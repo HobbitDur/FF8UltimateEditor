@@ -398,11 +398,11 @@ tkmnmes3.bin - subsection n°4|8|3|Formare squadra di 3 membri
 tkmnmes3.bin - subsection n°4|8|4|Cambio Junction
 tkmnmes3.bin - subsection n°4|8|5|Cambio di tutti i Junction
 tkmnmes3.bin - subsection n°4|8|6|Impossibile togliere dalla squadra
-tkmnmes3.bin - subsection n°4|8|7|({x0564})
+tkmnmes3.bin - subsection n°4|8|7|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|8|Impossibile inserire nella squadra
-tkmnmes3.bin - subsection n°4|8|9|({x0564})
+tkmnmes3.bin - subsection n°4|8|9|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|10|Scambia i Junction di {x0a27} e {x0a26}\nSei sicuro?
-tkmnmes3.bin - subsection n°4|8|11|({x0564})
+tkmnmes3.bin - subsection n°4|8|11|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|12|Il gruppo non è stato scelto
 tkmnmes3.bin - subsection n°4|8|13|Il gruppo Junction non è stato scelto
 tkmnmes3.bin - subsection n°5|9|0|Pagina1
@@ -788,11 +788,11 @@ Battle tutorial|16|16|comandi battaglia 6/8
 Battle tutorial|16|17|Il comando {Blue}Assimila{White} permette\ndi assimilare le magie dal nemico.\nSi seleziona il nemico e la magia\nda assorbire. Dopodiché si sceglie\n{Blue}Usa subito{White} o {Blue}Accumula{White}. Con {Blue}Usa{White}\n
 Battle tutorial|16|18|Tecniche speciali
 Battle tutorial|16|19|comandi battaglia 7/8
-Battle tutorial|16|20|Quando i personaggi sono in\nsituazioni critiche (HP basso),\npuò apparire {JunctionAbility}.\nPremendo il tasto direzionale\ndestro, al posto di {Blue}Attacco{White}\nappaiono comandi diversi\na seconda del personaggio.\nSono le Tecniche speciali,\nestremamente potenti.
+Battle tutorial|16|20|Quando i personaggi sono in\nsituazioni critiche (HP basso),\npuò apparire {LimitArrow}.\nPremendo il tasto direzionale\ndestro, al posto di {Blue}Attacco{White}\nappaiono comandi diversi\na seconda del personaggio.\nSono le Tecniche speciali,\nestremamente potenti.
 Battle tutorial|16|21|Altri
 Battle tutorial|16|22|comandi battaglia 8/8
 Battle tutorial|16|23|\n·Premere {L1} per attivare/disattivare\n la finestra di target.\n·Premere contemporaneamente {L2} e {R2}\n per fuggire dalla battaglia.\n In alcune battaglie non si può fuggire.\n·Anche se si fugge dalla battaglia, si possono\n ottenere EXP (Experience Points) in base\n ai danni arrecati al nemico.
-Battle tutorial|16|24|il numero di magie\npossedute dal personaggio.\n {LimitBreakArrow} indica invece che alla\nmagia è stato effettuato\nJunction.
+Battle tutorial|16|24|il numero di magie\npossedute dal personaggio.\n {JunctionedMagic} indica invece che alla\nmagia è stato effettuato\nJunction.
 Battle tutorial|16|25|{Blue}subito{White} il personaggio\npuò lanciare la magia\nappena assorbita; con\n{Blue}Accumula{White} la conserva.\n
 Battle tutorial|16|26|invocare ed il\ntarget desiderato.\nLa cifra accanto\nal G.F. indica il suo\nHP attuale.\n
 Card rules + Icon|17|0|Introduzione
@@ -841,18 +841,18 @@ Card rules + Icon|17|42|numeri della carta blu, danno la stessa somma.\nSi roves
 Card rules + Icon|17|43|appena girate, sono ancora in gioco. E poiché il 3\n(vedi es.) è maggiore del 2 della carta rossa,\nquest'ultima verrà girata.\n
 Card rules + Icon|17|44|Elementi
 Card rules + Icon|17|45|1/4
-Card rules + Icon|17|46|{Drain}    Fuoco\n{x055e}    Gelo\n{x055f}    Tuono\n{x0560}    Terra\n{x0561}    Veleno\n{x0562}    Vento\n{x0563}    Acqua\n{x0564}    Sacro\n
+Card rules + Icon|17|46|{ElementFire}    Fuoco\n{ElementIce}    Gelo\n{ElementThunder}    Tuono\n{ElementEarth}    Terra\n{ElementPoison}    Veleno\n{ElementWind}    Vento\n{ElementWater}    Acqua\n{ElementHoly}    Sacro\n
 Card rules + Icon|17|47|Status
 Card rules + Icon|17|48|2/4
-Card rules + Icon|17|49|{x0565}    Morte\n{x0566}    Veleno\n{x0567}    Pietra\n{x0568}    Blind\n{x0569}    Mutismo\n{x056a}    Berserk\n{x056b}    Zombie\n{x056c}    Sonno\n
-Card rules + Icon|17|50|{x056d}    Lentezza\n{x056e}    Arresto\n{x056f}    Maledizione\n{x0570}    Caos\n{x0571}    Drain\n
+Card rules + Icon|17|49|{StatusDeath}    Morte\n{StatusPoison}    Veleno\n{StatusPetrify}    Pietra\n{StatusDarkness}    Blind\n{StatusSilence}    Mutismo\n{StatusBerserk}    Berserk\n{StatusZombie}    Zombie\n{StatusSleep}    Sonno\n
+Card rules + Icon|17|50|{StatusSlow}    Lentezza\n{StatusStop}    Arresto\n{StatusCurse}    Maledizione\n{StatusConfuse}    Caos\n{StatusDrain}    Drain\n
 Card rules + Icon|17|51|Parametri
 Card rules + Icon|17|52|3/4
 Card rules + Icon|17|53|HP\nFRZ\nRES\nMAG\nSPR\nVEL\nDST\nMIRA\nFORT\n
 Card rules + Icon|17|54|Elem-Att\nElem-Dif\nST-Att\nST-Dif\n
 Card rules + Icon|17|55|Abilità
 Card rules + Icon|17|56|4/4
-Card rules + Icon|17|57|{CharacterAbility}    Abilità Junction\n{PartyAbility}    Abilità comando\n{MenuAbility}    Abilità personaggio\n{Fire}    Abilità squadra\n{Ice}    Abilità G.F.\n{Thunder}    Abilità menu\n
+Card rules + Icon|17|57|{AbilityJunction}    Abilità Junction\n{AbilityCommand}    Abilità comando\n{AbilityCharacter}    Abilità personaggio\n{AbilityParty}    Abilità squadra\n{AbilityGF}    Abilità G.F.\n{AbilityMenu}    Abilità menu\n
 Chocobo tutorial|18|0|Il Komoguri Moghy cerca amici\nper andare alla caccia del\ntesoro nascosto,ma non riesce\na trovarli. Il tesoro si trova\nsulla ‘Montagna mostruosa'.\nI suoi amici gli hanno risposto:\n‘Abbiamo troppa paura!'\n
 Chocobo tutorial|18|1|Ma nella testa di Moghy c'è solo quel tesoro.\nNessuno potrà fermarlo.
 Chocobo tutorial|18|2|Moghy alla fine, decide di\nandare da solo.\nMa passano 2 giorni, passano\n3 giorni e di Moghy neanche\nl'ombra. Mumba e Kyactus\ntemono che il demone della\nmagia voglia mangiare Moghy.\n
@@ -896,7 +896,7 @@ Test seed 2 |21|3|{x00}Domanda n°4\n\nIn ogni azione che si compie in status ve
 Test seed 2 |21|4|{x00}Domanda n°5\n\nSe si viene colpiti da un attacco fisico, lo status\nCaos viene annullato.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 2 |21|5|{x01}Domanda n°6\n\nLa tecnica speciale di {Squall} è Haryuken.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 2 |21|6|{x00}Domanda n°7\n\nPer fare Junction alle magie è necessaria\nun'abilità Junction corrispondente al parametro\nche si vuole collegare alle magie.\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
-Test seed 2 |21|7|{x00}Domanda n°8\n\n{CharacterAbility} indica le Abilità Junction\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
+Test seed 2 |21|7|{x00}Domanda n°8\n\n{AbilityJunction} indica le Abilità Junction\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 2 |21|8|{x01}Domanda n°9\n\nGli 8 Elementi sono Fuoco, Gelo, Tuono, Terra,\nVeleno, Vento, Magia e Sacro.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 2 |21|9|{x01}Domanda n°10\n\nC'è un limite al numero di magie che si possono\ncatturare dai mostri.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 3 |22|0|{x01}Domanda n°1\n\nPozione può ripristinare l'HP del G.F.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
@@ -905,7 +905,7 @@ Test seed 3 |22|2|{x00}Domanda n°3\n\nL'arma di Selphie è il nunchaku.\n\n\n\n
 Test seed 3 |22|3|{x01}Domanda n°4\n\nLe armi possono essere migliorate solo pagando\ndenaro.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 3 |22|4|{x00}Domanda n°5\n\nChi dà l'ultimo colpo e finisce il nemico riceve il\nmaggiore punteggio di EXP.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 3 |22|5|{x00}Domanda n°6\n\nPiù è alto il livello dei G.F., più potenti sono\ngli attacchi.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
-Test seed 3 |22|6|{x00}Domanda n°7\n\n{PartyAbility} indica le Abilità comando.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
+Test seed 3 |22|6|{x00}Domanda n°7\n\n{AbilityCommand} indica le Abilità comando.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 3 |22|7|{x01}Domanda n°8\n\nOgni membro di un gruppo può avere fino a 5 abilità\npersonaggio e squadra.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 3 |22|8|{x00}Domanda n°9\n\nLe abilità comando possono essere usate solo se\nassegnate prima al personaggio.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 3 |22|9|{x01}Domanda n°10\n\nAP significa Action Point.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
@@ -919,7 +919,7 @@ Test seed 4 |23|6|{x00}Domanda n°7\n\nIn caso di K.O. e status alterato, se si 
 Test seed 4 |23|7|{x00}Domanda n°8\n\nNel centro addestramento del Garden c'è anche il\nmostro Archeosaurus.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 4 |23|8|{x01}Domanda n°9\n\nIl Gunblade di {Squall} diventa più offensivo\npremendo {L2} al momento giusto.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 4 |23|9|{x01}Domanda n°10\n\nÈ possibile accumulare fino a 255 unità per\nogni magia.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
-Test seed 5 |24|0|{x01}Domanda n°1\n\n{MenuAbility} indica Abilità squadra.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
+Test seed 5 |24|0|{x01}Domanda n°1\n\n{AbilityCharacter} indica Abilità squadra.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 5 |24|1|{x01}Domanda n°2\n\nSi possono assimilare magie anche dai propri\ncompagni di squadra.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 5 |24|2|{x01}Domanda n°3\n\nIl gioco si può salvare ovunque e in qualsiasi\nmomento.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 5 |24|3|{x00}Domanda n°4\n\nQuando un G.F. acquisisce un'abilità, possono\napparire anche nuove abilità da apprendere che\nfino a quel momento non erano state indicate.\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
@@ -951,7 +951,7 @@ Test seed 7 |26|8|{x00}Domanda n°9\n\nI nemici salgono di livello come te.\n\n\
 Test seed 7 |26|9|{x01}Domanda n°10\n\nSe nella World Map invece di correre si cammina,\nsi incontreranno meno nemici.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 8 |27|0|{x01}Domanda n°1\n\nI soldati di Galbadia non usano magie.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 8 |27|1|{x00}Domanda n°2\n\nLe armi possono essere migliorate in modelli più\npotenti nel JunkShop.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
-Test seed 8 |27|2|{x01}Domanda n°3\n\n{Fire} indica le abilità dei personaggi.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
+Test seed 8 |27|2|{x01}Domanda n°3\n\n{AbilityParty} indica le abilità dei personaggi.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 8 |27|3|{x01}Domanda n°4\n\nUsando Slow contro Haste si cancella Haste e si\ntorna allo status normale.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 8 |27|4|{x00}Domanda n°5\n\nNella World Map si incontrano più nemici nei boschi\nche in pianura.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 8 |27|5|{x00}Domanda n°6\n\nSe Elem-Dif supera il 100%, i danni dell'elemento\nassociato verranno assorbiti.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
@@ -960,7 +960,7 @@ Test seed 8 |27|7|{x01}Domanda n°8\n\nNella Caverna di fuoco non ci sono Piros.
 Test seed 8 |27|8|{x00}Domanda n°9\n\nOgni G.F. può acquisire diverse abilità.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 8 |27|9|{x01}Domanda n°10\n\nIl JunkShop è un negozio che vende armi.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 9 |28|0|{x01}Domanda n°1\n\nSi può usare subito il G.F. assimilato dal nemico\ninvece di accumularlo.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
-Test seed 9 |28|1|{x00}Domanda n°2\n\n{Thunder} indica le Abilità Menu.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
+Test seed 9 |28|1|{x00}Domanda n°2\n\n{AbilityMenu} indica le Abilità Menu.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 9 |28|2|{x01}Domanda n°3\n\nLe magie che usa Selphie in Slot sono le magie\nche lei possiede.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 9 |28|3|{x01}Domanda n°4\n\nSe il G.F. non ha affinità con i membri della squadra,\npotrebbe lasciare il gruppo.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 9 |28|4|{x01}Domanda n°5\n\nSi possono usare le Abilità squadra anche senza\naverle assegnate al personaggio.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
@@ -1113,7 +1113,7 @@ Test seed 24|43|0|{x00}Domanda n°1\n\nEsna cura lo status Lentezza.\n\n\n\n  {C
 Test seed 24|43|1|{x00}Domanda n°2\n\nEffettuando J Elem-Dif a Levita, aumenta la %\ndi difesa elemento Terra.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 24|43|2|{x01}Domanda n°3\n\nL'ATB continua a scorrere anche quando arriva\nun G.F.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 24|43|3|{x01}Domanda n°4\n\nL'abilità Autoreflex porta lo status Reflex a tutta\nla squadra fino a quando qualche personaggio non\nva in K.O.\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
-Test seed 24|43|4|{x00}Domanda n°5\n\n{Ice} indica Abilità G.F.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
+Test seed 24|43|4|{x00}Domanda n°5\n\n{AbilityGF} indica Abilità G.F.\n\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 24|43|5|{x00}Domanda n°6\n\nIl n° di abilità che il G.F. può apprendere sono\nlimitate.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 24|43|6|{x01}Domanda n°7\n\nPiù si effettua Protect, più si è difesi dagli attacchi\nfisici.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
 Test seed 24|43|7|{x01}Domanda n°8\n\nSe si effettua Drain verso un nemico con status\nVeleno, si assorbe anche il Veleno.\n\n\n  {Cursor_location_id:0x20}SÌ      {Cursor_location_id:0x21}NO
@@ -1714,17 +1714,17 @@ TextBox03.bin|54|47|I G.F. possono apprendere varie abilità\naccumulando AP.\nL
 TextBox03.bin|54|48|Selezionare Abilità
 TextBox03.bin|54|49|{Cursor_location_id:0x2226}Abilità Junction\n{Cursor_location_id:0x2227}Abilità comando\n{Cursor_location_id:0x2228}Abilità personaggio\n{Cursor_location_id:0x2229}Abilità squadra\n{Cursor_location_id:0x222a}Abilità G.F.  \n{Cursor_location_id:0x222b}Abilità menu\n
 TextBox03.bin|54|50|Abilità Junction
-TextBox03.bin|54|51|·Sono le abilità che permettono Junction a magie,\n a parametri personaggi, alle proprietà elementali\n e status.\n·Fare Junction tra un G.F. che ha appreso\n tali abilità e un personaggio per attivarle.\n·Sono indicate nel menu con il simbolo {CharacterAbility}\n
+TextBox03.bin|54|51|·Sono le abilità che permettono Junction a magie,\n a parametri personaggi, alle proprietà elementali\n e status.\n·Fare Junction tra un G.F. che ha appreso\n tali abilità e un personaggio per attivarle.\n·Sono indicate nel menu con il simbolo {AbilityJunction}\n
 TextBox03.bin|54|52|Abilità comando
-TextBox03.bin|54|53|·Abilità che si usano nei comandi in battaglia.\n·Per attivarle, fare Junction ad un G.F. che\n ha acquisito tali abilità e assegnarle ai\n personaggi nella finesta ‘Abilità comando'\n·Sono indicate nel menu con il simbolo {PartyAbility}
+TextBox03.bin|54|53|·Abilità che si usano nei comandi in battaglia.\n·Per attivarle, fare Junction ad un G.F. che\n ha acquisito tali abilità e assegnarle ai\n personaggi nella finesta ‘Abilità comando'\n·Sono indicate nel menu con il simbolo {AbilityCommand}
 TextBox03.bin|54|54|Abilità personaggio
-TextBox03.bin|54|55|·Abilità che danno particolari capacità\n al personaggio.\n·Per attivarle, fare Junction ad un G.F. che ha\n acquisito tali abilità e selezionare ‘Abilità\n personaggio'.\n·Sono indicate nel menu con il simbolo {MenuAbility}
+TextBox03.bin|54|55|·Abilità che danno particolari capacità\n al personaggio.\n·Per attivarle, fare Junction ad un G.F. che ha\n acquisito tali abilità e selezionare ‘Abilità\n personaggio'.\n·Sono indicate nel menu con il simbolo {AbilityCharacter}
 TextBox03.bin|54|56|Abilità squadra
-TextBox03.bin|54|57|·Abilità che dà particolari capacità alla squadra.\n·Fare Junction ad un G.F. che ha tali abilità\n e selezionare Abilità squadra per attivarle.\n·Sono indicate nel menu con il simbolo {Fire}
+TextBox03.bin|54|57|·Abilità che dà particolari capacità alla squadra.\n·Fare Junction ad un G.F. che ha tali abilità\n e selezionare Abilità squadra per attivarle.\n·Sono indicate nel menu con il simbolo {AbilityParty}
 TextBox03.bin|54|58|Abilità G.F.
-TextBox03.bin|54|59|·Abilità che danno maggiori poteri ai G.F.\n·Sono attivate quando il G.F. apprende tali abilità.\n·Sono indicate nel menu con il simbolo {Ice}
+TextBox03.bin|54|59|·Abilità che danno maggiori poteri ai G.F.\n·Sono attivate quando il G.F. apprende tali abilità.\n·Sono indicate nel menu con il simbolo {AbilityGF}
 TextBox03.bin|54|60|Abilità menu
-TextBox03.bin|54|61|·Abilità che hanno effetti sul menu.\n·Sono attivate quando il G.F. apprende tali abilità.\n·Sono indicate nel menu con il simbolo {Thunder}
+TextBox03.bin|54|61|·Abilità che hanno effetti sul menu.\n·Sono attivate quando il G.F. apprende tali abilità.\n·Sono indicate nel menu con il simbolo {AbilityMenu}
 TextBox03.bin|54|62|Selezionare voce
 TextBox03.bin|54|63|{Cursor_location_id:0x222d}Proprietà elementali\n{Cursor_location_id:0x222e}Attacco elementale\n{Cursor_location_id:0x222f}Difesa elementale\n
 TextBox03.bin|54|64|Elementi/Proprietà elementali
@@ -2136,7 +2136,7 @@ Elemental junction tutorial|59|17|Effettuando Junction elementale a Elem-Dif,
 Elemental junction tutorial|59|18|si resiste meglio all'attacco di quell'elemento.
 Elemental junction tutorial|59|19|La % massima di Difesa è 100% che riduce\na 0 i danni dell'attacco di quell'elemento.
 Elemental junction tutorial|59|20|Nell'esempio, Elem-Dif Fuoco è a 80%.\nSe si riceve un attacco Fuoco in questa\ncondizione, i danni subiti saranno del 20%.
-Elemental junction tutorial|59|21|Se la % supera il 100%,\napparirà sullo schermo {CommandAbility}
+Elemental junction tutorial|59|21|Se la % supera il 100%,\napparirà sullo schermo {AbsorbStar}
 Elemental junction tutorial|59|22|In tale condizione la percentuale\ndi danni indicata viene assorbita.
 Elemental junction tutorial|59|23|In questo esempio, il 50% dei danni portati\nda un attacco elem. Fuoco verrà assorbito.
 Elemental junction tutorial|59|24|In base alle abilità G.F., è possibile associare\npiù magie di elemento diverso a Elem-Dif.

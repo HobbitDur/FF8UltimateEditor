@@ -74,19 +74,23 @@ class TestGameData(unittest.TestCase):
         ff8_re_str = self.game_data.translate_hex_to_str(ff8_hex)
         self.assertEqual(ff8_re_str, "{L2}")
 
-        ff8_str = ("{L2}{R2}{L1}{R1}{Circle}{Triangle}{X}{Square}{0x0528:Unknown}{0x0529:Unknown}{0x052a:Unknown}"
-                   "{0x052b:Unknown}{CrossTop}{CrossRight}{CrossDown}{CrossLeft}{0x0530:Unknown}{0x0531:Unknown}"
-                   "{0x0532:Unknown}{0x0533:Unknown}{0x0534:Unknown}{0x0535:Unknown}{0x0536:Unknown}{0x0537:Unknown}"
-                   "{Select}{0x0539:Unknown}{0x053a:Unknown}{START}{0x053c:Unknown}{0x053d:Unknown}{0x053e:Unknown}"
-                   "{0x053f:Unknown}{MagicJunctioned}{LimitBreakArrow}{JunctionAbility}{CommandAbility}{0x0545:Unknown}"
-                   "{CharacterAbility}{PartyAbility}{GFAbility}{MenuAbility}{Fire}{Ice}{Thunder}{Earth}{PoisonType}"
-                   "{Wind}{Water}{Holy}{Death}{PoisonStatus}{Petrify}{Darkness}{Silence}{Berserk}{Zombie}{Sleep}{Slow}"
-                   "{Stop}{Curse}{Confuse}{Drain}")
-        ff8_list = self.game_data.translate_str_to_hex(ff8_str)
-        ff8_hex = bytearray(ff8_list)
-        self.assertEqual(len(ff8_hex), 124)
-        ff8_re_str = self.game_data.translate_hex_to_str(ff8_hex)
-        self.assertEqual(ff8_re_str, ff8_str)
+        # Every code the exe resolves (0x20-0x7E, TEXT_ICON_CODE_TO_SPRITE) has a name that round-trips
+        icon_names = self.game_data.sysfnt_data_json['Icons']
+        self.assertEqual(len(icon_names), 0x7F - 0x20)
+        ff8_str = "".join("{" + name + "}" for name in icon_names)
+        ff8_hex = bytearray(self.game_data.translate_str_to_hex(ff8_str))
+        self.assertEqual(ff8_hex, bytes(b for code in range(0x20, 0x7F) for b in (0x05, code)))
+        self.assertEqual(self.game_data.translate_hex_to_str(ff8_hex), ff8_str)
+
+        # The two stars text can draw: 0x43 = sprite 175 (green, absorb), 0x44 = sprite 214
+        self.assertEqual(self.game_data.translate_hex_to_str(bytes([0x05, 0x43, 0x05, 0x44])),
+                         "{AbsorbStar}{WhiteStar}")
+        self.assertEqual(self.game_data.translate_hex_to_str(bytes([0x05, 0x5D])), "{ElementFire}")
+        self.assertEqual(self.game_data.translate_hex_to_str(bytes([0x05, 0x7F])), "{x057f}")
+
+        # Names from before the fix still encode to their old byte (old CSVs stay byte-exact)
+        self.assertEqual(bytes(self.game_data.translate_str_to_hex("{CommandAbility}{Fire}{Drain}")),
+                         bytes([0x05, 0x43, 0x05, 0x49, 0x05, 0x5D]))
 
     def test_sysfnt_color(self):
         ff8_str = "{x0620}"

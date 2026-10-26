@@ -1509,14 +1509,14 @@ Misc text section|24|97|Wehrlos
 Misc text section|24|98|Vari
 Misc text section|24|99|Flug-
 Misc text section|24|100|Zauber nicht verfügbar
-Misc text section|24|101|{Drain}
-Misc text section|24|102|{x055e}
-Misc text section|24|103|{x055f}
-Misc text section|24|104|{x0560}
-Misc text section|24|105|{x0561}
-Misc text section|24|106|{x0562}
-Misc text section|24|107|{x0563}
-Misc text section|24|108|{x0564}
+Misc text section|24|101|{ElementFire}
+Misc text section|24|102|{ElementIce}
+Misc text section|24|103|{ElementThunder}
+Misc text section|24|104|{ElementEarth}
+Misc text section|24|105|{ElementPoison}
+Misc text section|24|106|{ElementWind}
+Misc text section|24|107|{ElementWater}
+Misc text section|24|108|{ElementHoly}
 Misc text section|24|109|Die G.F. haben {RewardAmount} AP erhalten
 Misc text section|24|110|{RewardItem}-Karte
 Misc text section|24|111|Die G.F. haben sich weiterentwickelt

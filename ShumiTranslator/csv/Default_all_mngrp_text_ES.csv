@@ -400,11 +400,11 @@ tkmnmes3.bin - subsection n°4|8|3|Permite elegir a los miembros del grupo de ac
 tkmnmes3.bin - subsection n°4|8|4|Transferir
 tkmnmes3.bin - subsection n°4|8|5|Intercambia todos los enlaces entre dos miembros.
 tkmnmes3.bin - subsection n°4|8|6|No puedes quitar a ese personaje.
-tkmnmes3.bin - subsection n°4|8|7|({x0564})
+tkmnmes3.bin - subsection n°4|8|7|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|8|No puedes incluir a ese personaje.
-tkmnmes3.bin - subsection n°4|8|9|({x0564})
+tkmnmes3.bin - subsection n°4|8|9|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|10|¿Deseas intercambiar los enlaces\nentre {x0a27} y {x0a26}?
-tkmnmes3.bin - subsection n°4|8|11|({x0564})
+tkmnmes3.bin - subsection n°4|8|11|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|12|No hay un grupo de acción formado.
 tkmnmes3.bin - subsection n°4|8|13|No hay un grupo de enlace formado.
 tkmnmes3.bin - subsection n°5|9|0|Mayúscula
@@ -791,12 +791,12 @@ Battle tutorial|16|16|Batallas  6/8
 Battle tutorial|16|17|El comando {Blue}Extraer{White} permite\nquitarle magias al adversario.\nElige primero al enemigo y la\nmagia que deseas extraer, y\nluego {Blue}Guardar{White} o bien {Blue}Aplicar{White}.\n
 Battle tutorial|16|18|Técnicas especiales
 Battle tutorial|16|19|Batallas  7/8
-Battle tutorial|16|20|Cuando durante la batalla un\npersonaje está bajo de vitali-\ndad, a veces aparece una {JunctionAbility}\nal lado del comando {Blue}Atacar{White}.\nSi en ese momento pulsas el\nbotón de dirección derecho,\n{Blue}Atacar{White} se convertirá en otro\ncomando que permite usar una\ntécnica especial de gran poder.\n
+Battle tutorial|16|20|Cuando durante la batalla un\npersonaje está bajo de vitali-\ndad, a veces aparece una {LimitArrow}\nal lado del comando {Blue}Atacar{White}.\nSi en ese momento pulsas el\nbotón de dirección derecho,\n{Blue}Atacar{White} se convertirá en otro\ncomando que permite usar una\ntécnica especial de gran poder.\n
 Battle tutorial|16|21|Otros
 Battle tutorial|16|22|Batallas  8/8
 Battle tutorial|16|23|\n-Al elegir al receptor de un comando, pulsa {L1} y\n aparecerá una ventana que te permitirá\n seleccionarlo por el nombre.\n-Para escapar de la batalla, pulsa a la vez {L2} y\n {R2}, y mantenlos apretados. Recuerda que hay\n casos en los que no se puede huir.\n-Aunque escapes de la batalla, el daño que hayas\n infligido al enemigo te proporcionará cierta\n experiencia.
 Battle tutorial|16|24|para efectuar la selección. Para obtener un\nmensaje de ayuda, pulsa {START} mientras el cursor\nesté en la pantalla.\n
-Battle tutorial|16|25|tiene el personaje se ve\njunto al nombre de la\nmagia.\nEl icono {LimitBreakArrow} indica que la\nmagia está enlazada.\n
+Battle tutorial|16|25|tiene el personaje se ve\njunto al nombre de la\nmagia.\nEl icono {JunctionedMagic} indica que la\nmagia está enlazada.\n
 Battle tutorial|16|26|aplicará su técnica.\nLa vitalidad del\nG. F. está indicada\njunto a su nombre.\n
 Battle tutorial|16|27|\n{Blue}Guardar{White} permite\nalmacenar la magia, y\n{Blue}Aplicar{White} utilizarla en ese\nmomento.
 Card rules + Icon|17|0|Introducción
@@ -847,18 +847,18 @@ Card rules + Icon|17|44|En la figura, las dos cartas azules acaban de dar\nla vu
 Card rules + Icon|17|45|elemento, sus valores aumentan en 1 punto.\nPor el contrario, si los elementos no coinciden,\nlos valores de la carta disminuyen en 1 punto.\n
 Card rules + Icon|17|46|Elementos
 Card rules + Icon|17|47|Iconos 1/4
-Card rules + Icon|17|48|{Drain}    Fuego\n{x055e}    Frío\n{x055f}    Rayo\n{x0560}    Tierra\n{x0561}    Veneno\n{x0562}    Aire\n{x0563}    Agua\n{x0564}    Sacro\n
+Card rules + Icon|17|48|{ElementFire}    Fuego\n{ElementIce}    Frío\n{ElementThunder}    Rayo\n{ElementEarth}    Tierra\n{ElementPoison}    Veneno\n{ElementWind}    Aire\n{ElementWater}    Agua\n{ElementHoly}    Sacro\n
 Card rules + Icon|17|49|Estados alterados
 Card rules + Icon|17|50|Iconos 2/4
-Card rules + Icon|17|51|{x0565}    Muerte\n{x0566}    Veneno\n{x0567}    Piedra\n{x0568}    Ceguera\n{x0569}    Mudez\n{x056a}    Locura\n{x056b}    Zombi\n{x056c}    Sueño\n
-Card rules + Icon|17|52|{x056d}    Freno\n{x056e}    Paro\n{x056f}    Maldición\n{x0570}    Confusión\n{x0571}    Absorción\n
+Card rules + Icon|17|51|{StatusDeath}    Muerte\n{StatusPoison}    Veneno\n{StatusPetrify}    Piedra\n{StatusDarkness}    Ceguera\n{StatusSilence}    Mudez\n{StatusBerserk}    Locura\n{StatusZombie}    Zombi\n{StatusSleep}    Sueño\n
+Card rules + Icon|17|52|{StatusSlow}    Freno\n{StatusStop}    Paro\n{StatusCurse}    Maldición\n{StatusConfuse}    Confusión\n{StatusDrain}    Absorción\n
 Card rules + Icon|17|53|Parámetros básicos
 Card rules + Icon|17|54|Iconos 3/4
 Card rules + Icon|17|55|Vitalidad\nFuerza\nResistencia\nPoder mágico\nEspíritu\nRapidez\nEvasión\nPuntería\nSuerte\n
 Card rules + Icon|17|56|Ataque elemental\nDefensa elemental\nAtaque alterador\nde estado\nDefensa contra\nestados alterados\n
 Card rules + Icon|17|57|Tipos de habilidades
 Card rules + Icon|17|58|Iconos 4/4
-Card rules + Icon|17|59|{CharacterAbility}    Habilidad de enlace\n{PartyAbility}    Habilidad de comando\n{MenuAbility}    Habilidad individual\n{Fire}    Habilidad de grupo\n{Ice}    Habilidad de G. F.\n{Thunder}    Habilidad de menú\n
+Card rules + Icon|17|59|{AbilityJunction}    Habilidad de enlace\n{AbilityCommand}    Habilidad de comando\n{AbilityCharacter}    Habilidad individual\n{AbilityParty}    Habilidad de grupo\n{AbilityGF}    Habilidad de G. F.\n{AbilityMenu}    Habilidad de menú\n
 Chocobo tutorial|18|0|Mogu era un mogurito muy\nvaliente que quería ir a\nbuscar tesoros ocultos,\npero sus amigos no querían\nir con él. Tenían miedo de\nla Montaña Tenebrosa,\nadonde quería ir Mogu.\n
 Chocobo tutorial|18|1|Pero Mogu pensaba sólo en tesoros y estaba\ndecidido a buscarlos. {xc8}No había quién lo parara!\n
 Chocobo tutorial|18|2|Un buen día, Mogu decidió\nemprender el viaje él solo.\nPasaron dos días...\nPasaron tres días...\nY nada, sin noticias de Mogu.\nMumba y Cactilio imaginaron\na Mogu en manos del demonio,\n
@@ -903,7 +903,7 @@ Test seed 2 |21|3|{x00}Pregunta 4\n\nEfectuar una acción en estado Veneno causa
 Test seed 2 |21|4|{x00}Pregunta 5\n\nAl recibir un ataque físico desaparece\nel estado Confusión.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 2 |21|5|{x01}Pregunta 6\n\nLa técnica especial de {Squall} es Ninja.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 2 |21|6|{x00}Pregunta 7\n\nPara enlazar magia, se necesita la habilidad de\nenlace correspondiente al parámetro que se\ndesea enlazar.\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
-Test seed 2 |21|7|{x00}Pregunta 8\n\nEl icono {CharacterAbility} indica habilidad de enlace.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
+Test seed 2 |21|7|{x00}Pregunta 8\n\nEl icono {AbilityJunction} indica habilidad de enlace.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 2 |21|8|{x01}Pregunta 9\n\nLos 8 elementos son Fuego, Frío, Rayo, Tierra,\nAire, Veneno, Sacro y Muerte.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 2 |21|9|{x01}Pregunta 10\n\nExiste un número máximo de magias\nque pueden extraerse de los monstruos.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 3 |22|0|{x01}Pregunta 1\n\nCon la Poción se puede devolver VIT a los G. F.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
@@ -912,7 +912,7 @@ Test seed 3 |22|2|{x00}Pregunta 3\n\nEl arma de Selphie es el nunchaku.\n\n\n\n\
 Test seed 3 |22|3|{x01}Pregunta 4\n\nPara reformar un arma sólo se necesita dinero.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 3 |22|4|{x00}Pregunta 5\n\nQuien da al enemigo el golpe de gracia durante la\nbatalla recibe una cantidad de experiencia extra.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 3 |22|5|{x00}Pregunta 6\n\nLos G. F. también tienen niveles. Cuanto más\nalto el nivel, mayor su fuerza de ataque.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
-Test seed 3 |22|6|{x00}Pregunta 7\n\nEl icono {PartyAbility} indica habilidad de comando.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
+Test seed 3 |22|6|{x00}Pregunta 7\n\nEl icono {AbilityCommand} indica habilidad de comando.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 3 |22|7|{x01}Pregunta 8\n\nCada personaje puede tener un máximo de\n5 habilidades individuales y de grupo.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 3 |22|8|{x00}Pregunta 9\n\nPara poder utilizar habilidades de comando, hay\nque asignarlas a los personajes.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 3 |22|9|{x01}Pregunta 10\n\nPH significa Puntos de Heroísmo.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
@@ -926,7 +926,7 @@ Test seed 4 |23|6|{x00}Pregunta 7\n\nSi quedas K.O. cuando sufres de\nun estado 
 Test seed 4 |23|7|{x00}Pregunta 8\n\nArqueosaurio es un monstruo que se encuentra en\nla zona de entrenamiento del Jardín de Balamb.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 4 |23|8|{x01}Pregunta 9\n\nEl sable pistola de {Squall} causa mucho\nmás daño si se pulsa {L2} en el momento\nadecuado.\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 4 |23|9|{x01}Pregunta 10\n\nEs posible guardar hasta 255 unidades de\ncada clase de magia.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
-Test seed 5 |24|0|{x01}Pregunta 1\n\nEl icono {MenuAbility} indica habilidad de grupo.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
+Test seed 5 |24|0|{x01}Pregunta 1\n\nEl icono {AbilityCharacter} indica habilidad de grupo.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 5 |24|1|{x01}Pregunta 2\n\nEs posible extraer magias de los aliados.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 5 |24|2|{x01}Pregunta 3\n\nSe puede grabar en cualquier sitio\ny en cualquier momento.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 5 |24|3|{x00}Pregunta 4\n\nSi un G. F. aprende una habilidad determinada,\nes posible que aparezcan habilidades que no\nse habían visualizado hasta ese momento.\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
@@ -958,7 +958,7 @@ Test seed 7 |26|8|{x00}Pregunta 9\n\nEl nivel de los enemigos sube en relación\
 Test seed 7 |26|9|{x01}Pregunta 10\n\nSi en el mapa del mundo en vez de correr andas,\nno te topas con monstruos.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 8 |27|0|{x01}Pregunta 1\n\nLos soldados de Galbadia no utilizan magia.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 8 |27|1|{x00}Pregunta 2\n\nLos armeros puede reformar armas para que\nsean más potentes.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
-Test seed 8 |27|2|{x01}Pregunta 3\n\nEl icono {Fire} indica habilidad individual.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
+Test seed 8 |27|2|{x01}Pregunta 3\n\nEl icono {AbilityParty} indica habilidad individual.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 8 |27|3|{x01}Pregunta 4\n\nSi se aplica Freno a un sujeto en estado Prisa,\nvolverá al estado normal.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 8 |27|4|{x00}Pregunta 5\n\nEn el mapa del mundo, se encuentran más\nmonstruos en los bosques que en las llanuras.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 8 |27|5|{x00}Pregunta 6\n\nCuando el porcentaje de defensa elemental supera\nel 100%, la vitalidad del personaje aumenta al\nrecibir un ataque del elemento correspondiente.\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
@@ -967,7 +967,7 @@ Test seed 8 |27|7|{x01}Pregunta 8\n\nEn la Caverna de las Llamas no hay boms.\n\
 Test seed 8 |27|8|{x00}Pregunta 9\n\nLas habilidades que puede adquirir cada G. F.\nson diferentes.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 8 |27|9|{x01}Pregunta 10\n\nLos armeros venden armas.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 9 |28|0|{x01}Pregunta 1\n\nEs posible utilizar con el comando Aplicar un G. F.\nque se ha extraído de un adversario, en vez\nde guardarlo.\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
-Test seed 9 |28|1|{x00}Pregunta 2\n\nEl icono {Thunder} indica habilidad de menú.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
+Test seed 9 |28|1|{x00}Pregunta 2\n\nEl icono {AbilityMenu} indica habilidad de menú.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 9 |28|2|{x01}Pregunta 3\n\nLas magias que aparecen en la técnica especial\nde Selphie, Ruleta, son magias que ella tiene\nen reserva.\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 9 |28|3|{x01}Pregunta 4\n\nUn G. F. que tenga poca afinidad con los\npersonajes o que sea invocado pocas\nveces puede abandonar el grupo.\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 9 |28|4|{x01}Pregunta 5\n\nLas habilidades de grupo pueden utilizarse sin\nasignarlas a los personajes.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
@@ -1120,7 +1120,7 @@ Test seed 24|43|0|{x00}Pregunta 1\n\nEsna permite curar el estado Freno.\n\n\n\n
 Test seed 24|43|1|{x00}Pregunta 2\n\nSi se asigna Lévita a Enlace defensa ELM, aumenta\nla protección contra ataques de elemento Tierra.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 24|43|2|{x01}Pregunta 3\n\nEl medidor de batalla sigue subiendo aunque\nestá presente un G. F.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 24|43|3|{x01}Pregunta 4\n\nLa habilidad Autoespejo mantiene a los personajes\nen estado Espejo durante toda la batalla, siempre\ny cuando no queden K.O..\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
-Test seed 24|43|4|{x00}Pregunta 5\n\nEl icono {Ice} indica habilidad de G. F.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
+Test seed 24|43|4|{x00}Pregunta 5\n\nEl icono {AbilityGF} indica habilidad de G. F.\n\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 24|43|5|{x00}Pregunta 6\n\nLa cantidad de habilidades que puede aprender\nun G. F. es limitada.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 24|43|6|{x01}Pregunta 7\n\nCuantas más veces se aplique la magia Coraza,\nmenor será el daño recibido.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
 Test seed 24|43|7|{x01}Pregunta 8\n\nSi se efectúa un Drenaje a alguien que está en\nestado Veneno, se absorbe también el veneno.\n\n\n\n  {Cursor_location_id:0x20}SÍ     {Cursor_location_id:0x21}NO
@@ -1723,17 +1723,17 @@ TextBox03.bin|54|47|Los G. F. van adquiriendo una variedad de\nhabilidades a med
 TextBox03.bin|54|48|Elige una habilidad
 TextBox03.bin|54|49|\n{Cursor_location_id:0x2227}Habilidades de enlace\n{Cursor_location_id:0x2228}Habilidades de comando\n{Cursor_location_id:0x2229}Habilidades individuales\n{Cursor_location_id:0x222a}Habilidades de grupo\n{Cursor_location_id:0x222b}Habilidades de G. F.\n{Cursor_location_id:0x222c}Habilidades de menú\n
 TextBox03.bin|54|50|Habilidades de enlace
-TextBox03.bin|54|51|\n- Permiten enlazar magias a los parámetros\n{xc4}{xc4}{xc4}básicos, de ataque/defensa elemental y de\n{xc4}{xc4}{xc4}estado.\n- Para utilizarlas basta con enlazar al\n{xc4}{xc4}{xc4}personaje un G. F. que las haya adquirido.\n- En el menú se indican con el icono {CharacterAbility}.\n
+TextBox03.bin|54|51|\n- Permiten enlazar magias a los parámetros\n{xc4}{xc4}{xc4}básicos, de ataque/defensa elemental y de\n{xc4}{xc4}{xc4}estado.\n- Para utilizarlas basta con enlazar al\n{xc4}{xc4}{xc4}personaje un G. F. que las haya adquirido.\n- En el menú se indican con el icono {AbilityJunction}.\n
 TextBox03.bin|54|52|Habilidades de comando
-TextBox03.bin|54|53|\n- Actúan como comandos que pueden utilizarse\n{xc4}{xc4}{xc4}en la batalla.\n- Para utilizarlas hay que enlazar al personaje\n{xc4}{xc4}{xc4}un G. F. que las haya adquirido y después\n{xc4}{xc4}{xc4}agregarlas a la lista de comandos del personaje.\n- En el menú se indican con el icono {PartyAbility}.\n
+TextBox03.bin|54|53|\n- Actúan como comandos que pueden utilizarse\n{xc4}{xc4}{xc4}en la batalla.\n- Para utilizarlas hay que enlazar al personaje\n{xc4}{xc4}{xc4}un G. F. que las haya adquirido y después\n{xc4}{xc4}{xc4}agregarlas a la lista de comandos del personaje.\n- En el menú se indican con el icono {AbilityCommand}.\n
 TextBox03.bin|54|54|Habilidades individuales
-TextBox03.bin|54|55|\n- Son habilidades que otorgan poderes\n{xc4}{xc4}{xc4}especiales al personaje.\n- Para utilizarlas hay que enlazar al personaje\n{xc4}{xc4}{xc4}un G. F. que las haya adquirido, y después\n{xc4}{xc4}{xc4}agregarlas a la lista de habilidades del\n{xc4}{xc4}{xc4}personaje.\n- En el menú se indican con el icono {MenuAbility}.\n
+TextBox03.bin|54|55|\n- Son habilidades que otorgan poderes\n{xc4}{xc4}{xc4}especiales al personaje.\n- Para utilizarlas hay que enlazar al personaje\n{xc4}{xc4}{xc4}un G. F. que las haya adquirido, y después\n{xc4}{xc4}{xc4}agregarlas a la lista de habilidades del\n{xc4}{xc4}{xc4}personaje.\n- En el menú se indican con el icono {AbilityCharacter}.\n
 TextBox03.bin|54|56|Habilidades de grupo
-TextBox03.bin|54|57|\n- Dan poderes especiales al grupo de acción.\n- Para utilizarlas hay que enlazar a un\n{xc4}{xc4}{xc4}personaje un G. F. que las haya adquirido,\n{xc4}{xc4}{xc4}y después agregarlas a la lista de\n{xc4}{xc4}{xc4}habilidades del personaje.\n- En el menú se indican con el icono {Fire}.
+TextBox03.bin|54|57|\n- Dan poderes especiales al grupo de acción.\n- Para utilizarlas hay que enlazar a un\n{xc4}{xc4}{xc4}personaje un G. F. que las haya adquirido,\n{xc4}{xc4}{xc4}y después agregarlas a la lista de\n{xc4}{xc4}{xc4}habilidades del personaje.\n- En el menú se indican con el icono {AbilityParty}.
 TextBox03.bin|54|58|Habilidades de G. F.
-TextBox03.bin|54|59|\n- Otorgan poderes especiales al G. F.\n- Entran en vigor apenas el G. F. las ha adquirido.\n- En el menú se indican con el icono {Ice}.
+TextBox03.bin|54|59|\n- Otorgan poderes especiales al G. F.\n- Entran en vigor apenas el G. F. las ha adquirido.\n- En el menú se indican con el icono {AbilityGF}.
 TextBox03.bin|54|60|Habilidades de menú
-TextBox03.bin|54|61|\n- Permiten efectuar procedimientos especiales\n{xc4}{xc4}{xc4}desde el menú.\n- Entran en vigor apenas el G. F. las ha adquirido.\n- En el menú se indican con el icono {Thunder}.
+TextBox03.bin|54|61|\n- Permiten efectuar procedimientos especiales\n{xc4}{xc4}{xc4}desde el menú.\n- Entran en vigor apenas el G. F. las ha adquirido.\n- En el menú se indican con el icono {AbilityMenu}.
 TextBox03.bin|54|62|¿Sobre qué deseas informarte?
 TextBox03.bin|54|63|{Cursor_location_id:0x222e}Explicación general\n{Cursor_location_id:0x222f}Ataque elemental\n{Cursor_location_id:0x2230}Defensa elemental\n
 TextBox03.bin|54|64|Elementos - Explicación general
@@ -2145,7 +2145,7 @@ Elemental junction tutorial|59|17|Si enlazas una magia a la defensa elemental,
 Elemental junction tutorial|59|18|ciertos ataques elementales te causarán menos daño.
 Elemental junction tutorial|59|19|Los porcentajes indican la proporción de defensa.\nSi la proporción es del 100%, el daño será nulo.
 Elemental junction tutorial|59|20|En este caso la proporción es del 80%,\nde modo que al recibir un ataque de ELM\nFuego el daño será un 20% de lo normal.
-Elemental junction tutorial|59|21|Si la proporción supera el 100%\naparece el icono {CommandAbility}, que indica absorción.
+Elemental junction tutorial|59|21|Si la proporción supera el 100%\naparece el icono {AbsorbStar}, que indica absorción.
 Elemental junction tutorial|59|22|Al recibir un ataque de ese elemento,\nse recupera una cantidad de vitalidad\nproporcional al porcentaje extra.
 Elemental junction tutorial|59|23|En este caso, al recibir un ataque de ELM\nFuego se obtendrá una cantidad de VIT\nequivalente al 50% del poder del ataque.
 Elemental junction tutorial|59|24|Algunos G. F. poseen habilidades que permiten\nenlazar más de una magia a la defensa elemental.

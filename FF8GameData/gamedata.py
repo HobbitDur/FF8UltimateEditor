@@ -497,6 +497,10 @@ class GameData:
                     elif substring in self.sysfnt_data_json['Icons']:  # {Icons}
                         index_list = self.sysfnt_data_json['Icons'].index(substring)
                         encode_list.extend([0x05, 0x20 + index_list])
+                    elif substring in self.sysfnt_data_json.get('IconLegacyNames', {}):  # old {Icons} names
+                        # Encode-only: names from before the list matched the exe's icon table, kept so
+                        # old CSVs still give the same bytes. No current icon name reuses one of them.
+                        encode_list.extend([0x05, int(self.sysfnt_data_json['IconLegacyNames'][substring][-2:], 16)])
                     elif substring in self.sysfnt_data_json['Colors']:  # {Color}
                         index_list = self.sysfnt_data_json['Colors'].index(substring)
                         encode_list.extend([0x06, 0x20 + index_list])
@@ -596,7 +600,8 @@ class GameData:
                 i += 1
                 if i < hex_size:
                     hex_val = hex_list[i]
-                    if hex_val >= 0x20 and hex_val <= 0x5d:
+                    # 0x20-0x7E: every code the exe resolves (TEXT_ICON_CODE_TO_SPRITE ends at 0x7E)
+                    if 0x20 <= hex_val < 0x20 + len(self.sysfnt_data_json['Icons']):
                         build_str += '{' + self.sysfnt_data_json['Icons'][hex_val - 0x20] + '}'
                     else:
                         build_str += "{{x05{:02x}}}".format(hex_val)

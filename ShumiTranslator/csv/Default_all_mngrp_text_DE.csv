@@ -397,11 +397,11 @@ tkmnmes3.bin - subsection n°4|8|3|Bitte eine 3er Truppe aufstellen
 tkmnmes3.bin - subsection n°4|8|4|Austausch
 tkmnmes3.bin - subsection n°4|8|5|Alle Kopplungen werden ausgetauscht
 tkmnmes3.bin - subsection n°4|8|6|Kann nicht ausgewechselt werden
-tkmnmes3.bin - subsection n°4|8|7|({x0564})
+tkmnmes3.bin - subsection n°4|8|7|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|8|Kann nicht aufgenommen werden
-tkmnmes3.bin - subsection n°4|8|9|({x0564})
+tkmnmes3.bin - subsection n°4|8|9|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|10|Die Kopplungen von {x0a27} und {x0a26} werden vertauscht\n Bestätigen?
-tkmnmes3.bin - subsection n°4|8|11|({x0564})
+tkmnmes3.bin - subsection n°4|8|11|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|12|Die Truppe steht noch nicht
 tkmnmes3.bin - subsection n°4|8|13|Die Truppe steht noch nicht!
 tkmnmes3.bin - subsection n°5|9|0|Groß
@@ -787,11 +787,11 @@ Battle tutorial|16|16|Kampfführung 6/8
 Battle tutorial|16|17|Mit {Blue}Draw{White} kann man Zauber von\nGegnern ziehen. Zuerst wird\ndas Zielobjekt, danach der\nzu ziehende Zauber aus einer\nListe ausgewählt. Jetzt kann\n
 Battle tutorial|16|18|Spezial-Technik
 Battle tutorial|16|19|Kampfführung 7/8
-Battle tutorial|16|20|Wenn sich ein Charakter in Gefahr\nbefindet, erscheint neben {Blue}Angriff{White}\nmanchmal ein {JunctionAbility}. Wenn man dabei\ndie Richtungstaste nach rechts\ndrückt, erscheint ein weiterer\nBefehl, z.B. {Blue}Multi{White}. Dieser Befehl\nnennt sich Spezial-Technik, und\nunterscheidet sich von Charakter\nzu Charakter.
+Battle tutorial|16|20|Wenn sich ein Charakter in Gefahr\nbefindet, erscheint neben {Blue}Angriff{White}\nmanchmal ein {LimitArrow}. Wenn man dabei\ndie Richtungstaste nach rechts\ndrückt, erscheint ein weiterer\nBefehl, z.B. {Blue}Multi{White}. Dieser Befehl\nnennt sich Spezial-Technik, und\nunterscheidet sich von Charakter\nzu Charakter.
 Battle tutorial|16|21|Sonstiges
 Battle tutorial|16|22|Kampfführung 8/8
 Battle tutorial|16|23|\n·{L1} bei der Zielauswahl drücken, um das\n Ziel aus einem Hilfsfenster auszuwählen.\n·{L2} und {R2} gedrückt halten, um während\neines Kampfes die Flucht zu ergreifen.\nEs gibt allerdings auch Gegner wie z.B.\nBosse, vor denen man nicht fliehen kann.\n·Sobald man einem Gegner Schaden zugefügt\nhat, erhält man Erfahrungspunkte, auch\nwenn man danach flüchtet.
-Battle tutorial|16|24|Das kleine Icon {LimitBreakArrow}\nbedeutet, daß dieser\nZauber mit einem\nParameter gekoppelt\nwurde.\n
+Battle tutorial|16|24|Das kleine Icon {JunctionedMagic}\nbedeutet, daß dieser\nZauber mit einem\nParameter gekoppelt\nwurde.\n
 Battle tutorial|16|25|Die Zahl neben den\nItems zeigt an,\nwieviele Items die\nTruppe insgesamt\nbesitzt.\n
 Battle tutorial|16|26|Die Zahl neben den\nNamen zeigt die\nderzeitigen HP\nder jeweiligen\nG.F. an.
 Battle tutorial|16|27|man ihn {Blue}Lagern{White}\noder mit {Blue}Zaubern{White}\nauf der Stelle\nanwenden.
@@ -838,18 +838,18 @@ Card rules + Icon|17|39|Spielregeln 13/13
 Card rules + Icon|17|40|{Blue}Direct{White}\n Jeder Spieler bekommt alle Karten,\n die er im Spiel umgedreht hat.\n{Blue}Diff{White}\n Der Gewinner bekommt die Anzahl an Karten,\n wie die Differenz aus dem Spielstand ergibt.\n{Blue}Full{White}\n Der Gewinner bekommt alle Karten des\n Gegners.\n
 Card rules + Icon|17|41|Elemente
 Card rules + Icon|17|42|Die Icons 1/4
-Card rules + Icon|17|43|{Drain}    Hitze\n{x055e}    Kälte\n{x055f}    Donner\n{x0560}    Erde\n{x0561}    Gift\n{x0562}    Wind\n{x0563}    Wasser\n{x0564}    Holy\n
+Card rules + Icon|17|43|{ElementFire}    Hitze\n{ElementIce}    Kälte\n{ElementThunder}    Donner\n{ElementEarth}    Erde\n{ElementPoison}    Gift\n{ElementWind}    Wind\n{ElementWater}    Wasser\n{ElementHoly}    Holy\n
 Card rules + Icon|17|44|Zustände
 Card rules + Icon|17|45|Die Icons 2/4
-Card rules + Icon|17|46|{x0565}    Tod\n{x0566}    Gift\n{x0567}    Stein\n{x0568}    Blind\n{x0569}    Schweigen\n{x056a}    Tobsucht\n{x056b}    Zombie\n{x056c}    Schlaf\n
-Card rules + Icon|17|47|{x056d}    Gemach\n{x056e}    Stop\n{x056f}    Fluch\n{x0570}    Konfus\n{x0571}    Saugen\n
+Card rules + Icon|17|46|{StatusDeath}    Tod\n{StatusPoison}    Gift\n{StatusPetrify}    Stein\n{StatusDarkness}    Blind\n{StatusSilence}    Schweigen\n{StatusBerserk}    Tobsucht\n{StatusZombie}    Zombie\n{StatusSleep}    Schlaf\n
+Card rules + Icon|17|47|{StatusSlow}    Gemach\n{StatusStop}    Stop\n{StatusCurse}    Fluch\n{StatusConfuse}    Konfus\n{StatusDrain}    Saugen\n
 Card rules + Icon|17|48|Statuswerte
 Card rules + Icon|17|49|Die Icons 3/4
 Card rules + Icon|17|50|HP\nStärke\nKörper\nMagie\nGeist\nGeschick\nReflex\nGlück\nTreffer\n
 Card rules + Icon|17|51|Element-Angriff\nElement-Abwehr\nZustands-Angriff\nZustands-Abwehr
 Card rules + Icon|17|52|Ability-Typen
 Card rules + Icon|17|53|Die Icons 4/4
-Card rules + Icon|17|54|{CharacterAbility}    Kopplungs-Abilitys\n{PartyAbility}    Befehls-Abilitys\n{MenuAbility}    Charakter-Abilitys\n{Fire}    Truppen-Abilitys\n{Ice}    G.F.-Abilitys\n{Thunder}    Menü-Abilitys\n
+Card rules + Icon|17|54|{AbilityJunction}    Kopplungs-Abilitys\n{AbilityCommand}    Befehls-Abilitys\n{AbilityCharacter}    Charakter-Abilitys\n{AbilityParty}    Truppen-Abilitys\n{AbilityGF}    G.F.-Abilitys\n{AbilityMenu}    Menü-Abilitys\n
 Chocobo tutorial|18|0|Mog, der Mogry-Kid, sucht\nFreunde, mit denen er auf\nSchatzsuche gehen kann.\nNiemand will aber mit auf\nden 【Bösen Berg】.\nSeine Freunde sagen:\n“Es ist zu gefährlich!”\n
 Chocobo tutorial|18|1|Mog jedoch, träumt nur noch von dem Schatz.\nNiemand kann ihn jetzt mehr aufhalten!
 Chocobo tutorial|18|2|Er entschließt sich nun dazu,\nganz alleine dort hinzugehen.\nZwei Tage vergehen......\nDrei Tage vergehen......\nAber Mog ist immer noch nicht\nzurück. Moomba und Kaktor\nstellen sich vor, wie Mog von\n
@@ -893,7 +893,7 @@ Test seed 2 |21|3|{x00}Frage 4\n\nIm 【Gift-Zustand】 wird ein Charakter nur d
 Test seed 2 |21|4|{x00}Frage 5\n\n【Konfus】 kann durch konventionelle Angriffe geheilt\nwerden.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 2 |21|5|{x01}Frage 6\n\n{Squall} beherrscht den Kampfsport als\nSpezial-Technik.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 2 |21|6|{x00}Frage 7\n\nUm 【Zauber】 zu koppeln, muß die entsprechende\nAbility erlernt werden.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
-Test seed 2 |21|7|{x00}Frage 8\n\n{CharacterAbility} steht für Kopplungs-Ability.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
+Test seed 2 |21|7|{x00}Frage 8\n\n{AbilityJunction} steht für Kopplungs-Ability.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 2 |21|8|{x01}Frage 9\n\nDie 8 Elemente sind: Hitze·Kälte·Erde·Donner·Gift·\nWind·Schatten·Holy.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 2 |21|9|{x01}Frage 10\n\nMonster besitzen nur eine begrenzte Anzahl an\nZauber, die man ziehen kann.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 3 |22|0|{x01}Frage 1\n\nDie G.F. werden mit 【Potion】 geheilt.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
@@ -902,7 +902,7 @@ Test seed 3 |22|2|{x00}Frage 3\n\nSelphie benutzt ein Nunchaku als Waffe.\n\n\n\
 Test seed 3 |22|3|{x01}Frage 4\n\nZum Aufrüsten von Waffen, benötigt man nur Geld.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 3 |22|4|{x00}Frage 5\n\nDerjenige, der den Gegner beseitigt hat, erhält die\nmeisten Erfahrungspunkte.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 3 |22|5|{x00}Frage 6\n\nJe höher der G.F.-Level, desto stärker der Angriff.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
-Test seed 3 |22|6|{x00}Frage 7\n\n{PartyAbility} steht für 【Befehls-Ability】.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
+Test seed 3 |22|6|{x00}Frage 7\n\n{AbilityCommand} steht für 【Befehls-Ability】.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 3 |22|7|{x01}Frage 8\n\nBis zu 5 Charakter- und Truppen-Abilitys können\nmit einem Charakter gekoppelt werden.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 3 |22|8|{x00}Frage 9\n\n【Befehls-Abilitys】 müssen vor dem Gebrauch\ngekoppelt werden.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 3 |22|9|{x01}Frage 10\n\n【AP】 steht für 【Aktionspunkte】.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
@@ -916,7 +916,7 @@ Test seed 4 |23|6|{x00}Frage 7\n\nWenn ein kampfunfähiger Charakter belebt wird
 Test seed 4 |23|7|{x00}Frage 8\n\nIn der 【Übungshalle】 des Balamb-Garden lebt ein\nMonster namens 【Archeodinos】.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 4 |23|8|{x01}Frage 9\n\nDie Gun-Blade von {Squall} wird durch das\nDrücken von {L2} stärker.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 4 |23|9|{x01}Frage 10\n\nBis zu 255 Zaubereinheiten können gelagert werden.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
-Test seed 5 |24|0|{x01}Frage 1\n\n{MenuAbility} steht für 【Truppen-Ability】.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
+Test seed 5 |24|0|{x01}Frage 1\n\n{AbilityCharacter} steht für 【Truppen-Ability】.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 5 |24|1|{x01}Frage 2\n\nMan kann durch Draw, Zauber von einem anderen\nCharakter ziehen.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 5 |24|2|{x01}Frage 3\n\nDer Spielstand kann immer und überall gespeichert\nwerden.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 5 |24|3|{x00}Frage 4\n\nWenn die G.F. eine bestimmte Ability hinzulernt,\nkann eine neue Ability in der Auswahl erscheinen,\ndie anschließend erlernt werden kann. \n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
@@ -948,7 +948,7 @@ Test seed 7 |26|8|{x00}Frage 9\n\nJe höher der 【Charakterlevel】, desto höh
 Test seed 7 |26|9|{x01}Frage 10\n\nWenn man im Welt-Modus langsam geht, erscheinen\nkeine Gegner.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 8 |27|0|{x01}Frage 1\n\nDie 【Galbadia-Soldaten】 benutzen keine Zauber.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 8 |27|1|{x00}Frage 2\n\nDie Waffen werden durch Aufrüsten beim\nSchrotthändler stärker.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
-Test seed 8 |27|2|{x01}Frage 3\n\n{Fire} steht für Charakter-Ability.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
+Test seed 8 |27|2|{x01}Frage 3\n\n{AbilityParty} steht für Charakter-Ability.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 8 |27|3|{x01}Frage 4\n\nWenn man 【Gemach】 im 【Hast-Zustand】 benutzt,\nerlischt die 【Hast】-Wirkung.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 8 |27|4|{x00}Frage 5\n\nIn den Wäldern sind mehr Gegner als auf den\nFeldern.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 8 |27|5|{x00}Frage 6\n\nWenn die 【EL-Abwehr】 mehr als 100% beträgt,\nwerden entsprechende 【EL-Angriffe】 absorbiert.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
@@ -957,7 +957,7 @@ Test seed 8 |27|7|{x01}Frage 8\n\nIn der 【Feuer-Grotte】 tauchen keine 【Bom
 Test seed 8 |27|8|{x00}Frage 9\n\nJede G.F. erlernt unterschiedliche Abilitys.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 8 |27|9|{x01}Frage 10\n\nDer Schrotthändler verkauft Waffen.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 9 |28|0|{x01}Frage 1\n\nDie gezogenen G.F. können sofort beschwört werden,\nohne daß man sie erst einmal lagern muß.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
-Test seed 9 |28|1|{x00}Frage 2\n\n{Thunder} steht für Menü-Ability.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
+Test seed 9 |28|1|{x00}Frage 2\n\n{AbilityMenu} steht für Menü-Ability.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 9 |28|2|{x01}Frage 3\n\nBei Selphies 【Tombola】 erscheinen nur die Zauber,\ndie Selphie besitzt.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 9 |28|3|{x01}Frage 4\n\nWenn das Freundschaftsverhältnis zu einer G.F.\nzu schlecht ist, kann es passieren, daß die G.F.\nverschwindet.\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 9 |28|4|{x01}Frage 5\n\nDie Truppen-Ability kann auch ohne Kopplungen\neingesetzt werden.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
@@ -1110,7 +1110,7 @@ Test seed 24|43|0|{x00}Frage 1\n\n【Gemach】 kann man durch 【Medica】 kurie
 Test seed 24|43|1|{x00}Frage 2\n\nWenn man 【Levitas】 mit 【EL-Abwehr】 koppelt, steigt\ndie Abwehr gegen 【Erd-Elemente】.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 24|43|2|{x01}Frage 3\n\nDie ATB läuft auch, nachdem man eine G.F.\nbeschwört hat.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 24|43|3|{x01}Frage 4\n\n【Auto-Reflek】 versetzt einen Charakter in den\n【Reflek-Zustand】, bis er kampfunfähig wird.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
-Test seed 24|43|4|{x00}Frage 5\n\n{Ice} steht für G.F.-Ability.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
+Test seed 24|43|4|{x00}Frage 5\n\n{AbilityGF} steht für G.F.-Ability.\n\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 24|43|5|{x00}Frage 6\n\nEine G.F. kann nur eine begrenzte Anzahl an\nAbilitys erlernen.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 24|43|6|{x01}Frage 7\n\nJe öfter man 【Protes】 anwendet, desto stärker wird\ndie Abwehr.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
 Test seed 24|43|7|{x01}Frage 8\n\nWenn man von jemanden im 【Gift】-Zustand HP\nabsaugt, wird das 【Gift】 mit abgesaugt.\n\n\n  {Cursor_location_id:0x20}Ja     {Cursor_location_id:0x21}Nein
@@ -1711,17 +1711,17 @@ TextBox03.bin|54|47|Eine G.F. kann durch das Sammeln\nvon AP, Abilitys lernen.\n
 TextBox03.bin|54|48|Auswahl: Ability-Typen
 TextBox03.bin|54|49|{Cursor_location_id:0x2226}Kopplungs-Abilitys\n{Cursor_location_id:0x2227}Befehls-Abilitys\n{Cursor_location_id:0x2228}Charakter-Abilitys\n{Cursor_location_id:0x2229}Truppen-Abilitys\n{Cursor_location_id:0x222a}G.F.-Abilitys\n{Cursor_location_id:0x222b}Menü-Abilitys\n
 TextBox03.bin|54|50|Kopplungs-Abilitys
-TextBox03.bin|54|51|·Statuswerte, Element-Zugehörigkeit\n und Zustände können gekoppelt werden.\n·Der Charakter muß die G.F. koppeln,\n die diese Ability beherrscht.\n·Im Menü als {CharacterAbility} abgebildet.\n
+TextBox03.bin|54|51|·Statuswerte, Element-Zugehörigkeit\n und Zustände können gekoppelt werden.\n·Der Charakter muß die G.F. koppeln,\n die diese Ability beherrscht.\n·Im Menü als {AbilityJunction} abgebildet.\n
 TextBox03.bin|54|52|Befehls-Abilitys
-TextBox03.bin|54|53|·Kann im Kampf als Befehl eingesetzt werden.\n·Der Charakter muß die G.F. koppeln,\n die diese Ability beherrscht. Der Befehl\n muß anschließend im Menü eingesetzt werden.\n·Wird im Menü als {PartyAbility} abgebildet.\n
+TextBox03.bin|54|53|·Kann im Kampf als Befehl eingesetzt werden.\n·Der Charakter muß die G.F. koppeln,\n die diese Ability beherrscht. Der Befehl\n muß anschließend im Menü eingesetzt werden.\n·Wird im Menü als {AbilityCommand} abgebildet.\n
 TextBox03.bin|54|54|Charakter-Abilitys
-TextBox03.bin|54|55|·Verleiht dem Charakter besondere Kräfte.\n·Der Charakter muß die G.F. koppeln,\n die diese Ability besitzt. Die Ability\n muß im Menü eingesetzt werden.\n·Wird im Menü als {MenuAbility} abgebildet.\n
+TextBox03.bin|54|55|·Verleiht dem Charakter besondere Kräfte.\n·Der Charakter muß die G.F. koppeln,\n die diese Ability besitzt. Die Ability\n muß im Menü eingesetzt werden.\n·Wird im Menü als {AbilityCharacter} abgebildet.\n
 TextBox03.bin|54|56|Truppen-Abilitys
-TextBox03.bin|54|57|·Verleiht der Truppe spezielle Kräfte.\n·Der Charakter muß die G.F. koppeln,\n die diese Ability beherrscht. Die\n Ability muß im Menü eingesetzt werden.\n·Wird im Menü als {Fire} abgebildet.\n
+TextBox03.bin|54|57|·Verleiht der Truppe spezielle Kräfte.\n·Der Charakter muß die G.F. koppeln,\n die diese Ability beherrscht. Die\n Ability muß im Menü eingesetzt werden.\n·Wird im Menü als {AbilityParty} abgebildet.\n
 TextBox03.bin|54|58|G.F.-Abilitys
-TextBox03.bin|54|59|·Steigert die Statuswerte der G.F.\n·Die G.F. muß die Ability erlernen.\n·Wird im Menü als {Ice} abgebildet.\n
+TextBox03.bin|54|59|·Steigert die Statuswerte der G.F.\n·Die G.F. muß die Ability erlernen.\n·Wird im Menü als {AbilityGF} abgebildet.\n
 TextBox03.bin|54|60|Menü-Abilitys
-TextBox03.bin|54|61|·Addiert Menüpunkte hinzu.\n·Die G.F. muß die Ability erlernen.\n·Wird im Menü als {Thunder} abgebildet.\n
+TextBox03.bin|54|61|·Addiert Menüpunkte hinzu.\n·Die G.F. muß die Ability erlernen.\n·Wird im Menü als {AbilityMenu} abgebildet.\n
 TextBox03.bin|54|62|Auswahl: Elemente
 TextBox03.bin|54|63|{Cursor_location_id:0x222d}Über die Elemente\n{Cursor_location_id:0x222e}Element-Angriffe\n{Cursor_location_id:0x222f}Element-Abwehr\n
 TextBox03.bin|54|64|Elemente/Über die Elemente

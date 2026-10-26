@@ -74,8 +74,8 @@ Pero está agotado...",""
 "{Red}{x0dc2}{White} restante: ",""
 " unidad(es)",""
 "¿Quieres ir a ",""
-"{x0541}",""
-"{x0540}",""
+"{JunctionedMagic}",""
+"{Blank}",""
 "{Yellow}Manejo del vehículo{White}
           {x0524} Retroceder
   {x0527} Avanzar

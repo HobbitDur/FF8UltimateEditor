@@ -400,11 +400,11 @@ tkmnmes3.bin - subsection n°4|8|3|Please make a party of 3
 tkmnmes3.bin - subsection n°4|8|4|Junction Exchange
 tkmnmes3.bin - subsection n°4|8|5|Exchanges all that is junctioned
 tkmnmes3.bin - subsection n°4|8|6|Can't remove from party
-tkmnmes3.bin - subsection n°4|8|7|({x0564})
+tkmnmes3.bin - subsection n°4|8|7|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|8|Can't include in party
-tkmnmes3.bin - subsection n°4|8|9|({x0564})
+tkmnmes3.bin - subsection n°4|8|9|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|10|Exchanges {x0a27} and {x0a26}'s junction status.\nAre you sure?
-tkmnmes3.bin - subsection n°4|8|11|({x0564})
+tkmnmes3.bin - subsection n°4|8|11|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|12|The party has not been set
 tkmnmes3.bin - subsection n°4|8|13|The junction party has not been set
 tkmnmes3.bin - subsection n°5|9|0|English
@@ -777,7 +777,7 @@ Battle tutorial|16|4|  Battle Tutorial 2/8
 Battle tutorial|16|5| Commands are displayed when\nthe ATB is full.\n Use the directional buttons to\nchoose.\n Press {X} to confirm the\ncommand.\n Press {START} while the cursor\nis on-screen to see a help\nmessage.\n
 Battle tutorial|16|6|Using Magic
 Battle tutorial|16|7|  Battle Tutorial 3/8
-Battle tutorial|16|8| To use {Blue}Magic{White}, select one\nmagic and choose your\ntarget.\n The number in stock is\nindicated next to the\nmagic's name.\n The {LimitBreakArrow} indicates that the\nmagic is junctioned.\n
+Battle tutorial|16|8| To use {Blue}Magic{White}, select one\nmagic and choose your\ntarget.\n The number in stock is\nindicated next to the\nmagic's name.\n The {JunctionedMagic} indicates that the\nmagic is junctioned.\n
 Battle tutorial|16|9|Using Items
 Battle tutorial|16|10|  Battle Tutorial 4/8
 Battle tutorial|16|11| When {Blue}Item{White} is chosen,\nselect the item and its\ntarget.\n The number next to\neach item shows how\nmany items the party\nhas.\n
@@ -789,7 +789,7 @@ Battle tutorial|16|16|  Battle Tutorial 6/8
 Battle tutorial|16|17| {Blue}Draw{White} extracts magic\nfrom enemies.\n Choose a target and\nmagic, then {Blue}Stock{White} or\n{Blue}Cast{White}.\n {Blue}Stock{White} will stock the\nmagic and {Blue}Cast{White} will cast\nthe magic.\n
 Battle tutorial|16|18|Limit Break
 Battle tutorial|16|19|  Battle Tutorial 7/8
-Battle tutorial|16|20| When running low on HP, {JunctionAbility}\nmay appear next to {Blue}Attack{White}.\n Press the right directional\nbutton.\n This new command is more\npowerful than the usual\n{Blue}Attack{White}.\n This is a Limit Break.\n
+Battle tutorial|16|20| When running low on HP, {LimitArrow}\nmay appear next to {Blue}Attack{White}.\n Press the right directional\nbutton.\n This new command is more\npowerful than the usual\n{Blue}Attack{White}.\n This is a Limit Break.\n
 Battle tutorial|16|21|Miscellaneous
 Battle tutorial|16|22|  Battle Tutorial 8/8
 Battle tutorial|16|23|\n-Press {L1} to choose your\n target from a window.\n-Hold {L2} and {R2} to escape,\n though there are some\n battles from which you cannot escape.\n-EXP is gained even if you escape,\n as long as you damaged the enemy.
@@ -836,18 +836,18 @@ Card rules + Icon|17|39|    Card Rules 13/13
 Card rules + Icon|17|40|{Blue}Direct{White}\n Take cards you turned over, but lose cards\n turned over by the opponent.\n{Blue}Diff{White}\n Winner takes the number of cards by which s/he\n won.\n{Blue}All{White}\n The winner takes all the cards from the loser.\n
 Card rules + Icon|17|41|Elements
 Card rules + Icon|17|42|Icon Explanation 1/4
-Card rules + Icon|17|43|{Drain}  Fire\n{x055e}  Ice\n{x055f}  Thunder\n{x0560}  Earth\n{x0561}  Poison\n{x0562}  Wind\n{x0563}  Water\n{x0564}  Holy\n
+Card rules + Icon|17|43|{ElementFire}  Fire\n{ElementIce}  Ice\n{ElementThunder}  Thunder\n{ElementEarth}  Earth\n{ElementPoison}  Poison\n{ElementWind}  Wind\n{ElementWater}  Water\n{ElementHoly}  Holy\n
 Card rules + Icon|17|44|Status
 Card rules + Icon|17|45|Icon Explanation 2/4
-Card rules + Icon|17|46|{x0565}  Death\n{x0566}  Poison\n{x0567}  Petrify\n{x0568}  Darkness\n{x0569}  Silence\n{x056a}  Berserk\n{x056b}  Zombie\n{x056c}  Sleep\n
-Card rules + Icon|17|47|{x056d}  Slow\n{x056e}  Stop\n{x056f}  Curse\n{x0570}  Confuse\n{x0571}  Drain\n
+Card rules + Icon|17|46|{StatusDeath}  Death\n{StatusPoison}  Poison\n{StatusPetrify}  Petrify\n{StatusDarkness}  Darkness\n{StatusSilence}  Silence\n{StatusBerserk}  Berserk\n{StatusZombie}  Zombie\n{StatusSleep}  Sleep\n
+Card rules + Icon|17|47|{StatusSlow}  Slow\n{StatusStop}  Stop\n{StatusCurse}  Curse\n{StatusConfuse}  Confuse\n{StatusDrain}  Drain\n
 Card rules + Icon|17|48|Stats
 Card rules + Icon|17|49|Icon Explanation 3/4
 Card rules + Icon|17|50|Hit Points\nStrength\nVitality\nMagic\nSpirit\nSpeed\nEvade\nHit%\nLuck\n
 Card rules + Icon|17|51|Elemental Attack\nElemental Defense\nStatus Attack\nStatus Defense\n
 Card rules + Icon|17|52|Ability
 Card rules + Icon|17|53|Icon Explanation 4/4
-Card rules + Icon|17|54|{CharacterAbility}   Junction Ability\n{PartyAbility}   Command Ability\n{MenuAbility}   Character Ability\n{Fire}   Party Ability\n{Ice}   GF Ability\n{Thunder}   Menu Ability\n
+Card rules + Icon|17|54|{AbilityJunction}   Junction Ability\n{AbilityCommand}   Command Ability\n{AbilityCharacter}   Character Ability\n{AbilityParty}   Party Ability\n{AbilityGF}   GF Ability\n{AbilityMenu}   Menu Ability\n
 Chocobo tutorial|18|0|Mog, a MiniMog, wants to go\ntreasure hunting with his\nfriends.\nBut the treasure is in the\n‘Scary Mountain'.\nEverybody tells Mog, “We're\nnot going!  It's too scary!”\n
 Chocobo tutorial|18|1|But Mog wants to go so badly.\nNo one can stop him now!
 Chocobo tutorial|18|2|Mog finally decided to go by\nhimself.\nThen... Two days passed...\nThree days passed.\nMog did not come home.\nMoomba and Cactuar imagined\nMog being barbecued by the\n
@@ -891,7 +891,7 @@ Test seed 2 |21|3|{x00}Question 4\n\nAny action taken while Poisoned causes dama
 Test seed 2 |21|4|{x00}Question 5\n\nBeing hit by a physical attack removes Confuse.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 2 |21|5|{x01}Question 6\n\n{Squall}'s Limit Break is Kenzokuken.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 2 |21|6|{x00}Question 7\n\nTo junction magic, you need a matching junction\nability for the stat you want to junction.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
-Test seed 2 |21|7|{x00}Question 8\n\n{CharacterAbility} signifies Junction Ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
+Test seed 2 |21|7|{x00}Question 8\n\n{AbilityJunction} signifies Junction Ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 2 |21|8|{x01}Question 9\n\nThe 8 elements are Fire, Ice, Thunder, Poison,\nEarth, Sorcery, Wind, and Holy.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 2 |21|9|{x01}Question 10\n\nThere is a limit to how much magic you can draw\nfrom monsters.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 3 |22|0|{x01}Question 1\n\nPotions can restore a GF's HP.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
@@ -900,7 +900,7 @@ Test seed 3 |22|2|{x00}Question 3\n\nSelphie's weapon is the nunchaku.\n\n\n\n  
 Test seed 3 |22|3|{x01}Question 4\n\nYou only need money to remodel your weapon.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 3 |22|4|{x00}Question 5\n\nWhoever strikes the finishing blow in battle receives\nthe most EXP.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 3 |22|5|{x00}Question 6\n\nGF also have levels; the higher their levels, the\nstronger their attacks.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
-Test seed 3 |22|6|{x00}Question 7\n\n{PartyAbility} signifies Command Ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
+Test seed 3 |22|6|{x00}Question 7\n\n{AbilityCommand} signifies Command Ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 3 |22|7|{x01}Question 8\n\nEach party member can have up to 5 Character\nand Party Abilities.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 3 |22|8|{x00}Question 9\n\nCommand Abilities must be set to be used in battle.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 3 |22|9|{x01}Question 10\n\nAP means Action Point.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
@@ -914,7 +914,7 @@ Test seed 4 |23|6|{x00}Question 7\n\nIf you are KO'd with status change, but are
 Test seed 4 |23|7|{x00}Question 8\n\nT-Rexaur is a monster that lives in Balamb\nGarden's training center.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 4 |23|8|{x01}Question 9\n\n{Squall}'s gunblade causes more damage\nby pressing {L2} at the right time.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 4 |23|9|{x01}Question 10\n\nYou can stock up to 255 of each magic.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
-Test seed 5 |24|0|{x01}Question 1\n\n{MenuAbility} signifies Party Ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
+Test seed 5 |24|0|{x01}Question 1\n\n{AbilityCharacter} signifies Party Ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 5 |24|1|{x01}Question 2\n\nYou can Draw from party members.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 5 |24|2|{x01}Question 3\n\nYou can save the game anywhere.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 5 |24|3|{x00}Question 4\n\nWhen a GF learns an ability, some new abilities may\nappear.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
@@ -946,7 +946,7 @@ Test seed 7 |26|8|{x00}Question 9\n\nEnemies level up as you do.\n\n\n\n  {Curso
 Test seed 7 |26|9|{x01}Question 10\n\nYou encounter fewer enemies on the World Map if\nyou walk instead of run.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 8 |27|0|{x01}Question 1\n\nGalbadian Soldiers don't use magic.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 8 |27|1|{x00}Question 2\n\nWeapons can be remodeled into more powerful models\nat the Junk Shop.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
-Test seed 8 |27|2|{x01}Question 3\n\n{Fire} signifies Character Ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
+Test seed 8 |27|2|{x01}Question 3\n\n{AbilityParty} signifies Character Ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 8 |27|3|{x01}Question 4\n\nCasting Slow over Haste will cancel Haste and\nreturn the target's status to normal.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 8 |27|4|{x00}Question 5\n\nYou encounter more enemies in the forest than the\nplains on the World Map.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 8 |27|5|{x00}Question 6\n\nWhen Elem-Def goes over 100%, that element's\ndamage will be absorbed.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
@@ -955,7 +955,7 @@ Test seed 8 |27|7|{x01}Question 8\n\nThere are no Bombs in the Fire Cavern.\n\n\
 Test seed 8 |27|8|{x00}Question 9\n\nEach GF can learn different abilities.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 8 |27|9|{x01}Question 10\n\nJunk Shops sell weapons.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 9 |28|0|{x01}Question 1\n\nYou can Cast the GF you drew instead of Stock.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
-Test seed 9 |28|1|{x00}Question 2\n\n{Thunder} signifies Menu Ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
+Test seed 9 |28|1|{x00}Question 2\n\n{AbilityMenu} signifies Menu Ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 9 |28|2|{x01}Question 3\n\nMagic listed in Selphie's Limit Break is magic she\nowns.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 9 |28|3|{x01}Question 4\n\nIf a GF is hardly used, or has low compatibility\nwith party members, it may leave your party.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 9 |28|4|{x01}Question 5\n\nParty Abilities can be used without setting them as\nabilities.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
@@ -1108,7 +1108,7 @@ Test seed 24|43|0|{x00}Question1\n\nUse Esuna to cure Slow.\n\n\n\n  {Cursor_loc
 Test seed 24|43|1|{x00}Question 2\n\nSetting Float to Elem-Def-J raises defense against\nEarth elemental attacks.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 24|43|2|{x01}Question 3\n\nThe ATB runs even while a GF is appearing.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 24|43|3|{x01}Question 4\n\nAuto Reflect casts Reflect on you as long as you\ndon't fall under KO.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
-Test seed 24|43|4|{x00}Question 5\n\n{Ice} signifies GF ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
+Test seed 24|43|4|{x00}Question 5\n\n{AbilityGF} signifies GF ability.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 24|43|5|{x00}Question 6\n\nThere are a limited number of abilities a GF can\nlearn.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 24|43|6|{x01}Question 7\n\nProtect keeps reducing damage with each use.\n\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
 Test seed 24|43|7|{x01}Question 8\n\nYou get Poison along with HP when using Drain\nagainst a poisoned target.\n\n\n  {Cursor_location_id:0x20}YES     {Cursor_location_id:0x21}NO
@@ -1711,17 +1711,17 @@ TextBox03.bin|54|47|One of the GF abilities learned through acquiring\nAP.\nAbil
 TextBox03.bin|54|48|Select ability
 TextBox03.bin|54|49|{Cursor_location_id:0x2227}Junction Abilities\n{Cursor_location_id:0x2228}Command Abilities\n{Cursor_location_id:0x2229}Character Abilities\n{Cursor_location_id:0x222a}Party Abilities\n{Cursor_location_id:0x222b}GF Abilities\n{Cursor_location_id:0x222c}Menu Abilities\n
 TextBox03.bin|54|50|Junction Abilities
-TextBox03.bin|54|51| ·These abilities allows junctioning of magic to\n  stats, elements, and status.\n ·Junction a GF that has learned the ability and\n  set character ability to activate it.\n ·Signified by the {CharacterAbility} icon in the menu.\n
+TextBox03.bin|54|51| ·These abilities allows junctioning of magic to\n  stats, elements, and status.\n ·Junction a GF that has learned the ability and\n  set character ability to activate it.\n ·Signified by the {AbilityJunction} icon in the menu.\n
 TextBox03.bin|54|52|Command Abilities
-TextBox03.bin|54|53| ·Allows selection of commands in battle.\n ·Junction a GF that has learned the ability and\n  set character ability to activate it.\n ·Signified by the {PartyAbility} icon in the menu.
+TextBox03.bin|54|53| ·Allows selection of commands in battle.\n ·Junction a GF that has learned the ability and\n  set character ability to activate it.\n ·Signified by the {AbilityCommand} icon in the menu.
 TextBox03.bin|54|54|Character Abilities
-TextBox03.bin|54|55| ·Abilities that give specialized powers.\n ·Junction a GF that has learned the ability and\n  set character ability to activate it.\n ·Signified by the {MenuAbility} icon in the menu.
+TextBox03.bin|54|55| ·Abilities that give specialized powers.\n ·Junction a GF that has learned the ability and\n  set character ability to activate it.\n ·Signified by the {AbilityCharacter} icon in the menu.
 TextBox03.bin|54|56|Party Abilities
-TextBox03.bin|54|57| ·Abilities that give the party special powers.\n ·Junction a GF that has learned the ability and\n  set character ability to activate it.\n ·Signified by the {Fire} icon in the menu.\n
+TextBox03.bin|54|57| ·Abilities that give the party special powers.\n ·Junction a GF that has learned the ability and\n  set character ability to activate it.\n ·Signified by the {AbilityParty} icon in the menu.\n
 TextBox03.bin|54|58|GF Abilities
-TextBox03.bin|54|59| ·Abilities that power up GF.\n ·Have GF learn the ability to activate it.\n ·Signified by the {Ice} icon in the menu.\n
+TextBox03.bin|54|59| ·Abilities that power up GF.\n ·Have GF learn the ability to activate it.\n ·Signified by the {AbilityGF} icon in the menu.\n
 TextBox03.bin|54|60|Menu Abilities
-TextBox03.bin|54|61| ·Abilities that take effect in the menu.\n ·Have GF learn the ability to activate it.\n ·Signified by the {Thunder} icon on the menu.\n
+TextBox03.bin|54|61| ·Abilities that take effect in the menu.\n ·Have GF learn the ability to activate it.\n ·Signified by the {AbilityMenu} icon on the menu.\n
 TextBox03.bin|54|62|Select term
 TextBox03.bin|54|63|{Cursor_location_id:0x222e}About Elemental\n{Cursor_location_id:0x222f}Elemental Attack (Elem-Atk)\n{Cursor_location_id:0x2230}Elemental Defense (Elem-Def)\n
 TextBox03.bin|54|64|Elemental/About Elemental
@@ -2133,7 +2133,7 @@ Elemental junction tutorial|59|17|When junctioned to Elem-Def,
 Elemental junction tutorial|59|18|the damage from that element is reduced.
 Elemental junction tutorial|59|19|Reduction of damage is shown in %.\nAt 100%, damage is reduced to 0.
 Elemental junction tutorial|59|20|In the example, fire damage is\nreduced to 20%, because Elem-Def\nis at 80%.
-Elemental junction tutorial|59|21|{CommandAbility} is displayed when the value goes over\n100%, indicating that damage is absorbed.
+Elemental junction tutorial|59|21|{AbsorbStar} is displayed when the value goes over\n100%, indicating that damage is absorbed.
 Elemental junction tutorial|59|22|In this state, you can absorb the\namount of damage indicated in %.
 Elemental junction tutorial|59|23|In the example, 50% of fire\ndamage is absorbed.
 Elemental junction tutorial|59|24|Multiple magic types can be junctioned\nto Elem-Def, depending on the GF's ability.

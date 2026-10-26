@@ -398,11 +398,11 @@ tkmnmes3.bin - subsection n°4|8|3|Composez une équipe de 3
 tkmnmes3.bin - subsection n°4|8|4|Pouvoirs
 tkmnmes3.bin - subsection n°4|8|5|Echange d'Associations
 tkmnmes3.bin - subsection n°4|8|6|Impossible de retirer
-tkmnmes3.bin - subsection n°4|8|7|({x0564})
+tkmnmes3.bin - subsection n°4|8|7|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|8|Impossible d'ajouter
-tkmnmes3.bin - subsection n°4|8|9|({x0564})
+tkmnmes3.bin - subsection n°4|8|9|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|10|Modifier association {x0a27}/{x0a26}\nVous confirmez?
-tkmnmes3.bin - subsection n°4|8|11|({x0564})
+tkmnmes3.bin - subsection n°4|8|11|({ElementHoly})
 tkmnmes3.bin - subsection n°4|8|12|Equipe non déterminée
 tkmnmes3.bin - subsection n°4|8|13|Association Equipe non précisée
 tkmnmes3.bin - subsection n°5|9|0|Majuscule
@@ -787,7 +787,7 @@ Battle tutorial|16|4|Tutorial Combat 2/8
 Battle tutorial|16|5|Les actions sont disponibles\nlorsque l'ATB est au maximum.\nFaites votre choix à l'aide\nde la touche directionnelle.\nAppuyez sur {X} pour\nconfirmer. Consultez l'aide,\nen appuyant sur {START}.\n
 Battle tutorial|16|6|Utiliser la magie
 Battle tutorial|16|7|Tutorial Combat 3/8
-Battle tutorial|16|8|Sélectionnez {Blue}Magie{White}, puis\nun sortilège et la cible.\nLe nombre de sorts en\nstock est visible à côté\nde son nom. Le signe\n{LimitBreakArrow} indique que vous\navez associé ce sort.\n
+Battle tutorial|16|8|Sélectionnez {Blue}Magie{White}, puis\nun sortilège et la cible.\nLe nombre de sorts en\nstock est visible à côté\nde son nom. Le signe\n{JunctionedMagic} indique que vous\navez associé ce sort.\n
 Battle tutorial|16|9|Utiliser des objets
 Battle tutorial|16|10|Tutorial Combat 4/8
 Battle tutorial|16|11|Sélectionnez {Blue}Objets{White},\npuis un élément et\nindiquez sa 'cible'.\nLa quantité en stock\nest indiquée à côté\nde chaque objet.\n
@@ -799,7 +799,7 @@ Battle tutorial|16|16|Tutorial Combat 6/8
 Battle tutorial|16|17|{Blue}Voler{White} permet de\nprendre de la magie à\nun ennemi. Sélectionnez\nune cible, un type de\nmagie puis {Blue}Lancer{White}\nou {Blue}stocker{White}, pour\nl'utiliser immédiatement\nou la garder en réserve.\n
 Battle tutorial|16|18|Limit Break
 Battle tutorial|16|19|Tutorial Combat 7/8
-Battle tutorial|16|20|Lorsque les HP d'un perso\nsont bas, celui-ci tente une\naction désespérée: un Limit\nBreak. L'icône {JunctionAbility} apparaît\nalors à côté d'Attaquer.\nAvec la touche directionnelle\ndroite, activez cette\nattaque renforcée.\n
+Battle tutorial|16|20|Lorsque les HP d'un perso\nsont bas, celui-ci tente une\naction désespérée: un Limit\nBreak. L'icône {LimitArrow} apparaît\nalors à côté d'Attaquer.\nAvec la touche directionnelle\ndroite, activez cette\nattaque renforcée.\n
 Battle tutorial|16|21|Divers
 Battle tutorial|16|22|Tutorial Combat 8/8
 Battle tutorial|16|23|Appuyez sur {L1} pour choisir\nun ennemi dans le menu Cible.\nPour fuir, appuyez sur {L2} et\n{R2} (vous ne pouvez pas éviter\ntous les combats). Vous obtenez des\nExp même en fuyant, du moment que\nvous avez endommagé l'ennemi.
@@ -846,18 +846,18 @@ Card rules + Icon|17|39|Jeu de cartes 13/13
 Card rules + Icon|17|40|\n\n{Blue}Directe{White}: récupère les cartes que vous retournez,\nmais perd celles tournées par votre adversaire.\n{Blue}Change{White} prend le nombre de cartes correspondant\naux points gagnés.\nAvec la règle {Blue}Totale{White}, le vainqueur prend toutes\nles cartes du perdant.\n
 Card rules + Icon|17|41|Eléments
 Card rules + Icon|17|42|Détails Icône 1/4
-Card rules + Icon|17|43|{Drain}    Feu\n{x055e}    Neige\n{x055f}    Tonnerre\n{x0560}    Terre\n{x0561}    Poison\n{x0562}    Vent\n{x0563}    Eau\n{x0564}    Sacré\n
+Card rules + Icon|17|43|{ElementFire}    Feu\n{ElementIce}    Neige\n{ElementThunder}    Tonnerre\n{ElementEarth}    Terre\n{ElementPoison}    Poison\n{ElementWind}    Vent\n{ElementWater}    Eau\n{ElementHoly}    Sacré\n
 Card rules + Icon|17|44|Situation
 Card rules + Icon|17|45|Détails Icône 2/4
-Card rules + Icon|17|46|{x0565}    Mort\n{x0566}    Poison\n{x0567}    Fossile\n{x0568}    Darkness\n{x0569}    Aphasie\n{x056a}    Trouble\n{x056b}    Zombie\n{x056c}    Morphée\n
-Card rules + Icon|17|47|{x056d}    Somni\n{x056e}    Stop\n{x056f}    Fléau\n{x0570}    Folie\n{x0571}    Saignée\n
+Card rules + Icon|17|46|{StatusDeath}    Mort\n{StatusPoison}    Poison\n{StatusPetrify}    Fossile\n{StatusDarkness}    Darkness\n{StatusSilence}    Aphasie\n{StatusBerserk}    Trouble\n{StatusZombie}    Zombie\n{StatusSleep}    Morphée\n
+Card rules + Icon|17|47|{StatusSlow}    Somni\n{StatusStop}    Stop\n{StatusCurse}    Fléau\n{StatusConfuse}    Folie\n{StatusDrain}    Saignée\n
 Card rules + Icon|17|48|Etat
 Card rules + Icon|17|49|Détails Icône 3/4
 Card rules + Icon|17|50|Hit Points\nVigueur\nDéfense\nMagie\nPsychisme\nVitesse\nEsquive\nPrécision\nChance\n
 Card rules + Icon|17|51|Attaque élémentale\nDéfense élémentale\nAttaque mentale\nDéfense mentale\n
 Card rules + Icon|17|52|Capacité
 Card rules + Icon|17|53|Détails Icône 4/4
-Card rules + Icon|17|54|{CharacterAbility}    Associer\n{PartyAbility}    Actions\n{MenuAbility}    Personnage\n{Fire}    Equipe\n{Ice}    G-Forces\n{Thunder}    Menus\n
+Card rules + Icon|17|54|{AbilityJunction}    Associer\n{AbilityCommand}    Actions\n{AbilityCharacter}    Personnage\n{AbilityParty}    Equipe\n{AbilityGF}    G-Forces\n{AbilityMenu}    Menus\n
 Chocobo tutorial|18|0|MiniMog veut aller à la\nchasse au trésor avec tous\nses amis. Mais personne ne\nveut y aller! Le trésor se\ntrouve à Mont Frisson! C'est\nbien trop dangereux là-bas.\n
 Chocobo tutorial|18|1|MiniMog n'est pas un trouillard!\nIl ira, c'est sûr. Même tout seul!
 Chocobo tutorial|18|2|MiniMog prend la route.\nUn jour passe, puis un\nautre. Et encore un autre!\nAucune nouvelle de MiniMog,\nPampa et Moomba\nsont très inquiets. Ils\nimaginent leur ami...\n
@@ -901,7 +901,7 @@ Test seed 2 |21|3|{x00}Question 4\n\nPerdez-vous des points si vous attaquez\nen
 Test seed 2 |21|4|{x00}Question 5\n\nFolie est-il annulé si vous\nsubissez une attaque armée?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 2 |21|5|{x01}Question 6\n\nle Limit Break de {Squall}\nest le Kenzokuken.\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 2 |21|6|{x00}Question 7\n\nPour faire une association de magie,\nfaut il une capacité correspondant\nà l'association désirée?\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
-Test seed 2 |21|7|{x00}Question 8\n\n{CharacterAbility} signifie Capacité Associée?\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
+Test seed 2 |21|7|{x00}Question 8\n\n{AbilityJunction} signifie Capacité Associée?\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 2 |21|8|{x01}Question 9\n\nLes 8 éléments sont Feu, Neige, Tonnerre,\nTerre, Poison, Sorcellerie, Vent et Sacré.\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 2 |21|9|{x01}Question 10\n\nLa quantité de magie que vous\npouvez voler est-elle limitée?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 3 |22|0|{x01}Question 1\n\nLes potions restaurent-elles\nles HP des G-Forces?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
@@ -910,7 +910,7 @@ Test seed 3 |22|2|{x00}Question 3\n\nL'arme de Selphie est un Nunchaku.\n\n\n\n 
 Test seed 3 |22|3|{x01}Question 4\n\nSuffit-il d'un peu d'argent\npour améliorer votre arme?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 3 |22|4|{x00}Question 5\n\nCelui qui donne le coup de grâce\nreçoit-il le plus de points d'EXP?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 3 |22|5|{x00}Question 6\n\nLa puissance d'attaque des G-Forces\ndépend-elle de leur niveau?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
-Test seed 3 |22|6|{x00}Question 7\n\n{PartyAbility} signifie capacité Actions.\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
+Test seed 3 |22|6|{x00}Question 7\n\n{AbilityCommand} signifie capacité Actions.\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 3 |22|7|{x01}Question 8\n\nChaque membre de l'équipe dispose de\n5 Capacités individuelles et globales?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 3 |22|8|{x00}Question 9\n\nLes commandes actions doivent être\nplacées dans le menu Action pour\nêtre utilisées lors des combats.\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 3 |22|9|{x01}Question 10\n\nPDC signifie Points de Compétence.\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
@@ -924,7 +924,7 @@ Test seed 4 |23|6|{x00}Question 7\n\nSi vous êtes mis KO par une attaque mental
 Test seed 4 |23|7|{x00}Question 8\n\nEst-ce que T-Rex vit dans la\nserre de combat de la BGU?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 4 |23|8|{x01}Question 9\n\nLa Gunblade de {Squall} provoque-t-elle\nplus de dégâts en appuyant sur {L2}?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 4 |23|9|{x01}Question 10\n\nEst-il possible de stocker\njusqu'à 255 fois le même sort?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
-Test seed 5 |24|0|{x01}Question 1\n\n{MenuAbility} signifie Capacité Equipe.\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
+Test seed 5 |24|0|{x01}Question 1\n\n{AbilityCharacter} signifie Capacité Equipe.\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 5 |24|1|{x01}Question 2\n\nPouvez-vous Voler vos équipiers?\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 5 |24|2|{x01}Question 3\n\nPouvez-vous sauvegarder la partie\nà n'importe quel moment?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 5 |24|3|{x00}Question 4\n\nQuand une G-Force acquiert une capacité,\nd'autres compétences peuvent-elles\napparaître?\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
@@ -956,7 +956,7 @@ Test seed 7 |26|8|{x00}Question 9\n\nLe rang de vos ennemis\ns'améliore-t-il co
 Test seed 7 |26|9|{x01}Question 10\n\nRencontrerez-vous moins d'ennemis\ndans l'Atlas si vous marchez\nau lieu de courir?\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 8 |27|0|{x01}Question 1\n\nLes Galbadiens n'utilisent pas de magie.\n\n\n\n  {Cursor_location_id:0x20}Vrai     {Cursor_location_id:0x21}Faux
 Test seed 8 |27|1|{x00}Question 2\n\nPouvez-vous améliorer vos\narmes dans les Bazars?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
-Test seed 8 |27|2|{x01}Question 3\n\n{Fire} signifie capacité Personnage?\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
+Test seed 8 |27|2|{x01}Question 3\n\n{AbilityParty} signifie capacité Personnage?\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 8 |27|3|{x01}Question 4\n\nL'état de la cible redevient-il\nnormal si vous lancez Somni\npar dessus Booster?\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 8 |27|4|{x00}Question 5\n\nRencontrez-vous plus d'ennemis dans\nles forêts que dans les plaines?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 8 |27|5|{x00}Question 6\n\nQuand la valeur Déf-Elé dépasse 100%,\nun dommage élémental est-il absorbé?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
@@ -965,7 +965,7 @@ Test seed 8 |27|7|{x01}Question 8\n\nIl n'y a pas de Succubes\ndans la Mine de S
 Test seed 8 |27|8|{x00}Question 9\n\nLes G-Forces peuvent-elles acquérir\ndes capacités différentes?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 8 |27|9|{x01}Question 10\n\nPouvez-vous acheter des\narmes dans les Bazars?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 9 |28|0|{x01}Question 1\n\nPouvez-vous Lancer la G-Force que vous\navez volée au lieu de la Stocker?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
-Test seed 9 |28|1|{x00}Question 2\n\n{Thunder} signifie Menu Capacité.\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
+Test seed 9 |28|1|{x00}Question 2\n\n{AbilityMenu} signifie Menu Capacité.\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 9 |28|2|{x01}Question 3\n\nLes sorts figurant dans la liste\ndu Limit Break de Selphie sont-ils\nceux qu'elle possède en stock?\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 9 |28|3|{x01}Question 4\n\nUne G-Force peu utilisée (ou faiblement\ncompatible) peut quitter son utilisateur.\n\n\n  {Cursor_location_id:0x20}Vrai     {Cursor_location_id:0x21}Faux
 Test seed 9 |28|4|{x01}Question 5\n\nLes capacités d'équipe peuvent-elles\nêtre utilisées sans être configurées?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
@@ -1118,7 +1118,7 @@ Test seed 24|43|0|{x00}Question 1\n\nFaut-il utiliser Esuna pour guérir Somni?\
 Test seed 24|43|1|{x00}Question 2\n\nL'association Décubitus avec Déf-Elém-A\naugmente-t-elle votre défense face\naux attaques Elémentales Terrestres?\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 24|43|2|{x01}Question 3\n\nLa jauge ATB est-elle active\nquand une G-Force est invoquée?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 24|43|3|{x01}Question 4\n\nAuto-Boomerang fonctionne\ntant que vous n'êtes pas KO.\n\n\n  {Cursor_location_id:0x20}Vrai     {Cursor_location_id:0x21}Faux
-Test seed 24|43|4|{x00}Question 5\n\nEst-ce que {Ice}\nsignifie Capacité G-Forces?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
+Test seed 24|43|4|{x00}Question 5\n\nEst-ce que {AbilityGF}\nsignifie Capacité G-Forces?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 24|43|5|{x00}Question 6\n\nLes Capacités que peuvent acquérir les\nG-Forces sont-elles limitées?\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 24|43|6|{x01}Question 7\n\nCarapace se renforce à chaque utilisation?\n\n\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
 Test seed 24|43|7|{x01}Question 8\n\nObtenez-vous Poison (en + des HP)\nquand vous utilisez Saignée\ncontre une cible empoisonnée.\n\n  {Cursor_location_id:0x20}Oui     {Cursor_location_id:0x21}Non
@@ -1721,17 +1721,17 @@ TextBox03.bin|54|47|Lorsqu'une G-Force a obtenu assez de\npoints de capacités (
 TextBox03.bin|54|48|Glossaire/Capacités
 TextBox03.bin|54|49|{Cursor_location_id:0x2227}Associer capacités\n{Cursor_location_id:0x2228}Actions\n{Cursor_location_id:0x2229}Capacités Perso \n{Cursor_location_id:0x222a}Capacités équipe \n{Cursor_location_id:0x222b}Capacités G-Forces \n{Cursor_location_id:0x222c}Capacités Menu \n
 TextBox03.bin|54|50|Associer capacités
-TextBox03.bin|54|51|Cette fonction permet de renforcer\nl'état général d'un personnage à l'aide\nde la magie. Pour cela, associez une\nG-Force qui possède l'aptitude voulue,\npuis sélectionnez une capacité pour\nvotre personnage.\n·Correspond à l'icône {CharacterAbility} dans le menu.\n
+TextBox03.bin|54|51|Cette fonction permet de renforcer\nl'état général d'un personnage à l'aide\nde la magie. Pour cela, associez une\nG-Force qui possède l'aptitude voulue,\npuis sélectionnez une capacité pour\nvotre personnage.\n·Correspond à l'icône {AbilityJunction} dans le menu.\n
 TextBox03.bin|54|52|Actions
-TextBox03.bin|54|53| ·Sélection des Actions disponibles\n  en cours de combat.\n ·Associez une G-Force qui possède\n  l'aptitude voulue, puis sélectionnez une\n  capacité pour votre personnage.\n ·Correspond à l'icône {PartyAbility} dans le menu.\n
+TextBox03.bin|54|53| ·Sélection des Actions disponibles\n  en cours de combat.\n ·Associez une G-Force qui possède\n  l'aptitude voulue, puis sélectionnez une\n  capacité pour votre personnage.\n ·Correspond à l'icône {AbilityCommand} dans le menu.\n
 TextBox03.bin|54|54|Capacités Perso
-TextBox03.bin|54|55|Une fois que votre G-Force a appris la\ncapacité de votre choix, vous pouvez\nl'attribuer à votre personnage pour\nmodifier ses pouvoirs.\n·Correspond à l'icône {MenuAbility} dans le menu.\n
+TextBox03.bin|54|55|Une fois que votre G-Force a appris la\ncapacité de votre choix, vous pouvez\nl'attribuer à votre personnage pour\nmodifier ses pouvoirs.\n·Correspond à l'icône {AbilityCharacter} dans le menu.\n
 TextBox03.bin|54|56|Capacités équipe
-TextBox03.bin|54|57| ·Capacités qui donnent des pouvoirs à\n  l'ensemble des membres de votre groupe.\n ·Associez une G-Force qui possède\n  l'aptitude voulue, puis sélectionnez une\n  capacité pour votre équipe.\n ·Correspond à l'icône {Fire} dans le menu.\n
+TextBox03.bin|54|57| ·Capacités qui donnent des pouvoirs à\n  l'ensemble des membres de votre groupe.\n ·Associez une G-Force qui possède\n  l'aptitude voulue, puis sélectionnez une\n  capacité pour votre équipe.\n ·Correspond à l'icône {AbilityParty} dans le menu.\n
 TextBox03.bin|54|58|Capacités G-Forces
-TextBox03.bin|54|59| ·Capacités qui renforcent les\n  pouvoirs de votre G-Force.\n ·Associez une G-Force qui possède\n  l'aptitude voulue.\n ·Correspond à l'icône {Ice} dans le menu.\n
+TextBox03.bin|54|59| ·Capacités qui renforcent les\n  pouvoirs de votre G-Force.\n ·Associez une G-Force qui possède\n  l'aptitude voulue.\n ·Correspond à l'icône {AbilityGF} dans le menu.\n
 TextBox03.bin|54|60|Capacités Menu
-TextBox03.bin|54|61| ·Capacités disponibles dans le menu Actions.\n ·Associez une G-Force qui\n  possède l'aptitude voulue.\n ·Correspond à l'icône {Thunder} dans le menu.\n
+TextBox03.bin|54|61| ·Capacités disponibles dans le menu Actions.\n ·Associez une G-Force qui\n  possède l'aptitude voulue.\n ·Correspond à l'icône {AbilityMenu} dans le menu.\n
 TextBox03.bin|54|62|Choix d'un terme
 TextBox03.bin|54|63|{Cursor_location_id:0x222e}Forces élémentales\n{Cursor_location_id:0x222f}Atq-Elé\n{Cursor_location_id:0x2230}Déf-Elé\n
 TextBox03.bin|54|64|Elémental/Forces
@@ -2143,7 +2143,7 @@ Elemental junction tutorial|59|17|En associant une magie à Déf-Elé,
 Elemental junction tutorial|59|18|vous réduisez l'impact des\nattaques utilisant cette magie. 
 Elemental junction tutorial|59|19|Le niveau de cette protection\nest indiqué en %.
 Elemental junction tutorial|59|20|Dans cet exemple, l'impact\ndes attaques de feu est\nréduit de 80%.
-Elemental junction tutorial|59|21|Si le pourcentage est au-dessus\nde 100, l'icône {CommandAbility} est visible.\nL'attaque élémentale n'a aucun effet.
+Elemental junction tutorial|59|21|Si le pourcentage est au-dessus\nde 100, l'icône {AbsorbStar} est visible.\nL'attaque élémentale n'a aucun effet.
 Elemental junction tutorial|59|22|Au-dessus de 100%, vous\nrecevez des points d'HP.
 Elemental junction tutorial|59|23|Dans cet exemple, 50% de\nl'attaque est transformé en HP.
 Elemental junction tutorial|59|24|Selon les capacités des\nG-Forces, associez divers\ntypes de magie à Def-Elé.
