@@ -455,8 +455,15 @@ def test_direct_drag_supports_real_undo_redo_shortcuts_and_saved_state(widget, a
     from ff8ultimateeditorwidget import FF8UltimateEditorWidget
 
     class UndoHost(FF8UltimateEditorWidget):
+        """Only the main window's Ctrl+Z event filter around the tool. Its __init__ is skipped, so
+        what the filter and closing read must exist: a Python error inside a Qt event handler is a
+        hard abort of the whole process, not a test failure."""
+        def closeEvent(self, event):   # no unsaved-changes question
+            event.accept()
+
         def __init__(self, tool):
             QWidget.__init__(self)
+            self._enhance_container = None
             self.tool_stack = QStackedWidget(self)
             self.tool_stack.addWidget(tool)
             QVBoxLayout(self).addWidget(self.tool_stack)
