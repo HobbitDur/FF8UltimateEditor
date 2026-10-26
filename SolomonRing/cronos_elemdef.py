@@ -5,8 +5,9 @@ mask the same unsigned value, and a G-Force gives no elemental defense at all. T
 NegativeElemDef DLL reads this table instead:
   - a spell line: one signed value per element (Fire +50 and Ice -50 from the same spell, a weakness
     being a negative value), applied x stock / 100 per Elem-Def slot like the kernel value;
-  - a GF line: one signed value per element, given flat (no stock, no level) to the character the GF
-    is junctioned to (Ifrit Fire +30 / Ice -30);
+  - GF lines: one signed value per element, given flat (no stock) to the character the GF is
+    junctioned to (Ifrit Fire +30 / Ice -30), from a GF level up: of a GF's lines, the one with the
+    highest level not above the GF's level applies (none = nothing), e.g. low / mid / high from 1 / 34 / 67;
   - a character line: the character's own base resistance, flat, always (CH0 = Squall ... CH7 = Edea;
     Laguna, Kiros and Ward use Squall, Zell and Irvine's records in the dreams, so their lines too).
 Everything adds up on top of the neutral 800 and the DLL clamps the total to -800% .. +200%.
@@ -15,13 +16,17 @@ The file (cronos/elemdef.csv in the mod, served by Junction VIII from the game f
 
     # comment
     id;Fire;Ice;Thunder;Earth;Poison;Wind;Water;Holy      a spell (magic id)
-    GFid;Fire;Ice;Thunder;Earth;Poison;Wind;Water;Holy    a G-Force (GF0 = Quezacotl ... GF15 = Eden)
+    GFid@level;Fire;Ice;...;Holy                          a G-Force (GF0 = Quezacotl ... GF15 = Eden) from
+                                                          that GF level (1-100) up; no "@level" = from 1;
+                                                          8 levels per GF at most
     CHid;Fire;Ice;Thunder;Earth;Poison;Wind;Water;Holy    a character (CH0 = Squall ... CH7 = Edea)
                                                           anything after the 9 numbers is ignored
 
-A spell without a line keeps its kernel.bin values, exactly as vanilla; a GF or a character without a\nline gives nothing.
+A spell without a line keeps its kernel.bin values, exactly as vanilla; a GF or a character without a
+line gives nothing.
 """
 import os
+import re
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTableWidget,
@@ -34,6 +39,10 @@ ELEMENTS = ["Fire", "Ice", "Thunder", "Earth", "Poison", "Wind", "Water", "Holy"
 GF_COUNT = 16
 CHARA_COUNT = 8   # the save's character records; Laguna/Kiros/Ward use Squall/Zell/Irvine's in the dreams
 VALUE_MIN, VALUE_MAX = -999, 999
+LEVEL_MIN, LEVEL_MAX = 1, 100
+GF_TIER_LEVELS = (1, 34, 67)   # low / mid / high: the "from level" of a GF's rows by default
+GF_TIER_MAX = 8                # the DLL's limit of levels per GF
+_GF_KEY = re.compile(r"^([+-]?\d+)@\s*([+-]?\d+)$")   # "id@level", as the DLL's strtol reads it
 FILE_FILTER = "Elemental defense table (*.csv);;All files (*)"
 DEFAULT_FILE_NAME = "elemdef.csv"
 SETTINGS_KEY = "solomonring/cronos_elemdef_path"
@@ -43,10 +52,11 @@ MAGIC_PAGE, GF_PAGE, CHARACTER_PAGE = 0, 1, 2
 # ---- the file ---------------------------------------------------------------------------------------
 
 def read_table(path):
-    """(spell rows, GF rows, character rows), each {id: [8 values]} - the same rules as the DLL: '#'
-    lines skipped, ; , or tab between the numbers, 9 numbers per line (a GF line starts with GF, a
-    character line with CH, any case), spell id 0-255, GF id 0-15, character id 0-7, anything after the
-    9 numbers ignored."""
+    """(spell rows, GF rows, character rows): spells and characters {id: [8 values]}, GFs
+    {id: {from level: [8 values]}} - the same rules as the DLL: '#' lines skipped, ; , or tab between the
+    numbers, 9 numbers per line (a GF line starts with GF, a character line with CH, any case), spell id
+    0-255, GF id 0-15 with an optional "@level" 1-100 (none = 1; a repeated level replaces the earlier
+    line, a 9th level is ignored), character id 0-7, anything after the 9 numbers ignored."""
     spells, gfs, characters = {}, {}, {}
     with open(path, encoding="utf-8-sig") as file:
         for line in file:
@@ -55,6 +65,14 @@ def read_table(path):
             if kind:
                 text = text[2:]
             fields = [part.strip() for part in text.replace(",", ";").replace("\t", ";").split(";") if part.strip()]
+            level = LEVEL_MIN
+            if kind == "GF" and fields and "@" in fields[0]:
+                match = _GF_KEY.match(fields[0])
+                if not match:
+                    continue
+                fields[0], level = match.group(1), int(match.group(2))
+                if not LEVEL_MIN <= level <= LEVEL_MAX:
+                    continue
             try:
                 numbers = [int(part) for part in fields[:9]]
             except ValueError:
@@ -62,7 +80,13 @@ def read_table(path):
             if len(numbers) != 9:
                 continue
             target, limit = {"GF": (gfs, GF_COUNT), "CH": (characters, CHARA_COUNT), "": (spells, 256)}[kind]
-            if 0 <= numbers[0] < limit:
+            if not 0 <= numbers[0] < limit:
+                continue
+            if kind == "GF":
+                tiers = gfs.setdefault(numbers[0], {})
+                if level in tiers or len(tiers) < GF_TIER_MAX:
+                    tiers[level] = numbers[1:]
+            else:
                 target[numbers[0]] = numbers[1:]
     return spells, gfs, characters
 
@@ -74,16 +98,18 @@ def write_table(path, spells, gfs=None, characters=None, spell_names=None, gf_na
         file.write("# Cronos elemental defense table, read by NegativeElemDef.dll (edit it in SolomonRing >\n"
                    "# Magic, G-Forces or Characters > Cronos extension). The resistance % given to each element:\n"
                    "#   spell line:     when junctioned to Elem-Def, x stock / 100 (no line = kernel.bin values)\n"
-                   "#   GF line:        flat, to the character the GF is junctioned to (no line = nothing)\n"
+                   "#   GF line:        flat, to the character the GF is junctioned to, from GF level @level up\n"
+                   "#                   (the highest one not above the GF's level; no line = nothing)\n"
                    "#   character line: flat, always - the character's base (no line = nothing)\n"
                    "# +100 = immune, more = absorb, negative = weakness.\n"
                    "# id;" + ";".join(ELEMENTS) + "\n")
         for magic_id in sorted(spells):
             file.write(_line(str(magic_id), spells[magic_id], spell_names.get(magic_id, "")))
         if gfs:
-            file.write("\n# G-Forces: GFid;" + ";".join(ELEMENTS) + "\n")
+            file.write("\n# G-Forces: GFid@level;" + ";".join(ELEMENTS) + "\n")
             for gf_id in sorted(gfs):
-                file.write(_line(f"GF{gf_id}", gfs[gf_id], gf_names.get(gf_id, "")))
+                for level in sorted(gfs[gf_id]):
+                    file.write(_line(f"GF{gf_id}@{level}", gfs[gf_id][level], gf_names.get(gf_id, "")))
         if characters:
             file.write("\n# Characters: CHid;" + ";".join(ELEMENTS) + "\n")
             for chara_id in sorted(characters):
@@ -103,33 +129,53 @@ def rows_from_kernel(entries):
     return rows
 
 
-# ---- one grid (spells or GFs) -------------------------------------------------------------------------
+# ---- one grid (spells, GFs or characters) --------------------------------------------------------------
 
 class _ElemGrid(QTableWidget):
     """Use | Id | Name | Fire .. Holy. A row is written to the file only when Use is ticked;
-    editing a value ticks it."""
+    editing a value ticks it.
 
-    def __init__(self, names, id_label, missing_name, on_change):
-        super().__init__(0, 3 + len(ELEMENTS))
-        self.setHorizontalHeaderLabels(["Use", id_label, "Name"] + ELEMENTS)
+    With tiers (the GFs): Use | GF | Name | From Lv | Fire .. Holy, one row per level line, keyed
+    (GF id, tier index): 3 rows per GF by default (low / mid / high from GF_TIER_LEVELS), more when a
+    loaded file has more levels for a GF."""
+
+    def __init__(self, names, id_label, missing_name, on_change, tiers=False):
+        self._tiers = tiers
+        self._first_value = 4 if tiers else 3
+        super().__init__(0, self._first_value + len(ELEMENTS))
+        self.setHorizontalHeaderLabels(["Use", id_label, "Name"] + (["From Lv"] if tiers else []) + ELEMENTS)
         self.verticalHeader().setVisible(False)
         header = self.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self._names, self._missing_name, self._on_change = names, missing_name, on_change
-        self.use, self.spins, self.ids = {}, {}, []
+        self.use, self.spins, self.levels, self.ids = {}, {}, {}, []
         self._loading = False
-        self.add_rows(sorted(names))
+        if tiers:
+            self.add_rows([(row_id, tier) for row_id in sorted(names) for tier in range(len(GF_TIER_LEVELS))])
+        else:
+            self.add_rows(sorted(names))
 
-    def add_rows(self, ids):
-        for row_id in ids:
-            if row_id in self.spins:
+    @staticmethod
+    def _default_level(tier):
+        return GF_TIER_LEVELS[tier] if tier < len(GF_TIER_LEVELS) else LEVEL_MAX
+
+    def _insert_position(self, key):
+        """A tier row goes right after its GF's previous tier; anything else at the end."""
+        if self._tiers and key[1] and (key[0], key[1] - 1) in self.spins:
+            return self.ids.index((key[0], key[1] - 1)) + 1
+        return self.rowCount()
+
+    def add_rows(self, keys):
+        for key in keys:
+            if key in self.spins:
                 continue
-            row = self.rowCount()
+            row_id = key[0] if self._tiers else key
+            row = self._insert_position(key)
             self.insertRow(row)
-            self.ids.append(row_id)
+            self.ids.insert(row, key)
             use = QCheckBox()
-            use.toggled.connect(lambda _on, i=row_id: self._row_changed(i))
+            use.toggled.connect(lambda _on, k=key: self._row_changed(k))
             holder = QWidget()
             holder_layout = QHBoxLayout(holder)
             holder_layout.setContentsMargins(6, 0, 0, 0)
@@ -139,28 +185,40 @@ class _ElemGrid(QTableWidget):
                 item = QTableWidgetItem(text)
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 self.setItem(row, column, item)
+            if self._tiers:
+                level = NoWheelSpinBox()
+                level.setRange(LEVEL_MIN, LEVEL_MAX)
+                level.setPrefix("Lv ")
+                level.setValue(self._default_level(key[1]))
+                level.setToolTip("These values apply from this GF level up, until the GF's next row's level")
+                level.valueChanged.connect(lambda _v, k=key: self._level_changed(k))
+                self.setCellWidget(row, 3, level)
+                self.levels[key] = level
             spins = []
             for element in range(len(ELEMENTS)):
                 spin = NoWheelSpinBox()
                 spin.setRange(VALUE_MIN, VALUE_MAX)
                 spin.setSuffix(" %")
-                spin.valueChanged.connect(lambda _v, i=row_id, s=spin: self._value_changed(i, s))
-                self.setCellWidget(row, 3 + element, spin)
+                spin.valueChanged.connect(lambda _v, k=key, s=spin: self._value_changed(k, s))
+                self.setCellWidget(row, self._first_value + element, spin)
                 spins.append(spin)
-            self.use[row_id] = use
-            self.spins[row_id] = spins
+            self.use[key] = use
+            self.spins[key] = spins
 
-    def _value_changed(self, row_id, spin):
+    def _value_changed(self, key, spin):
         self._colour(spin)
+        self._level_changed(key)
+
+    def _level_changed(self, key):
         if self._loading:
             return
-        if not self.use[row_id].isChecked():
-            self.use[row_id].setChecked(True)   # editing a row puts it in the table
+        if not self.use[key].isChecked():
+            self.use[key].setChecked(True)   # editing a row puts it in the table
         self._on_change()
 
-    def _row_changed(self, row_id):
-        for spin in self.spins[row_id]:
-            spin.setEnabled(self.use[row_id].isChecked())
+    def _row_changed(self, key):
+        for spin in self.spins[key] + ([self.levels[key]] if key in self.levels else []):
+            spin.setEnabled(self.use[key].isChecked())
         if not self._loading:
             self._on_change()
 
@@ -170,22 +228,38 @@ class _ElemGrid(QTableWidget):
         spin.setStyleSheet("color: #d04040;" if value < 0 else ("color: #2f9e44;" if value > 0 else ""))
 
     def load(self, rows):
-        self.add_rows(sorted(set(rows) - set(self.spins)))
+        """rows: {id: [8 values]}, or with tiers {GF id: {from level: [8 values]}}."""
+        if self._tiers:
+            # a GF's levels fill its rows in order; rows left over go back to their default level, unused
+            by_key = {(row_id, tier): (level, tiers[level])
+                      for row_id, tiers in rows.items() for tier, level in enumerate(sorted(tiers))}
+        else:
+            by_key = {row_id: (None, values) for row_id, values in rows.items()}
+        self.add_rows(sorted(set(by_key) - set(self.spins)))
         self._loading = True
         try:
-            for row_id in self.ids:
-                values = rows.get(row_id)
-                self.use[row_id].setChecked(values is not None)
-                for spin, value in zip(self.spins[row_id], values or [0] * len(ELEMENTS)):
+            for key in self.ids:
+                level, values = by_key.get(key, (None, None))
+                self.use[key].setChecked(values is not None)
+                if key in self.levels:
+                    self.levels[key].setValue(level if level is not None else self._default_level(key[1]))
+                for spin, value in zip(self.spins[key], values or [0] * len(ELEMENTS)):
                     spin.setValue(max(VALUE_MIN, min(VALUE_MAX, value)))
                     self._colour(spin)
-                self._row_changed(row_id)
+                self._row_changed(key)
         finally:
             self._loading = False
 
     def rows(self):
-        return {row_id: [spin.value() for spin in self.spins[row_id]]
-                for row_id in self.ids if self.use[row_id].isChecked()}
+        """{id: [8 values]}, or with tiers {GF id: {from level: [8 values]}} (two rows of a GF with the
+        same level: the lower one wins, like the later line in the DLL)."""
+        used = [key for key in self.ids if self.use[key].isChecked()]
+        if not self._tiers:
+            return {key: [spin.value() for spin in self.spins[key]] for key in used}
+        rows = {}
+        for key in used:
+            rows.setdefault(key[0], {})[self.levels[key].value()] = [spin.value() for spin in self.spins[key]]
+        return rows
 
 
 # ---- the dialog -------------------------------------------------------------------------------------
@@ -212,7 +286,9 @@ class CronosElemDefDialog(QDialog):
             "<span style='color:#d04040'>negative = weakness</span> (-100 = x2 damage). "
             "<b>Magic</b>: what a <b>used</b> spell gives when junctioned to Elem-Def (x stock / 100); an unused "
             "spell keeps its kernel.bin J-Elem defense. <b>G-Forces</b>: what a GF gives, flat, to the character "
-            "it is junctioned to. <b>Characters</b>: the character's own base, flat, always (Squall/Zell/Irvine "
+            "it is junctioned to, from its <b>From Lv</b> GF level up (3 rows: low / mid / high, by default from "
+            "levels 1 / 34 / 67; the used row with the highest level not above the GF's applies). "
+            "<b>Characters</b>: the character's own base, flat, always (Squall/Zell/Irvine "
             "also cover Laguna/Kiros/Ward). Everything adds up, clamped to -800% .. +200%.<br>"
             "Cronos ships the file as <i>CronosFiles/GameEnhancement/NegativeElemDef/cronos/elemdef.csv</i>.")
         info.setWordWrap(True)
@@ -224,7 +300,7 @@ class CronosElemDefDialog(QDialog):
 
         self.pages = QTabWidget()
         self.magic_grid = _ElemGrid(magic_names, "Id", "(not in this kernel.bin)", self._changed)
-        self.gf_grid = _ElemGrid(gf_names, "GF", "(unknown GF)", self._changed)
+        self.gf_grid = _ElemGrid(gf_names, "GF", "(unknown GF)", self._changed, tiers=True)
         self.pages.addTab(self.magic_grid, "Magic")
         self.character_grid = _ElemGrid(self._character_names, "CH", "(unknown character)", self._changed)
         self.pages.addTab(self.gf_grid, "G-Forces")

@@ -26,7 +26,8 @@ class _Entry:
 
 def test_round_trip(tmp_path):
     spells = {1: [50, -50, 0, 0, 0, 0, 0, 0], 7: [0] * 8, 56: [-275, 999, -999, 1, 2, 3, 4, 5]}
-    gfs = {2: [30, -30, 0, 0, 0, 0, 0, 0], 15: [0, 0, 0, 0, 0, 0, 0, 100]}
+    gfs = {2: {1: [30, -30, 0, 0, 0, 0, 0, 0], 34: [50, -20, 0, 0, 0, 0, 0, 0], 67: [100, 0, 0, 0, 0, 0, 0, 0]},
+           15: {50: [0, 0, 0, 0, 0, 0, 0, 100]}}
     characters = {0: [10, -10, 0, 0, 0, 0, 0, 0], 7: [0, 0, 0, 0, 0, 0, 0, -20]}
     path = tmp_path / "elemdef.csv"
     write_table(path, spells, gfs, characters, {1: "Fire", 56: "Ultima # with a hash"}, {2: "Ifrit"}, {0: "Squall"})
@@ -34,7 +35,9 @@ def test_round_trip(tmp_path):
     text = path.read_text(encoding="utf-8")
     assert "# id;" + ";".join(ELEMENTS) in text
     assert "1;50;-50;0;0;0;0;0;0    # Fire" in text
-    assert "GF2;30;-30;0;0;0;0;0;0    # Ifrit" in text
+    assert ("GF2@1;30;-30;0;0;0;0;0;0    # Ifrit\nGF2@34;50;-20;0;0;0;0;0;0    # Ifrit\n"
+            "GF2@67;100;0;0;0;0;0;0;0    # Ifrit\n") in text
+    assert "GF15@50;0;0;0;0;0;0;0;100\n" in text
     assert "CH0;10;-10;0;0;0;0;0;0    # Squall" in text
 
 
@@ -48,16 +51,25 @@ def test_spells_only_file_has_no_gf_section(tmp_path):
 
 def test_parser_rules_match_the_dll(tmp_path):
     # Same rules as NegativeElemDef.dll: '#' lines, ; , or tab, 9 numbers, spell id 0-255,
-    # GF id 0-15 after "GF", character id 0-7 after "CH" (any case), the rest ignored
+    # GF id 0-15 after "GF" with an optional @level 1-100 (none = 1, a repeated level replaces, 8 levels at
+    # most), character id 0-7 after "CH" (any case), the rest ignored
     path = tmp_path / "elemdef.csv"
     path.write_text("# comment\n\n"
                     "2,10,20,30,40,50,60,70,80\n"
                     "3\t-1\t-2\t-3\t-4\t-5\t-6\t-7\t-8\r\n"
                     "4;1;2;3;4;5;6;7;8;99 trailing\n"
                     "  gf2;30;-30;0;0;0;0;0;0    # Ifrit\n"
+                    "GF2@34;40;0;0;0;0;0;0;0\n"
+                    "GF2@34;45;0;0;0;0;0;0;0\n"     # same level: replaces
                     "GF15;1;1;1;1;1;1;1;1\n"
                     "GF16;1;2;3;4;5;6;7;8\n"         # GF id out of range
-                    "ch3;5;5;5;5;5;5;5;5    # Quistis\n"
+                    "GF3@0;1;2;3;4;5;6;7;8\n"        # level out of range
+                    "GF3@101;1;2;3;4;5;6;7;8\n"
+                    "GF3@;1;2;3;4;5;6;7;8\n"         # no level number
+                    + "".join(f"GF4@{level};{level};0;0;0;0;0;0;0\n" for level in (90, 10, 80, 20, 70, 30, 60, 40, 50))
+                    + "ch3;5;5;5;5;5;5;5;5    # Quistis\n"
+                    "CH3@5;1;2;3;4;5;6;7;8\n"        # only GF lines take a level
+                    "12@5;1;2;3;4;5;6;7;8\n"
                     "CH8;1;2;3;4;5;6;7;8\n"          # character id out of range
                     "5;1;2;3\n"                      # too short
                     "300;1;2;3;4;5;6;7;8\n"          # spell id out of range
@@ -66,7 +78,8 @@ def test_parser_rules_match_the_dll(tmp_path):
     assert spells == {2: [10, 20, 30, 40, 50, 60, 70, 80],
                       3: [-1, -2, -3, -4, -5, -6, -7, -8],
                       4: [1, 2, 3, 4, 5, 6, 7, 8]}
-    assert gfs == {2: [30, -30, 0, 0, 0, 0, 0, 0], 15: [1] * 8}
+    assert gfs == {2: {1: [30, -30, 0, 0, 0, 0, 0, 0], 34: [45, 0, 0, 0, 0, 0, 0, 0]}, 15: {1: [1] * 8},
+                   4: {level: [level] + [0] * 7 for level in (10, 20, 30, 40, 60, 70, 80, 90)}}   # 50 = 9th
     assert characters == {3: [5] * 8}
 
 
@@ -130,16 +143,30 @@ def test_dialog_on_a_real_kernel(qapp, tmp_path):
 
     dialog.magic_grid.spins[fire_id][0].setValue(50)
     dialog.magic_grid.spins[fire_id][1].setValue(-50)
-    dialog.gf_grid.spins[2][0].setValue(30)    # Ifrit Fire +30 / Ice -30
-    dialog.gf_grid.spins[2][1].setValue(-30)
+    # GFs: 3 rows each (low / mid / high), From Lv 1 / 34 / 67, next to each other
+    gf_grid = dialog.gf_grid
+    assert gf_grid.ids[:4] == [(0, 0), (0, 1), (0, 2), (1, 0)]
+    assert [gf_grid.levels[(2, tier)].value() for tier in range(3)] == [1, 34, 67]
+    assert gf_grid.horizontalHeaderItem(3).text() == "From Lv"
+    gf_grid.spins[(2, 0)][0].setValue(30)    # Ifrit low: Fire +30 / Ice -30
+    gf_grid.spins[(2, 0)][1].setValue(-30)
+    gf_grid.spins[(2, 2)][0].setValue(80)    # Ifrit high: Fire +80
+    gf_grid.levels[(2, 2)].setValue(70)      # ... from level 70
+    gf_grid.levels[(5, 1)].setValue(20)      # editing a level alone puts the row in the table
+    assert dialog.gf_rows() == {2: {1: [30, -30, 0, 0, 0, 0, 0, 0], 70: [80, 0, 0, 0, 0, 0, 0, 0]},
+                                5: {20: [0] * 8}}
+    gf_grid.use[(5, 1)].setChecked(False)
+    assert not gf_grid.levels[(5, 1)].isEnabled()
     dialog.character_grid.spins[4][7].setValue(20)   # Rinoa Holy +20
     dialog._path = str(tmp_path / "elemdef.csv")
     assert dialog._save()
     assert read_table(tmp_path / "elemdef.csv") == ({fire_id: [50, -50, 0, 0, 0, 0, 0, 0]},
-                                                    {2: [30, -30, 0, 0, 0, 0, 0, 0]},
+                                                    {2: {1: [30, -30, 0, 0, 0, 0, 0, 0],
+                                                         70: [80, 0, 0, 0, 0, 0, 0, 0]}},
                                                     {4: [0, 0, 0, 0, 0, 0, 0, 20]})
     assert "CH4;0;0;0;0;0;0;0;20    # Rinoa" in (tmp_path / "elemdef.csv").read_text(encoding="utf-8")
-    assert "GF2;30;-30;0;0;0;0;0;0    # Ifrit" in (tmp_path / "elemdef.csv").read_text(encoding="utf-8")
+    assert "GF2@1;30;-30;0;0;0;0;0;0    # Ifrit" in (tmp_path / "elemdef.csv").read_text(encoding="utf-8")
+    assert "GF2@70;80;0;0;0;0;0;0;0    # Ifrit" in (tmp_path / "elemdef.csv").read_text(encoding="utf-8")
 
     # Import puts every row back, on every page
     other = CronosElemDefDialog(widget, entries, names, gf_names, character_names, page=CHARACTER_PAGE)
@@ -147,6 +174,14 @@ def test_dialog_on_a_real_kernel(qapp, tmp_path):
     other._load(*read_table(tmp_path / "elemdef.csv"))
     assert (other.rows(), other.gf_rows(), other.character_rows()) == \
         (dialog.rows(), dialog.gf_rows(), dialog.character_rows())
+    # Ifrit's 2 levels fill its first 2 rows in order; the third goes back to its default, unused
+    assert [other.gf_grid.levels[(2, tier)].value() for tier in range(3)] == [1, 70, 67]
+    assert [other.gf_grid.use[(2, tier)].isChecked() for tier in range(3)] == [True, True, False]
+    # A GF with more levels than rows gets more rows, right after its own
+    other.gf_grid.load({3: {level: [level] + [0] * 7 for level in (1, 20, 40, 60, 80)}})
+    assert other.gf_grid.ids.index((3, 4)) == other.gf_grid.ids.index((3, 0)) + 4
+    assert other.gf_grid.ids[other.gf_grid.ids.index((3, 4)) + 1] == (4, 0)
+    assert other.gf_rows() == {3: {level: [level] + [0] * 7 for level in (1, 20, 40, 60, 80)}}
     for opened in (dialog, other):
         opened._dirty = False
         opened.close()
