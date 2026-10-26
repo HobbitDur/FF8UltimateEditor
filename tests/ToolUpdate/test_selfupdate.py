@@ -21,7 +21,7 @@ CLI_ZIP_URL = "https://fake.download/FF8UltimateEditor-cli-1.10.0.zip"
 CANARY_GUI_ZIP_URL = "https://fake.download/FF8UltimateEditor-continuous-abc1234.zip"
 CANARY_CLI_ZIP_URL = "https://fake.download/FF8UltimateEditor-cli-continuous-abc1234.zip"
 CANARY_GHOST_ZIP_URL = "https://fake.download/FF8UltimateEditor-continuous-0000000.zip"
-CANARY_LINUX_URL = "https://fake.download/FF8UltimateEditor-linux_x64-continuous-abc1234.tar.gz"
+CANARY_LINUX_URL = "https://fake.download/ff8ultimateeditor-linux_x64-continuous-abc1234.tar.gz"
 CANARY_CLI_LINUX_URL = "https://fake.download/FF8UltimateEditor-cli-linux_x64-continuous-abc1234.tar.gz"
 
 
@@ -110,7 +110,7 @@ def fake_github(monkeypatch, tmp_path):
                 "browser_download_url": CANARY_GHOST_ZIP_URL,
             },
             {"name": "FF8UltimateEditor-continuous-abc1234.zip", "browser_download_url": CANARY_GUI_ZIP_URL},
-            {"name": "FF8UltimateEditor-linux_x64-continuous-abc1234.tar.gz", "browser_download_url": CANARY_LINUX_URL},
+            {"name": "ff8ultimateeditor-linux_x64-continuous-abc1234.tar.gz", "browser_download_url": CANARY_LINUX_URL},
             {"name": "FF8UltimateEditor-cli-linux_x64-continuous-abc1234.tar.gz", "browser_download_url": CANARY_CLI_LINUX_URL},
         ]),
         GUI_ZIP_URL: FakeResponse(content=make_release_zip(b"stable exe")),

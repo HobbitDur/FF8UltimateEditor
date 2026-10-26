@@ -146,11 +146,15 @@ jobs:
       shell: bash
       run: |
         SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+        # The Linux GUI build is named in lower case: the self update of versions up to 5.0 takes
+        # the first asset starting with "FF8UltimateEditor" (case-sensitive) that is not the CLI,
+        # and the release's assets list is sorted by name - "linux" comes before "v5...". The
+        # current self update compares names in lower case, so it still finds this one on Linux.
         if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-          MAIN_NAME="FF8UltimateEditor-linux_x64-${{ github.ref_name }}.tar.gz"
+          MAIN_NAME="ff8ultimateeditor-linux_x64-${{ github.ref_name }}.tar.gz"
           CLI_NAME="FF8UltimateEditor-cli-linux_x64-${{ github.ref_name }}.tar.gz"
         else
-          MAIN_NAME="FF8UltimateEditor-linux_x64-continuous-${SHORT_SHA}.tar.gz"
+          MAIN_NAME="ff8ultimateeditor-linux_x64-continuous-${SHORT_SHA}.tar.gz"
           CLI_NAME="FF8UltimateEditor-cli-linux_x64-continuous-${SHORT_SHA}.tar.gz"
         fi
         mkdir -p linux-artifacts
@@ -625,7 +629,7 @@ jobs:
         files: |
           release/FF8UltimateEditor-continuous-*.zip
           release/FF8UltimateEditor-cli-continuous-*.zip
-          release-linux/FF8UltimateEditor-linux_x64-continuous-*.tar.gz
+          release-linux/ff8ultimateeditor-linux_x64-continuous-*.tar.gz
           release-linux/FF8UltimateEditor-cli-linux_x64-continuous-*.tar.gz
         generate_release_notes: false
         make_latest: false
@@ -639,9 +643,11 @@ jobs:
         name: "FF8UltimateEditor-${{ github.ref_name }}"
         body: ${{ steps.official_notes.outputs.release_notes }}
         prerelease: false
+        # One pattern per file: a broader FF8UltimateEditor-*.zip also matched the CLI zip, which
+        # was then uploaded twice at once and the run failed on the second upload (v5.1.0).
         files: |
-          release/FF8UltimateEditor-*.zip
-          release/FF8UltimateEditor-cli-*.zip
-          release-linux/FF8UltimateEditor-linux_x64-*.tar.gz
+          release/FF8UltimateEditor-${{ github.ref_name }}.zip
+          release/FF8UltimateEditor-cli-${{ github.ref_name }}.zip
+          release-linux/ff8ultimateeditor-linux_x64-*.tar.gz
           release-linux/FF8UltimateEditor-cli-linux_x64-*.tar.gz
         generate_release_notes: false
