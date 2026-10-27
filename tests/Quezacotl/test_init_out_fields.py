@@ -120,6 +120,7 @@ def test_unlock_switch_hands_the_unused_fields_back(qapp, files):
     widget.character_list.setCurrentRow(3)
     locked = [widget.gf_unused_spin, widget.gf_ap_spins[21], *widget.char_unused_spins,
               widget.char_status_checks[7], widget.misc_party_combos[3],
+              widget.config_key_combos["key_l3"], widget.config_key_combos["key_r3"],
               *(check for mask, check in widget.config_flag_checks if mask in (0x02, 0x08))]
     assert not any(widget.isEnabled() for widget in locked)
     assert all(check.isEnabled() for mask, check in widget.config_flag_checks if mask not in (0x02, 0x08))
