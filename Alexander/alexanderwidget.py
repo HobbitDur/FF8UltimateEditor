@@ -238,7 +238,7 @@ class AlexanderWidget(QWidget):
         self.sceneout_binding.file_closed.connect(self._on_sceneout_closed)
 
         self.camera_editor = CameraTrackEditor(self.manager, self.preview, room_name="stage file",
-                                               growth_note=STAGE_GROWTH_NOTE)
+                                               growth_note=STAGE_GROWTH_NOTE, context="stage")
         self.camera_editor.keyframes_changed.connect(self._on_camera_edited)
         self.camera_editor.track_changed.connect(self._on_camera_edited)
         self.camera_info = QLabel()

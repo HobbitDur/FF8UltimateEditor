@@ -96,6 +96,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   executable tracks share the battle-context preview and caster/target imports. This previews
   the selected track, not additional procedural writes. Disease Breath (231) has a camera in
   `MAG230_B.00` at `0x870`: 3 blocks, 5 keyframe entries. Bone-driven motion is edited in scripts.
+  The track's Script tab shows its camera script as **User-friendly** rows (commands, battle
+  values, tests and jump targets picked from lists, described in `camera_script.json`) or as
+  **Code**; its info button explains how the script picks the animation.
   **Create a camera:** an item/command effect that starts no camera (5 Phoenix Down, 7 Mega
   Phoenix, 40 Scan, 53, 58, 59, 183 Defend, 292-296) can be given one, from a copy of another
   effect's track (Life, 35, is suggested for 5 and 7) or a minimal one (`play(0)`,

@@ -108,7 +108,7 @@ Edits GF refine abilities: which items/cards convert into which magic, and in wh
 <img src="Resources/screenshots/pandemona.png" width="800">
 
 ### Alexander — battle stage viewer
-Views and edits battle stage geometry/textures (`a0stgXXX.x` files from `battle.fs`). The **Camera** tab edits the stage's camera section (the intro cameras an encounter picks with its scene.out camera bytes): keyframes, slots and the camera script, in the same editor as Fujin, with a battle preview on the stage. **Import read-only** opens `scene.out` (each slot shows the encounters that start with it) and the monster / party models the preview stands. A camera that grows past its room moves the geometry after it: Save then also writes `a0stgNNN.hext` next to the stage, which gives FF8_EN.exe (English Steam exe, FFNx hext) the new geometry offset.
+Views and edits battle stage geometry/textures (`a0stgXXX.x` files from `battle.fs`). The **Camera** tab edits the stage's camera section (the intro cameras an encounter picks with its scene.out camera bytes): keyframes, slots and the camera script, in the same editor as Fujin, with a battle preview on the stage. The Script tab shows the script as **User-friendly** rows (each command and value picked from lists, jumps kept on their command, from `camera_script.json`) or as **Code**; its info button explains what the script does. **Import read-only** opens `scene.out` (each slot shows the encounters that start with it) and the monster / party models the preview stands. A camera that grows past its room moves the geometry after it: Save then also writes `a0stgNNN.hext` next to the stage, which gives FF8_EN.exe (English Steam exe, FFNx hext) the new geometry offset.
 
 <img src="Resources/screenshots/alexander.png" width="800">
 

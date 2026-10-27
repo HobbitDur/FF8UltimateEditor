@@ -1,0 +1,229 @@
+{
+ "comment": "The battle camera script as the user-friendly editor shows it (Common/camerascripteditor.py, FF8GameData/dat/camerascriptsteps.py). The byte code itself is camera_sequence_info.json: this file groups its op codes into commands a modder picks from lists, names every value a parameter can take, and holds the explanation the Script tab's info button shows. Contexts: 'spell' = an attack/spell camera track (exe or MAG), 'stage' = a battle stage's camera section (a0stgNNN.x).",
+ "commands": [
+  {
+   "id": "play",
+   "group": "Camera",
+   "label": "Play camera animation",
+   "op_codes": ["0x00"],
+   "params": ["camera_animation"],
+   "text": "Play camera animation {0}",
+   "help": "Starts a keyframe animation of this track (Keyframes tab). The script goes on with the next command at once: it does not wait for the animation to end."
+  },
+  {
+   "id": "play_var",
+   "group": "Camera",
+   "label": "Play camera animation from a value",
+   "op_codes": ["0x05"],
+   "params": ["read_variable"],
+   "text": "Play the camera animation given by {0}",
+   "help": "Like 'Play camera animation', the animation number (set x 16 + slot) is read from a battle value. A missing set or an empty slot plays nothing."
+  },
+  {
+   "id": "wait",
+   "group": "Flow",
+   "label": "Wait for the next frame",
+   "op_codes": ["0x01"],
+   "params": [],
+   "text": "Wait for the next frame",
+   "help": "Stops the script for this frame; the next frame goes on with the command after it. A script that waits must go back (jump) to a test, or it simply goes on."
+  },
+  {
+   "id": "end",
+   "group": "Flow",
+   "label": "End the script",
+   "op_codes": ["0x02"],
+   "params": [],
+   "text": "End the script (it never runs again)",
+   "help": "Stops the script for good; the camera keeps the animation playing, then holds its last view."
+  },
+  {
+   "id": "capture_return",
+   "group": "Camera",
+   "label": "Save the view as the return view",
+   "op_codes": ["0x03"],
+   "params": [],
+   "text": "Save the current view as the return view",
+   "help": "The view the camera has now becomes the view the battle camera comes back to (the resting view between actions). Also clears the camera flag."
+  },
+  {
+   "id": "return_view",
+   "group": "Camera",
+   "label": "Go back to the return view",
+   "op_codes": ["0x08"],
+   "params": [],
+   "text": "Stop the shot and blend back to the return view",
+   "help": "Ends the script's shot (clears the shot flag) and blends the camera back to the saved return view."
+  },
+  {
+   "id": "wobble",
+   "group": "Camera",
+   "label": "Shake the camera",
+   "op_codes": ["0x04"],
+   "params": ["strength"],
+   "text": "Shake the camera, strength {0}",
+   "help": "Starts a camera oscillation (UpdateCameraOscillation). Not shown by the preview."
+  },
+  {
+   "id": "set_flag",
+   "group": "Camera",
+   "label": "Set the camera flag",
+   "op_codes": ["0x06"],
+   "params": [],
+   "text": "Set the camera flag (0x8000)",
+   "help": "Sets bit 0x8000 of the battle camera flags."
+  },
+  {
+   "id": "clear_flag",
+   "group": "Camera",
+   "label": "Clear the camera flag",
+   "op_codes": ["0x07"],
+   "params": [],
+   "text": "Clear the camera flag (0x8000)",
+   "help": "Clears bit 0x8000 of the battle camera flags."
+  },
+  {
+   "id": "nop",
+   "group": "Flow",
+   "label": "Do nothing",
+   "op_codes": ["0x09"],
+   "params": ["byte"],
+   "text": "Do nothing (skips the byte {0})",
+   "help": "Does nothing; its byte is not read. Tracks use it as filler."
+  },
+  {
+   "id": "value",
+   "group": "Value",
+   "label": "Compute the value",
+   "op_codes": ["0xC0", "0xC1", "0xC2", "0xC3", "0xC4", "0xC5", "0xC6", "0xC7", "0xC8", "0xC9", "0xCA", "0xCB",
+                "0xCC", "0xCD", "0xCE", "0xCF", "0xD0", "0xD1", "0xD2", "0xD3", "0xD4", "0xD5", "0xD6", "0xD7",
+                "0xD8", "0xD9", "0xDA", "0xDB", "0xDC", "0xDD", "0xDE", "0xDF", "0xE0", "0xE1", "0xE2", "0xE3"],
+   "params": ["operation", "operand"],
+   "text": "value {0} {1}",
+   "help": "The script has one working value: these commands set it or change it with a number or a battle value. The tests of 'Jump' and 'Store the value' use it. The byte size of a number is chosen for you."
+  },
+  {
+   "id": "store",
+   "group": "Value",
+   "label": "Store the value",
+   "op_codes": ["0xE5"],
+   "params": ["write_variable"],
+   "text": "Store the value in {0}",
+   "help": "Writes the working value into a camera variable, the shot flag or a saved value."
+  },
+  {
+   "id": "jump",
+   "group": "Jump",
+   "label": "Jump",
+   "op_codes": ["0xE6", "0xE7", "0xE8", "0xE9", "0xEA", "0xEB", "0xEC",
+                "0xED", "0xEE", "0xEF", "0xF0", "0xF1", "0xF2", "0xF3"],
+   "params": ["condition", "jump_target"],
+   "text": "{0}, go to {1}",
+   "help": "Goes on at another command, always or only when the working value passes the test. The offset and its byte size are computed for you; inserting or removing commands keeps every jump on its command."
+  },
+  {
+   "id": "hang",
+   "group": "Value",
+   "label": "Reset the value (bugged)",
+   "op_codes": ["0xE4"],
+   "params": [],
+   "text": "value = 0 - BUGGED: the game hangs here",
+   "help": "The engine never moves past this command: the battle freezes. Do not use it; 'value = 0' does the same thing safely."
+  }
+ ],
+ "operations": [
+  {"id": "set", "label": "=", "help": "value = operand", "number_op_codes": {"int16": "0xC0", "sbyte": "0xC1", "ubyte": "0xC2"}, "variable_op_code": "0xC3"},
+  {"id": "add", "label": "+=", "help": "value = value + operand", "number_op_codes": {"int16": "0xC4", "sbyte": "0xC5", "ubyte": "0xC6"}, "variable_op_code": "0xC7"},
+  {"id": "sub", "label": "-=", "help": "value = value - operand", "number_op_codes": {"int16": "0xC8", "sbyte": "0xC9", "ubyte": "0xCA"}, "variable_op_code": "0xCB"},
+  {"id": "mul", "label": "*=", "help": "value = value x operand", "number_op_codes": {"int16": "0xCC", "sbyte": "0xCD", "ubyte": "0xCE"}, "variable_op_code": "0xCF"},
+  {"id": "div", "label": "/=", "help": "value = value / operand (rounded toward 0)", "number_op_codes": {"int16": "0xD0", "sbyte": "0xD1", "ubyte": "0xD2"}, "variable_op_code": "0xD3"},
+  {"id": "and", "label": "&=", "help": "value = value AND operand (keeps the bits set in both)", "number_op_codes": {"int16": "0xD4", "sbyte": "0xD5", "ubyte": "0xD6"}, "variable_op_code": "0xD7"},
+  {"id": "or", "label": "|=", "help": "value = value OR operand (adds the operand's bits)", "number_op_codes": {"int16": "0xD8", "sbyte": "0xD9", "ubyte": "0xDA"}, "variable_op_code": "0xDB"},
+  {"id": "xor", "label": "^=", "help": "value = value XOR operand (flips the operand's bits)", "number_op_codes": {"int16": "0xDC", "sbyte": "0xDD", "ubyte": "0xDE"}, "variable_op_code": "0xDF"},
+  {"id": "mod", "label": "%=", "help": "value = remainder of value / operand", "number_op_codes": {"int16": "0xE0", "sbyte": "0xE1", "ubyte": "0xE2"}, "variable_op_code": "0xE3"}
+ ],
+ "number_types": [
+  {"id": "sbyte", "min": -128, "max": 127},
+  {"id": "ubyte", "min": 0, "max": 255},
+  {"id": "int16", "min": -32768, "max": 32767}
+ ],
+ "conditions": [
+  {"id": "always", "label": "Always", "op_codes": {"sbyte": "0xE6", "int16": "0xED"}},
+  {"id": "gt", "label": "If value > 0", "op_codes": {"sbyte": "0xE7", "int16": "0xEE"}},
+  {"id": "ge", "label": "If value >= 0", "op_codes": {"sbyte": "0xE8", "int16": "0xEF"}},
+  {"id": "eq", "label": "If value = 0", "op_codes": {"sbyte": "0xE9", "int16": "0xF0"}},
+  {"id": "ne", "label": "If value is not 0", "op_codes": {"sbyte": "0xEA", "int16": "0xF1"}},
+  {"id": "le", "label": "If value <= 0", "op_codes": {"sbyte": "0xEB", "int16": "0xF2"}},
+  {"id": "lt", "label": "If value < 0", "op_codes": {"sbyte": "0xEC", "int16": "0xF3"}}
+ ],
+ "params": {
+  "camera_animation": {"label": "Animation", "help": "Set (Keyframes tab group) and slot (0-7) of the animation; the byte is set x 16 + slot."},
+  "read_variable": {"label": "Battle value", "help": "What the script reads: a camera variable, the shot flag, a slot, a random number..."},
+  "write_variable": {"label": "Variable", "help": "Where the value goes: camera variables 0-7, the shot flag or the saved values."},
+  "strength": {"label": "Strength", "help": "Oscillation strength (0-255)", "min": 0, "max": 255},
+  "byte": {"label": "Byte", "help": "The skipped byte (never read)", "min": 0, "max": 255},
+  "operation": {"label": "Operation", "help": "How the operand changes the working value"},
+  "operand": {"label": "Operand", "help": "A number, or a battle value read when the command runs"},
+  "condition": {"label": "Test", "help": "When the jump is taken (the working value is tested)"},
+  "jump_target": {"label": "Go to", "help": "The command the script goes on at"}
+ },
+ "read_variables": [
+  {"id": "0x00", "label": "Camera variable 0", "help": "Set by the engine before the script starts.",
+   "stage": "The encounter's intro camera (scene.out encounter bytes 0x02/0x03, picked 50/50): the animation to play, set x 16 + slot.",
+   "spell": "The opening shot the attacker played: 0-5 for a character's shot, 8 for a monster's Magic, -1 when none played."},
+  {"id": "0x01", "label": "Camera variable 1", "help": "A variable the script writes with 'Store the value' and reads back. 0 unless a script wrote it."},
+  {"id": "0x02", "label": "Camera variable 2", "help": "A variable the script writes with 'Store the value' and reads back. 0 unless a script wrote it."},
+  {"id": "0x03", "label": "Camera variable 3", "help": "A variable the script writes with 'Store the value' and reads back. 0 unless a script wrote it."},
+  {"id": "0x04", "label": "Camera variable 4", "help": "A variable the script writes with 'Store the value' and reads back. 0 unless a script wrote it."},
+  {"id": "0x05", "label": "Camera variable 5", "help": "A variable the script writes with 'Store the value' and reads back. 0 unless a script wrote it."},
+  {"id": "0x06", "label": "Camera variable 6", "help": "A variable the script writes with 'Store the value' and reads back. 0 unless a script wrote it."},
+  {"id": "0x07", "label": "Camera variable 7", "help": "A variable the script writes with 'Store the value' and reads back. 0 unless a script wrote it."},
+  {"id": "0x10", "label": "Shot flag", "help": "Not 0 while an animation this script started still plays (one bit per slot, bit = 1 << slot). Test it to wait for the end of a shot.",
+   "stage": "The stage script loops on it: it waits until the intro shot is over."},
+  {"id": "0x11", "label": "Random number", "help": "A random number (0-255)."},
+  {"id": "0x13", "label": "Party members (state bit 2)", "help": "Number of party members whose animation state has bit 2."},
+  {"id": "0x15", "label": "Target's camera category", "help": "The target monster's camera category (section 7 byte 246, 0-5); 0 for a character."},
+  {"id": "0x16", "label": "Target's status", "help": "The target's animation status: bit 0 = low HP (also Poison/Sleep/Curse for a character), bit 1 = dead."},
+  {"id": "0x17", "label": "Action count - 1", "help": "The action's count minus 1 (battle task value 2)."},
+  {"id": "0x18", "label": "Attacker slot", "help": "Who acts: 0-2 party, 3-10 monsters."},
+  {"id": "0x19", "label": "Target slot", "help": "Who is targeted: 0-2 party, 3-10 monsters."},
+  {"id": "0x1A", "label": "Number of targets", "help": "How many targets the action hits."},
+  {"id": "0x1B", "label": "Party members with no status", "help": "Number of party members whose animation status is 0."},
+  {"id": "0x1C", "label": "Random 0-1", "help": "A random number modulo 2."},
+  {"id": "0x1D", "label": "Random 0-2", "help": "A random number modulo 3."},
+  {"id": "0x1E", "label": "Random 0-3", "help": "A random number modulo 4."},
+  {"id": "0x1F", "label": "Random 0-4", "help": "A random number modulo 5."},
+  {"id": "0x20", "label": "Random 0-5", "help": "A random number modulo 6."},
+  {"id": "0x21", "label": "Random 0-6", "help": "A random number modulo 7."},
+  {"id": "0x22", "label": "Random 0-7", "help": "A random number modulo 8."},
+  {"id": "0x23", "label": "Value 0x23 (unknown)", "help": "The result of sub_50E4E0, not identified yet."},
+  {"id": "0x78", "label": "Saved value 0", "help": "A camera value kept between scripts (camera stack word)."},
+  {"id": "0x79", "label": "Saved value 1", "help": "A camera value kept between scripts (camera stack word)."},
+  {"id": "0x7A", "label": "Saved value 2", "help": "A camera value kept between scripts (camera stack word)."},
+  {"id": "0x7B", "label": "Saved value 3", "help": "A camera value kept between scripts (camera stack word)."},
+  {"id": "0x7C", "label": "Saved value 4", "help": "A camera value kept between scripts (camera stack word)."},
+  {"id": "0x7D", "label": "Saved value 5", "help": "A camera value kept between scripts (camera stack word)."},
+  {"id": "0x7E", "label": "Saved value 6", "help": "A camera value kept between scripts (camera stack word)."},
+  {"id": "0x7F", "label": "Saved value 7", "help": "A camera value kept between scripts (camera stack word)."}
+ ],
+ "write_variables": ["0x00", "0x01", "0x02", "0x03", "0x04", "0x05", "0x06", "0x07", "0x10",
+                     "0x78", "0x79", "0x7A", "0x7B", "0x7C", "0x7D", "0x7E", "0x7F"],
+ "other_variable": {"label": "Id 0x{:02X} (no meaning)", "help": "An id with no battle value: it reads id - 16 (stack ids 0x80+ read the camera stack); writing it does nothing."},
+ "info": {
+  "title": "Camera script",
+  "common": [
+   "<b>What it is</b> - every camera track starts with a small byte-code script. The engine runs it each frame (BS_UpdateCameraSequence) to choose <i>which</i> keyframe animation of the track plays: the Keyframes tab holds the animations, the script picks one (set x 16 + slot) from the battle state and starts it.",
+   "<b>How it runs</b> - the commands run from the top, one after the other, until 'Wait for the next frame' (the next frame goes on after it) or 'End the script'. The script has one working value: 'Compute the value' sets or changes it from numbers or battle values (attacker, target, random numbers, camera variables...), 'Jump' goes to another command when the value passes a test, 'Store the value' keeps it in a variable.",
+   "<b>What can be edited</b> - everything: the commands, their order, the animation played, the values tested, the jumps. The <i>User-friendly</i> view lists every command and every value a parameter can take; the <i>Code</i> view is the same script as text (one command per line). Edits are kept only on <b>Apply</b>, which also checks the size. The preview runs the applied script.",
+   "<b>Size</b> - the bar under the editor shows the bytes used and the room. A shorter script is filled up on Apply; a longer one makes the track grow where its file allows it."
+  ],
+  "stage": [
+   "<b>Battle stage script</b> - the engine installs it once, at the start of the battle (BS_CameraInit), with the encounter's intro camera in <i>Camera variable 0</i> (scene.out encounter bytes 0x02/0x03, main or alternative 50/50). Every vanilla stage has the same script: play the animation in variable 0, wait frame after frame while the <i>Shot flag</i> says it plays, save the view it ended on as the battle's return view, end.",
+   "Once an attack plays its own camera, the stage script never runs again: it only makes the battle intro and the resting view. A grown script pushes the stage's geometry (the .hext saved beside the stage tells the exe where it moved)."
+  ],
+  "spell": [
+   "<b>Attack / spell script</b> - the engine starts it with the action, with the attacker's opening shot in <i>Camera variable 0</i>. Scripts usually test the attacker or target slot, the target's camera category or a random number, play one animation and end in the same frame."
+  ],
+  "wiki": "https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/battle/model-sections/camera-sequence/"
+ }
+}

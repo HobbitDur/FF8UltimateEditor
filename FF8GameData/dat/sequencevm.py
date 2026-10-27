@@ -97,8 +97,10 @@ def entity_sequence_vm(game_data) -> SequenceVM:
 def camera_sequence_vm(game_data) -> SequenceVM:
     """The camera VM (camera_sequence_info.json): opcodes 00-09, no animation range, no
     variable-size families - every action op code is fixed size from the json."""
-    return SequenceVM(game_data.camera_sequence_data_json,
-                      animation_op_code_max=0, async_anim_op_code=None, name="camera")
+    vm = SequenceVM(game_data.camera_sequence_data_json,
+                    animation_op_code_max=0, async_anim_op_code=None, name="camera")
+    vm.script_json = getattr(game_data, "camera_script_data_json", {})  # the script editor's json
+    return vm
 
 
 def as_sequence_vm(game_data_or_vm) -> SequenceVM:

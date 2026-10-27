@@ -10,15 +10,25 @@ longer script use that filler, and an edit that needs more than the room is refu
 
 `manager` edits the script (FF8GameData.dat.cameratrack.CameraScriptTools); `preview`, if any,
 plays the track: set_track(track), preview_animation(animation), refresh(), a `track` attribute
-and an `animation_chosen` signal (the animation index the script plays, or None)."""
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QFont
+and an `animation_chosen` signal (the animation index the script plays, or None).
+
+The Script tab has two views of the same code: User-friendly (Common.camerascripteditor, one row
+per command with lists of values) and Code (text). The code text is what Apply reads; a
+user-friendly edit rewrites it. `context` ("spell", "stage") picks what the info button and the
+value lists say about the track's script (camera_script.json)."""
+from PyQt6.QtCore import pyqtSignal, QSize, Qt
+from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTabWidget, QPlainTextEdit,
-                             QPushButton, QScrollArea, QSplitter, QMessageBox)
+                             QPushButton, QScrollArea, QSplitter, QMessageBox, QComboBox, QStackedWidget)
 
 from FF8GameData.dat.camerascript import animation_index_parts
 from FF8GameData.dat.sequencecodec import code_to_sequence, sequence_to_code
+from Common.apppaths import app_path
 from Common.cameracollectionwidget import CameraCollectionWidget
+from Common.camerascripteditor import CameraScriptStepsWidget
+
+VIEW_USER_FRIENDLY = 0
+VIEW_CODE = 1
 
 
 class CameraTrackEditor(QWidget):
@@ -28,12 +38,14 @@ class CameraTrackEditor(QWidget):
     # Where a grown track goes (no fixed_size): an exe spell track only fits an FFNx .bcam file
     EXE_GROWTH_NOTE = "the vanilla exe cannot use it any more, an FFNx .bcam file can"
 
-    def __init__(self, manager, preview=None, room_name="exe", parent=None, growth_note=EXE_GROWTH_NOTE):
+    def __init__(self, manager, preview=None, room_name="exe", parent=None, growth_note=EXE_GROWTH_NOTE,
+                 context="spell"):
         super().__init__(parent)
         self.manager = manager
         self.preview = preview
         self.room_name = room_name
         self.growth_note = growth_note
+        self.context = context
         self.slot_notes = {}       # (set index, slot) -> note shown with the slot
         self.track = None
         self.fixed_size = None
@@ -60,6 +72,20 @@ class CameraTrackEditor(QWidget):
         self.apply_script_button = QPushButton("Apply script")
         self.apply_script_button.clicked.connect(self._apply_script)
         self.script_size_label = QLabel()
+        self.script_steps = CameraScriptStepsWidget(lambda: self.manager.vm, self.context)
+        self.script_steps.script_edited.connect(self._on_steps_edited)
+
+        self.script_info_button = QPushButton()
+        self.script_info_button.setIcon(QIcon(str(app_path("Resources", "info.png"))))
+        self.script_info_button.setIconSize(QSize(30, 30))
+        self.script_info_button.setFixedSize(40, 40)
+        self.script_info_button.setToolTip("What the camera script does and what can be edited")
+        self.script_info_button.clicked.connect(self._show_script_info)
+        self.script_view_combo = QComboBox()
+        self.script_view_combo.addItems(["User-friendly", "Code"])
+        self.script_view_combo.setToolTip("User-friendly: one row per command, values picked from lists. "
+                                          "Code: the same script as text. Both are kept until Apply.")
+        self.script_view_combo.currentIndexChanged.connect(self._change_script_view)
         self.script_description = QPlainTextEdit()
         self.script_description.setReadOnly(True)
         self.script_description.setFont(monospace)
@@ -70,10 +96,6 @@ class CameraTrackEditor(QWidget):
         editor_layout.setContentsMargins(0, 0, 0, 0)
         editor_layout.addWidget(QLabel("Code (editable)"))
         editor_layout.addWidget(self.script_editor, 1)
-        apply_row = QHBoxLayout()
-        apply_row.addWidget(self.apply_script_button)
-        apply_row.addWidget(self.script_size_label, 1)
-        editor_layout.addLayout(apply_row)
         description_side = QWidget()
         description_layout = QVBoxLayout(description_side)
         description_layout.setContentsMargins(0, 0, 0, 0)
@@ -84,7 +106,53 @@ class CameraTrackEditor(QWidget):
         splitter.addWidget(editor_side)
         splitter.addWidget(description_side)
         splitter.setStretchFactor(1, 2)
-        return splitter
+
+        self.script_views = QStackedWidget()
+        self.script_views.addWidget(self.script_steps)   # VIEW_USER_FRIENDLY
+        self.script_views.addWidget(splitter)            # VIEW_CODE
+        top_row = QHBoxLayout()
+        top_row.addWidget(self.script_info_button)
+        top_row.addWidget(QLabel("View:"))
+        top_row.addWidget(self.script_view_combo)
+        top_row.addStretch(1)
+        apply_row = QHBoxLayout()
+        apply_row.addWidget(self.apply_script_button)
+        apply_row.addWidget(self.script_size_label, 1)
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(top_row)
+        layout.addWidget(self.script_views, 1)
+        layout.addLayout(apply_row)
+        return tab
+
+    def _show_script_info(self):
+        info = self.script_steps.info
+        message = QMessageBox(self)
+        message.setIcon(QMessageBox.Icon.Information)
+        message.setWindowTitle(info.info["title"])
+        message.setTextFormat(Qt.TextFormat.RichText)
+        message.setText(info.info_html(self.context))
+        message.exec()
+
+    def _change_script_view(self, view):
+        """Code -> User-friendly shows the code as it is now; code that does not parse keeps the Code view."""
+        if view == VIEW_USER_FRIENDLY:
+            try:
+                script = bytes(code_to_sequence(self.manager.vm, self.script_editor.toPlainText()))
+            except ValueError as error:
+                self.script_view_combo.blockSignals(True)
+                self.script_view_combo.setCurrentIndex(VIEW_CODE)
+                self.script_view_combo.blockSignals(False)
+                self._refuse("The code cannot be shown as commands", error)
+                return
+            if self.track is not None:
+                self.script_steps.set_script(script)
+        self.script_views.setCurrentIndex(view)
+
+    def _on_steps_edited(self, script):
+        """A user-friendly edit: the code text follows (Apply reads it)."""
+        self.script_editor.setPlainText(sequence_to_code(self.manager.vm, script))
 
     # ------------------------------------------------------------------ track
     def set_track(self, track, fixed_size=None):
@@ -110,6 +178,9 @@ class CameraTrackEditor(QWidget):
             self._set_script_texts("", "")
         else:  # a fixed room shows the script without its filler, whose size follows the keyframes
             self._set_script_texts(sequence_to_code(self.manager.vm, self._code), self.manager.script_text(track))
+        self.script_steps.collection = None if track is None else track.collection
+        self.script_steps.slot_notes = dict(self.slot_notes)
+        self.script_steps.set_script(None if track is None else self._code)
         if self.preview is not None:
             self.preview.set_track(track)
 
@@ -119,10 +190,12 @@ class CameraTrackEditor(QWidget):
         if self.track is not None:
             expanded = self._collection_widget.expanded_set_indices() if self._collection_widget else ()
             self._set_collection_widget(self.track, expanded)
+            self.script_steps.set_collection(self.track.collection, self.slot_notes)
 
     def set_enabled(self, enabled):
         self.apply_script_button.setEnabled(enabled)
         self.script_editor.setReadOnly(not enabled)
+        self.script_steps.setEnabled(enabled)
 
     def script_room(self):
         """Bytes the script may use: its exe length, or what the fixed room leaves after the keyframes."""
@@ -226,6 +299,7 @@ class CameraTrackEditor(QWidget):
         self._set_collection_widget(track, expanded)
         self.keyframe_scroll.verticalScrollBar().setValue(scroll)
         self.script_description.setPlainText(self.manager.script_text(track))
+        self.script_steps.set_collection(track.collection, self.slot_notes)   # sets and empty slots changed
         self._update_script_size()
         self.track_changed.emit()
         if self.preview is not None:
@@ -251,6 +325,7 @@ class CameraTrackEditor(QWidget):
             self._refuse("The script was not applied", error)
             return
         self._set_script_texts(code, self.manager.script_text(track))
+        self.script_steps.set_script(bytes(code_to_sequence(self.manager.vm, code)))
         self.track_changed.emit()
         if self.preview is not None:
             self.preview.set_track(track)  # the script may now choose another animation
