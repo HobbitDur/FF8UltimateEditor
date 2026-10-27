@@ -107,9 +107,11 @@ def test_ifrit_open_save_are_on_the_shared_toolbar(main_window):
     tb._on_tool_changed()
     # No main binding - Import runs through the open_files() hook, Save through save_folder(). Its
     # bindings are complementary: kernel.bin names the spells/items/enemy attacks, scene.out
-    # gives the linked monster parts drawn in the 3D view (Seifer's Gunblade...).
+    # gives the linked monster parts drawn in the 3D view (Seifer's Gunblade...) and the battle
+    # previews' encounters, audio.fmt plays the Sequence tab's sounds, mngrp.bin its battle texts.
     assert tb._main_bindings() == []
-    assert [b.file_name for b in tb._complementary_bindings()] == ["kernel.bin", "scene.out"]
+    assert [b.file_name for b in tb._complementary_bindings()] == ["kernel.bin", "scene.out", "audio.fmt",
+                                                                    "mngrp.bin"]
     assert callable(getattr(ifrit, "open_files", None)) and callable(getattr(ifrit, "save_folder", None))
     assert tb.import_button.isEnabled()          # enabled via open_files(), no bindings needed
     assert tb.save_button.isEnabled() is False   # nothing changed/loaded yet (can_save_folder False)
@@ -378,9 +380,10 @@ def test_compress_buttons_route_to_the_active_tool(main_window, monkeypatch):
 
 @pytest.mark.ff8data("extracted_files/battle/a0stg000.x")
 def test_alexander_open_files_hook_and_auto_save_enable(main_window, monkeypatch):
-    """Alexander has no FileBinding at all (a0stgXXX.x has no fixed name, and several are opened
-    into a list at once): Import calls its open_files() hook, and Save enables itself via
-    file_bindings_changed once a stage is loaded, without the user touching the header again."""
+    """Alexander has no main FileBinding (a0stgXXX.x has no fixed name, and several are opened
+    into a list at once), only scene.out read-only for its Camera preview: Import calls its
+    open_files() hook, and Save enables itself via file_bindings_changed once a stage is loaded,
+    without the user touching the header again."""
     from PyQt6.QtWidgets import QFileDialog, QMessageBox
     monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
     monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
@@ -389,7 +392,8 @@ def test_alexander_open_files_hook_and_auto_save_enable(main_window, monkeypatch
     main_window.tool_stack.setCurrentWidget(alexander)
     tb._on_tool_changed()
 
-    assert tb._main_bindings() == [] and tb._complementary_bindings() == []
+    assert tb._main_bindings() == [] and tb._complementary_bindings() == [alexander.sceneout_binding]
+    assert any("scene.out" in label for label, _callback in alexander.complementary_entries())
     assert tb.import_button.isEnabled() is True     # enabled via open_files(), no bindings needed
     assert not hasattr(alexander, "open_x_btn") and not hasattr(alexander, "save_btn")
     assert tb.save_button.isEnabled() is False       # nothing loaded yet

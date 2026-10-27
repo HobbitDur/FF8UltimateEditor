@@ -1,6 +1,7 @@
-"""Who stands in a battle preview: the party (a character and its weapon per slot) and, for a
-camera, the caster and the target - one panel shared by every battle preview (Fujin's effect
-cameras, Ifrit's Camera and Sequence tabs and its 3D battle view, SolomonRing's commands).
+"""The battle setup every battle preview shows, the same widget everywhere (Fujin's effect camera
+and effect previews, Ifrit's Camera and Sequence tabs and its 3D battle view, SolomonRing's
+commands): the scene.out encounter (and the slot of the model filmed), the party (a character and
+its weapon per slot) and, for a camera, the caster and the target.
 
 The models are only the .dat files the host's user loaded (Ifrit's file list, Fujin's imported
 models...): the panel lists them, it never opens a file nor looks one up in a folder; scene.out
@@ -31,6 +32,10 @@ FIRST_ENEMY_SLOT = 3
 _MONSTER_FILE = re.compile(r"^c0m(\d{3})\.dat$", re.IGNORECASE)
 _CHARACTER_FILE = re.compile(r"^d([0-9a-f])c\d{3}\.dat$", re.IGNORECASE)
 _WEAPON_FILE = re.compile(r"^d([0-9a-f])w\d{3}\.dat$", re.IGNORECASE)
+# Read-only models of the loaded files, shared by every panel (Ifrit's Camera and Sequence tabs and
+# 3D battle view stand the same files): (game data, path, modification time) -> IfritManager
+_MODEL_CACHE = {}
+_MODEL_CACHE_SIZE = 16
 NO_CHARACTER_TEXT = ("No character loaded: open character .dat files (d?c###.dat, and their d?w###.dat "
                      "weapons) to stand the party.")
 
@@ -70,17 +75,18 @@ class BattleCastPanel(QWidget):
     changed = pyqtSignal()
 
     def __init__(self, game_data, model_paths=None, mode="cast", main_manager=None, main_path=None,
-                 parent=None):
+                 file_registry=None, picker_manager=None, parent=None):
         """game_data: the GameData the models are read with, or a callable returning it fully loaded
         (Fujin loads its data on the first model). model_paths: callable -> the loaded .dat paths
         (None: none). main_manager/main_path: the host's own model (modes "role" and "other"), drawn
-        live - its edits show."""
+        live - its edits show. file_registry: the shared file bank (scene.out). picker_manager: the
+        manager whose model the encounter list is filtered for (default main_manager; Fujin's stage)."""
         super().__init__(parent)
         self.game_data = game_data
         self.model_paths_source = model_paths
         self.mode = mode
         self.main_manager = main_manager
-        self.main_path = main_path
+        self._main_path = main_path
         self.setup = None                      # the BattlePreviewSetup fed (attach)
         self._models = {}                      # path -> loaded read-only IfritManager
         self._failed = set()
@@ -89,6 +95,15 @@ class BattleCastPanel(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        from .encounterpreview import EncounterPicker
+        self.encounters = EncounterPicker(picker_manager if picker_manager is not None else main_manager,
+                                          file_registry, host_cast=mode == "cast")
+        # with a model of the host's, the encounter's slot pick is that model's own slot (a monster);
+        # a character's opponent is Other's
+        self.encounters.monster_slot_only = mode != "cast"
+        self.encounters.refresh_model(force=True)
+        self.encounters.changed.connect(self._encounter_changed)   # once the pickers below exist
+        layout.addWidget(self.encounters)
         grid = QGridLayout()
         grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(QLabel("Party"), 0, 0)
@@ -142,6 +157,15 @@ class BattleCastPanel(QWidget):
         layout.addWidget(self.message)
         self.refresh()
 
+    @property
+    def main_path(self):
+        """The host's model file: the one given, else the file its manager holds now (a camera
+        preview reloads its manager with another file)."""
+        if self._main_path is not None:
+            return self._main_path
+        enemy = getattr(self.main_manager, 'enemy', None)
+        return getattr(enemy, 'origin_path', None) or None
+
     # ------------------------------------------------------------------ models
     def model_paths(self):
         paths = list(self.model_paths_source() or []) if self.model_paths_source is not None else []
@@ -175,17 +199,29 @@ class BattleCastPanel(QWidget):
             return self.main_manager
         if path not in self._models:
             from Ifrit.IfritCameraSeq.battlepreview import BattlePreviewSetup
-            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            game_data = self.game_data() if callable(self.game_data) else self.game_data
             try:
-                game_data = self.game_data() if callable(self.game_data) else self.game_data
-                self._models[path] = BattlePreviewSetup._load_model(path, game_data, weapon=is_weapon_file(path))
-            except Exception as error:
-                self._failed.add(path)
+                key = (id(game_data), os.path.normcase(os.path.abspath(path)), os.path.getmtime(path))
+            except OSError:
+                key = None
+            if key is not None and key in _MODEL_CACHE:
+                self._models[path] = _MODEL_CACHE[key]
+            else:
+                QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+                try:
+                    manager = BattlePreviewSetup._load_model(path, game_data, weapon=is_weapon_file(path))
+                except Exception as error:
+                    self._failed.add(path)
+                    QApplication.restoreOverrideCursor()
+                    QMessageBox.warning(self, "Battle preview", f"Cannot use {file_name(path)}: {error}")
+                    return None
                 QApplication.restoreOverrideCursor()
-                QMessageBox.warning(self, "Battle preview", f"Cannot use {file_name(path)}: {error}")
-                return None
-            QApplication.restoreOverrideCursor()
-            if len(self._models) > 16:  # a long session revisiting encounters stays bounded
+                if key is not None:
+                    _MODEL_CACHE[key] = manager
+                    while len(_MODEL_CACHE) > _MODEL_CACHE_SIZE:  # a long session stays bounded
+                        _MODEL_CACHE.pop(next(iter(_MODEL_CACHE)))
+                self._models[path] = manager
+            if len(self._models) > _MODEL_CACHE_SIZE:
                 self._models.pop(next(iter(self._models)))
         return self._models[path]
 
@@ -261,19 +297,21 @@ class BattleCastPanel(QWidget):
 
     # ------------------------------------------------------------------ cast
     def _encounter(self):
-        return self.setup.encounters.selected if self.setup is not None else None
+        return self.encounters.selected
 
     def main_key(self):
         """The actor key of the host's model (modes "role" and "other"), None in "cast" mode."""
-        if self.main_path is None:
+        if self.main_manager is None:
             return None
-        if is_character_file(self.main_path):
+        character = (is_character_file(self.main_path) if self.main_path is not None else
+                     getattr(getattr(self.main_manager.enemy, 'entity_type', None), 'name', '').startswith('CHARACTER'))
+        if character:
             return next((("party", slot) for slot, (path, _weapon) in self.party_members().items()
                          if _same(path, self.main_path)), ("party", 0))
-        slot = self.setup.encounters.selected_slot if self._encounter() is not None else None
+        slot = self.encounters.selected_slot if self._encounter() is not None else None
         if slot is not None:
             return "enemy", slot.slot_index
-        return "monster", self.main_path
+        return "monster", self.main_path      # (a model with no file: no path)
 
     def _cast_options(self):
         """[(label, actor key)] of the battle slots that can stand in the preview."""
@@ -281,7 +319,7 @@ class BattleCastPanel(QWidget):
                    for slot, (path, _weapon) in self.party_members().items()]
         encounter = self._encounter()
         if encounter is not None:
-            picker = self.setup.encounters
+            picker = self.encounters
             options += [(f"Enemy {FIRST_ENEMY_SLOT + slot.slot_index}: {picker.monster_name(slot.com_file_id)} "
                          f"(c0m{slot.com_file_id:03})", ("enemy", slot.slot_index))
                         for slot in encounter.enabled_slots()]
@@ -392,21 +430,15 @@ class BattleCastPanel(QWidget):
 
     # ------------------------------------------------------------------ feeding the setup
     def attach(self, setup):
-        """Drive this BattlePreviewSetup: its encounters list the enemies the pickers offer."""
+        """Drive this BattlePreviewSetup (its encounter picker is this panel's)."""
         self.setup = setup
-        setup.encounters.changed.connect(self._encounter_changed)
-        self._updating = True
-        try:
-            self._fill_cast_combos()
-        finally:
-            self._updating = False
 
     def _encounter_changed(self):
         """Another encounter (or slot of the host's monster): offer its slots. A character caster
         faces the picker's enemy slot."""
         if self._updating:
             return
-        picker = self.setup.encounters
+        picker = self.encounters
         self._updating = True
         try:
             self._fill_cast_combos()
@@ -431,6 +463,8 @@ class BattleCastPanel(QWidget):
                 return None
         else:
             main_key = self.main_key()
+            if main_key is None:
+                return None
         other_key = target_key if main_key == caster_key else caster_key
         members = self.party_members()
         setup.model_source = lambda name: self.model(self.path_of(name))   # loaded files only, one cache
@@ -438,8 +472,11 @@ class BattleCastPanel(QWidget):
                               for slot, (body, weapon) in members.items()
                               if main_key != ("party", slot) and self.model(body) is not None}
         setup.role.setCurrentIndex(0 if main_key == caster_key else 1)
-        setup.opponent = self.actor_model(other_key) if other_key != main_key else None
-        setup.opponent_weapon = self.actor_weapon(other_key)
+        # The other model stands by hand only without an encounter: in one, every actor already has
+        # its place (party, scene.out slots) and Other only says which slot is the target
+        manual = self._encounter() is None
+        setup.opponent = self.actor_model(other_key) if manual and other_key != main_key else None
+        setup.opponent_weapon = self.actor_weapon(other_key) if manual else None
         size = max(members) + 1 if members else 1
         if main_key[0] == "party":
             # the formation depends on the party size, with an encounter or without

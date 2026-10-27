@@ -24,6 +24,7 @@ class EncounterPicker(QWidget):
         self._model_key = None
         self._name_cache = {}
         self.host_cast = host_cast
+        self.monster_slot_only = False     # the slot pick only for a monster (the host picks the rest)
         self.registry = registry if registry is not None else FileRegistry()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -59,7 +60,10 @@ class EncounterPicker(QWidget):
 
     @property
     def is_monster(self):
-        return getattr(self.manager.enemy.entity_type, 'name', '').startswith('MONSTER')
+        """Whether the model filmed is a monster (False before a host has one: Fujin before its
+        caster is chosen - every encounter is offered then)."""
+        enemy = getattr(self.manager, 'enemy', None)
+        return getattr(getattr(enemy, 'entity_type', None), 'name', '').startswith('MONSTER')
 
     @property
     def selected(self):
@@ -144,8 +148,9 @@ class EncounterPicker(QWidget):
                     self.enemy_slot.setCurrentIndex(self.enemy_slot.count() - 1)
         self.enemy_slot.blockSignals(False)
         self.slot_label.setText('Loaded monster:' if self.is_monster else 'Enemy opponent:')
-        self.slot_label.setVisible(encounter is not None and not self.host_cast)
-        self.enemy_slot.setVisible(encounter is not None and not self.host_cast)
+        shown = encounter is not None and not self.host_cast and (self.is_monster or not self.monster_slot_only)
+        self.slot_label.setVisible(shown)
+        self.enemy_slot.setVisible(shown)
         if encounter is None:
             count = self.encounter.count() - 1
             self.status.setText(f'{count} matching encounters. Manual placement.' if self.path else

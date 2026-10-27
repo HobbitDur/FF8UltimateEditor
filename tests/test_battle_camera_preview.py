@@ -238,11 +238,13 @@ def test_shared_preview_battle_setup_and_read_only_opponent():
     panel._slider.setValue(10)
     np.testing.assert_allclose(panel._gl._explicit_eye,
                                panel._battle_setup.to_viewer(panel._poses[9].eye))
-    assert panel._battle_setup.load_opponent(ROOT / 'extracted_files/battle/c0m071.dat')
+    # the other model: a loaded file (the host's list), picked in the battle setup panel
+    panel._battle_setup.set_model_paths(lambda: [str(BODY), str(ROOT / 'extracted_files/battle/c0m071.dat')])
+    assert panel._battle_setup.cast.other_key() == ('monster', str(ROOT / 'extracted_files/battle/c0m071.dat'))
     assert panel._gl._preview_actor is not None
     assert panel._gl._preview_actor.vertices.shape[1] == 3
     assert any(batch.pixmap is not None for batch in panel._gl._preview_actor.batches)
-    panel._battle_setup.role.setCurrentIndex(1)
+    panel._battle_setup.cast.role_combo.setCurrentIndex(1)       # this model is the target
     assert panel._battle_setup.context.target.position == (0., 0., 0.)
     panel._battle_setup.view_mode.setCurrentIndex(1)
     assert panel._gl._explicit_view is None
@@ -279,7 +281,8 @@ def test_scene_picker_places_world_actors_without_environment_or_file_edits(tmp_
     setup = panel._battle_setup
     # the host's opened models (Ifrit's file list): nothing is read from scene.out's folder
     opened = {'c0m071.dat': str(ROOT / 'extracted_files/battle/c0m071.dat'), 'd0c000.dat': str(BODY)}
-    setup.model_source = opened.get
+    setup.set_model_paths(lambda: list(opened.values()))
+    cast = setup.cast
     assert setup.group._toggle.arrowType() == Qt.ArrowType.RightArrow
     assert setup.options.isAncestorOf(setup.encounters)
     assert setup.options.isEnabled()  # folding hides; it never disables controls
@@ -289,7 +292,7 @@ def test_scene_picker_places_world_actors_without_environment_or_file_edits(tmp_
     assert 'G-Soldier' in picker.encounter.itemText(1)
     assert 'c0m071' not in picker.encounter.itemText(1)
     picker.encounter.setCurrentIndex(1)
-    assert setup.context.caster.position == (-1200, 0, 2100)
+    assert setup.context.caster.position == (0, 0, 1800)     # the party: Squall alone, in the middle
     assert setup.main_yaw == 0.
     assert setup.context.target.yaw == math.pi
     assert setup.context.target.position == (-1100, 77, -2900)
@@ -299,15 +302,15 @@ def test_scene_picker_places_world_actors_without_environment_or_file_edits(tmp_
     assert all(actor is not None for _manager, actor in setup._scene_mesh_actors)
     assert panel._gl._preview_markers == (None, None)
     assert not panel._gl.show_axis
-    setup.party_size.setValue(1)
-    assert setup.context.caster.position == (0, 0, 1800)
-    setup.party_size.setValue(2)
-    setup.party_slot.setValue(1)
+    # Squall moved to the party's slot 1: a party of two, him on the right
+    cast.party_combos[0].setCurrentIndex(0)
+    cast.party_combos[1].setCurrentIndex(cast.party_combos[1].findData(str(BODY)))
     assert setup.context.caster.position == (1000, 0, 1800)
     assert setup.caster_slot.value() == 1
-    setup.party_size.setValue(3)
-    setup.party_slot.setValue(0)
-    picker.enemy_slot.setCurrentIndex(1)
+    cast.party_combos[1].setCurrentIndex(0)
+    cast.party_combos[0].setCurrentIndex(cast.party_combos[0].findData(str(BODY)))
+    from Ifrit.IfritCameraSeq.battlecast import index_of
+    cast.target_combo.setCurrentIndex(index_of(cast.target_combo, ('enemy', 1)))   # Other: the second soldier
     assert setup.context.target.position == (1300, 0, -4200)
     assert setup.target_slot.value() == 4
     assert panel._gl._preview_model_transform[1] == pytest.approx(0)
@@ -331,7 +334,7 @@ def test_scene_picker_places_world_actors_without_environment_or_file_edits(tmp_
     picker.encounter.setCurrentIndex(1)
     picker.enemy_slot.setCurrentIndex(1)
     assert setup.context.caster.position == (1300, 0, -4200)
-    assert setup.context.target.position == (-1200, 0, 2100)
+    assert setup.context.target.position == (0, 0, 1800)      # Other: Squall, the party alone
     assert setup.main_yaw == math.pi and setup.context.target.yaw == 0
     assert setup.caster_slot.value() == 4 and setup.target_slot.value() == 0
     np.testing.assert_allclose(panel._gl._preview_model_transform[0],

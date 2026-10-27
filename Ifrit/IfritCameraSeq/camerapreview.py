@@ -80,7 +80,7 @@ class CameraPreviewPanel(QWidget):
     _FPS = 15
 
     def __init__(self, ifrit_manager, parent=None, show_model_animation=True, battle_context=True,
-                 file_registry=None, host_cast=False):
+                 file_registry=None, host_cast=False, cast=None):
         super().__init__(parent)
         self.ifrit_manager = ifrit_manager
         self.setMinimumWidth(420 if battle_context else 320)
@@ -101,9 +101,9 @@ class CameraPreviewPanel(QWidget):
         self._battle_setup = None
         if battle_context:
             from Ifrit.IfritCameraSeq.battlepreview import BattlePreviewSetup
-            # host_cast: the host places the actors itself and opens files from the header toolbar
+            # cast: the host's own battle setup panel (Fujin), shown by the host
             self._battle_setup = BattlePreviewSetup(ifrit_manager, file_registry=file_registry,
-                                                    host_cast=host_cast)
+                                                    host_cast=host_cast, cast=cast)
             self._battle_setup.changed.connect(self._rebuild_battle)
             # Folded or not, the Battle setup stays as the user left it (all camera previews)
             self._battle_setup.group.remember(getattr(file_registry, "settings", None),

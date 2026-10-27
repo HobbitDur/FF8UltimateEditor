@@ -308,19 +308,24 @@ def test_last_selected_variant_is_preferred_to_canonical_file(tmp_path):
     assert AutoImportSource.for_binding(binding).find_paths(registry) == [selected]
 
 
-def test_ifrit_manual_import_saves_only_its_last_pick(main_window, tmp_path, monkeypatch):
+@pytest.mark.ff8data("extracted_files/battle/c0m040.dat", "extracted_files/battle/c0m041.dat",
+                     "extracted_files/battle/c0m071.dat")
+def test_ifrit_auto_upload_reopens_the_whole_session(main_window):
+    """Two Imports, then a closed file: Auto-upload reopens what the list shows, not the last pick."""
     tool = main_window._ifrit_widget
+    tool._ask_ram_budget = lambda *a: True
     registry = main_window.file_registry
-    paths = [touch(tmp_path, name) for name in ("c0m000.dat", "c0m001.dat", "c0m002.dat")]
-    loader = Mock()
-    monkeypatch.setattr(tool, "_append_to_session", loader)
+    paths = [str(Path(__file__).resolve().parents[2] / "extracted_files/battle" / name)
+             for name in ("c0m040.dat", "c0m041.dat", "c0m071.dat")]
     tool.open_files(paths[:2])
     assert registry.last_files("Ifrit battle models") == paths[:2]
     tool.open_files(paths[2:])
-    assert registry.last_files("Ifrit battle models") == paths[2:]
+    assert registry.last_files("Ifrit battle models") == paths
+    tool._close_file(1)
+    assert registry.last_files("Ifrit battle models") == [paths[0], paths[2]]
     # Xu shares the model directory, but keeps a separate selected set.
     registry.remember_files("Xu battle models", paths[:1])
-    assert tool.auto_import_sources()[0].find_paths(registry) == paths[2:]
+    assert tool.auto_import_sources()[0].find_paths(registry) == [paths[0], paths[2]]
 
 
 def test_cancelled_import_does_not_clear_previous_selection(tmp_path):

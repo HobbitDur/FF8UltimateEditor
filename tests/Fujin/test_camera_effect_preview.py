@@ -164,9 +164,10 @@ def test_scene_out_places_party_and_enemies(fujin, tmp_path):
     picker = setup.encounters
     picker.encounter.setCurrentIndex(1)
     preview.panel._timer.stop()
-    # Fujin's party and Caster/Target place the actors, and the header toolbar opens the files:
-    # the shared setup's own file buttons and slot controls are hidden here
-    assert picker.open_button.isHidden() and all(button.isHidden() for button in setup.opponent_buttons)
+    # The battle setup panel (Fujin's, shown in Preview settings) places the actors, and the header
+    # toolbar opens the files: no file button anywhere, the setup's slot state never shown
+    assert picker is preview.cast.encounters
+    assert not hasattr(picker, "open_button") and not hasattr(setup, "opponent_buttons")
     assert setup.role.isHidden() and setup.caster_slot.isHidden() and setup.party_size.isHidden()
     assert picker.enemy_slot.isHidden() and not picker.encounter.isHidden()
 
@@ -225,7 +226,7 @@ def test_encounter_enemy_not_imported_is_a_named_marker(fujin, tmp_path):
     assert setup.context.slots[4].position == (1300, 0, -4200)
     assert [manager for manager, _actor in setup._scene_mesh_actors] == []      # markers only
     assert "c0m071.dat: not imported" in picker.status.text()
-    assert all("c0m071" not in path for path in preview._models)
+    assert all("c0m071" not in path for path in preview.cast._models)
 
 
 @pytest.mark.ff8data(EXE, SOLDIER)

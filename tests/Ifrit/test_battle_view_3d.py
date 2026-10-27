@@ -108,7 +108,8 @@ def test_party_member_drawn_when_opened(qapp, tmp_path):
     view = _view(widget, 0)
     assert view.battle_view_active()
     assert view._battle_view.setup.encounters.selected.index == 0
-    assert len(view.gl_widget._preview_slots[0]) == 2         # the player slot has its model now
+    assert len(view.gl_widget._preview_slots[0]) == 0         # the party is Squall alone, drawn
+    assert view._battle_view.setup.cast.party_members()[0][0] == str(ROOT / BODY)
     widget.close()
 
 

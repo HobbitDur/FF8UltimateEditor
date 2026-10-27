@@ -41,8 +41,8 @@ from pathlib import Path
 
 from PyQt6 import sip
 from PyQt6.QtCore import QProcess, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QCursor, QImage, QPixmap
-from PyQt6.QtWidgets import (QApplication, QComboBox, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+from PyQt6.QtGui import QImage, QPixmap
+from PyQt6.QtWidgets import (QComboBox, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                              QSlider, QVBoxLayout, QWidget)
 
 from Common.filebinding import FileBinding
@@ -175,18 +175,6 @@ def camera_lines(manager, track, cast=None, ticks=600):
     return pose_lines(play_camera_animation(animation, context), ticks)
 
 
-class _BattleCombo(QComboBox):
-    """A picker that sets the battle up (before_popup) the moment it is opened."""
-
-    def __init__(self, before_popup):
-        super().__init__()
-        self._before_popup = before_popup
-
-    def showPopup(self):
-        self._before_popup()
-        super().showPopup()
-
-
 class NativePreviewView(QWidget):
     recording_changed = pyqtSignal()        # another recording is shown (or none)
 
@@ -245,20 +233,6 @@ class NativePreviewView(QWidget):
             "edits are included; after the first recording, editing a texture or using Undo / Redo refreshes "
             "this preview automatically.")
         self.intro.setWordWrap(True)
-        # the Camera tab preview's caster and target pickers, mirrored: one battle for both previews
-        self.caster_combo, self.target_combo = QComboBox(), QComboBox()
-        self.caster_combo.setToolTip("Who casts the effect: a party member, an enemy of the encounter or an "
-                                     "imported monster (the Camera tab's preview: Import complementary, Camera "
-                                     "preview models).")
-        self.target_combo.setToolTip("Who the effect is cast on.")
-        self.caster_combo.activated.connect(lambda _i: self._pick(self.caster_combo, "caster_combo"))
-        self.target_combo.activated.connect(lambda _i: self._pick(self.target_combo, "target_combo"))
-        # the Camera tab preview's party, mirrored too (its weapons are chosen there)
-        self.party_combos = [QComboBox() for _slot in range(3)]
-        for slot, combo in enumerate(self.party_combos):
-            combo.setToolTip(f"Party slot {slot}: any imported character (Import complementary: Camera preview "
-                             f"models), with its first imported weapon - the Camera tab's preview picks another.")
-            combo.activated.connect(lambda _i, row=slot: self._pick_party(row))
         # the battle's actors, drawn or not: their pickers live in this group, greyed while it is off
         self.actors_group = QGroupBox("Battle actors")
         self.actors_group.setCheckable(True)
@@ -269,17 +243,11 @@ class NativePreviewView(QWidget):
                                      "redraws itself, as Cure does its target, is left out too - its own models, "
                                      "as Protect's shield, stay).")
         self.actors_group.toggled.connect(lambda _on: (self._cast_changed(), self._update_controls()))
-        # the Camera tab setup's scene.out encounter: enemies and party where that battle puts them
-        self.encounter_combo = _BattleCombo(self._load_battle)
-        self.encounter_combo.setToolTip("Where the actors stand: an encounter of scene.out (Import complementary: "
-                                        "scene.out) puts the enemies where that battle has them and the party in "
-                                        "its formation; Manual placement puts the target across from the caster. "
-                                        "Same list as the Camera tab's preview.")
-        self.encounter_combo.activated.connect(lambda _i: self._pick_encounter())
-        self._watched_encounters = None
+        self._cast_key = None
         if cast_source is not None:
-            for combo in (cast_source.caster_combo, cast_source.target_combo, *cast_source.party_combos):
-                combo.currentIndexChanged.connect(lambda _i: self._cast_refresh.start())
+            # the battle setup is the Camera tab preview's own panel, shown here while this preview is:
+            # one battle for both previews
+            cast_source.cast.changed.connect(self._cast_refresh.start)
             cast_source.models_changed.connect(self._cast_refresh.start)
             # the Camera tab's script inputs choose the camera animation: a new one records anew
             cast_source.animation_chosen.connect(lambda _chosen: self.camera_changed())
@@ -309,24 +277,9 @@ class NativePreviewView(QWidget):
         self._prerender = QTimer(self)
         self._prerender.setInterval(0)
         self._prerender.timeout.connect(self._prerender_step)
-        party_row = QHBoxLayout()
-        party_row.addWidget(QLabel("Party:"))
-        for combo in self.party_combos:
-            party_row.addWidget(combo, 1)
-        cast_row = QHBoxLayout()
-        cast_row.addWidget(QLabel("Battle:"))
-        cast_row.addWidget(self.encounter_combo, 2)
-        cast_row.addWidget(QLabel("Caster:"))
-        cast_row.addWidget(self.caster_combo, 1)
-        cast_row.addWidget(QLabel("Target:"))
-        cast_row.addWidget(self.target_combo, 1)
-        # one inner widget: the group greys it whole (a picker enabling itself stays greyed inside)
-        actors = QWidget()
-        rows = QVBoxLayout(actors)
-        rows.setContentsMargins(0, 0, 0, 0)
-        rows.addLayout(party_row)
-        rows.addLayout(cast_row)
-        QVBoxLayout(self.actors_group).addWidget(actors)
+        self._actors_layout = QVBoxLayout(self.actors_group)
+        if cast_source is None:
+            self._actors_layout.addWidget(QLabel("The battle comes from the Camera tab's preview."))
         controls = QHBoxLayout()
         controls.addWidget(self.view_mode)
         controls.addWidget(self.play_button)
@@ -351,101 +304,38 @@ class NativePreviewView(QWidget):
         if path:
             registry.remember_folder(SHARED_TEXTURES, os.path.dirname(path))
 
+    def _take_battle_setup(self):
+        # the very same battle setup panel as the Camera tab preview's, moved here while shown
+        if self.cast_source is not None and not self.lab:
+            panel = self.cast_source.cast
+            if panel.parentWidget() is not self.actors_group:
+                self._actors_layout.addWidget(panel)
+                panel.show()
+
+    # the battle setup's pickers (the Camera tab preview's panel)
+    @property
+    def caster_combo(self):
+        return self.cast_source.caster_combo if self.cast_source is not None else None
+
+    @property
+    def target_combo(self):
+        return self.cast_source.target_combo if self.cast_source is not None else None
+
+    @property
+    def party_combos(self):
+        return self.cast_source.party_combos if self.cast_source is not None else []
+
+    @property
+    def encounter_combo(self):
+        return self.cast_source.encounter_combo() if self.cast_source is not None else None
+
     def refresh_cast(self):
-        """Mirror the Camera tab preview's caster / target pickers; a new cast shows the recording
-        already made with it, if any."""
-        before = self.cast().key()
-        for mine, name in ((self.caster_combo, "caster_combo"), (self.target_combo, "target_combo")):
-            source = getattr(self.cast_source, name, None)
-            mine.blockSignals(True)
-            try:
-                mine.clear()
-                if source is None or source.count() == 0 or source.currentData() is None and source.count() == 1:
-                    mine.addItem("(import models: Import complementary, Camera preview models)", None)
-                else:
-                    for index in range(source.count()):
-                        mine.addItem(source.itemText(index), source.itemData(index))
-                    mine.setCurrentIndex(source.currentIndex())
-            finally:
-                mine.blockSignals(False)
-        for slot, mine in enumerate(self.party_combos):
-            source = self.cast_source.party_combos[slot] if self.cast_source is not None else None
-            mine.blockSignals(True)
-            try:
-                mine.clear()
-                if source is not None:
-                    for index in range(source.count()):
-                        mine.addItem(source.itemText(index), source.itemData(index))
-                    mine.setCurrentIndex(source.currentIndex())
-                mine.setEnabled(source is not None and source.count() > 1)
-            finally:
-                mine.blockSignals(False)
-        self._refresh_encounters()
-        if self.cast().key() != before:
+        """The battle setup changed: a new cast shows the recording already made with it, if any."""
+        key = self.cast().key()
+        if key != self._cast_key:
+            self._cast_key = key
             self._cast_changed()
         self._update_controls()          # a newly imported actor can make Record possible
-
-    def _refresh_encounters(self):
-        source = self.cast_source.encounter_combo() if self.cast_source is not None else None
-        if source is not None and source is not self._watched_encounters:
-            source.currentIndexChanged.connect(lambda _i: self._cast_refresh.start())
-            self._watched_encounters = source
-        combo = self.encounter_combo
-        combo.blockSignals(True)
-        try:
-            combo.clear()
-            if source is None:
-                combo.addItem("Manual placement (the battle is set up when a model is imported in the Camera "
-                              "tab's preview)", None)
-            elif source.count() <= 1:
-                combo.addItem("Manual placement (Import complementary: scene.out for its encounters)", None)
-            else:
-                for index in range(source.count()):
-                    combo.addItem(source.itemText(index), source.itemData(index))
-                combo.setCurrentIndex(source.currentIndex())
-        finally:
-            combo.blockSignals(False)
-
-    def _load_battle(self):
-        """The encounter list is the Camera tab setup's: set the battle up first if it waits."""
-        if self.cast_source is None:
-            return
-        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
-        try:
-            self.cast_source.load_battle()
-        finally:
-            QApplication.restoreOverrideCursor()
-        self.refresh_cast()
-
-    def _pick_encounter(self):
-        source = self.cast_source.encounter_combo() if self.cast_source is not None else None
-        if source is None:
-            return
-        picked = self.encounter_combo.currentData()
-        index = next((i for i in range(source.count()) if source.itemData(i) is picked), 0)
-        source.setCurrentIndex(index)
-        self.refresh_cast()
-
-    def _pick_party(self, slot):
-        """A party pick here is the Camera tab preview's (it fills the caster / target pickers)."""
-        if self.cast_source is None:
-            return
-        source = self.cast_source.party_combos[slot]
-        index = source.findData(self.party_combos[slot].currentData())
-        if index >= 0:
-            source.setCurrentIndex(index)
-        self.refresh_cast()
-
-    def _pick(self, mine, name):
-        """A pick here is the Camera tab preview's pick (it moves the other role when needed)."""
-        source = getattr(self.cast_source, name, None)
-        if source is None:
-            return
-        # the actor keys are Python tuples: compared here (QComboBox.findData does not match them)
-        index = next((i for i in range(source.count()) if source.itemData(i) == mine.currentData()), -1)
-        if index >= 0:
-            source.setCurrentIndex(index)
-        self.refresh_cast()
 
     def cast(self, placed=False):
         """The battle to record: the Camera tab preview's (placed: with where its setup stands the
@@ -468,6 +358,7 @@ class NativePreviewView(QWidget):
 
     def _cast_changed(self):
         """Show the recording already made with this cast, if any."""
+        self._cast_key = self.cast().key()     # the battle shown: a refresh of the same one changes nothing
         if self.effect_id is None or self._process is not None:
             return
         effect_id, name = self.effect_id, self.effect_name
@@ -790,6 +681,7 @@ class NativePreviewView(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
+        self._take_battle_setup()
         if self.recording is not None and self._prerender_tick < len(self.recording.ticks):
             self._prerender.start()
 

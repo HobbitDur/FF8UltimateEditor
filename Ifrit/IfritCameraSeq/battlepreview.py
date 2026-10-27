@@ -83,14 +83,15 @@ def actor_from_model(manager, position=(0., 0., 0.), yaw=0., animation=0, animat
 class BattlePreviewSetup(QWidget):
     changed = pyqtSignal()
 
-    def __init__(self, manager, parent=None, file_registry=None, host_cast=False, model_view=False):
-        """host_cast: the host tool feeds the actors and slots itself (Fujin's party, Caster and
-        Target) and opens files from the header toolbar, so those controls are hidden here.
+    def __init__(self, manager, parent=None, file_registry=None, host_cast=False, model_view=False, cast=None):
+        """cast: the host's own battle setup panel (Fujin's: it shows it itself, with its caster and
+        target); None builds this setup's own, shown in its group. host_cast: the host places the
+        actors (implied by cast).
         model_view: no camera is played (Ifrit3D's battle view, a free camera on the encounter),
         so the camera-only controls - game/free camera, caster/target, starting view - are hidden."""
         super().__init__(parent)
         self.manager = manager
-        self.host_cast = host_cast
+        self.host_cast = host_cast or cast is not None
         self.opponent = None
         self.context = None
         self._main = None               # the loaded model's actor, after build()
@@ -126,10 +127,6 @@ class BattlePreviewSetup(QWidget):
         layout.addWidget(self.group)
         options = QVBoxLayout(self.options)
         options.setContentsMargins(0, 0, 0, 0)
-        from .encounterpreview import EncounterPicker
-        self.encounters = EncounterPicker(manager, file_registry, host_cast=host_cast)
-        self.encounters.changed.connect(self._encounter_changed)
-        options.addWidget(self.encounters)
         # Who stands where: the shared cast panel (the host's own for host_cast, Fujin's). These
         # are its state, set by it (BattleCastPanel.apply), never shown.
         self.party_size, self.party_slot = QSpinBox(self), QSpinBox(self)
@@ -149,16 +146,20 @@ class BattlePreviewSetup(QWidget):
             spin.valueChanged.connect(lambda _value: self.changed.emit())
         for state in (self.party_size, self.party_slot, self.role, self.caster_slot, self.target_slot):
             state.hide()
-        self.cast = None
-        if not host_cast:
+        # The battle setup panel - encounter, party, caster / target or other model: the same widget
+        # in every battle preview. A host with its own (Fujin) shows it itself.
+        if cast is None:
             from .battlecast import BattleCastPanel
-            self.cast = BattleCastPanel(getattr(manager, 'game_data', None), lambda: (self.model_paths() if
-                                        self.model_paths is not None else []),
-                                        mode="other" if model_view else "role", main_manager=manager,
-                                        main_path=getattr(manager.enemy, 'origin_path', None) or None)
-            self.cast.attach(self)
-            self.cast.changed.connect(self._cast_changed)
-            options.addWidget(self.cast)
+            cast = BattleCastPanel(getattr(manager, 'game_data', None), lambda: (self.model_paths() if
+                                   self.model_paths is not None else []),
+                                   mode="other" if model_view else "role", main_manager=manager,
+                                   file_registry=file_registry)
+            cast.changed.connect(self._cast_changed)
+            options.addWidget(cast)
+        self.cast = cast
+        cast.attach(self)
+        self.encounters = cast.encounters
+        self.encounters.changed.connect(self._encounter_changed)
         # Manual placement (no encounter): where the other model stands
         position_row = QHBoxLayout()
         self._position_row = position_row
@@ -265,7 +266,8 @@ class BattlePreviewSetup(QWidget):
         return manager
 
     def _cast_changed(self):
-        self.cast.apply(self)
+        # the actors are stood (and their models read) when the scene is built: a preview not
+        # shown reads nothing
         self.changed.emit()
 
     def set_manual_position_visible(self, visible):

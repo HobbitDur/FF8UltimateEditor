@@ -97,6 +97,8 @@ _VIEW_ONLY_PROPERTY = "ifritViewOnly"
 # set of id()s: the AI tab rebuilds its command rows, and a new row reusing a deleted row's id()
 # was taken as already wired, so its edits went unnoticed.
 _DIRTY_WIRED_PROPERTY = "ifritDirtyWired"
+# The file list Auto-upload reopens: the whole session, kept up to date as files come and go.
+SESSION_SELECTION_KEY = "Ifrit battle models"
 
 
 def _shrink_stack_to_current(stack, policy_cache):
@@ -225,6 +227,57 @@ class _ClosableItemDelegate(QStyledItemDelegate):
         return super().eventFilter(obj, event)
 
 
+def _shown_tabs(manager):
+    """Which tabs of a file's pane are shown, by the pane's widget attribute: only the sections
+    its parsed entity type has (never a filename heuristic). Known before the pane is built, so
+    the Opening dialog can count the tabs it will load."""
+    et = manager.enemy.entity_type
+    stat_ai = et in _STAT_AI_CAPABLE_ENTITY_TYPES
+    return {
+        '_3d_widget': et in _3D_SECTIONS_BY_ENTITY,
+        '_dynamic_texture_widget': et in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY,
+        '_seq_widget': et in _SEQ_SECTION_BY_ENTITY,
+        '_camera_widget': et in _CAMERA_SECTION_BY_ENTITY,
+        '_entrance_widget': manager.entrance_section_index() is not None,
+        '_stat_container': stat_ai,
+        '_ai_container': stat_ai,
+        '_texture_widget': _section_of(et, 'texture') is not None,
+    }
+
+
+class _OpeningProgress:
+    """The Opening dialog of a file, step by step: it names what is being loaded right now
+    (textures, animations, the editor, then each tab) instead of an endless spinner. The number
+    of steps is known before the first one, so the bar only moves forward: "Step 3/9"."""
+
+    def __init__(self, parent, name):
+        self.name = name
+        self.done = 0
+        self.dialog = QProgressDialog(f"Opening {name}...", None, 0, 0, parent)
+        self.dialog.setWindowTitle("Opening")
+        self.dialog.setWindowModality(Qt.WindowModality.WindowModal)
+        self.dialog.setMinimumDuration(0)
+        self.dialog.setMinimumWidth(380)
+        self.dialog.setAutoReset(False)          # reaching the last step must not rewind the bar
+        self.dialog.setAutoClose(False)
+        self.dialog.show()
+        QApplication.processEvents()
+
+    def set_steps(self, count):
+        """How many steps the whole opening takes, set once before the first step."""
+        self.dialog.setMaximum(count)
+
+    def step(self, text):
+        self.done += 1
+        self.dialog.setLabelText(f"Opening {self.name}\nStep {self.done}/{self.dialog.maximum()}: {text}...")
+        self.dialog.setValue(self.done - 1)
+        QApplication.processEvents()
+
+    def close(self):
+        self.dialog.setValue(self.dialog.maximum())
+        self.dialog.close()
+
+
 class IfritFilePane(QWidget):
     """The whole tab editor (3D / Dynamic Texture / Sequence / Camera / Stat / AI / Static
     Texture) for ONE loaded .dat file, backed by its own IfritManager.
@@ -240,7 +293,8 @@ class IfritFilePane(QWidget):
 
     def __init__(self, ifrit_manager: IfritManager, path: str, settings: QSettings,
                  icon_path="Resources", weapon_provider=None, file_registry=None,
-                 linked_parts_provider=None):
+                 linked_parts_provider=None, progress=None):
+        """progress: the Opening dialog (_OpeningProgress), told about each tab loaded, or None."""
         super().__init__()
         self.ifrit_manager = ifrit_manager   # its enemy + textures are already set for `path`
         self.path = path
@@ -356,10 +410,14 @@ class IfritFilePane(QWidget):
         # a tab the user can never even see. Re-run once more now that visibility is settled.
         self._shrink_tabs_to_current(self._tabs)
         # Load EVERY tab now, not just the visible one, so moving between this monster's tabs is
-        # instant afterwards. The pane is built lazily on the file's first open and kept alive, so
-        # this cost is paid once per opened file - "load when opening, clean while using". Hidden
-        # tabs (sections this entity type doesn't have) load nothing (gated in _load_tab).
-        for index in range(self._tabs.count()):
+        # instant afterwards ("load when opening, clean while using"); the tab shown first is
+        # loaded first. Hidden tabs (sections this entity type doesn't have) load nothing (gated
+        # in _load_tab), and are not counted in the Opening dialog.
+        saved = self.settings.value("ifrit/current_tab", defaultValue=0, type=int)
+        order = sorted(range(self._tabs.count()), key=lambda index: index != saved)
+        for index in order:
+            if progress is not None and self._tabs.isTabVisible(index):
+                progress.step(f"Loading tab {self._tabs.tabText(index)}")
             self._ensure_tab_loaded(self._tabs.widget(index))
         # Tied to the pane: a pane closed before the tick arrives would otherwise run
         # _end_loading on deleted C++ objects, which aborts the process (see Common/deferredcall).
@@ -445,18 +503,8 @@ class IfritFilePane(QWidget):
     def _apply_visibility(self):
         """Hide the tabs whose section this entity type does not have (gated on the parsed type,
         never a filename heuristic)."""
-        et = self.ifrit_manager.enemy.entity_type
-        stat_ai = et in _STAT_AI_CAPABLE_ENTITY_TYPES
-        for w in (self._stat_container, self._ai_container):
-            self._tabs.setTabVisible(self._tabs.indexOf(w), stat_ai)
-        self._tabs.setTabVisible(self._tabs.indexOf(self._texture_widget), _section_of(et, 'texture') is not None)
-        self._tabs.setTabVisible(self._tabs.indexOf(self._3d_widget), et in _3D_SECTIONS_BY_ENTITY)
-        self._tabs.setTabVisible(self._tabs.indexOf(self._seq_widget), et in _SEQ_SECTION_BY_ENTITY)
-        self._tabs.setTabVisible(self._tabs.indexOf(self._camera_widget), et in _CAMERA_SECTION_BY_ENTITY)
-        self._tabs.setTabVisible(self._tabs.indexOf(self._entrance_widget),
-                                 self.ifrit_manager.entrance_section_index() is not None)
-        self._tabs.setTabVisible(self._tabs.indexOf(self._dynamic_texture_widget),
-                                 et in _DYNAMIC_TEXTURE_SECTION_BY_ENTITY)
+        for name, shown in _shown_tabs(self.ifrit_manager).items():
+            self._tabs.setTabVisible(self._tabs.indexOf(getattr(self, name)), shown)
         self._update_section_tab_labels()
 
     def _update_section_tab_labels(self):
@@ -970,7 +1018,7 @@ class IfritMonsterWidget(QWidget):
     def auto_import_sources(self):
         return [AutoImportSource("battle model (.dat)",
                                  ("*.dat",), self.open_files, selection_only=True,
-                                 selection_key="Ifrit battle models")]
+                                 selection_key=SESSION_SELECTION_KEY)]
 
     def open_files(self, paths=None):
         """Open one or more model .dat files at once (shared header Import routes here). Non-model
@@ -994,7 +1042,6 @@ class IfritMonsterWidget(QWidget):
                 "skipped:\n\n" + "\n".join(skipped))
         if not good:
             return
-        self.file_registry.remember_files("Ifrit battle models", good)
         # Add to the current session rather than replacing it: opening more models keeps the
         # ones already open (and their unsaved edits) and appends the new ones to the list.
         self._append_to_session(good)
@@ -1015,8 +1062,13 @@ class IfritMonsterWidget(QWidget):
         """Load a single .dat (replaces the session with just it)."""
         if path:
             self._file_dialog_folder = os.path.dirname(path)
-            self.file_registry.remember_files("Ifrit battle models", [path])
             self._build_session([path])
+
+    def _remember_session(self):
+        """Auto-upload reopens the whole session: every file in the list, whichever Import (or
+        auto-loaded weapon) brought it in, saved again each time the list changes. Closing the
+        last file keeps the previous list (an empty selection is never stored)."""
+        self.file_registry.remember_files(SESSION_SELECTION_KEY, [f['path'] for f in self._files])
 
     def _read_file_entries(self, paths):
         """Lean-parse each .dat into a session entry (structure + name for the list only - no
@@ -1101,6 +1153,7 @@ class IfritMonsterWidget(QWidget):
         self.file_registry.open_file(
             self.REGISTRY_NAME,
             FileRegistry.summarize_paths([f['path'] for f in files], "model"))
+        self._remember_session()
         self.file_bindings_changed.emit()
 
     def _append_to_session(self, paths):
@@ -1135,6 +1188,7 @@ class IfritMonsterWidget(QWidget):
         self.file_registry.open_file(
             self.REGISTRY_NAME,
             FileRegistry.summarize_paths([f['path'] for f in self._files], "model"))
+        self._remember_session()
         self.file_bindings_changed.emit()
         notes = []
         if already:
@@ -1233,17 +1287,11 @@ class IfritMonsterWidget(QWidget):
         self._active_index = index
         f = self._files[index]
         if show_busy:
-            name = f['name'] or os.path.basename(f['path'])
-            busy = QProgressDialog(f"Opening {name}...", None, 0, 0, self)   # 0..0 = busy spinner
-            busy.setWindowTitle("Opening")
-            busy.setWindowModality(Qt.WindowModality.WindowModal)
-            busy.setMinimumDuration(0)
-            busy.show()
-            QApplication.processEvents()
+            progress = _OpeningProgress(self, f['name'] or os.path.basename(f['path']))
             try:
-                self._build_pane(index)
+                self._build_pane(index, progress)
             finally:
-                busy.close()
+                progress.close()
         else:
             self._build_pane(index)
         f['pane'].show_saved_tab()
@@ -1351,6 +1399,7 @@ class IfritMonsterWidget(QWidget):
             self._file_list.blockSignals(True)
             self._file_list.setCurrentRow(self._active_index)
             self._file_list.blockSignals(False)
+        self._remember_session()
         self.file_bindings_changed.emit()
 
     def _destroy_current_pane(self):
@@ -1380,13 +1429,17 @@ class IfritMonsterWidget(QWidget):
             except Exception:
                 pass
 
-    def _build_pane(self, index: int):
+    def _build_pane(self, index: int, progress=None):
         """Fully load file[index]: extract its textures (VincentTim), expand its animation, and
         build its editor pane (all tabs + the 3D viewer). This is the one heavy step, paid only
-        for the file the user actually opens."""
+        for the file the user actually opens. progress: the Opening dialog, told each step."""
         f = self._files[index]
         manager = f['manager']
         enemy = manager.enemy
+        step = progress.step if progress is not None else (lambda _text: None)
+        if progress is not None:     # 3 steps of our own, then one per tab this file shows
+            progress.set_steps(3 + sum(_shown_tabs(manager).values()))
+        step("Extracting textures")
         # Real textures now - skipped at open time to keep loading light. Blank placeholder files
         # (0-byte slots) have nothing to extract; they keep their empty texture set.
         if not f.get('blank') and enemy.entity_type != EntityType.MONSTER_NO_MODEL:
@@ -1397,14 +1450,16 @@ class IfritMonsterWidget(QWidget):
                 print(f"[texture] {f['path']}: {e}")
         # Expand the animation before the pane's 3D view poses it (bone matrices must be ready,
         # incl. for a character's weapon overlay which reads the body's matrices).
+        step("Expanding animations")
         try:
             enemy.ensure_animation_expanded()
         except Exception:
             pass
+        step("Building the editor (tabs and 3D view)")
         pane = IfritFilePane(manager, f['path'], self.settings, self.icon_path,
                              weapon_provider=self._weapon_options_for,
                              file_registry=self.file_registry,
-                             linked_parts_provider=self._linked_parts_for)
+                             linked_parts_provider=self._linked_parts_for, progress=progress)
         pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
         pane.edited.connect(self._on_active_edited)          # every edit -> (debounced) undo snapshot
         pane.set_model_paths(self._opened_model_paths)
@@ -1454,6 +1509,7 @@ class IfritMonsterWidget(QWidget):
             self._file_list.addItem(self._list_label(len(self._files) - 1))
             added = True
         if added:
+            self._remember_session()
             self.file_bindings_changed.emit()
         return added
 
@@ -1594,6 +1650,7 @@ class IfritMonsterWidget(QWidget):
         entry = {'path': path, 'manager': manager, 'pane': None, 'name': ''}
         self._files.append(entry)
         self._file_list.addItem(self._list_label(len(self._files) - 1))
+        self._remember_session()
         self.file_bindings_changed.emit()
         return entry
 

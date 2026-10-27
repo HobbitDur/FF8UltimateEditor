@@ -799,6 +799,8 @@ class SequencePreviewPanel(QWidget):
         self._seq_id = seq_id
         self.__rebuild_sound_resolver()
         self._battle_setup.encounters.refresh_model()   # this file's encounters
+        if self.battle_context is None:
+            self.__on_battle_setup_changed(rebake=False)   # stand the battle now it is shown
         self.show()
         self.__ensure_model()
         # Sound on by default when the file bank already holds an archive (opened here
@@ -1305,11 +1307,14 @@ class SequencePreviewPanel(QWidget):
         other model are only these."""
         self._battle_setup.set_model_paths(paths)
 
-    def __on_battle_setup_changed(self):
+    def __on_battle_setup_changed(self, rebake=True):
         """Build the battle context from the setup: in an encounter, this model stands at
         its scene.out slot and the other model where the encounter or the battle formation
         puts it, so the distance the sequence walks is the real one. The other model is the
-        stand-in at the target (a party character: the only honest scale reference)."""
+        stand-in at the target (a party character: the only honest scale reference). Only
+        while the preview shows a sequence: a hidden preview reads no model."""
+        if self._seq_id is None:
+            return
         setup = self._battle_setup
         try:
             setup.build(0, False)
@@ -1332,7 +1337,7 @@ class SequencePreviewPanel(QWidget):
         if self._view is not None:
             self._view.set_companion(setup.cast.actor_model(setup.cast.other_key()))
         self.__place_companion()
-        if self._seq_id is not None:
+        if rebake:
             self.__rebake(keep_frame=True)
 
     def __place_companion(self):

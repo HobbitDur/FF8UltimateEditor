@@ -197,6 +197,8 @@ def test_effect_preview_party_pickers_and_effect_alone(qapp):
     assert preview.party_members()[2] == (squall2, gunblade)
     assert ("party", 2) in [view.caster_combo.itemData(i) for i in range(view.caster_combo.count())]
     fujin.select_effect(1)
+    view._take_battle_setup()                    # shown: the Camera tab's very battle setup panel moves here
+    assert preview.cast.parentWidget() is view.actors_group
     assert not view.actors_group.isChecked() and not view.party_combos[0].isEnabled()   # off by default: greyed
     view.actors_group.setChecked(True)
     assert view.party_combos[0].isEnabled() and view.caster_combo.isEnabled()
@@ -247,7 +249,6 @@ def test_effect_preview_plays_a_scene_out_encounter(qapp):
     preview = fujin.camera_editor.preview
     preview.sceneout_binding.open_path(str(BATTLE / "scene.out"))
     preview.add_models([str(BATTLE / "d0c000.dat"), str(BATTLE / "d0w000.dat")])
-    view._load_battle()
     index = next(i for i in range(view.encounter_combo.count())
                  if view.encounter_combo.itemText(i).startswith("Encounter 20 "))
     view.encounter_combo.setCurrentIndex(index)

@@ -98,7 +98,9 @@ class CameraEffectPreview(QWidget):
         # offering only the imported models
         from Ifrit.IfritCameraSeq.battlecast import BattleCastPanel
         # its models are read with the game data loaded in full on first use
-        self.cast = BattleCastPanel(self._shared_game_data, self.model_paths, mode="cast")
+        # (its encounter list follows the model filmed once there is one: the panel's stage)
+        self.cast = BattleCastPanel(self._shared_game_data, self.model_paths, mode="cast",
+                                    file_registry=file_registry, picker_manager=SimpleNamespace(enemy=None))
         self.cast.changed.connect(lambda: self._cast_changed(defaults=True))
         self.party_combos, self.weapon_combos = self.cast.party_combos, self.cast.weapon_combos
         self.caster_combo, self.target_combo = self.cast.caster_combo, self.cast.target_combo
@@ -163,7 +165,11 @@ class CameraEffectPreview(QWidget):
         self.settings_section.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         settings_layout = self.settings_section.content_layout()
         settings_layout.setContentsMargins(0, 0, 0, 0)
-        settings_layout.addWidget(self.cast)
+        # Its slot here: the same panel moves to the effect preview (Overview) while that one is shown
+        self.battle_slot = QWidget()
+        QVBoxLayout(self.battle_slot).setContentsMargins(0, 0, 0, 0)
+        self.battle_slot.layout().addWidget(self.cast)
+        settings_layout.addWidget(self.battle_slot)
         settings_layout.addWidget(self.inputs_section)
         settings = getattr(file_registry, "settings", None)
         self.settings_section.remember(settings, SETTINGS_STATE_KEY)
@@ -230,8 +236,15 @@ class CameraEffectPreview(QWidget):
         else:
             self._cast_changed(defaults=True)
 
+    def take_battle_setup(self):
+        """Show the battle setup here (the effect preview borrows the very same panel while shown)."""
+        if self.cast.parentWidget() is not self.battle_slot:
+            self.battle_slot.layout().addWidget(self.cast)
+            self.cast.show()
+
     def showEvent(self, event):
         super().showEvent(event)
+        self.take_battle_setup()
         if self._cast_pending:
             self._cast_pending = False
             self._cast_changed(defaults=True)
@@ -317,8 +330,8 @@ class CameraEffectPreview(QWidget):
             self._cast_changed(defaults=True)
 
     def encounter_combo(self):
-        """The setup's scene.out encounter list (None before the battle is set up)."""
-        return self.panel._battle_setup.encounters.encounter if self.panel is not None else None
+        """The battle setup's scene.out encounter list."""
+        return self.cast.encounters.encounter
 
     def _plan_animations(self, cast):
         """Each actor's idle animation and the caster's Magic cast, read from its sequences (a
@@ -370,15 +383,15 @@ class CameraEffectPreview(QWidget):
         from Ifrit.ifritmanager import IfritManager
         from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
         self._stage = IfritManager(game_data=self._shared_game_data())
-        # Fujin's party and Caster/Target place the actors: the setup keeps only the encounter,
-        # the manual placement and the views
-        self.panel = CameraPreviewPanel(self._stage, file_registry=self.file_registry, host_cast=True)
+        # Fujin's battle setup panel places the actors (shown in Preview settings): the camera
+        # preview keeps the manual placement and the views
+        self.panel = CameraPreviewPanel(self._stage, file_registry=self.file_registry, cast=self.cast)
+        self.cast.encounters.manager = self._stage   # the encounters of the model filmed
         from Ifrit.IfritCameraSeq.camerapreview import BATTLE_SETUP_STATE_KEY
         setup = self.panel._battle_setup
         settings = getattr(self.file_registry, "settings", None)
         if settings is None or not settings.contains(BATTLE_SETUP_STATE_KEY):
-            setup.group.set_expanded(True)      # the encounter picker is how actors get placed
-        self.cast.attach(setup)      # its encounter's slots are offered as caster / target
+            setup.group.set_expanded(True)
         for spin in (setup.caster_slot, setup.target_slot):
             spin.valueChanged.connect(lambda _value: self._slots_changed())
         self._layout.replaceWidget(self.placeholder, self.panel)

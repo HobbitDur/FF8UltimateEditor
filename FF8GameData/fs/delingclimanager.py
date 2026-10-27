@@ -13,6 +13,13 @@ class DelingCliManager:
         else:
             self.__deling_path = self.DEFAULT_DELING_PATH
 
+    def cli_path(self):
+        return os.path.join(self.__deling_path, self.DELING_CLI_NAME)
+
+    def is_installed(self):
+        """deling-cli is installed with the Deling tool update; without it nothing here can run."""
+        return os.path.isfile(self.cli_path())
+
     def unpack(self, fs_path, folder_dest_path, recursive=True):
         os.makedirs(folder_dest_path, exist_ok=True)
         command = [os.path.join(self.__deling_path, self.DELING_CLI_NAME), "unpack"]

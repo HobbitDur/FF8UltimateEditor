@@ -10,8 +10,10 @@ from FF8GameData.fs.delingclimanager import DelingCliManager
 class _ExtractWorker(QThread):
     finished_signal = pyqtSignal(bool, str)
 
-    def __init__(self, deling_manager: DelingCliManager, fs_path: str, dest_path: str):
-        QThread.__init__(self)
+    def __init__(self, deling_manager: DelingCliManager, fs_path: str, dest_path: str, parent=None):
+        # parented: the button owns the thread, so dropping our reference while run() is still
+        # returning never destroys a running QThread (that aborts the whole process)
+        QThread.__init__(self, parent)
         self._deling_manager = deling_manager
         self._fs_path = fs_path
         self._dest_path = dest_path
@@ -42,6 +44,14 @@ class FsExtractWidget(QPushButton):
         self.clicked.connect(self._on_click)
 
     def _on_click(self):
+        if not self._deling_manager.is_installed():
+            QMessageBox.warning(
+                self, "deling-cli missing",
+                "Extracting a .fs archive needs deling-cli, which is not installed:\n"
+                f"{self._deling_manager.cli_path()}\n\n"
+                "Update the Deling tool to get it: tick the checkbox above Deling's button, "
+                "then click Tool update.")
+            return
         fs_path, _ = QFileDialog.getOpenFileName(
             self, "Select a .fs archive to extract", "", "FS archives (*.fs);;All files (*)")
         if not fs_path:
@@ -54,8 +64,9 @@ class FsExtractWidget(QPushButton):
 
         self.setEnabled(False)
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        self._worker = _ExtractWorker(self._deling_manager, fs_path, dest_path)
+        self._worker = _ExtractWorker(self._deling_manager, fs_path, dest_path, self)
         self._worker.finished_signal.connect(self._on_finished)
+        self._worker.finished.connect(self._worker.deleteLater)
         self._worker.start()
 
     def _on_finished(self, success: bool, message: str):
