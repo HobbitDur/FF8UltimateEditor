@@ -155,7 +155,7 @@ class HyneWidget(QWidget):
         self.tabs.addTab(self._build_items_tab(), "Items")
         self.tabs.setTabToolTip(0, "The 16 Guardian Forces: stats, learned abilities and AP")
         self.tabs.setTabToolTip(1, "The 8 playable characters: stats, magic, junctions and abilities")
-        self.tabs.setTabToolTip(2, "Saved game configuration (speeds, volume, controls, map seal)")
+        self.tabs.setTabToolTip(2, "Saved game configuration (speeds, controls, map seal)")
         self.tabs.setTabToolTip(3, "Party, gil, weapons, Griever name and limit-break unlocks")
         self.tabs.setTabToolTip(4, "Current inventory (item id + quantity per slot)")
         self.tabs.setEnabled(False)
@@ -872,7 +872,7 @@ class HyneWidget(QWidget):
             ("battle_speed", "Battle speed", 4, "Battle ATB speed. 0 = slowest, 4 = fastest (ATB gauge = 4000 x (value+1))"),
             ("battle_message_speed", "Battle message speed", 4, f"Battle message scroll speed. {speed_tip}"),
             ("field_message_speed", "Field message speed", 4, f"Field/menu message scroll speed. {speed_tip}"),
-            ("volume", "Sound volume", 100, "Sound volume (0-100)"),
+            ("volume", "Analog stick dead zone", 0xFF, ConfigEntry.ANALOG_DEAD_ZONE_HELP),
             ("camera", "Battle camera speed", 4, f"Battle camera movement speed. {speed_tip}"),
         ]
         form = QFormLayout()
@@ -889,7 +889,7 @@ class HyneWidget(QWidget):
         form.addRow("Scan:", self.config_scan_check)
 
         settings_group = QGroupBox("Settings")
-        settings_group.setToolTip("In-game options: speeds, volume, camera, scan detail")
+        settings_group.setToolTip("In-game options: speeds, analog dead zone, camera, scan detail")
         settings_group.setLayout(form)
 
         # Config flag (offset 4): editable as a bitfield of named checkboxes.

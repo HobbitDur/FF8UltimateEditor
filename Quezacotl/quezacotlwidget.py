@@ -23,7 +23,7 @@ from FF8GameData.kernellevels import level_curves, load_kernel
 from Quezacotl.levelformulapopup import LevelFormulaPopup
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
-    QuezacotlManager, ACTIVE_ABILITY_RANGE, PASSIVE_ABILITY_RANGE, ABILITY_COUNT,
+    QuezacotlManager, CharacterEntry, ACTIVE_ABILITY_RANGE, PASSIVE_ABILITY_RANGE, ABILITY_COUNT,
     GF_COMPATIBILITY_MIN, GF_COMPATIBILITY_MAX,
 )
 
@@ -130,7 +130,7 @@ class QuezacotlWidget(QWidget):
         self.tabs.addTab(self._build_items_tab(), "Items")
         self.tabs.setTabToolTip(0, "The 16 Guardian Forces: stats, learned abilities and AP")
         self.tabs.setTabToolTip(1, "The 8 playable characters: stats, magic, junctions and abilities")
-        self.tabs.setTabToolTip(2, "Default game configuration (speeds, volume, controls, map seal)")
+        self.tabs.setTabToolTip(2, "Default game configuration (speeds, controls, map seal)")
         self.tabs.setTabToolTip(3, "Party, gil, weapons, Griever name and limit-break unlocks")
         self.tabs.setTabToolTip(4, "Starting inventory (item id + quantity per slot)")
         self.tabs.setEnabled(False)
@@ -205,11 +205,42 @@ class QuezacotlWidget(QWidget):
             self.level_curves = self.gf_slots = None
         self._update_level_hints()
         self._update_ap_slots()
+        if self._selected_gf():
+            self._fill_learning_combo(self._selected_gf())
 
     def _clear_kernel_data(self, _path=None):
         self.level_curves = self.gf_slots = None
         self._update_level_hints()
         self._update_ap_slots()
+        if self._selected_gf():
+            self._fill_learning_combo(self._selected_gf())
+
+    def _fill_learning_combo(self, gf):
+        """The Learning choice. With a kernel.bin open: None and the GF's own 21 abilities, each marked
+        when the GF cannot earn AP toward it (GF_AddApToLearningAbility only credits an ability of
+        the GF's list, and the battle results only one it can learn now). Without one: every ability."""
+        slots = (self.gf_slots or {}).get("slots", [])
+        if not slots or gf.gf_id >= len(slots):
+            self._fill_ability_combo(self.gf_learning_ability_combo, gf.learning_ability, None)
+            return
+        names = self.kernel_names
+        combo = self.gf_learning_ability_combo
+        with QSignalBlocker(combo):
+            combo.clear()
+            combo.addItem("0: None", 0)
+            for slot, entry in enumerate(slots[gf.gf_id], start=1):
+                if entry.ability == 0 or combo.findData(entry.ability) >= 0:
+                    continue
+                name = names.ability_name(entry.ability) or f"Ability {entry.ability}"
+                if gf.has_ability(entry.ability):
+                    name += " (learned)"
+                elif gf.is_forgotten(slot):
+                    name += " (forgotten)"
+                combo.addItem(f"{entry.ability}: {name}", entry.ability)
+            if combo.findData(gf.learning_ability) < 0:  # never lose the file's value
+                combo.addItem(f"{gf.learning_ability}: not in this GF's list - earns no AP",
+                              gf.learning_ability)
+            combo.setCurrentIndex(combo.findData(gf.learning_ability))
 
     def _update_ap_slots(self):
         """Name each AP slot after the ability of the selected GF's kernel.bin list it counts toward,
@@ -225,13 +256,13 @@ class QuezacotlWidget(QWidget):
 
         for index, (label, info) in enumerate(zip(self.gf_ap_labels, self.gf_ap_infos)):
             slot = index + 1
+            if index >= ABILITY_LIST_COUNT:
+                label.setText(f"Slot {slot}: -")
+                info.setText(f"unused: a GF's ability list has {ABILITY_LIST_COUNT} entries, no code reads this one")
+                continue
             if gf_list is None:
                 label.setText(f"Slot {slot}:")
                 info.setText("")
-                continue
-            if index >= ABILITY_LIST_COUNT:
-                label.setText(f"Slot {slot}: -")
-                info.setText(f"not used: a GF's kernel.bin list has {ABILITY_LIST_COUNT} abilities")
                 continue
             entry = gf_list[index]
             if entry.ability == 0:
@@ -491,7 +522,10 @@ class QuezacotlWidget(QWidget):
         self.gf_learning_ability_combo = self._enum_combo(
             [], self._on_gf_data_changed,
             "Ability the GF is currently set to learn — earned AP is applied to it. This is an "
-            "ability id, not an AP amount; the AP invested per ability is on the AP tab.")
+            "ability id, not an AP amount; the AP invested per ability is on the AP tab.\n"
+            "With a kernel.bin open the list is this GF's own abilities: the game only credits AP to "
+            "one of them (GF_AddApToLearningAbility), and only while it can learn it (not learned, "
+            "not forgotten, unlocked).")
         self.gf_available_check = QCheckBox("Available")
         self.gf_available_check.setToolTip("GF has been obtained — set once the GF is junctioned/acquired at least once")
         self.gf_available_check.stateChanged.connect(self._on_gf_data_changed)
@@ -512,13 +546,7 @@ class QuezacotlWidget(QWidget):
 
         gf_reserved_group, gf_reserved_spins = self._reserved_group(["Unused (0x10):"])
         self.gf_unused_spin = gf_reserved_spins[0]
-        status_tab_container = QWidget()
-        status_tab_layout = QVBoxLayout()
-        status_tab_layout.setContentsMargins(0, 0, 0, 0)
-        status_tab_layout.addWidget(status_group)
-        status_tab_layout.addWidget(gf_reserved_group)
-        status_tab_layout.addStretch(1)
-        status_tab_container.setLayout(status_tab_layout)
+        status_tab_container = self._left_column_scroll([status_group, gf_reserved_group])
 
         # Learned abilities: one checkbox per junctionable_ability id (bit id in the GF's
         # 128-bit "complete abilities" field). Value 0 (None) is skipped.
@@ -531,6 +559,8 @@ class QuezacotlWidget(QWidget):
             check.stateChanged.connect(self._on_gf_ability_changed)
             self.gf_ability_checks[ability_id] = check
             ability_grid.addWidget(check, i // columns, i % columns)
+        ability_grid.setColumnStretch(columns, 1)  # the spare width goes right of the columns
+        ability_grid.setRowStretch((ABILITY_COUNT - 2) // columns + 1, 1)
         ability_container = QWidget()
         ability_container.setLayout(ability_grid)
         ability_scroll = QScrollArea()
@@ -541,24 +571,39 @@ class QuezacotlWidget(QWidget):
         # N-th entry in *this GF's* learnable-ability list (BuildGFAbilityList), whose abilities,
         # AP costs and unlocks are in kernel.bin (Junctionable GFs section), not in init.out: the
         # slots are named from an opened kernel.bin (_update_ap_slots), numbered without one.
+        # Slot 22 exists in init.out (24 AP bytes) but a GF's list has 21 abilities: nothing reads or
+        # writes it (GF_AddApToLearningAbility / BuildGFAbilityList / DrawGFAbilityLearnStatus all
+        # stop at 21), so it is shown read-only. "Forgotten" = the GF's forgotten bits (offset 65).
         self.gf_ap_spins = []
         self.gf_ap_labels = []
         self.gf_ap_infos = []
+        self.gf_forgotten_checks = []
         ap_form = QFormLayout()
-        ap_note = QLabel("Slot N = AP invested in this GF's N-th learnable ability, named from kernel.bin "
+        ap_note = QLabel("Slot N = AP invested in this GF's N-th learnable ability, named from kernel.bin\n"
                          "(Junctionable GFs section) with the AP it costs and when it unlocks.")
-        ap_note.setWordWrap(True)
         ap_form.addRow(ap_note)
         for slot in range(1, 23):
-            spin = self._spinbox(0, 0xFF, self._on_gf_ap_changed,
-                                "AP invested in this GF's learnable-ability slot "
-                                f"{slot} (its ability is defined by the GF's kernel.bin ability list)")
-            self.gf_ap_spins.append(spin)
             label = QLabel(f"Slot {slot}:")
             info = QLabel()
             info.setStyleSheet("color: gray;")
             row = QHBoxLayout()
-            row.addWidget(spin)
+            if slot <= 21:
+                spin = self._spinbox(0, 0xFF, self._on_gf_ap_changed,
+                                    "AP invested in this GF's learnable-ability slot "
+                                    f"{slot} (its ability is defined by the GF's kernel.bin ability list)")
+                forgotten = QCheckBox("Forgotten")
+                forgotten.setToolTip("The GF forgot this ability: it is left out of the abilities it can learn, "
+                                     "so it can never learn it again (offset 0x41 bit field, one bit per slot).")
+                forgotten.stateChanged.connect(self._on_gf_forgotten_changed)
+                self.gf_forgotten_checks.append(forgotten)
+                row.addWidget(spin)
+                row.addWidget(forgotten)
+            else:
+                spin = self._readonly_spin(RESERVED_TOOLTIP)
+                label.setStyleSheet("color: gray;")
+                label.setToolTip(RESERVED_TOOLTIP)
+                row.addWidget(spin)
+            self.gf_ap_spins.append(spin)
             row.addWidget(info)
             row.addStretch(1)
             self.gf_ap_labels.append(label)
@@ -566,9 +611,7 @@ class QuezacotlWidget(QWidget):
             ap_form.addRow(label, row)
         ap_container = QWidget()
         ap_container.setLayout(ap_form)
-        ap_scroll = QScrollArea()
-        ap_scroll.setWidgetResizable(True)
-        ap_scroll.setWidget(ap_container)
+        ap_scroll = self._left_column_scroll([ap_container])
 
         sub_tabs = QTabWidget()
         sub_tabs.addTab(status_tab_container, "Status")
@@ -603,7 +646,7 @@ class QuezacotlWidget(QWidget):
         ]:
             with QSignalBlocker(spin):
                 spin.setValue(value)
-        self._fill_ability_combo(self.gf_learning_ability_combo, gf.learning_ability, None)
+        self._fill_learning_combo(gf)
         self.gf_unused_spin.setValue(gf.unknown1)
         with QSignalBlocker(self.gf_available_check):
             self.gf_available_check.setChecked(gf.available)
@@ -613,6 +656,9 @@ class QuezacotlWidget(QWidget):
         for slot, spin in enumerate(self.gf_ap_spins, start=1):
             with QSignalBlocker(spin):
                 spin.setValue(gf.get_ap_ability(slot))
+        for slot, check in enumerate(self.gf_forgotten_checks, start=1):
+            with QSignalBlocker(check):
+                check.setChecked(gf.is_forgotten(slot))
         self._update_level_hints()
         self._update_ap_slots()
 
@@ -644,8 +690,17 @@ class QuezacotlWidget(QWidget):
         gf = self._selected_gf()
         if not gf:
             return
-        for slot, spin in enumerate(self.gf_ap_spins, start=1):
+        for slot, spin in enumerate(self.gf_ap_spins[:21], start=1):  # slot 22 is read-only
             gf.set_ap_ability(slot, spin.value())
+
+    def _on_gf_forgotten_changed(self):
+        gf = self._selected_gf()
+        if not gf:
+            return
+        for slot, check in enumerate(self.gf_forgotten_checks, start=1):
+            gf.set_forgotten(slot, check.isChecked())
+        self._update_ap_slots()
+        self._fill_learning_combo(gf)
 
     # ── Character tab ────────────────────────────────────────────────────
 
@@ -668,9 +723,29 @@ class QuezacotlWidget(QWidget):
         self.char_alt_model_check = QCheckBox("Alternative Model (SeeD, Galbadian)")
         self.char_alt_model_check.setToolTip("Use the alternative outfit model (e.g. SeeD uniform, Galbadian soldier)")
         self.char_alt_model_check.stateChanged.connect(self._on_character_status_changed)
-        self.char_exist_check = QCheckBox("Exists (recruited)")
-        self.char_exist_check.setToolTip("Character has joined the party at least once — available in menus/party select")
-        self.char_exist_check.stateChanged.connect(self._on_character_status_changed)
+        # Offset 0x94 is a bit field the field scripts drive (ADDMEMBER/SUBMEMBER/HOLD), not a 0/1
+        # "exists": see CharacterEntry.EXIST_BITS. Each bit is its own checkbox so editing one never
+        # wipes the others (the old single checkbox wrote 0 or 1).
+        self.char_exist_checks = []
+        party_flags_layout = QVBoxLayout()
+        exist_tips = {
+            0x01: "In the party roster: can be picked in the party select (set by the field script ADDMEMBER, "
+                  "cleared by SUBMEMBER, tested by ISMEMBER).",
+            0x02: "Locked in the party: the party select won't swap it out (field script HOLD sets 0x02 and 0x04).",
+            0x04: "Locked like 0x02, and keeps its place in the walking field party (Squall gets it from ADDMEMBER).",
+            0x08: "Replaced by Laguna's party in the dream sequences (ADDMEMBER sets it for everyone but Rinoa, "
+                  "Seifer and Edea).",
+        }
+        for mask, name in CharacterEntry.EXIST_BITS:
+            check = QCheckBox(name)
+            check.setToolTip(f"Offset 0x94, bit 0x{mask:02X}: {exist_tips[mask]}")
+            check.stateChanged.connect(self._on_character_party_flags_changed)
+            self.char_exist_checks.append((mask, check))
+            party_flags_layout.addWidget(check)
+        party_flags_group = QGroupBox("Party flags")
+        party_flags_group.setToolTip("Offset 0x94 bit field set by the field scripts. Bits 0x10-0x80 are never "
+                                     "read or written by the game.")
+        party_flags_group.setLayout(party_flags_layout)
 
         self.char_str_spin = self._spinbox(0, 0xFF, self._on_character_status_changed, "Base Strength")
         self.char_vit_spin = self._spinbox(0, 0xFF, self._on_character_status_changed, "Base Vitality")
@@ -691,7 +766,6 @@ class QuezacotlWidget(QWidget):
         status_form.addRow("Kills:", self.char_kills_spin)
         status_form.addRow("KOs:", self.char_kos_spin)
         status_form.addRow(self.char_alt_model_check)
-        status_form.addRow(self.char_exist_check)
         stats_form = QFormLayout()
         stats_form.addRow("Str:", self.char_str_spin)
         stats_form.addRow("Vit:", self.char_vit_spin)
@@ -703,7 +777,9 @@ class QuezacotlWidget(QWidget):
         status_group.setToolTip("HP, EXP, model/weapon and base stats of the selected character")
         status_layout = QHBoxLayout()
         status_layout.addLayout(status_form)
+        status_layout.addSpacing(24)
         status_layout.addLayout(stats_form)
+        status_layout.addStretch(1)
         status_group.setLayout(status_layout)
 
         # Persistent status flags: only bits 0-6 of the 16-bit status_1 field are real,
@@ -726,14 +802,12 @@ class QuezacotlWidget(QWidget):
         char_reserved_group, char_reserved_spins = self._reserved_group(
             ["Unused (0x5A):", "Unused (0x6F):", "Unused (0x95):"])
         self.char_unused_spins = char_reserved_spins
+        self.char_unused_spins[0].setToolTip(
+            RESERVED_TOOLTIP + "\nVanilla init.out holds 0, 0, 2, 1, 0, 2, 1, 1 here (Squall to Edea): a PSX "
+                               "leftover, the PC game neither reads nor writes it.")
 
-        status_tab_layout = QVBoxLayout()
-        status_tab_layout.addWidget(status_group)
-        status_tab_layout.addWidget(status_checks_group)
-        status_tab_layout.addWidget(char_reserved_group)
-        status_tab_layout.addStretch(1)
-        status_tab = QWidget()
-        status_tab.setLayout(status_tab_layout)
+        status_tab = self._left_column_scroll([status_group, status_checks_group, party_flags_group,
+                                               char_reserved_group])
 
         # Magic
         self.char_magic_table = QTableWidget(32, 2)
@@ -766,11 +840,7 @@ class QuezacotlWidget(QWidget):
         abilities_group = QGroupBox("Equipped abilities")
         abilities_group.setToolTip("The 4 equipped command abilities and 4 equipped passive abilities")
         abilities_group.setLayout(abilities_form)
-        abilities_layout = QVBoxLayout()
-        abilities_layout.addWidget(abilities_group)
-        abilities_layout.addStretch(1)
-        abilities_tab = QWidget()
-        abilities_tab.setLayout(abilities_layout)
+        abilities_tab = self._left_column_scroll([abilities_group])
 
         # G-Forces (junctioned GFs + compatibility)
         self.char_jun_gf1_combo = self._enum_combo(self._gforce_entries, self._on_character_gf_changed,
@@ -789,22 +859,12 @@ class QuezacotlWidget(QWidget):
             spin = self._spinbox(0, 0xFFFF, self._on_character_gf_changed, compat_tooltip)
             self.char_gf_compat_spins.append(spin)
             compat_form.addRow(f"{entry['name']}:", spin)
-        compat_container = QWidget()
-        compat_container.setLayout(compat_form)
-        compat_scroll = QScrollArea()
-        compat_scroll.setWidgetResizable(True)
-        compat_scroll.setWidget(compat_container)
-
-        gf_layout = QVBoxLayout()
-        gf_layout.addLayout(junction_form)
+        junction_widget = QWidget()
+        junction_widget.setLayout(junction_form)
         compat_group = QGroupBox("Compatibility")
         compat_group.setToolTip(f"Per-GF compatibility ({GF_COMPATIBILITY_MIN}-{GF_COMPATIBILITY_MAX}); higher summons faster")
-        compat_group_layout = QVBoxLayout()
-        compat_group_layout.addWidget(compat_scroll)
-        compat_group.setLayout(compat_group_layout)
-        gf_layout.addWidget(compat_group)
-        gf_tab = QWidget()
-        gf_tab.setLayout(gf_layout)
+        compat_group.setLayout(compat_form)
+        gf_tab = self._left_column_scroll([junction_widget, compat_group])
 
         # Junction stat assignments (each stores a magic id)
         self.char_junction_combos = {}
@@ -863,8 +923,9 @@ class QuezacotlWidget(QWidget):
                 spin.setValue(value)
         with QSignalBlocker(self.char_alt_model_check):
             self.char_alt_model_check.setChecked(char.alt_model)
-        with QSignalBlocker(self.char_exist_check):
-            self.char_exist_check.setChecked(char.exist)
+        for mask, check in self.char_exist_checks:
+            with QSignalBlocker(check):
+                check.setChecked(bool(char.exist_flags & mask))
         self._update_level_hints()
         for spin, value in zip(self.char_unused_spins, [char.unknown2, char.unknown3, char.unknown4]):
             spin.setValue(value)
@@ -913,7 +974,13 @@ class QuezacotlWidget(QWidget):
         char.spd = self.char_spd_spin.value()
         char.luck = self.char_luck_spin.value()
         char.alt_model = self.char_alt_model_check.isChecked()
-        char.exist = self.char_exist_check.isChecked()
+
+    def _on_character_party_flags_changed(self):
+        char = self._selected_character()
+        if not char:
+            return
+        for mask, check in self.char_exist_checks:
+            char.set_exist_flag(mask, check.isChecked())
 
     def _on_character_status_flags_changed(self):
         char = self._selected_character()
@@ -965,7 +1032,7 @@ class QuezacotlWidget(QWidget):
             ("battle_speed", "Battle speed", 4, "Battle ATB speed. 0 = slowest, 4 = fastest (ATB gauge = 4000 x (value+1))"),
             ("battle_message_speed", "Battle message speed", 4, f"Battle message scroll speed. {speed_tip}"),
             ("field_message_speed", "Field message speed", 4, f"Field/menu message scroll speed. {speed_tip}"),
-            ("volume", "Sound volume", 100, "Sound volume (0-100)"),
+            ("volume", "Analog stick dead zone", 0xFF, ConfigEntry.ANALOG_DEAD_ZONE_HELP),
             ("camera", "Battle camera speed", 4, f"Battle camera movement speed. {speed_tip}"),
         ]
         form = QFormLayout()
@@ -982,7 +1049,7 @@ class QuezacotlWidget(QWidget):
         form.addRow("Scan:", self.config_scan_check)
 
         settings_group = QGroupBox("Settings")
-        settings_group.setToolTip("In-game options: speeds, volume, camera, scan detail")
+        settings_group.setToolTip("In-game options: speeds, analog dead zone, camera, scan detail")
         settings_group.setLayout(form)
 
         # Config flag (offset 4): editable as a bitfield of named checkboxes.

@@ -164,6 +164,21 @@ class GfEntry:
     def learning_ability(self, value):
         self._buffer[self._offset + 64] = value & 0xFF
 
+    # Offset 65-67: the "forgotten" bits, one per slot of the GF's kernel.bin ability list (bit k =
+    # slot k+1). BuildGFAbilityList reads them as `*(u32 *)&LearningAbility >> 8` and leaves a
+    # forgotten slot out of the learnable abilities, so the GF can never learn it again.
+    def is_forgotten(self, slot):
+        """slot is 1-21."""
+        return bool(self._buffer[self._offset + 65 + (slot - 1) // 8] & (1 << ((slot - 1) % 8)))
+
+    def set_forgotten(self, slot, forgotten):
+        position = self._offset + 65 + (slot - 1) // 8
+        bit = 1 << ((slot - 1) % 8)
+        if forgotten:
+            self._buffer[position] |= bit
+        else:
+            self._buffer[position] &= ~bit & 0xFF
+
 
 class MagicSlot:
     """One (magic id, quantity) pair inside a CharacterEntry."""
@@ -388,13 +403,39 @@ class CharacterEntry:
     def kos(self, value):
         _set_u16(self._buffer, self._offset + 146, value)
 
+    # Offset 148 (IDA: CharacterData.Exists) is a bitfield, not a boolean:
+    #   0x01 in the roster: SCRIPT_ADDMEMBER sets it, SUBMEMBER clears it, ISMEMBER / the party
+    #        select / partyRest read it.
+    #   0x02 locked in the party (SCRIPT_HOLD sets 0x02|0x04): the party select won't swap it out.
+    #   0x04 locked, and keeps its place in the walking field party (the party select keeps it in
+    #        SG_PARTY_FIELD1); ADDMEMBER gives Squall 0x0D.
+    #   0x08 replaced by Laguna's party in dreams (the dream party setup at 0x4ACF50 swaps the
+    #        members having it for Laguna/Kiros/Ward); ADDMEMBER sets it for all but Rinoa,
+    #        Seifer and Edea.
+    # Bits 4-7 have no reader or writer.
+    EXIST_BITS = [
+        (0x01, "In the roster"),
+        (0x02, "Locked in the party (HOLD)"),
+        (0x04, "Locked, keeps its field-party place (HOLD)"),
+        (0x08, "Replaced by Laguna's party in dreams"),
+    ]
+
     @property
     def exist(self):
-        return self._byte(148) != 0
+        """In the roster (bit 0x01 of exist_flags)."""
+        return bool(self._byte(148) & 0x01)
 
     @exist.setter
     def exist(self, value):
-        self._set_byte(148, 1 if value else 0)
+        self.set_exist_flag(0x01, value)
+
+    @property
+    def exist_flags(self):
+        return self._byte(148)
+
+    def set_exist_flag(self, mask, value):
+        flags = self._byte(148)
+        self._set_byte(148, flags | mask if value else flags & ~mask)
 
     @property
     def unknown4(self):
@@ -407,8 +448,9 @@ class CharacterEntry:
     # CurrentStatus is a 16-bit bitmask spanning offset 150-151 (IDA: `Status1Flag status_1`),
     # not an 8-bit byte + a separate unknown byte as the original C# tool's struct implied.
     # Only bits 0-6 are real persistent statuses (Death/Poison/Petrify/Darkness/Silence/
-    # Berserk/Zombie); bit 7 is padding, bits 8-9 are HP-derived synthetic flags the game
-    # recomputes, and 10-15 are unused.
+    # Berserk/Zombie); bits 8-9 are HP-derived synthetic flags the game recomputes, and 10-15
+    # are unused. Bit 7 (IDA STATUS1_UNUSED1) has no known effect, but it is not plain padding:
+    # partyRest heals every status except it (status_1 &= 0x80), so the tool keeps it as is.
     def has_status(self, status_index):
         """status_index is a 0-based bit index into the status_1 word."""
         return bool(_u16(self._buffer, self._offset + 150) & (1 << status_index))
@@ -450,6 +492,12 @@ class ConfigEntry:
         "key_cross", "key_square", "key_select", "key_l3", "key_r3", "key_start",
     ]
 
+    # Offset 3 ("volume", IDA SAVEMAP_CONFIG.analog_volume) is not a sound volume: its only reader
+    # is sub_4C3010, which sets the pad's analog dead zone from it (the save code only copies it).
+    ANALOG_DEAD_ZONE_HELP = ("Analog stick dead zone (offset 0x03, not a sound volume). The game sets the "
+                             "stick threshold to (12 x (value + 5))² / 256, capped at 127: a stick pushed "
+                             "less than that counts as centred. Values above 5 all hit the cap.")
+
     # map_seal (offset 7) bit meanings (IDA: MapSeal enum).
     MAP_SEAL_BITS = [
         (0x01, "Item locked"), (0x02, "Magic locked"), (0x04, "GF locked"), (0x08, "Draw locked"),
@@ -463,9 +511,15 @@ class ConfigEntry:
     # Identified by walking all 26 references to SG_SETTING.flag (0x1CFE73C) and decoding the
     # mask each one tests. The in-game Config menu drives its rows from a 16-byte-stride table
     # at 0xB88978 (mask at +0, optional handler at +4, three text ids at +8/+10/+12); its rows
-    # are 0x20 (Controls, handler 0x4EDD20), 0x04 (Cursor), 0x01 (Vibration) and 0x100 - the
+    # are 0x20 (Controls, handler 0x4EDD20), 0x04 (Cursor), 0x01 (Battle Mode) and 0x100 - the
     # last being bit 0 of the *scan* byte at offset 5, since the code reads flag as a word.
     #
+    #   0x01 is Battle Mode: Wait. Battle_ShouldAtbKeepRunning (0x4A9450) freezes the ATB gauges
+    #        while a command is pending only when it is set (Active when clear).
+    #   0x10 is written by battle_vibrate_init (0x4A93A1 sets it, 0x4A93B6 clears it) and read by
+    #        BattleUI_InitForBattle: the pad can vibrate.
+    #   0x80 swaps the analog sticks: sub_4C3010 copies it (only when 0x20 custom controls is on)
+    #        into the pad's gamepad_options bit 7, which makes sub_49F0A0 read axis ^ 2.
     #   0x04 is the Config menu's "Cursor: Memory". BattleMenu_CommandWindow_Update tests it at
     #        0x4BBBC5 / 0x4BC659, and the stub at 0x4BB9B0 wipes the per-character remembered
     #        cursor slots (BATTLE_CHARA_UI +0x54..+0x68) when it is CLEAR - i.e. Cursor: Initial.
@@ -480,14 +534,14 @@ class ConfigEntry:
     #        straight get/set pair, i.e. the persisted pad vibration option. (Distinct from
     #        vibrate_capable, which is a separate field of the same input struct.)
     FLAG_BITS = [
-        (0x01, "Battle vibration trigger"),
+        (0x01, "Battle Mode: Wait (unset = Active)"),
         (0x02, "PSX audio setting (stubbed on PC)"),
         (0x04, "Cursor: Memory"),
         (0x08, "Bit 3 (unused - no reader or writer)"),
         (0x10, "Vibration hardware present (auto)"),
         (0x20, "Use custom button config"),
         (0x40, "Pad vibration option (auto)"),
-        (0x80, "Controls modified from default"),
+        (0x80, "Swap analog sticks (with custom controls)"),
     ]
 
     # The 12 remap bytes are physical button slots, in this order. The order is the PSX
@@ -813,8 +867,10 @@ class QuezacotlManager:
 
     The file is kept as a single in-memory buffer and every entry is a thin view over it
     (mirroring the original tool's direct byte-array mutation), so regions the original
-    tool never decoded (Shops, GF.ForgottenAbilities, the Misc raw tail) are preserved
-    byte-for-byte on save instead of being reset.
+    tool never decoded (Shops, the Misc tail) are preserved byte-for-byte on save instead of
+    being reset. The Misc tail (bytes 48-79) is SG_ITEM_BATTLE_ORDER: the order of the 32 battle
+    items in the battle Item menu, a permutation of 0-31 kept by Inventory_ReserveBattleOrderPosition
+    and the Item menu - left untouched, a wrong order would corrupt that menu.
     """
 
     def __init__(self, game_data: GameData):
