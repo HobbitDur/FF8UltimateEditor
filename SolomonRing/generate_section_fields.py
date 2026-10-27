@@ -859,8 +859,8 @@ HELP = {
                         "growth; must be non-zero. Click f(x) on GF HP modifier 3 for the curve.",
     "gf_hp_modifier_3": "Flat base of the GF HP curve. Click f(x) for the whole level→HP curve.",
     "gf_level_modifier_1": "Linear term of the GF EXP curve: total EXP for level L = "
-                           "10×mod1×L + mod2×L²/256 (GetGFLevelFromExperience). Click f(x) on "
-                           "GF level modifier 2.",
+                           "10×mod1×(L−1) + mod2×(L−1)²/256 (GetGFLevelFromExperience). Click f(x) "
+                           "on GF level modifier 2.",
     "gf_level_modifier_2": "Quadratic (÷256) acceleration of the GF EXP curve. Click f(x) for the "
                            "level→EXP curve.",
     "hit_count": _HIT_COUNT_HELP,

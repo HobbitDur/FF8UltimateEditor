@@ -6,7 +6,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QSpinBox, QLineEdit, QGroupBox, QFormLayout, QTabWidget, QCheckBox, QGridLayout,
-    QScrollArea, QComboBox, QTableWidget, QHeaderView, QAbstractSpinBox, QSizePolicy,
+    QScrollArea, QComboBox, QTableWidget, QHeaderView, QAbstractSpinBox, QSizePolicy, QToolButton,
 )
 
 # Tooltip shown on the read-only (greyed) padding fields.
@@ -19,6 +19,7 @@ from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
 from FF8GameData.kernellevels import read_level_curves
+from Quezacotl.levelformulapopup import LevelFormulaPopup
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
     QuezacotlManager, ACTIVE_ABILITY_RANGE, PASSIVE_ABILITY_RANGE, ABILITY_COUNT,
@@ -114,6 +115,7 @@ class QuezacotlWidget(QWidget):
         self.kernel_notice = KernelNameSource.make_notice("ability and weapon")
         # ...and of the EXP curves, which turn the EXP into a level (hints under the EXP fields)
         self.level_curves = None
+        self.level_popup = None  # the f(x) window of the EXP fields, made on first use
         self.kernel_names.binding.file_opened.connect(self._load_level_curves)
         self.kernel_names.binding.file_closed.connect(self._clear_level_curves)
 
@@ -202,15 +204,26 @@ class QuezacotlWidget(QWidget):
         self.level_curves = None
         self._update_level_hints()
 
-    @staticmethod
-    def _with_level_hint(spin):
-        """The spinbox with a small grey "Lvl N + X xp" line under it (like SolomonRing's "≈ N s"
-        hints). Returns (widget to place, hint label)."""
+    def _with_level_hint(self, spin, kind):
+        """The spinbox and an f(x) button opening the level formula, with a small grey
+        "Lvl N + X xp" line under them (like SolomonRing's "≈ N s" hints and f(x) buttons).
+        Returns (widget to place, hint label)."""
         container = QWidget()
         box = QVBoxLayout(container)
         box.setContentsMargins(0, 0, 0, 0)
         box.setSpacing(0)
-        box.addWidget(spin)
+        row = QHBoxLayout()
+        row.setSpacing(2)
+        row.addWidget(spin)
+        button = QToolButton()
+        button.setText("ƒ(x)")
+        button.setAutoRaise(True)
+        button.setToolTip("Show the level formula, its two kernel.bin parameters and the EXP curve")
+        button.setStyleSheet("QToolButton { color: palette(highlight); font-style: italic; }")
+        button.clicked.connect(lambda _=False, k=kind: self._open_level_popup(k))
+        row.addWidget(button)
+        row.addStretch(1)
+        box.addLayout(row)
         hint = QLabel()
         hint.setStyleSheet("color: gray; font-size: 8pt;")
         box.addWidget(hint)
@@ -236,6 +249,23 @@ class QuezacotlWidget(QWidget):
         else:
             hint.setToolTip(f"Level 100, the maximum ({owner}'s curve in kernel.bin)")
 
+    def _open_level_popup(self, kind):
+        if self.level_popup is None:
+            self.level_popup = LevelFormulaPopup(self)
+        self.level_popup.show_for(lambda k=kind: self._level_source(k))
+
+    def _level_source(self, kind):
+        """(kind, owner name, kernel.bin entry, LevelCurve or None, EXP) of the selected GF/character."""
+        if kind == "gf":
+            gf = self._selected_gf()
+            index = gf.gf_id if gf else 0
+            owner = gf.gf_name if gf else "GF"
+            return kind, owner, index, self._level_curve("gf", index), self.gf_exp_spin.value()
+        char = self._selected_character()
+        index = self.char_model_spin.value()
+        owner = char.name if char else "character"
+        return kind, owner, index, self._level_curve("character", index), self.char_exp_spin.value()
+
     def _update_level_hints(self, *_):
         gf = self._selected_gf()
         if gf:
@@ -246,6 +276,8 @@ class QuezacotlWidget(QWidget):
             com_id = self.char_model_spin.value()
             self._show_level(self.char_exp_hint, self._level_curve("character", com_id),
                              self.char_exp_spin.value(), f"character entry {com_id}")
+        if self.level_popup is not None:
+            self.level_popup.refresh()
 
     # ── Small widget helpers ─────────────────────────────────────────────
 
@@ -422,7 +454,7 @@ class QuezacotlWidget(QWidget):
 
         status_form = QFormLayout()
         status_form.addRow("Name:", self.gf_name_edit)
-        gf_exp_widget, self.gf_exp_hint = self._with_level_hint(self.gf_exp_spin)
+        gf_exp_widget, self.gf_exp_hint = self._with_level_hint(self.gf_exp_spin, "gf")
         self.gf_exp_spin.valueChanged.connect(self._update_level_hints)
         status_form.addRow("EXP:", gf_exp_widget)
         status_form.addRow("Current HP:", self.gf_hp_spin)
@@ -592,7 +624,7 @@ class QuezacotlWidget(QWidget):
         status_form = QFormLayout()
         status_form.addRow("Current HP:", self.char_hp_spin)
         status_form.addRow("Max HP bonus:", self.char_hp_bonus_spin)
-        char_exp_widget, self.char_exp_hint = self._with_level_hint(self.char_exp_spin)
+        char_exp_widget, self.char_exp_hint = self._with_level_hint(self.char_exp_spin, "character")
         self.char_exp_spin.valueChanged.connect(self._update_level_hints)
         self.char_model_spin.valueChanged.connect(self._update_level_hints)
         status_form.addRow("EXP:", char_exp_widget)

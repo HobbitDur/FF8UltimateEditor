@@ -355,24 +355,27 @@ def _gf_hp(value, P, entry):
 
 
 def _gf_next_exp(value, P, entry):
-    # GetGFLevelFromExperience @0x4960c0: cumulative EXP threshold for level L is
-    # 10*mod1*L + mod2*L^2/256 (the loop accumulates 10*mod1 and mod2 per level).
+    # GetGFLevelFromExperience @0x4960c0: the loop starts at level 1 and moves on to level n+1
+    # while experience >= 10*mod1*n + mod2*n^2/256, so level L is reached at that value for
+    # n = L-1 (the same curve as Stat_ComputeLevelFromExp, see _char_exp).
     m1 = (entry.get("gf_level_modifier_1") if entry else 0) or 0
     m2 = (entry.get("gf_level_modifier_2") if entry else 0) or 0
     lvl = P["gf_level"]
-    exp = 10 * m1 * lvl + _idiv(m2 * lvl * lvl, 256)
+    n = lvl - 1
+    exp = 10 * m1 * n + _idiv(m2 * n * n, 256)
+    per = (10 * m1 * lvl + _idiv(m2 * lvl * lvl, 256)) - exp  # L -> L+1 increment
     return {
         "params": ("gf_level",),
-        "symbolic": "total EXP to reach level L = 10 × mod1 × L + mod2 × L² / 256",
-        "substituted": f"10×{m1}×{lvl} + {m2}×{lvl}²/256 = {exp}",
-        "result": f"≈ {exp} total EXP to reach GF level {lvl}",
+        "symbolic": "total EXP to reach level L = 10 × mod1 × (L−1) + mod2 × (L−1)² / 256",
+        "substituted": f"10×{m1}×{n} + {m2}×{n}²/256 = {exp}",
+        "result": f"≈ {exp} total EXP to reach GF level {lvl}   (+{per} for the next level)",
         "value": exp,
         "plot": {"param": "gf_level", "x_label": "GF level", "y_label": "Total EXP"},
-        "note": "GetGFLevelFromExperience @0x4960c0 walks levels while "
-                "experience ≥ 10×mod1×L + mod2×L²/256, so this is the cumulative EXP threshold "
-                "for level L. mod1 = linear term, mod2 = quadratic (÷256) acceleration.",
-        "latex": r"Exp(L) = 10\,mod_1\,L + \left\lfloor\frac{mod_2\,L^2}{256}\right\rfloor",
-        "latex_sub": rf"10\cdot{m1}\cdot{lvl} + \lfloor {m2}\cdot{lvl}^2/256\rfloor = {exp}",
+        "note": "GetGFLevelFromExperience @0x4960c0 starts at level 1 and moves on to level n+1 while "
+                "experience ≥ 10×mod1×n + mod2×n²/256, so level L is reached at n = L−1. "
+                "mod1 = linear term, mod2 = quadratic (÷256) acceleration.",
+        "latex": r"Exp(L) = 10\,mod_1\,(L-1) + \left\lfloor\frac{mod_2\,(L-1)^2}{256}\right\rfloor",
+        "latex_sub": rf"10\cdot{m1}\cdot{n} + \lfloor {m2}\cdot{n}^2/256\rfloor = {exp}",
     }
 
 

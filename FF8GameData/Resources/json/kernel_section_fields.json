@@ -716,7 +716,7 @@
     "size": 1,
     "group": "General",
     "label": "GF level modifier 1",
-    "help": "Linear term of the GF EXP curve: total EXP for level L = 10×mod1×L + mod2×L²/256 (GetGFLevelFromExperience). Click f(x) on GF level modifier 2.",
+    "help": "Linear term of the GF EXP curve: total EXP for level L = 10×mod1×(L−1) + mod2×(L−1)²/256 (GetGFLevelFromExperience). Click f(x) on GF level modifier 2.",
     "subgroup": "Next-level EXP",
     "row": "gf_next_exp"
    },

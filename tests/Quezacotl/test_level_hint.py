@@ -70,5 +70,18 @@ def test_exp_fields_show_the_level(qapp, tmp_path):
     widget.gf_exp_spin.setValue(1250)
     assert widget.gf_exp_hint.text() == "Lvl 3 + 250 xp"
 
+    # f(x): the formula with the GF's two kernel.bin bytes, following the EXP as it is edited
+    widget._open_level_popup("gf")
+    popup = widget.level_popup
+    assert popup.title.text() == "Level from EXP: Quezacotl"
+    assert "A (linear) = 50, B (quadratic) = 0" in popup.parameters.text()
+    assert "byte 24 (A) and byte 25 (B)" in popup.parameters.text()
+    assert "GF level modifier 1" in popup.parameters.text()
+    assert popup.substituted.text().endswith("Lvl 3 + 250 xp (250 to the next level)")
+    widget.gf_exp_spin.setValue(4100)
+    assert popup.substituted.text().endswith("Lvl 9 + 100 xp (400 to the next level)")
+
     widget.kernel_names.binding.registry.close_file("kernel.bin")
     assert widget.gf_exp_hint.text() == "Lvl ? (needs kernel.bin)"
+    assert "No kernel.bin is open" in popup.parameters.text()
+    popup.close()
