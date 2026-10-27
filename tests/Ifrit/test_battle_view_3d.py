@@ -150,3 +150,21 @@ def test_ground_toggle_in_both_views(qapp, tmp_path):
     view.cb_ground.setChecked(True)
     assert gl._preview_slots[2] is not None and gl._preview_ground_y == 0.
     widget.close()
+
+
+@pytest.mark.ff8data(SOLDIER)
+def test_ground_keeps_its_size_while_the_animation_plays(qapp, tmp_path):
+    """The grid is sized once on the loaded model: the canvas' MODEL_SIZE follows each posed frame's
+    bounds, and a grid sized on it stretched while the animation played."""
+    widget, view = _pane(tmp_path, SOLDIER)
+    gl = view.gl_widget
+    view.cb_ground.setChecked(True)
+    grids, sizes = set(), set()
+    for frame in range(view.get_max_frames()):
+        view.set_frame(frame)
+        view.update_animated_mesh()
+        grids.add((gl._preview_slots[2], gl._preview_slots[3], gl._preview_ground_y))
+        sizes.add(round(float(gl.MODEL_SIZE), 4))
+    assert len(sizes) > 1          # the pose's bounds do change...
+    assert len(grids) == 1         # ...the ground does not
+    widget.close()

@@ -944,6 +944,10 @@ class Ifrit3DWidget(QWidget):
             # A battle model has a battle ground; a stage (Alexander) or a field model (Seed) has not
             self._ground_action.setVisible(isinstance(getattr(self.ifrit_manager.enemy, 'entity_type', None),
                                                       EntityType))
+            if not keep_view or getattr(self, '_ground_half', None) is None:
+                # Sized once on the loaded pose: MODEL_SIZE follows every animated frame's bounds,
+                # a grid sized on it would stretch while the animation plays
+                self._ground_half = max(2., float(getattr(self.gl_widget, 'MODEL_SIZE', 1.)) * 2.)
             if not self.battle_view_active():
                 self._update_ground()   # reset_view sized the model: the grid follows its size
         if self._battle_view_cb is not None and self._battle_view_cb.isChecked() and self._battle_view is None:
@@ -1636,7 +1640,7 @@ class Ifrit3DWidget(QWidget):
             position = animations[self.current_anim_id].frames[0].position
             if len(position) >= 2:
                 ground_y = position[1].get_pos_world() + position[1].get_pos_raw() / 128
-        half = max(2., float(getattr(self.gl_widget, 'MODEL_SIZE', 1.)) * 2.)
+        half = getattr(self, '_ground_half', None) or max(2., float(getattr(self.gl_widget, 'MODEL_SIZE', 1.)) * 2.)
         self.gl_widget.set_preview_slot_markers(grid_half_size=half, grid_step=half / 8, ground_y=ground_y)
 
     def _on_skeleton_toggle(self, checked):
