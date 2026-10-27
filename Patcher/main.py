@@ -22,6 +22,15 @@ def wait_for_exit(exe_name, timeout=30):
     return False
 
 
+def notify(text, error=True):
+    """Tell the user, and the log. The Windows Patcher is built without a console (--noconsole):
+    there is no stdin, so input() crashes it ("lost sys.stdin") - a message box is the only way."""
+    print(text)
+    if sys.platform == "win32":
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(None, text, "FF8UltimateEditor update", 0x10 if error else 0x40)
+
+
 def main():
     temp_dir = Path("SelfUpdate")
     target_dir = Path(".")
@@ -31,8 +40,8 @@ def main():
     # Wait for the main application to fully exit
     print(f"Waiting for {exe_name} to close...")
     if not wait_for_exit(exe_name):
-        print(f"{exe_name} is still running. Update aborted.")
-        input("Press Enter to exit...")
+        notify(f"{exe_name} is still running. Update aborted.\n\n"
+               "Close it, then use Self update again.")
         return
 
     try:
@@ -47,13 +56,22 @@ def main():
         else:
             print(f"Source directory {temp_dir} does not exist")
 
-        # Launch the updated application independently
-        subprocess.Popen([str(target_dir / exe_name)], close_fds=True)
-        print(f"{exe_name} launched successfully.")
-
     except Exception as e:
-        print(f"Update failed: {e}")
-        input("Press Enter to exit...")
+        notify(f"Update failed: {e}")
+    else:
+        # Launch the updated application independently
+        exe_path = (target_dir / exe_name).resolve()
+        try:
+            subprocess.Popen([str(exe_path)], close_fds=True)
+            print(f"{exe_name} launched successfully.")
+        except OSError as e:
+            # The update is in place, only the restart failed. WinError 4551: Windows' application
+            # control (Smart App Control or an administrator policy) blocks a program it doesn't
+            # know yet - a freshly downloaded build has no reputation.
+            notify(f"The update is installed, but Windows refused to start {exe_name}:\n{e}\n\n"
+                   f"Start it yourself:\n{exe_path}\n\n"
+                   "If Windows blocks it again, its application control (Smart App Control, in Windows "
+                   "Security > App & browser control) is refusing this new build.")
     # Clean up temporary folder
     shutil.rmtree(temp_dir, ignore_errors=True)
 

@@ -313,6 +313,14 @@ class ToolUpdateWidget(QWidget):
             # and the downloaded update waits in SelfUpdate for the next Self update.
             if not self.window().close():
                 return
+            # The Patcher never overwrites itself while running, so the editor (still alive here)
+            # puts the downloaded one in place first: Patcher fixes reach users too.
+            new_patcher = Path("SelfUpdate") / "Patcher" / patcher_name
+            if new_patcher.exists():
+                try:
+                    shutil.copy2(new_patcher, updater_path)
+                except OSError as e:
+                    print(f"[self update] kept the current Patcher: {e}")
             subprocess.Popen([str(updater_path)])
             QApplication.quit()
         else:

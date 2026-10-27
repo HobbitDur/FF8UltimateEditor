@@ -239,13 +239,62 @@ def test_patcher_aborts_if_tool_still_running(monkeypatch, tmp_path):
     (self_update / "FF8UltimateEditor.exe").write_bytes(b"new exe")
 
     monkeypatch.setattr(patcher, "wait_for_exit", lambda exe_name, timeout=30: False)
-    monkeypatch.setattr("builtins.input", lambda *args: "")
+    told = []
+    monkeypatch.setattr(patcher, "notify", lambda text, error=True: told.append(text))
     launched = []
     monkeypatch.setattr(subprocess, "Popen", lambda cmd, **kwargs: launched.append(cmd))
 
     patcher.main()
+    assert told and "still running" in told[0]       # a message box: the Patcher has no console
 
     # Nothing copied, nothing launched: update aborted while the tool is running
     assert not (tmp_path / "FF8UltimateEditor.exe").exists()
     assert self_update.exists()
     assert launched == []
+
+
+def test_patcher_reports_a_blocked_restart_without_crashing(monkeypatch, tmp_path):
+    """Windows' application control can refuse to start the new build (WinError 4551). The update
+    is already copied: the Patcher says so and where the exe is, instead of calling input() -
+    which, without a console, crashed it with "lost sys.stdin"."""
+    monkeypatch.chdir(tmp_path)
+    tool_exe = "FF8UltimateEditor.exe" if sys.platform == "win32" else "FF8UltimateEditor"
+    (tmp_path / "SelfUpdate").mkdir()
+    (tmp_path / "SelfUpdate" / tool_exe).write_bytes(b"new exe")
+    monkeypatch.setattr(patcher, "wait_for_exit", lambda exe_name, timeout=30: True)
+    monkeypatch.setattr("builtins.input", lambda *args: (_ for _ in ()).throw(RuntimeError("lost sys.stdin")))
+
+    def blocked(cmd, **kwargs):
+        raise OSError(22, "An Application Control policy has blocked this file", None, 4551)
+    monkeypatch.setattr(subprocess, "Popen", blocked)
+    told = []
+    monkeypatch.setattr(patcher, "notify", lambda text, error=True: told.append(text))
+
+    patcher.main()
+
+    assert (tmp_path / tool_exe).read_bytes() == b"new exe"
+    assert len(told) == 1 and "update is installed" in told[0] and str(tmp_path / tool_exe) in told[0]
+    assert not (tmp_path / "SelfUpdate").exists()
+
+
+def test_self_update_puts_the_downloaded_patcher_in_place(monkeypatch, tmp_path):
+    """The Patcher skips itself when copying, so the editor installs the new Patcher before
+    launching it: Patcher fixes reach the users."""
+    from types import SimpleNamespace
+    from ToolUpdate import toolupdatewidget
+    monkeypatch.chdir(tmp_path)
+    name = "Patcher.exe" if sys.platform == "win32" else "Patcher"
+    (tmp_path / "Patcher").mkdir()
+    (tmp_path / "Patcher" / name).write_bytes(b"old patcher")
+    (tmp_path / "SelfUpdate" / "Patcher").mkdir(parents=True)
+    (tmp_path / "SelfUpdate" / "Patcher" / name).write_bytes(b"new patcher")
+    monkeypatch.setattr(toolupdatewidget.QMessageBox, "information", lambda *a, **k: None)
+    monkeypatch.setattr(toolupdatewidget.QApplication, "quit", lambda *a: None)
+    launched = []
+    monkeypatch.setattr(toolupdatewidget.subprocess, "Popen", lambda cmd, **kwargs: launched.append(
+        (tmp_path / "Patcher" / name).read_bytes()))
+    host = SimpleNamespace(window=lambda: SimpleNamespace(close=lambda: True))
+
+    toolupdatewidget.ToolUpdateWidget.start_self_update_process(host)
+
+    assert launched == [b"new patcher"]
