@@ -543,6 +543,7 @@ class ConfigEntry:
         (0x40, "Pad vibration option (auto)"),
         (0x80, "Swap analog sticks (with custom controls)"),
     ]
+    UNUSED_FLAG_BITS = (0x02, 0x08)  # nothing in the PC build acts on them (see above)
 
     # The 12 remap bytes are physical button slots, in this order. The order is the PSX
     # DualShock button word (see remap_pad_input @0x4A2D60), so slots 9 and 10 are L3 and R3 -
@@ -579,8 +580,8 @@ class MiscEntry:
 
     The first 48 bytes (party, unlocked weapons, Griever name, weapon ids, gil, limit-break
     unlocks) are edited here. The 32-byte tail (offset 0x30) is the items-battle-order array
-    (index = battle-usable item id - 1, value = its slot in the in-battle item menu); it is
-    runtime ordering state, so the tool round-trips it untouched rather than exposing it.
+    (index = battle-usable item id - 1, value = its place in the in-battle item menu), edited
+    as a reordering only (get/set_battle_order).
     """
 
     def __init__(self, buffer, offset, game_data: GameData):
@@ -828,6 +829,22 @@ class MiscEntry:
     def set_angelo_point(self, index, value):
         self._set_byte(40 + index, value)
 
+    # Offset 48-79: SG_ITEM_BATTLE_ORDER, battle_order[item id - 1] = the place (0-31) of battle item
+    # 1-32 in the in-battle Item list. It must stay a permutation of 0-31: the Item menu's init
+    # (sub_4F8180) writes BATTLE_ORDER_EDIT_ID[2 * place] for each item, so a place of 32 or more
+    # writes past those 32-entry arrays, and a repeated place leaves another one empty.
+    # Inventory_ReserveBattleOrderPosition swaps a newly obtained battle item into the first place
+    # no owned item uses.
+    BATTLE_ORDER_SIZE = 32
+
+    def get_battle_order(self):
+        return list(self._buffer[self._offset + 48:self._offset + 48 + self.BATTLE_ORDER_SIZE])
+
+    def set_battle_order(self, order):
+        if sorted(order) != list(range(self.BATTLE_ORDER_SIZE)):
+            raise ValueError("The battle item order must hold each place 0-31 exactly once")
+        self._buffer[self._offset + 48:self._offset + 48 + self.BATTLE_ORDER_SIZE] = bytes(order)
+
 
 class ItemEntry:
     """One (item id, quantity) pair inside the item table."""
@@ -867,10 +884,7 @@ class QuezacotlManager:
 
     The file is kept as a single in-memory buffer and every entry is a thin view over it
     (mirroring the original tool's direct byte-array mutation), so regions the original
-    tool never decoded (Shops, the Misc tail) are preserved byte-for-byte on save instead of
-    being reset. The Misc tail (bytes 48-79) is SG_ITEM_BATTLE_ORDER: the order of the 32 battle
-    items in the battle Item menu, a permutation of 0-31 kept by Inventory_ReserveBattleOrderPosition
-    and the Item menu - left untouched, a wrong order would corrupt that menu.
+    tool never decoded (Shops) are preserved byte-for-byte on save instead of being reset.
     """
 
     def __init__(self, game_data: GameData):

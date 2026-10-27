@@ -7,12 +7,13 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QSpinBox, QLineEdit, QGroupBox, QFormLayout, QTabWidget, QCheckBox, QGridLayout,
     QScrollArea, QComboBox, QTableWidget, QHeaderView, QAbstractSpinBox, QSizePolicy, QToolButton,
+    QPushButton, QAbstractScrollArea,
 )
 
-# Tooltip shown on the read-only (greyed) padding fields.
-RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed unused / padding — "
-                    "no code reads it). It is shown for completeness and preserved on save, but "
-                    "editing it would have no effect.")
+# Tooltip shown on the fields the vanilla game never uses (greyed until "Unlock" is ticked).
+RESERVED_TOOLTIP = ("Unused by the vanilla game: no code reads this value (checked in FF8_EN.exe). It is "
+                    "greyed out so you only edit what does something; tick \"Unlock fields unused by the "
+                    "vanilla game\" to edit it anyway, for a mod that gives it a meaning.")
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -122,6 +123,17 @@ class QuezacotlWidget(QWidget):
         self.kernel_names.binding.file_opened.connect(self._load_kernel_data)
         self.kernel_names.binding.file_closed.connect(self._clear_kernel_data)
 
+        # Fields the vanilla game never uses are greyed out (SolomonRing's rule): _lock() registers
+        # them, the "Unlock" switch hands them back for a mod that gives them a meaning.
+        self._locked_widgets = []
+        self.unlock_check = QCheckBox("Unlock fields unused by the vanilla game")
+        self.unlock_check.setToolTip(
+            "Off (default): a field the unmodified game never reads is shown - so you can see its "
+            "value - but greyed out, so you cannot change something that does nothing.\n"
+            "On: every field becomes editable, for a mod that gave those bytes/flags a purpose. "
+            "This only changes what the UI lets you edit; loading and saving are identical either way.")
+        self.unlock_check.toggled.connect(self.set_unlock_all)
+
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
         self.tabs.addTab(self._build_character_tab(), "Characters")
@@ -137,6 +149,10 @@ class QuezacotlWidget(QWidget):
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.kernel_notice)
+        unlock_row = QHBoxLayout()
+        unlock_row.addWidget(self.unlock_check)
+        unlock_row.addStretch(1)
+        main_layout.addLayout(unlock_row)
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
 
@@ -407,16 +423,30 @@ class QuezacotlWidget(QWidget):
             index = combo.findData(value)
         combo.setCurrentIndex(index)
 
-    def _readonly_spin(self, tooltip, maximum=0xFF):
-        """A greyed, non-editable spinbox for showing a byte the tool won't let you change.
-        Kept enabled (read-only) so the hover tooltip still works."""
-        spin = QSpinBox()
-        spin.setRange(0, maximum)
-        spin.setReadOnly(True)
-        spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
-        self._compact_spin(spin)
-        spin.setToolTip(tooltip)
-        spin.setStyleSheet("color: gray;")
+    def _lock(self, widget, kind="plain"):
+        """Grey ``widget`` out because the unmodified game never reads that value, and remember it
+        so the Unlock switch can hand it back ("spin" is also made read-only, without arrows)."""
+        widget.setEnabled(self.unlock_check.isChecked())
+        if kind == "spin" and not self.unlock_check.isChecked():
+            widget.setReadOnly(True)
+            widget.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
+        self._locked_widgets.append((widget, kind))
+
+    def set_unlock_all(self, unlocked):
+        """Enable (or grey again) every field the vanilla game does not use. Values are read and
+        written the same either way: this only changes what the UI lets you touch."""
+        for widget, kind in self._locked_widgets:
+            widget.setEnabled(unlocked)
+            if kind == "spin":
+                widget.setReadOnly(not unlocked)
+                widget.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.UpDownArrows if unlocked
+                                        else QAbstractSpinBox.ButtonSymbols.NoButtons)
+
+    def _unused_spin(self, slot, tooltip=RESERVED_TOOLTIP, maximum=0xFF):
+        """A spinbox for a byte the vanilla game never reads: greyed until unlocked, written back
+        through ``slot`` like any other field once it is."""
+        spin = self._spinbox(0, maximum, slot, tooltip)
+        self._lock(spin, "spin")
         return spin
 
     @staticmethod
@@ -426,17 +456,18 @@ class QuezacotlWidget(QWidget):
         label.setStyleSheet("color: gray;")
         return label
 
-    def _reserved_group(self, rows):
-        """Build a 'Reserved (read-only)' group from rows of (label, offset_tooltip). Returns
-        (group, [(spin, ...)]) so the caller can populate values on reload."""
+    def _reserved_group(self, rows, slot):
+        """Build an 'Unused by the vanilla game' group, one greyed spinbox per row label, each
+        written back through ``slot`` once unlocked. Returns (group, [spin, ...])."""
         form = QFormLayout()
         spins = []
         for label_text in rows:
-            spin = self._readonly_spin(RESERVED_TOOLTIP)
+            spin = self._unused_spin(slot)
             form.addRow(self._grey_label(label_text, RESERVED_TOOLTIP), spin)
             spins.append(spin)
-        group = QGroupBox("Reserved (read-only)")
-        group.setToolTip("Bytes with no game meaning — shown for completeness, not editable")
+        group = QGroupBox("Unused by the vanilla game")
+        group.setToolTip("Bytes no game code reads - greyed out until \"Unlock fields unused by the vanilla "
+                         "game\" is ticked")
         group.setLayout(form)
         return group, spins
 
@@ -544,7 +575,7 @@ class QuezacotlWidget(QWidget):
         status_group.setToolTip("Core stats and state of the selected GF")
         status_group.setLayout(status_form)
 
-        gf_reserved_group, gf_reserved_spins = self._reserved_group(["Unused (0x10):"])
+        gf_reserved_group, gf_reserved_spins = self._reserved_group(["Unused (0x10):"], self._on_gf_unused_changed)
         self.gf_unused_spin = gf_reserved_spins[0]
         status_tab_container = self._left_column_scroll([status_group, gf_reserved_group])
 
@@ -599,7 +630,7 @@ class QuezacotlWidget(QWidget):
                 row.addWidget(spin)
                 row.addWidget(forgotten)
             else:
-                spin = self._readonly_spin(RESERVED_TOOLTIP)
+                spin = self._unused_spin(self._on_gf_ap_changed)
                 label.setStyleSheet("color: gray;")
                 label.setToolTip(RESERVED_TOOLTIP)
                 row.addWidget(spin)
@@ -647,7 +678,8 @@ class QuezacotlWidget(QWidget):
             with QSignalBlocker(spin):
                 spin.setValue(value)
         self._fill_learning_combo(gf)
-        self.gf_unused_spin.setValue(gf.unknown1)
+        with QSignalBlocker(self.gf_unused_spin):
+            self.gf_unused_spin.setValue(gf.unknown1)
         with QSignalBlocker(self.gf_available_check):
             self.gf_available_check.setChecked(gf.available)
         for ability_id, check in self.gf_ability_checks.items():
@@ -690,8 +722,13 @@ class QuezacotlWidget(QWidget):
         gf = self._selected_gf()
         if not gf:
             return
-        for slot, spin in enumerate(self.gf_ap_spins[:21], start=1):  # slot 22 is read-only
+        for slot, spin in enumerate(self.gf_ap_spins, start=1):  # slot 22: greyed until unlocked
             gf.set_ap_ability(slot, spin.value())
+
+    def _on_gf_unused_changed(self):
+        gf = self._selected_gf()
+        if gf:
+            gf.unknown1 = self.gf_unused_spin.value()
 
     def _on_gf_forgotten_changed(self):
         gf = self._selected_gf()
@@ -782,9 +819,9 @@ class QuezacotlWidget(QWidget):
         status_layout.addStretch(1)
         status_group.setLayout(status_layout)
 
-        # Persistent status flags: only bits 0-6 of the 16-bit status_1 field are real,
-        # persistable statuses (bit 7 padding; bits 8-9 are HP-derived synthetic flags the
-        # game recomputes; 10-15 unused).
+        # Persistent status flags: bits 0-6 of the 16-bit status_1 field are the persistable
+        # statuses; bit 7 has no known effect (greyed, see CharacterEntry); bits 8-9 are HP-derived
+        # flags the game recomputes; 10-15 unused.
         self.char_status_checks = {}
         status_checks_form = QGridLayout()
         persistent_statuses = [e for e in self._status_entries if e["mask"] <= 0x40]
@@ -794,13 +831,21 @@ class QuezacotlWidget(QWidget):
             bit = entry["mask"].bit_length() - 1
             self.char_status_checks[bit] = check
             status_checks_form.addWidget(check, i // 4, i % 4)
+        bit7_check = QCheckBox("Bit 7 (no known effect)")
+        bit7_check.setToolTip("status_1 bit 0x80 (IDA STATUS1_UNUSED1): no code gives it an effect. The monster "
+                              "AI can test it like any status and resting keeps it (it clears every other "
+                              "status), so it is not plain padding.\n" + RESERVED_TOOLTIP)
+        bit7_check.stateChanged.connect(self._on_character_status_flags_changed)
+        self.char_status_checks[7] = bit7_check
+        status_checks_form.addWidget(bit7_check, len(persistent_statuses) // 4, len(persistent_statuses) % 4)
+        self._lock(bit7_check)
         status_checks_group = QGroupBox("Current Status")
         status_checks_group.setToolTip("Persistent statuses (status_1 bits 0-6). Higher bits are unused or "
                                        "HP-derived and are recomputed by the game.")
         status_checks_group.setLayout(status_checks_form)
 
         char_reserved_group, char_reserved_spins = self._reserved_group(
-            ["Unused (0x5A):", "Unused (0x6F):", "Unused (0x95):"])
+            ["Unused (0x5A):", "Unused (0x6F):", "Unused (0x95):"], self._on_character_unused_changed)
         self.char_unused_spins = char_reserved_spins
         self.char_unused_spins[0].setToolTip(
             RESERVED_TOOLTIP + "\nVanilla init.out holds 0, 0, 2, 1, 0, 2, 1, 1 here (Squall to Edea): a PSX "
@@ -928,7 +973,8 @@ class QuezacotlWidget(QWidget):
                 check.setChecked(bool(char.exist_flags & mask))
         self._update_level_hints()
         for spin, value in zip(self.char_unused_spins, [char.unknown2, char.unknown3, char.unknown4]):
-            spin.setValue(value)
+            with QSignalBlocker(spin):
+                spin.setValue(value)
         for bit, check in self.char_status_checks.items():
             with QSignalBlocker(check):
                 check.setChecked(char.has_status(bit))
@@ -981,6 +1027,11 @@ class QuezacotlWidget(QWidget):
             return
         for mask, check in self.char_exist_checks:
             char.set_exist_flag(mask, check.isChecked())
+
+    def _on_character_unused_changed(self):
+        char = self._selected_character()
+        if char:
+            char.unknown2, char.unknown3, char.unknown4 = (spin.value() for spin in self.char_unused_spins)
 
     def _on_character_status_flags_changed(self):
         char = self._selected_character()
@@ -1062,6 +1113,9 @@ class QuezacotlWidget(QWidget):
             check.stateChanged.connect(self._on_config_changed)
             self.config_flag_checks.append((mask, check))
             flag_grid.addWidget(check, i // 2, i % 2)
+            if mask in ConfigEntry.UNUSED_FLAG_BITS:
+                check.setToolTip(check.toolTip() + "\n" + RESERVED_TOOLTIP)
+                self._lock(check)
         flag_group = QGroupBox("Config flags")
         flag_group.setToolTip("Controller / config bitfield (offset 0x04). Some bits are set automatically "
                               "by the game from the detected hardware.")
@@ -1150,17 +1204,17 @@ class QuezacotlWidget(QWidget):
     def _build_misc_tab(self):
         # Party slots 1-3 are the real party; slot 4 (party[3]) is unused padding (the top byte
         # of the 32-bit party word) — FF8's party is fixed at 3, so it is shown read-only.
-        party4_tip = ("Read-only: party slot 4 is unused padding (the high byte of the 32-bit party word). "
-                      "FF8's party is fixed at 3 members; the game never stores a character here.")
+        party4_tip = ("Party slot 4 is unused padding (the high byte of the 32-bit party word): FF8's party is "
+                      "fixed at 3 members, the game never stores a character here.\n" + RESERVED_TOOLTIP)
         self.misc_party_combos = []
         self._party_rows = []
         for i in range(4):
             phantom = i == 3
-            combo = self._enum_combo(self._party_entries, None if phantom else self._on_misc_changed,
+            combo = self._enum_combo(self._party_entries, self._on_misc_changed,
                                      party4_tip if phantom else f"Party slot {i + 1} character (None = empty)")
             self.misc_party_combos.append(combo)
             if phantom:
-                combo.setEnabled(False)
+                self._lock(combo)
                 self._party_rows.append((self._grey_label("Party member 4:", party4_tip), combo))
             else:
                 self._party_rows.append((f"Party member {i + 1}:", combo))
@@ -1279,9 +1333,77 @@ class QuezacotlWidget(QWidget):
         self.items_table = QTableWidget(0, 2)
         self.items_table.setHorizontalHeaderLabels(["Item", "Quantity"])
         self._configure_list_table(self.items_table)
-        return self.items_table
+
+        # The in-battle Item list order of the 32 battle items (Misc offset 0x30). Edited as a
+        # reordering only, so it always stays the permutation of 0-31 the game needs.
+        self.battle_order_list = QListWidget()
+        self.battle_order_list.setToolTip("Order of the 32 battle items in the in-battle Item list (and the "
+                                          "Item menu's battle arrangement). A newly obtained battle item is "
+                                          "moved to the first place no owned item uses.")
+        self.battle_order_up = QPushButton("Move up")
+        self.battle_order_down = QPushButton("Move down")
+        self.battle_order_up.clicked.connect(lambda: self._move_battle_order(-1))
+        self.battle_order_down.clicked.connect(lambda: self._move_battle_order(1))
+        self.battle_order_warning = QLabel()
+        self.battle_order_warning.setWordWrap(True)
+        self.battle_order_warning.setStyleSheet("color:#c0392b; font-weight:bold;")
+        self.battle_order_warning.setVisible(False)
+        buttons = QHBoxLayout()
+        buttons.addWidget(self.battle_order_up)
+        buttons.addWidget(self.battle_order_down)
+        buttons.addStretch(1)
+        order_layout = QVBoxLayout()
+        order_layout.addWidget(self.battle_order_warning)
+        order_layout.addWidget(self.battle_order_list)
+        order_layout.addLayout(buttons)
+        order_group = QGroupBox("Battle item order")
+        order_group.setToolTip(self.battle_order_list.toolTip())
+        order_group.setLayout(order_layout)
+
+        # Both lists as wide as their content, so the stretch takes the spare width, not them
+        for widget in (self.items_table, self.battle_order_list):
+            widget.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+        layout = QHBoxLayout()
+        layout.addWidget(self.items_table)
+        layout.addWidget(order_group)
+        layout.addStretch(1)
+        container = QWidget()
+        container.setLayout(layout)
+        return container
+
+    def _reload_battle_order(self, select_place=None):
+        """Fill the order list: place 1..32, each with the battle item (id 1-32) the file puts there."""
+        order = self.manager.misc.get_battle_order()
+        valid = sorted(order) == list(range(len(order)))
+        self.battle_order_warning.setVisible(not valid)
+        self.battle_order_warning.setText(
+            "This file's battle item order is not a valid ordering (each place 0-31 exactly once): "
+            "the game would write past its arrays. Left as is, not editable here.")
+        self.battle_order_up.setEnabled(valid)
+        self.battle_order_down.setEnabled(valid)
+        self.battle_order_list.clear()
+        by_place = {place: item_id for item_id, place in enumerate(order, start=1)}
+        for place in range(len(order)):
+            item_id = by_place.get(place)
+            name = self.kernel_names.item_name(item_id) if item_id else "(none)"
+            self.battle_order_list.addItem(f"{place + 1}. {name}" + (f"  [{item_id}]" if item_id else ""))
+        if select_place is not None:
+            self.battle_order_list.setCurrentRow(select_place)
+
+    def _move_battle_order(self, step):
+        """Swap the places of the selected battle item and its neighbour."""
+        place = self.battle_order_list.currentRow()
+        other = place + step
+        order = self.manager.misc.get_battle_order()
+        if place < 0 or not 0 <= other < len(order):
+            return
+        first, second = order.index(place), order.index(other)
+        order[first], order[second] = other, place
+        self.manager.misc.set_battle_order(order)
+        self._reload_battle_order(select_place=other)
 
     def _reload_items(self):
+        self._reload_battle_order()
         self.items_table.setRowCount(0)
         self.items_table.setRowCount(len(self.manager.item_entries))
         for row, entry in enumerate(self.manager.item_entries):
