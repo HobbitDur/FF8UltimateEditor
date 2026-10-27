@@ -35,7 +35,9 @@ class KernelNameSource(QObject):
         self.binding.file_opened.connect(self._load)
         self.binding.file_closed.connect(self._clear)
         self.weapons = []    # name by weapon id; empty without a kernel.bin
-        self.abilities = []  # name by ability id (0 = none ... 115 = Card Mod)
+        self.abilities = []  # name by ability id (0 = none ... 115 = Card Mod in vanilla)
+        self.ability_groups = []  # entry count of the 7 ability sections (junction, command, stat %,
+                                  # character, party, GF, menu): the ids are these, one after the other
         self.items = {}      # name by item id, ids 0-255 as far as the kernel.bin defines them
 
     @property
@@ -75,6 +77,15 @@ class KernelNameSource(QObject):
         return [{"value": index, "name": name or ("None" if index == 0 else f"Ability {index}")}
                 for index, name in enumerate(self.abilities)]
 
+    def ability_group_ids(self, first_group, last_group=None):
+        """The ability ids of groups first_group..last_group (0 junction, 1 command, 2 stat %,
+        3 character, 4 party, 5 GF, 6 menu) as the kernel.bin sizes them; empty without one."""
+        if not self.ability_groups:
+            return range(0)
+        last_group = first_group if last_group is None else last_group
+        start = sum(self.ability_groups[:first_group])
+        return range(start, start + sum(self.ability_groups[first_group:last_group + 1]))
+
     @classmethod
     def make_notice(cls, what) -> QLabel:
         """The red "open kernel.bin" notice a tool shows while it has no names of `what`."""
@@ -91,10 +102,11 @@ class KernelNameSource(QObject):
             names = read_weapon_and_ability_names(self.game_data, path)
         except Exception as error:  # noqa: BLE001 - a bad kernel.bin just gives no names
             print(f"[kernel names] could not read {path}: {error}")
-            names = {"weapon": [], "ability": [], "item": {}}
+            names = {"weapon": [], "ability": [], "ability_groups": [], "item": {}}
         self.weapons, self.abilities, self.items = names["weapon"], names["ability"], names["item"]
+        self.ability_groups = names["ability_groups"]
         self.changed.emit()
 
     def _clear(self, _path=None):
-        self.weapons, self.abilities, self.items = [], [], {}
+        self.weapons, self.abilities, self.ability_groups, self.items = [], [], [], {}
         self.changed.emit()

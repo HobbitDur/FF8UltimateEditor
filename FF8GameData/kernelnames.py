@@ -242,16 +242,21 @@ ABILITY_SECTION_IDS = (12, 13, 14, 15, 16, 17, 18)
 
 
 def read_weapon_and_ability_names(game_data, kernel_file) -> dict:
-    """{"weapon": [name by weapon id], "ability": [name by ability id], "item": {id: name}} of a
+    """{"weapon": [name by weapon id], "ability": [name by ability id], "ability_groups": [entry
+    count of each ability section, in ABILITY_SECTION_IDS order], "item": {id: name}} of a
     kernel.bin, exactly as the file holds them (an entry the file leaves unnamed has an empty
-    name). The items run to the last one the file defines, ids 199-255 with FFNx's AddMoreItems."""
+    name). The items run to the last one the file defines, ids 199-255 with FFNx's AddMoreItems;
+    the ability sections are as long as the file makes them (FFNx's AddMoreAbility resizes them)."""
     from ShumiTranslator.model.kernel.kernelmanager import KernelManager
 
     kernel_manager = KernelManager(game_data)
     kernel_manager.load_file(str(kernel_file))
-    abilities = []
+    abilities, group_sizes = [], []
     for section_id in ABILITY_SECTION_IDS:
-        abilities.extend(_section_names(game_data, kernel_manager, section_id))
+        section_names = _section_names(game_data, kernel_manager, section_id)
+        abilities.extend(section_names)
+        group_sizes.append(len(section_names))
     return {"weapon": _section_names(game_data, kernel_manager, WEAPON_SECTION_ID),
             "ability": abilities,
+            "ability_groups": group_sizes,
             "item": _read_names(game_data, kernel_manager, keep_unnamed=True).get("item", {})}

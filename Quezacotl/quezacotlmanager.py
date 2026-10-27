@@ -6,13 +6,16 @@ from FF8GameData.gamedata import GameData
 # 8-10 are the Laguna-flashback trio; 0xFF is an empty slot.
 CHARACTER_NAMES = ["Squall", "Zell", "Irvine", "Quistis", "Rinoa", "Selphie", "Seifer", "Edea"]
 
-# Ability id space is the shared FF8Abilities / junctionable_ability enum (kernel_lookups
-# json). The game validates the two character ability blocks to these sub-ranges (IDA
-# sub_4DA600): "active" (command) abilities 0x14-0x26, "passive" (junction) abilities
-# 0x27-0x39. 0 = None/empty in both.
-ACTIVE_ABILITY_RANGE = range(0x14, 0x27)   # 20..38 command abilities (Magic, GF, Draw...)
-PASSIVE_ABILITY_RANGE = range(0x27, 0x3A)  # 39..57 passive abilities (HP+20%, Str+40%...)
-ABILITY_COUNT = 116  # ability ids 0 (none) .. 115 (Card Mod): the 7 kernel.bin ability sections
+# Ability ids are the 7 kernel.bin ability sections one after the other (junction, command,
+# stat %, character, party, GF, menu: 0-115 in vanilla), sized by the kernel.bin (FFNx's
+# AddMoreAbility resizes them), so the tools take the ranges from it (KernelNameSource).
+# The game validates the two character ability blocks to these groups: commands = the command
+# section (Menu_UnequipUnavailableCommands 0x4DA600), abilities = stat %, character and party
+# sections (Menu_ValidateCharaPassiveAbilities 0x4DA660). 0 = None/empty in both.
+COMMAND_ABILITY_GROUPS = (1, 1)
+EQUIPPED_ABILITY_GROUPS = (2, 4)
+LEARNED_ABILITY_BITS = 128  # a GF's learned-ability bitfield: 16 bytes, so ids 0-127 at most
+VANILLA_ABILITY_COUNT = 116  # ids shown without a kernel.bin to size them
 
 # GF compatibility per GF (u16). Game clamps to [1000, 6000] (IDA
 # itemAction_ModifyGfCompatibility); 1000 = minimum / neutral, 6000 = maximum.

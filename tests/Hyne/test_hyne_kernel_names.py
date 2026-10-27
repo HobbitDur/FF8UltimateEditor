@@ -71,3 +71,47 @@ def test_abilities_are_named_from_kernel_bin(tmp_path):
 def _contains():
     from PyQt6.QtCore import Qt
     return Qt.MatchFlag.MatchContains
+
+
+@pytest.mark.ff8data("extracted_files/main/init.out", "extracted_files/main/kernel.bin")
+def test_ability_ranges_follow_the_kernel_bin_sections(tmp_path):
+    """The command slots take the command section, the ability slots the stat %, character and party
+    sections (Menu_ValidateCharaPassiveAbilities: 39 <= id < 83 in vanilla), and Learned lists every
+    id - all as the open kernel.bin sizes them, so an ability added to a section shifts the rest."""
+    from PyQt6.QtWidgets import QPushButton
+    from SolomonRing.solomonringwidget import SolomonRingWidget
+
+    widget = HyneWidget(str(REPO / "Resources"), str(REPO / "FF8GameData"))
+    widget.ff8_binding.open_path(_save_from_init_out(tmp_path / "slot1_save01.ff8"))
+    widget.gf_list.setCurrentRow(0)
+
+    vanilla = tmp_path / "kernel.bin"
+    shutil.copy(MAIN / "kernel.bin", vanilla)
+    widget.kernel_names.binding.open_path(str(vanilla))
+    passive = widget.char_passive_combos[0]
+    offered = {passive.itemData(i): passive.itemText(i) for i in range(passive.count())}
+    assert set(offered) == {0, *range(39, 83)}
+    assert offered[73].endswith("Auto-Haste") and offered[78].endswith("Alert")
+    command = widget.char_active_combos[0]
+    assert {command.itemData(i) for i in range(command.count())} == {0, *range(20, 39)}
+    assert not widget.gf_ability_checks[115].isHidden() and widget.gf_ability_checks[116].isHidden()
+
+    modded = tmp_path / "mod" / "kernel.bin"
+    modded.parent.mkdir()
+    shutil.copy(vanilla, modded)
+    editor = SolomonRingWidget(icon_path=str(REPO / "Resources"), game_data_folder=str(REPO / "FF8GameData"))
+    editor.load_file(str(modded))
+    stat = editor._section_tabs[14]
+    stat.list_widget.setCurrentRow(stat._visible_indices.index(18))
+    next(b for b in stat.findChildren(QPushButton) if "Add entry" in b.text()).click()
+    stat._text_widgets[0].setText("Luck+60%")
+    editor._save_kernel()
+
+    widget.kernel_names.binding.registry.close_file("kernel.bin")
+    widget.kernel_names.binding.open_path(str(modded))
+    assert widget.kernel_names.ability_groups == [20, 19, 20, 20, 5, 9, 24]
+    offered = {passive.itemData(i): passive.itemText(i) for i in range(passive.count())}
+    assert set(offered) == {0, *range(39, 84)}
+    assert offered[58] == "58: Luck+60%" and offered[83].endswith("Rare Item")
+    assert widget.gf_ability_checks[116].text() == "Card Mod" and not widget.gf_ability_checks[116].isHidden()
+    assert widget.gf_ability_checks[117].isHidden()

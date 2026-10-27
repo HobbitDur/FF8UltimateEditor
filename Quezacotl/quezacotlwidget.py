@@ -24,7 +24,8 @@ from FF8GameData.kernellevels import level_curves, load_kernel
 from Quezacotl.levelformulapopup import LevelFormulaPopup
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
-    QuezacotlManager, CharacterEntry, ACTIVE_ABILITY_RANGE, PASSIVE_ABILITY_RANGE, ABILITY_COUNT,
+    QuezacotlManager, CharacterEntry, COMMAND_ABILITY_GROUPS, EQUIPPED_ABILITY_GROUPS,
+    LEARNED_ABILITY_BITS, VANILLA_ABILITY_COUNT,
     GF_COMPATIBILITY_MIN, GF_COMPATIBILITY_MAX,
 )
 
@@ -193,14 +194,17 @@ class QuezacotlWidget(QWidget):
         the file (and unsaved edits) are untouched - only the names change."""
         names = self.kernel_names
         self.kernel_notice.setVisible(not (names.abilities and names.weapons))
+        commands = names.ability_group_ids(*COMMAND_ABILITY_GROUPS)
+        equipped = names.ability_group_ids(*EQUIPPED_ABILITY_GROUPS)
         for combo, allowed in ([(self.gf_learning_ability_combo, None)]
-                               + [(c, ACTIVE_ABILITY_RANGE) for c in self.char_active_combos]
-                               + [(c, PASSIVE_ABILITY_RANGE) for c in self.char_passive_combos]):
+                               + [(c, commands) for c in self.char_active_combos]
+                               + [(c, equipped) for c in self.char_passive_combos]):
             current = combo.currentData()
             self._fill_ability_combo(combo, 0 if current is None else current, allowed)
         for ability_id, check in self.gf_ability_checks.items():
             check.setText(names.ability_name(ability_id) or f"Ability {ability_id}")
             check.setEnabled(bool(names.abilities))
+        self._show_defined_abilities()
         for bit, check in self.misc_weapon_checks:
             name = names.weapon_name(bit)
             check.setText(f"{name} ({self._weapon_characters.get(bit, '?')})" if name
@@ -584,14 +588,14 @@ class QuezacotlWidget(QWidget):
         self.gf_ability_checks = {}
         ability_grid = QGridLayout()
         columns = 4
-        for i, ability_id in enumerate(range(1, ABILITY_COUNT)):
+        for i, ability_id in enumerate(range(1, LEARNED_ABILITY_BITS)):
             check = QCheckBox(f"Ability {ability_id}")  # named once a kernel.bin is open
             check.setToolTip(f"Ability id {ability_id} learned")
             check.stateChanged.connect(self._on_gf_ability_changed)
             self.gf_ability_checks[ability_id] = check
             ability_grid.addWidget(check, i // columns, i % columns)
         ability_grid.setColumnStretch(columns, 1)  # the spare width goes right of the columns
-        ability_grid.setRowStretch((ABILITY_COUNT - 2) // columns + 1, 1)
+        ability_grid.setRowStretch((LEARNED_ABILITY_BITS - 2) // columns + 1, 1)
         ability_container = QWidget()
         ability_container.setLayout(ability_grid)
         ability_scroll = QScrollArea()
@@ -659,6 +663,14 @@ class QuezacotlWidget(QWidget):
         container.setLayout(layout)
         return container
 
+    def _show_defined_abilities(self):
+        """Show a Learned checkbox per ability id the kernel.bin defines (the vanilla 115 without
+        one), plus any id the selected GF has learned beyond that: the bitfield holds 127."""
+        count = len(self.kernel_names.abilities) or VANILLA_ABILITY_COUNT
+        gf = self._selected_gf()
+        for ability_id, check in self.gf_ability_checks.items():
+            check.setVisible(ability_id < count or bool(gf and gf.has_ability(ability_id)))
+
     def _selected_gf(self):
         index = self.gf_list.currentRow()
         if self.manager.gf_entries and 0 <= index < len(self.manager.gf_entries):
@@ -685,6 +697,7 @@ class QuezacotlWidget(QWidget):
         for ability_id, check in self.gf_ability_checks.items():
             with QSignalBlocker(check):
                 check.setChecked(gf.has_ability(ability_id))
+        self._show_defined_abilities()
         for slot, spin in enumerate(self.gf_ap_spins, start=1):
             with QSignalBlocker(spin):
                 spin.setValue(gf.get_ap_ability(slot))
@@ -985,9 +998,11 @@ class QuezacotlWidget(QWidget):
                 self.char_magic_qty_spins[i].setValue(magic.quantity)
 
         for slot, combo in enumerate(self.char_active_combos):
-            self._fill_ability_combo(combo, char.get_active_ability(slot), ACTIVE_ABILITY_RANGE)
+            self._fill_ability_combo(combo, char.get_active_ability(slot),
+                                     self.kernel_names.ability_group_ids(*COMMAND_ABILITY_GROUPS))
         for slot, combo in enumerate(self.char_passive_combos):
-            self._fill_ability_combo(combo, char.get_passive_ability(slot), PASSIVE_ABILITY_RANGE)
+            self._fill_ability_combo(combo, char.get_passive_ability(slot),
+                                     self.kernel_names.ability_group_ids(*EQUIPPED_ABILITY_GROUPS))
 
         for gf_id, check in enumerate(self.char_gf_junction_checks):
             with QSignalBlocker(check):
