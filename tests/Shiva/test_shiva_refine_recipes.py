@@ -267,3 +267,26 @@ def test_shiva_tab_adds_a_recipe_and_saves_both_files(qapp, game_data, files, mo
     before = (files / "mngrp.bin").read_bytes()
     assert widget.save_files() is False and "no kernel.bin is open" in messages[-1]
     assert (files / "mngrp.bin").read_bytes() == before
+
+
+@pytest.mark.ff8data(*FILES)
+def test_shiva_saves_twice_in_one_session_and_removes_the_added_recipe(qapp, game_data, files, monkeypatch):
+    """The Sprite and Tutorial tabs swap their sections in unpadded on every save: from the second
+    save on, mngrphd.bin got every later section's offset 496 bytes short (no menu images in game)."""
+    from Shiva.shivawidget import ShivaWidget
+    messages = []
+    monkeypatch.setattr(QMessageBox, "critical", lambda *args: messages.append(args[2]))
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args: messages.append(args[2]))
+    originals = {name: (files / name).read_bytes() for name in ("mngrp.bin", "mngrphd.bin", "kernel.bin")}
+    widget = ShivaWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
+    widget.mngrp_binding.open_path(str(files / "mngrp.bin"))
+    widget.kernel_binding.open_path(str(files / "kernel.bin"))
+    refine = widget.refine_tab
+    refine.section_list.setCurrentRow(next(i for i, view in enumerate(refine.refine_views) if view.name == "Ammo-RF"))
+    refine.entry_table.setCurrentCell(15, 0)
+    refine.add_recipe_button.click()
+    assert widget.save_files() is True
+    refine.entry_table.setCurrentCell(16, 0)
+    refine.remove_recipe_button.click()
+    assert widget.save_files() is True and widget.save_files() is True and not messages
+    assert {name: (files / name).read_bytes() for name in originals} == originals

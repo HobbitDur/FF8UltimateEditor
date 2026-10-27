@@ -91,12 +91,16 @@ class Mngrp(Section):
         return local_index_section
 
     def update_data_hex(self):
+        # Each offset is set to where the section is written, not shifted from its old value: a
+        # section swapped in unpadded (set_section_by_id_and_bytearray) shifts the following ones
+        # by its missing padding, which the fill below never gave back, so a second save in one
+        # session wrote every later section's header offset 496 bytes short.
         self._data_hex = bytearray()
         for local_index, section in enumerate(self._section_list):
-            len_old = len(section)
             section.update_data_hex()
             section.fill(2048)
-            self.__shift_offset(len_old=len_old, section_id=local_index, new_section=section)
+            if not self.header_entry_list or not self.header_entry_list[local_index].invalid_value:
+                section.own_offset = len(self._data_hex)
             self._data_hex.extend(section.get_data_hex())
         self._size = len(self._data_hex)
 
