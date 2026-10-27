@@ -14,7 +14,7 @@ from FF8GameData.monsterdata import EntityType
 from Ifrit.IfritSeq.seqwidget import SeqWidget
 from Ifrit.IfritSeq.seqcommandwidget import build_op_code_model
 from Watts.wattsmanager import WattsManager
-from Watts.cameracollectionwidget import CameraCollectionWidget
+from Common.cameracollectionwidget import CameraCollectionWidget
 from FF8GameData.dat.camerabake import BakedAnimation
 
 

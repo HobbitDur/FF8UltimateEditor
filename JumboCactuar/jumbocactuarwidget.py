@@ -1,4 +1,3 @@
-import fnmatch
 import os
 from contextlib import contextmanager
 
@@ -10,6 +9,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLa
 
 from Common.autoimport import AutoImportSource
 from Common.battlescenepreview import BattleScenePreview
+from Common.battlesidefiles import BattleSideFiles
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.battlestage.stagecamera import INTRO_CAMERA_NOTE
@@ -25,9 +25,6 @@ SLOT_FLAGS = [("enabled", "Enabled"), ("not_targetable", "Not targetable"),
 UNKNOWN_ROWS = [(0, 16), (16, 16), (32, 16), (48, 8)]  # (start, size) of the 4 unknown fields
 CAMERA_NAMES = ["Main", "Secondary"]
 BATTLE_FILES_KEY = "JumboCactuar battle files"   # the Opened files entry of the preview's files
-BATTLE_FILE_PATTERNS = ("a0stg*.x", "c0m*.dat", "d?c*.dat", "d?w*.dat")
-MODEL_FOLDER_KEY = "battle model (.dat)"   # the monsters' folder, remembered with Ifrit's and Xu's
-STAGE_FOLDER_KEY = "battle stage (.x)"
 WIKI_ENCOUNTERS = "https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/battle/encounter-codes/"
 WIKI_SCENE_OUT = "https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/battle/battle-structure-sceneout/"
 
@@ -173,10 +170,9 @@ class JumboCactuarWidget(QWidget):
         # The battle as the encounter sets it up: stage, enemies, party places, intro cameras.
         # Its files are side files (complementary_entries: c0m###.dat, a0stg###.x), never looked up
         # in a folder.
-        self._battle_files = {}   # lower-case file name -> path (a0stgNNN.x, c0mNNN.dat)
         self.preview = BattleScenePreview(game_data_folder)
-        self.preview.file_source = lambda name: self._battle_files.get(name.lower())
-        file_registry.file_closed.connect(self._on_registry_closed)
+        self.battle_files = BattleSideFiles(self, file_registry, BATTLE_FILES_KEY, self.preview)
+        self.preview.file_source = self.battle_files.path
 
         self._build_stage_group()
         self._build_flags_group()
@@ -388,64 +384,17 @@ class JumboCactuarWidget(QWidget):
     def complementary_entries(self):
         """The header's Import read-only menu: the files the battle preview draws, never edited here
         (several at once, added to the ones already opened)."""
-        return [("Monsters: c0m###.dat (several, Ctrl+A for all)", self._import_monsters),
-                ("Party: characters d?c###.dat and their weapons d?w###.dat (several, Ctrl+A for all)",
-                 self._import_party),
-                ("Battle stages: a0stg###.x (several, Ctrl+A for all)", self._import_stages)]
-
-    def _import_monsters(self):
-        self._import_side_files("Monsters to show in the battle preview (Ctrl+A for all)", MODEL_FOLDER_KEY,
-                                "Monster battle models (c0m*.dat)")
-
-    def _import_party(self):
-        self._import_side_files("Characters and weapons to stand the party (Ctrl+A for all)", MODEL_FOLDER_KEY,
-                                "Character and weapon battle models (d?c*.dat d?w*.dat)")
-
-    def _import_stages(self):
-        self._import_side_files("Battle stages to show in the battle preview (Ctrl+A for all)", STAGE_FOLDER_KEY,
-                                "Battle stages (a0stg*.x)")
-
-    def _import_side_files(self, caption, folder_key, file_filter):
-        file_paths = QFileDialog.getOpenFileNames(self, caption, self.file_registry.last_folder(folder_key),
-                                                  file_filter)[0]
-        if file_paths:
-            self.file_registry.remember_folder(folder_key, os.path.dirname(file_paths[0]))
-            self._add_battle_files(file_paths)
+        return self.battle_files.entries()
 
     def load_folder(self, folder):
         """The header's Open folder: every battle stage, monster, character and weapon found in it
         (and below; the first one of each name)."""
-        found = {}
-        for root, _folders, names in os.walk(folder):
-            for name in names:
-                if any(fnmatch.fnmatch(name.lower(), pattern) for pattern in BATTLE_FILE_PATTERNS):
-                    found.setdefault(name.lower(), os.path.join(root, name))
-        if found:
-            self._add_battle_files(list(found.values()))
+        self.battle_files.load_folder(folder)
 
     def auto_import_sources(self):
         """The header's Auto-upload: scene.out and the battle files opened last time."""
         return [AutoImportSource.for_binding(self.binding, self.file_registry.last_folder(FILE_NAME)),
-                AutoImportSource(BATTLE_FILES_KEY, BATTLE_FILE_PATTERNS, self._add_battle_files,
-                                 selection_only=True)]
-
-    def _add_battle_files(self, file_paths):
-        for path in file_paths:
-            name = os.path.basename(path).lower()
-            if any(fnmatch.fnmatch(name, pattern) for pattern in BATTLE_FILE_PATTERNS):
-                self._battle_files[name] = path
-        paths = list(self._battle_files.values())
-        self.file_registry.remember_files(BATTLE_FILES_KEY, paths)
-        # No fixed FF8 name: one summary entry in the Opened files panel (as Alexander's stages)
-        self.file_registry.open_file(BATTLE_FILES_KEY, FileRegistry.summarize_paths(paths, "battle file"))
-        self.preview.set_party_files(paths)
-        self.preview.files_changed()
-
-    def _on_registry_closed(self, file_name, _path):
-        if file_name == BATTLE_FILES_KEY:   # removed from the Opened files panel
-            self._battle_files.clear()
-            self.preview.set_party_files([])
-            self.preview.files_changed()
+                self.battle_files.auto_import_source()]
 
     def save_file(self):
         if not self.manager.loaded:

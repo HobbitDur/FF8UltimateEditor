@@ -2,6 +2,11 @@
 
 All parsing/logic lives in AlexanderManager (no Qt); this module only adapts
 it to the Ifrit3D viewer (QPixmap textures) and provides the tool UI.
+
+Two tabs: the 3D view of the stage, and its Camera - the camera section (intro cameras) in the
+shared camera track editor (Common.cameratrackeditor: keyframes, slots and script), filmed by the
+shared battle preview (Common.battlescenepreview) on this stage, with an encounter of scene.out and
+the monster / party models opened as read-only side files.
 """
 
 import os
@@ -10,10 +15,16 @@ from PIL.ImageQt import ImageQt
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
-                             QListWidget, QFileDialog, QMessageBox, QSplitter, QCheckBox)
+                             QListWidget, QFileDialog, QMessageBox, QSplitter, QCheckBox,
+                             QTabWidget, QComboBox, QSizePolicy)
 
 from Common.fileregistry import FileRegistry
 from Common.autoimport import AutoImportSource
+from Common.battlescenepreview import BattleScenePreview
+from Common.battlesidefiles import BattleSideFiles
+from Common.cameratrackeditor import CameraTrackEditor
+from Common.filebinding import FileBinding
+from FF8GameData.sceneout import EncounterRecord
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Alexander.alexandermanager import AlexanderManager
 from SmallWidget.listsearchbar import ListSearchBar
@@ -94,6 +105,12 @@ _ANIM_WIDGETS = ("play_btn", "reset_anim_btn", "fps_label", "fps_slider", "cb_gr
                  # the 4-group / sky structure) - so both dropdowns are hidden.
                  "anim_tools_btn", "files_btn")
 
+BATTLE_FILES_KEY = "Alexander battle files"   # the Opened files entry of the preview's side files
+SCENE_OUT = "scene.out"
+STAGE_GROWTH_NOTE = ("the geometry section after it moves further in the file, and Save writes a .hext "
+                     "giving FF8_EN.exe its new offset")
+MAX_ENCOUNTERS_IN_NOTE = 6
+
 
 class AlexanderWidget(QWidget):
     """Alexander: FF8 battle stage viewer (a0stgXXX.x)."""
@@ -107,14 +124,14 @@ class AlexanderWidget(QWidget):
     # The one summary entry the opened stages have in the Opened files panel.
     REGISTRY_NAME = "Alexander battle stage(s)"
 
-    def __init__(self, icon_path='Resources', settings=None, file_registry=None):
+    def __init__(self, icon_path='Resources', settings=None, file_registry=None, game_data_folder="FF8GameData"):
         super().__init__()
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
         self.file_registry = file_registry
         file_registry.file_closed.connect(self._on_registry_file_closed)
         self.settings = settings
-        self.manager = AlexanderManager()
+        self.manager = AlexanderManager(game_data_folder)
         self.bridge = ViewerBridge(self.manager)
 
         main_layout = QVBoxLayout(self)
@@ -185,15 +202,211 @@ class AlexanderWidget(QWidget):
 
         self.viewer_3d = Ifrit3DWidget(self.bridge, show_controls=True)
         self._hide_animation_controls()
+        # The viewer sits in its own page: it is hidden while no stage is open, and showing it must
+        # not show it over the Camera tab
+        view_page = QWidget()
+        view_layout = QVBoxLayout(view_page)
+        view_layout.setContentsMargins(0, 0, 0, 0)
+        view_layout.addWidget(self.viewer_3d)
+        self.tabs = QTabWidget()
+        self.tabs.addTab(view_page, "3D view")
+        self.tabs.addTab(self._build_camera_tab(game_data_folder), "Camera")
 
         splitter.addWidget(left)
-        splitter.addWidget(self.viewer_3d)
+        splitter.addWidget(self.tabs)
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
         splitter.setSizes([200, 820])
         main_layout.addWidget(splitter, 1)
 
         self._stage_names = []
+        self._show_camera()
+
+    # ------------------------------------------------------------------ camera tab
+
+    def _build_camera_tab(self, game_data_folder):
+        """The stage's camera section in the shared track editor, filmed by the shared battle preview."""
+        self.preview = BattleScenePreview(game_data_folder)
+        self.battle_files = BattleSideFiles(self, self.file_registry, BATTLE_FILES_KEY, self.preview,
+                                            patterns=("c0m*.dat", "d?c*.dat", "d?w*.dat"))
+        self.preview.file_source = self._battle_file_path
+        # scene.out (read only, edited in JumboCactuar): the encounters fought on this stage
+        from JumboCactuar.jumbocactuarmanager import JumboCactuarManager
+        self.scene = JumboCactuarManager()
+        self.sceneout_binding = FileBinding(SCENE_OUT, self.file_registry, load_callback=self._on_sceneout_opened,
+                                            file_filter=SCENE_OUT, read_only=True)
+        self.sceneout_binding.file_closed.connect(self._on_sceneout_closed)
+
+        self.camera_editor = CameraTrackEditor(self.manager, self.preview, room_name="stage file",
+                                               growth_note=STAGE_GROWTH_NOTE)
+        self.camera_editor.keyframes_changed.connect(self._on_camera_edited)
+        self.camera_editor.track_changed.connect(self._on_camera_edited)
+        self.camera_info = QLabel()
+        self.camera_info.setWordWrap(True)
+        self.camera_info.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Minimum)
+        self.camera_info.setToolTip(
+            "The camera section holds the stage's intro cameras: scene.out bytes 0x02/0x03 of an encounter "
+            "pick one animation (set = high nibble, slot = bits 0-2), main or secondary at random. Its "
+            "script (Script tab) plays the animation of camera variable 0, that byte. FF8_EN.exe hardcodes "
+            "where the camera and the geometry sections start: a camera that grows past its room pushes "
+            "the geometry, and the exe then needs the .hext Save writes.")
+        editor_side = QWidget()
+        editor_layout = QVBoxLayout(editor_side)
+        editor_layout.setContentsMargins(4, 4, 4, 4)
+        editor_layout.addWidget(self.camera_info)
+        editor_layout.addWidget(self.camera_editor, 1)
+
+        self.encounter_combo = QComboBox()
+        self.encounter_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.encounter_combo.setMinimumContentsLength(20)
+        self.encounter_combo.setToolTip("The encounter the preview stands on this stage (scene.out, opened with "
+                                        "Import read-only): its enemies, and its intro cameras to play")
+        self.encounter_combo.currentIndexChanged.connect(self._show_preview_encounter)
+        encounter_row = QHBoxLayout()
+        encounter_row.addWidget(QLabel("Encounter:"))
+        encounter_row.addWidget(self.encounter_combo, 1)
+        preview_side = QWidget()
+        preview_layout = QVBoxLayout(preview_side)
+        preview_layout.setContentsMargins(4, 4, 4, 4)
+        preview_layout.addLayout(encounter_row)
+        preview_layout.addWidget(self.preview, 1)
+
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.addWidget(editor_side)
+        splitter.addWidget(preview_side)
+        splitter.setStretchFactor(0, 3)
+        splitter.setStretchFactor(1, 2)
+        return splitter
+
+    def _battle_file_path(self, name):
+        """The preview's files: the opened stages, then the side files."""
+        for stage_name, path in self.manager._folder_files.items():
+            if os.path.basename(stage_name).lower() == name.lower():
+                return path
+        return self.battle_files.path(name)
+
+    def _show_camera(self):
+        """Show the current stage's camera track, its encounters and the preview on it."""
+        self.camera_editor.set_track(self.manager.camera_track)
+        self._fill_encounters()
+        self._update_camera_info()
+
+    def _stage_encounters(self):
+        stage_id = self.manager.stage_id
+        if stage_id is None or not self.scene.loaded:
+            return []
+        return [index for index, record in enumerate(self.scene.records) if record.stage_id == stage_id]
+
+    def _fill_encounters(self):
+        encounters = self._stage_encounters()
+        self.encounter_combo.blockSignals(True)
+        self.encounter_combo.clear()
+        self.encounter_combo.addItem("(no encounter: the party only)" if self.scene.loaded else
+                                     "(open scene.out with Import read-only for this stage's encounters)", None)
+        for index in encounters:
+            record = self.scene.records[index]
+            cameras = ", ".join(f"{name} {record.camera(i)[0]}/{record.camera(i)[1]}"
+                                for i, name in enumerate(("main", "secondary")))
+            self.encounter_combo.addItem(f"{self.scene.summary(index)}  ·  intro {cameras}", index)
+        self.encounter_combo.setCurrentIndex(1 if encounters else 0)
+        self.encounter_combo.blockSignals(False)
+        self.camera_editor.set_slot_notes(self._slot_notes(encounters))
+        self._show_preview_encounter()
+
+    def _slot_notes(self, encounters):
+        """(set, slot) -> 'intro of encounter 12 (main), 13 (secondary)' for this stage's encounters."""
+        users = {}
+        for index in encounters:
+            record = self.scene.records[index]
+            for camera, name in enumerate(("main", "secondary")):
+                users.setdefault(record.camera(camera), []).append(f"{index} ({name})")
+        notes = {}
+        for key, names in users.items():
+            shown = names[:MAX_ENCOUNTERS_IN_NOTE] + ([f"+{len(names) - MAX_ENCOUNTERS_IN_NOTE}"]
+                                                      if len(names) > MAX_ENCOUNTERS_IN_NOTE else [])
+            notes[key] = "intro of encounter " + ", ".join(shown)
+        return notes
+
+    def _show_preview_encounter(self, _index=None):
+        if self.manager.stage_id is None:
+            self.preview.show_encounter(None)
+            return
+        index = self.encounter_combo.currentData()
+        if index is None:
+            record = EncounterRecord()
+            record.stage_id = self.manager.stage_id
+        else:
+            record = self.scene.records[index]
+        self.preview.show_encounter(record, index)
+
+    def _on_sceneout_opened(self, path):
+        try:
+            self.scene.load_file(path)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Alexander", f"Could not read {path}:\n{error}")
+            return
+        self._fill_encounters()
+
+    def _on_sceneout_closed(self, _path):
+        from JumboCactuar.jumbocactuarmanager import JumboCactuarManager
+        self.scene = JumboCactuarManager()
+        self._fill_encounters()
+
+    def _on_camera_edited(self):
+        self._update_camera_info()
+        self._refresh_stage_marks()
+        self.file_bindings_changed.emit()   # Save may now have something to write
+
+    def _update_camera_info(self):
+        layout = self.manager.camera_layout() if self.manager.current_stage_path else None
+        if layout is None:
+            self.camera_info.setText("No battle stage camera: open an a0stgNNN.x stage." if not self.manager.is_loaded
+                                     else "This file is not a known battle stage (a0stgNNN.x): no camera to edit.")
+            return
+        size, room, geometry = layout
+        text = f"Camera section: {size} bytes, {room} bytes of room before the geometry section."
+        if size > room:
+            name = os.path.splitext(os.path.basename(self.manager.current_stage_path))[0]
+            text += (f" It grew {size - room} bytes: Save moves the geometry section to {geometry} and writes "
+                     f"{name}.hext, which FF8_EN.exe needs (FFNx hext) to read this stage.")
+        else:
+            text += " The geometry section stays where FF8_EN.exe reads it."
+        self.camera_info.setText(text)
+
+    def _refresh_stage_marks(self):
+        """'* ' before the stages whose camera has unsaved edits."""
+        modified = set(self.manager.modified_camera_paths())
+        for row, name in enumerate(self._stage_names):
+            item = self.stage_list.item(row)
+            if item is not None:
+                item.setText(("* " if self.manager._folder_files.get(name) in modified else "") + name)
+
+    # ------------------------------------------------------------------ side files
+
+    def file_bindings(self):
+        """scene.out, read only (the encounters the Camera preview shows). The stages themselves are
+        opened with open_files (no fixed name)."""
+        return [self.sceneout_binding]
+
+    def complementary_entries(self):
+        """The header's Import read-only menu: scene.out and the models the Camera preview draws."""
+        return [("Encounters: scene.out", self._import_sceneout)] + self.battle_files.entries()
+
+    def _import_sceneout(self):
+        path = self.sceneout_binding.open_dialog(self, default_dir=self.file_registry.last_folder(SCENE_OUT))
+        if path:
+            self.file_registry.remember_folder(SCENE_OUT, os.path.dirname(path))
+
+    def load_folder(self, folder):
+        """The header's Open folder: its battle stages, and the models the Camera preview draws
+        (scene.out is found by the shared folder scan)."""
+        stages = []
+        for root, _folders, names in os.walk(folder):
+            stages += [os.path.join(root, name) for name in names
+                       if name.lower().startswith("a0stg") and name.lower().endswith(".x")]
+        if stages:
+            self.open_files(sorted(stages))
+        self.battle_files.load_folder(folder)
 
     # ------------------------------------------------------------------ helpers
 
@@ -257,7 +470,9 @@ class AlexanderWidget(QWidget):
 
     def auto_import_sources(self):
         return [AutoImportSource(self.REGISTRY_NAME, ("a0stg*.x",), self.open_files,
-                                 selection_only=True)]
+                                 selection_only=True),
+                AutoImportSource.for_binding(self.sceneout_binding, self.file_registry.last_folder(SCENE_OUT)),
+                self.battle_files.auto_import_source()]
 
     def open_files(self, file_paths=None):
         """Open one or more battle stage files at once (the shared header Import button calls
@@ -268,6 +483,11 @@ class AlexanderWidget(QWidget):
                 "Battle stage (a0stg*.x);;All files (*)")
         if not file_paths:
             return
+        if self.manager.modified_camera_paths() and QMessageBox.question(
+                self, "Alexander", "Some stage cameras have unsaved edits. Open other stages and drop them?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+            return
+        self.manager.camera_tracks.clear()   # the new list's cameras are read from its files
         self._save_last_dir(file_paths[0])
         self.file_registry.remember_files(self.REGISTRY_NAME, file_paths)
         names = self.manager.open_files(file_paths)
@@ -304,12 +524,20 @@ class AlexanderWidget(QWidget):
 
     def save_folder(self):
         """Write the current stage back to its a0stgXXX.x (the shared header Save button calls
-        this). Writes straight back to the loaded file, no dialog - unless there is none to write
-        back to (only a .glb was imported, with no original .x of its own), in which case it asks
-        where to save."""
+        this), and every other opened stage whose camera was edited. Writes straight back to the
+        loaded file, no dialog - unless there is none to write back to (only a .glb was imported,
+        with no original .x of its own), in which case it asks where to save."""
         if not self.manager.can_save:
             QMessageBox.warning(self, "Alexander", "Nothing to save yet.")
             return
+        others = [path for path in self.manager.modified_camera_paths() if path != self.manager.current_stage_path]
+        notes = []
+        for path in others:
+            try:
+                notes.append(f"{os.path.basename(path)}: {self.manager.save_camera(path)}")
+            except Exception as e:
+                QMessageBox.critical(self, "Alexander", f"Could not save {path}:\n{e}")
+                return
         file_path = self.manager.current_stage_path
         if not file_path:
             file_path, _ = QFileDialog.getSaveFileName(
@@ -324,8 +552,12 @@ class AlexanderWidget(QWidget):
             QMessageBox.critical(self, "Alexander", f"Could not save {file_path}:\n{e}")
             return
         self._unsaved_import = False
+        self.preview.files_changed(reload=True)   # the saved stage is read again
+        self._refresh_stage_marks()
+        self._update_camera_info()
+        self.file_bindings_changed.emit()
         QMessageBox.information(self, "Alexander",
-                               f"{os.path.basename(file_path)}\n\n{note}")
+                               "\n\n".join([f"{os.path.basename(file_path)}\n\n{note}"] + notes))
 
     def _import_glb(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -347,6 +579,7 @@ class AlexanderWidget(QWidget):
         self.file_label.setText(f"{os.path.basename(file_path)}  (imported glb)")
         self._update_sky_button()
         self._load_into_viewer()
+        self._show_camera()
 
     def _on_sky_toggle(self, checked: bool):
         self.manager.set_show_sky(checked)
@@ -385,6 +618,7 @@ class AlexanderWidget(QWidget):
         self.file_label.setText("No stage loaded  -  Open a battle stage (.x) file")
         self._update_sky_button()
         self.viewer_3d.hide()  # it would keep drawing the last stage; shown again on the next load
+        self._show_camera()
         self.file_bindings_changed.emit()
 
     def can_save_folder(self):
@@ -392,8 +626,8 @@ class AlexanderWidget(QWidget):
         return self.manager.can_save
 
     def has_unsaved_changes(self):
-        """A loaded stage is only viewed; an imported .glb mesh is an edit until it is saved."""
-        return getattr(self, "_unsaved_import", False)
+        """An imported .glb mesh, or an edited camera, is an edit until it is saved."""
+        return getattr(self, "_unsaved_import", False) or bool(self.manager.modified_camera_paths())
 
     def _on_stage_selected(self, row: int):
         if row < 0 or row >= len(self._stage_names):
@@ -405,3 +639,4 @@ class AlexanderWidget(QWidget):
             return
         self._update_sky_button()
         self._load_into_viewer()
+        self._show_camera()

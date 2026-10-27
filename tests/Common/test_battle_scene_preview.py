@@ -198,3 +198,46 @@ def test_free_camera_wheel_zoom_and_right_drag_pan(qapp):
     gl.mouseMoveEvent(mouse(QMouseEvent.Type.MouseMove, 160, Qt.MouseButton.RightButton))
     gl.mouseReleaseEvent(mouse(QMouseEvent.Type.MouseButtonRelease, 160, Qt.MouseButton.NoButton))
     assert gl.pan_x > pan
+
+
+@pytest.fixture(scope="module")
+def camera_vm():
+    from FF8GameData.gamedata import GameData
+    from FF8GameData.dat.sequencevm import camera_sequence_vm
+    game_data = GameData("FF8GameData")
+    game_data.load_camera_sequence_data()
+    return camera_sequence_vm(game_data)
+
+
+def test_stage_script_waits_for_the_intro_shot(camera_vm):
+    """Every stage's script: play variable 0, wait while the shot plays, keep its end as the return view."""
+    from FF8GameData.dat.camerascript import CameraScriptInputs, run_camera_script_frames
+    script = CAMERA_SETTINGS[:23]
+    timeline = run_camera_script_frames(camera_vm, script, CameraScriptInputs(opening=0x02),
+                                        shot_length=lambda index: 30)
+    assert timeline.shots == [(0, 0x02)] and timeline.frames == 31
+    assert timeline.events == [(30, "capture_return: saves the current view as the return view")]
+    assert timeline.stop_reason.startswith("end_clear")
+    missing = run_camera_script_frames(camera_vm, script, CameraScriptInputs(opening=0x12))
+    assert missing.frames == 1 and missing.events[0][0] == 0   # no shot starts: the view is kept at once
+
+
+def test_intro_follows_an_edited_stage_script(qapp, camera_vm):
+    from Common.battlescenepreview import BattleScenePreview
+    from FF8GameData.dat.cameratrack import CameraScriptTools, CameraTrack
+    tools = CameraScriptTools()
+    tools.vm = camera_vm
+    data = synthetic_stage()
+    section = data[STAGE_CAMERA_OFFSET[0]:]
+    track = CameraTrack.from_bytes(camera_vm, section)
+    preview = BattleScenePreview()
+    preview.set_track(track)
+    preview.show_encounter(_record(stage_id=0, camera=0x12), 0)   # set 1: the stage has none...
+    preview.play_intro(0)
+    preview._timer.stop()
+    assert not preview._poses and "plays nothing" in preview.status.text()
+    tools.set_script_code(track, "play(0x02)\nend_clear()")   # ...but the edited script plays slot 2
+    preview.refresh()
+    preview._rebuild()
+    assert len(preview._poses) == 30
+    assert "camera script plays set 0 anim 2 at tick 0" in preview.status.text()

@@ -15,6 +15,12 @@ a stage not opened is a ground grid. Coordinates: battle (engine) space, +Y down
 vertices are in the viewer space of to_viewer() as read (checked over all 163 stages: the intro
 cameras frame the stage, the scene.out slots stand on its floor).
 
+A camera track being edited (a stage's camera section, FF8GameData.dat.cameratrack) can replace the
+stage file's: set_track() plays the intro cameras from it and preview_animation() films any of its
+animations - the interface Common.cameratrackeditor drives a preview with.
+The intro is filmed as the game plays it: the stage's camera script runs frame by frame with the
+intro byte in variable 0 (camerascript.run_camera_script_frames), so an edited script shows.
+
 Approximated: the intro camera's caster/target (an intro animation rarely uses them) are the
 first enemy and the middle party member; the sky does not turn; the party stands in the
 3-member formation.
@@ -25,13 +31,14 @@ from dataclasses import replace
 from time import perf_counter
 
 import numpy as np
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSlider,
                              QComboBox, QCheckBox, QSizePolicy)
 
 from FF8GameData.battlestage.battlestageanalyser import VERTEX_SCALE
 from FF8GameData.battlestage.stagecamera import read_stage_camera, INTRO_CAMERA_NOTE
 from FF8GameData.dat.battlecamera import BattleCameraContext, CameraActor, CameraPose, play_camera_animation
+from FF8GameData.dat.camerascript import camera_animation_at
 from FF8GameData.sceneout import NB_SLOT, ENEMY_ID_BASE
 
 UNIT = VERTEX_SCALE            # viewer units per battle unit (the stage's own vertex scale)
@@ -42,6 +49,7 @@ ENEMY_YAW = math.pi            # resetBasedRotation (EN 502070): monsters 2048, 
 PARTY_SIZE = 3
 FPS = 15
 CAMERA_NAMES = ("Main", "Secondary")
+PICKED_MODE = len(CAMERA_NAMES) + 1   # camera_mode entry of an animation picked by preview_animation
 
 
 def stage_file_name(stage_id):
@@ -131,7 +139,9 @@ class _Model:
 class BattleScenePreview(QWidget):
     """The 3D battle preview. A host gives it an encounter (show_encounter) and where the opened
     battle files are (file_source); play_intro(0 / 1) films it with the main / secondary intro
-    camera."""
+    camera; set_track / preview_animation film a camera track being edited."""
+
+    animation_chosen = pyqtSignal(object)   # the animation index an intro camera plays (None: another camera)
 
     def __init__(self, game_data_folder="FF8GameData", parent=None):
         super().__init__(parent)
@@ -156,6 +166,9 @@ class BattleScenePreview(QWidget):
         self._characters = []       # opened d?c###.dat (the party's choices)
         self._weapons = []          # opened d?w###.dat
         self._party_chosen = set()  # party slots the user set (the others follow the opened files)
+        self.track = None           # an edited camera track replacing the stage file's camera section
+        self._picked = None         # (set, slot) of the track animation preview_animation films
+        self._vm = None             # the camera script VM, read on first use
 
         from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
         self.gl = FF8OpenGLWidget()
@@ -235,9 +248,46 @@ class BattleScenePreview(QWidget):
         self._encounter_index = index
         self._rebuild_timer.start()
 
-    def files_changed(self):
-        """The host's opened battle files changed: read the scene again."""
+    def files_changed(self, reload=False):
+        """The host's opened battle files changed: read the scene again (`reload`: the files
+        themselves changed, read them again too)."""
+        if reload:
+            self._stages.clear()
+            self._models.clear()
         self._rebuild_timer.start()
+
+    def set_track(self, track):
+        """Film the intro cameras (and picked animations) from this camera track instead of the stage
+        file's camera section (None: the file's again). Its animation objects may be new ones."""
+        self.track = track
+        if track is None and self.camera_mode.currentIndex() == PICKED_MODE:
+            self.camera_mode.setCurrentIndex(0)
+        self._rebuild_timer.start()
+
+    def preview_animation(self, animation):
+        """Film one animation of the track from the start (Picked camera animation)."""
+        self._picked = self._animation_key(animation)
+        if self.camera_mode.count() <= PICKED_MODE:
+            self.camera_mode.addItem("Picked camera animation")
+        if self.camera_mode.currentIndex() != PICKED_MODE:
+            self.camera_mode.setCurrentIndex(PICKED_MODE)   # -> _camera_mode_changed
+        else:
+            self._rebuild()
+        self.slider.setValue(0)
+        if self._poses:
+            self._start_playback()
+
+    def refresh(self):
+        """Keyframe values of the track changed: film it again (at the same tick)."""
+        self._rebuild_timer.start()
+
+    def _animation_key(self, animation):
+        collection = self.track.collection if self.track is not None else None
+        for camera_set in (collection.sets if collection is not None else ()):
+            for slot, candidate in enumerate(camera_set.animations):
+                if candidate is animation:
+                    return camera_set.index, slot
+        return None
 
     def play_intro(self, camera_index):
         """Film the encounter with its main (0) or secondary (1) intro camera, from the start."""
@@ -450,27 +500,85 @@ class BattleScenePreview(QWidget):
         self._poses = []
         index = self._camera_index()
         if index < 0:
-            return
-        camera_byte = self._record.camera_byte(index)
-        camera_set, camera_anim = camera_byte >> 4, camera_byte & 0x07
-        name = f"{CAMERA_NAMES[index].lower()} intro camera (set {camera_set}, anim {camera_anim})"
-        if self._stage is None:
-            notes.append(f"the {name} needs the stage file")
-            return
-        animation = self._stage.camera.intro_animation(camera_byte)
-        if animation is None:
-            notes.append(f"the {name} plays nothing: the stage has {self._stage.camera.set_count} "
-                         "camera set(s), the battle keeps the default camera")
+            self.animation_chosen.emit(None)
             return
         enemies = [actor for slot, actor in sorted(self._slots.items()) if slot >= 3]
         caster = enemies[0] if enemies else CameraActor()
         context = BattleCameraContext(caster, self._slots.get(1, CameraActor()),
                                       CameraPose((-4000., -2500., -7000.), (0., -500., 2500.)), self._slots)
-        self._poses = play_camera_animation(animation, context)
+        if index >= len(CAMERA_NAMES):   # an animation of the edited track
+            self.animation_chosen.emit(None)
+            animation, name = None, "picked camera animation"
+            if self.track is not None and self._picked is not None:
+                camera_set, slot = self._picked
+                name = f"picked camera animation (set {camera_set}, slot {slot})"
+                animation = camera_animation_at(self.track.collection, camera_set << 4 | slot)
+            if animation is None:
+                notes.append(f"the {name} is not in the camera any more")
+                return
+            self._poses = play_camera_animation(animation, context)
+        else:
+            camera_byte = self._record.camera_byte(index)
+            camera_set, camera_anim = camera_byte >> 4, camera_byte & 0x07
+            name = f"{CAMERA_NAMES[index].lower()} intro camera (set {camera_set}, anim {camera_anim})"
+            if self.track is not None:
+                collection, script = self.track.collection, self.track.script
+            elif self._stage is None:
+                notes.append(f"the {name} needs the stage file")
+                return
+            else:
+                collection, script = self._stage.camera.collection, self._stage.camera.settings
+            self._poses = self._run_stage_script(script, collection, camera_byte, context, name, notes)
+            if not self._poses:
+                return
         if not self._poses:
             notes.append(f"the {name} is empty")
         elif context.warnings:
             notes.append("; ".join(sorted(context.warnings)))
+
+    def _run_stage_script(self, script, collection, camera_byte, context, name, notes):
+        """Film the intro as the game does: the stage's camera script runs each frame with the intro
+        byte in variable 0 (BS_CameraInit), so an edited script films what it plays. The camera holds
+        the last shot's end (the battle's return view)."""
+        from FF8GameData.dat.camerascript import CameraScriptInputs, run_camera_script_frames
+        shots = {}
+
+        def shot_length(index):
+            if index not in shots:
+                animation = camera_animation_at(collection, index)
+                shots[index] = play_camera_animation(animation, context) if animation is not None else []
+            return len(shots[index])
+
+        timeline = run_camera_script_frames(self._camera_vm(), script, CameraScriptInputs(opening=camera_byte),
+                                            shot_length=shot_length)
+        played = [(frame, index) for frame, index in timeline.shots if shots.get(index)]
+        self.animation_chosen.emit(played[-1][1] if played else camera_byte)
+        if [index for _frame, index in timeline.shots] != [camera_byte]:
+            notes.append("the stage's camera script plays " + (", ".join(
+                f"set {index >> 4} anim {index & 7} at tick {frame}" for frame, index in timeline.shots)
+                if timeline.shots else "no animation"))
+        if not timeline.stop_reason.startswith("end"):
+            notes.append(f"camera script: {timeline.stop_reason}")
+        if not played:
+            notes.append(f"the {name} plays nothing: the stage has {len(collection.sets)} "
+                         "camera set(s), the battle keeps the default camera")
+            return []
+        poses = []
+        total = max(frame + len(shots[index]) for frame, index in played)
+        for tick in range(total):
+            frame, index = [shot for shot in played if shot[0] <= tick][-1]   # the last shot started
+            poses.append(shots[index][min(tick - frame, len(shots[index]) - 1)])
+        return poses
+
+    def _camera_vm(self):
+        """The camera script VM (camera_sequence_info.json), read on first use."""
+        if self._vm is None:
+            from FF8GameData.gamedata import GameData
+            from FF8GameData.dat.sequencevm import camera_sequence_vm
+            game_data = GameData(self._game_data_folder)
+            game_data.load_camera_sequence_data()
+            self._vm = camera_sequence_vm(game_data)
+        return self._vm
 
     def _camera_mode_changed(self):
         self._timer.stop()

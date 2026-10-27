@@ -18,6 +18,10 @@ How the intro camera is chosen (BS_CameraInit 0x500F70, BS_GetCameraAnimationPoi
 main one. The byte goes to the camera VM's variable 0: its high nibble is the animation SET
 of the stage's collection, bits 0-2 the animation in that set (bit 3 is unused). A set the
 stage does not have plays nothing: the battle keeps the default camera.
+
+The section is a camera track (FF8GameData.dat.cameratrack: header, script, keyframes), the same
+block as a spell's camera. Editing it may change its size: the geometry section that follows it
+then moves (with_camera_section), and the exe needs the new geometry offset (stagehext).
 """
 import struct
 
@@ -51,6 +55,41 @@ INTRO_CAMERA_NOTE = (
     f"(encounter {ALWAYS_MAIN_CAMERA_ENCOUNTER} always uses the main one). Set = the camera "
     "animation set of the battle stage file, Anim = the animation in that set (0-7). A set "
     "the stage does not have plays nothing: the battle keeps the default camera.")
+
+
+def camera_section(data, stage_id) -> bytes:
+    """The whole camera section (a camera track) of a stage file."""
+    offset = STAGE_CAMERA_OFFSET[stage_id]
+    size = struct.unpack_from("<H", data, offset + 6)[0]
+    return bytes(data[offset:offset + size])
+
+
+def stage_camera_track(data, stage_id, vm):
+    """The camera section as an editable CameraTrack (vm: camera_sequence_vm)."""
+    from FF8GameData.dat.cameratrack import CameraTrack
+    return CameraTrack.from_bytes(vm, camera_section(data, stage_id))
+
+
+def with_camera_section(data, stage_id, section):
+    """(file bytes, geometry offset): the stage file with `section` as its camera section. The
+    camera section keeps its exe offset; the geometry section stays at the exe's offset while the
+    camera fits before it, else it moves right after the camera (4-byte aligned, as the TIM inside
+    it is aligned on the file), and the exe must be given that offset (stagehext). Everything in
+    the geometry section is relative to its start, so it moves as it is."""
+    from FF8GameData.battlestage.battlestageanalyser import STAGE_GEOMETRY_OFFSET, stage_geometry_offset
+    if len(section) > 0xFFFF:
+        raise ValueError(f"the camera section is {len(section)} bytes: its size field holds at most 65535")
+    camera = STAGE_CAMERA_OFFSET[stage_id]
+    geometry = stage_geometry_offset(data, stage_id)
+    old_end = camera + struct.unpack_from("<H", data, camera + 6)[0]
+    end = camera + len(section)
+    new_geometry = max(STAGE_GEOMETRY_OFFSET[stage_id], (end + 3) & ~3)
+    gap = bytearray(new_geometry - end)
+    # The bytes a stage has between its camera and its geometry (only one vanilla stage has any)
+    keep_from, keep_to = max(end, old_end), min(new_geometry, geometry)
+    if keep_from < keep_to:
+        gap[keep_from - end:keep_to - end] = data[keep_from:keep_to]
+    return bytes(data[:camera]) + bytes(section) + bytes(gap) + bytes(data[geometry:]), new_geometry
 
 
 class StageCamera:

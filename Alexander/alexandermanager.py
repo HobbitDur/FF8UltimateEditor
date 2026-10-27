@@ -3,16 +3,27 @@
 Pure Python/PIL: no Qt import, usable from scripts and tests. The GUI layer
 (alexanderwidget) wraps it in a small bridge that adapts textures to QPixmaps
 for the Ifrit3D viewer.
+
+Each opened stage's camera section is kept as an editable camera track
+(FF8GameData.dat.cameratrack) while the user moves between stages; Save writes it back. A camera
+that grew past its room pushes the geometry section further (stagecamera.with_camera_section) and
+FF8_EN.exe must be told: Save writes a .hext next to the stage (stagehext).
 """
 
 import os
 import pathlib
 from typing import List, Tuple
 
-from FF8GameData.battlestage.battlestageanalyser import build_stage_model, BattleStageModel
+from FF8GameData.battlestage.battlestageanalyser import build_stage_model, BattleStageModel, STAGE_GEOMETRY_OFFSET
+from FF8GameData.battlestage.stagecamera import (STAGE_CAMERA_OFFSET, camera_section, stage_camera_track,
+                                                 with_camera_section)
+from FF8GameData.battlestage.stagehext import stage_hext_text
+from FF8GameData.dat.cameratrack import CameraScriptTools
+
+HEXT_MARK = "#Alexander battle stage patch"   # first line of the .hext files Save writes
 
 
-class AlexanderManager:
+class AlexanderManager(CameraScriptTools):
     # Battle stages are static (one bind-pose frame); the viewer still reads
     # these attributes.
     max_animation_frames = 1
@@ -20,7 +31,9 @@ class AlexanderManager:
     # TIM decoding gives real alpha; do not key opaque black to transparent.
     texture_black_is_transparent = False
 
-    def __init__(self):
+    def __init__(self, game_data_folder="FF8GameData"):
+        self._game_data_folder = game_data_folder
+        self._vm = None
         self.close()
 
     def close(self):
@@ -41,6 +54,10 @@ class AlexanderManager:
         # back to it (matching every other tool). None once a .glb is imported: an imported
         # mesh has no original .x of its own, so Save must ask where to write it.
         self.current_stage_path = None
+        self.stage_id = None
+        self._template_path = None
+        # stage path -> its camera section as a CameraTrack, kept (with its edits) across stage switches
+        self.camera_tracks = {}
 
     # ------------------------------------------------------------------ loading
 
@@ -71,6 +88,80 @@ class AlexanderManager:
         self._template_raw = model.raw
         self._template_tex_layout = dict(model.tex_layout)   # tex_key -> (page, clut, w, h)
         self.current_stage_path = path
+        self.stage_id = stage_id
+        self._template_path = path
+        if path not in self.camera_tracks and stage_id in STAGE_CAMERA_OFFSET:
+            try:
+                self.camera_tracks[path] = stage_camera_track(data, stage_id, self.vm)
+            except ValueError:
+                self.camera_tracks[path] = None   # not a camera track: nothing to edit
+
+    # ------------------------------------------------------------------ camera
+
+    @property
+    def vm(self):
+        """The camera script VM (camera_sequence_info.json), read on first use."""
+        if self._vm is None:
+            from FF8GameData.gamedata import GameData
+            from FF8GameData.dat.sequencevm import camera_sequence_vm
+            game_data = GameData(self._game_data_folder)
+            game_data.load_camera_sequence_data()
+            self._vm = camera_sequence_vm(game_data)
+        return self._vm
+
+    @property
+    def camera_track(self):
+        """The shown stage's camera track (None: no stage, or one the exe table does not know)."""
+        return self.camera_tracks.get(self.current_stage_path)
+
+    def camera_layout(self, path=None):
+        """(camera size, room before the vanilla geometry, geometry offset once saved) of a stage."""
+        path = path or self.current_stage_path
+        track = self.camera_tracks.get(path)
+        stage_id = _stage_id_from_name(os.path.basename(path or ""))
+        if track is None or stage_id is None:
+            return None
+        size = track.current_size
+        room = STAGE_GEOMETRY_OFFSET[stage_id] - STAGE_CAMERA_OFFSET[stage_id]
+        geometry = max(STAGE_GEOMETRY_OFFSET[stage_id], (STAGE_CAMERA_OFFSET[stage_id] + size + 3) & ~3)
+        return size, room, geometry
+
+    def modified_camera_paths(self):
+        """Stages whose camera was edited and not saved yet."""
+        return [path for path, track in self.camera_tracks.items() if track is not None and track.modified]
+
+    def _write_stage(self, path, data, stage_id, camera_path):
+        """Write a stage with the camera track of `camera_path` (and the .hext its geometry needs).
+        Returns (bytes written, a note)."""
+        track = self.camera_tracks.get(camera_path)
+        geometry = STAGE_GEOMETRY_OFFSET.get(stage_id)
+        if track is not None and stage_id in STAGE_CAMERA_OFFSET:
+            data, geometry = with_camera_section(data, stage_id, track.to_bytes())
+        pathlib.Path(path).write_bytes(data)
+        if track is not None:
+            track.original = camera_section(data, stage_id)   # saved: no longer an unsaved edit
+        note = ""
+        hext_path = os.path.splitext(path)[0] + ".hext"
+        if geometry is not None and geometry != STAGE_GEOMETRY_OFFSET[stage_id]:
+            pathlib.Path(hext_path).write_text(stage_hext_text(stage_id, geometry, os.path.basename(path)),
+                                               encoding="utf-8")
+            note = (f"\n\nThe camera grew: the geometry section now starts at {geometry} "
+                    f"(vanilla {STAGE_GEOMETRY_OFFSET[stage_id]}). {os.path.basename(hext_path)} was written "
+                    "next to it: FF8_EN.exe needs it (FFNx hext) to read this stage.")
+        elif geometry is not None and os.path.isfile(hext_path) and _is_alexander_hext(hext_path):
+            # an earlier save moved the geometry: the patch now gives the exe its vanilla offset back
+            pathlib.Path(hext_path).write_text(stage_hext_text(stage_id, geometry, os.path.basename(path)),
+                                               encoding="utf-8")
+            note = (f"\n\nThe geometry section is back at its vanilla offset {geometry}: "
+                    f"{os.path.basename(hext_path)} now gives the exe that offset (it can be removed).")
+        return data, note
+
+    def save_camera(self, path):
+        """Save the camera edits of an opened stage that is not the shown one (read from disk)."""
+        stage_id = _stage_id_from_name(os.path.basename(path))
+        data = pathlib.Path(path).read_bytes()
+        _data, note = self._write_stage(path, data, stage_id, path)
+        return "camera saved" + note
 
     def load_glb(self, path: str):
         """Load a .glb (previously exported, optionally edited) for viewing."""
@@ -187,7 +278,8 @@ class AlexanderManager:
         model = self.enemy
         if getattr(model, "raw", None) is not None:
             data = serialize(model.raw)
-            note = "saved (byte-exact copy of the loaded stage)"
+            note = ("saved (camera edits written)" if self.camera_track is not None and self.camera_track.modified
+                    else "saved (byte-exact copy of the loaded stage)")
         elif self._template_raw is not None:
             layout = self._template_tex_layout            # tex_key -> (page, clut, w, h)
             # distribute the (full) objects back into their groups; the sky stays
@@ -203,8 +295,15 @@ class AlexanderManager:
         else:
             raise ValueError("Load a battle stage first: it provides the camera, "
                              "texture and skeleton the saved file needs.")
-        pathlib.Path(path).write_bytes(data)
-        return note
+        stage_id = _stage_id_from_name(os.path.basename(self._template_path or ""))
+        data, camera_note = self._write_stage(path, data, stage_id, self._template_path)
+        if getattr(model, "raw", None) is not None and path == self.current_stage_path:
+            # the next save starts from what is on disk now (the geometry may have moved)
+            from FF8GameData.battlestage.battlestageanalyser import stage_geometry_offset
+            from FF8GameData.battlestage.battlestagewriter import parse_raw
+            model.raw = parse_raw(data, stage_geometry_offset(data, stage_id))
+            self._template_raw = model.raw
+        return note + camera_note
 
     # ---------------------------------------------------- viewer data
 
@@ -247,6 +346,14 @@ class AlexanderManager:
             matrix.M21 * x + matrix.M22 * y + matrix.M23 * z + matrix.M42,
             matrix.M31 * x + matrix.M32 * y + matrix.M33 * z + matrix.M43,
         )
+
+
+def _is_alexander_hext(path):
+    try:
+        with open(path, encoding="utf-8") as file:
+            return file.readline().startswith(HEXT_MARK)
+    except (OSError, UnicodeDecodeError):
+        return False
 
 
 def _stage_id_from_name(name: str):

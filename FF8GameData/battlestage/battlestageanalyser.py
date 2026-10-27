@@ -132,24 +132,46 @@ class BattleStageModel:
 
 # --------------------------------------------------------------------- scanning
 
-def find_geometry_offset(data: bytes) -> int:
-    """Locate the geometry section: header is [u32 count=6, u32 g0=32, ...]
-    with a valid TIM at its tim offset. Returns the file offset."""
-    limit = len(data) - 32
-    o = 0
-    while o < limit:
-        if _u32(data, o) == 6 and _u32(data, o + 4) == 32:
-            _, g0, g1, g2, g3, end_groups, tim_off, size = struct.unpack_from("<8I", data, o)
-            offs = [g0, g1, g2, g3, end_groups]
-            tim_at = o + ((tim_off + 3) & ~3)
-            if (all(offs[i] <= offs[i + 1] for i in range(4))
-                    and end_groups <= tim_off
-                    and tim_at + 8 <= len(data)
-                    and _u32(data, tim_at) == 0x10
-                    and (_u32(data, tim_at + 4) & 0x7) in (0, 1, 2)):
-                return o
-        o += 4
+def is_geometry_header(data: bytes, o: int) -> bool:
+    """Whether a geometry section starts at o: [u32 count=6, u32 g0=32, ...] with a valid TIM at
+    its tim offset."""
+    if o < 0 or o + 32 > len(data) or _u32(data, o) != 6 or _u32(data, o + 4) != 32:
+        return False
+    _, g0, g1, g2, g3, end_groups, tim_off, size = struct.unpack_from("<8I", data, o)
+    offs = [g0, g1, g2, g3, end_groups]
+    tim_at = o + ((tim_off + 3) & ~3)
+    return (all(offs[i] <= offs[i + 1] for i in range(4))
+            and end_groups <= tim_off
+            and tim_at + 8 <= len(data)
+            and _u32(data, tim_at) == 0x10
+            and (_u32(data, tim_at + 4) & 0x7) in (0, 1, 2))
+
+
+def find_geometry_offset(data: bytes, start: int = 0) -> int:
+    """Locate the geometry section by scanning (from `start`). Returns the file offset."""
+    for o in range(start - start % 4, len(data) - 32, 4):
+        if is_geometry_header(data, o):
+            return o
     raise ValueError("No battle stage geometry section found in file")
+
+
+def stage_geometry_offset(data: bytes, stage_id: Optional[int]) -> int:
+    """Where a stage file's geometry section starts. The exe hardcodes it per stage
+    (STAGE_GEOMETRY_OFFSET); a file whose camera section grew has it further, right after the
+    camera section (FF8GameData.battlestage.stagecamera.with_camera_section), and needs a .hext
+    giving the exe that offset (stagehext)."""
+    from FF8GameData.battlestage.stagecamera import STAGE_CAMERA_OFFSET
+    vanilla = STAGE_GEOMETRY_OFFSET.get(stage_id)
+    camera = STAGE_CAMERA_OFFSET.get(stage_id)
+    if vanilla is None or camera is None or camera + 8 > len(data):
+        return find_geometry_offset(data)
+    camera_end = camera + struct.unpack_from("<H", data, camera + 6)[0]
+    if vanilla >= camera_end and is_geometry_header(data, vanilla):
+        return vanilla
+    after_camera = _align4(camera_end)
+    if is_geometry_header(data, after_camera):
+        return after_camera
+    return find_geometry_offset(data, camera_end)
 
 
 # ------------------------------------------------------------------ geometry
@@ -371,10 +393,8 @@ def _decode_page(tim: RawTim, page_x_hw, page_y, clut, w, h) -> Image.Image:
 
 def build_stage_model(data: bytes, geometry_offset: Optional[int] = None,
                       stage_id: Optional[int] = None, name: str = "") -> BattleStageModel:
-    if geometry_offset is None and stage_id is not None:
-        geometry_offset = STAGE_GEOMETRY_OFFSET.get(stage_id)
     if geometry_offset is None:
-        geometry_offset = find_geometry_offset(data)
+        geometry_offset = stage_geometry_offset(data, stage_id)
     geo = geometry_offset
     count, g0, g1, g2, g3, end_groups, tim_off, size = struct.unpack_from("<8I", data, geo)
     group_offs = [g0, g1, g2, g3, end_groups]

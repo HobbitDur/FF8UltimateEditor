@@ -1,10 +1,16 @@
-"""The Keyframes + Script editor of one camera track, shared by every place Fujin edits one.
+"""The Keyframes + Script editor of one camera track (FF8GameData.dat.cameratrack), shared by Fujin
+(spell cameras) and Alexander (battle stage cameras).
 
-An exe track (Camera effect editor) may change size: the exe has no room for it any more, an
-FFNx .bcam file can still use it. A track stored inside another file (a MAG section) has a fixed
-room, `fixed_size`: the script and the keyframes share it. Removing keyframes or applying a
+A track may change size where its host can store a bigger one (`growth_note` says how): an exe
+spell track no longer fits the exe but an FFNx .bcam file can still use it, a battle stage's
+camera pushes the geometry after it. A track stored inside another file (a MAG section) has a
+fixed room, `fixed_size`: the script and the keyframes share it. Removing keyframes or applying a
 shorter script leaves filler after the script's last command (never run); added keyframes or a
-longer script use that filler, and an edit that needs more than the room is refused."""
+longer script use that filler, and an edit that needs more than the room is refused.
+
+`manager` edits the script (FF8GameData.dat.cameratrack.CameraScriptTools); `preview`, if any,
+plays the track: set_track(track), preview_animation(animation), refresh(), a `track` attribute
+and an `animation_chosen` signal (the animation index the script plays, or None)."""
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTabWidget, QPlainTextEdit,
@@ -12,18 +18,23 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTabWidg
 
 from FF8GameData.dat.camerascript import animation_index_parts
 from FF8GameData.dat.sequencecodec import code_to_sequence, sequence_to_code
-from Watts.cameracollectionwidget import CameraCollectionWidget
+from Common.cameracollectionwidget import CameraCollectionWidget
 
 
 class CameraTrackEditor(QWidget):
     keyframes_changed = pyqtSignal()   # a keyframe value changed in place (same size)
     track_changed = pyqtSignal()       # the script was applied or keyframes/slots added or removed
 
-    def __init__(self, manager, preview=None, room_name="exe", parent=None):
+    # Where a grown track goes (no fixed_size): an exe spell track only fits an FFNx .bcam file
+    EXE_GROWTH_NOTE = "the vanilla exe cannot use it any more, an FFNx .bcam file can"
+
+    def __init__(self, manager, preview=None, room_name="exe", parent=None, growth_note=EXE_GROWTH_NOTE):
         super().__init__(parent)
         self.manager = manager
         self.preview = preview
         self.room_name = room_name
+        self.growth_note = growth_note
+        self.slot_notes = {}       # (set index, slot) -> note shown with the slot
         self.track = None
         self.fixed_size = None
         self._code = b""           # fixed size: the script without the filler added after it
@@ -85,8 +96,8 @@ class CameraTrackEditor(QWidget):
         if fixed_size is None:
             tip = ("The camera script as code, one command per line. It picks which keyframe animation "
                    "plays (play / play_var) from the attacker, the target, random values... A shorter "
-                   "script is filled up on Apply (the track keeps its exe size); a longer one makes the "
-                   "track grow: the vanilla exe cannot use it any more, an FFNx .bcam file can.")
+                   f"script is filled up on Apply (the track keeps its {self.room_name} size); a longer one "
+                   f"makes the track grow: {self.growth_note}.")
         else:
             tip = ("The camera script as code, one command per line. It picks which keyframe animation "
                    "plays (play / play_var) from the attacker, the target, random values... The script "
@@ -101,6 +112,13 @@ class CameraTrackEditor(QWidget):
             self._set_script_texts(sequence_to_code(self.manager.vm, self._code), self.manager.script_text(track))
         if self.preview is not None:
             self.preview.set_track(track)
+
+    def set_slot_notes(self, notes):
+        """Notes shown with the slots, {(set index, slot): text}; the keyframes are shown again."""
+        self.slot_notes = dict(notes)
+        if self.track is not None:
+            expanded = self._collection_widget.expanded_set_indices() if self._collection_widget else ()
+            self._set_collection_widget(self.track, expanded)
 
     def set_enabled(self, enabled):
         self.apply_script_button.setEnabled(enabled)
@@ -120,7 +138,7 @@ class CameraTrackEditor(QWidget):
             self.keyframe_scroll.setWidget(QLabel(""))
             return
         widget = CameraCollectionWidget(track.collection, structure_edits=True, expanded_sets=expanded_sets,
-                                        show_preview_buttons=self.preview is not None)
+                                        show_preview_buttons=self.preview is not None, slot_notes=self.slot_notes)
         widget.data_changed.connect(self._on_keyframes_changed)
         widget.collection_rebuilt.connect(self._on_collection_rebuilt)
         if self.preview is not None:
@@ -166,8 +184,8 @@ class CameraTrackEditor(QWidget):
                     f"keeps its {self.fixed_size} bytes there; remove keyframes first to make room")
         elif longer:
             self.script_size_label.setStyleSheet("color: #c77800;")
-            text = (f"{size} / {room} bytes: {size - room} more than the exe has - "
-                    "the track grows, only an FFNx .bcam file can use it")
+            text = (f"{size} / {room} bytes: {size - room} more than the {self.room_name} has - "
+                    f"the track grows: {self.growth_note}")
         elif size < room:
             self.script_size_label.setStyleSheet("")
             text = f"{size} / {room} bytes (Apply fills the {room - size} left)"

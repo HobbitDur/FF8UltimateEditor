@@ -250,7 +250,7 @@ class MagSectionEditor(QWidget):
     def _camera_view(self):
         from FF8GameData.gamedata import GameData
         from Fujin.cameraeffectmanager import CameraEffectManager, CameraTrack
-        from Fujin.cameratrackeditor import CameraTrackEditor
+        from Common.cameratrackeditor import CameraTrackEditor
         try:
             self.camera_manager = CameraEffectManager(GameData(getattr(self.manager, "game_data_folder", "FF8GameData")))
             self.camera_track = CameraTrack.from_bytes(

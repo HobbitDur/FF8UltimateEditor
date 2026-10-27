@@ -9,7 +9,7 @@ from Common.filebinding import FileBinding
 from Fujin.cameraeffectmanager import (CAM_FFNX_FOLDER, CREATABLE_CAMERA_EFFECTS, DEFAULT_CAMERA_SOURCE,
                                        CameraEffectManager, cam_file_name)
 from Fujin.cameraeffectpreview import CameraEffectPreview
-from Fujin.cameratrackeditor import CameraTrackEditor
+from Common.cameratrackeditor import CameraTrackEditor
 from SmallWidget.listsearchbar import ListSearchBar
 
 HEXT_FOLDER_KEY = "camera effect .hext"

@@ -1,14 +1,15 @@
-"""A compact editor for a battle camera animation collection.
+"""A compact editor for a battle camera animation collection, shared by Watts (r0win.dat), Fujin
+(spell cameras) and Alexander (battle stage cameras).
 
 Reuses FF8GameData.dat.cameracollection (the same Qt-free model Ifrit's camera tab uses):
 every value is a fixed-size field patched in place, so editing never changes the section
-length. Unlike Ifrit's camera tab there is no 3D preview - r0win.dat carries no single
-model to film - so this is a keyframe value editor only.
+length. Its Preview buttons only ask (preview_requested): the host plays the animation in its
+own preview.
 
 Each set is built lazily the first time it is expanded: the collection has dozens of
 animations and hundreds of keyframe fields, and building them all up front would be slow.
 
-A host whose collection may change size (Fujin's effect cameras saved as .cam files) turns on
+A host whose collection may change size (Fujin's effect cameras, a battle stage's camera) turns on
 structure_edits: keyframes can then be duplicated or removed and slots filled or emptied. Those
 edits rebuild the collection bytes (FF8GameData.dat.cameracollection) and hand them over with
 collection_rebuilt; the host swaps its collection and builds a new widget.
@@ -112,11 +113,13 @@ class CameraCollectionWidget(QWidget):
     }
 
     def __init__(self, collection, set_notes=None, show_preview_buttons=True, structure_edits=False,
-                 expanded_sets=()):
+                 expanded_sets=(), slot_notes=None):
         QWidget.__init__(self)
         self._collection = collection
         self._show_preview_buttons = show_preview_buttons
         self._structure_edits = structure_edits
+        # (set index, slot) -> a note shown with the slot, e.g. which encounters start with it
+        self._slot_notes = slot_notes or {}
         set_notes = set_notes or {}
         self._set_boxes = {}  # set index -> _CollapsibleBox, for enabling/greying out
         self._slot_groups = {}  # (set index, slot) -> its QGroupBox, once its set is unfolded
@@ -189,7 +192,9 @@ class CameraCollectionWidget(QWidget):
                         target_layout.addLayout(self._empty_slot_row(camera_set.index, animation.slot))
                     continue
                 frames = sum(len(block.frames) for block in animation.blocks)
-                slot_group = QGroupBox(f"Slot {animation.slot} - {frames} keyframes")
+                note = self._slot_notes.get((camera_set.index, animation.slot))
+                slot_group = QGroupBox(f"Slot {animation.slot} - {frames} keyframes"
+                                       + (f" - {note}" if note else ""))
                 slot_group.setProperty("plain_title", slot_group.title())
                 self._slot_groups[(camera_set.index, animation.slot)] = slot_group
                 slot_layout = QVBoxLayout()
@@ -223,7 +228,8 @@ class CameraCollectionWidget(QWidget):
 
     def _empty_slot_row(self, set_index, slot):
         row = QHBoxLayout()
-        row.addWidget(QLabel(f"Slot {slot} - empty"))
+        note = self._slot_notes.get((set_index, slot))
+        row.addWidget(QLabel(f"Slot {slot} - empty" + (f" - {note}" if note else "")))
         add_button = QPushButton("Add camera")
         add_button.setToolTip("Put a new 2-keyframe camera animation in this slot, ready to edit")
         add_button.clicked.connect(lambda _checked: self._rebuild(set_slot_animation, set_index, slot,

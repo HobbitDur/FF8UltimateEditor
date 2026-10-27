@@ -11,6 +11,12 @@ This module reproduces that run from inputs a preview lets the user set (CameraS
 a preview films what the game would. The arithmetic and jumps are the shared VM's
 (computeAnimationSequence), like FF8GameData.dat.sequencebake for the entity VM. Effect tracks
 never loop across frames: they run to 01/02 in their first frame, so one run is the whole script.
+
+A battle stage's script does wait across frames (run_camera_script_frames): 01 ends the frame and
+the next frame goes on after it, 02 ends the script for good. Every stage plays the intro byte
+(variable 0), waits while the shot flag (C3 0x10) says a shot is playing, then saves the view the
+shot ended on as the battle's return view (03) and ends (BS_CameraInit 0x500F70 installs it at the
+battle start; nothing runs it again).
 """
 from dataclasses import dataclass, field
 
@@ -18,6 +24,7 @@ from .sequencebake import _c_div, _c_mod
 from .sequencecommand import get_jump_target, iter_command
 
 MAX_STEPS = 10000  # an endless loop inside one frame (jump to itself) stops here
+MAX_FRAMES = 3000  # a script still waiting after this many frames (200 s at 15 fps) is cut there
 
 # CURRENT_CAMERA_ANIMATION[0] as cameraWhenDoingAction (EN 0x506190) leaves it for the effect's
 # script: the character's opening shot (0-5), 8 for a monster's Magic, -1 when no opening shot
@@ -125,15 +132,19 @@ class _CameraScriptRunner:
         elif parameter < 8 or parameter > 0x77:
             self.variables[parameter] = _int16(value)
 
-    def execute(self, vm, script: bytes, max_steps=MAX_STEPS) -> CameraScriptRun:
+    def execute(self, vm, script: bytes, max_steps=MAX_STEPS, address=0, waits=False) -> CameraScriptRun:
+        """Run from `address`. `waits`: run one frame of a script that waits across frames - 01 stops
+        it at the next command (self.resume), a shot played sets its bit of the shot flag as
+        BS_GetCameraAnimationPointer does."""
         commands = {}
         order = []
-        for address, op_code, parameters in iter_command(vm, bytes(script)):
-            commands[address] = (op_code, None if parameters is None else bytes(parameters))
-            order.append(address)
-        next_address = {address: (order[i + 1] if i + 1 < len(order) else len(script))
-                        for i, address in enumerate(order)}
-        run, current, address = self.run, 0, 0
+        for command_address, op_code, parameters in iter_command(vm, bytes(script)):
+            commands[command_address] = (op_code, None if parameters is None else bytes(parameters))
+            order.append(command_address)
+        next_address = {command_address: (order[i + 1] if i + 1 < len(order) else len(script))
+                        for i, command_address in enumerate(order)}
+        run, current = self.run, 0
+        self.resume = None
         while True:
             if run.steps >= max_steps:
                 run.stop_reason = "endless loop (stopped after %d commands)" % max_steps
@@ -149,11 +160,16 @@ class _CameraScriptRunner:
                 run.stop_reason = f"unknown op code 0x{op_code:02X}: ends the script"
                 return run
             if op_code < 0xC0:
-                if op_code == 0x00:
-                    run.played.append(parameters[0])
-                elif op_code == 0x05:
-                    run.played.append(self.read(parameters[0]) & 0xFF)
+                if op_code in (0x00, 0x05):
+                    index = parameters[0] if op_code == 0x00 else self.read(parameters[0]) & 0xFF
+                    run.played.append(index)
+                    if waits and self.shot_length(index) > 0:   # no shot starts for a missing set
+                        self.shot_flag |= 1 << (index & 7)
                 elif op_code == 0x01:
+                    if waits:
+                        self.resume = following
+                        run.stop_reason = "end: waits for the next frame"
+                        return run
                     run.stop_reason = "end: the camera script stops"
                     return run
                 elif op_code == 0x02:
@@ -222,3 +238,39 @@ def run_camera_script(vm, script: bytes, inputs: CameraScriptInputs = None,
     """Run one camera script (camera VM from sequencevm.camera_sequence_vm) with the given battle
     state. The result tells which animation indexes it played and what it read to decide."""
     return _CameraScriptRunner(inputs or CameraScriptInputs()).execute(vm, script, max_steps)
+
+
+@dataclass
+class CameraScriptTimeline:
+    shots: list = field(default_factory=list)    # [(frame, animation index)] in the order played
+    events: list = field(default_factory=list)   # [(frame, text)] other camera commands
+    stop_reason: str = ""
+    frames: int = 0                              # frames the script ran
+
+
+def run_camera_script_frames(vm, script: bytes, inputs: CameraScriptInputs = None, shot_length=None,
+                             max_frames=MAX_FRAMES) -> CameraScriptTimeline:
+    """Run a script that waits across frames (a battle stage's), one run per frame as
+    BS_UpdateCameraSequence does. shot_length(index) is how many frames an animation plays (0: none
+    plays, e.g. a set the collection does not have); its bit of the shot flag stays set that long."""
+    runner = _CameraScriptRunner(inputs or CameraScriptInputs())
+    shot_length = runner.shot_length = shot_length or (lambda _index: 0)
+    timeline, address, ends = CameraScriptTimeline(), 0, {}
+    for frame in range(max_frames):
+        runner.shot_flag = 0
+        for bit, end in ends.items():
+            if frame < end:
+                runner.shot_flag |= bit
+        played, events = len(runner.run.played), len(runner.run.events)
+        run = runner.execute(vm, script, address=address, waits=True)
+        for index in run.played[played:]:
+            timeline.shots.append((frame, index))
+            ends[1 << (index & 7)] = frame + shot_length(index)
+        timeline.events += [(frame, text) for text in run.events[events:]]
+        timeline.frames = frame + 1
+        if runner.resume is None:
+            timeline.stop_reason = run.stop_reason
+            return timeline
+        address = runner.resume
+    timeline.stop_reason = f"still running after {max_frames} frames"
+    return timeline

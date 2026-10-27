@@ -194,7 +194,7 @@ def test_battle_files_feed_the_preview(widget, tmp_path):
     files = [tmp_path / name for name in ("a0stg001.x", "C0M084.DAT", "notes.txt")]
     for file in files:
         file.write_bytes(b"")
-    w._add_battle_files([str(file) for file in files])
+    w.battle_files.add([str(file) for file in files])
     assert w.preview.file_source("a0stg001.x") == str(files[0])
     assert w.preview.file_source("c0m084.dat") == str(files[1])     # names match whatever their case
     assert w.preview.file_source("notes.txt") is None
@@ -210,7 +210,7 @@ def test_open_folder_finds_the_battle_files(widget, tmp_path):
     for name in ("a0stg005.x", "c0m071.dat", "d0c000.dat", "d0w001.dat", "b0wave.dat"):
         (battle / name).write_bytes(b"")
     w.load_folder(str(tmp_path / "data"))
-    assert set(w._battle_files) == {"a0stg005.x", "c0m071.dat", "d0c000.dat", "d0w001.dat"}
+    assert set(w.battle_files.files) == {"a0stg005.x", "c0m071.dat", "d0c000.dat", "d0w001.dat"}
     assert w.preview.party_combos[0].currentData() == str(battle / "d0c000.dat")   # Squall stands
     assert w.preview.weapon_combos[0].currentData() == str(battle / "d0w001.dat")  # with his weapon
 
@@ -227,14 +227,14 @@ def test_preview_follows_the_shown_encounter(widget):
 
 def test_monsters_and_stages_are_side_files(widget, monkeypatch, tmp_path):
     """Import goes straight to scene.out; the monsters and stages come from Import read-only."""
-    from JumboCactuar import jumbocactuarwidget
+    from Common import battlesidefiles
     w, _path = widget
     assert not callable(getattr(w, "open_files", None))
     labels = [label for label, _callback in w.complementary_entries()]
     assert any("c0m###.dat" in label for label in labels) and any("a0stg###.x" in label for label in labels)
     monster = tmp_path / "c0m071.dat"
     monster.write_bytes(b"")
-    monkeypatch.setattr(jumbocactuarwidget.QFileDialog, "getOpenFileNames", lambda *args: ([str(monster)], ""))
-    w._import_monsters()
+    monkeypatch.setattr(battlesidefiles.QFileDialog, "getOpenFileNames", lambda *args: ([str(monster)], ""))
+    w.battle_files.import_monsters()
     assert w.preview.file_source("c0m071.dat") == str(monster)
-    assert w.file_registry.last_folder(jumbocactuarwidget.MODEL_FOLDER_KEY) == str(tmp_path)
+    assert w.file_registry.last_folder(battlesidefiles.MODEL_FOLDER_KEY) == str(tmp_path)

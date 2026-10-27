@@ -289,7 +289,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._minimog_widget = MinimogWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._seed_widget = SeedWidget(icon_path=os.path.join(resources_path), settings=self.settings, file_registry=self.file_registry)
         self._shiva_widget = ShivaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
-        self._alexander_widget = AlexanderWidget(icon_path=os.path.join(resources_path), settings=self.settings, file_registry=self.file_registry)
+        self._alexander_widget = AlexanderWidget(icon_path=os.path.join(resources_path), settings=self.settings, file_registry=self.file_registry, game_data_folder=os.path.join(game_data_path))
         self._julia_widget = JuliaWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._siren_widget = SirenWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._junkshop_widget = JunkshopWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
