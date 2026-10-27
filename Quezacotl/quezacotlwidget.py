@@ -887,29 +887,28 @@ class QuezacotlWidget(QWidget):
         abilities_group.setLayout(abilities_form)
         abilities_tab = self._left_column_scroll([abilities_group])
 
-        # G-Forces (junctioned GFs + compatibility)
-        self.char_jun_gf1_combo = self._enum_combo(self._gforce_entries, self._on_character_gf_changed,
-                                                   "First junctioned GF")
-        self.char_jun_gf2_combo = self._enum_combo(self._gforce_entries, self._on_character_gf_changed,
-                                                   "Second junctioned GF")
-        junction_form = QFormLayout()
-        junction_form.addRow("Junctioned GF 1:", self.char_jun_gf1_combo)
-        junction_form.addRow("Junctioned GF 2:", self.char_jun_gf2_combo)
-
+        # G-Forces (junctioned GFs + compatibility): one row per GF, junctioned is a bitmask
+        self.char_gf_junction_checks = []
         self.char_gf_compat_spins = []
         compat_form = QFormLayout()
         compat_tooltip = (f"Compatibility with this GF. Game range: {GF_COMPATIBILITY_MIN} (minimum / neutral) "
                           f"to {GF_COMPATIBILITY_MAX} (maximum). Higher = summons faster.")
-        for entry in self._gforce_entries:
+        for gf_id, entry in enumerate(self._gforce_entries):
+            check = QCheckBox("Junctioned")
+            check.setToolTip("GF junctioned to this character (any number of GFs). A GF can only be "
+                             "junctioned to one character: checking it here removes it from the others.")
+            check.toggled.connect(lambda checked, g=gf_id: self._on_character_gf_junction_changed(g, checked))
+            self.char_gf_junction_checks.append(check)
             spin = self._spinbox(0, 0xFFFF, self._on_character_gf_changed, compat_tooltip)
             self.char_gf_compat_spins.append(spin)
-            compat_form.addRow(f"{entry['name']}:", spin)
-        junction_widget = QWidget()
-        junction_widget.setLayout(junction_form)
-        compat_group = QGroupBox("Compatibility")
-        compat_group.setToolTip(f"Per-GF compatibility ({GF_COMPATIBILITY_MIN}-{GF_COMPATIBILITY_MAX}); higher summons faster")
+            row = QHBoxLayout()
+            row.addWidget(check)
+            row.addWidget(spin)
+            compat_form.addRow(f"{entry['name']}:", row)
+        compat_group = QGroupBox("Junction && compatibility")
+        compat_group.setToolTip(f"Junctioned GFs and per-GF compatibility ({GF_COMPATIBILITY_MIN}-{GF_COMPATIBILITY_MAX}); higher summons faster")
         compat_group.setLayout(compat_form)
-        gf_tab = self._left_column_scroll([junction_widget, compat_group])
+        gf_tab = self._left_column_scroll([compat_group])
 
         # Junction stat assignments (each stores a magic id)
         self.char_junction_combos = {}
@@ -990,10 +989,9 @@ class QuezacotlWidget(QWidget):
         for slot, combo in enumerate(self.char_passive_combos):
             self._fill_ability_combo(combo, char.get_passive_ability(slot), PASSIVE_ABILITY_RANGE)
 
-        with QSignalBlocker(self.char_jun_gf1_combo):
-            self._select_combo(self.char_jun_gf1_combo, char.jun_gf1)
-        with QSignalBlocker(self.char_jun_gf2_combo):
-            self._select_combo(self.char_jun_gf2_combo, char.jun_gf2)
+        for gf_id, check in enumerate(self.char_gf_junction_checks):
+            with QSignalBlocker(check):
+                check.setChecked(char.is_gf_junctioned(gf_id))
         for gf_id, spin in enumerate(self.char_gf_compat_spins):
             with QSignalBlocker(spin):
                 spin.setValue(char.get_gf_compatibility(gf_id))
@@ -1061,10 +1059,17 @@ class QuezacotlWidget(QWidget):
         char = self._selected_character()
         if not char:
             return
-        char.jun_gf1 = self.char_jun_gf1_combo.currentData()
-        char.jun_gf2 = self.char_jun_gf2_combo.currentData()
         for gf_id, spin in enumerate(self.char_gf_compat_spins):
             char.set_gf_compatibility(gf_id, spin.value())
+
+    def _on_character_gf_junction_changed(self, gf_id, checked):
+        char = self._selected_character()
+        if not char:
+            return
+        if checked:
+            for other in self.manager.character_entries:
+                other.set_gf_junctioned(gf_id, False)
+        char.set_gf_junctioned(gf_id, checked)
 
     def _on_character_junction_changed(self):
         char = self._selected_character()

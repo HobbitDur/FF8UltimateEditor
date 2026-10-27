@@ -165,3 +165,25 @@ def test_battle_item_order_is_edited_as_a_reordering(qapp, files):
     broken.write_bytes(bytes(data))
     widget.init_binding.open_path(str(broken))
     assert not widget.battle_order_warning.isHidden() and not widget.battle_order_up.isEnabled()
+
+
+@pytest.mark.ff8data("extracted_files/main/init.out")
+def test_junctioned_gfs_is_a_16_bit_mask_owned_by_one_character(qapp, files):
+    from Quezacotl.quezacotlwidget import QuezacotlWidget
+    widget = QuezacotlWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
+    widget.init_binding.open_path(str(files / "init.out"))
+    squall, zell = widget.manager.character_entries[0], widget.manager.character_entries[1]
+    assert len(widget.char_gf_junction_checks) == 16
+
+    widget.character_list.setCurrentRow(0)
+    for gf_id in (0, 9, 15):                                        # more than 2, incl. bit 15
+        widget.char_gf_junction_checks[gf_id].setChecked(True)
+    assert squall.junctioned_gfs == (1 << 0) | (1 << 9) | (1 << 15)
+    assert squall._buffer[squall._offset + 88:squall._offset + 90] == bytes((0x01, 0x82))
+
+    widget.character_list.setCurrentRow(1)
+    assert not any(check.isChecked() for check in widget.char_gf_junction_checks)
+    widget.char_gf_junction_checks[9].setChecked(True)              # a GF has one owner
+    assert zell.junctioned_gfs == 1 << 9 and squall.junctioned_gfs == (1 << 0) | (1 << 15)
+    widget.char_gf_junction_checks[9].setChecked(False)
+    assert zell.junctioned_gfs == 0

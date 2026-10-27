@@ -331,21 +331,23 @@ class CharacterEntry:
     def set_passive_ability(self, slot, value):
         self._set_byte(84 + slot, value)
 
+    # offset 88-89 = JunctionedGFs: u16 bitmask, bit n = GF n (gforce.json order), so any of the
+    # 16 GFs can be junctioned at once (IDA: CharacterData.JunctionedGFs).
     @property
-    def jun_gf1(self):
-        return self._byte(88)
+    def junctioned_gfs(self):
+        return _u16(self._buffer, self._offset + 88)
 
-    @jun_gf1.setter
-    def jun_gf1(self, value):
-        self._set_byte(88, value)
+    @junctioned_gfs.setter
+    def junctioned_gfs(self, value):
+        _set_u16(self._buffer, self._offset + 88, value)
 
-    @property
-    def jun_gf2(self):
-        return self._byte(89)
+    def is_gf_junctioned(self, gf_id):
+        """gf_id is 0-15."""
+        return bool(self.junctioned_gfs & (1 << gf_id))
 
-    @jun_gf2.setter
-    def jun_gf2(self, value):
-        self._set_byte(89, value)
+    def set_gf_junctioned(self, gf_id, junctioned):
+        mask = 1 << gf_id
+        self.junctioned_gfs = (self.junctioned_gfs | mask) if junctioned else (self.junctioned_gfs & ~mask)
 
     @property
     def unknown2(self):

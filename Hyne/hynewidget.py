@@ -21,6 +21,8 @@ from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
+from FF8GameData.kernelgfabilities import ABILITY_LIST_COUNT, gf_ability_slots
+from FF8GameData.kernellevels import load_kernel
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
     CHARACTER_NAMES, ACTIVE_ABILITY_RANGE, PASSIVE_ABILITY_RANGE, ABILITY_COUNT,
@@ -146,6 +148,10 @@ class HyneWidget(QWidget):
         self.kernel_names = KernelNameSource(self.game_data, file_registry)
         self.kernel_names.changed.connect(self._on_kernel_names_changed)
         self.kernel_notice = KernelNameSource.make_notice("ability and weapon")
+        # ...and of each GF's learnable-ability list, which the AP slots count toward
+        self.gf_slots = None
+        self.kernel_names.binding.file_opened.connect(self._load_kernel_data)
+        self.kernel_names.binding.file_closed.connect(self._clear_kernel_data)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
@@ -217,6 +223,92 @@ class HyneWidget(QWidget):
             check.setEnabled(bool(names.weapons))
         if self.manager.item_entries:
             self._reload_items()   # the item names (and ids 199-255) come from it too
+        self._update_ap_slots()
+        if self._selected_gf():
+            self._fill_learning_combo(self._selected_gf())
+
+    # ── GF ability lists from kernel.bin ─────────────────────────────────
+
+    def _load_kernel_data(self, kernel_path):
+        try:
+            self.gf_slots = gf_ability_slots(load_kernel(self.game_data, kernel_path))
+        except Exception as error:  # noqa: BLE001 - a bad kernel.bin just gives no slots
+            print(f"[Hyne] could not read the GF abilities of {kernel_path}: {error}")
+            self.gf_slots = None
+        self._update_ap_slots()
+        if self._selected_gf():
+            self._fill_learning_combo(self._selected_gf())
+
+    def _clear_kernel_data(self, _path=None):
+        self.gf_slots = None
+        self._update_ap_slots()
+        if self._selected_gf():
+            self._fill_learning_combo(self._selected_gf())
+
+    def _fill_learning_combo(self, gf):
+        """The Learning choice. With a kernel.bin open: None and the GF's own 21 abilities, each marked
+        when the GF cannot earn AP toward it (GF_AddApToLearningAbility only credits an ability of
+        the GF's list, and the battle results only one it can learn now). Without one: every ability."""
+        slots = (self.gf_slots or {}).get("slots", [])
+        if not slots or gf.gf_id >= len(slots):
+            self._fill_ability_combo(self.gf_learning_ability_combo, gf.learning_ability, None)
+            return
+        names = self.kernel_names
+        combo = self.gf_learning_ability_combo
+        with QSignalBlocker(combo):
+            combo.clear()
+            combo.addItem("0: None", 0)
+            for slot, entry in enumerate(slots[gf.gf_id], start=1):
+                if entry.ability == 0 or combo.findData(entry.ability) >= 0:
+                    continue
+                name = names.ability_name(entry.ability) or f"Ability {entry.ability}"
+                if gf.has_ability(entry.ability):
+                    name += " (learned)"
+                elif gf.is_forgotten(slot):
+                    name += " (forgotten)"
+                combo.addItem(f"{entry.ability}: {name}", entry.ability)
+            if combo.findData(gf.learning_ability) < 0:  # never lose the file's value
+                combo.addItem(f"{gf.learning_ability}: not in this GF's list - earns no AP",
+                              gf.learning_ability)
+            combo.setCurrentIndex(combo.findData(gf.learning_ability))
+        combo.setEnabled(True)
+
+    def _update_ap_slots(self):
+        """Name each AP slot after the ability of the selected GF's kernel.bin list it counts toward,
+        with that ability's AP cost and when it unlocks."""
+        gf = self._selected_gf()
+        slots = (self.gf_slots or {}).get("slots", [])
+        costs = (self.gf_slots or {}).get("ap", [])
+        gf_list = slots[gf.gf_id] if gf and gf.gf_id < len(slots) else None
+        names = self.kernel_names
+
+        def ability_name(ability_id):
+            return names.ability_name(ability_id) or f"Ability {ability_id}"
+
+        for index, (label, info) in enumerate(zip(self.gf_ap_labels, self.gf_ap_infos)):
+            slot = index + 1
+            if index >= ABILITY_LIST_COUNT:
+                label.setText(f"Slot {slot}: -")
+                info.setText(f"unused: a GF's ability list has {ABILITY_LIST_COUNT} entries, no code reads this one")
+                continue
+            if gf_list is None:
+                label.setText(f"Slot {slot}:")
+                info.setText("")
+                continue
+            entry = gf_list[index]
+            if entry.ability == 0:
+                label.setText(f"Slot {slot}: -")
+                info.setText("no ability in this slot of the GF's kernel.bin list")
+                continue
+            label.setText(f"Slot {slot}: {ability_name(entry.ability)}")
+            parts = [f"/ {costs[entry.ability]} AP" if entry.ability < len(costs) else "/ ? AP"]
+            if entry.unlock_level is not None:
+                parts.append(f"from GF level {entry.unlock_level}" if entry.unlock_level > 1 else "from the start")
+            elif entry.unlock_after_slot is not None:
+                parts.append(f"after {ability_name(gf_list[entry.unlock_after_slot].ability)}")
+            if gf.has_ability(entry.ability):
+                parts.append("learned")
+            info.setText(" - ".join(parts))
 
     def _item_choices(self):
         """The items an inventory slot offers: the game's 0-198, named by the open kernel.bin when
@@ -466,20 +558,32 @@ class HyneWidget(QWidget):
         ability_scroll.setWidget(ability_container)
 
         # AP invested per ability slot. The slots are NOT global ability ids: slot N is the
-        # N-th entry in *this GF's* learnable-ability list, whose id/AP-cost order is defined
-        # in kernel.bin (Junctionable GFs section) and is not part of the savemap, so the slots
-        # can only be numbered here, not named.
+        # N-th entry in *this GF's* learnable-ability list, whose abilities, AP costs and unlocks
+        # are in kernel.bin (Junctionable GFs section), not in the savemap: the slots are named
+        # from an opened kernel.bin (_update_ap_slots), numbered without one.
         self.gf_ap_spins = []
+        self.gf_ap_labels = []
+        self.gf_ap_infos = []
         ap_form = QFormLayout()
-        ap_note = QLabel("Slot N = AP invested in this GF's N-th learnable ability (order set by kernel.bin).")
+        ap_note = QLabel("Slot N = AP invested in this GF's N-th learnable ability, named from kernel.bin\n"
+                         "(Junctionable GFs section) with the AP it costs and when it unlocks.")
         ap_note.setWordWrap(True)
         ap_form.addRow(ap_note)
         for slot in range(1, 23):
             spin = self._spinbox(0, 0xFF, self._on_gf_ap_changed,
                                 "AP invested in this GF's learnable-ability slot "
                                 f"{slot} (its ability is defined by the GF's kernel.bin ability list)")
+            label = QLabel(f"Slot {slot}:")
+            info = QLabel()
+            info.setStyleSheet("color: gray;")
+            row = QHBoxLayout()
+            row.addWidget(spin)
+            row.addWidget(info)
+            row.addStretch(1)
             self.gf_ap_spins.append(spin)
-            ap_form.addRow(f"Slot {slot}:", spin)
+            self.gf_ap_labels.append(label)
+            self.gf_ap_infos.append(info)
+            ap_form.addRow(label, row)
         ap_container = QWidget()
         ap_container.setLayout(ap_form)
         ap_scroll = QScrollArea()
@@ -519,7 +623,7 @@ class HyneWidget(QWidget):
         ]:
             with QSignalBlocker(spin):
                 self._set_spin_value(spin, value)
-        self._fill_ability_combo(self.gf_learning_ability_combo, gf.learning_ability, None)
+        self._fill_learning_combo(gf)
         self._set_spin_value(self.gf_unused_spin, gf.unknown1)
         with QSignalBlocker(self.gf_available_check):
             self.gf_available_check.setChecked(gf.available)
@@ -529,6 +633,7 @@ class HyneWidget(QWidget):
         for slot, spin in enumerate(self.gf_ap_spins, start=1):
             with QSignalBlocker(spin):
                 self._set_spin_value(spin, gf.get_ap_ability(slot))
+        self._update_ap_slots()
 
     def _on_gf_name_changed(self):
         gf = self._selected_gf()
@@ -552,6 +657,8 @@ class HyneWidget(QWidget):
             return
         for ability_id, check in self.gf_ability_checks.items():
             gf.set_ability(ability_id, check.isChecked())
+        self._update_ap_slots()  # the "learned" marks of the AP tab
+        self._fill_learning_combo(gf)
 
     def _on_gf_ap_changed(self):
         gf = self._selected_gf()
@@ -680,23 +787,24 @@ class HyneWidget(QWidget):
         abilities_tab = QWidget()
         abilities_tab.setLayout(abilities_layout)
 
-        # G-Forces (junctioned GFs + compatibility)
-        self.char_jun_gf1_combo = self._enum_combo(self._gforce_entries, self._on_character_gf_changed,
-                                                   "First junctioned GF")
-        self.char_jun_gf2_combo = self._enum_combo(self._gforce_entries, self._on_character_gf_changed,
-                                                   "Second junctioned GF")
-        junction_form = QFormLayout()
-        junction_form.addRow("Junctioned GF 1:", self.char_jun_gf1_combo)
-        junction_form.addRow("Junctioned GF 2:", self.char_jun_gf2_combo)
-
+        # G-Forces (junctioned GFs + compatibility): one row per GF, junctioned is a bitmask
+        self.char_gf_junction_checks = []
         self.char_gf_compat_spins = []
         compat_form = QFormLayout()
         compat_tooltip = (f"Compatibility with this GF. Game range: {GF_COMPATIBILITY_MIN} (minimum / neutral) "
                           f"to {GF_COMPATIBILITY_MAX} (maximum). Higher = summons faster.")
-        for entry in self._gforce_entries:
+        for gf_id, entry in enumerate(self._gforce_entries):
+            check = QCheckBox("Junctioned")
+            check.setToolTip("GF junctioned to this character (any number of GFs). A GF can only be "
+                             "junctioned to one character: checking it here removes it from the others.")
+            check.toggled.connect(lambda checked, g=gf_id: self._on_character_gf_junction_changed(g, checked))
+            self.char_gf_junction_checks.append(check)
             spin = self._spinbox(0, 0xFFFF, self._on_character_gf_changed, compat_tooltip)
             self.char_gf_compat_spins.append(spin)
-            compat_form.addRow(f"{entry['name']}:", spin)
+            row = QHBoxLayout()
+            row.addWidget(check)
+            row.addWidget(spin)
+            compat_form.addRow(f"{entry['name']}:", row)
         compat_container = QWidget()
         compat_container.setLayout(compat_form)
         compat_scroll = QScrollArea()
@@ -704,9 +812,8 @@ class HyneWidget(QWidget):
         compat_scroll.setWidget(compat_container)
 
         gf_layout = QVBoxLayout()
-        gf_layout.addLayout(junction_form)
-        compat_group = QGroupBox("Compatibility")
-        compat_group.setToolTip(f"Per-GF compatibility ({GF_COMPATIBILITY_MIN}-{GF_COMPATIBILITY_MAX}); higher summons faster")
+        compat_group = QGroupBox("Junction && compatibility")
+        compat_group.setToolTip(f"Junctioned GFs and per-GF compatibility ({GF_COMPATIBILITY_MIN}-{GF_COMPATIBILITY_MAX}); higher summons faster")
         compat_group_layout = QVBoxLayout()
         compat_group_layout.addWidget(compat_scroll)
         compat_group.setLayout(compat_group_layout)
@@ -790,10 +897,9 @@ class HyneWidget(QWidget):
         for slot, combo in enumerate(self.char_passive_combos):
             self._fill_ability_combo(combo, char.get_passive_ability(slot), PASSIVE_ABILITY_RANGE)
 
-        with QSignalBlocker(self.char_jun_gf1_combo):
-            self._select_combo(self.char_jun_gf1_combo, char.jun_gf1)
-        with QSignalBlocker(self.char_jun_gf2_combo):
-            self._select_combo(self.char_jun_gf2_combo, char.jun_gf2)
+        for gf_id, check in enumerate(self.char_gf_junction_checks):
+            with QSignalBlocker(check):
+                check.setChecked(char.is_gf_junctioned(gf_id))
         for gf_id, spin in enumerate(self.char_gf_compat_spins):
             with QSignalBlocker(spin):
                 self._set_spin_value(spin, char.get_gf_compatibility(gf_id))
@@ -850,10 +956,17 @@ class HyneWidget(QWidget):
         char = self._selected_character()
         if not char:
             return
-        char.jun_gf1 = self.char_jun_gf1_combo.currentData()
-        char.jun_gf2 = self.char_jun_gf2_combo.currentData()
         for gf_id, spin in enumerate(self.char_gf_compat_spins):
             char.set_gf_compatibility(gf_id, spin.value())
+
+    def _on_character_gf_junction_changed(self, gf_id, checked):
+        char = self._selected_character()
+        if not char:
+            return
+        if checked:
+            for other in self.manager.character_entries:
+                other.set_gf_junctioned(gf_id, False)
+        char.set_gf_junctioned(gf_id, checked)
 
     def _on_character_junction_changed(self):
         char = self._selected_character()
