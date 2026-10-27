@@ -18,6 +18,7 @@ from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
+from FF8GameData.kernellevels import read_level_curves
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
     QuezacotlManager, ACTIVE_ABILITY_RANGE, PASSIVE_ABILITY_RANGE, ABILITY_COUNT,
@@ -111,6 +112,10 @@ class QuezacotlWidget(QWidget):
         self.kernel_names = KernelNameSource(self.game_data, file_registry)
         self.kernel_names.changed.connect(self._on_kernel_names_changed)
         self.kernel_notice = KernelNameSource.make_notice("ability and weapon")
+        # ...and of the EXP curves, which turn the EXP into a level (hints under the EXP fields)
+        self.level_curves = None
+        self.kernel_names.binding.file_opened.connect(self._load_level_curves)
+        self.kernel_names.binding.file_closed.connect(self._clear_level_curves)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
@@ -182,6 +187,65 @@ class QuezacotlWidget(QWidget):
             check.setEnabled(bool(names.weapons))
         if self.manager.item_entries:
             self._reload_items()   # the item names, and the items 199-255 a mod adds, come from it too
+
+    # ── Levels from kernel.bin ───────────────────────────────────────────
+
+    def _load_level_curves(self, kernel_path):
+        try:
+            self.level_curves = read_level_curves(self.game_data, kernel_path)
+        except Exception as error:  # noqa: BLE001 - a bad kernel.bin just gives no levels
+            print(f"[Quezacotl] could not read the EXP curves of {kernel_path}: {error}")
+            self.level_curves = None
+        self._update_level_hints()
+
+    def _clear_level_curves(self, _path=None):
+        self.level_curves = None
+        self._update_level_hints()
+
+    @staticmethod
+    def _with_level_hint(spin):
+        """The spinbox with a small grey "Lvl N + X xp" line under it (like SolomonRing's "≈ N s"
+        hints). Returns (widget to place, hint label)."""
+        container = QWidget()
+        box = QVBoxLayout(container)
+        box.setContentsMargins(0, 0, 0, 0)
+        box.setSpacing(0)
+        box.addWidget(spin)
+        hint = QLabel()
+        hint.setStyleSheet("color: gray; font-size: 8pt;")
+        box.addWidget(hint)
+        return container, hint
+
+    def _level_curve(self, kind, index):
+        curves = (self.level_curves or {}).get(kind, [])
+        return curves[index] if 0 <= index < len(curves) else None
+
+    @staticmethod
+    def _show_level(hint, curve, exp, owner):
+        if curve is None:
+            hint.setText("Lvl ? (needs kernel.bin)")
+            hint.setToolTip(f"The level comes from {owner}'s EXP curve in kernel.bin: open one with the "
+                            f"toolbar's \"Import complementary\" button.")
+            return
+        level, past = curve.level_from_exp(exp)
+        hint.setText(f"Lvl {level} + {past} xp" if level < 100 else "Lvl 100 (max)")
+        if level < 100:
+            hint.setToolTip(f"Level {level}: {past} EXP past it, level {level + 1} at "
+                            f"{curve.exp_to_leave(level)} EXP ({owner}'s curve in kernel.bin: "
+                            f"{curve.linear} linear, {curve.quadratic} quadratic)")
+        else:
+            hint.setToolTip(f"Level 100, the maximum ({owner}'s curve in kernel.bin)")
+
+    def _update_level_hints(self, *_):
+        gf = self._selected_gf()
+        if gf:
+            self._show_level(self.gf_exp_hint, self._level_curve("gf", gf.gf_id), self.gf_exp_spin.value(),
+                             "this GF")
+        char = self._selected_character()
+        if char:
+            com_id = self.char_model_spin.value()
+            self._show_level(self.char_exp_hint, self._level_curve("character", com_id),
+                             self.char_exp_spin.value(), f"character entry {com_id}")
 
     # ── Small widget helpers ─────────────────────────────────────────────
 
@@ -358,7 +422,9 @@ class QuezacotlWidget(QWidget):
 
         status_form = QFormLayout()
         status_form.addRow("Name:", self.gf_name_edit)
-        status_form.addRow("EXP:", self.gf_exp_spin)
+        gf_exp_widget, self.gf_exp_hint = self._with_level_hint(self.gf_exp_spin)
+        self.gf_exp_spin.valueChanged.connect(self._update_level_hints)
+        status_form.addRow("EXP:", gf_exp_widget)
         status_form.addRow("Current HP:", self.gf_hp_spin)
         status_form.addRow("Kills:", self.gf_kills_spin)
         status_form.addRow("KOs:", self.gf_kos_spin)
@@ -459,6 +525,7 @@ class QuezacotlWidget(QWidget):
         for slot, spin in enumerate(self.gf_ap_spins, start=1):
             with QSignalBlocker(spin):
                 spin.setValue(gf.get_ap_ability(slot))
+        self._update_level_hints()
 
     def _on_gf_name_changed(self):
         gf = self._selected_gf()
@@ -502,7 +569,9 @@ class QuezacotlWidget(QWidget):
         self.char_hp_bonus_spin = self._spinbox(0, 0xFFFF, self._on_character_status_changed,
                                                "Max-HP bonus from HP-Bonus ability (added to base max HP)")
         self.char_exp_spin = self._spinbox(0, 2147483647, self._on_character_status_changed, "Total experience")
-        self.char_model_spin = self._spinbox(0, 0xFF, self._on_character_status_changed, "Field/battle model id")
+        self.char_model_spin = self._spinbox(0, 0xFF, self._on_character_status_changed,
+                                             "Field/battle model id; also the kernel.bin character entry "
+                                             "the game takes the EXP curve and stats from (comId)")
         self.char_weapon_spin = self._spinbox(0, 0xFF, self._on_character_status_changed, "Equipped weapon id")
         self.char_kills_spin = self._spinbox(0, 0xFFFF, self._on_character_status_changed, "Number of enemies killed")
         self.char_kos_spin = self._spinbox(0, 0xFFFF, self._on_character_status_changed, "Number of times KO'd")
@@ -523,7 +592,10 @@ class QuezacotlWidget(QWidget):
         status_form = QFormLayout()
         status_form.addRow("Current HP:", self.char_hp_spin)
         status_form.addRow("Max HP bonus:", self.char_hp_bonus_spin)
-        status_form.addRow("EXP:", self.char_exp_spin)
+        char_exp_widget, self.char_exp_hint = self._with_level_hint(self.char_exp_spin)
+        self.char_exp_spin.valueChanged.connect(self._update_level_hints)
+        self.char_model_spin.valueChanged.connect(self._update_level_hints)
+        status_form.addRow("EXP:", char_exp_widget)
         status_form.addRow("Model:", self.char_model_spin)
         status_form.addRow("Weapon:", self.char_weapon_spin)
         status_form.addRow("Kills:", self.char_kills_spin)
@@ -703,6 +775,7 @@ class QuezacotlWidget(QWidget):
             self.char_alt_model_check.setChecked(char.alt_model)
         with QSignalBlocker(self.char_exist_check):
             self.char_exist_check.setChecked(char.exist)
+        self._update_level_hints()
         for spin, value in zip(self.char_unused_spins, [char.unknown2, char.unknown3, char.unknown4]):
             spin.setValue(value)
         for bit, check in self.char_status_checks.items():
