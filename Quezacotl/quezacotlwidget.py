@@ -18,7 +18,8 @@ from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
-from FF8GameData.kernellevels import read_level_curves
+from FF8GameData.kernelgfabilities import ABILITY_LIST_COUNT, gf_ability_slots
+from FF8GameData.kernellevels import level_curves, load_kernel
 from Quezacotl.levelformulapopup import LevelFormulaPopup
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
@@ -113,11 +114,13 @@ class QuezacotlWidget(QWidget):
         self.kernel_names = KernelNameSource(self.game_data, file_registry)
         self.kernel_names.changed.connect(self._on_kernel_names_changed)
         self.kernel_notice = KernelNameSource.make_notice("ability and weapon")
-        # ...and of the EXP curves, which turn the EXP into a level (hints under the EXP fields)
+        # ...of the EXP curves, which turn the EXP into a level (hints under the EXP fields), and of
+        # each GF's learnable-ability list, which the AP slots count toward
         self.level_curves = None
+        self.gf_slots = None
         self.level_popup = None  # the f(x) window of the EXP fields, made on first use
-        self.kernel_names.binding.file_opened.connect(self._load_level_curves)
-        self.kernel_names.binding.file_closed.connect(self._clear_level_curves)
+        self.kernel_names.binding.file_opened.connect(self._load_kernel_data)
+        self.kernel_names.binding.file_closed.connect(self._clear_kernel_data)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
@@ -192,17 +195,58 @@ class QuezacotlWidget(QWidget):
 
     # ── Levels from kernel.bin ───────────────────────────────────────────
 
-    def _load_level_curves(self, kernel_path):
+    def _load_kernel_data(self, kernel_path):
         try:
-            self.level_curves = read_level_curves(self.game_data, kernel_path)
-        except Exception as error:  # noqa: BLE001 - a bad kernel.bin just gives no levels
-            print(f"[Quezacotl] could not read the EXP curves of {kernel_path}: {error}")
-            self.level_curves = None
+            kernel_manager = load_kernel(self.game_data, kernel_path)
+            self.level_curves = level_curves(kernel_manager)
+            self.gf_slots = gf_ability_slots(kernel_manager)
+        except Exception as error:  # noqa: BLE001 - a bad kernel.bin just gives no levels nor slots
+            print(f"[Quezacotl] could not read the EXP curves / GF abilities of {kernel_path}: {error}")
+            self.level_curves = self.gf_slots = None
         self._update_level_hints()
+        self._update_ap_slots()
 
-    def _clear_level_curves(self, _path=None):
-        self.level_curves = None
+    def _clear_kernel_data(self, _path=None):
+        self.level_curves = self.gf_slots = None
         self._update_level_hints()
+        self._update_ap_slots()
+
+    def _update_ap_slots(self):
+        """Name each AP slot after the ability of the selected GF's kernel.bin list it counts toward,
+        with that ability's AP cost and when it unlocks."""
+        gf = self._selected_gf()
+        slots = (self.gf_slots or {}).get("slots", [])
+        costs = (self.gf_slots or {}).get("ap", [])
+        gf_list = slots[gf.gf_id] if gf and gf.gf_id < len(slots) else None
+        names = self.kernel_names
+
+        def ability_name(ability_id):
+            return names.ability_name(ability_id) or f"Ability {ability_id}"
+
+        for index, (label, info) in enumerate(zip(self.gf_ap_labels, self.gf_ap_infos)):
+            slot = index + 1
+            if gf_list is None:
+                label.setText(f"Slot {slot}:")
+                info.setText("")
+                continue
+            if index >= ABILITY_LIST_COUNT:
+                label.setText(f"Slot {slot}: -")
+                info.setText(f"not used: a GF's kernel.bin list has {ABILITY_LIST_COUNT} abilities")
+                continue
+            entry = gf_list[index]
+            if entry.ability == 0:
+                label.setText(f"Slot {slot}: -")
+                info.setText("no ability in this slot of the GF's kernel.bin list")
+                continue
+            label.setText(f"Slot {slot}: {ability_name(entry.ability)}")
+            parts = [f"/ {costs[entry.ability]} AP" if entry.ability < len(costs) else "/ ? AP"]
+            if entry.unlock_level is not None:
+                parts.append(f"from GF level {entry.unlock_level}" if entry.unlock_level > 1 else "from the start")
+            elif entry.unlock_after_slot is not None:
+                parts.append(f"after {ability_name(gf_list[entry.unlock_after_slot].ability)}")
+            if gf.has_ability(entry.ability):
+                parts.append("learned")
+            info.setText(" - ".join(parts))
 
     def _with_level_hint(self, spin, kind):
         """The spinbox and an f(x) button opening the level formula, with a small grey
@@ -494,12 +538,15 @@ class QuezacotlWidget(QWidget):
         ability_scroll.setWidget(ability_container)
 
         # AP invested per ability slot. The slots are NOT global ability ids: slot N is the
-        # N-th entry in *this GF's* learnable-ability list, whose id/AP-cost order is defined
-        # in kernel.bin (Junctionable GFs section) and is not part of init.out, so the slots
-        # can only be numbered here, not named.
+        # N-th entry in *this GF's* learnable-ability list (BuildGFAbilityList), whose abilities,
+        # AP costs and unlocks are in kernel.bin (Junctionable GFs section), not in init.out: the
+        # slots are named from an opened kernel.bin (_update_ap_slots), numbered without one.
         self.gf_ap_spins = []
+        self.gf_ap_labels = []
+        self.gf_ap_infos = []
         ap_form = QFormLayout()
-        ap_note = QLabel("Slot N = AP invested in this GF's N-th learnable ability (order set by kernel.bin).")
+        ap_note = QLabel("Slot N = AP invested in this GF's N-th learnable ability, named from kernel.bin "
+                         "(Junctionable GFs section) with the AP it costs and when it unlocks.")
         ap_note.setWordWrap(True)
         ap_form.addRow(ap_note)
         for slot in range(1, 23):
@@ -507,7 +554,16 @@ class QuezacotlWidget(QWidget):
                                 "AP invested in this GF's learnable-ability slot "
                                 f"{slot} (its ability is defined by the GF's kernel.bin ability list)")
             self.gf_ap_spins.append(spin)
-            ap_form.addRow(f"Slot {slot}:", spin)
+            label = QLabel(f"Slot {slot}:")
+            info = QLabel()
+            info.setStyleSheet("color: gray;")
+            row = QHBoxLayout()
+            row.addWidget(spin)
+            row.addWidget(info)
+            row.addStretch(1)
+            self.gf_ap_labels.append(label)
+            self.gf_ap_infos.append(info)
+            ap_form.addRow(label, row)
         ap_container = QWidget()
         ap_container.setLayout(ap_form)
         ap_scroll = QScrollArea()
@@ -558,6 +614,7 @@ class QuezacotlWidget(QWidget):
             with QSignalBlocker(spin):
                 spin.setValue(gf.get_ap_ability(slot))
         self._update_level_hints()
+        self._update_ap_slots()
 
     def _on_gf_name_changed(self):
         gf = self._selected_gf()
@@ -581,6 +638,7 @@ class QuezacotlWidget(QWidget):
             return
         for ability_id, check in self.gf_ability_checks.items():
             gf.set_ability(ability_id, check.isChecked())
+        self._update_ap_slots()  # the "learned" marks of the AP tab
 
     def _on_gf_ap_changed(self):
         gf = self._selected_gf()

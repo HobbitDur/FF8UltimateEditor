@@ -45,13 +45,23 @@ def _curves(data, entry_size, linear_offset, quadratic_offset):
             for start in range(0, len(data) - entry_size + 1, entry_size)]
 
 
-def read_level_curves(game_data, kernel_path):
-    """{"gf": [LevelCurve by GF id], "character": [LevelCurve by comId]} of a kernel.bin."""
+def load_kernel(game_data, kernel_path):
+    """A KernelManager holding kernel_path, to read several things out of one parse."""
     from ShumiTranslator.model.kernel.kernelmanager import KernelManager
     if not getattr(game_data, "kernel_data_json", None):
         game_data.load_kernel_data()
     kernel_manager = KernelManager(game_data)
     kernel_manager.load_file(str(kernel_path))
+    return kernel_manager
+
+
+def read_level_curves(game_data, kernel_path):
+    """{"gf": [LevelCurve by GF id], "character": [LevelCurve by comId]} of a kernel.bin."""
+    return level_curves(load_kernel(game_data, kernel_path))
+
+
+def level_curves(kernel_manager):
+    """read_level_curves of an already loaded KernelManager."""
     by_id = {section.id: section for section in kernel_manager.section_list if section is not None}
     return {"gf": _curves(by_id[GF_SECTION_ID].get_data_hex(), GF_ENTRY_SIZE,
                           GF_LINEAR_OFFSET, GF_QUADRATIC_OFFSET),
