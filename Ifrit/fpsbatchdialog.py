@@ -36,7 +36,9 @@ class FpsBatchDialog(QDialog):
         self._fps_30 = QRadioButton("30 FPS - FFNx True30FPS (recommended)")
         self._fps_30.setToolTip("The real 30 fps conversion: twice the frames (every animation "
                                 "of the vanilla game fits,\nthree are split automatically) AND "
-                                "the sequences rewritten for a battle VM running at 30 Hz.\n"
+                                "the sequences rewritten for a battle VM running at 30 Hz,\n"
+                                "and the camera's keyframe durations doubled (FFNx plays every "
+                                "battle camera at 30 Hz).\n"
                                 "A character body and its weapons are converted together.")
         self._fps_60 = QRadioButton("60 FPS")
         self._fps_60.setToolTip("Four times the frames, animations only (the sequences are left "
