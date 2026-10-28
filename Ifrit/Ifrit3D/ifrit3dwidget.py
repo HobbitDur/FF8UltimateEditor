@@ -1348,11 +1348,17 @@ class Ifrit3DWidget(QWidget):
         if self.current_anim_id < len(self.ifrit_manager.enemy.animation_data.animations):
             anim = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id]
             if len(anim.frames) > 0 and len(anim.frames[0].position) >= 3:
-                pos_x = anim.frames[0].position[0].get_pos_world()
-                pos_y = anim.frames[0].position[1].get_pos_world()
-                pos_z = anim.frames[0].position[2].get_pos_world()
+                pos_x, pos_y, pos_z = self._root_translation(anim.frames[0].position)
 
         self.gl_widget.set_reference_position(pos_x, pos_y, pos_z)
+
+    @classmethod
+    def _root_translation(cls, position):
+        """A frame's root position in the posed vertices' units (raw/128), where the engine puts
+        the model: get_pos_world is raw/204.8. Moved by get_pos_world, the model only covered 5/8
+        of its vertical motion and left the ground - c0m071's fall (anim 7) ended 2.4 units above
+        it, while with raw/128 every grounded frame keeps the feet on y = 0."""
+        return tuple(position[axis].get_pos_world() * cls._ROOT_DELTA_TO_VERTEX_SCALE for axis in range(3))
 
     def set_animation(self, anim_id: int):
         """Switch to a different animation while preserving playback state."""
@@ -1470,10 +1476,7 @@ class Ifrit3DWidget(QWidget):
                 self.current_frame < len(self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames)):
             frame = self.ifrit_manager.enemy.animation_data.animations[self.current_anim_id].frames[self.current_frame]
             if len(frame.position) >= 3:
-                pos_x = frame.position[0].get_pos_world()
-                pos_y = frame.position[1].get_pos_world()
-                pos_z = frame.position[2].get_pos_world()
-
+                pos_x, pos_y, pos_z = self._root_translation(frame.position)
 
         self.gl_widget.set_model_translation(pos_x, pos_y, pos_z)
         if hasattr(self, 'cb_ground'):
@@ -1624,20 +1627,13 @@ class Ifrit3DWidget(QWidget):
                 and isinstance(getattr(self.ifrit_manager.enemy, 'entity_type', None), EntityType))
 
     def _update_ground(self):
-        """The model alone: the engine's ground under it. The game places the root at raw/128 vertex
-        units (its feet then stand on y = 0); this view moves it by get_pos_world (raw/204.8), so the
-        ground is drawn where the engine's is at the animation's first frame, and stays there."""
+        """The model alone: the engine's ground under it. The root is placed like the game does
+        (_root_translation, raw/128 vertex units), so the feet stand on y = 0 on every frame."""
         if not self.show_ground():
             self.gl_widget.set_preview_slot_markers()
             return
-        ground_y = 0.
-        animations = self.ifrit_manager.enemy.animation_data.animations
-        if self.current_anim_id < len(animations) and animations[self.current_anim_id].frames:
-            position = animations[self.current_anim_id].frames[0].position
-            if len(position) >= 2:
-                ground_y = position[1].get_pos_world() + position[1].get_pos_raw() / 128
         half = getattr(self, '_ground_half', None) or max(2., float(getattr(self.gl_widget, 'MODEL_SIZE', 1.)) * 2.)
-        self.gl_widget.set_preview_slot_markers(grid_half_size=half, grid_step=half / 8, ground_y=ground_y)
+        self.gl_widget.set_preview_slot_markers(grid_half_size=half, grid_step=half / 8, ground_y=0.)
 
     def _on_skeleton_toggle(self, checked):
         self.gl_widget.set_show_skeleton(checked)
@@ -3107,7 +3103,7 @@ class Ifrit3DWidget(QWidget):
 
         # Update the 3D view to show the new position
         if anim_id == self.current_anim_id and frame_id == self.current_frame:
-            self.gl_widget.set_model_translation(pos_x, pos_y, pos_z)
+            self.gl_widget.set_model_translation(*self._root_translation(frame.position))
             self.gl_widget.update()
 
     def _propagate_rotation_enabled(self) -> bool:

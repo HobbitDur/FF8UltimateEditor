@@ -520,7 +520,8 @@ def test_the_frame_position_editor_moves_the_model_the_way_it_was_typed(tmp_path
     viewer.on_frame_position_changed(0, 0, *typed)
     _APP.processEvents()
 
-    assert viewer.gl_widget.model_translation == pytest.approx(typed), (
+    # The model moves where the engine puts it: raw/128 vertex units, 1.6x the typed raw/204.8
+    assert viewer.gl_widget.model_translation == pytest.approx(tuple(1.6 * value for value in typed)), (
         "the viewer does not move the model by the position that was typed")
 
     pane.save()

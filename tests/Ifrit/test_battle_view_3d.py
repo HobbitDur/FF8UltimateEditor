@@ -168,3 +168,22 @@ def test_ground_keeps_its_size_while_the_animation_plays(qapp, tmp_path):
     assert len(sizes) > 1          # the pose's bounds do change...
     assert len(grids) == 1         # ...the ground does not
     widget.close()
+
+
+@pytest.mark.ff8data(SOLDIER)
+def test_the_model_stays_on_the_ground_through_its_animation(qapp, tmp_path):
+    """The root moves the model like the engine (raw/128, the battle view's model_root): the
+    G-Soldier's fall (anim 7) ends lying ON the ground. Moved by get_pos_world (raw/204.8) it only
+    covered 5/8 of its descent and ended 2.4 units above it."""
+    from Ifrit.IfritCameraSeq.battlepreview import model_root
+    widget, view = _pane(tmp_path, SOLDIER)
+    gl = view.gl_widget
+    view.cb_ground.setChecked(True)
+    view.set_animation(7)
+    for frame in range(view.get_max_frames()):
+        view.set_frame(frame)
+        view.update_animated_mesh()
+        assert np.allclose(gl.model_translation, model_root(view.ifrit_manager, 7, frame))
+        feet = np.asarray(view.current_animated_vertices)[:, 1].min() + gl.model_translation[1]
+        assert feet == pytest.approx(gl._preview_ground_y, abs=0.35), f"frame {frame}"
+    widget.close()
