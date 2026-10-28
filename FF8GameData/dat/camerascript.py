@@ -178,7 +178,7 @@ class _CameraScriptRunner:
                 elif op_code == 0x03:
                     run.events.append("capture_return: saves the current view as the return view")
                 elif op_code == 0x04:
-                    run.events.append(f"wobble({parameters[0]}): camera oscillation")
+                    run.events.append(f"wobble({parameters[0]}): eases back to the return view over {parameters[0]} frames")
                 elif op_code == 0x08:
                     self.shot_flag = 0
                     run.events.append("return_view: blends back to the return view")

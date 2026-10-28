@@ -58,11 +58,11 @@
   {
    "id": "wobble",
    "group": "Camera",
-   "label": "Shake the camera",
+   "label": "Ease back to the return view",
    "op_codes": ["0x04"],
    "params": ["strength"],
-   "text": "Shake the camera, strength {0}",
-   "help": "Starts a camera oscillation (UpdateCameraOscillation). Not shown by the preview."
+   "text": "Ease back to the return view over {0} frames",
+   "help": "Blends the camera back to the saved return view over the given number of frames (CameraSeq04_ReturnViewEaseTask: blend = sin(frame / frames x 90 degrees)). Not a shake. Not used by any vanilla script; not shown by the preview."
   },
   {
    "id": "set_flag",
@@ -160,7 +160,7 @@
   "camera_animation": {"label": "Animation", "help": "Set (Keyframes tab group) and slot (0-7) of the animation; the byte is set x 16 + slot."},
   "read_variable": {"label": "Battle value", "help": "What the script reads: a camera variable, the shot flag, a slot, a random number..."},
   "write_variable": {"label": "Variable", "help": "Where the value goes: camera variables 0-7, the shot flag or the saved values."},
-  "strength": {"label": "Strength", "help": "Oscillation strength (0-255)", "min": 0, "max": 255},
+  "strength": {"label": "Frames", "help": "How many frames (battle ticks) the ease lasts (1-255; 0 divides by zero in the game)", "min": 0, "max": 255},
   "byte": {"label": "Byte", "help": "The skipped byte (never read)", "min": 0, "max": 255},
   "operation": {"label": "Operation", "help": "How the operand changes the working value"},
   "operand": {"label": "Operand", "help": "A number, or a battle value read when the command runs"},

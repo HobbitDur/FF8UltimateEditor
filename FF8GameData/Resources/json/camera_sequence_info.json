@@ -56,7 +56,7 @@
   {
    "op_code": "0x04",
    "size": 1,
-   "text": "Start camera oscillation (wobble) with strength {}",
+   "text": "Ease back to the return view over {} frames",
    "param_index": [
     0
    ],
@@ -65,9 +65,9 @@
     "ubyte"
    ],
    "param_list": [],
-   "short_text": "Wobble",
+   "short_text": "Ease to return view",
    "func_name": "wobble",
-   "comment": "Queues UpdateCameraOscillation"
+   "comment": "Queues CameraSeq04_ReturnViewEaseTask (EN 0x509930): Battle_Camera_ReturnViewBlend = sin((t << 10) / XX) for t = 1..XX, a duration in ticks (the code name stays wobble)"
   },
   {
    "op_code": "0x05",
