@@ -8,15 +8,31 @@ from pathlib import Path
 import psutil
 
 
-def wait_for_exit(exe_name, timeout=30):
+def is_running(exe_path: Path) -> bool:
+    """Whether the exe at exe_path runs. Only this installation's exe counts: another copy of the
+    tool open elsewhere does not lock these files. process_iter with attrs skips the processes
+    that end while being listed - the editor's own two processes are ending right now - where
+    asking a gone process its name raised NoSuchProcess and crashed the Patcher before the copy.
+    A process whose path cannot be read (AccessDenied) counts if it has the exe's name."""
+    target = os.path.normcase(str(exe_path.resolve()))
+    for process in psutil.process_iter(["name", "exe"]):
+        path = process.info["exe"]
+        if path:
+            if os.path.normcase(path) == target:
+                return True
+        elif process.info["name"] == exe_path.name:
+            return True
+    return False
+
+
+def wait_for_exit(exe_path: Path, timeout=60):
     """
-    Wait until the process exe_name is no longer running.
+    Wait until the exe at exe_path is no longer running.
     Returns True if exited within timeout, False otherwise.
     """
     start_time = time.time()
     while time.time() - start_time < timeout:
-        running = any(p.name() == exe_name for p in psutil.process_iter())
-        if not running:
+        if not is_running(exe_path):
             return True
         time.sleep(0.5)
     return False
@@ -39,7 +55,7 @@ def main():
 
     # Wait for the main application to fully exit
     print(f"Waiting for {exe_name} to close...")
-    if not wait_for_exit(exe_name):
+    if not wait_for_exit(target_dir / exe_name):
         notify(f"{exe_name} is still running. Update aborted.\n\n"
                "Close it, then use Self update again.")
         return
@@ -84,8 +100,9 @@ def setup_logging():
     # Log file with timestamp
     log_file = f"logs/Patcher_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
-    # Redirect stdout and stderr to file
-    sys.stdout = open(log_file, 'w')
+    # Redirect stdout and stderr to file, line buffered: a Patcher that dies midway still leaves
+    # the steps it went through (block buffered, its log was empty)
+    sys.stdout = open(log_file, 'w', buffering=1)
     sys.stderr = sys.stdout
 
 

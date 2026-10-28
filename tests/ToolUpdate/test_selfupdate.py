@@ -217,7 +217,7 @@ def test_patcher_applies_selfupdate_and_restarts(monkeypatch, tmp_path):
     (self_update / patcher_exe).write_bytes(b"patcher from release")
     (self_update / "Resources" / "hobbitdur.ico").write_bytes(b"icon")
 
-    monkeypatch.setattr(patcher, "wait_for_exit", lambda exe_name, timeout=30: True)
+    monkeypatch.setattr(patcher, "wait_for_exit", lambda exe_path, timeout=60: True)
     launched = []
     monkeypatch.setattr(subprocess, "Popen", lambda cmd, **kwargs: launched.append(cmd))
 
@@ -238,7 +238,7 @@ def test_patcher_aborts_if_tool_still_running(monkeypatch, tmp_path):
     self_update.mkdir()
     (self_update / "FF8UltimateEditor.exe").write_bytes(b"new exe")
 
-    monkeypatch.setattr(patcher, "wait_for_exit", lambda exe_name, timeout=30: False)
+    monkeypatch.setattr(patcher, "wait_for_exit", lambda exe_path, timeout=60: False)
     told = []
     monkeypatch.setattr(patcher, "notify", lambda text, error=True: told.append(text))
     launched = []
@@ -261,7 +261,7 @@ def test_patcher_reports_a_blocked_restart_without_crashing(monkeypatch, tmp_pat
     tool_exe = "FF8UltimateEditor.exe" if sys.platform == "win32" else "FF8UltimateEditor"
     (tmp_path / "SelfUpdate").mkdir()
     (tmp_path / "SelfUpdate" / tool_exe).write_bytes(b"new exe")
-    monkeypatch.setattr(patcher, "wait_for_exit", lambda exe_name, timeout=30: True)
+    monkeypatch.setattr(patcher, "wait_for_exit", lambda exe_path, timeout=60: True)
     monkeypatch.setattr("builtins.input", lambda *args: (_ for _ in ()).throw(RuntimeError("lost sys.stdin")))
 
     def blocked(cmd, **kwargs):
@@ -275,6 +275,51 @@ def test_patcher_reports_a_blocked_restart_without_crashing(monkeypatch, tmp_pat
     assert (tmp_path / tool_exe).read_bytes() == b"new exe"
     assert len(told) == 1 and "update is installed" in told[0] and str(tmp_path / tool_exe) in told[0]
     assert not (tmp_path / "SelfUpdate").exists()
+
+
+def _fake_processes(monkeypatch, *processes):
+    """psutil.process_iter(attrs) as the Patcher sees it: a process that could not be read has
+    None for that attribute, one that ended while being listed is not there at all."""
+    from types import SimpleNamespace
+    listed = [SimpleNamespace(info={"name": name, "exe": exe}) for name, exe in processes]
+    monkeypatch.setattr(patcher.psutil, "process_iter", lambda attrs=None: iter(listed))
+
+
+def test_patcher_waits_only_for_its_own_installation(monkeypatch, tmp_path):
+    """Another copy of the tool open in another folder does not lock this installation: waiting
+    for every process of that name made the Patcher give up after its timeout, copy nothing and
+    leave SelfUpdate full."""
+    exe = tmp_path / "install" / "FF8UltimateEditor.exe"
+    other = tmp_path / "Downloads" / "FF8UltimateEditor-v4.2.0" / "FF8UltimateEditor.exe"
+    _fake_processes(monkeypatch, ("FF8UltimateEditor.exe", str(other)))
+    assert not patcher.is_running(exe)
+
+    _fake_processes(monkeypatch, ("FF8UltimateEditor.exe", str(other)), ("FF8UltimateEditor.exe", str(exe)))
+    assert patcher.is_running(exe)
+
+
+def test_patcher_counts_an_unreadable_process_of_that_name(monkeypatch, tmp_path):
+    exe = tmp_path / "FF8UltimateEditor.exe"
+    _fake_processes(monkeypatch, ("FF8UltimateEditor.exe", None), ("explorer.exe", None))
+    assert patcher.is_running(exe)
+
+    _fake_processes(monkeypatch, ("explorer.exe", None))
+    assert not patcher.is_running(exe)
+
+
+def test_patcher_waits_for_the_exe_next_to_it(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    tool_exe = "FF8UltimateEditor.exe" if sys.platform == "win32" else "FF8UltimateEditor"
+    (tmp_path / "SelfUpdate").mkdir()
+    (tmp_path / "SelfUpdate" / tool_exe).write_bytes(b"new exe")
+    waited = []
+    monkeypatch.setattr(patcher, "wait_for_exit", lambda exe_path, timeout=60: waited.append(exe_path) or True)
+    monkeypatch.setattr(subprocess, "Popen", lambda cmd, **kwargs: None)
+
+    patcher.main()
+
+    assert [path.resolve() for path in waited] == [tmp_path / tool_exe]
+    assert (tmp_path / tool_exe).read_bytes() == b"new exe"
 
 
 def test_self_update_puts_the_downloaded_patcher_in_place(monkeypatch, tmp_path):
