@@ -10,6 +10,8 @@ Headless monster editing, same operations as the Ifrit GUI tabs:
   • import-seq-xml (XML → section 5 of a c0m .dat)
   • export-sections (.dat → one folder with one file per section)
   • apply-sections  (section folder → onto a base .dat, sections without a file are kept)
+  • convert-fps     (.dat files → 30 fps for FFNx True30FPS: animations 2n frames, sequences,
+                     camera durations x2; or 60 fps: animation frames only)
 """
 
 import argparse
@@ -161,6 +163,54 @@ def _cmd_apply_sections(args) -> int:
     return 0
 
 
+def _cmd_convert_fps(args) -> int:
+    """Ifrit's "Convert files to 30/60 FPS": at 30 fps the real FFNx True30FPS conversion (2n-frame
+    animations, rewritten sequences, camera durations x2, a character family whole or not at all)."""
+    import os
+    import shutil
+    from Ifrit.ifritmanager import IfritManager
+    paths = []
+    for path in args.input:
+        path = pathlib.Path(path)
+        paths.extend(sorted(p for p in path.iterdir() if IfritManager.is_battle_model_file(p.name))
+                     if path.is_dir() else [path])
+    if args.output_dir:
+        os.makedirs(args.output_dir, exist_ok=True)
+        copies = []
+        for path in paths:
+            copy = pathlib.Path(args.output_dir) / path.name
+            shutil.copyfile(path, copy)
+            copies.append(copy)
+        paths = copies
+    manager = IfritManager(str(PROJECT_ROOT / "FF8GameData"))
+    reports = manager.convert_file_list_to_fps([str(p) for p in paths], args.fps,
+                                               split_when_too_long=not args.no_split)
+    failed = 0
+    for report in reports:
+        name = report['file'] + (f" ({report['name']})" if report['name'] else "")
+        if report['error'] or report['skipped_list']:
+            failed += 1
+            reason = report['error'] or "; ".join(
+                f"{'camera' if anim_id == 'camera' else f'animation {anim_id}'}: {why}"
+                for anim_id, why in report['skipped_list'])
+            print(f"[not converted] {name}: {reason}")
+            continue
+        detail = f"{report['nb_converted']} animation(s)"
+        sequence_report = report.get('sequence_report')
+        if sequence_report is not None:
+            count = sequence_report.count()
+            detail += (f", sequences {count.get('rewritten', 0)} rewritten / {count.get('unchanged', 0)} unchanged"
+                       + (f" / {count.get('fallback', 0)} at 15 Hz cadence" if count.get('fallback') else "")
+                       + (f" / {count.get('manual', 0) + count.get('refused', 0)} MANUAL"
+                          if count.get('manual') or count.get('refused') else ""))
+        if report.get('camera_report') is not None:
+            detail += f", camera {report['camera_report'].summary()}"
+        print(f"[ok] {name}: {detail}")
+        for warning in report.get('warning_list', []):
+            print(f"    [warning] {warning}")
+    return 1 if failed else 0
+
+
 class IfritModelCliTool(BaseCliTool):
     """CLI tool for monster .dat model/stat/seq editing (AI lives in 'ifrit-ai')."""
 
@@ -235,6 +285,17 @@ class IfritModelCliTool(BaseCliTool):
         p_sections_in.add_argument("--output", "-o", required=True, help="Path of the .dat to write (can equal --input)")
         p_sections_in.add_argument("--sections", help=sections_help)
         p_sections_in.set_defaults(func=_cmd_apply_sections)
+
+        p_fps = sub.add_parser(
+            "convert-fps",
+            help="Convert battle model .dat files to 30 fps (FFNx True30FPS: animations 2n frames, sequences, "
+                 "camera) or 60 fps (animation frames only); a character family whole or not at all")
+        p_fps.add_argument("--input", "-i", nargs="+", required=True,
+                           help="c0m/dXc/dXw .dat file(s) and/or folders (give a character's body AND weapons)")
+        p_fps.add_argument("--fps", type=int, choices=(30, 60), default=30, help="Target rate (default 30)")
+        p_fps.add_argument("--output-dir", "-o", help="Convert copies written there (omitted: in place)")
+        p_fps.add_argument("--no-split", action="store_true", help="Refuse a file instead of splitting a too-long animation")
+        p_fps.set_defaults(func=_cmd_convert_fps)
 
         return parser
 
