@@ -3,7 +3,7 @@ import os
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
-                             QPushButton, QSplitter, QMessageBox, QFileDialog, QComboBox)
+                             QPushButton, QSplitter, QMessageBox, QFileDialog, QComboBox, QMenu)
 
 from Common.filebinding import FileBinding
 from Fujin.cameraeffectmanager import (CAM_FFNX_FOLDER, CREATABLE_CAMERA_EFFECTS, DEFAULT_CAMERA_SOURCE,
@@ -15,6 +15,7 @@ from SmallWidget.listsearchbar import ListSearchBar
 HEXT_FOLDER_KEY = "camera effect .hext"
 CAM_FOLDER_KEY = "camera effect .bcam"
 CAM_SELECTION_KEY = "camera effect .bcam files"   # the .bcam files last imported, reloaded by Import previous
+ANIM_SET_FOLDER_KEY = "battle anim set .animset"
 
 _NO_TRACK_TEXT = {
     "file": "This effect uses a file camera: its camera data or commands are stored in a loaded "
@@ -48,6 +49,7 @@ class CameraEffectEditorWidget(QWidget):
     def __init__(self, game_data, file_registry, embedded=False):
         QWidget.__init__(self)
         self.file_registry = file_registry
+        self.game_data = game_data
         self.manager = CameraEffectManager(game_data)
         self.exe_binding = FileBinding("FF8 exe", file_registry, load_callback=self.load_exe,
                                        file_filter="*.exe")
@@ -145,10 +147,22 @@ class CameraEffectEditorWidget(QWidget):
             f"Write every changed camera track as effect_NNN.bcam into a folder (FFNx reads them from the\n"
             f"game folder's {CAM_FFNX_FOLDER}/, any exe language).")
         self.export_all_button.clicked.connect(lambda: self.export_all_cam())
+        # The limit break / Blue Magic... anim sets of the exe, as FFNx effect_NNN.animset files
+        self.export_anim_sets_button = QPushButton("Export anim sets…")
+        self.export_anim_sets_button.setToolTip(
+            "Write the exe's 72 battle anim sets (limit breaks, Blue Magic cast, Shot, Duel, Angelo...) as\n"
+            f"effect_NNN.animset files, which FFNx binds instead of the exe's (game folder's {CAM_FFNX_FOLDER}/,\n"
+            "any size, any exe language). Converted to 30 fps: 2n frames per animation, sequences rewritten\n"
+            "for FFNx True30FPS, animations over 255 frames split.")
+        anim_set_menu = QMenu(self.export_anim_sets_button)
+        anim_set_menu.addAction("As in the exe…", lambda: self.export_anim_sets(convert=False))
+        anim_set_menu.addAction("Converted to 30 fps (FFNx True30FPS)…", lambda: self.export_anim_sets(convert=True))
+        self.export_anim_sets_button.setMenu(anim_set_menu)
         status_row = QHBoxLayout()
         status_row.addWidget(self.status_label, 1)
         status_row.addWidget(self.convert_30fps_button)
         status_row.addWidget(self.export_all_button)
+        status_row.addWidget(self.export_anim_sets_button)
 
         layout = QVBoxLayout()
         layout.addLayout(status_row)
@@ -309,6 +323,50 @@ class CameraEffectEditorWidget(QWidget):
             written.append(path)
         self.file_registry.remember_folder(CAM_FOLDER_KEY, folder)
         self.status_label.setText(self.status_label.text() + f" - {len(written)} .bcam file(s) written.")
+        return written
+
+    def export_anim_sets(self, convert=False, folder=None) -> list:
+        """Write every anim set of the opened exe as effect_NNN.animset into `folder` (asked when not
+        given), as is or converted to 30 fps. Every file is built and checked before any is written.
+        Returns the paths written."""
+        from FF8GameData.dat import exeanimset
+        title = "Export anim sets"
+        path = self.exe_binding.current_path
+        if not path:
+            QMessageBox.information(self, title, "Open the FF8 exe first.")
+            return []
+        with open(path, "rb") as file:
+            anim_sets = exeanimset.read_exe_anim_sets(file.read())
+        if not anim_sets:
+            QMessageBox.warning(self, title, "No vanilla anim set was found in this exe.")
+            return []
+        files, errors = [], []
+        for info, anim_set in sorted(anim_sets.items(), key=lambda item: (item[0].effect_id, item[0].index)):
+            try:
+                if convert:
+                    anim_set, _report = exeanimset.convert_to_real30(self.game_data, anim_set)
+                files.append((info.file_name, anim_set.to_bytes()))
+            except exeanimset.AnimSetError as error:
+                errors.append(f"{info.file_name} ({info.label}): {error}")
+        if not folder:
+            folder = QFileDialog.getExistingDirectory(
+                self, f"Folder for the .animset files (FFNx: the game folder's {CAM_FFNX_FOLDER}/)",
+                self.file_registry.last_folder(ANIM_SET_FOLDER_KEY) or os.getcwd())
+        if not folder:
+            return []
+        written = []
+        for name, data in files:
+            file_path = os.path.join(folder, name)
+            with open(file_path, "wb") as file:
+                file.write(data)
+            written.append(file_path)
+        self.file_registry.remember_folder(ANIM_SET_FOLDER_KEY, folder)
+        missing = len(exeanimset.ANIM_SETS) - len(anim_sets)
+        lines = [f"{len(written)} anim set file(s) written" + (" (converted to 30 fps)" if convert else "") + "."]
+        if missing:
+            lines.append(f"{missing} vanilla set(s) not found in this exe (already changed?).")
+        lines += errors[:20]
+        (QMessageBox.warning if errors else QMessageBox.information)(self, title, "\n".join(lines))
         return written
 
     # ------------------------------------------------------------------ list

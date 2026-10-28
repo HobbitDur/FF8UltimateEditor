@@ -251,6 +251,55 @@ def _cmd_camera_30fps(args):
     return 1 if failed else 0
 
 
+def _cmd_anim_sets(args):
+    """Battle anim sets of the exe (limit breaks, Blue Magic...) as FFNx effect_NNN.animset files,
+    as they are or converted for FFNx True30FPS."""
+    from FF8GameData.dat import exeanimset
+    if not (args.exe or args.files):
+        raise ValueError("Give --exe and/or --files")
+    anim_sets = {}
+    if args.exe:
+        anim_sets.update(exeanimset.read_exe_anim_sets(Path(args.exe).read_bytes()))
+        if len(anim_sets) != len(exeanimset.ANIM_SETS):
+            print(f"[warning] {len(exeanimset.ANIM_SETS) - len(anim_sets)} vanilla set(s) not found in this exe")
+    failed = 0
+    for path in args.files or []:
+        info = exeanimset.info_from_file_name(path)
+        if info is None:
+            print(f"[error] {path}: not an effect_NNN[_K].animset name")
+            failed += 1
+            continue
+        try:
+            anim_sets[info] = exeanimset.AnimSet.parse(Path(path).read_bytes(), info)
+        except exeanimset.AnimSetError as error:
+            print(f"[error] {path}: {error}")
+            failed += 1
+    if args.effect:
+        anim_sets = {info: anim_set for info, anim_set in anim_sets.items() if info.effect_id in args.effect}
+    game_data = None
+    files = []
+    for info, anim_set in sorted(anim_sets.items(), key=lambda item: (item[0].effect_id, item[0].index)):
+        if args.fps == 30:
+            if game_data is None:
+                from FF8GameData.gamedata import GameData
+                game_data = GameData("FF8GameData")
+                game_data.load_anim_sequence_data()
+            try:
+                anim_set, report = exeanimset.convert_to_real30(game_data, anim_set)
+            except exeanimset.AnimSetError as error:
+                print(f"[error] {info.file_name} ({info.label}): {error}")
+                failed += 1
+                continue
+            split = f", {len(report['split_list'])} split" if report['split_list'] else ""
+            print(f"[ok] {info.file_name} ({info.label}): {report['nb_converted']} animation(s) at 30 fps{split}")
+        files.append((info.file_name, anim_set.to_bytes()))   # every file is checked before any is written
+    os.makedirs(args.output_dir, exist_ok=True)
+    for name, data in files:
+        Path(args.output_dir, name).write_bytes(data)
+    print(f"[ok] {len(files)} anim set file(s) -> {args.output_dir}")
+    return 1 if failed else 0
+
+
 class FujinCliTool(BaseCliTool):
     """Effect source catalog, native resources, MAG sections and cinematic scripts."""
 
@@ -330,6 +379,18 @@ class FujinCliTool(BaseCliTool):
         p_30.add_argument("--fps", type=int, choices=(30, 60), default=30,
                           help="Target camera rate: 30 (durations x2, default) or 60 (x4)")
         p_30.set_defaults(func=_cmd_camera_30fps)
+
+        p_sets = sub.add_parser("anim-sets",
+                                help="Write the exe's battle anim sets (limit breaks, Blue Magic, Shot, Duel, Angelo...) "
+                                     "as FFNx effect_NNN.animset files, optionally converted to 30 fps")
+        p_sets.add_argument("--exe", help="FF8 executable (any release: the sets are the same; never overwritten)")
+        p_sets.add_argument("--files", nargs="+", help="effect_NNN[_K].animset files to use instead of the exe's sets")
+        p_sets.add_argument("--output-dir", "-o", required=True,
+                            help="Folder for the files (FFNx reads them from the game folder's direct/exe/)")
+        p_sets.add_argument("--fps", type=int, choices=(15, 30), default=15,
+                            help="30: convert for FFNx True30FPS (2n frames, sequences rewritten, split over 255 frames)")
+        p_sets.add_argument("--effect", type=int, nargs="+", help="Only these effect ids")
+        p_sets.set_defaults(func=_cmd_anim_sets)
         return parser
 
     def execute(self, args: argparse.Namespace) -> int:
