@@ -30,6 +30,7 @@ from Ifrit.fpsbatchdialog import (FpsBatchDialog, FpsBatchReportDialog,
 from Ifrit.sectionexportdialog import SectionExportDialog
 from Ifrit.IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
 from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
+from Ifrit.IfritAnimSet.ifritanimsetwidget import AnimSetSource, IfritAnimSetWidget, TAB_LABEL as ANIM_SET_TAB_LABEL
 from Ifrit.IfritCameraSeq.ifritcameraseqwidget import IfritCameraSeqWidget, _CAMERA_SECTION_BY_ENTITY
 from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
 from Ifrit.IfritDynamicTexture.texturepreviewwidget import TexturePreviewWidget
@@ -242,6 +243,9 @@ def _shown_tabs(manager):
         '_stat_container': stat_ai,
         '_ai_container': stat_ai,
         '_texture_widget': _section_of(et, 'texture') is not None,
+        # The exe's anim sets of a character body: shown once the exe or an .animset file is open
+        # (IfritFilePane._apply_visibility), not counted here.
+        '_anim_set_widget': False,
     }
 
 
@@ -293,8 +297,9 @@ class IfritFilePane(QWidget):
 
     def __init__(self, ifrit_manager: IfritManager, path: str, settings: QSettings,
                  icon_path="Resources", weapon_provider=None, file_registry=None,
-                 linked_parts_provider=None, progress=None):
-        """progress: the Opening dialog (_OpeningProgress), told about each tab loaded, or None."""
+                 linked_parts_provider=None, progress=None, anim_set_source=None):
+        """progress: the Opening dialog (_OpeningProgress), told about each tab loaded, or None.
+        anim_set_source: the shell's AnimSetSource (the exe / .animset files of the anim set tab)."""
         super().__init__()
         self.ifrit_manager = ifrit_manager   # its enemy + textures are already set for `path`
         self.path = path
@@ -349,6 +354,14 @@ class IfritFilePane(QWidget):
         self._stat_widget = IfritStatWidget(ifrit_manager, icon_path=icon_path)
         self._battle_text_widget = IfritBattleTextWidget(ifrit_manager)
         self._dynamic_texture_widget = IfritDynamicTextureWidget(ifrit_manager)
+        # The exe's battle anim sets (limit breaks, Blue Magic...) on this character's skeleton. Its
+        # edits are the sets' (saved by its own buttons), not the .dat's: only a skeleton edit made
+        # through its 3D view changes the file.
+        self._anim_set_widget = IfritAnimSetWidget(
+            ifrit_manager, anim_set_source if anim_set_source is not None else AnimSetSource(FileRegistry()),
+            weapon_provider=weapon_provider, icon_path=icon_path, file_registry=file_registry)
+        self._anim_set_widget.path = path
+        self._anim_set_widget.body_edited.connect(self._on_edit)
         # Dyntex also mutates the model live and self-reports (same as seq/camera).
         self._dynamic_texture_widget.data_edited.connect(self._on_edit)
         # Changes no single control reports: AI lines added/removed, AI code compiled or imported,
@@ -383,6 +396,7 @@ class IfritFilePane(QWidget):
         self._tabs.addTab(self._stat_container, "7 - Stat")
         self._tabs.addTab(self._ai_container, "8 - AI")
         self._tabs.addTab(self._texture_widget, "11 - Static Texture")
+        self._tabs.addTab(self._anim_set_widget, ANIM_SET_TAB_LABEL)
         self._order_tabs_by_section()
         self._tabs.setCurrentIndex(settings.value("ifrit/current_tab", defaultValue=0, type=int))
         self._tabs.currentChanged.connect(self._on_tab_changed)
@@ -505,7 +519,19 @@ class IfritFilePane(QWidget):
         never a filename heuristic)."""
         for name, shown in _shown_tabs(self.ifrit_manager).items():
             self._tabs.setTabVisible(self._tabs.indexOf(getattr(self, name)), shown)
+        self._tabs.setTabVisible(self._tabs.indexOf(self._anim_set_widget), self._anim_set_widget.has_sets())
         self._update_section_tab_labels()
+
+    def refresh_anim_sets(self):
+        """The exe or the .animset files were opened or closed: show or hide the anim set tab, and
+        read its sets again when it is loaded (its unsaved set edits are kept)."""
+        index = self._tabs.indexOf(self._anim_set_widget)
+        shown = self._anim_set_widget.has_sets()
+        self._tabs.setTabVisible(index, shown)
+        self._loaded_tabs.discard(self._anim_set_widget)
+        if shown and self._tabs.currentWidget() is self._anim_set_widget:
+            self._ensure_tab_loaded(self._anim_set_widget)
+        self._shrink_tabs_to_current(self._tabs)
 
     def _update_section_tab_labels(self):
         et = self.ifrit_manager.enemy.entity_type
@@ -607,6 +633,9 @@ class IfritFilePane(QWidget):
             if et in _STAT_AI_CAPABLE_ENTITY_TYPES:
                 self._ai_widget.load_file(path)
                 self._battle_text_widget.load_data()
+        elif widget is self._anim_set_widget:
+            if self._anim_set_widget.has_sets():
+                self._anim_set_widget.load(path)
 
     def _ensure_tab_loaded(self, widget):
         if widget is None or widget in self._loaded_tabs:
@@ -677,7 +706,7 @@ class IfritFilePane(QWidget):
         walked, which is ~0.2 s and pointless when only one tab changed (undo/redo)."""
         scope = root if root is not None else self._tabs
         excluded_roots = [self._3d_widget, self._entrance_widget, self._seq_widget,
-                          self._camera_widget, self._dynamic_texture_widget]
+                          self._camera_widget, self._dynamic_texture_widget, self._anim_set_widget]
         excluded_roots += scope.findChildren(CameraPreviewPanel)
         excluded_roots += scope.findChildren(TexturePreviewWidget)
         excluded_roots += scope.findChildren(CommandWidget)
@@ -857,6 +886,10 @@ class IfritMonsterWidget(QWidget):
         # them itself; they are offered here so the header imports them, as every other file.
         self.audio_binding = FileBinding("audio.fmt", file_registry, file_filter="audio.fmt", read_only=True)
         self.mngrp_binding = FileBinding("mngrp.bin", file_registry, file_filter="mngrp.bin", read_only=True)
+        # The "Exe - Limit anim." tab's sets: the FF8 exe and/or FFNx effect_NNN.animset files,
+        # complementary too (an .animset brings every effect_*.animset of its folder).
+        self.anim_set_source = AnimSetSource(file_registry)
+        self.anim_set_source.changed.connect(self._on_anim_set_source_changed)
         self._encounters = []
         # Ifrit is an Alexander-pattern tool with no per-file FileBinding, so the shared-toolbar
         # Reload button reaches it through the reload_files() / can_reload_files() hooks below
@@ -997,12 +1030,19 @@ class IfritMonsterWidget(QWidget):
         self._apply_cronos_data(self._cronos_checkbox.isChecked())
         self._update_section_buttons()   # nothing shown yet -> both off
         self.kernel_binding.load_opened_file()   # another tool may have opened a kernel.bin already
+        self.anim_set_source.load_opened_files()   # the exe may be open in Fujin, Cid...
 
     def file_bindings(self):
         """The fixed-name files of this tool, all complementary (read-only): kernel.bin, scene.out
         and the Sequence preview's audio.fmt and mngrp.bin. The .dat models have no fixed name -
         they go through open_files() / save_folder()."""
-        return [self.kernel_binding, self.sceneout_binding, self.audio_binding, self.mngrp_binding]
+        return [self.kernel_binding, self.sceneout_binding, self.audio_binding, self.mngrp_binding,
+                *self.anim_set_source.bindings()]
+
+    def _on_anim_set_source_changed(self):
+        for f in self._files:
+            if f.get('pane') is not None:
+                f['pane'].refresh_anim_sets()
 
     STAT_CURVES = ('hp', 'str', 'vit', 'mag', 'spr', 'spd', 'eva')
 
@@ -1468,7 +1508,8 @@ class IfritMonsterWidget(QWidget):
         pane = IfritFilePane(manager, f['path'], self.settings, self.icon_path,
                              weapon_provider=self._weapon_options_for,
                              file_registry=self.file_registry,
-                             linked_parts_provider=self._linked_parts_for, progress=progress)
+                             linked_parts_provider=self._linked_parts_for, progress=progress,
+                             anim_set_source=self.anim_set_source)
         pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
         pane.edited.connect(self._on_active_edited)          # every edit -> (debounced) undo snapshot
         pane.set_model_paths(self._opened_model_paths)

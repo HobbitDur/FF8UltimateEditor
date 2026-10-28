@@ -116,6 +116,23 @@ def test_every_animation_decodes_on_its_bone_count(anim_sets):
 
 
 @pytest.mark.ff8data(EXE)
+@pytest.mark.parametrize("effect_id", [188, 263, 274])
+def test_document_round_trip(anim_sets, effect_id):
+    info = ea.anim_set_info(effect_id)
+    anim_set = anim_sets[info]
+    weapon = ea.synthetic_bone_section(info.weapon_bones) if info.weapon_bones else None
+    document = ea.AnimSetDocument(anim_set, ea.synthetic_bone_section(info.body_bones), weapon)
+    rebuilt = document.to_anim_set()
+    assert rebuilt.sequences == anim_set.sequences
+    assert _same_but_slack_bits(rebuilt.body, anim_set.body)
+    if effect_id == 263:   # the 8 animations on another skeleton are kept as they are
+        assert document.body.nb_animations == 8 and len(document.foreign_body_animations) == 8
+        assert ea.split_animation_section(rebuilt.body)[8:] == ea.split_animation_section(anim_set.body)[8:]
+    document.seq_animation_data['seq_animation_data'][0]['data'] = bytearray(bytes([0xA2]))   # an edit is kept
+    assert document.to_anim_set().sequence_list()[0][:1] == bytes([0xA2])
+
+
+@pytest.mark.ff8data(EXE)
 @pytest.mark.parametrize("effect_id, index", [(188, 0), (261, 0), (263, 0), (334, 1), (274, 0)])
 def test_convert_to_real30(game_data, anim_sets, effect_id, index):
     info = ea.anim_set_info(effect_id, index)

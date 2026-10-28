@@ -419,6 +419,66 @@ class AnimSet:
         return copy.copy(self)
 
 
+# ----------------------------------------------------------------------------- editing
+def split_animation_section(section: bytes) -> list:
+    """[bytes of animation 0, 1...] of an animation section (each runs to the next higher offset)."""
+    count = struct.unpack_from("<I", section, 0)[0]
+    offsets = struct.unpack_from(f"<{count}I", section, 4)
+    return [bytes(section[offset:min([other for other in offsets if other > offset] or [len(section)])])
+            for offset in offsets]
+
+
+def join_animation_section(animation_list: list) -> bytes:
+    """An animation section holding these animations (bytes each), padded to 4 bytes."""
+    offset = 4 + 4 * len(animation_list)
+    offsets = []
+    for data in animation_list:
+        offsets.append(offset)
+        offset += len(data)
+    return _pad4(struct.pack(f"<{len(animation_list) + 1}I", len(animation_list), *offsets)
+                 + b"".join(bytes(data) for data in animation_list))
+
+
+class AnimSetDocument:
+    """A set opened for editing on a model's REAL skeleton (an editor's 3D view and sequence list):
+    `body` / `weapon` are AnimationSections decoded on the body / weapon BoneSection, and
+    `seq_animation_data` the sequences in the MonsterAnalyser shape ({'seq_animation_data':
+    [{'id', 'data'}]}, ids from 1). Animations that do not use the model's skeleton
+    (BODY_BONE_EXCEPTIONS) and a weapon section without a weapon skeleton are kept as they are.
+    to_anim_set() builds the set back (validated)."""
+
+    def __init__(self, anim_set: AnimSet, body_bone_section, weapon_bone_section=None):
+        from ..monsterdata import AnimationSection
+        info = anim_set.info
+        self.info = info
+        self.original = anim_set
+        animation_list = split_animation_section(anim_set.body)
+        exceptions = BODY_BONE_EXCEPTIONS.get((info.effect_id, info.index), {}) if info else {}
+        nb_own = min([first for first in exceptions] + [len(animation_list)])
+        self.body = AnimationSection()
+        self.body.analyze(join_animation_section(animation_list[:nb_own]), body_bone_section)
+        self.foreign_body_animations = animation_list[nb_own:]
+        self.weapon = None
+        self.raw_weapon = anim_set.weapon
+        if anim_set.weapon is not None and weapon_bone_section is not None:
+            self.weapon = AnimationSection()
+            self.weapon.analyze(bytes(anim_set.weapon), weapon_bone_section)
+            self.raw_weapon = None
+        self.seq_animation_data = {'seq_animation_data': [
+            {'id': index + 1, 'data': bytearray(data)} for index, data in enumerate(anim_set.sequence_list())]}
+
+    def to_anim_set(self) -> AnimSet:
+        body = join_animation_section([bytes(animation.to_binary()) for animation in self.body.animations]
+                                      + self.foreign_body_animations)
+        weapon = _pad4(self.weapon.to_binary()) if self.weapon is not None else self.raw_weapon
+        sequences = sorted(self.seq_animation_data['seq_animation_data'], key=lambda item: item['id'])
+        if [item['id'] for item in sequences] != list(range(1, len(sequences) + 1)):
+            raise AnimSetError("the sequence ids must run from 1 with no gap")
+        anim_set = AnimSet(body, build_sequence_section([bytes(item['data']) for item in sequences]), weapon, self.info)
+        anim_set.to_bytes()   # validated
+        return anim_set
+
+
 # ----------------------------------------------------------------------------- exe
 def locate_anim_sets(exe: bytes) -> dict:
     """{AnimSetInfo: file offset in `exe`} for every vanilla set found in this exe (any release:
