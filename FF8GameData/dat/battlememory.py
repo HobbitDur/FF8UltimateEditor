@@ -81,7 +81,7 @@ def file_warning_list(name: str, data: bytes) -> list:
         if arena > MONSTER_ARENA_CAP:
             warnings.append(f"{name}: {arena} bytes of model data, over the {MONSTER_ARENA_CAP}-byte monster "
                             "arena on its own (needs the enlarged-memory FFNx build)")
-    elif nb in (7, 8, 10):
+    elif len(lower) > 2 and lower[0] == 'd' and lower[2] in 'cw' and nb in (7, 8, 10):
         cap = EXTRA_WEAPON_CAP if nb == 8 else EXTRA_BODY_CAP
         extra = extra_animation_bytes(data)
         if extra > cap:

@@ -71,6 +71,15 @@ class WattsWidget(QWidget):
         file_section_layout.addWidget(QLabel("Sequence view:"))
         file_section_layout.addWidget(self.sequence_view_selector)
         file_section_layout.addStretch(1)
+        self.convert_30fps_button = QPushButton("Convert to 30 fps (FFNx)…")
+        self.convert_30fps_button.setToolTip(
+            "For FFNx True30FPS, which expects every battle file converted (nothing marks a\n"
+            "converted file): the 6 body and 4 weapon win-pose animations get 2n frames, every\n"
+            "pose sequence is rewritten for a 30 Hz VM (blink stamps x2...) and every keyframe\n"
+            "duration of the Section 2 camera doubles. Convert a vanilla file once, then Save.")
+        self.convert_30fps_button.setEnabled(False)
+        self.convert_30fps_button.clicked.connect(self.convert_to_30fps)
+        file_section_layout.addWidget(self.convert_30fps_button)
 
         # Editor
         editor_layout = QVBoxLayout()
@@ -530,7 +539,37 @@ class WattsWidget(QWidget):
         self._rebuild_camera()
         self._rebuild_pose_groups()
         self.editor_container.setEnabled(True)
+        self.convert_30fps_button.setEnabled(True)
         self.refresh_info()
+
+    def convert_to_30fps(self, confirm=True) -> dict:
+        """Convert the opened r0win.dat in memory (WattsManager.convert_to_real30); Save writes it."""
+        title = "Convert to 30 fps (FFNx)"
+        if not self.manager.poses:
+            return {}
+        if confirm and QMessageBox.question(
+                self, title, "Convert r0win.dat for FFNx True30FPS?\n\nThe win-pose animations get "
+                "2n frames, the pose sequences and the camera are converted. Convert a vanilla file "
+                "only once: converting twice doubles again.") != QMessageBox.StandardButton.Yes:
+            return {}
+        try:
+            report = self.manager.convert_to_real30()
+        except ValueError as error:
+            QMessageBox.warning(self, title, f"Not converted, nothing was changed:\n{error}")
+            return {}
+        self._rebuild_camera()
+        self._rebuild_pose_groups()
+        self.refresh_info()
+        lines = []
+        for name, body_frames, weapon_frames, status in report['poses']:
+            weapon = f", weapon {weapon_frames} frames" if weapon_frames is not None else ""
+            lines.append(f"{name}: body {body_frames} frames{weapon}, sequence {status}")
+        lines.append(f"Camera: {report['camera_report'].summary()}.")
+        lines += [f"Warning: {warning}" for warning in report['warning_list']]
+        lines.append("\nSave the file to keep the result.")
+        if confirm:
+            QMessageBox.information(self, title, "\n".join(lines))
+        return report
 
     def save_file(self):
         if self.manager.file_path:

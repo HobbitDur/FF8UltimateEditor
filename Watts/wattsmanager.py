@@ -260,8 +260,98 @@ class WattsManager:
             raise ValueError("No file loaded")
         if not file_path:
             file_path = self.file_path
+        data = self.to_bytes()   # built before the file is opened: a failure leaves it as it was
         with open(file_path, "wb") as out_file:
-            out_file.write(self.to_bytes())
+            out_file.write(data)
+
+    # ------------------------------------------------------------- 30 fps (FFNx)
+    def _converted_animation_block(self, block: bytes, nb_bone: int, mode) -> bytes:
+        """A pose animation section with 2n frames per animation (one-shot: the pose winds up
+        once and holds, the last pose is held once more like dat30)."""
+        from FF8GameData.dat import dat30
+        from FF8GameData.dat.animsplitter import MAX_ANIMATION_FRAME
+        bone_section = self.synthetic_bone_section(nb_bone)
+        section = AnimationSection()
+        section.analyze(bytes(block), bone_section)
+        for anim_id, animation in enumerate(section.animations):
+            if len(animation.frames) * dat30.FACTOR > MAX_ANIMATION_FRAME:
+                raise ValueError(f"animation {anim_id}: {len(animation.frames)} frames, over "
+                                 f"{MAX_ANIMATION_FRAME} once converted")
+            dat30.double_animation(animation, bone_section.bones, False, mode)
+        return self.canonicalize_animation_block(bytes(section.to_binary()), nb_bone)
+
+    def looks_converted_to_real30(self) -> bool:
+        """A guess for a warning only: every pose animation ends on its last pose held twice and
+        the camera's keyframe durations are all even (nothing marks a converted file)."""
+        from FF8GameData.dat import camera30, dat30
+        for pose in self.poses:
+            section = AnimationSection()
+            try:
+                section.analyze(bytes(pose.body_anim), self.synthetic_bone_section(pose.character.body_bones))
+            except Exception:
+                return False
+            if any(len(a.frames) < 2 or not dat30.same_pose(a.frames[-1], a.frames[-2])
+                   for a in section.animations):
+                return False
+        return camera30.collection_looks_converted(self.camera_collection)
+
+    def convert_to_real30(self, mode=None) -> dict:
+        """Convert r0win.dat in memory for FFNx True30FPS (every battle file is expected
+        converted, there is no marker): the 6 body and 4 weapon pose animations get exactly 2n
+        frames (FF8GameData/dat/dat30.py), each pose sequence is rewritten for a VM ticking at
+        30 Hz (seqrewrite30: the 9F blink stamps x2...) and the section 2 camera is converted
+        (camera30: keyframe durations x2, script waits). All or nothing: ValueError and nothing
+        changed. Returns {'poses': [(name, body frames, weapon frames, sequence status)],
+        'camera_report', 'warning_list'}."""
+        from FF8GameData.dat import battlememory, camera30, interpolation
+        from FF8GameData.dat.seqrewrite30 import STATUS_MANUAL, STATUS_REFUSED, rewrite_sequence
+        from FF8GameData.dat.sequencevm import camera_sequence_vm, entity_sequence_vm
+        if not self.poses:
+            raise ValueError("No file loaded")
+        if self.game_data is None:
+            raise ValueError("No GameData available for the sequence rewrite")
+        if not self.game_data.anim_sequence_data_json:
+            self.game_data.load_anim_sequence_data()
+        if not getattr(self.game_data, "camera_sequence_data_json", None):
+            self.game_data.load_camera_sequence_data()
+        if self.camera_collection is None:
+            raise ValueError("the section 2 camera collection does not read as one: it cannot be converted")
+        mode = mode or interpolation.LINEAR
+        report = {'poses': [], 'camera_report': camera30.CameraConversionReport(), 'warning_list': []}
+        if self.looks_converted_to_real30():
+            report['warning_list'].append("looks already converted (every pose ends on a held pose, "
+                                          "even camera durations): converting twice doubles again")
+        entity_vm = entity_sequence_vm(self.game_data)
+        converted = []
+        for pose in self.poses:
+            name = pose.character.name
+            try:
+                body = self._converted_animation_block(pose.body_anim, pose.character.body_bones, mode)
+                weapon = (self._converted_animation_block(pose.weapon_anim, pose.character.weapon_bones, mode)
+                          if pose.weapon_anim is not None else None)
+            except ValueError as error:
+                raise ValueError(f"{name} pose: {error}")
+            sequence, sequence_report = rewrite_sequence(entity_vm, pose.get_seq_bytecode(), pose.character.section_id)
+            if sequence_report.status in (STATUS_MANUAL, STATUS_REFUSED):
+                raise ValueError(f"{name} pose sequence: "
+                                 + "; ".join(sequence_report.manual_list or [sequence_report.status]))
+            converted.append((pose, body, weapon, sequence, sequence_report.status))
+        try:
+            camera = camera30.convert_track_bytes(camera_sequence_vm(self.game_data), self.camera_bytes(),
+                                                  camera30.FACTOR_30FPS, report['camera_report'])
+        except ValueError as error:
+            raise ValueError(f"section 2 camera: {error}")
+        # everything converted: apply
+        for pose, body, weapon, sequence, status in converted:
+            pose.body_anim = body
+            if weapon is not None:
+                pose.weapon_anim = weapon
+            pose.set_seq_bytecode(sequence)
+            report['poses'].append((pose.character.name, R0winPose.anim_frame_count(body),
+                                    R0winPose.anim_frame_count(weapon) if weapon is not None else None, status))
+        self.camera = camera
+        report['warning_list'].extend(battlememory.file_warning_list("r0win.dat", self.to_bytes()))
+        return report
 
     # ------------------------------------------------------------------- parts
     def part_keys(self) -> list:

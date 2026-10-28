@@ -13,6 +13,9 @@ Commands:
     • set-fanfare-id - change the fanfare AKAO id: on PC this byte is the only part of
                     Section 1 the game reads (it plays song id = AKAO id - 1), so this
                     swaps the victory music
+    • convert-30fps - convert the file for FFNx True30FPS: the pose animations get 2n
+                    frames, the pose sequences are rewritten (9F blink stamps x2...), the
+                    camera keyframe durations x2 (FF8GameData/dat/camera30.py)
 """
 import argparse
 import os
@@ -162,6 +165,23 @@ def _cmd_set_fanfare_id(args) -> int:
     return 0
 
 
+def _cmd_convert_30fps(args) -> int:
+    manager = _load_manager(args)
+    try:
+        report = manager.convert_to_real30()
+    except ValueError as error:
+        print(f"[error] not converted, nothing written: {error}", file=sys.stderr)
+        return 1
+    for name, body_frames, weapon_frames, status in report['poses']:
+        weapon = f", weapon {weapon_frames} frames" if weapon_frames is not None else ""
+        print(f"  {name}: body {body_frames} frames{weapon}, sequence {status}")
+    print(f"  camera: {report['camera_report'].summary()}")
+    for warning in report['warning_list']:
+        print(f"[warning] {warning}")
+    _save_manager(manager, args)
+    return 0
+
+
 def _add_input_argument(parser):
     parser.add_argument("--input", "-i", required=True, help="Path to r0win.dat")
 
@@ -249,6 +269,14 @@ class WattsCliTool(BaseCliTool):
         p_fanfare.add_argument("--output", "-o",
                                help="Output r0win.dat (omitted: overwrite --input)")
         p_fanfare.set_defaults(func=_cmd_set_fanfare_id)
+
+        p_30 = sub.add_parser(
+            "convert-30fps",
+            help="Convert r0win.dat for FFNx True30FPS (pose animations 2n frames, pose "
+                 "sequences rewritten, camera durations x2); convert a vanilla file only once")
+        _add_input_argument(p_30)
+        p_30.add_argument("--output", "-o", help="Output r0win.dat (omitted: overwrite --input)")
+        p_30.set_defaults(func=_cmd_convert_30fps)
 
         return parser
 

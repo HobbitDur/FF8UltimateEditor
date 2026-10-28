@@ -152,6 +152,16 @@ def _double_animation(animation, bones, smooth_loop, mode):
     animation.create_interpolated_frames(bones, FACTOR, smooth_loop, mode=mode)
 
 
+def double_animation(animation, bones, smooth_loop: bool = False, mode=interpolation.LINEAR):
+    """2n frames for an n-frame animation (one-shot: the last pose held once more; loop: the
+    in-between back to frame 0), for the anim sets outside a model (r0win poses...)."""
+    _double_animation(animation, bones, smooth_loop, mode)
+
+
+def same_pose(frame_a, frame_b) -> bool:
+    return _same_pose(frame_a, frame_b)
+
+
 def plan_animation_list(game_data, monster, kind_dict, allow_split: bool) -> tuple:
     """([(anim id, smooth_loop, needs_split)], [(anim id, reason)]) without touching anything."""
     plan_list, skipped_list = [], []
