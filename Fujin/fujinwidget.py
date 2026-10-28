@@ -24,8 +24,10 @@ from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
 from Fujin.texturepictureview import TexturePictureView
-from Fujin.effectparts import PORTS_MISSING, PartTab, defaults as schema_defaults, effect_schema, recorder_has_ports
+from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults as schema_defaults, effect_schema,
+                               recorder_has_ports)
 from Fujin.nativepreview import NativePreviewView, gl_renderer
+from Fujin.recorderbuild import recorder_build
 from Fujin.soundpanel import SoundPanel
 from Fujin.objectview import MagObjectView
 from SmallWidget.listsearchbar import ListSearchBar, SEARCH_TEXT_ROLE
@@ -98,6 +100,8 @@ class FujinWidget(QWidget):
         self.lab.setParent(self)
         self.lab.hide()
         self.part_tabs = []
+        self._parts_schema = None           # the parameter table the part tabs show
+        recorder_build().changed.connect(self._recorder_built)     # FFNx's sources updated: tabs without a restart
         self._params_refresh = QTimer(self)
         self._params_refresh.setSingleShot(True)
         self._params_refresh.setInterval(300)
@@ -786,9 +790,8 @@ class FujinWidget(QWidget):
             tab.deleteLater()
         self.part_tabs = []
         effect = self.current_effect
-        schema = effect_schema(effect) if effect is not None else None
-        self.parts_note.setText("" if schema is not None or recorder_has_ports() else PORTS_MISSING)
-        self.parts_note.setVisible(bool(self.parts_note.text()))
+        schema = self._parts_schema = effect_schema(effect) if effect is not None else None
+        self._show_parts_note()
         if schema is None:
             return
         values = self.effect_params.get(effect, {})
@@ -799,6 +802,23 @@ class FujinWidget(QWidget):
             self.part_tabs.append(tab)
             self.choreography.addTab(tab, part["title"])
             self.choreography.setTabToolTip(self.choreography.count() - 1, part["doc"])
+
+    def _recorder_built(self):
+        """The recorder's build started or ended (the updater brought FFNx's effect sources): the
+        part tabs of the new recorder, kept as they are when its parameter table did not change."""
+        if recorder_build().building:
+            self._show_parts_note()
+        elif self.current_effect is not None and effect_schema(self.current_effect) != self._parts_schema:
+            self._build_part_tabs()
+        else:
+            self._show_parts_note()
+
+    def _show_parts_note(self):
+        """Why there are no part tabs: the recorder is being built, or lacks FFNx's effect sources."""
+        building = recorder_build().building
+        self.parts_note.setText("" if self._parts_schema is not None and not building else
+                                PORTS_BUILDING if building else "" if recorder_has_ports() else PORTS_MISSING)
+        self.parts_note.setVisible(bool(self.parts_note.text()))
 
     def _param_changed(self, key, value):
         effect = self.current_effect

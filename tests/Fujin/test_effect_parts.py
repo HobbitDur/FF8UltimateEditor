@@ -203,3 +203,29 @@ def test_choreography_says_how_to_get_the_part_tabs(qapp, monkeypatch):
     monkeypatch.setattr(fujinwidget, "recorder_has_ports", lambda: True)    # built with them: no part for it
     fujin.select_effect(2)
     assert fujin.parts_note.isHidden()
+
+
+def test_part_tabs_come_when_the_recorder_build_ends(qapp, monkeypatch):
+    """The updater brought FFNx's effect sources and the recorder is built again: Fujin shows the
+    part tabs without a restart (and says it is building meanwhile)."""
+    from Fujin import fujinwidget, recorderbuild
+    build = recorderbuild.RecorderBuild()
+    monkeypatch.setattr(recorderbuild, "_build", build)
+    monkeypatch.setattr(fujinwidget, "effect_schema", lambda _effect: None)
+    monkeypatch.setattr(fujinwidget, "recorder_has_ports", lambda: False)
+    fujin = fujinwidget.FujinWidget()
+    fujin.select_effect(1)
+    assert fujin.part_tabs == [] and "FFNx button" in fujin.parts_note.text()
+    build.building = True
+    build.changed.emit()
+    assert "being built" in fujin.parts_note.text()
+    schema = {"parts": [{"id": 1, "key": "ring", "title": "Ring", "doc": ""}],
+              "fields": [{"part": "ring", "key": "ring.substeps", "label": "Sub-steps", "doc": "", "default": 4,
+                          "min": 1, "max": 16}]}
+    monkeypatch.setattr(fujinwidget, "effect_schema", lambda _effect: schema)
+    monkeypatch.setattr(fujinwidget, "recorder_has_ports", lambda: True)
+    build._end(0, "")
+    assert [tab.part["key"] for tab in fujin.part_tabs] == ["ring"] and fujin.parts_note.isHidden()
+    tabs = list(fujin.part_tabs)
+    build.changed.emit()                                         # the same table: the tabs stay as they are
+    assert fujin.part_tabs == tabs

@@ -29,6 +29,7 @@ PORTS_MISSING = ("Part tabs (an effect part by part, with its parameters - Cure 
                  "sources: tick the FFNx button in the header's External program bar, then Update (it downloads "
                  "them and builds Fujin's effect recorder with them; Visual Studio's C++ tools are needed when "
                  "running from source).")
+PORTS_BUILDING = "Fujin's effect recorder is being built: the part tabs come when it is ready."
 
 
 def recorder_has_ports():
