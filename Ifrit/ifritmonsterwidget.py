@@ -30,7 +30,8 @@ from Ifrit.fpsbatchdialog import (FpsBatchDialog, FpsBatchReportDialog,
 from Ifrit.sectionexportdialog import SectionExportDialog
 from Ifrit.IfritDynamicTexture.ifritdynamictexturewidget import IfritDynamicTextureWidget
 from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
-from Ifrit.IfritAnimSet.ifritanimsetwidget import AnimSetSource, IfritAnimSetWidget, TAB_LABEL as ANIM_SET_TAB_LABEL
+from Ifrit.IfritAnimSet.ifritanimsetwidget import (AnimSetSource, IfritAnimSetWidget, NO_SOURCE_TOOLTIP,
+                                                   TAB_LABEL as ANIM_SET_TAB_LABEL, model_set_infos)
 from Ifrit.IfritCameraSeq.ifritcameraseqwidget import IfritCameraSeqWidget, _CAMERA_SECTION_BY_ENTITY
 from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
 from Ifrit.IfritDynamicTexture.texturepreviewwidget import TexturePreviewWidget
@@ -243,8 +244,9 @@ def _shown_tabs(manager):
         '_stat_container': stat_ai,
         '_ai_container': stat_ai,
         '_texture_widget': _section_of(et, 'texture') is not None,
-        # The exe's anim sets of a character body: shown once the exe or an .animset file is open
-        # (IfritFilePane._apply_visibility), not counted here.
+        # The exe's anim sets of a character body or weapon: shown when the file has sets, greyed
+        # until the exe or an .animset file is open (IfritFilePane._apply_anim_set_tab), not
+        # counted here.
         '_anim_set_widget': False,
     }
 
@@ -354,9 +356,10 @@ class IfritFilePane(QWidget):
         self._stat_widget = IfritStatWidget(ifrit_manager, icon_path=icon_path)
         self._battle_text_widget = IfritBattleTextWidget(ifrit_manager)
         self._dynamic_texture_widget = IfritDynamicTextureWidget(ifrit_manager)
-        # The exe's battle anim sets (limit breaks, Blue Magic...) on this character's skeleton. Its
-        # edits are the sets' (saved by its own buttons), not the .dat's: only a skeleton edit made
-        # through its 3D view changes the file.
+        # The exe's battle anim sets (limit breaks, Blue Magic...) on this character's skeleton: the
+        # body animations + sequences on a body file, the weapon animations on a weapon file (the same
+        # set documents, held by the shared AnimSetSource). Its edits are the sets' (saved by its own
+        # buttons), not the .dat's: only a skeleton edit made through its 3D view changes the file.
         self._anim_set_widget = IfritAnimSetWidget(
             ifrit_manager, anim_set_source if anim_set_source is not None else AnimSetSource(FileRegistry()),
             weapon_provider=weapon_provider, icon_path=icon_path, file_registry=file_registry)
@@ -426,11 +429,12 @@ class IfritFilePane(QWidget):
         # Load EVERY tab now, not just the visible one, so moving between this monster's tabs is
         # instant afterwards ("load when opening, clean while using"); the tab shown first is
         # loaded first. Hidden tabs (sections this entity type doesn't have) load nothing (gated
-        # in _load_tab), and are not counted in the Opening dialog.
+        # in _load_tab), and are not counted in the Opening dialog; neither is a greyed tab (the
+        # anim set tab without its exe), which loads nothing either.
         saved = self.settings.value("ifrit/current_tab", defaultValue=0, type=int)
         order = sorted(range(self._tabs.count()), key=lambda index: index != saved)
         for index in order:
-            if progress is not None and self._tabs.isTabVisible(index):
+            if progress is not None and self._tab_usable(index):
                 progress.step(f"Loading tab {self._tabs.tabText(index)}")
             self._ensure_tab_loaded(self._tabs.widget(index))
         # Tied to the pane: a pane closed before the tick arrives would otherwise run
@@ -485,7 +489,7 @@ class IfritFilePane(QWidget):
                     if tab is not None:
                         self._loaded_tabs.discard(tab)   # only the changed tabs reload
             if (focus_tab_index is not None and 0 <= focus_tab_index < self._tabs.count()
-                    and self._tabs.isTabVisible(focus_tab_index)):
+                    and self._tab_usable(focus_tab_index)):
                 self._tabs.setCurrentIndex(focus_tab_index)   # jump to the tab that changed
             current = self._tabs.currentWidget()
             if current is not None and current not in self._loaded_tabs:
@@ -509,8 +513,12 @@ class IfritFilePane(QWidget):
     def show_saved_tab(self):
         """Select the tab the user last had open (shared preference across panes)."""
         idx = self.settings.value("ifrit/current_tab", defaultValue=0, type=int)
-        if 0 <= idx < self._tabs.count() and self._tabs.isTabVisible(idx):
+        if 0 <= idx < self._tabs.count() and self._tab_usable(idx):
             self._tabs.setCurrentIndex(idx)
+
+    def _tab_usable(self, index) -> bool:
+        """Shown and not greyed: a tab the user can open, and that loads something."""
+        return self._tabs.isTabVisible(index) and self._tabs.isTabEnabled(index)
 
     # ── Tab visibility / labels ───────────────────────────────────────
 
@@ -519,17 +527,27 @@ class IfritFilePane(QWidget):
         never a filename heuristic)."""
         for name, shown in _shown_tabs(self.ifrit_manager).items():
             self._tabs.setTabVisible(self._tabs.indexOf(getattr(self, name)), shown)
-        self._tabs.setTabVisible(self._tabs.indexOf(self._anim_set_widget), self._anim_set_widget.has_sets())
+        self._apply_anim_set_tab()
         self._update_section_tab_labels()
 
-    def refresh_anim_sets(self):
-        """The exe or the .animset files were opened or closed: show or hide the anim set tab, and
-        read its sets again when it is loaded (its unsaved set edits are kept)."""
+    def _apply_anim_set_tab(self) -> bool:
+        """The anim set tab: hidden on a file no set plays on (monsters, reduced weapons...), greyed
+        with a tooltip while neither the exe nor an .animset file is open, usable otherwise. Returns
+        whether it is usable."""
         index = self._tabs.indexOf(self._anim_set_widget)
-        shown = self._anim_set_widget.has_sets()
-        self._tabs.setTabVisible(index, shown)
+        possible = self._anim_set_widget.can_have_sets()
+        usable = possible and self._anim_set_widget.has_sets()
+        self._tabs.setTabVisible(index, possible)
+        self._tabs.setTabEnabled(index, usable)
+        self._tabs.setTabToolTip(index, NO_SOURCE_TOOLTIP if possible and not usable else "")
+        return usable
+
+    def refresh_anim_sets(self):
+        """The exe or the .animset files were opened or closed: enable or grey the anim set tab, and
+        read its sets again when it is loaded (its unsaved set edits are kept)."""
+        usable = self._apply_anim_set_tab()
         self._loaded_tabs.discard(self._anim_set_widget)
-        if shown and self._tabs.currentWidget() is self._anim_set_widget:
+        if usable and self._tabs.currentWidget() is self._anim_set_widget:
             self._ensure_tab_loaded(self._anim_set_widget)
         self._shrink_tabs_to_current(self._tabs)
 
@@ -890,6 +908,8 @@ class IfritMonsterWidget(QWidget):
         # complementary too (an .animset brings every effect_*.animset of its folder).
         self.anim_set_source = AnimSetSource(file_registry)
         self.anim_set_source.changed.connect(self._on_anim_set_source_changed)
+        # an anim set becoming edited or saved changes has_unsaved_changes(): the header re-checks it
+        self.anim_set_source.documents_changed.connect(self.file_bindings_changed.emit)
         self._encounters = []
         # Ifrit is an Alexander-pattern tool with no per-file FileBinding, so the shared-toolbar
         # Reload button reaches it through the reload_files() / can_reload_files() hooks below
@@ -1103,7 +1123,10 @@ class IfritMonsterWidget(QWidget):
         return any(f['pane'] is not None and f['pane'].dirty for f in self._files)
 
     def has_unsaved_changes(self) -> bool:
-        return self.can_save_folder()   # Save is only enabled on a changed .dat
+        # A changed .dat (the header Save writes it), or an edited anim set of the "Exe - Limit anim."
+        # tab (saved by that tab's own buttons, as an .animset file or into the exe): both count for
+        # the window-title * and the close-window prompt.
+        return self.can_save_folder() or self.anim_set_source.has_modified()
 
     # ── Loading ───────────────────────────────────────────────────────
 
@@ -1487,7 +1510,9 @@ class IfritMonsterWidget(QWidget):
         enemy = manager.enemy
         step = progress.step if progress is not None else (lambda _text: None)
         if progress is not None:     # 3 steps of our own, then one per tab this file shows
-            progress.set_steps(3 + sum(_shown_tabs(manager).values()))
+            # (+ the anim set tab when it loads: a character file with sets, the exe or an .animset open)
+            anim_sets = bool(model_set_infos(enemy, f['path'])) and self.anim_set_source.has_data()
+            progress.set_steps(3 + sum(_shown_tabs(manager).values()) + int(anim_sets))
         step("Extracting textures")
         # Real textures now - skipped at open time to keep loading light. Blank placeholder files
         # (0-byte slots) have nothing to extract; they keep their empty texture set.

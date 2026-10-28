@@ -440,14 +440,17 @@ def join_animation_section(animation_list: list) -> bytes:
 
 
 class AnimSetDocument:
-    """A set opened for editing on a model's REAL skeleton (an editor's 3D view and sequence list):
-    `body` / `weapon` are AnimationSections decoded on the body / weapon BoneSection, and
-    `seq_animation_data` the sequences in the MonsterAnalyser shape ({'seq_animation_data':
-    [{'id', 'data'}]}, ids from 1). Animations that do not use the model's skeleton
-    (BODY_BONE_EXCEPTIONS) and a weapon section without a weapon skeleton are kept as they are.
-    to_anim_set() builds the set back (validated)."""
+    """A set opened for editing (an editor's 3D view and sequence list): `body` / `weapon` are
+    AnimationSections and `seq_animation_data` the sequences in the MonsterAnalyser shape
+    ({'seq_animation_data': [{'id', 'data'}]}, ids from 1). Animations that do not use the model's
+    skeleton (BODY_BONE_EXCEPTIONS), and a weapon section whose bone count is not known, are kept
+    as they are. to_anim_set() builds the set back (validated).
 
-    def __init__(self, anim_set: AnimSet, body_bone_section, weapon_bone_section=None):
+    Both pools are always decoded, on the skeleton given or else on a neutral one of the set's
+    bone count (decoding only needs the count): one document serves the character body file and
+    its weapon file alike. bind_skeleton() puts a model's REAL bones under a pool for its 3D view."""
+
+    def __init__(self, anim_set: AnimSet, body_bone_section=None, weapon_bone_section=None):
         from ..monsterdata import AnimationSection
         info = anim_set.info
         self.info = info
@@ -455,17 +458,45 @@ class AnimSetDocument:
         animation_list = split_animation_section(anim_set.body)
         exceptions = BODY_BONE_EXCEPTIONS.get((info.effect_id, info.index), {}) if info else {}
         nb_own = min([first for first in exceptions] + [len(animation_list)])
+        if body_bone_section is None:
+            if info is None:
+                raise AnimSetError("unknown set: its bone counts are not known")
+            body_bone_section = synthetic_bone_section(info.body_bones)
+        self._bones = {'body': body_bone_section.bones, 'weapon': None}
         self.body = AnimationSection()
         self.body.analyze(join_animation_section(animation_list[:nb_own]), body_bone_section)
         self.foreign_body_animations = animation_list[nb_own:]
         self.weapon = None
         self.raw_weapon = anim_set.weapon
+        if anim_set.weapon is not None and weapon_bone_section is None and info is not None and info.weapon_bones:
+            weapon_bone_section = synthetic_bone_section(info.weapon_bones)
         if anim_set.weapon is not None and weapon_bone_section is not None:
             self.weapon = AnimationSection()
             self.weapon.analyze(bytes(anim_set.weapon), weapon_bone_section)
             self.raw_weapon = None
+            self._bones['weapon'] = weapon_bone_section.bones
         self.seq_animation_data = {'seq_animation_data': [
             {'id': index + 1, 'data': bytearray(data)} for index, data in enumerate(anim_set.sequence_list())]}
+
+    def pool(self, name: str):
+        """The 'body' or 'weapon' AnimationSection (None: the set has no weapon animations)."""
+        return self.body if name == 'body' else self.weapon
+
+    def bind_skeleton(self, name: str, bone_section) -> bool:
+        """Show pool `name` on `bone_section` (a model of the same bone count): its frames' render
+        matrices are rebuilt on those bones when they were built on others. False when the pool is
+        missing or the bone count differs (nothing changed)."""
+        section = self.pool(name)
+        if section is None or bone_section is None:
+            return False
+        bones = bone_section.bones
+        if self._bones.get(name) is bones:
+            return True
+        if len(bones) != len(self._bones[name] or ()):
+            return False
+        section.build_bone_matrices(bones)
+        self._bones[name] = bones
+        return True
 
     def to_anim_set(self) -> AnimSet:
         body = join_animation_section([bytes(animation.to_binary()) for animation in self.body.animations]
