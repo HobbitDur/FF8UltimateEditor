@@ -59,6 +59,7 @@
 #include <map>
 #include <algorithm>
 #ifdef FF8_FX_LAB
+#include "fx_port.h"
 #include "fx_params.h"
 #endif
 
@@ -590,6 +591,7 @@ static void build_battle()
 	memset((void *)0x1D97708, 0, 16);
 	auto wc = [](int32_t v, int r) { ((void (__cdecl *)(int32_t, int))0x45D7F0)(v, r); };
 	wc(160 << 16, 24); wc(112 << 16, 25); wc(0x280, 26);
+	*(int16_t *)0x1D8E038 = 0x280;   // the battle camera's projection distance, which effects read (Hypnotize)
 	*(int16_t *)0x1CA92F0 = 0x155; *(int16_t *)0x1CA92F4 = 0x100; // GTE ZSF3 / ZSF4 as the game's GTE init
 }
 
@@ -738,6 +740,7 @@ static void set_camera(int t)
 	memcpy((void *)0xB8B7F0, c.eye, 6);
 	memcpy((void *)0xB8B7F8, c.at, 6);
 	*(int16_t *)0x1D977A2 = c.roll;
+	*(int16_t *)0x1D8E038 = (int16_t)(c.h > 0 ? c.h : 0x280);   // the camera's projection distance (as the camera player)
 	if (!call0(0x5033E0)) printf("tick %d: view matrix build faulted %08lX at eip %08lX\n", t, g_fault_code, g_fault_eip);
 	if (getenv("FXR_VIEW") && t < 2)
 	{
@@ -853,13 +856,25 @@ namespace ff8fx
 {
 	void register_port(uint32_t orig, void *port, const char *, int effect_id) { g_lab_ports.push_back({ orig, port, effect_id }); }
 	void register_mag001_cure();
+	// the shared prim-model player: FFNx's twin (fx_primplayer.cpp) needs FFNx itself; the exe's own
+	// 0x701970 plays the same
+	int prim::play(prim::Layout *l, prim::Callback cb, int arg, int paused)
+	{
+		return ((int (__cdecl *)(prim::Layout *, prim::Callback, int, int))0x701970)(l, cb, arg, paused);
+	}
 }
+// every module with parameters (FX_LAB_MODULE: the ones build.bat compiles in); sources older than
+// FX_LAB_MODULE name Cure only
 static void lab_register()
 {
 	static bool done = false;
 	if (done) return;
 	done = true;
+#ifdef FX_LAB_MODULE
+	for (int i = 0; i < ff8fx::fxp::g_lab_module_count; i++) ff8fx::fxp::g_lab_modules[i]();
+#else
 	ff8fx::register_mag001_cure();
+#endif
 }
 static int32_t field_value(const void *base, const ff8fx::fxp::Field &f)
 {

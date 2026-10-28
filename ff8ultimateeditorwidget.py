@@ -638,7 +638,7 @@ class FF8UltimateEditorWidget(QWidget):
         QMessageBox.information(self, "FFNx effect sources",
                                 "FFNx's battle effects ported to C++ (src/ff8/battle/fx), built into Fujin's effect "
                                 "recorder: Fujin's Choreography shows an effect part by part with its parameters "
-                                f"(Cure for now).\n\n{installed}\n{recorder}")
+                                f"(Cure, Hypnotize).\n\n{installed}\n{recorder}")
 
     def tools_to_update(self):
         tool_list = []

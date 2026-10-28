@@ -244,3 +244,39 @@ def test_part_tabs_come_when_the_recorder_build_ends(qapp, monkeypatch):
     tabs = list(fujin.part_tabs)
     build.changed.emit()                                         # the same table: the tabs stay as they are
     assert fujin.part_tabs == tabs
+
+
+HYPNOTIZE_FILES = ("extracted_files/FF8_EN.exe", "extracted_files/magic/mag132.tim",
+                   "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                   "extracted_files/battle/c0m033.dat")
+
+
+@pytest.mark.ff8data(*HYPNOTIZE_FILES)
+def test_hypnotize_port_and_its_pc_screen_units(tmp_path):
+    """Hypnotize (Gayla on Squall): the port is the original; its main layout never draws on PC (its
+    frame takes the PC's eighths of a pixel for PSX pixels), main.pixels = 1 brings it back."""
+    from FF8GameData.psxgpu.fxdump import parse_recording
+    from Fujin.effectparts import effect_schema
+    from Fujin.recorderbuild import RECORDER
+    schema = effect_schema(133)
+    if schema is None:
+        pytest.skip("the effect recorder is not built with FFNx's effect sources (the updater's FFNxEffects)")
+    assert [part["key"] for part in schema["parts"]] == ["timing", "main", "rings", "targets", "sprites"]
+    assert {field["key"]: field["default"] for field in schema["fields"]}["main.pixels"] == 0
+
+    def hypnotize(tag, *extra):
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(RECORDER), "133", f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m033.dat'}", "caster=3", "target=0", *extra],
+                             cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0, run.stdout[-500:]
+        return out.read_text().splitlines()
+
+    original, native = hypnotize("original"), hypnotize("native", "native=1")
+    assert [re.sub(r"^P \d+ ", "P 0 ", line) for line in native] == original
+    parts = lambda lines: set().union(*(set(tick.parts) for tick in parse_recording(lines, 133).ticks))
+    assert parts(native) == {0, 2, 3, 4}                          # no main layout on PC
+    params = tmp_path / "params.txt"
+    params.write_text("main.pixels 1\n")
+    assert 1 in parts(hypnotize("pixels", "native=1", f"params={params}"))

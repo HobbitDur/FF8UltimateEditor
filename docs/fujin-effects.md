@@ -113,14 +113,16 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   engine model as a labelled, untextured approximation that names the draw handlers it shows as
   markers only), and native decompilation read-only.
   **Part tabs** (one per part of an effect FFNx has a C++ port with parameters for; Cure:
-  Emitter, Ring, Ground glow, Overlay, Sparkles, Motes, Glints): the part's parameters as a form
+  Emitter, Ring, Ground glow, Overlay, Sparkles, Motes, Glints; Hypnotize: Timing, Main layout,
+  Rings, Target layouts, Sprites): the part's parameters as a form
   (bold = not the game's value, **Game values** resets them) beside a small preview of that part
   alone, framed on where it goes. The numbers come out of the port's code into one struct per
   part (FFNx `src/ff8/battle/fx/fx_params.h`: generic blocks every module can reuse - a tick
   window, a count per tick, a random range, a fraction, the effect library's glint style -
-  `CureParams` in `mag001_cure.cpp`, defaults = the game's values) with a field table the
-  recorder writes out (`fxrecorder <effect> schema=<file>`), so the forms are always those of
-  the port it runs. The previews are one more recording: the recorder runs the port instead of
+  `CureParams` in `mag001_cure.cpp`, `HypnotizeParams` in `mag133_hypnotize.cpp`, defaults = the
+  game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
+  so the forms are always those of the port it runs. A module with parameters registers itself
+  for the recorder (`FX_LAB_MODULE`): `build.bat` compiles in every source file naming it. The previews are one more recording: the recorder runs the port instead of
   the exe's code (`native=1`; with the game's values it draws exactly what the original does,
   checked by the tests) with the edited parameters (`params=`), only the effect's target drawn
   (`actors=2`: no party, no cast) and each primitive tagged with the part that drew it
@@ -144,6 +146,13 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   software GTE (`GTE_RTPS` 0x45FAA0) returns screen coordinates in eighths of a pixel
   (`8·x·H/z + 8·OFX`), while the overlay tests them against the PSX window in pixels
   (96..223 × 56..183 around 160, 120) - every polygon falls outside.
+  The same PC unit breaks Hypnotize's main layout (its purple swirl, ticks 0-29): its frame
+  places it at the caster's screen position taken as PSX pixels (`(160 - sx) << 4`,
+  `(120 - sy) << 4` at 12 H / 16 H), so on PC it lands eight times as far out, off screen - it
+  never shows. Its **PSX screen units** parameter (Main layout tab, off by default = the PC as it
+  is) takes the position back to pixels first: the swirl draws over the caster. The recorder sets
+  the battle camera's projection distance (`0x1D8E038`, which the camera player keeps and many
+  effects read) with the GTE's.
 - **Models / animation:** a 3D view of every object of the selected file (meshes, morph
   targets as points, embedded battle models and the standard battle models of indexed
   containers such as `mag186_b.dat`, which play their own animations). Untextured: texture
