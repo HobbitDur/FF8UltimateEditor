@@ -630,8 +630,8 @@ class FujinWidget(QWidget):
         self.choreography.setTabToolTip(0, note)
         self.choreography_note.setText(note)
         self.choreography_note.setVisible(bool(note))
-        if not candidates:
-            self.choreography.setCurrentIndex(1)
+        if not candidates and self.choreography.currentIndex() == 0:
+            self.choreography.setCurrentIndex(1)       # off the greyed script tab, never off another
         functions = self.catalog.functions(self.current_effect)
         previous = self.function_selector.currentData()
         with QSignalBlocker(self.function_selector):
@@ -795,10 +795,12 @@ class FujinWidget(QWidget):
         if schema is None:
             return
         values = self.effect_params.get(effect, {})
+        drawing = frozenset(part["id"] for part in schema["parts"] if part["id"])
         for part in schema["parts"]:
             fields = [field for field in schema["fields"] if field["part"] == part["key"]]
-            tab = PartTab(part, fields, values, self.lab, gl_renderer)
+            tab = PartTab(part, fields, values, self.lab, gl_renderer, drawing)
             tab.value_changed.connect(self._param_changed)
+            tab.preview.reference_toggled.connect(self._part_reference)
             self.part_tabs.append(tab)
             self.choreography.addTab(tab, part["title"])
             self.choreography.setTabToolTip(self.choreography.count() - 1, part["doc"])
@@ -819,6 +821,11 @@ class FujinWidget(QWidget):
         self.parts_note.setText("" if self._parts_schema is not None and not building else
                                 PORTS_BUILDING if building else "" if recorder_has_ports() else PORTS_MISSING)
         self.parts_note.setVisible(bool(self.parts_note.text()))
+
+    def _part_reference(self, on):
+        """A part preview's Target box: the same for every part tab."""
+        for tab in self.part_tabs:
+            tab.preview.set_reference(on)
 
     def _param_changed(self, key, value):
         effect = self.current_effect

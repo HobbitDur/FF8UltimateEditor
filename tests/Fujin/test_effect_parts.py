@@ -108,12 +108,27 @@ def test_cure_part_tabs_edit_preview_and_save(qapp, tmp_path):
     wait(qapp, fujin.lab)
     recording = fujin.lab.recording
     assert recording is not None and not fujin.lab.cast().actors and fujin.lab.cast().native
-    assert set().union(*(set(tick.parts) for tick in recording.ticks)) == {1, 2, 3, 4, 5, 6}   # no actor of its own
+    assert set().union(*(set(tick.parts) for tick in recording.ticks)) == {0, 1, 2, 3, 4, 5, 6}   # 0: its target
     assert ring.preview.picture.pixmap() is not None and not ring.preview.picture.pixmap().isNull()
+    # the Target box: the monster as a reference, the same in every tab
+    ring.preview._show(5)
+    alone = ring.preview.picture.pixmap().toImage()
+    assert ring.preview.reference.isEnabled() and "c0m009.dat" in ring.preview.reference.text()
+    ring.preview.reference.setChecked(True)
+    assert all(tab.preview.reference.isChecked() for tab in fujin.part_tabs)
+    assert ring.preview.shown_parts() == {0, 1} and ring.preview.picture.pixmap().toImage() != alone
+    ring.preview.reference.setChecked(False)
+    # the emitter draws nothing: its tab shows the whole effect, the sound and heal ticks marked
+    emitter = next(tab for tab in fujin.part_tabs if tab.part["key"] == "emitter")
+    assert emitter.preview.part_ids == {1, 2, 3, 4, 5, 6}
+    emitter.preview.slider.setValue(15)
+    assert emitter.preview.frame_label.text().endswith("- Heal")
+    assert fujin.choreography.currentWidget() is ring
     ring.spins["ring.radius.num"].setValue(4)
     assert fujin.effect_params == {1: {"ring.radius.num": 4}} and fujin.can_save_folder()
     QTest.qWait(400)
     wait(qapp, fujin.lab)
+    assert fujin.choreography.currentWidget() is ring              # an edit keeps the tab shown
     assert fujin.lab.recording is not recording and fujin.lab.cast().params == (("ring.radius.num", 4),)
     ring.spins["ring.radius.num"].setValue(2)                    # back to the game's: nothing kept
     assert fujin.effect_params == {1: {}}

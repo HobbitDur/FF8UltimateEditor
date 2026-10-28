@@ -3,10 +3,12 @@ with parameters for - Cure: ring, ground glow, overlay, sparkles, motes, glints)
 
 Each tab edits the part's parameters (FFNx src/ff8/battle/fx/fx_params.h: the numbers the port is
 made of, the game's values by default) and shows that part alone: the effect is recorded once by
-the effect recorder running the port with the edited parameters and no actors (Fujin's lab
-recording), every primitive carrying the part that drew it, and each tab draws only its own,
-framed on where that part goes. The parameter table comes from the recorder itself
-(`fxrecorder <effect> schema=<file>`), so it is always the one of the port it runs.
+the effect recorder running the port with the edited parameters and only its target drawn (Fujin's
+lab recording), every primitive carrying the part that drew it (0: the target itself), and each
+tab draws only its own, framed on where that part goes - with the target as a reference when its
+Target box is ticked. A part that draws nothing (Cure's emitter: when the sound plays, when the HP
+are given) shows the whole effect, its ticks marked. The parameter table comes from the recorder
+itself (`fxrecorder <effect> schema=<file>`), so it is always the one of the port it runs.
 """
 import json
 import os
@@ -15,8 +17,8 @@ import tempfile
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtWidgets import (QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider, QSpinBox,
-                             QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QCheckBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider,
+                             QSpinBox, QVBoxLayout, QWidget)
 
 from Fujin.recorderbuild import FFNX_EFFECTS, RECORDER
 
@@ -88,12 +90,17 @@ def defaults(schema):
     return {field["key"]: field["default"] for field in schema["fields"]}
 
 
-class PartPreview(QWidget):
-    """One part of the lab recording, alone, framed on where it goes, playable."""
+TARGET_PART = 0                     # what no effect part drew: in the lab recording, the target's model
 
-    def __init__(self, runner, part_ids, renderer):
+
+class PartPreview(QWidget):
+    """One part of the lab recording, alone (or with the target as a reference), framed on where it
+    goes, playable; markers: {tick: what happens then} shown under the picture."""
+    reference_toggled = pyqtSignal(bool)
+
+    def __init__(self, runner, part_ids, renderer, markers=lambda: {}):
         super().__init__()
-        self.runner, self.part_ids, self.renderer = runner, part_ids, renderer
+        self.runner, self.part_ids, self.renderer, self.markers = runner, part_ids, renderer, markers
         self._frames, self._view = {}, None
         self.picture = QLabel()
         self.picture.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -105,6 +112,9 @@ class PartPreview(QWidget):
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.valueChanged.connect(self._show)
         self.frame_label = QLabel()
+        self.reference = QCheckBox("Target")
+        self.reference.setToolTip("Draw the effect's target too, as a reference for where the part goes")
+        self.reference.toggled.connect(self._reference_toggled)
         self.timer = QTimer(self)
         self.timer.setInterval(int(1000 / TICKS_PER_SECOND))
         self.timer.timeout.connect(lambda: self.slider.setValue((self.slider.value() + 1) % (self.slider.maximum() + 1)))
@@ -112,6 +122,7 @@ class PartPreview(QWidget):
         controls.addWidget(self.play_button)
         controls.addWidget(self.slider, 1)
         controls.addWidget(self.frame_label)
+        controls.addWidget(self.reference)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.picture, 1)
@@ -119,9 +130,28 @@ class PartPreview(QWidget):
         runner.recording_changed.connect(self.refresh)
         self.refresh()
 
+    def shown_parts(self):
+        return self.part_ids | {TARGET_PART} if self.reference.isChecked() else self.part_ids
+
+    def set_reference(self, on):
+        """The Target box, set from another tab's (one choice for all of them)."""
+        if self.reference.isChecked() != on:
+            self.reference.blockSignals(True)
+            self.reference.setChecked(on)
+            self.reference.blockSignals(False)
+            self.refresh()
+
+    def _reference_toggled(self, on):
+        self.refresh()
+        self.reference_toggled.emit(on)
+
     def refresh(self):
         """A new lab recording (or none): frame the part on it again."""
         self._frames, self._view = {}, None
+        cast = self.runner.cast()
+        body = cast.slots.get(cast.target, (None, None))[0]
+        self.reference.setText(f"Target ({os.path.basename(body)})" if body else "Target")
+        self.reference.setEnabled(bool(body))
         recording = self.runner.recording
         self.slider.blockSignals(True)
         self.slider.setRange(0, max(0, len(recording.ticks) - 1) if recording else 0)
@@ -133,10 +163,11 @@ class PartPreview(QWidget):
             self.picture.setText(self.runner.status.text() or "Recording...")
             self.frame_label.setText("")
             return
-        if not any(set(tick.parts) & self.part_ids for tick in recording.ticks) and self.part_ids:
+        if not any(set(tick.parts) & self.part_ids for tick in recording.ticks):
+            self.picture.setPixmap(QPixmap())
             self.picture.setText("This part draws nothing with these values.")
             return
-        self._view = recording.fit_view(parts=self.part_ids or None)
+        self._view = recording.fit_view(parts=self.shown_parts())
         self._show(self.slider.value())
 
     def _show(self, tick):
@@ -147,23 +178,26 @@ class PartPreview(QWidget):
         if tick not in self._frames:
             scale = PREVIEW_WIDTH / max(1, self._view[2])
             image, _gpu = recording.frame(tick, view=self._view, scale=scale, renderer=self.renderer(),
-                                          parts=self.part_ids or None)
+                                          parts=self.shown_parts())
             height, width = image.shape[:2]
             qimage = QImage(image.tobytes(), width, height, width * 3, QImage.Format.Format_RGB888).copy()
             self._frames[tick] = QPixmap.fromImage(qimage)
         self.picture.setPixmap(self._frames[tick])
-        self.frame_label.setText(f"tick {tick} / {len(recording.ticks) - 1}")
+        marker = self.markers().get(tick)
+        self.frame_label.setText(f"tick {tick} / {len(recording.ticks) - 1}" + (f" - {marker}" if marker else ""))
 
 
 class PartTab(QWidget):
-    """A part's parameters (a form) beside its preview."""
+    """A part's parameters (a form) beside its preview. A part that draws nothing (id 0) previews
+    the whole effect (effect_parts: every drawing part's id), its tick parameters marked on it."""
     value_changed = pyqtSignal(str, int)      # key, new value
 
-    def __init__(self, part, fields, values, runner, renderer):
+    def __init__(self, part, fields, values, runner, renderer, effect_parts=frozenset()):
         super().__init__()
         self.part, self.fields = part, fields
         self.spins, self.labels = {}, {}
-        doc = QLabel(part["doc"])
+        doc = QLabel(part["doc"] + ("" if part["id"] else
+                                    ". It draws nothing: the preview shows the whole effect, its ticks marked."))
         doc.setWordWrap(True)
         form = QFormLayout()
         for field in fields:
@@ -190,11 +224,22 @@ class PartTab(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setWidget(form_widget)
         scroll.setMinimumWidth(280)
-        part_ids = {part["id"]} if part["id"] else set()      # 0: the whole effect
-        self.preview = PartPreview(runner, part_ids, renderer)
+        part_ids = {part["id"]} if part["id"] else set(effect_parts)      # 0: draws nothing, the whole effect
+        self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers)
         layout = QHBoxLayout(self)
         layout.addWidget(scroll)
         layout.addWidget(self.preview, 1)
+
+    def markers(self):
+        """{tick: what happens}: a part drawing nothing has its tick parameters marked on the preview."""
+        if self.part["id"]:
+            return {}
+        marks = {}
+        for field in self.fields:
+            if field["key"].endswith("_tick"):
+                tick = self.spins[field["key"]].value()
+                marks[tick] = ", ".join(filter(None, (marks.get(tick), field["label"].replace(" tick", ""))))
+        return marks
 
     def _default(self, key):
         return next(field["default"] for field in self.fields if field["key"] == key)
@@ -206,6 +251,7 @@ class PartTab(QWidget):
 
     def _changed(self, key, value):
         self._mark(key)
+        self.preview._show(self.preview.slider.value())      # its tick markers
         self.value_changed.emit(key, value)
 
     def reset(self):

@@ -92,7 +92,7 @@ class BattleCast:
     actors: bool = True                                # False: the actors are loaded, not drawn (the effect alone)
     native: bool = False                               # the effect's C++ port (FFNx) instead of the exe's code
     params: tuple = ()                                 # ((key, value), ..) its parameters not at the game's value
-    lab: bool = False                                  # parts kept whole (keepparts=1): Choreography's part tabs
+    lab: bool = False                                  # only the target drawn (actors=2): Choreography's part tabs
 
     def key(self):
         """The cache tag of this cast: its files (where they are and their state on disk), roles,
@@ -186,7 +186,7 @@ class NativePreviewView(QWidget):
     battle_cast() gives the battle), or None for the battle folder's test dummy;
     params(effect_id) -> {key: value} of the effect's edited parameters (FFNx fx_params.h): when
     there are some, the recorder runs the effect's C++ port with them (native=1);
-    lab: always the C++ port and never the actors - the effect alone, its parts tagged (Fujin's
+    lab: always the C++ port, of the actors only its target (the part tabs' reference) - its parts tagged (Fujin's
     Choreography part tabs show it part by part)."""
 
     def __init__(self, file_registry, exe_path=None, effect_files=None, camera_track=None, file_edits=None,
@@ -492,12 +492,12 @@ class NativePreviewView(QWidget):
             args.append(f"yaw{slot}={int(round(cast.yaws.get(slot, 0.0) / (2 * math.pi) * 4096)) & 4095}")
         if not cast.slots:
             args.append("model=-1")
-        if not cast.actors:
+        if cast.lab:
+            args.append("actors=2")          # only the target drawn (untagged: part 0), no cast
+        elif not cast.actors:
             args.append("actors=0")          # the effect alone: no cast either
         if cast.native:
             args.append("native=1")          # the effect's C++ port (FFNx), with its parameters
-            if cast.lab:
-                args.append("keepparts=1")   # a part redrawing its target (Cure's overlay) stays
             if cast.params:
                 path = os.path.join(scratch.name, "params.txt")
                 with open(path, "w", encoding="ascii") as file:

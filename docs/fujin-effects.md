@@ -122,9 +122,12 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   recorder writes out (`fxrecorder <effect> schema=<file>`), so the forms are always those of
   the port it runs. The previews are one more recording: the recorder runs the port instead of
   the exe's code (`native=1`; with the game's values it draws exactly what the original does,
-  checked by the tests) with the edited parameters (`params=`), no actors, and each primitive
-  tagged with the part that drew it (`FX_PART`, nothing in the game's build); a part redrawing
-  an actor (Cure's overlay: its target) keeps that (`keepparts=1`). An edit records again; the
+  checked by the tests) with the edited parameters (`params=`), only the effect's target drawn
+  (`actors=2`: no party, no cast) and each primitive tagged with the part that drew it
+  (`FX_PART`, nothing in the game's build; untagged = part 0 = the target). Each preview's
+  **Target** box adds the target (its file named on the box) as a reference, in every tab at
+  once. A part that draws nothing (Cure's Emitter: when the sound plays, when the HP are given)
+  shows the whole effect with its ticks marked under the picture. An edit records again; the
   Overview's preview runs the port with the edited parameters too. Save writes them as
   `effect_NNN.fxparams` (JSON, only the values not at the game's) into the export folder, with
   the patch; Import complementary reads them back. The ports come from FFNx's effect sources:
@@ -134,8 +137,13 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   source - for now the `VanillaDecompiledForFutur30FPS` branch of HobbitDur/FFNx for both
   channels - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
   built again with them); the release's CI does the same before building the recorder.
-  Open: Cure's projected light (the overlay's second pass, its texture projected from the ring
-  onto the target) never lands in the recorder, with the original code as well.
+  Cure's Overlay hides the target while the ring climbs and redraws it itself, twice per
+  polygon: flat with its own texture (what the preview shows - the target as it is), and, where
+  it faces the ring and falls in the projected window, gouraud with Cure's light texture
+  projected from the ring. That second pass never draws on PC, in the game as well: the PC's
+  software GTE (`GTE_RTPS` 0x45FAA0) returns screen coordinates in eighths of a pixel
+  (`8·x·H/z + 8·OFX`), while the overlay tests them against the PSX window in pixels
+  (96..223 × 56..183 around 160, 120) - every polygon falls outside.
 - **Models / animation:** a 3D view of every object of the selected file (meshes, morph
   targets as points, embedded battle models and the standard battle models of indexed
   containers such as `mag186_b.dat`, which play their own animations). Untextured: texture

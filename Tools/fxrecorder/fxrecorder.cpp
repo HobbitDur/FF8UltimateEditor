@@ -43,7 +43,8 @@
 // effect's parameter table as JSON and stop - no exe needed]. Each primitive a port draws carries
 // the part it belongs to (FX_PART): the P lines' first number. [keepparts=1: with actors=0, what a
 // part draws stays even in an actor's texture (Cure's overlay redraws its target): only the actors'
-// own drawing goes]
+// own drawing goes] [actors=2: only the effect's targets are drawn (the effect against one monster, no
+// party, no cast)]
 // [targets=N] [caster=slot] [seed=N] [camera=<file>: per tick "t ex ey ez ax ay az roll H" - the
 // view the camera player would show, set before the tick; without it a fixed default view]
 //
@@ -303,7 +304,8 @@ static void write_packet(uint32_t fn, uint32_t bucket, uint32_t pkt, int part = 
 	fprintf(g_out, "\n");
 }
 static void walk_render_list(std::vector<Ins> &out); // the PC draw order (below, after the battle memory)
-static int g_actors = 1;          // actors=0: do not draw the battle's models
+static int g_actors = 1;          // actors=0: do not draw the battle's models; 2: only the targets
+static uint16_t g_target_mask;    // the effect's target slots (bit per slot)
 static int g_keep_parts = 0;      // keepparts=1 (with actors=0): what an effect part draws stays, even an actor's redraw
 // a textured polygon / sprite whose CLUT (the word after its first vertex: cmd, xy, uv + clut) lies in
 // the actors' VRAM: part of an actor's model
@@ -478,7 +480,7 @@ static void render_actors()
 	if (!g_actors) return;
 	for (int k = 0; k < 7; k++)
 	{
-		if (!g_drawn_slot[k]) continue;
+		if (!g_drawn_slot[k] || (g_actors == 2 && !(g_target_mask & (1 << k)))) continue;
 		uint32_t e = 0x1D972C0 + 0x9C * k;
 		uint8_t flags = *(uint8_t *)e;
 		uint16_t combat = *(uint16_t *)(e + 2);
@@ -536,6 +538,7 @@ static void build_battle()
 		tg[0x18 * k] = (uint8_t)slot;
 		mask |= (uint16_t)(1 << slot);
 	}
+	g_target_mask = mask;
 	act[0x11] = 0;
 	uint8_t *cast = (uint8_t *)0x1D99A78;     // g_MagicCastContext
 	memset(cast, 0, 12);
@@ -945,7 +948,7 @@ int main(int argc, char **argv)
 	}
 	if (!parsed)
 	{
-		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [modelfile=<file>] [slotK=<file>] [weaponK=<file>] [target=K,..] [idleK=N] [castplan=a:n,..] [castafter=a:n,..] [castcam=ex,ey,ez,ax,ay,az] [actors=0|1] [native=1] [keepparts=1] [params=<file>] [schema=<file>] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
+		printf("usage: fxrecorder <effect id> exe=FF8_EN.exe magic=<dir> battle=<dir> out=<file> [overrides=<dir>] [model=N] [modelfile=<file>] [slotK=<file>] [weaponK=<file>] [target=K,..] [idleK=N] [castplan=a:n,..] [castafter=a:n,..] [castcam=ex,ey,ez,ax,ay,az] [actors=0|1|2] [native=1] [keepparts=1] [params=<file>] [schema=<file>] [ticks=N] [targets=N] [caster=N] [seed=N] [camera=<file>]\n");
 		return 1;
 	}
 	if (strcmp(argv[argc - 1], "child") != 0)
