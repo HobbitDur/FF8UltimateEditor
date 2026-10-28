@@ -134,7 +134,7 @@ def test_pane_has_an_entrance_tab(qapp, name, label):
     widget = pane._entrance_widget
     assert widget.ifrit_manager.enemy.animation_data is manager.enemy.entrance_animation_data
     assert widget.get_max_frames() == manager.enemy.entrance_animation_data.animations[0].get_nb_frame()
-    assert not any(action.isVisible() for action in widget._animation_list_actions)
+    assert all(action.isVisible() for action in widget._animation_list_actions)   # every 3D option
     # Editing it is an edit of the 3D sections and of the entrance section.
     section = manager.entrance_section_index()
     assert set(pane._sections_for_tab(widget)) == {1, 2, 3, section}
@@ -151,10 +151,9 @@ def test_monster_pane_hides_the_entrance_tab(qapp):
 
 
 def test_entrance_tab_plays_the_weapon_entrance_in_lockstep(qapp):
-    from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
+    from Ifrit.Ifrit3D.entrance3dwidget import Entrance3DWidget
     body, weapon = _manager("d0c000"), _manager("d0w000")
-    widget = Ifrit3DWidget(body.entrance_view(), show_controls=True)
-    widget.set_single_animation_block()
+    widget = Entrance3DWidget(body.entrance_view(), show_controls=True)
     widget.load_file()
     widget.set_weapon_options([("None", None), ("d0w000", weapon.entrance_view())], default_index=1)
     shown = widget._weapon_manager
@@ -192,3 +191,27 @@ def test_3d_and_entrance_tabs_share_their_view_toggles(qapp):
                 settings.remove(key)
             else:
                 settings.setValue(key, value)
+
+
+def test_entrance_view_plays_its_animations_once_and_never_splits(qapp):
+    from FF8GameData.dat.animloopdetector import ANIM_ONE_SHOT
+    from Ifrit.Ifrit3D.entrance3dwidget import Entrance3DWidget
+    body = _manager("d0c000")
+    widget = Entrance3DWidget(body.entrance_view(), show_controls=True)
+    widget.load_file()
+    nb_animations = len(body.enemy.entrance_animation_data.animations)
+    # Section 3's sequences say nothing of this block: it is played once, out of Slow's reach.
+    assert widget._get_animation_kind_dict() == {anim_id: ANIM_ONE_SHOT for anim_id in range(nb_animations)}
+    assert widget._get_max_animation_frames(0) == getattr(body, 'max_animation_frames', 255)
+    report, reason = widget._split_animation_to_fit(0, 2, False, 255)
+    assert report is None and reason
+    widget.deleteLater()
+
+
+def test_entrance_whole_file_30fps_goes_through_the_3d_tab(qapp):
+    from PyQt6.QtCore import QSettings
+    from Ifrit.ifritmonsterwidget import IfritFilePane
+    manager = _manager("d0c000")
+    pane = IfritFilePane(manager, _path("d0c000"), QSettings("FF8UltimateEditorTest", "entrance"))
+    assert pane._entrance_widget.real30_handler == pane._3d_widget._convert_loaded_file_to_real30
+    pane.deleteLater()

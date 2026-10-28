@@ -371,7 +371,7 @@ class Ifrit3DWidget(QWidget):
                                    "(asked on click). Save afterwards to write the new frames.")
             act_fps_all.triggered.connect(self.convert_all_anims_to_60fps)
             self._anim_tools_menu.addAction(act_fps_all)
-            # Hidden for a block that holds one fixed animation (set_single_animation_block)
+            # The actions editing the animation list (every view offers them, entrance and anim sets too)
             self._animation_list_actions = [act_new_from_range, act_dup_anim, act_del_anim,
                                             act_fps, act_fps_all]
             self._anim_tools_menu.setToolTipsVisible(True)   # show the per-action tooltips above
@@ -1353,14 +1353,6 @@ class Ifrit3DWidget(QWidget):
                 pos_z = anim.frames[0].position[2].get_pos_world()
 
         self.gl_widget.set_reference_position(pos_x, pos_y, pos_z)
-
-    def set_single_animation_block(self):
-        """Edit a block holding exactly one animation the game plays by its own (the battle
-        entrance, character section 7 / weapon 8 / Edea 10): frames and poses stay editable, but
-        the actions adding or removing animations, and the fps conversions (they also rewrite the
-        file's sequences, which belong to section 3), are hidden."""
-        for action in getattr(self, '_animation_list_actions', []):
-            action.setVisible(False)
 
     def set_animation(self, anim_id: int):
         """Switch to a different animation while preserving playback state."""

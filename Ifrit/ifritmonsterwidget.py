@@ -38,6 +38,7 @@ from Ifrit.IfritDynamicTexture.texturepreviewwidget import TexturePreviewWidget
 from SmallWidget.listsearchbar import ListSearchBar
 from FF8GameData.monsterdata import EntityType
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
+from Ifrit.Ifrit3D.entrance3dwidget import Entrance3DWidget
 from Ifrit.IfritTexture.ifrittexturewidget import IfritTextureWidget
 from Ifrit.IfritTexture.editabletexturewidget import EditableTextureWidget
 from Ifrit.IfritXlsx.ifritxlsxwidget import IfritXlsxWidget
@@ -347,9 +348,10 @@ class IfritFilePane(QWidget):
                                                EntityType.CHARACTER_NO_WEAPON):
             self._3d_widget.enable_battle_view(file_registry)
         # The battle-entrance block (character section 7, weapon 8, Edea 10): the same 3D editor
-        # on the same file, through a manager view whose animation list is that block.
-        self._entrance_widget = Ifrit3DWidget(ifrit_manager.entrance_view(), show_controls=True)
-        self._entrance_widget.set_single_animation_block()
+        # on the same file, through a manager view whose animation list is that block. Its 30 fps
+        # conversion of the whole file is the 3D tab's (the file's sequences are section 3's).
+        self._entrance_widget = Entrance3DWidget(ifrit_manager.entrance_view(), show_controls=True)
+        self._entrance_widget.real30_handler = self._3d_widget._convert_loaded_file_to_real30
         self._3d_widget.share_view_toggles(self._entrance_widget)   # one Skeleton/Texture... switch
         self._texture_widget = IfritTextureWidget(ifrit_manager)
         self._xlsx_widget = IfritXlsxWidget(ifrit_manager)
