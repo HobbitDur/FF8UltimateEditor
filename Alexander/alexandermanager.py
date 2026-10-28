@@ -156,6 +156,47 @@ class AlexanderManager(CameraScriptTools):
                     f"{os.path.basename(hext_path)} now gives the exe that offset (it can be removed).")
         return data, note
 
+    def _ensure_camera_track(self, path):
+        """The camera track of an opened stage, read from disk if it was never shown."""
+        if path not in self.camera_tracks:
+            stage_id = _stage_id_from_name(os.path.basename(path))
+            if stage_id not in STAGE_CAMERA_OFFSET:
+                return None
+            try:
+                self.camera_tracks[path] = stage_camera_track(pathlib.Path(path).read_bytes(), stage_id, self.vm)
+            except ValueError:
+                self.camera_tracks[path] = None
+        return self.camera_tracks[path]
+
+    def convert_cameras_to_real30(self, paths=None, factor: int = 2) -> list:
+        """Convert the camera of every opened stage (or of `paths`) for FFNx True30FPS, in memory:
+        keyframe durations x factor, script waits (FF8GameData/dat/camera30.py). Each stage is all
+        or nothing; Save writes them. Returns [(path, CameraConversionReport or None, message)]."""
+        from FF8GameData.dat import camera30
+        result = []
+        for path in (paths if paths is not None else list(self._folder_files.values())):
+            track = self._ensure_camera_track(path)
+            if track is None:
+                result.append((path, None, "not a known battle stage camera: left as it is"))
+                continue
+            message = ("looks already converted (every keyframe duration is even): converted again"
+                       if camera30.track_looks_converted(track, factor) else "")
+            report = camera30.CameraConversionReport()
+            try:
+                camera30.convert_track(self.vm, track, factor, report)
+            except ValueError as error:
+                result.append((path, None, f"not converted: {error}"))
+                continue
+            result.append((path, report, message))
+        return result
+
+    def write_stage_copy(self, source_path, output_path):
+        """Write the stage `source_path` with its (edited) camera to `output_path` (+ its .hext
+        when the geometry moved), leaving the source as it is. Returns a note."""
+        stage_id = _stage_id_from_name(os.path.basename(source_path))
+        _data, note = self._write_stage(output_path, pathlib.Path(source_path).read_bytes(), stage_id, source_path)
+        return note
+
     def save_camera(self, path):
         """Save the camera edits of an opened stage that is not the shown one (read from disk)."""
         stage_id = _stage_id_from_name(os.path.basename(path))

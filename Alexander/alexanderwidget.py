@@ -253,7 +253,17 @@ class AlexanderWidget(QWidget):
         editor_side = QWidget()
         editor_layout = QVBoxLayout(editor_side)
         editor_layout.setContentsMargins(4, 4, 4, 4)
-        editor_layout.addWidget(self.camera_info)
+        self.convert_30fps_button = QPushButton("Cameras to 30 fps…")
+        self.convert_30fps_button.setToolTip(
+            "Convert the camera of every opened stage for FFNx True30FPS, which plays every battle "
+            "camera at 30 Hz and expects every file converted (nothing marks a converted file): every "
+            "keyframe duration doubles, a one-frame script wait is repeated. Vanilla cameras keep their "
+            "size. Save writes the converted stages. Convert a vanilla stage once.")
+        self.convert_30fps_button.clicked.connect(self.convert_cameras_to_30fps)
+        info_row = QHBoxLayout()
+        info_row.addWidget(self.camera_info, 1)
+        info_row.addWidget(self.convert_30fps_button, 0, Qt.AlignmentFlag.AlignTop)
+        editor_layout.addLayout(info_row)
         editor_layout.addWidget(self.camera_editor, 1)
 
         self.encounter_combo = QComboBox()
@@ -351,6 +361,30 @@ class AlexanderWidget(QWidget):
         from JumboCactuar.jumbocactuarmanager import JumboCactuarManager
         self.scene = JumboCactuarManager()
         self._fill_encounters()
+
+    def convert_cameras_to_30fps(self, confirm=True) -> list:
+        """Convert the cameras of every opened stage in memory (AlexanderManager.convert_cameras_to_real30)."""
+        title = "Cameras to 30 fps (FFNx)"
+        if not self.manager._folder_files:
+            if confirm:
+                QMessageBox.information(self, title, "Open battle stages first.")
+            return []
+        if confirm and QMessageBox.question(
+                self, title, f"Convert the camera of the {len(self.manager._folder_files)} opened stage(s) for "
+                "FFNx True30FPS? Every keyframe duration doubles. Convert vanilla stages only once: "
+                "converting twice doubles again.") != QMessageBox.StandardButton.Yes:
+            return []
+        result = self.manager.convert_cameras_to_real30()
+        self._show_camera()
+        self._refresh_stage_marks()
+        self.file_bindings_changed.emit()
+        if confirm:
+            lines = [f"{os.path.basename(path)}: " + (report.summary() if report is not None else "")
+                     + (f" ({message})" if report is not None and message else message if report is None else "")
+                     for path, report, message in result]
+            lines.append("Save writes every converted stage.")
+            QMessageBox.information(self, title, chr(10).join(lines))
+        return result
 
     def _on_camera_edited(self):
         self._update_camera_info()
