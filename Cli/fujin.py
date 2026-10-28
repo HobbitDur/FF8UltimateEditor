@@ -183,6 +183,74 @@ def _cmd_native(args):
     return 0
 
 
+def _cmd_camera_30fps(args):
+    """Effect camera tracks (exe / .bcam) and MAG cameras converted for FFNx True30FPS."""
+    from FF8GameData.dat import camera30
+    from FF8GameData.dat.sequencevm import camera_sequence_vm
+    from FF8GameData.gamedata import GameData
+    from Fujin.cameraeffectmanager import CameraEffectManager
+    factor = args.fps // 15
+    if not (args.exe or args.bcam or args.mag):
+        raise ValueError("Give --exe, --bcam and/or --mag")
+    if (args.exe or args.bcam) and not (args.bcam_dir or args.hext):
+        raise ValueError("The converted effect tracks need --bcam-dir and/or --hext")
+    if args.hext and not args.exe:
+        raise ValueError("--hext needs --exe (a .hext patches the exe's own tracks)")
+    failed = 0
+    if args.exe or args.bcam:
+        game_data = GameData("FF8GameData")
+        manager = CameraEffectManager(game_data)
+        if args.exe:
+            manager.load_exe(args.exe)
+        if args.bcam:
+            _loaded, refused = manager.load_bcam_files(args.bcam)
+            for path, reason in refused:
+                print(f"[error] {path}: {reason}")
+                failed += 1
+        result = manager.convert_tracks_to_real30(factor=factor)
+        for effect_id, report, message in result:
+            if report is None:
+                print(f"[error] effect {effect_id}: {message}")
+                failed += 1
+            elif message:
+                print(f"[warning] effect {effect_id}: {message}")
+        converted = [effect_id for effect_id, report, _message in result if report is not None]
+        print(f"[ok] {len(converted)} effect camera track(s) converted")
+        # everything is built and checked before anything is written
+        files = manager.all_cam_files() if args.bcam_dir else []
+        hext = manager.hext_text() if args.hext else None
+        if args.bcam_dir:
+            os.makedirs(args.bcam_dir, exist_ok=True)
+            for name, data in files:
+                Path(args.bcam_dir, name).write_bytes(data)
+            print(f"[ok] {len(files)} .bcam file(s) -> {args.bcam_dir}")
+        if hext is not None:
+            Path(args.hext).write_text(hext, encoding="utf-8")
+            print(f"[ok] .hext ({manager.language_name} exe) -> {args.hext}")
+    if args.mag:
+        game_data = GameData("FF8GameData")
+        game_data.load_camera_sequence_data()
+        vm = camera_sequence_vm(game_data)
+        for path in args.mag:
+            data = Path(path).read_bytes()
+            if camera30.mag_camera_offset(data) is None:
+                print(f"[skip] {os.path.basename(path)}: no camera track")
+                continue
+            report = camera30.CameraConversionReport()
+            try:
+                new = camera30.convert_mag_camera(vm, data, factor, report)
+            except ValueError as error:
+                print(f"[error] {os.path.basename(path)}: {error}")
+                failed += 1
+                continue
+            output = os.path.join(args.mag_output_dir, os.path.basename(path)) if args.mag_output_dir else path
+            if args.mag_output_dir:
+                os.makedirs(args.mag_output_dir, exist_ok=True)
+            Path(output).write_bytes(new)
+            print(f"[ok] {os.path.basename(path)}: {report.summary()} -> {output}")
+    return 1 if failed else 0
+
+
 class FujinCliTool(BaseCliTool):
     """Effect source catalog, native resources, MAG sections and cinematic scripts."""
 
@@ -249,6 +317,19 @@ class FujinCliTool(BaseCliTool):
         p_patch.add_argument("--words", help="Comma list of operand words; default: unchanged")
         p_patch.add_argument("--output", "-o", help="Destination (default: overwrite the input)")
         p_patch.set_defaults(func=_cmd_patch)
+
+        p_30 = sub.add_parser("camera-30fps",
+                              help="Convert battle effect cameras for FFNx True30FPS: the exe's 221 tracks and "
+                                   ".bcam files (written as .bcam and/or .hext), MAG cameras (in place or to a folder)")
+        p_30.add_argument("--exe", help="2013 Steam FF8 executable (its effect camera tracks; never overwritten)")
+        p_30.add_argument("--bcam", nargs="+", help="effect_NNN.bcam files to convert too (they override the exe's)")
+        p_30.add_argument("--bcam-dir", help="Write every converted effect track there as effect_NNN.bcam")
+        p_30.add_argument("--hext", help="Write the exe tracks that kept their size as a .hext (needs --exe)")
+        p_30.add_argument("--mag", nargs="+", help="MAGxxx_B.00 files whose camera track is converted")
+        p_30.add_argument("--mag-output-dir", help="Write the converted MAG files there (omitted: in place)")
+        p_30.add_argument("--fps", type=int, choices=(30, 60), default=30,
+                          help="Target camera rate: 30 (durations x2, default) or 60 (x4)")
+        p_30.set_defaults(func=_cmd_camera_30fps)
         return parser
 
     def execute(self, args: argparse.Namespace) -> int:

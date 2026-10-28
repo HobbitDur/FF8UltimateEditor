@@ -132,8 +132,26 @@ class CameraEffectEditorWidget(QWidget):
         splitter.setStretchFactor(1, 1)
         splitter.setStretchFactor(2, 1)
 
+        # FFNx True30FPS plays every battle camera at 30 Hz and expects every file converted
+        self.convert_30fps_button = QPushButton("All to 30 fps…")
+        self.convert_30fps_button.setToolTip(
+            "Convert every camera track (the exe's, the created ones, the .bcam read back) for FFNx\n"
+            "True30FPS, which plays every battle camera at 30 Hz with no marker: every keyframe\n"
+            "duration doubles, a one-frame script wait is repeated. Vanilla tracks keep their size:\n"
+            "Save writes them in the .hext, Export all .bcam… as FFNx files. Convert once.")
+        self.convert_30fps_button.clicked.connect(lambda: self.convert_all_to_30fps())
+        self.export_all_button = QPushButton("Export all .bcam…")
+        self.export_all_button.setToolTip(
+            f"Write every changed camera track as effect_NNN.bcam into a folder (FFNx reads them from the\n"
+            f"game folder's {CAM_FFNX_FOLDER}/, any exe language).")
+        self.export_all_button.clicked.connect(lambda: self.export_all_cam())
+        status_row = QHBoxLayout()
+        status_row.addWidget(self.status_label, 1)
+        status_row.addWidget(self.convert_30fps_button)
+        status_row.addWidget(self.export_all_button)
+
         layout = QVBoxLayout()
-        layout.addWidget(self.status_label)
+        layout.addLayout(status_row)
         layout.addWidget(splitter, 1)
         self.setLayout(layout)
 
@@ -241,6 +259,57 @@ class CameraEffectEditorWidget(QWidget):
             self.status_label.setText(self.status_label.text() + f" - {os.path.basename(path)} written: "
                                       f"FFNx only reads it named {cam_file_name(effect_id)}.")
         return True
+
+    def convert_all_to_30fps(self, confirm=True) -> list:
+        """Every loaded camera track converted for FFNx True30FPS (CameraEffectManager.convert_tracks_to_real30)."""
+        title = "Camera tracks to 30 fps (FFNx)"
+        if not self.manager.tracks:
+            if confirm:
+                QMessageBox.information(self, title, "Open the FF8 exe (or import .bcam files) first.")
+            return []
+        if confirm and QMessageBox.question(
+                self, title, f"Convert the {len(self.manager.tracks)} camera tracks for FFNx True30FPS? Every "
+                "keyframe duration doubles. Convert vanilla tracks only once: converting twice doubles "
+                "again.") != QMessageBox.StandardButton.Yes:
+            return []
+        result = self.manager.convert_tracks_to_real30()
+        self._after_tracks_changed()
+        if confirm:
+            done = [effect_id for effect_id, report, _message in result if report is not None]
+            notes = [f"effect {effect_id}: {message}" for effect_id, _report, message in result if message]
+            QMessageBox.information(self, title, "\n".join(
+                [f"{len(done)} camera track(s) converted."] + notes[:30]
+                + (["..."] if len(notes) > 30 else [])
+                + ["Save writes the .hext (exe tracks that kept their size), Export all .bcam… the FFNx files."]))
+        return result
+
+    def export_all_cam(self, folder=None) -> list:
+        """Write every changed track as effect_NNN.bcam into `folder` (asked when not given).
+        Every file is checked before any is written. Returns the paths written."""
+        title = "Export all .bcam"
+        try:
+            files = self.manager.all_cam_files()
+        except ValueError as error:
+            QMessageBox.warning(self, title, f"Nothing was written:\n{error}")
+            return []
+        if not files:
+            QMessageBox.information(self, title, "No camera track was changed: nothing to export.")
+            return []
+        if not folder:
+            folder = QFileDialog.getExistingDirectory(
+                self, f"Folder for the .bcam files (FFNx: the game folder's {CAM_FFNX_FOLDER}/)",
+                self.file_registry.last_folder(CAM_FOLDER_KEY) or os.getcwd())
+        if not folder:
+            return []
+        written = []
+        for name, data in files:
+            path = os.path.join(folder, name)
+            with open(path, "wb") as file:
+                file.write(data)
+            written.append(path)
+        self.file_registry.remember_folder(CAM_FOLDER_KEY, folder)
+        self.status_label.setText(self.status_label.text() + f" - {len(written)} .bcam file(s) written.")
+        return written
 
     # ------------------------------------------------------------------ list
     def _fill_list(self):

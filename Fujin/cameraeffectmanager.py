@@ -372,6 +372,39 @@ class CameraEffectManager(CameraScriptTools):
             raise ValueError(f"effect {track.effect_id}: FFNx would ignore this track ({error})")
         return data
 
+    def all_cam_files(self, tracks=None) -> list:
+        """[(effect_NNN.bcam, bytes)] of `tracks` (default: every modified track), every one checked
+        before the caller writes any. ValueError naming the first FFNx would refuse."""
+        tracks = self.modified_tracks() if tracks is None else tracks
+        return [(cam_file_name(track.effect_id), self.cam_bytes(track)) for track in tracks]
+
+    # ------------------------------------------------------------------ 30 fps (FFNx)
+    def convert_tracks_to_real30(self, effect_ids=None, factor: int = 2) -> list:
+        """Convert every loaded camera track (the exe's, the created ones, the .bcam read back) or
+        `effect_ids` for FFNx True30FPS, which plays every battle camera at 30 Hz with no marker:
+        keyframe durations x factor, script waits (FF8GameData/dat/camera30.py). Each track all or
+        nothing. Vanilla tracks keep their size, so they still go into the .hext as well as .bcam.
+        Returns [(effect id, CameraConversionReport or None, message)]."""
+        from FF8GameData.dat import camera30
+        result = []
+        for effect_id in sorted(self.tracks if effect_ids is None else effect_ids):
+            track = self.tracks.get(effect_id)
+            if track is None:
+                result.append((effect_id, None, "no camera track"))
+                continue
+            message = ("looks already converted (every keyframe duration is even): converted again"
+                       if camera30.track_looks_converted(track, factor) else "")
+            report = camera30.CameraConversionReport()
+            try:
+                camera30.convert_track(self.vm, track, factor, report)
+            except ValueError as error:
+                result.append((effect_id, None, f"not converted: {error}"))
+                continue
+            if not track.created and not track.fits_exe:
+                message = (message + "; " if message else "") + "grew: .bcam only"
+            result.append((effect_id, report, message))
+        return result
+
     # ------------------------------------------------------------------ hext
     def hext_text(self) -> str:
         """The .hext of every edited track that still fits the exe (FFNx applies it to the running

@@ -313,6 +313,44 @@ def convert_track_bytes(vm, data: bytes, factor: int = FACTOR_30FPS,
     return track.to_bytes()
 
 
+MAG_CAMERA_HEADER_OFFSET = 0x20     # packed MAG header: the camera track of a GF cinematic MAGxxx_B.00
+
+
+def mag_camera_offset(data: bytes):
+    """Where the camera track of a packed MAG file starts (MAGxxx_B.00 + *(u32*)(file + 0x20),
+    played by the cinematic op 0x39 sub-op 1), or None when the file has none."""
+    if len(data) < 0x30:
+        return None
+    header = struct.unpack_from("<12I", data)
+    if header[0] != 0 or header[5] != 0x30 or not 0x30 <= header[2] <= header[6] <= header[7] <= len(data):
+        return None
+    offset = header[MAG_CAMERA_HEADER_OFFSET // 4]
+    return offset if offset and offset + 8 <= len(data) else None
+
+
+def convert_mag_camera(vm, data: bytes, factor: int = FACTOR_30FPS, report: CameraConversionReport = None) -> bytes:
+    """A whole MAG file with its camera track converted, the file keeping its size (the MAG
+    offsets after the track are not relocated). CameraConversionError when the file has no camera
+    or the converted track would not fit its room."""
+    from .cameratrack import CameraTrack, CameraScriptTools
+    offset = mag_camera_offset(data)
+    if offset is None:
+        raise CameraConversionError("this MAG file has no camera track (header +0x20 is 0)")
+    size = struct.unpack_from("<H", data, offset + 6)[0]
+    track = CameraTrack.from_bytes(vm, bytes(data[offset:offset + size]))
+    convert_track(vm, track, factor, report)
+    if track.current_size != size:
+        tools = CameraScriptTools()
+        tools.vm = vm
+        try:
+            tools.fit_track_to_size(track, tools.script_without_filler(track.script), size)
+        except ValueError as error:
+            raise CameraConversionError(f"the converted camera does not fit its {size} bytes: {error}")
+    new = bytearray(data)
+    new[offset:offset + size] = track.to_bytes()
+    return bytes(new)
+
+
 def track_looks_converted(track, factor: int = FACTOR_30FPS) -> bool:
     return collection_looks_converted(track.collection, factor)
 

@@ -265,7 +265,16 @@ class MagSectionEditor(QWidget):
         self.camera_info = QLabel()
         self.camera_info.setWordWrap(True)
         self.camera_info.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        layout.addWidget(self.camera_info)
+        self.camera_30fps_button = QPushButton("To 30 fps…")
+        self.camera_30fps_button.setToolTip(
+            "Convert this camera for FFNx True30FPS, which plays every battle camera at 30 Hz and expects "
+            "every file converted (nothing marks a converted file): every keyframe duration doubles, a "
+            "one-frame script wait is repeated. The camera keeps its bytes. Convert a vanilla file once.")
+        self.camera_30fps_button.clicked.connect(self.convert_camera_to_30fps)
+        info_row = QHBoxLayout()
+        info_row.addWidget(self.camera_info, 1)
+        info_row.addWidget(self.camera_30fps_button, 0, Qt.AlignmentFlag.AlignTop)
+        layout.addLayout(info_row)
         self.camera_editor = CameraTrackEditor(self.camera_manager, self.camera_preview, room_name="MAG file")
         self.camera_editor.keyframes_changed.connect(self._apply_camera)
         self.camera_editor.track_changed.connect(self._apply_camera)
@@ -282,6 +291,24 @@ class MagSectionEditor(QWidget):
             f"{self.section.size} bytes (the MAG file's following offsets are not moved), so the script "
             "and the keyframes share them: keyframes and slots can be added once removed keyframes or "
             "a shorter script have left room. Changes go into this MAG file (no .bcam).")
+
+    def convert_camera_to_30fps(self):
+        """This MAG camera converted for FFNx True30FPS (FF8GameData/dat/camera30.py), in its room."""
+        from FF8GameData.dat import camera30
+        track = self.camera_track
+        before = track.to_bytes()
+        try:
+            camera30.convert_track(self.camera_manager.vm, track, camera30.FACTOR_30FPS)
+            if track.current_size != self.section.size:
+                self.camera_manager.fit_track_to_size(
+                    track, self.camera_manager.script_without_filler(track.script), self.section.size)
+        except ValueError as error:
+            self.camera_track._set_parts(before, self.camera_manager.vm)
+            self.error.setText(f"Not converted: {error}")
+            return False
+        self.camera_editor.set_track(track, fixed_size=self.section.size)
+        self._apply_camera()
+        return True
 
     def _apply_camera(self):
         try:
