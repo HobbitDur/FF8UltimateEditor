@@ -1814,6 +1814,11 @@ class Ifrit3DWidget(QWidget):
             self.anim_selector.setRange(0, nb - 1)
             self.anim_selector.setToolTip(f"Nb animation: {nb}")
 
+    def _after_animation_interpolated(self, anim_id: int, factor: int, smooth_loop: bool, mode):
+        """Animation anim_id just got its frames interpolated by `factor` (fps conversion). Nothing
+        else to do for a .dat; a view whose animations go in lockstep with others (an anim set's
+        body and weapon) converts the matching one the same way."""
+
     def _split_animation_to_fit(self, anim_id: int, factor: int, smooth_loop: bool, max_frames: int,
                                 mode: str = interpolation.LINEAR):
         """Cut an animation too long for the format in parts and chain them in the sequences.
@@ -2032,6 +2037,7 @@ class Ifrit3DWidget(QWidget):
 
         anim.create_interpolated_frames(self.ifrit_manager.enemy.bone_data.bones, factor,
                                         smooth_loop, mode=interpolation_mode)
+        self._after_animation_interpolated(self.current_anim_id, factor, smooth_loop, interpolation_mode)
 
         # Refresh the viewer with the new frame count
         self.current_frame = 0
@@ -2174,6 +2180,7 @@ class Ifrit3DWidget(QWidget):
                 skipped_too_long.append((anim_id, nb_frames_before, nb_frames_after))
                 continue
             anim.create_interpolated_frames(bones, factor, smooth_loop, mode=interpolation_mode)
+            self._after_animation_interpolated(anim_id, factor, smooth_loop, interpolation_mode)
             converted += 1
             nb_smoothed += smooth_loop
 

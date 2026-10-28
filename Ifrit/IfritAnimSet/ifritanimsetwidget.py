@@ -13,13 +13,16 @@ sequences, the tab of a character WEAPON file (dXw) the weapon animations, and b
 set: the open sets live in the shared AnimSetSource (one AnimSetDocument per set, whichever file
 opened it), so the 30 fps conversion and both saves always carry the body and the weapon together.
 
-Edits stay in memory per set (a '*' marks them, and the tool counts as unsaved) until "Save
-.animset" (the FFNx file, any size) or "Save into exe" (only while the set still fits its exe block:
-a 30 fps set never does)."""
+The animations are edited with everything Ifrit's 3D view offers a .dat (frames, poses, new /
+duplicated / deleted animations, frame ranges, copy-paste, fps conversion, glTF), the body and weapon
+pools kept in lockstep (AnimSetManagerView). Edits stay in memory per set (a '*' marks them, and the
+tool counts as unsaved) until "Save .animset" (back into the set's .animset file, or a new one for a
+set read from the exe; any size) or "Save into exe" (only while the set still fits its exe block: a
+30 fps set never does). "Export all sets" writes every set of the character, edits included."""
 import os
 
 from PyQt6.QtCore import QObject, pyqtSignal
-from PyQt6.QtWidgets import (QComboBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPlainTextEdit,
+from PyQt6.QtWidgets import (QComboBox, QFileDialog, QHBoxLayout, QLabel, QMenu, QMessageBox, QPlainTextEdit,
                              QPushButton, QTabWidget, QVBoxLayout, QWidget)
 
 from Common.filebinding import FileBinding
@@ -166,6 +169,24 @@ class AnimSetSource(QObject):
                 return anim_set, SOURCE_EXE, self.exe_path(), problem
         return None, "", "", problem or "not in the opened exe, and no .animset file for it"
 
+    def sets_to_export(self, infos) -> tuple:
+        """({AnimSetInfo: AnimSet}, [(info, problem)]) of `infos` as they are now: an edited set with
+        its edits, else the .animset file / exe set (load's rule)."""
+        anim_sets, problems = {}, []
+        for info in infos:
+            try:
+                anim_set = self.current_set(info)
+                problem = ""
+                if anim_set is None:
+                    anim_set, _kind, _path, problem = self.load(info)
+            except (OSError, exeanimset.AnimSetError) as error:
+                anim_set, problem = None, str(error)
+            if anim_set is not None:
+                anim_sets[info] = anim_set
+            else:
+                problems.append((info, problem))
+        return anim_sets, problems
+
     # ------------------------------------------------------------------ the sets opened for editing
     def entry(self, info):
         """The OpenAnimSet of `info` when it is opened, else None (nothing is read)."""
@@ -231,6 +252,40 @@ class AnimSetSource(QObject):
         self.documents_changed.emit()
 
 
+class AnimSet3DWidget(Ifrit3DWidget):
+    """Ifrit's 3D view on a set: every action of the .dat viewer, with what differs for a set.
+    - an fps conversion of one animation converts the other pool's animation of that id too;
+    - a too-long animation is not split here: the body and the weapon must be split together,
+      which the whole-set conversion ("To 30 fps") does;
+    - "Convert ALL animations" at 30 fps is the whole-set conversion (real30_handler);
+    - a glTF import replaces the FILE's mesh (mesh_import_running tells the tab)."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.real30_handler = None        # callable(interpolation mode): the set's 30 fps conversion
+        self.mesh_import_running = False
+
+    def _after_animation_interpolated(self, anim_id, factor, smooth_loop, mode):
+        mirror = getattr(self.ifrit_manager, 'mirror_interpolated_frames', None)
+        if mirror is not None:
+            mirror(anim_id, factor, smooth_loop, mode)
+
+    def _split_animation_to_fit(self, anim_id, factor, smooth_loop, max_frames, mode=None):
+        return None, ("in an anim set the body and weapon animations are split together: convert the "
+                      "whole set with \"To 30 fps\"")
+
+    def _convert_loaded_file_to_real30(self, title, interpolation_mode):
+        if self.real30_handler is not None:
+            self.real30_handler(interpolation_mode)
+
+    def import_gltf(self):
+        self.mesh_import_running = True
+        try:
+            super().import_gltf()
+        finally:
+            self.mesh_import_running = False
+
+
 class IfritAnimSetWidget(QWidget):
     """The anim sets of the loaded character file. On a BODY file: a set picker, the set's body
     animations in Ifrit's 3D view (with the character's weapon) and its sequences in Ifrit's sequence
@@ -265,24 +320,33 @@ class IfritAnimSetWidget(QWidget):
                                        "30 Hz, an animation over 255 frames is split. Convert once.")
         self.convert_button.clicked.connect(lambda: self.convert_to_30fps())
         self.save_file_button = QPushButton("Save .animset…")
-        self.save_file_button.setToolTip("Write this set (body, sequences and weapon) as FFNx's\n"
-                                         "effect_NNN.animset (any size, any exe language; the game folder's\n"
-                                         "direct/exe/).")
+        self.save_file_button.setToolTip("Write this set (body, sequences and weapon) as FFNx's effect_NNN.animset\n"
+                                         "(any size, any exe language; the game folder's direct/exe/): back into\n"
+                                         "its .animset file, or a new file chosen for a set read from the exe.")
         self.save_file_button.clicked.connect(lambda: self.save_file())
         self.save_exe_button = QPushButton("Save into exe")
         self.save_exe_button.setToolTip("Write this set back into its block of the opened exe. Only a set that\n"
                                         "still fits the vanilla block can: else save it as an .animset file.")
         self.save_exe_button.clicked.connect(lambda: self.save_into_exe())
+        self.export_button = QPushButton("Export all sets…")
+        self.export_button.setToolTip("Write every set of this character (the list above) as effect_NNN.animset\n"
+                                      "files into a folder, as they are or converted to 30 fps. Unsaved edits\n"
+                                      "are exported with their edits.")
+        export_menu = QMenu(self.export_button)
+        export_menu.addAction("As they are…", lambda: self.export_all(convert=False))
+        export_menu.addAction("Converted to 30 fps (FFNx True30FPS)…", lambda: self.export_all(convert=True))
+        self.export_button.setMenu(export_menu)
         top = QHBoxLayout()
         top.addWidget(QLabel("Set:"))
         top.addWidget(self.set_selector, 1)
         top.addWidget(self.convert_button)
         top.addWidget(self.save_file_button)
         top.addWidget(self.save_exe_button)
+        top.addWidget(self.export_button)
 
-        self.view_3d = Ifrit3DWidget(self.set_view, show_controls=True)
-        self.view_3d.set_single_animation_block()   # the set's own list: no add/remove, no fps action
-        self.view_3d.model_edited.connect(self._on_set_edit)
+        self.view_3d = AnimSet3DWidget(self.set_view, show_controls=True)
+        self.view_3d.real30_handler = lambda mode: self.convert_to_30fps(confirm=False, mode=mode, inform=True)
+        self.view_3d.model_edited.connect(self._on_model_edited)
         bone_editor = getattr(self.view_3d, 'bone_editor', None)
         if bone_editor is not None:
             for name in ('animation_rotation_changed', 'animation_position_changed', 'animation_scale_changed',
@@ -411,6 +475,7 @@ class IfritAnimSetWidget(QWidget):
                     self._refresh_labels()
         self.holder.document = document
         self.source_label.setText(self._describe(info, problem))
+        self.view_3d._animation_usage_cache.clear()   # the loops are read from THIS set's sequences
         if document is not None:
             self.view_3d.load_file()
             self.view_3d.set_weapon_options(*options)
@@ -454,6 +519,14 @@ class IfritAnimSetWidget(QWidget):
         self.convert_button.setEnabled(has_document)
         self.save_file_button.setEnabled(has_document)
         self.save_exe_button.setEnabled(has_document and bool(self.source.exe_path()))
+        self.export_button.setEnabled(bool(self._infos))
+
+    def _on_model_edited(self):
+        """An edit made in the 3D view: of the set, except a glTF mesh import (the file's mesh)."""
+        if self.view_3d.mesh_import_running:
+            self.body_edited.emit()
+        else:
+            self._on_set_edit()
 
     def _on_set_edit(self):
         info = self._current_info()
@@ -471,9 +544,10 @@ class IfritAnimSetWidget(QWidget):
             return None, None
         return info, self.source.current_set(info)
 
-    def convert_to_30fps(self, confirm=True) -> dict:
+    def convert_to_30fps(self, confirm=True, mode=None, inform=None) -> dict:
         """Convert the shown set, body and weapon animations together (never one pool alone: the
-        weapon must keep the body's frame counts), whichever file's tab asks."""
+        weapon must keep the body's frame counts), whichever file's tab asks. mode: the
+        interpolation curve (linear by default). inform: show the result (default: as confirm)."""
         title = "Anim set to 30 fps"
         info = self._current_info()
         if info is None or self.source.entry(info) is None:
@@ -485,7 +559,7 @@ class IfritAnimSetWidget(QWidget):
             return {}
         try:
             anim_set = self.source.current_set(info)
-            converted, report = exeanimset.convert_to_real30(self.ifrit_manager.game_data, anim_set)
+            converted, report = exeanimset.convert_to_real30(self.ifrit_manager.game_data, anim_set, mode)
             document = exeanimset.AnimSetDocument(converted)
         except exeanimset.AnimSetError as error:
             QMessageBox.warning(self, title, f"Not converted:\n{error}")
@@ -494,7 +568,7 @@ class IfritAnimSetWidget(QWidget):
         self._refresh_labels()
         self._show_selected()
         self.set_edited.emit()
-        if confirm:
+        if confirm if inform is None else inform:
             split = "".join(f"\nanimation {anim_id} ({nb} frames) split in {parts}"
                             for anim_id, nb, parts, _ids in report['split_list'])
             QMessageBox.information(self, title, f"{report['nb_converted']} animation(s) converted, "
@@ -502,9 +576,22 @@ class IfritAnimSetWidget(QWidget):
                                     "Save it with Save .animset… (it no longer fits the exe).")
         return report
 
-    def save_file(self, folder=None) -> str:
-        """Write the shown set as effect_NNN.animset: into the opened .animset folder, else `folder`
-        (asked). Returns the path written, or ""."""
+    def _default_folder(self) -> str:
+        """Where a new .animset goes: beside the opened ones, else the last folder used for them, else
+        the exe's direct/exe/ (FFNx's) when it exists."""
+        folder = self.source.folder()
+        if not folder and self.file_registry is not None:
+            folder = self.file_registry.last_folder(ANIM_SET_FILE_NAME) or ""
+        if not folder and self.source.exe_path():
+            ffnx = os.path.join(os.path.dirname(self.source.exe_path()), *exeanimset.FFNX_FOLDER.split("/"))
+            folder = ffnx if os.path.isdir(ffnx) else ""
+        return folder
+
+    def save_file(self, path=None) -> str:
+        """Write the shown set as an FFNx .animset: back into the .animset file it was read from (or
+        last saved to), with no dialog; a set read from the exe asks for the file (effect_NNN.animset
+        proposed), which then becomes the set's file. `path`: write there instead (no dialog).
+        Returns the path written, or ""."""
         title = "Save .animset"
         try:
             info, anim_set = self._current_set()
@@ -514,20 +601,63 @@ class IfritAnimSetWidget(QWidget):
         except exeanimset.AnimSetError as error:
             QMessageBox.warning(self, title, f"Not saved:\n{error}")
             return ""
-        folder = folder or self.source.folder()
-        if not folder:
-            start = (self.file_registry.last_folder(ANIM_SET_FILE_NAME) if self.file_registry else "") or os.getcwd()
-            folder = QFileDialog.getExistingDirectory(self, "Folder for the .animset file (FFNx: the game "
-                                                      "folder's direct/exe/)", start)
-        if not folder:
+        entry = self.source.entry(info)
+        if not path and entry.kind == SOURCE_FILE and entry.path:
+            path = entry.path
+        if not path:
+            start = os.path.join(self._default_folder() or os.getcwd(), info.file_name)
+            path, _filter = QFileDialog.getSaveFileName(
+                self, f"Save {info.label} as (FFNx reads {info.file_name} in the game folder's "
+                f"{exeanimset.FFNX_FOLDER}/)", start, "FFNx anim set (*.animset)")
+        if not path:
             return ""
-        path = os.path.join(folder, info.file_name)
         with open(path, "wb") as file:
             file.write(data)
         if self.file_registry is not None:
-            self.file_registry.remember_folder(ANIM_SET_FILE_NAME, folder)
+            self.file_registry.remember_folder(ANIM_SET_FILE_NAME, os.path.dirname(path))
         self._saved(info, SOURCE_FILE, path)
         return path
+
+    def export_all(self, convert=False, folder=None) -> list:
+        """Write every set of this character (the list of the tab) as effect_NNN.animset into `folder`
+        (asked when not given), as they are or converted to 30 fps, edited sets with their edits
+        (saved or not). Every file is built and checked before any is written (the shared export of
+        FF8GameData, as Fujin's). Returns the paths written."""
+        title = "Export all sets"
+        if not self._infos:
+            return []
+        anim_sets, problems = self.source.sets_to_export(self._infos)
+        edited = [info for info in anim_sets if self.source.is_modified(info)]
+        if folder is None:
+            note = (f"\n\n{len(edited)} set(s) have unsaved edits: they are exported WITH them."
+                    if edited else "")
+            if QMessageBox.question(
+                    self, title, f"Export the {len(anim_sets)} set(s) of this character as effect_NNN.animset "
+                    f"files{' converted to 30 fps' if convert else ''}?{note}") != QMessageBox.StandardButton.Yes:
+                return []
+        files, _reports, errors = exeanimset.build_export_files(anim_sets, convert, self.ifrit_manager.game_data)
+        if folder is None:
+            folder = QFileDialog.getExistingDirectory(
+                self, f"Folder for the .animset files (FFNx: the game folder's {exeanimset.FFNX_FOLDER}/)",
+                self._default_folder() or os.getcwd())
+        if not folder:
+            return []
+        written = []
+        for name, data in files:
+            path = os.path.join(folder, name)
+            with open(path, "wb") as file:
+                file.write(data)
+            written.append(path)
+        if self.file_registry is not None:
+            self.file_registry.remember_folder(ANIM_SET_FILE_NAME, folder)
+        lines = [f"{len(written)} anim set file(s) written into {folder}"
+                 + (" (converted to 30 fps)" if convert else "") + "."]
+        if edited:
+            lines.append(f"With their unsaved edits: {', '.join(info.file_name for info in edited)} "
+                         "(still marked unsaved: their own Save keeps them).")
+        lines += [f"{info.file_name} ({info.label}): {problem}" for info, problem in problems + errors][:20]
+        (QMessageBox.warning if problems or errors else QMessageBox.information)(self, title, "\n".join(lines))
+        return written
 
     def save_into_exe(self, confirm=True) -> bool:
         title = "Save into exe"

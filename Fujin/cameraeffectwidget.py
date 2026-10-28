@@ -340,14 +340,8 @@ class CameraEffectEditorWidget(QWidget):
         if not anim_sets:
             QMessageBox.warning(self, title, "No vanilla anim set was found in this exe.")
             return []
-        files, errors = [], []
-        for info, anim_set in sorted(anim_sets.items(), key=lambda item: (item[0].effect_id, item[0].index)):
-            try:
-                if convert:
-                    anim_set, _report = exeanimset.convert_to_real30(self.game_data, anim_set)
-                files.append((info.file_name, anim_set.to_bytes()))
-            except exeanimset.AnimSetError as error:
-                errors.append(f"{info.file_name} ({info.label}): {error}")
+        files, _reports, error_list = exeanimset.build_export_files(anim_sets, convert, self.game_data)
+        errors = [f"{info.file_name} ({info.label}): {error}" for info, error in error_list]
         if not folder:
             folder = QFileDialog.getExistingDirectory(
                 self, f"Folder for the .animset files (FFNx: the game folder's {CAM_FFNX_FOLDER}/)",

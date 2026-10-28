@@ -201,3 +201,17 @@ def test_fujin_export_button(tmp_path, monkeypatch):
     written = editor.export_anim_sets(convert=False, folder=str(tmp_path))
     assert len(written) == 72 and (tmp_path / "effect_339_2.animset").exists()
     assert app is not None
+
+
+@pytest.mark.ff8data(EXE)
+def test_build_export_files_shared_by_every_export(exe, anim_sets, game_data):
+    """Fujin, the CLI and Ifrit's anim set tab write what build_export_files builds."""
+    files, reports, errors = ea.build_export_files(anim_sets, False)
+    assert files == ea.export_files(exe) and not reports and not errors
+    irvine = {info: anim_sets[info] for info in ea.sets_of_character("Irvine")}
+    files, reports, errors = ea.build_export_files(irvine, True, game_data)
+    assert [name for name, _data in files] == [info.file_name for info in sorted(irvine, key=lambda i: i.effect_id)]
+    assert len(reports) == 8 and not errors
+    broken = ea.AnimSet(b"\x00" * 4, b"", None, ea.anim_set_info(188))
+    files, reports, errors = ea.build_export_files({ea.anim_set_info(188): broken}, False)
+    assert not files and errors and errors[0][0] is ea.anim_set_info(188)

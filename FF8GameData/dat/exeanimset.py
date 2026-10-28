@@ -482,6 +482,10 @@ class AnimSetDocument:
         """The 'body' or 'weapon' AnimationSection (None: the set has no weapon animations)."""
         return self.body if name == 'body' else self.weapon
 
+    def bones_of(self, name: str):
+        """The bones pool `name` is currently shown on (its matrices are built on them)."""
+        return self._bones.get(name)
+
     def bind_skeleton(self, name: str, bone_section) -> bool:
         """Show pool `name` on `bone_section` (a model of the same bone count): its frames' render
         matrices are rebuilt on those bones when they were built on others. False when the pool is
@@ -538,6 +542,23 @@ def read_exe_anim_sets(exe: bytes) -> dict:
     """{AnimSetInfo: AnimSet} of every vanilla set found in the exe."""
     return {info: AnimSet.parse(exe[offset:offset + info.size], info)
             for info, offset in locate_anim_sets(exe).items()}
+
+
+def build_export_files(anim_sets: dict, convert=False, game_data=None) -> tuple:
+    """Every set of `anim_sets` ({AnimSetInfo: AnimSet}) as the FFNx file it is saved as, as is or
+    converted to 30 fps (convert_to_real30, which needs `game_data`), every file built and checked
+    before the caller writes any. Returns (files [(file name, bytes)], reports [(info, report)] of
+    the converted sets, errors [(info, message)] of the sets left out), sorted by effect."""
+    files, reports, errors = [], [], []
+    for info, anim_set in sorted(anim_sets.items(), key=lambda item: (item[0].effect_id, item[0].index)):
+        try:
+            if convert:
+                anim_set, report = convert_to_real30(game_data, anim_set)
+                reports.append((info, report))
+            files.append((info.file_name, anim_set.to_bytes()))
+        except AnimSetError as error:
+            errors.append((info, str(error)))
+    return files, reports, errors
 
 
 def export_files(exe: bytes) -> list:

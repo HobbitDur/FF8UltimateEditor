@@ -11,7 +11,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PyQt6.QtCore import QSettings
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox
 _APP = QApplication.instance() or QApplication([])
 
 from Common.fileregistry import FileRegistry
@@ -127,7 +127,7 @@ def test_sets_preview_convert_and_save(session, monkeypatch):
     assert not tab.save_into_exe(confirm=False)
     assert "effect_188.animset" in warnings[-1] and exe.read_bytes() == before
     # as an FFNx file it is fine
-    path = tab.save_file(folder=str(tmp_path))
+    path = tab.save_file(path=str(tmp_path / "effect_188.animset"))
     assert os.path.basename(path) == "effect_188.animset" and not tab.is_modified()
     data = open(path, "rb").read()
     assert exeanimset.anim_set_error(data, 3) is None and len(data) > 0x1570
@@ -242,7 +242,7 @@ def test_weapon_tab_converts_both_pools_and_saves_the_whole_set(session):
 
     # saved from the weapon tab: the file holds the body, the sequences and the weapon, all converted
     weapon_tab = _show_tab(_pane(widget, "d2w013.dat"))
-    path = weapon_tab.save_file(folder=str(tmp_path))
+    path = weapon_tab.save_file(path=str(tmp_path / "effect_188.animset"))
     assert os.path.basename(path) == "effect_188.animset"
     assert not widget.anim_set_source.has_modified() and not widget.has_unsaved_changes()
     saved = exeanimset.AnimSet.parse(open(path, "rb").read(), info)
@@ -252,3 +252,157 @@ def test_weapon_tab_converts_both_pools_and_saves_the_whole_set(session):
     assert [len(a.frames) for a in body.animations] == [2 * n for n in body_frames]
     assert [len(a.frames) for a in weapon.animations] == [2 * n for n in weapon_frames]
     assert "*" not in weapon_tab.set_selector.currentText()
+
+
+# ----------------------------------------------------------------------------- Save .animset
+def test_save_animset_writes_back_into_its_file_or_asks_one_file(session, monkeypatch):
+    widget, registry, tmp_path, exe = session
+    registry.open_file(EXE_FILE_NAME, str(exe))
+    tab = _show_tab(_pane(widget, "d2c006.dat"))
+    info = tab._current_info()
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("no folder picker")))
+    asked = []
+    target = tmp_path / "mods" / "effect_188.animset"
+    target.parent.mkdir()
+
+    def ask(_parent, _caption, start, _filter):
+        asked.append(start)
+        return str(target), _filter
+
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", ask)
+    # read from the exe: a FILE dialog, effect_NNN.animset proposed
+    assert tab.save_file() == str(target) and asked and asked[0].endswith("effect_188.animset")
+    entry = widget.anim_set_source.entry(info)
+    assert entry.kind == "file" and entry.path == str(target) and not entry.modified
+    # it is now the set's file: the next save writes it again, no dialog
+    position = tab.holder.document.body.animations[0].frames[0].position[0]
+    position.set_pos_raw(position.get_pos_raw() + 3)
+    tab._on_set_edit()
+    before = target.read_bytes()
+    assert tab.save_file() == str(target) and len(asked) == 1 and target.read_bytes() != before
+    # a set read from an opened .animset file: straight back into it
+    registry.open_file(ANIM_SET_FILE_NAME, str(target))
+    _settle()
+    tab = _show_tab(_pane(widget, "d2c006.dat"))
+    assert widget.anim_set_source.entry(info).kind == "file"
+    assert tab.save_file() == str(target) and len(asked) == 1
+
+
+# ----------------------------------------------------------------------------- full 3D editing
+def _quiet(monkeypatch):
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: QMessageBox.StandardButton.Ok)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: (_ for _ in ()).throw(AssertionError(a[2])))
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: (QMessageBox.StandardButton.Yes
+                                                                 if "Delete" in a[1] else QMessageBox.StandardButton.Ok))
+
+
+def _counts(document):
+    return ([len(a.frames) for a in document.body.animations], [len(a.frames) for a in document.weapon.animations])
+
+
+def test_the_3d_view_offers_every_action_with_body_and_weapon_in_lockstep(session, monkeypatch):
+    widget, registry, _tmp, exe = session
+    registry.open_file(EXE_FILE_NAME, str(exe))
+    _quiet(monkeypatch)
+    tab = _show_tab(_pane(widget, "d2c006.dat"))
+    view = tab.view_3d
+    assert view._animation_list_actions and all(action.isVisible() for action in view._animation_list_actions)
+    document = tab.holder.document
+    body, weapon = _counts(document)
+    assert body == weapon and len(body) == 8
+
+    view._select_animation(2)
+    view._duplicate_current_animation()                              # body anim 2 -> new anim 8, weapon too
+    assert _counts(document) == (body + [body[2]], weapon + [weapon[2]]) and tab.is_modified()
+    view._select_animation(8)
+    view._add_frame_after_current()                                  # one more frame, both pools
+    assert _counts(document)[0][8] == body[2] + 1 and _counts(document)[1][8] == weapon[2] + 1
+    pasted = tab.set_view.paste_animation_frames(8, 0, tab.set_view.copy_animation_frames(0, 0, 2))
+    assert pasted == 3 and _counts(document)[0][8] == _counts(document)[1][8] == body[2] + 4
+    view._delete_current_frame()
+    assert _counts(document)[0][8] == _counts(document)[1][8] == body[2] + 3
+    view._delete_current_animation()                                 # back to the 8 animations
+    assert _counts(document) == (body, weapon)
+    assert exeanimset.anim_set_error(document.to_anim_set().to_bytes(), 3) is None
+
+    # one animation to 30 fps: its weapon animation is converted the same way
+    anim_id = next(i for i, nb in enumerate(body) if 2 <= nb <= 100)
+    other = next(i for i in range(len(body)) if i != anim_id)
+    view._select_animation(anim_id)
+    monkeypatch.setattr(type(view), "_ask_target_fps", lambda _self, _title: (30, "linear"))
+    view.convert_current_anim_to_60fps()
+    body_now, weapon_now = _counts(document)
+    assert body_now[anim_id] == weapon_now[anim_id] == 2 * body[anim_id] and body_now[other] == body[other]
+
+    # from the weapon's tab: a new animation is added to the body too
+    weapon_tab = _show_tab(_pane(widget, "d2w013.dat"))
+    assert weapon_tab.holder.document is document
+    weapon_tab.view_3d._select_animation(0)
+    weapon_tab.view_3d._duplicate_current_animation()
+    assert len(document.body.animations) == len(document.weapon.animations) == 9
+
+    # "Convert ALL animations" at 30 fps is the whole-set conversion (sequences rewritten)
+    weapon_tab.view_3d.convert_all_anims_to_60fps()
+    converted = widget.anim_set_source.entry(weapon_tab._current_info()).document
+    assert converted is not document and len(converted.body.animations) == len(converted.weapon.animations)
+    assert [len(a.frames) for a in converted.weapon.animations][other] == 2 * weapon[other]
+
+
+def test_animation_list_edits_refused_where_ids_would_move(session):
+    widget, registry, _tmp, exe = session
+    registry.open_file(EXE_FILE_NAME, str(exe))
+    tab = _show_tab(_pane(widget, "d2c006.dat"))
+    shown = tab.holder.document
+    anchor = widget.anim_set_source.read_exe_set(exeanimset.anim_set_info(263))    # Massive Anchor
+    tab.holder.document = exeanimset.AnimSetDocument(anchor)
+    try:
+        with pytest.raises(ValueError, match="another skeleton"):
+            tab.set_view.create_animation_from_frame_range(0, 0, 0)
+        with pytest.raises(ValueError, match="another skeleton"):
+            tab.set_view.delete_animation(0)
+    finally:
+        tab.holder.document = shown
+
+
+def test_a_gltf_mesh_import_edits_the_file_not_the_set(session):
+    widget, registry, _tmp, exe = session
+    registry.open_file(EXE_FILE_NAME, str(exe))
+    pane = _pane(widget, "d2c006.dat")
+    tab = _show_tab(pane)
+    tab.view_3d.mesh_import_running = True
+    tab.view_3d.model_edited.emit()
+    tab.view_3d.mesh_import_running = False
+    _settle()
+    assert pane.dirty and not tab.is_modified()
+
+
+# ----------------------------------------------------------------------------- Export all sets
+def test_export_all_sets_of_the_character_with_their_edits(session, monkeypatch):
+    widget, registry, tmp_path, exe = session
+    registry.open_file(EXE_FILE_NAME, str(exe))
+    monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: QMessageBox.StandardButton.Ok)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: (_ for _ in ()).throw(AssertionError(a[2])))
+    tab = _show_tab(_pane(widget, "d2w013.dat"))
+    info = tab._current_info()
+    frames_before = len(tab.holder.document.weapon.animations[0].frames)
+    tab.set_view.duplicate_animation_frame(0, 0)                    # an unsaved edit of 188
+    tab._on_set_edit()
+    out = tmp_path / "export"
+    out.mkdir()
+    written = tab.export_all(folder=str(out))
+    names = sorted(os.path.basename(path) for path in written)
+    assert names == sorted(info.file_name for info in tab._infos) and len(names) == 8   # Irvine's only
+    saved = exeanimset.AnimSet.parse((out / "effect_188.animset").read_bytes(), info)
+    weapon = exeanimset.parse_animation_section(saved.weapon, info.weapon_bones)
+    assert len(weapon.animations[0].frames) == frames_before + 1             # with the edit
+    assert widget.anim_set_source.is_modified(info)                          # still unsaved
+    # converted to 30 fps, with the shared export code
+    out30 = tmp_path / "export30"
+    out30.mkdir()
+    tab.export_all(convert=True, folder=str(out30))
+    saved = exeanimset.AnimSet.parse((out30 / "effect_192.animset").read_bytes(), exeanimset.anim_set_info(192))
+    original = widget.anim_set_source.read_exe_set(exeanimset.anim_set_info(192))
+    body = exeanimset.parse_animation_section(saved.body, 34)
+    vanilla = exeanimset.parse_animation_section(original.body, 34)
+    assert [len(a.frames) for a in body.animations] == [2 * len(a.frames) for a in vanilla.animations]

@@ -277,22 +277,18 @@ def _cmd_anim_sets(args):
     if args.effect:
         anim_sets = {info: anim_set for info, anim_set in anim_sets.items() if info.effect_id in args.effect}
     game_data = None
-    files = []
-    for info, anim_set in sorted(anim_sets.items(), key=lambda item: (item[0].effect_id, item[0].index)):
-        if args.fps == 30:
-            if game_data is None:
-                from FF8GameData.gamedata import GameData
-                game_data = GameData("FF8GameData")
-                game_data.load_anim_sequence_data()
-            try:
-                anim_set, report = exeanimset.convert_to_real30(game_data, anim_set)
-            except exeanimset.AnimSetError as error:
-                print(f"[error] {info.file_name} ({info.label}): {error}")
-                failed += 1
-                continue
-            split = f", {len(report['split_list'])} split" if report['split_list'] else ""
-            print(f"[ok] {info.file_name} ({info.label}): {report['nb_converted']} animation(s) at 30 fps{split}")
-        files.append((info.file_name, anim_set.to_bytes()))   # every file is checked before any is written
+    if args.fps == 30:
+        from FF8GameData.gamedata import GameData
+        game_data = GameData("FF8GameData")
+        game_data.load_anim_sequence_data()
+    # every file is built and checked before any is written
+    files, reports, errors = exeanimset.build_export_files(anim_sets, args.fps == 30, game_data)
+    for info, report in reports:
+        split = f", {len(report['split_list'])} split" if report['split_list'] else ""
+        print(f"[ok] {info.file_name} ({info.label}): {report['nb_converted']} animation(s) at 30 fps{split}")
+    for info, error in errors:
+        print(f"[error] {info.file_name} ({info.label}): {error}")
+    failed += len(errors)
     os.makedirs(args.output_dir, exist_ok=True)
     for name, data in files:
         Path(args.output_dir, name).write_bytes(data)
