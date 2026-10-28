@@ -24,6 +24,8 @@ from Common.fileregistry import FileRegistry
 from Common.undo import UndoStack
 from FF8GameData.gamedata import GameData
 
+HEXT_FILE_KEY = "Cid draw .hext"  # registry key of the last .hext saved by Cid
+
 
 class CidWidget(QWidget):
     """Unified draw-point editor.
@@ -52,6 +54,7 @@ class CidWidget(QWidget):
 
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
+        self.file_registry = file_registry
 
         # Field screenshots (from the Deling image export) live under Resources by default.
         if field_images_folder is None:
@@ -646,7 +649,9 @@ class CidWidget(QWidget):
         if not self.exe_loaded:
             self._show_error("Draw Editor - No EXE loaded", "Load the FF8 exe before saving magic data.")
             return False
-        default_file_name = os.path.join(os.getcwd(), "draw_data_injection.hext")
+        # The last .hext saved here (file and folder) is remembered, like the opened files
+        default_file_name = self.file_registry.last_file(HEXT_FILE_KEY) or os.path.join(os.getcwd(),
+                                                                                         "draw_data_injection.hext")
         file_to_save = self._save_hext_dialog.getSaveFileName(parent=self, caption="Save hext file", filter="*.hext",
                                                               directory=default_file_name)[0]
         if not file_to_save:
@@ -666,6 +671,7 @@ class CidWidget(QWidget):
             hext_str += '\n'.join(phase_lines) + '\n'
         with open(file_to_save, "w", encoding="utf-8") as hext_file:
             hext_file.write(hext_str)
+        self.file_registry.remember_files(HEXT_FILE_KEY, [file_to_save])
         return True
 
     def _save_wmset(self):
