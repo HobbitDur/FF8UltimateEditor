@@ -21,7 +21,15 @@ d7c016, reduced weapon d1w/d9w):
    section 10): the battle-entry animation, swapped in at battle start
    (initAnimationSequenceAtStartBattle 0x5029A8/0x5029C9) and played by sequence 8 - doubled
    like section 3 (one-shot: it ends on AC).
-4. Cameras (monster section 6, character section 5), stats, AI and sounds are left alone.
+4. The camera (monster section 6, character section 5): every keyframe duration x2
+   (FF8GameData.dat.camera30) - FFNx plays every battle camera at 30 Hz too. A block that would
+   last over 2047 ticks refuses the whole file.
+5. Section 4 (dynamic textures) is left alone: opcode 80 steps it once per call, and the
+   sequence rewrite keeps the vanilla call rate everywhere (an 80 in a smoothed tick loop is a
+   per-tick event gated on the counter parity, a fallback loop keeps A1 A1, a background
+   sequence runs at 15 Hz behind its toggle), so the speed byte keeps its meaning (the study's
+   "speed 8 -> 4" only holds for a loop whose 80 would fire on every 30 Hz tick, which the
+   rewrite never produces). Stats, AI and sounds are left alone.
 
 ORDER of the section 3 split and the section 5 rewrite: the sequences are rewritten FIRST,
 on the vanilla byte-code the rules were made for (and verified against), then a too-long
@@ -40,11 +48,60 @@ from .animloopdetector import is_looping, ANIM_UNUSED
 from .animsplitter import (MAX_ANIMATION_FRAME, can_split_animation, get_nb_part_needed,
                            split_and_convert_animation)
 from .seqrewrite30 import rewrite_seq_animation_data
+from . import camera30
 
 FACTOR = 2
 
 # Section index of the extra single-animation block, by entity type name.
 _EXTRA_ANIMATION_SECTION = {"CHARACTER": 7, "WEAPON": 8, "CHARACTER_NO_WEAPON": 10}
+
+
+def get_camera_section_index(monster):
+    """Section index of the per-entity camera collection (monster 6, character 5), or None."""
+    from .monsteranalyser import MonsterAnalyser
+    layout = MonsterAnalyser.SECTION_INDEX_BY_ENTITY.get(getattr(monster, "entity_type", None), {})
+    index = layout.get('camera')
+    if index is None or index >= len(monster.section_raw_data):
+        return None
+    return index
+
+
+def _camera_collection(monster):
+    index = get_camera_section_index(monster)
+    if index is None or len(monster.section_raw_data[index]) < 6:
+        return index, None
+    return index, camera30.parse_camera_collection(bytes(monster.section_raw_data[index]))
+
+
+def plan_camera(monster, factor: int = FACTOR) -> str:
+    """Why the camera section cannot be converted ("" when it can, or when there is none)."""
+    try:
+        index, collection = _camera_collection(monster)
+    except ValueError as error:
+        return f"the camera section does not read as a camera collection ({error})"
+    if collection is None:
+        return ""
+    return "; ".join(camera30.collection_problem_list(collection, factor))
+
+
+def convert_camera_section(monster, factor: int = FACTOR):
+    """Multiply every keyframe duration of the model's camera section, in place. Returns the
+    CameraConversionReport, or None when the model has no camera."""
+    index, collection = _camera_collection(monster)
+    if collection is None:
+        return None
+    report = camera30.CameraConversionReport()
+    camera30.convert_collection(collection, factor, report)
+    monster.section_raw_data[index] = bytearray(collection.get_bytes())
+    return report
+
+
+def camera_looks_already_converted(monster, factor: int = FACTOR) -> bool:
+    try:
+        _index, collection = _camera_collection(monster)
+    except ValueError:
+        return False
+    return camera30.collection_looks_converted(collection, factor)
 
 
 def get_extra_animation_section_index(monster):
@@ -155,10 +212,16 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
 
     kind_dict: {anim id: loop kind} read from the sequences that drive this model (the weapon's
     for a character body), BEFORE anything is rewritten.
-    Returns {'nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra'}.
+    Returns {'nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra',
+    'camera_report'}. A camera that cannot be converted is listed in 'skipped_list' as
+    ('camera', reason), and nothing is touched either.
     """
     report = {'nb_converted': 0, 'split_list': [], 'skipped_list': [], 'sequence_report': None,
-              'nb_extra': 0}
+              'nb_extra': 0, 'camera_report': None}
+    camera_problem = plan_camera(monster)
+    if camera_problem:
+        report['skipped_list'].append(('camera', camera_problem))
+        return report
     has_animation = bool(monster.animation_data.animations) and bool(monster.bone_data.bones)
     plan_list = []
     if has_animation:
@@ -191,4 +254,7 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
     # 3. the battle-entry block
     if has_animation:
         report['nb_extra'] = convert_extra_animation_block(monster, mode)
+
+    # 4. the camera (checked before anything was touched: plan_camera)
+    report['camera_report'] = convert_camera_section(monster)
     return report

@@ -234,7 +234,8 @@ class FpsBatchReportDialog(QDialog):
                 line_list.append(f"{title}: {len(report['skipped_list'])} animation(s) cannot be "
                                  f"converted")
                 for anim_id, reason in report['skipped_list']:
-                    line_list.append(f"    animation {anim_id}: {reason}")
+                    label = "camera" if anim_id == 'camera' else f"animation {anim_id}"
+                    line_list.append(f"    {label}: {reason}")
             line_list.append("")
 
         line_list.append("=== Converted ===")
@@ -262,6 +263,9 @@ class FpsBatchReportDialog(QDialog):
             line_list.append(f"    WARNING: {warning}")
         if report.get('nb_extra'):
             line_list.append(f"    battle-entry animation block converted")
+        camera_report = report.get('camera_report')
+        if camera_report is not None:
+            line_list.append(f"    camera: {camera_report.summary()}")
         sequence_report = report.get('sequence_report')
         if sequence_report is None:
             return line_list

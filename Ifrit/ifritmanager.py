@@ -19,7 +19,7 @@ from FF8GameData.dat.animloopdetector import analyse_animation_usage, is_looping
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
                                           get_max_frame_for_animation, get_nb_part_needed,
                                           can_split_animation, MAX_ANIMATION_ID, MAX_ANIMATION_FRAME)
-from FF8GameData.dat import dat30
+from FF8GameData.dat import dat30, battlememory
 from FF8GameData.dat.entranceanimation import EntranceAnimationView
 from FF8GameData.tim.timfile import (decode_tim, force_opaque, word_to_rgba, PalettedTim,
                                      encode_clut, encode_indices)
@@ -560,7 +560,8 @@ class IfritManager:
     def _new_fps_report(file_path) -> dict:
         return {'file': os.path.basename(str(file_path)), 'name': "", 'nb_converted': 0,
                 'split_list': [], 'skipped_list': [], 'error': "", 'source': "",
-                'real30': True, 'sequence_report': None, 'nb_extra': 0, 'warning_list': []}
+                'real30': True, 'sequence_report': None, 'nb_extra': 0, 'warning_list': [],
+                'camera_report': None}
 
     def _group_families(self, file_list) -> list:
         """The files of file_list grouped so a character body and its weapons are converted
@@ -608,6 +609,7 @@ class IfritManager:
         blocking = [report for report in group_report
                     if report['skipped_list']
                     or (report.get('_monster') is None and not report.get('_not_a_model'))]
+        data_list = []
         for report in group_report:
             monster = report.pop('_monster', None)
             report.pop('_not_a_model', None)
@@ -620,11 +622,42 @@ class IfritManager:
                 report['split_list'] = []
                 report['sequence_report'] = None
                 report['nb_extra'] = 0
+                report['camera_report'] = None
                 continue
+            # Every file of the family is built in memory before any is written: a file that
+            # cannot be built leaves the whole family untouched on disk.
             try:
-                monster.write_data_to_file(self.game_data, monster.origin_path)
+                data_list.append((report, monster.origin_path, bytes(monster.get_bytes(self.game_data))))
             except Exception as e:
+                report['error'] = f"the file cannot be built ({type(e).__name__}: {e})"
+                for other, _path, _data in data_list:
+                    other['error'] = other['error'] or "left untouched: another file of its family failed"
+                return
+        self._add_memory_warnings(data_list)
+        for report, path, data in data_list:
+            try:
+                with open(path, "wb") as file:
+                    file.write(data)
+            except OSError as e:
                 report['error'] = f"the file cannot be saved ({type(e).__name__}: {e})"
+
+    @staticmethod
+    def _add_memory_warnings(data_list):
+        """Warn when a converted file no longer fits the vanilla battle memory (the 30 fps FFNx
+        build enlarges it; FF8GameData/dat/battlememory.py)."""
+        body_list, weapon_list = [], []
+        for report, path, data in data_list:
+            name = os.path.basename(str(path))
+            report['warning_list'].extend(battlememory.file_warning_list(name, data))
+            lower = name.lower()
+            if len(lower) > 2 and lower[0] == 'd' and lower[2] == 'c':
+                body_list.append((report, name, data))
+            elif len(lower) > 2 and lower[0] == 'd' and lower[2] == 'w':
+                weapon_list.append((name, data))
+        for report, body_name, body in body_list:
+            pairs = [(name, data) for name, data in weapon_list if name[1] == body_name[1]] or [("(no weapon)", b"")]
+            worst = max(pairs, key=lambda pair: battlememory.party_bytes(pair[1]) if pair[1] else 0)
+            report['warning_list'].extend(battlememory.pair_warning_list(body_name, body, *worst))
 
     def _convert_one_file_to_real30(self, file_path, split_when_too_long: bool,
                                     mode: str = interpolation.LINEAR) -> dict:
@@ -682,6 +715,10 @@ class IfritManager:
                 report['warning_list'].append(
                     "looks already converted (every animation has an even frame count and its "
                     "one-shot animations end on a held pose): converting twice doubles again")
+        if dat30.camera_looks_already_converted(monster):
+            report['warning_list'].append(
+                "the camera looks already converted (every keyframe duration is even): "
+                "converting twice doubles again")
         origin = getattr(monster, 'origin_path', "") or ""
         allow_split = split_when_too_long and not self.is_character_family_file(origin)
         try:
@@ -689,7 +726,8 @@ class IfritManager:
                                                      allow_split, mode)
         except Exception as e:
             return f"the conversion failed ({type(e).__name__}: {e})"
-        for key in ('nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra'):
+        for key in ('nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra',
+                    'camera_report'):
             report[key] = result[key]
         return ""
 

@@ -680,9 +680,11 @@ class MonsterAnalyser:
         self.restore_sections_from_snapshot(bytes(file_bytes), list(new_section_bytes.keys()), game_data, decompiler)
 
     def write_data_to_file(self, game_data: GameData, dat_path):
-        """Serialize (get_bytes) and write the enemy to `dat_path`."""
+        """Serialize (get_bytes) and write the enemy to `dat_path`. The bytes are built before the
+        file is opened: a model that fails to serialize leaves the file as it was."""
+        data = self.get_bytes(game_data)
         with open(dat_path, "wb") as f:
-            f.write(self.get_bytes(game_data))
+            f.write(data)
 
     def __get_raw_data_from_game_data(self, sect_nb: int, sect_data: dict):
         sect_offset = self.header_data['section_pos'][sect_nb]

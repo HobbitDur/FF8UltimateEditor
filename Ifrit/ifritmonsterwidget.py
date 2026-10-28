@@ -653,9 +653,18 @@ class IfritFilePane(QWidget):
         # dragging (rotate ring / Ctrl+drag length), and glTF mesh import - fires this one on a
         # real, committed change ONLY (a click that ends in a cancelled dialog never emits it, so
         # cancelling never dirties the file).
+        # An action of the 3D view that rewrote other sections (the 30 fps conversion: sequences,
+        # camera): reload their tabs, connected BEFORE model_edited so the undo step lists them.
+        sections_rewritten = getattr(view, 'sections_rewritten', None)
+        if sections_rewritten is not None:
+            sections_rewritten.connect(self._on_sections_rewritten)
         model_edited = getattr(view, 'model_edited', None)
         if model_edited is not None:
             model_edited.connect(self._on_edit)
+
+    def _on_sections_rewritten(self, sections):
+        self.reload_from_model(changed_sections=set(sections))
+        self._edited_sections.update(sections)
 
     def _connect_dirty_signals(self, root=None):
         """(Re)connect edit signals of the currently-built editable controls. Only user-interaction

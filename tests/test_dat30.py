@@ -124,8 +124,23 @@ class TestMonster:
         path = _copy(tmp_path, "c0m001.dat")[0]
         manager.convert_file_list_to_fps([path], 30)
         original, converted = _load(manager, BATTLE_PATH / "c0m001.dat"), _load(manager, path)
-        for index in (1, 2, 4, 6, 7, 8, 9, 10, 11):   # skeleton ... textures, camera included
+        for index in (1, 2, 4, 7, 8, 9, 10, 11):   # skeleton ... textures (not the camera)
             assert bytes(converted.section_raw_data[index]) == bytes(original.section_raw_data[index]), index
+
+    def test_the_camera_durations_double(self, manager, tmp_path):
+        from FF8GameData.dat.cameracollection import parse_camera_collection
+        path = _copy(tmp_path, "c0m001.dat")[0]
+        report = manager.convert_file_list_to_fps([path], 30)[0]
+        assert report['camera_report'] is not None and report['camera_report'].nb_keyframe
+        original, converted = _load(manager, BATTLE_PATH / "c0m001.dat"), _load(manager, path)
+
+        def durations(monster):
+            collection = parse_camera_collection(bytes(monster.section_raw_data[6]))
+            return [frame.duration.get() for camera_set in collection.sets
+                    for animation in camera_set.animations for block in animation.blocks
+                    for frame in block.frames]
+        assert durations(converted) == [2 * d for d in durations(original)]
+        assert len(converted.section_raw_data[6]) == len(original.section_raw_data[6])
 
     def test_the_slow_limit_no_longer_applies(self, manager, tmp_path):
         """c0m083 animation 20 (116 frames) is played by the idle: Slow-limited to 128 frames
@@ -187,6 +202,10 @@ class TestCharacterFamily:
         assert report_list[0]['sequence_report'] is None
         assert report_list[1]['sequence_report'] is not None
         assert _verify_file(vm, BATTLE_PATH / "d0w000.dat", weapon) == {}
+        # the body's camera (section 5) is converted, the weapon has none
+        assert report_list[0]['camera_report'].nb_keyframe and report_list[1]['camera_report'] is None
+        # a converted pair no longer fits the vanilla 64 KB party slot: the user is told
+        assert any("party slot" in warning for warning in report_list[0]['warning_list'])
 
     def test_the_battle_entry_blocks_are_doubled(self, manager, tmp_path):
         body, weapon = _copy(tmp_path, "d0c000.dat", "d0w000.dat")

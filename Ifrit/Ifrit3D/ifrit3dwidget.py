@@ -94,6 +94,10 @@ class Ifrit3DWidget(QWidget):
     # in-view bone dragging (rotate ring / Shift+drag length), and glTF mesh import. Distinct from
     # animation_changed, which also fires on mere navigation and must NOT dirty the file.
     model_edited = pyqtSignal()
+    # Sections of the file rewritten by an action of this view outside its own animation data
+    # (the 30 fps conversion rewrites the sequences and the camera): {section index}. The monster
+    # pane reloads those tabs, so a tab still showing the old bytes cannot write them back.
+    sections_rewritten = pyqtSignal(object)
     def __init__(self, ifrit_manager:IfritManager, show_controls=True):
         super().__init__()
         self.ifrit_manager = ifrit_manager
@@ -2237,8 +2241,14 @@ class Ifrit3DWidget(QWidget):
             return
         if report['skipped_list']:
             QMessageBox.warning(self, title, "Not converted, nothing was changed:\n" + "\n".join(
-                f"  animation {anim_id}: {reason}" for anim_id, reason in report['skipped_list']))
+                f"  {'camera' if anim_id == 'camera' else f'animation {anim_id}'}: {reason}"
+                for anim_id, reason in report['skipped_list']))
             return
+        from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+        layout = MonsterAnalyser.SECTION_INDEX_BY_ENTITY.get(enemy.entity_type, {})
+        self.sections_rewritten.emit({layout[name] for name in ('anim_seq', 'camera', 'extra_animation')
+                                      if name in layout})
+        self.model_edited.emit()
         self._refresh_animation_count()
         self.current_frame = 0
         self.next_frame_index = 1
@@ -2262,6 +2272,8 @@ class Ifrit3DWidget(QWidget):
                                      key=lambda r: r.seq_id):
                 reason = "; ".join(seq_report.manual_list or seq_report.note_list)
                 line_list.append(f"  sequence {seq_report.seq_id} ({seq_report.status}): {reason}")
+        if report.get('camera_report') is not None:
+            line_list.append(f"Camera: {report['camera_report'].summary()}.")
         for warning in report['warning_list']:
             line_list.append(f"Warning: {warning}")
         line_list.append("\nFor FFNx True30FPS: convert only vanilla, unconverted files - "
