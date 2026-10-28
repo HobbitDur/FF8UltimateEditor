@@ -80,13 +80,16 @@ def test_texture_edit_is_cropped_back_to_its_tim(qapp):
     ("c0m001", ["1/2/3 - 3D", "4 - Dynamic Texture", "5 - Sequence", "6 - Camera", "7 - Stat", "8 - AI",
                 "11 - Static Texture"]),
     ("c0m127", ["1 - Stat", "2 - AI"]),
-    ("d0c000", ["1/2/3 - 3D", "4 - Dynamic Texture", "5 - Camera", "6 - Static Texture", "7 - Entrance"]),
-    ("d0w000", ["1/2/3 - 3D", "4 - Sequence", "7 - Static Texture", "8 - Entrance"]),
+    ("d0c000", ["1/2/3 - 3D", "4 - Dynamic Texture", "5 - Camera", "6 - Static Texture", "7 - Entrance",
+                "Exe - Limit anim."]),
+    ("d0w000", ["1/2/3 - 3D", "4 - Sequence", "7 - Static Texture", "8 - Entrance", "Exe - Limit anim."]),
     ("d1w008", ["1 - 3D", "2 - Sequence", "5 - Static Texture"]),
     ("d7c016", ["1/2/3 - 3D", "4 - Dynamic Texture", "5 - Camera", "6 - Sequence", "9 - Static Texture",
-                "10 - Entrance"]),
+                "10 - Entrance", "Exe - Limit anim."]),
 ])
 def test_tabs_show_their_real_section_in_section_order(qapp, name, labels):
+    """A character body / weapon with exe anim sets also shows the "Exe - Limit anim." tab, greyed
+    while no FF8 exe / .animset is open (Zell's reduced gloves never have it)."""
     manager = _manager(name)
     pane = _pane(manager, name)
     tabs = pane._tabs
