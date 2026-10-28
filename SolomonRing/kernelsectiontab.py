@@ -156,7 +156,7 @@ class KernelSectionTab(QWidget):
         self._remove_btn = None
         self._add_btn = None
         # Sections sharing an entry budget with others (the seven ability sections share
-        # one 128-id space) get a "N left" line under Add, refreshed by the owner through
+        # one 255-id space) get a "N left" line under Add, refreshed by the owner through
         # set_pool_status(); pool_callback() -> (text, can_add) supplies it on rebuild. A
         # section with a cap of its own (battle commands, command ability data) uses the same
         # line, with pool_tooltip explaining where its limit comes from.
@@ -237,9 +237,10 @@ class KernelSectionTab(QWidget):
                 self._pool_label.setStyleSheet("font-size: 9pt;")
                 self._pool_label.setToolTip(self._pool_tooltip or
                     "The seven ability sections share one id space - the engine reads\n"
-                    "them as a single array - and a savegame stores 128 learned-ability\n"
-                    "bits per GF. That is the budget: spend it in whichever sections you\n"
-                    "like, and free some again by removing entries from another one.")
+                    "them as a single array - of at most 255 ids (FFNx saves learned ids\n"
+                    "128+ in its own block of the save). That is the budget: spend it in\n"
+                    "whichever sections you like, and free some again by removing entries\n"
+                    "from another one.")
                 list_col.addWidget(self._pool_label)
                 self.refresh_pool_status()
         self._list_col = list_col

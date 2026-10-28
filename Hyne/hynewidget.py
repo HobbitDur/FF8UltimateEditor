@@ -26,10 +26,10 @@ from FF8GameData.kernellevels import load_kernel
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
     CHARACTER_NAMES, COMMAND_ABILITY_GROUPS, EQUIPPED_ABILITY_GROUPS,
-    LEARNED_ABILITY_BITS, VANILLA_ABILITY_COUNT,
+    VANILLA_ABILITY_COUNT,
     GF_COMPATIBILITY_MIN, GF_COMPATIBILITY_MAX,
 )
-from Hyne.hynemanager import HyneManager
+from Hyne.hynemanager import HyneManager, SAVE_ABILITY_IDS
 
 # Junction stat slots: (manager field, label). Each stores a magic id (0 = none); the
 # potency comes from that spell's kernel junction value scaled by the quantity stocked.
@@ -544,12 +544,13 @@ class HyneWidget(QWidget):
         status_tab_layout.addStretch(1)
         status_tab_container.setLayout(status_tab_layout)
 
-        # Learned abilities: one checkbox per junctionable_ability id (bit id in the GF's
-        # 128-bit "complete abilities" field). Value 0 (None) is skipped.
+        # Learned abilities: one checkbox per junctionable_ability id - ids 0-127 in the GF's
+        # 128-bit "complete abilities" field, 128-254 in FFNx AddMoreAbility's save block.
+        # Value 0 (None) is skipped.
         self.gf_ability_checks = {}
         ability_grid = QGridLayout()
         columns = 4
-        for i, ability_id in enumerate(range(1, LEARNED_ABILITY_BITS)):
+        for i, ability_id in enumerate(range(1, SAVE_ABILITY_IDS)):
             check = QCheckBox(f"Ability {ability_id}")  # named once a kernel.bin is open
             check.setToolTip(f"Ability id {ability_id} learned")
             check.stateChanged.connect(self._on_gf_ability_changed)
@@ -599,7 +600,7 @@ class HyneWidget(QWidget):
         sub_tabs.addTab(ability_scroll, "Learned Abilities")
         sub_tabs.addTab(ap_scroll, "AP")
         sub_tabs.setTabToolTip(0, "Name, EXP, HP, kills and availability of the GF")
-        sub_tabs.setTabToolTip(1, "Abilities this GF has finished learning (128-bit ability bitfield)")
+        sub_tabs.setTabToolTip(1, "Abilities this GF has finished learning (ids 128+ are kept in FFNx AddMoreAbility's save block)")
         sub_tabs.setTabToolTip(2, "AP invested toward each of the GF's learnable abilities")
 
         layout = QHBoxLayout()
@@ -611,7 +612,7 @@ class HyneWidget(QWidget):
 
     def _show_defined_abilities(self):
         """Show a Learned checkbox per ability id the kernel.bin defines (the vanilla 115 without
-        one), plus any id the selected GF has learned beyond that: the bitfield holds 127."""
+        one), plus any id the selected GF has learned beyond that."""
         count = len(self.kernel_names.abilities) or VANILLA_ABILITY_COUNT
         gf = self._selected_gf()
         for ability_id, check in self.gf_ability_checks.items():

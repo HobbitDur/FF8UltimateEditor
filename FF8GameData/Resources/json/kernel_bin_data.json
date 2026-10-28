@@ -1,6 +1,6 @@
 {
-"comment_ability_id_max":"Sections 12-18 are one ability id space to the engine; a savegame holds 128 learned-ability bits per GF, so that is the most entries they may have between them (FFNx AddMoreAbility refuses more).",
-"ability_id_max":128,
+"comment_ability_id_max":"Sections 12-18 are one ability id space to the engine. Ability ids are bytes and 255 means no ability, so FFNx AddMoreAbility takes at most 255 entries between them (ids 0-254); a savegame holds 128 learned bits per GF and FFNx saves ids 128+ in its own block of the save. Sections 12-16 must end below id 128.",
+"ability_id_max":255,
 "sections": [
 {"id":1, "section_offset":"0x0004","number_sub_section":39, "sub_section_size":8,  "section_offset_text_linked":"0x0080","section_id_text_linked":32, "section_offset_data_linked":"",       "section_id_data_linked":0 ,"compressibility_factor":0,"sub_section_nb_text_offset":2,"type": "data", "size":4, "section_name":"Battle commands section", "growable":true},
 {"id":2, "section_offset":"0x0008","number_sub_section":57, "sub_section_size":60, "section_offset_text_linked":"0x0084","section_id_text_linked":33, "section_offset_data_linked":"",       "section_id_data_linked":0 ,"compressibility_factor":0,"sub_section_nb_text_offset":2,"type": "data", "size":4, "section_name":"Magic data section", "growable":true, "gf_reserved_start":64, "gf_reserved_count":32},

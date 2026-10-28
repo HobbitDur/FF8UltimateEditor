@@ -694,8 +694,8 @@ def test_adding_an_ability_renumbers_the_gf_learn_lists(qapp, tmp_path):
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
 def test_ability_pool_stops_at_the_savemap_limit(qapp, tmp_path):
-    """The seven sections share 128 ids - the width of a savegame's per-GF learned
-    mask - so the counter counts down across all of them and Add greys out at zero,
+    """The seven sections share 255 ids - ability ids are bytes and 255 means none -
+    so the counter counts down across all of them and Add greys out at zero,
     whichever tab the entries were added from."""
     work = tmp_path / "kernel.bin"
     work.write_bytes(KERNEL.read_bytes())
@@ -705,24 +705,24 @@ def test_ability_pool_stops_at_the_savemap_limit(qapp, tmp_path):
     menu_add = _add_button(widget._section_tabs[18])
 
     text, can_add = widget._ability_pool_status()
-    assert "116 / 128" in text and "12 left" in text and can_add
-    for section_id, current in ((16, 5), (17, 9)):
+    assert "116 / 255" in text and "139 left" in text and can_add
+    for section_id, current, maximum in ((16, 5, 126), (17, 9, 254)):
         text, can_add = widget._ability_pool_status(section_id)
-        assert f"{current} entries - category maximum 126" in text
-        assert "Shared pool: 116 / 128" in text and "12 left" in text and can_add
+        assert f"{current} entries - category maximum {maximum}" in text
+        assert "Shared pool: 116 / 255" in text and "139 left" in text and can_add
 
-    for _ in range(5):
-        gf_add.click()
-    for _ in range(7):
+    for _ in range(8):
         menu_add.click()
+    for _ in range(131):
+        gf_add.click()
 
-    assert widget._ability_total() == 128
+    assert widget._ability_total() == 255
     text, can_add = widget._ability_pool_status()
     assert "0 left" in text and not can_add
     # Both tabs' buttons, not just the one last clicked, and the handler itself refuses.
     assert not gf_add.isEnabled() and not menu_add.isEnabled()
     widget._add_growable_entry(17)
-    assert widget._ability_total() == 128
+    assert widget._ability_total() == 255
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
@@ -760,7 +760,7 @@ def test_removing_an_ability_frees_the_budget_and_clears_its_slots(qapp, tmp_pat
     entry, field = next(iter(widget._ability_reference_entries()))
     assert entry.get(field) == 0, "the slot teaching the removed ability was not cleared"
     text, can_add = widget._ability_pool_status()
-    assert "12 left" in text and can_add
+    assert "139 left" in text and can_add
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
@@ -815,7 +815,7 @@ def test_original_abilities_can_be_removed_and_their_ids_reused(qapp, tmp_path, 
     assert not widget._section_tabs[12].can_remove(0)
     assert widget._ability_category_max(12) == 127
     assert widget._ability_category_max(16) == 126
-    assert widget._ability_category_max(17) == 126
+    assert widget._ability_category_max(17) == 254
     assert widget._ability_category_max(18) == 32
 
 
@@ -823,7 +823,7 @@ def test_original_abilities_can_be_removed_and_their_ids_reused(qapp, tmp_path, 
 def test_the_pool_counter_reflects_the_loaded_file(qapp, tmp_path):
     """The tabs are built before a kernel.bin is open, when every section is empty. The
     counter has to be refreshed once one is loaded, or it sits at the widget's starting
-    state and claims all 128 ids are free on a vanilla file."""
+    state and claims all 255 ids are free on a vanilla file."""
     widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
 
     text, can_add = widget._ability_pool_status(17)
@@ -835,7 +835,7 @@ def test_the_pool_counter_reflects_the_loaded_file(qapp, tmp_path):
 
     for section_id in widget._ability_section_ids():
         label = widget._section_tabs[section_id]._pool_label
-        assert "116 / 128" in label.text() and "12 left" in label.text(), \
+        assert "116 / 255" in label.text() and "139 left" in label.text(), \
             f"section {section_id} still shows {label.text()!r}"
 
 
@@ -1284,8 +1284,8 @@ def test_empty_command_ability_section_can_be_saved_and_grown_again(qapp, tmp_pa
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
-@pytest.mark.parametrize("section_id, expected_max", [(12, 127), (16, 126), (17, 126)])
-def test_empty_menu_group_keeps_its_start_representable(qapp, tmp_path, section_id, expected_max):
+@pytest.mark.parametrize("section_id, expected_max", [(12, 127), (16, 126)])
+def test_empty_gf_group_keeps_its_start_representable(qapp, tmp_path, section_id, expected_max):
     work = tmp_path / "kernel.bin"
     work.write_bytes(KERNEL.read_bytes())
     widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
@@ -1300,10 +1300,31 @@ def test_empty_menu_group_keeps_its_start_representable(qapp, tmp_path, section_
         target.append_blank_subsection()
     assert widget._ability_entry_count(section_id) == expected_max
     assert widget._ability_category_max(section_id) == expected_max
-    assert widget._ability_first_id(18) == 127
+    assert widget._ability_first_id(17) == 127
     assert not widget._ability_pool_status(12)[1]
-    assert not widget._ability_pool_status(17)[1]
+    assert not widget._ability_pool_status(16)[1]
+    assert widget._ability_pool_status(17)[1]
     assert widget._ability_pool_status(18)[1]
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_gf_abilities_can_use_ids_past_127(qapp, tmp_path):
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    for sid in widget._ability_section_ids():
+        section = widget._section_by_id(sid)
+        keep = 1 if sid == 12 else 0
+        while len(section.get_subsection_list()) > keep:
+            section.remove_subsection(len(section.get_subsection_list()) - 1)
+    gf = widget._section_by_id(17)
+    while widget._ability_total() < 255:
+        gf.append_blank_subsection()
+    assert widget._ability_entry_count(17) == widget._ability_category_max(17) == 254
+    assert widget._ability_first_id(18) == 255
+    assert not widget._ability_pool_status(17)[1], "the 255-id pool is full"
+    assert not widget._ability_pool_status(18)[1]
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")

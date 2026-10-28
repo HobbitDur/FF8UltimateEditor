@@ -33,6 +33,16 @@ FFNx uses the block only when it is valid AND its first 198 slots equal the save
 table (otherwise the vanilla table was changed after it, by the game or a tool, and FFNx takes
 that table and empties slots 199-255). So with a block this tool edits its 255 slots and copies
 the first 198 into the savemap's table on save; without one the save is edited as vanilla.
+
+FFNx's AddMoreAbility (up to 255 kernel.bin abilities) keeps learned ability ids 128-254 in a
+524-byte block right after it, also outside the CRC; ids 0-127 stay in each GF's 16-byte field:
+  [0x1810..0x1813] magic 0x42415846 ("FXAB"), [0x1814] u16 version 1, [0x1816] u16 GF count 16,
+  [0x1818] u32 FNV-1a over the 512 bytes that follow,
+  [0x181C..] 16 x 16 bytes: each GF's savemap learned field again (ids 0-127),
+  [0x191C..] 16 x 16 bytes: each GF's ids 128-255.
+FFNx uses the block only when it is valid AND its copy of the 16 learned fields still equals the
+savemap's (otherwise something saved over the slot without FFNx) - then ids 128+ start unlearned.
+This tool writes the block only once an id past 127 is ticked, or when the save already has one.
 """
 import os
 import re
@@ -46,7 +56,7 @@ from Quezacotl.quezacotlmanager import (
     NB_GF, GF_ENTRY_SIZE, NB_CHARACTERS, CHARACTER_ENTRY_SIZE,
     CONFIG_ENTRY_SIZE, MISC_ENTRY_SIZE, NB_ITEMS, ITEM_ENTRY_SIZE,
     GF_DATA_OFFSET, CHARACTER_DATA_OFFSET, CONFIG_DATA_OFFSET, MISC_DATA_OFFSET,
-    ITEMS_DATA_OFFSET,
+    ITEMS_DATA_OFFSET, LEARNED_ABILITY_BITS,
 )
 
 IMAGE_SIZE = 8192
@@ -71,6 +81,17 @@ ITEM_EXT_SLOTS = 255
 ITEM_EXT_HEADER_SIZE = 12
 ITEM_EXT_SIZE = ITEM_EXT_HEADER_SIZE + 2 * ITEM_EXT_SLOTS   # 522
 ITEM_MAX_QUANTITY = 100
+
+ABILITY_EXT_OFFSET = 0x1810           # FFNx AddMoreAbility learned-ability block (see the docstring)
+ABILITY_EXT_MAGIC = 0x42415846
+ABILITY_EXT_VERSION = 1
+ABILITY_EXT_HEADER_SIZE = 12
+ABILITY_EXT_GF_BYTES = LEARNED_ABILITY_BITS // 8                     # 16 per GF, per half
+ABILITY_EXT_NATIVE = ABILITY_EXT_OFFSET + ABILITY_EXT_HEADER_SIZE    # the learned fields' copy
+ABILITY_EXT_EXTENDED = ABILITY_EXT_NATIVE + NB_GF * ABILITY_EXT_GF_BYTES
+ABILITY_EXT_SIZE = ABILITY_EXT_HEADER_SIZE + 2 * NB_GF * ABILITY_EXT_GF_BYTES   # 524
+SAVE_ABILITY_IDS = 255                # a save can mark ids 0-254 learned (255 means "no ability")
+GF_LEARNED_OFFSET = 20                # a GF record's 16-byte learned field
 
 
 def item_extension_checksum(slot_bytes) -> int:
@@ -334,6 +355,35 @@ def crc16_ff8(data) -> int:
     return (~crc) & 0xFFFF
 
 
+class HyneGfEntry(GfEntry):
+    """A save's GF record: learned ids 128+ live in FFNx AddMoreAbility's block."""
+
+    def __init__(self, manager, offset, gf_id):
+        super().__init__(manager.buffer, offset, gf_id, manager.game_data)
+        self._manager = manager
+
+    def has_ability(self, ability_id):
+        if ability_id < LEARNED_ABILITY_BITS:
+            return super().has_ability(ability_id)
+        if self._manager.ability_extension != "extended":
+            return False
+        position, bit = self._manager.extended_ability_bit(self.gf_id, ability_id)
+        return bool(self._buffer[position] & bit)
+
+    def set_ability(self, ability_id, learned):
+        if ability_id < LEARNED_ABILITY_BITS:
+            super().set_ability(ability_id, learned)
+            return
+        if not learned and self._manager.ability_extension != "extended":
+            return
+        self._manager.enable_ability_extension()
+        position, bit = self._manager.extended_ability_bit(self.gf_id, ability_id)
+        if learned:
+            self._buffer[position] |= bit
+        else:
+            self._buffer[position] &= ~bit & 0xFF
+
+
 class HyneManager:
     """.ff8 save-file editor logic.
 
@@ -359,6 +409,8 @@ class HyneManager:
         # "extended": the FFNx AddMoreItems block is in use (255 slots); "stale": a block is
         # there but FFNx would ignore it (damaged, or the item table changed since); "none".
         self.item_extension = "none"
+        # The same states for FFNx AddMoreAbility's learned-ability block.
+        self.ability_extension = "none"
 
     def load_file(self, file_path):
         self.file_path = file_path
@@ -388,8 +440,9 @@ class HyneManager:
                 f"{error_message} (stored 0x{stored1:04X}/0x{stored2:04X}, computed 0x{computed:04X})")
 
     def _parse(self):
+        self.ability_extension = self._ability_extension_state()
         self.gf_entries = [
-            GfEntry(self.buffer, GAMESTATE_BASE + GF_DATA_OFFSET + i * GF_ENTRY_SIZE, i, self.game_data)
+            HyneGfEntry(self, GAMESTATE_BASE + GF_DATA_OFFSET + i * GF_ENTRY_SIZE, i)
             for i in range(NB_GF)
         ]
         self.character_entries = [
@@ -462,6 +515,50 @@ class HyneManager:
         self.buffer[native:native + NB_ITEMS * ITEM_ENTRY_SIZE] = slot_bytes[:NB_ITEMS * ITEM_ENTRY_SIZE]
         self._write_item_extension(slot_bytes)
 
+    # ── FFNx AddMoreAbility learned-ability block ────────────────────────
+
+    def _native_learned_bytes(self):
+        """The 16 GFs' savemap learned fields (ids 0-127), one after the other."""
+        fields = bytearray()
+        for gf in range(NB_GF):
+            start = GAMESTATE_BASE + GF_DATA_OFFSET + gf * GF_ENTRY_SIZE + GF_LEARNED_OFFSET
+            fields += self.buffer[start:start + ABILITY_EXT_GF_BYTES]
+        return bytes(fields)
+
+    def _ability_extension_state(self):
+        """What FFNx would make of the block (see the module docstring)."""
+        magic, version, gf_count, checksum = struct.unpack_from("<IHHI", self.buffer, ABILITY_EXT_OFFSET)
+        if magic != ABILITY_EXT_MAGIC:
+            return "none"
+        data = bytes(self.buffer[ABILITY_EXT_NATIVE:ABILITY_EXT_OFFSET + ABILITY_EXT_SIZE])
+        if version != ABILITY_EXT_VERSION or gf_count != NB_GF or checksum != item_extension_checksum(data):
+            return "stale"
+        if data[:NB_GF * ABILITY_EXT_GF_BYTES] != self._native_learned_bytes():
+            return "stale"
+        return "extended"
+
+    def extended_ability_bit(self, gf_id, ability_id):
+        """(buffer position, bit mask) of a learned id 128+ in the block."""
+        byte_index, bit = divmod(ability_id - LEARNED_ABILITY_BITS, 8)
+        return ABILITY_EXT_EXTENDED + gf_id * ABILITY_EXT_GF_BYTES + byte_index, 1 << bit
+
+    def enable_ability_extension(self):
+        """Give the save FFNx AddMoreAbility's block, with no id past 127 learned yet. A stale
+        block is replaced the same way FFNx would."""
+        if self.ability_extension == "extended":
+            return
+        self.buffer[ABILITY_EXT_EXTENDED:ABILITY_EXT_OFFSET + ABILITY_EXT_SIZE] = bytes(NB_GF * ABILITY_EXT_GF_BYTES)
+        self.ability_extension = "extended"
+        self._sync_ability_extension()
+
+    def _sync_ability_extension(self):
+        """Before a save with the block: copy the savemap's learned fields into it (FFNx compares
+        them) and recompute its checksum."""
+        self.buffer[ABILITY_EXT_NATIVE:ABILITY_EXT_EXTENDED] = self._native_learned_bytes()
+        data = bytes(self.buffer[ABILITY_EXT_NATIVE:ABILITY_EXT_OFFSET + ABILITY_EXT_SIZE])
+        struct.pack_into("<IHHI", self.buffer, ABILITY_EXT_OFFSET, ABILITY_EXT_MAGIC, ABILITY_EXT_VERSION,
+                         NB_GF, item_extension_checksum(data))
+
     def save_file(self, file_path="", backup=True):
         if not file_path:
             file_path = self.file_path
@@ -470,6 +567,8 @@ class HyneManager:
 
         if self.item_extension == "extended":
             self._sync_item_extension()   # before the CRC: it covers the item table
+        if self.ability_extension == "extended":
+            self._sync_ability_extension()
         crc = crc16_ff8(bytes(self.buffer[CRC_SPAN_START:CRC_SPAN_START + CRC_SPAN_LEN]))
         struct.pack_into("<H", self.buffer, CRC_OFFSET_1, crc)
         struct.pack_into("<H", self.buffer, CRC_OFFSET_2, crc)

@@ -264,8 +264,10 @@ class SolomonRingWidget(QWidget):
         if config.get("ability_pool"):
             pool_callback = lambda sid=section_id: self._ability_pool_status(sid)
             pool_tooltip = ("The category maximum assumes abilities in the other categories are removed.\n"
-                            "Ability ID 0 (None) is always kept. The menu group's first ID must\n"
-                            "stay below 128, and menu abilities have their own 32-entry limit.\n"
+                            "Ability ID 0 (None) is always kept. Junction, command, stat %, character\n"
+                            "and party abilities must end below ID 128 (the GF group starts at 127 at\n"
+                            "most); GF and menu abilities may use IDs up to 254. Menu abilities have\n"
+                            "their own 32-entry limit.\n"
                             "The shared pool shows how many IDs are available right now;\n"
                             "removing an ability frees an ID for any category.")
         elif config.get("max_count"):
@@ -445,16 +447,21 @@ class SolomonRingWidget(QWidget):
     # them as a single 8-byte-entry array and decide the group from where the id falls,
     # so an entry appended to one section takes the id just after that section's last,
     # and every ability behind it shifts up by one. The budget they share is
-    # kernel_bin_data.json's "ability_id_max" - 128, the width of a savegame's per-GF
-    # learned-ability mask, and what FFNx's AddMoreAbility patch refuses to exceed.
+    # kernel_bin_data.json's "ability_id_max" - 255: ids are bytes and 255 means "no
+    # ability", what FFNx's AddMoreAbility patch refuses to exceed. FFNx saves learned
+    # ids 128+ in its own block of the save; the game compares junction, command,
+    # stat %, character and party ids as signed bytes, so those sections end below 128.
 
     ABILITY_REF_SECTION = 3      # Junctionable GFs: the only section storing ability ids
+    GF_ABILITY_SECTION = 17
+    # The GF group's first id: everything before it must stay below 128.
+    MAX_GF_GROUP_START = 127
     # Learned menu abilities also have their own 32-bit mask.
     MENU_ABILITY_SECTION = 18
     MAX_MENU_ABILITIES = 32
 
     def _ability_id_max(self):
-        return self.game_data.kernel_data_json.get("ability_id_max", 128)
+        return self.game_data.kernel_data_json.get("ability_id_max", 255)
 
     def _ability_section_ids(self):
         """The sections sharing the ability id space, in id order."""
@@ -482,13 +489,15 @@ class SolomonRingWidget(QWidget):
 
     def _ability_category_max(self, section_id):
         """Maximum after removing the other groups' removable entries, not today's free IDs."""
-        # Only the first group's None entry is protected. Even an empty menu group
-        # must start at an ID below 128, leaving at most 127 entries before it.
+        # Only the first group's None entry is protected. Even an empty GF group must
+        # start at an ID below 128, leaving at most 127 entries before it.
         reserved_elsewhere = 0 if section_id == self._ability_section_ids()[0] else 1
         maximum = self._ability_id_max() - reserved_elsewhere
         if section_id == self.MENU_ABILITY_SECTION:
             return max(0, min(maximum, self.MAX_MENU_ABILITIES))
-        return max(0, min(maximum, 127 - reserved_elsewhere))
+        if section_id == self.GF_ABILITY_SECTION:
+            return max(0, maximum)
+        return max(0, min(maximum, self.MAX_GF_GROUP_START - reserved_elsewhere))
 
     def _ability_pool_status(self, section_id=None):
         """(counter text, may another entry be added) for a pooled tab's Add button.
@@ -507,8 +516,9 @@ class SolomonRingWidget(QWidget):
             text = (f"{entries} entries - category maximum {self._ability_category_max(section_id)}\n"
                     f"Shared pool: {text}")
         can_add = used < maximum
-        if section_id is not None and section_id != self.MENU_ABILITY_SECTION and self._ability_first_id(self.MENU_ABILITY_SECTION) >= 127:
-            text += "  (menu group start must stay below 128)"
+        if (section_id is not None and section_id not in (self.GF_ABILITY_SECTION, self.MENU_ABILITY_SECTION)
+                and self._ability_first_id(self.GF_ABILITY_SECTION) >= self.MAX_GF_GROUP_START):
+            text += "  (these abilities must end below ID 128)"
             can_add = False
         if section_id == self.MENU_ABILITY_SECTION:
             menu = self._ability_entry_count(section_id)

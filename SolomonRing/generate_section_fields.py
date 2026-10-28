@@ -468,8 +468,8 @@ sec(18, 2, NAMEDESC, [("Data", [
 # single array, so an entry added to one renumbers every group behind it.
 # FFNx's AddMoreAbility patch rewrites those group boundaries from the file's
 # own section sizes, which makes all seven growable - the shared budget is
-# kernel_bin_data.json's "ability_id_max" (128, the width of a savegame's
-# per-GF learned mask). "ability_pool" marks the tabs that share it, so the tab
+# kernel_bin_data.json's "ability_id_max" (255: ids are bytes and 255 means
+# "no ability"; FFNx saves learned ids 128+ in its own save block). "ability_pool" marks the tabs that share it, so the tab
 # can show what is left next to its Add button.
 for _ability_section in range(12, 19):
     sections[str(_ability_section)]["growable"] = True
