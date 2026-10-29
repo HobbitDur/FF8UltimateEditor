@@ -113,13 +113,16 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   engine model as a labelled, untextured approximation that names the draw handlers it shows as
   markers only), and native decompilation read-only.
   **Part tabs** (one per part of an effect FFNx has a C++ port with parameters for; Cure:
-  Emitter, Ring, Ground glow, Overlay, Sparkles, Motes, Glints; Hypnotize: Timing, Main layout,
+  Emitter, Ring, Ground glow, Overlay, Sparkles, Motes, Glints, and the same for Potion, whose
+  module is a relocated copy of Cure's; Hypnotize: Timing, Main layout,
   Rings, Target layouts, Sprites): the part's parameters as a form
   (bold = not the game's value, **Game values** resets them) beside a small preview of that part
   alone, framed on where it goes. The numbers come out of the port's code into one struct per
   part (FFNx `src/ff8/battle/fx/fx_params.h`: generic blocks every module can reuse - a tick
   window, a count per tick, a random range, a fraction, the effect library's glint style -
-  `CureParams` in `mag001_cure.cpp`, `HypnotizeParams` in `mag133_hypnotize.cpp`, defaults = the
+  `HealRingParams` in `mag_heal_ring.h`, shared by Cure and Potion - one struct, parts and field
+  table, each module with its own live values, so Potion and Cure are edited apart -
+  `HypnotizeParams` in `mag133_hypnotize.cpp`, defaults = the
   game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
   so the forms are always those of the port it runs. A module with parameters registers itself
   for the recorder (`FX_LAB_MODULE`): `build.bat` compiles in every source file naming it. The previews are one more recording: the recorder runs the port instead of
@@ -136,8 +139,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   the header's **FFNx** button in the External program bar (tick it, then Update; clicking it says
   what is installed - Choreography says so too when the recorder has no ports), the updater's
   **FFNxEffects** (Update downloads the folder `src/ff8/battle/fx` of FFNx's
-  source - for now the `VanillaDecompiledForFutur30FPS` branch of HobbitDur/FFNx for both
-  channels - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
+  source - for now the `VanillaDecompiledStructRework` branch of HobbitDur/FFNx for both
+  channels: `VanillaDecompiledForFutur30FPS` (the ports) plus the editor's parameter rework on
+  top, such as Cure and Potion sharing `mag_heal_ring.h` - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
   built again with them); the release's CI does the same before building the recorder.
   Cure's Overlay hides the target while the ring climbs and redraws it itself, twice per
   polygon: flat with its own texture (what the preview shows - the target as it is), and, where

@@ -280,3 +280,30 @@ def test_hypnotize_port_and_its_pc_screen_units(tmp_path):
     params = tmp_path / "params.txt"
     params.write_text("main.pixels 1\n")
     assert 1 in parts(hypnotize("pixels", "native=1", f"params={params}"))
+
+
+@pytest.mark.ff8data(*CURE_FILES)
+def test_potion_shares_cures_parameters_but_keeps_its_own(tmp_path):
+    """Potion (effect 50) runs a relocated copy of Cure's code: the same parts and fields (FFNx
+    mag_heal_ring.h, each module with its own live values), and its port is the original."""
+    from Fujin.effectparts import effect_schema
+    cure = cure_schema()
+    potion = effect_schema(50)
+    assert potion is not None and potion["name"] == "Potion"
+    assert potion["parts"] == cure["parts"] and potion["fields"] == cure["fields"]
+
+    def effect(effect_id, tag, *extra):
+        from Fujin.recorderbuild import RECORDER
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(RECORDER), str(effect_id), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}",
+                              f"out={out}", f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m009.dat'}", "caster=0", "target=3", *extra],
+                             cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0, run.stdout[-500:]
+        return out.read_text().splitlines()
+
+    potion_original, potion_native = effect(50, "original"), effect(50, "native", "native=1")
+    assert [re.sub(r"^P \d+ ", "P 0 ", line) for line in potion_native] == potion_original
+    params = tmp_path / "params.txt"
+    params.write_text("ring.radius.num 4\nring.radius_max 2048\n")
+    assert effect(50, "wide", "native=1", f"params={params}") != potion_native

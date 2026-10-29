@@ -54,7 +54,7 @@
 	"FFNxEffects": {
 	  "link":         "https://github.com/HobbitDur/FFNx",
 	  "install_path": "ExternalTools/FFNx/fx",
-	  "source":       {"stable": "branch:VanillaDecompiledForFutur30FPS", "canary": "branch:VanillaDecompiledForFutur30FPS"},
+	  "source":       {"stable": "branch:VanillaDecompiledStructRework", "canary": "branch:VanillaDecompiledStructRework"},
 	  "source_folder":"src/ff8/battle/fx"
 	}
   },

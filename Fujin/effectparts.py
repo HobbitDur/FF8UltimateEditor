@@ -27,7 +27,7 @@ TICKS_PER_SECOND = 15
 
 _SCHEMAS = {}                       # (recorder build, effect) -> schema or None
 _PORTS = {}                         # recorder build -> whether it has FFNx's effect ports
-PORTS_MISSING = ("Part tabs (an effect part by part, with its parameters - Cure, Hypnotize) need FFNx's effect "
+PORTS_MISSING = ("Part tabs (an effect part by part, with its parameters - Cure, Potion, Hypnotize) need FFNx's effect "
                  "sources: tick the FFNx button in the header's External program bar, then Update (it downloads "
                  "them and builds Fujin's effect recorder with them; Visual Studio's C++ tools are needed when "
                  "running from source).")
