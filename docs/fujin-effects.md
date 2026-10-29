@@ -134,7 +134,19 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   lines). Each sequence is a row of its frames, drawn from the recording's video memory (the frames
   the part never draws dimmed, those of the preview's tick framed blue); a click lists the frame's
   pieces and outlines them dashed orange on the Images tab (Cure: Ring `0x1641F78` and its ending
-  `0x1641FCC`, Ground glow `0x1642504`, Sparkles `0x1642238`, Motes `0x164205C`). Read only for now.
+  `0x1641FCC`, Ground glow `0x1642504`, Sparkles `0x1642238`, Motes `0x164205C`; Potion has its own
+  copies). The sequences are parameters too (FFNx `fx_params.h` field type `Seq`, Cure and Potion's
+  **Sequence** fields): **Choose…** opens the exe's sequences (filter: those drawing from video
+  memory the effect fills - every magic loads its pictures at the same places, so another
+  effect's sequence draws this one's pictures cut its own way, as the list shows it); FFNx keeps
+  the game's sequence for a value that is none (`fxp::sequence`) and a flipbook's last frame
+  within its sequence (`fxp::last_frame`). A **Frames** field crosses the frames its sequence never
+  plays (Sparkles: frames 9-26 of 27). **Browse all sequences…** lists them without choosing.
+  Every field's **?** answers *What does it change?*: the effect is recorded again with that value
+  one lower and compared with the shown recording, per part (`FF8GameData/psxgpu/fxdiff.py`): the
+  ticks drawn differently, the sprite frames no longer or now drawn, the length - and the preview
+  goes to the first tick that changes. Parts the value does not drive can change too (the random
+  numbers come from one stream).
   The numbers come out of the port's code into one struct per
   part (FFNx `src/ff8/battle/fx/fx_params.h`: generic blocks every module can reuse - a tick
   window, a count per tick, a random range, a fraction, the effect library's glint style -

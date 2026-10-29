@@ -30,11 +30,13 @@ Exact: what is drawn, where, its colours, blending and timing (the game's code r
 Approximated: the fake battle (actors stand at fixed places), the camera player is Fujin's
 (floating point), and an effect that reads the real battle state may differ.
 """
+import dataclasses
 import hashlib
 import math
 import os
 import shutil
 import struct
+import subprocess
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -460,23 +462,55 @@ class NativePreviewView(QWidget):
         # A recorder killed with the preview can still hold its output open: never fail on cleanup
         scratch = tempfile.TemporaryDirectory(prefix="fujin_preview_", ignore_cleanup_errors=True)
         self._scratch = scratch
-        output = os.path.join(scratch.name, "recording.txt")
-        # The recorder reads only what was opened in Fujin: the effect's imported files as Fujin
-        # holds them (unsaved edits included) and a8def.tim, staged privately; models by path
-        effect_folder, battle_folder = Path(scratch.name, "effect"), Path(scratch.name, "battle")
         try:
-            effect_folder.mkdir()
-            battle_folder.mkdir()
-            for name, data in self.effect_files().items():
-                if name != os.path.basename(name) or name in ("", ".", ".."):
-                    raise ValueError(f"invalid effect file name: {name}")
-                (effect_folder / name).write_bytes(data)
-            if self.textures_binding.current_path:
-                shutil.copyfile(self.textures_binding.current_path, battle_folder / SHARED_TEXTURES)
+            args, output, lines = self._recorder_args(cast, scratch.name)
         except (OSError, ValueError) as error:
             self._clean_scratch()
             self.status.setText(f"Could not prepare the preview: {error}")
             return False
+        tick = self.slider.value() if keep_tick else 0
+        self.timer.stop()
+        self._prerender.stop()
+        self._process = QProcess(self)
+        self._process.setWorkingDirectory(str(RECORDER.parent))
+        self._process.finished.connect(lambda code, _status, out=output, effect=self.effect_id, camera=lines:
+                                       self._recorded(effect, out, code, signature, tick, model, camera))
+        self._process.errorOccurred.connect(self._record_error)
+        self.status.setText(f"Recording effect {self.effect_id}…")
+        self._update_controls()
+        self._process.start(str(RECORDER), args)
+        return True
+
+    def record_with(self, params):
+        """The effect recorded now as the shown recording was, but with these parameters ({key:
+        value}, the port's): waits for it (a few seconds); None when it cannot be made."""
+        if self.effect_id is None or self.missing():
+            return None
+        cast = dataclasses.replace(self.cast(placed=True), params=tuple(sorted(params.items())))
+        with tempfile.TemporaryDirectory(prefix="fujin_variant_", ignore_cleanup_errors=True) as folder:
+            try:
+                args, output, _lines = self._recorder_args(cast, folder)
+                subprocess.run([str(RECORDER), *args], cwd=str(RECORDER.parent), capture_output=True, timeout=120,
+                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                return load_recording(output, self.effect_id) if os.path.isfile(output) else None
+            except (OSError, ValueError, subprocess.SubprocessError):
+                return None
+
+    def _recorder_args(self, cast, folder):
+        """(recorder arguments, output path, camera lines) of a recording of `cast`, its files
+        staged in `folder`."""
+        output = os.path.join(folder, "recording.txt")
+        # The recorder reads only what was opened in Fujin: the effect's imported files as Fujin
+        # holds them (unsaved edits included) and a8def.tim, staged privately; models by path
+        effect_folder, battle_folder = Path(folder, "effect"), Path(folder, "battle")
+        effect_folder.mkdir()
+        battle_folder.mkdir()
+        for name, data in self.effect_files().items():
+            if name != os.path.basename(name) or name in ("", ".", ".."):
+                raise ValueError(f"invalid effect file name: {name}")
+            (effect_folder / name).write_bytes(data)
+        if self.textures_binding.current_path:
+            shutil.copyfile(self.textures_binding.current_path, battle_folder / SHARED_TEXTURES)
         # absolute paths: the recorder runs from its own folder
         args = [str(self.effect_id), f"exe={os.path.abspath(self.exe_path())}",
                 f"magic={effect_folder}", f"battle={battle_folder}", f"out={output}"]
@@ -499,7 +533,7 @@ class NativePreviewView(QWidget):
         if cast.native:
             args.append("native=1")          # the effect's C++ port (FFNx), with its parameters
             if cast.params:
-                path = os.path.join(scratch.name, "params.txt")
+                path = os.path.join(folder, "params.txt")
                 with open(path, "w", encoding="ascii") as file:
                     file.write("".join(f"{key} {int(value)}\n" for key, value in cast.params))
                 args.append(f"params={path}")
@@ -521,18 +555,7 @@ class NativePreviewView(QWidget):
                 file.write("\n".join(lines) + "\n")
             args.append(f"camera={camera}")
             self.camera_used = True
-        tick = self.slider.value() if keep_tick else 0
-        self.timer.stop()
-        self._prerender.stop()
-        self._process = QProcess(self)
-        self._process.setWorkingDirectory(str(RECORDER.parent))
-        self._process.finished.connect(lambda code, _status, out=output, effect=self.effect_id, camera=lines:
-                                       self._recorded(effect, out, code, signature, tick, model, camera))
-        self._process.errorOccurred.connect(self._record_error)
-        self.status.setText(f"Recording effect {self.effect_id}…")
-        self._update_controls()
-        self._process.start(str(RECORDER), args)
-        return True
+        return args, output, lines
 
     def _clean_scratch(self):
         if self._scratch is not None:

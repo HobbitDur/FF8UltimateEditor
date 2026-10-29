@@ -19,11 +19,12 @@ import tempfile
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtWidgets import (QCheckBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider,
-                             QSpinBox, QTabWidget, QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+                             QSlider, QSpinBox, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
-from Fujin.partsequences import PartSequences
+from FF8GameData.psxgpu.fxdiff import describe, differences
+from Fujin.partsequences import PartSequences, SequenceField
 from Fujin.recorderbuild import FFNX_EFFECTS, RECORDER
 
 PREVIEW_WIDTH = 320                 # the part preview's picture width (pixels)
@@ -193,28 +194,47 @@ class PartPreview(QWidget):
 
 class PartTab(QWidget):
     """A part's parameters (a form) beside its preview. A part that draws nothing (id 0) previews
-    the whole effect (effect_parts: every drawing part's id), its tick parameters marked on it."""
+    the whole effect (effect_parts: every drawing part's id), its tick parameters marked on it.
+    A Sequence field (type "seq") picks a sprite sequence of the exe; a Frames field marks the
+    frames its sequence plays; each field's "?" records the effect with it nudged and says what
+    draws differently (part_names: {part id: title})."""
     value_changed = pyqtSignal(str, int)      # key, new value
 
-    def __init__(self, part, fields, values, runner, renderer, effect_parts=frozenset(), locate=None):
+    def __init__(self, part, fields, values, runner, renderer, effect_parts=frozenset(), locate=None,
+                 part_names=None):
         super().__init__()
-        self.part, self.fields = part, fields
+        self.part, self.fields, self.runner = part, fields, runner
+        self.part_names = part_names or {}
         self.spins, self.labels = {}, {}
         doc = QLabel(part["doc"] + ("" if part["id"] else
                                     ". It draws nothing: the preview shows the whole effect, its ticks marked."))
         doc.setWordWrap(True)
         form = QFormLayout()
         for field in fields:
-            spin = QSpinBox()
+            sequence = field.get("type") == "seq"
+            spin = SequenceField(runner, self.part_names) if sequence else QSpinBox()
             spin.setRange(field["min"], field["max"])
             spin.setValue(values.get(field["key"], field["default"]))
-            spin.setToolTip(f"{field['doc']}\nThe game's value: {field['default']}".strip())
+            game = f"0x{field['default']:X}" if sequence else field["default"]
+            spin.setToolTip(f"{field['doc']}\nThe game's value: {game}".strip())
             spin.valueChanged.connect(lambda value, key=field["key"]: self._changed(key, value))
             label = QLabel(field["label"])
             label.setToolTip(spin.toolTip())
+            probe = QToolButton()
+            probe.setText("?")
+            probe.setToolTip("What does it change? Records the effect with this value nudged by one and "
+                             "lists what draws differently")
+            probe.setEnabled(not sequence)
+            probe.clicked.connect(lambda _checked, key=field["key"]: self.probe(key))
+            row = QHBoxLayout()
+            row.addWidget(spin, 1)
+            row.addWidget(probe)
             self.spins[field["key"]], self.labels[field["key"]] = spin, label
-            form.addRow(label, spin)
+            form.addRow(label, row)
             self._mark(field["key"])
+        self.probe_text = QLabel()
+        self.probe_text.setWordWrap(True)
+        self.probe_text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         reset = QPushButton("Game values")
         reset.setToolTip("Put this part's parameters back to the game's values")
         reset.clicked.connect(self.reset)
@@ -223,15 +243,16 @@ class PartTab(QWidget):
         form_layout.addWidget(doc)
         form_layout.addLayout(form)
         form_layout.addWidget(reset)
+        form_layout.addWidget(self.probe_text)
         form_layout.addStretch(1)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(form_widget)
-        scroll.setMinimumWidth(280)
+        scroll.setMinimumWidth(380)
         part_ids = {part["id"]} if part["id"] else set(effect_parts)      # 0: draws nothing, the whole effect
         self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers)
         self.images = PartImages(runner, part_ids, self.named_images, locate, part["title"])
-        self.sequences = PartSequences(runner, part_ids)
+        self.sequences = PartSequences(runner, part_ids, self.part_names)
         self.sequences.picked.connect(self.images.select)
         self.preview.slider.valueChanged.connect(self.images.set_tick)
         self.preview.slider.valueChanged.connect(self.sequences.set_tick)
@@ -245,6 +266,51 @@ class PartTab(QWidget):
         layout = QHBoxLayout(self)
         layout.addWidget(scroll)
         layout.addLayout(right, 1)
+        self._update_limits()
+
+    def frame_limits(self):
+        """{sequence address: (Frames field label, last frame played)}: a "frames" field and the
+        "seq" field beside it (ring.end_frames - ring.end_seq, sparkle.frames - sparkle.seq)."""
+        limits = {}
+        for field in self.fields:
+            key = field["key"]
+            sequence = key[:-len("frames")] + "seq" if key.endswith("frames") else None
+            if sequence in self.spins:
+                limits[self.spins[sequence].value()] = (f"{self.part['title']} {field['label']}",
+                                                         self.spins[key].value())
+        return limits
+
+    def _update_limits(self):
+        self.sequences.set_limits(self.frame_limits())
+
+    def probe(self, key):
+        """What `key` changes: the effect recorded with it one lower (higher at its minimum), compared
+        with the shown recording, the differences listed under the form and the preview moved to
+        the first tick that changes."""
+        field = next(field for field in self.fields if field["key"] == key)
+        base = self.runner.recording
+        if base is None:
+            self.probe_text.setText("What does it change: the recording is not ready yet.")
+            return
+        value = self.spins[key].value()
+        nudged = value - 1 if value > field["min"] else value + 1
+        params = dict(self.runner.cast().params)
+        params[key] = nudged
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            variant = self.runner.record_with(params)
+        finally:
+            QApplication.restoreOverrideCursor()
+        if variant is None:
+            self.probe_text.setText("What does it change: the effect recorder could not record it.")
+            return
+        changes, lengths = differences(base, variant, self.part_names)
+        self.probe_text.setText(f"<b>{field['label']} {value} → {nudged}</b><br>"
+                                + "<br>".join(line.replace("    ", "&nbsp;&nbsp;&nbsp;&nbsp;")
+                                              for line in describe(changes, lengths)))
+        first = min((entry["ticks"][0] for entry in changes), default=None)
+        if first is not None:
+            self.preview.slider.setValue(min(first, self.preview.slider.maximum()))
 
     def markers(self):
         """{tick: what happens}: a part drawing nothing has its tick parameters marked on the preview."""
@@ -285,6 +351,7 @@ class PartTab(QWidget):
 
     def _changed(self, key, value):
         self._mark(key)
+        self._update_limits()
         self.preview._show(self.preview.slider.value())      # its tick markers
         self.value_changed.emit(key, value)
 

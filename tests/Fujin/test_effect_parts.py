@@ -12,6 +12,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
+from PyQt6.QtCore import Qt
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QApplication, QLabel, QPushButton
 
@@ -223,7 +224,7 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     # the recorder says which sequence and frame each sprite is, and the part drawing it
     drawn = {(part, address) for tick in fujin.lab.recording.ticks for part, address, _frame in tick.sprites}
     assert drawn == {(1, 0x1641F78), (1, 0x1641FCC), (2, 0x1642504), (4, 0x1642238), (5, 0x164205C)}
-    rows = {key: [(sequence.address, sorted(frames)) for sequence, frames, _thumbs in tab.sequences.rows]
+    rows = {key: [(row[0].address, sorted(row[1])) for row in tab.sequences.rows]
             for key, tab in tabs.items()}
     assert rows["ring"] == [(0x1641F78, [0]), (0x1641FCC, [0, 1, 2, 3, 4])]
     assert rows["glow"] == [(0x1642504, [0])] and rows["sparkles"][0][0] == 0x1642238
@@ -232,13 +233,37 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     # the tick: frames drawn then framed; a click lists the frame's pieces and outlines them
     sequences = tabs["ring"].sequences
     tabs["ring"].preview.slider.setValue(25)
-    _sequence, frames, thumbs = sequences.rows[1]
+    _sequence, frames, thumbs, *_rest = sequences.rows[1]
     assert [thumb.index for thumb in thumbs if thumb.now] == [index for index, ticks in frames.items() if 25 in ticks]
     sequences.pick(0x1641FCC, 2)
     assert sequences.table.rowCount() == 1 and sequences.table.item(0, 0).text() == "48, 96 - 16 x 16"
     assert "B + F" in sequences.table.item(0, 5).text()
     view = next(v for v in tabs["ring"].images.views if v.sheet.clut_xy == (320, 240))
     assert view.selected == [(48, 96, 64, 112)]
+    # Frames fields mark what their sequence plays: the sparkles' 27-frame sequence plays 0-8 only
+    sparkles = tabs["sparkles"].sequences
+    _sequence, _frames, thumbs, title, _text = sparkles.rows[0]
+    assert [thumb.index for thumb in thumbs if thumb.beyond] == list(range(9, 27))
+    assert "plays frames 0-8 (Sparkles Frames)" in title.text()
+    ring = tabs["ring"]
+    ring.spins["ring.end_frames"].setValue(2)
+    assert [thumb.index for thumb in ring.sequences.rows[1][2] if thumb.beyond] == [3, 4]
+    ring.spins["ring.end_frames"].setValue(4)
+    # Sequence fields: the address, the exe's sequences to choose from
+    field = ring.spins["ring.seq"]
+    assert field.value() == 0x1641F78 and field.label.text() == "0x1641F78 (2 frames)"
+    from Fujin.partsequences import SequenceBrowser
+    browser = SequenceBrowser(fujin.lab, 0x1641F78, choose=True)
+    assert browser.only_loaded.isChecked() and browser.address == 0x1641F78
+    shown = [browser.list.item(i).data(Qt.ItemDataRole.UserRole) for i in range(browser.list.count())]
+    assert {0x1641F78, 0x1642238, 0x164205C} <= set(shown) and len(shown) < len(browser.sequences)
+    browser.only_loaded.setChecked(False)
+    assert browser.list.count() == len(browser.sequences) > 300
+    # What does it change: Ring End frames 4 -> 3, the ending's frame 4 no longer drawn
+    ring.probe("ring.end_frames")
+    text = ring.probe_text.text()
+    assert "End frames 4 → 3" in text and "Ring: draws differently" in text
+    assert "no longer draws sequence 0x1641FCC frames 4" in text
 
 
 def wait(qapp, view):
@@ -383,12 +408,20 @@ def test_hypnotize_port_and_its_pc_screen_units(tmp_path):
 @pytest.mark.ff8data(*CURE_FILES)
 def test_potion_shares_cures_parameters_but_keeps_its_own(tmp_path):
     """Potion (effect 50) runs a relocated copy of Cure's code: the same parts and fields (FFNx
-    mag_heal_ring.h, each module with its own live values), and its port is the original."""
+    mag_heal_ring.h, each module with its own live values) but its own copies of the sprite
+    sequences, and its port is the original."""
     from Fujin.effectparts import effect_schema
     cure = cure_schema()
     potion = effect_schema(50)
     assert potion is not None and potion["name"] == "Potion"
-    assert potion["parts"] == cure["parts"] and potion["fields"] == cure["fields"]
+    assert potion["parts"] == cure["parts"]
+    same = lambda fields: [dict(f, default=None) if f["type"] == "seq" else f for f in fields]
+    assert same(potion["fields"]) == same(cure["fields"])
+    sequences = lambda schema: {f["key"]: f["default"] for f in schema["fields"] if f["type"] == "seq"}
+    assert sequences(cure) == {"ring.seq": 0x1641F78, "ring.end_seq": 0x1641FCC, "glow.seq": 0x1642504,
+                               "sparkle.seq": 0x1642238, "mote.seq": 0x164205C}
+    assert sequences(potion) == {"ring.seq": 0x15AD52C, "ring.end_seq": 0x15AD580, "glow.seq": 0x15ADAB8,
+                                 "sparkle.seq": 0x15AD7EC, "mote.seq": 0x15AD610}
 
     def effect(effect_id, tag, *extra):
         from Fujin.recorderbuild import RECORDER
@@ -405,3 +438,10 @@ def test_potion_shares_cures_parameters_but_keeps_its_own(tmp_path):
     params = tmp_path / "params.txt"
     params.write_text("ring.radius.num 4\nring.radius_max 2048\n")
     assert effect(50, "wide", "native=1", f"params={params}") != potion_native
+    # another sprite sequence for the sparkles: drawn instead; a value that is no sequence: the game's
+    params.write_text(f"sparkle.seq {0x15AD610}\n")
+    swapped = effect(50, "swapped", "native=1", f"params={params}")
+    drawn = lambda lines: {(int(l.split()[2]), int(l.split()[3], 16)) for l in lines if l.startswith("Q ")}
+    assert (4, 0x15AD610) in drawn(swapped) and (4, 0x15AD7EC) not in drawn(swapped)
+    params.write_text("sparkle.seq 12345\n")
+    assert effect(50, "bad", "native=1", f"params={params}") == potion_native
