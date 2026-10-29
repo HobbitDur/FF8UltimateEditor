@@ -178,8 +178,10 @@ class GltfExporter:
     def _collect_triangulated_faces(self):
         """
         Return every face of the model as a triangle: (vertex_indices, uvs, tex_id).
-        Quads are split into two triangles exactly like the OpenGL viewer does
-        (A,B,D then A,C,D).
+        Quads (PSX strip order: A B on top, C D below) are split into the same two
+        triangles as the OpenGL viewer, both wound like the quad (A,B,C): A,B,D then
+        A,D,C. A,C,D would flip the second half - the viewer culls back faces like the
+        game, so half the imported quad would vanish (and Blender shows it inside out).
         """
         # depth_bias (the 4th element of get_*_with_uv) is a PSX rendering hint with no
         # glTF equivalent, so it's dropped here rather than threaded through the exporter.
@@ -188,7 +190,7 @@ class GltfExporter:
                  for indices, uvs, tex_id, _depth_bias in geometry.get_triangles_with_uv()]
         for (a, b, c, d), (uv_a, uv_b, uv_c, uv_d), tex_id, _depth_bias in geometry.get_quads_with_uv():
             faces.append(((a, b, d), (uv_a, uv_b, uv_d), tex_id))
-            faces.append(((a, c, d), (uv_a, uv_c, uv_d), tex_id))
+            faces.append(((a, d, c), (uv_a, uv_d, uv_c), tex_id))
         return faces
 
     def _build_primitives(self, builder, world_positions, vertex_bone_ids, skinned,

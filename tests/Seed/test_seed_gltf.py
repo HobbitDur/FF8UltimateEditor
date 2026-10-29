@@ -149,3 +149,35 @@ def test_export_import_round_trip_is_exact(tmp_path):
     after = manager.get_animated_vertices(1, 5)
     assert len(after) == len(before)
     assert max(min(math.dist(a, b) for b in before) for a in after) < 1e-9
+
+
+@pytest.mark.parametrize("field, name", [("gpbigin6", "o199"), ("bgroad_6", "p050")])
+def test_round_trip_keeps_face_winding(tmp_path, field, name):
+    """Quads are exported as two triangles wound like the quad: the viewer culls back faces like
+    the game, so a flipped half would vanish (gpbigin6 o199 crate lost half of every quad)."""
+    manager = SeedManager()
+    manager.load_chara_one(next(FIELD.rglob(f"{field}/chara.one")))
+    manager.load_entry([entry.name for entry in manager.chara_one.entries].index(name))
+
+    def normals(m):
+        vertices = m.get_animated_vertices(0, 0)
+        geometry = m.enemy.geometry_data
+        faces = [entry[0] for entry in geometry.get_triangles_with_uv() + geometry.get_quads_with_uv()]
+        result = []
+        for indices in faces:
+            a, b, c = (vertices[i] for i in indices[:3])
+            u = [b[k] - a[k] for k in range(3)]
+            v = [c[k] - a[k] for k in range(3)]
+            normal = (u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0])
+            result.append(([tuple(round(c, 6) for c in vertices[i]) for i in indices], normal))
+        return result
+
+    before = normals(manager)
+    glb = tmp_path / "model.glb"
+    GltfExporter(manager).export(str(glb))
+    GltfImporter(manager.vertex_axis_signs).import_into_enemy(str(glb), manager.enemy)
+    for corners, normal in normals(manager):
+        if not any(normal):
+            continue  # degenerate
+        source = next(n for face, n in before if set(corners) <= set(face) and any(n))
+        assert sum(p * q for p, q in zip(normal, source)) > 0
