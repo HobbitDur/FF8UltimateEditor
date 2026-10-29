@@ -73,7 +73,10 @@ from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_nb_pa
                                           get_max_frame_for_animation,
                                           MAX_ANIMATION_FRAME, MAX_SLOW_SAFE_ANIMATION_FRAME)
 from Ifrit.ifritmanager import IfritManager
+from FF8GameData.dat.animdiff import (STATUS_CHANGED, diff_animations, snapshot_animation,
+                                      snapshot_animations)
 from FF8GameData.dat.bonenames import SOURCE_USER
+from Ifrit.Ifrit3D.animtimelinewidget import AnimTimelinePanel
 from Ifrit.Ifrit3D.boneeditorwidget import AnimEditor
 from Ifrit.Ifrit3D.bonenamestore import shared_bone_names
 from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
@@ -515,6 +518,27 @@ class Ifrit3DWidget(QWidget):
             # Add bone editor to layout
             layout.addWidget(self._make_shortcut_legend())
             layout.addWidget(self.bone_editor)
+
+            # Timeline: what changed in the animations vs the file as opened / a vanilla file
+            self.timeline_panel = AnimTimelinePanel()
+            self._timeline_current = None    # per-animation snapshots of the live model (lazy)
+            self._timeline_diffs = None
+            self.timeline_panel.expanded_changed.connect(self._on_timeline_expanded)
+            self.timeline_panel.reference_changed.connect(self._on_timeline_reference_changed)
+            self.timeline_panel.load_reference_requested.connect(self._timeline_load_vanilla)
+            self.timeline_panel.animation_clicked.connect(self._select_animation)
+            self.timeline_panel.sheet.cell_clicked.connect(self._on_timeline_cell_clicked)
+            self.timeline_panel.sheet.revert_requested.connect(self._timeline_revert)
+            self.frame_changed.connect(self.timeline_panel.sheet.set_current_frame)
+            self.animation_changed.connect(self._timeline_show_current_animation)
+            self.model_edited.connect(lambda: self._timeline_invalidate())
+            # Edits through the bone editor touch one animation (the handlers above ran first)
+            for signal in (self.bone_editor.animation_rotation_changed,
+                           self.bone_editor.animation_position_changed,
+                           self.bone_editor.animation_scale_changed,
+                           self.bone_editor.frame_scale_mode_changed):
+                signal.connect(lambda anim_id, *_: self._timeline_invalidate(anim_id))
+            layout.addWidget(self.timeline_panel)
 
             playlist_main_layout = QVBoxLayout(self.playlist_container)
             playlist_main_layout.setContentsMargins(0, 0, 0, 0)
@@ -965,6 +989,9 @@ class Ifrit3DWidget(QWidget):
             self._battle_view.model_loaded()
             self._battle_view.reframe_needed = not keep_view
             self._update_model_translation()
+        if hasattr(self, 'timeline_panel'):
+            self._timeline_references()      # the first show of a file records it "as opened"
+            self._timeline_invalidate()      # new file, or an undo/redo put another state back
 
     # ── Vertex / primitive budget readout (info bar) ──────────────────
     # The engine limits these are checked against were measured in FF8_EN.exe:
@@ -2820,6 +2847,8 @@ class Ifrit3DWidget(QWidget):
         self._update_frame_position_selection()
         self._update_bone_compare()
         self.gl_widget.set_selected_bones(self._selected_bone_ids)
+        if hasattr(self, 'timeline_panel'):
+            self.timeline_panel.sheet.set_selected_bones(self._selected_bone_ids)
         self._update_gizmo()
         self.gl_widget.update()
 
@@ -3058,6 +3087,7 @@ class Ifrit3DWidget(QWidget):
         self.bone_editor.set_bone_names(
             store.names(key, nb_bones),
             {bone for bone in range(nb_bones) if store.source(key, bone) == SOURCE_USER})
+        self._timeline_set_rows()
 
     def _on_bone_renamed(self, bone_id: int, name: str):
         """Save the user's name for a bone (an empty name goes back to the built-in one)."""
@@ -3068,6 +3098,176 @@ class Ifrit3DWidget(QWidget):
         except (OSError, RuntimeError) as e:
             QMessageBox.warning(self, "Rename bone", f"The bone name could not be saved:\n{e}")
         self._refresh_bone_names()
+
+    # ── Timeline ───────────────────────────────────────────────────────────
+    def _timeline_references(self):
+        """[(name, snapshot)] the timeline can compare with: the file as opened, then the vanilla
+        file the user loaded. Kept on the model itself, so it follows the file (not this view) and
+        the "as opened" one is taken once, the first time the file is shown."""
+        enemy = self.ifrit_manager.enemy
+        references = getattr(enemy, '_timeline_references', None)
+        if references is None:
+            references = []
+            if enemy.animation_data and enemy.animation_data.animations:
+                references.append(("File as opened", snapshot_animations(enemy.animation_data)))
+            enemy._timeline_references = references
+            enemy._timeline_reference_index = 0
+        return references
+
+    def _timeline_reference(self):
+        references = self._timeline_references()
+        if not references:
+            return None, None
+        index = min(getattr(self.ifrit_manager.enemy, '_timeline_reference_index', 0), len(references) - 1)
+        return references[index]
+
+    def _timeline_set_rows(self):
+        """One row per bone, parents before their children, indented by depth."""
+        if not hasattr(self, 'timeline_panel') or not self.ifrit_manager.enemy.bone_data:
+            return
+        bones = self.ifrit_manager.enemy.bone_data.bones
+        children = {}
+        roots = []
+        for bone_id, bone in enumerate(bones):
+            if bone.parent_id == 0xFFFF or not (0 <= bone.parent_id < len(bones)):
+                roots.append(bone_id)
+            else:
+                children.setdefault(bone.parent_id, []).append(bone_id)
+        rows, stack, seen = [], [(b, 0) for b in reversed(roots)], set()
+        while stack:
+            bone_id, depth = stack.pop()
+            if bone_id in seen:
+                continue
+            seen.add(bone_id)
+            rows.append((bone_id, self.bone_editor.bone_label(bone_id), depth))
+            stack.extend((c, depth + 1) for c in reversed(children.get(bone_id, [])))
+        rows += [(b, self.bone_editor.bone_label(b), 0) for b in range(len(bones)) if b not in seen]
+        self.timeline_panel.sheet.set_rows(rows)
+
+    def _timeline_invalidate(self, anim_id=None):
+        """The live model changed: drop the snapshot of one animation (or of all) and refresh."""
+        if not hasattr(self, 'timeline_panel'):
+            return
+        if anim_id is None or self._timeline_current is None:
+            self._timeline_current = None
+        elif 0 <= anim_id < len(self._timeline_current):
+            self._timeline_current[anim_id] = None
+        self._timeline_diffs = None
+        self._timeline_refresh()
+
+    def _timeline_refresh(self):
+        """Recompute the diff and repaint - only while the panel is open (else on opening)."""
+        panel = getattr(self, 'timeline_panel', None)
+        if panel is None or not panel.expanded:
+            return
+        enemy = self.ifrit_manager.enemy
+        animations = enemy.animation_data.animations if enemy.animation_data else []
+        name, reference = self._timeline_reference()
+        if reference is None or not animations:
+            self._timeline_diffs = None
+            panel.set_overview(len(animations), None, self.current_anim_id, "")
+            self._timeline_show_current_animation()
+            return
+        if self._timeline_current is None or len(self._timeline_current) != len(animations):
+            self._timeline_current = [None] * len(animations)
+        for anim_id, animation in enumerate(animations):
+            if self._timeline_current[anim_id] is None:
+                self._timeline_current[anim_id] = snapshot_animation(animation)
+        self._timeline_diffs = diff_animations(self._timeline_current, reference)
+        references = self._timeline_references()
+        panel.set_reference_names([n for n, _ in references],
+                                  getattr(enemy, '_timeline_reference_index', 0))
+        panel.set_overview(len(animations), self._timeline_diffs, self.current_anim_id, name)
+        self._timeline_show_current_animation()
+
+    def _timeline_show_current_animation(self):
+        panel = getattr(self, 'timeline_panel', None)
+        if panel is None or not panel.expanded:
+            return
+        if self._timeline_diffs is None and self._timeline_reference()[1] is not None:
+            self._timeline_refresh()     # calls back here once the diff exists
+            return
+        enemy = self.ifrit_manager.enemy
+        animations = enemy.animation_data.animations if enemy.animation_data else []
+        anim_id = self.current_anim_id
+        diff = (self._timeline_diffs[anim_id]
+                if self._timeline_diffs is not None and anim_id < len(self._timeline_diffs) else None)
+        nb_frames = len(animations[anim_id].frames) if anim_id < len(animations) else 0
+        can_revert = diff is not None and diff.status == STATUS_CHANGED and not diff.retimed
+        panel.sheet.set_animation(nb_frames, diff, can_revert)
+        panel.sheet.set_current_frame(self.current_frame)
+        panel.strip.set_current(anim_id)
+        panel.set_animation_status(diff)
+
+    def _on_timeline_expanded(self, expanded: bool):
+        if expanded:
+            self._timeline_set_rows()
+            self.timeline_panel.sheet.set_selected_bones(self._selected_bone_ids)
+            self._timeline_refresh()
+
+    def _on_timeline_reference_changed(self, index: int):
+        self.ifrit_manager.enemy._timeline_reference_index = index
+        self._timeline_diffs = None
+        self._timeline_refresh()
+
+    def _on_timeline_cell_clicked(self, frame: int, bone_id: int, additive: bool):
+        """A timeline cell: show that frame, select that bone (Ctrl+click adds it)."""
+        if frame >= 0 and frame != self.current_frame:
+            self._pause_playback()
+            self.set_frame(frame)
+            self._update_frame_indicator()
+        if bone_id >= 0:
+            self._on_bone_picked_in_view(bone_id, additive)
+
+    def _timeline_load_vanilla(self):
+        """Pick the vanilla .dat of this model to compare with (picked by hand each time: the
+        editor never guesses where the user keeps the original files)."""
+        file_path, _ = QFileDialog.getOpenFileName(self, "Vanilla file to compare with", "",
+                                                   "FF8 battle model (*.dat)")
+        if not file_path:
+            return
+        self._timeline_add_vanilla(file_path)
+
+    def _timeline_add_vanilla(self, file_path):
+        try:
+            reference = self.ifrit_manager.parse_file(file_path)
+            if hasattr(reference, 'ensure_animation_expanded'):
+                reference.ensure_animation_expanded()
+            snapshot = snapshot_animations(reference.animation_data)
+        except Exception as e:      # any unreadable file: say so, keep the current reference
+            QMessageBox.warning(self, "Timeline", f"This file could not be read:\n{e}")
+            return
+        enemy = self.ifrit_manager.enemy
+        nb_bones = len(enemy.bone_data.bones) if enemy.bone_data else 0
+        nb_reference_bones = len(reference.bone_data.bones) if reference.bone_data else 0
+        if nb_reference_bones != nb_bones:
+            QMessageBox.information(
+                self, "Timeline",
+                f"This file has {nb_reference_bones} bones, the model {nb_bones}: it may be another "
+                "model. Bones it does not have are shown as new.")
+        references = self._timeline_references()
+        del references[1:]           # one vanilla file at a time
+        references.append((f"Vanilla: {pathlib.Path(file_path).name}", snapshot))
+        enemy._timeline_reference_index = len(references) - 1
+        self._timeline_diffs = None
+        self._timeline_refresh()
+
+    def _timeline_revert(self, cells):
+        """Put cells of the current animation back to the reference."""
+        _, reference = self._timeline_reference()
+        anim_id = self.current_anim_id
+        if reference is None or anim_id >= len(reference) or not cells:
+            return
+        self._pause_playback()
+        try:
+            self.ifrit_manager.revert_animation_cells(anim_id, cells, reference[anim_id])
+        except ValueError as e:
+            QMessageBox.warning(self, "Timeline", str(e))
+            return
+        self.update_animated_mesh()
+        self.update_skeleton()
+        self._apply_bone_selection()   # the bone editor shows the reverted values
+        self.model_edited.emit()       # dirty + undo step, and refreshes the timeline
 
     def _on_reset_skeleton_requested(self):
         """Start a skeleton from scratch: keep only the root joint."""

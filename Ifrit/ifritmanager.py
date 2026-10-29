@@ -15,6 +15,7 @@ from PIL.ImageQt import QPixmap
 from PyQt6.QtGui import QColor, QImage
 from FF8GameData.dat.monsteranalyser import GarbageFileError, MonsterAnalyser
 from FF8GameData.dat import interpolation
+from FF8GameData.dat.animdiff import NEUTRAL_SCALE, ROW_POSITION
 from FF8GameData.dat.animloopdetector import analyse_animation_usage, is_looping, ANIM_UNUSED
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
                                           get_max_frame_for_animation, get_nb_part_needed,
@@ -1629,6 +1630,48 @@ class IfritManager:
             axes.append(tuple(v / norm) if norm > 1e-9 else (1.0, 0.0, 0.0))
 
         return center, axes
+
+    def revert_animation_cells(self, anim_id: int, cells, reference_frames):
+        """Put cells of an animation back to a reference (the timeline's "Revert").
+
+        cells: (row, frame) pairs - row = a bone id, or animdiff.ROW_POSITION for the model position.
+        reference_frames: the reference's frames of this animation, as animdiff snapshots, with the
+        same frame count (the timeline only offers a revert then).
+        A bone gets back its rotation and scale. A frame whose every row is reverted also gets back
+        its scale mode bit; a single bone whose reference scale is not neutral turns it on (the other
+        bones' scales are neutral in a frame without it, so they do not change).
+        """
+        anim: Animation = self.enemy.animation_data.animations[anim_id]
+        if len(reference_frames) != len(anim.frames):
+            raise ValueError("The reference has a different frame count")
+        rows_by_frame = {}
+        for row, frame_id in cells:
+            rows_by_frame.setdefault(frame_id, set()).add(row)
+        nb_bones = len(self.enemy.bone_data.bones)
+        for frame_id, rows in rows_by_frame.items():
+            frame = anim.frames[frame_id]
+            ref_position, ref_rotations, ref_scales = reference_frames[frame_id]
+            for row in rows:
+                if row == ROW_POSITION:
+                    for axis in range(3):
+                        frame.position[axis].set_pos_raw(ref_position[axis])
+                    continue
+                if not (0 <= row < len(ref_rotations) and row < len(frame.rotation_vector_data)):
+                    continue                            # a bone the reference does not have
+                for axis in range(3):
+                    frame.rotation_vector_data[row][axis].rotate_raw(ref_rotations[row][axis])
+                scale = ref_scales[row] if ref_scales and row < len(ref_scales) else NEUTRAL_SCALE
+                for axis in range(3):
+                    frame.rotation_vector_data_supp[row].set_scale_raw(axis, scale[axis])
+                if tuple(scale) != NEUTRAL_SCALE:
+                    frame.mode_bit = 1
+            if rows >= set(range(min(nb_bones, len(ref_rotations)))):
+                frame.mode_bit = 1 if ref_scales else 0
+        # Frames are stored as deltas from the previous one: refresh the storage types, then the
+        # matrices of every frame touched
+        anim._recompute_frame_storage_types()
+        for frame_id in rows_by_frame:
+            self._recompute_frame_matrices(anim, frame_id)
 
     def set_animation_frame_bone_scale(self, anim_id: int, frame_id: int, bone_idx: int,
                                        scale_x: float, scale_y: float, scale_z: float):
