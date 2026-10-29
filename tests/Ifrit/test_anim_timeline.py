@@ -31,7 +31,7 @@ def test_dot_grows_with_the_change():
 def test_sheet_hit_testing_and_clicks(qapp):
     sheet = DopeSheetView()
     sheet.resize(600, 200)
-    sheet.set_rows([(0, "0 · Root", 0), (1, "1 · Head", 1)])
+    sheet.set_rows([(0, "0 · Root", 0, "Root"), (1, "1 · Head", 1, "Head")])
     diff = diff_animation(0, [_frame(), _frame(200)], [_frame(), _frame()])
     sheet.set_animation(2, diff, can_revert=True)
     # rows: summary, position, bone 0, bone 1 -> bone 1 is the 4th row
@@ -42,6 +42,26 @@ def test_sheet_hit_testing_and_clicks(qapp):
     assert "rotation X +17.6°" in describe_cell(diff, 1, 1, "1 · Head")
     assert "same as the reference" in describe_cell(diff, 0, 1, "0 · Root")
     sheet.grab()                                                           # paints without error
+
+
+def test_double_click_a_name_renames_the_bone(qapp):
+    sheet = DopeSheetView()
+    sheet.resize(600, 200)
+    sheet.set_rows([(0, "0 · Root", 0, "Root"), (1, "1 · Head", 1, "Head")])
+    renamed = []
+    sheet.bone_renamed.connect(lambda bone, name: renamed.append((bone, name)))
+    sheet.start_rename(1)
+    assert sheet._rename_edit.text() == "Head"
+    sheet._rename_edit.setText("Lion head")
+    sheet._rename_edit.editingFinished.emit()
+    assert renamed == [(1, "Lion head")]
+    # Escape cancels: nothing renamed
+    sheet.start_rename(0)
+    from PyQt6.QtCore import Qt as _Qt
+    from PyQt6.QtGui import QKeyEvent
+    sheet._rename_edit.keyPressEvent(QKeyEvent(QKeyEvent.Type.KeyPress, _Qt.Key.Key_Escape,
+                                               _Qt.KeyboardModifier.NoModifier))
+    assert renamed == [(1, "Lion head")] and sheet._rename_edit is None
 
 
 def test_panel_overview_texts(qapp):
@@ -96,3 +116,28 @@ def test_edit_click_revert_on_a_real_file(qapp, tmp_path):
     # A vanilla reference picked by hand
     widget._timeline_add_vanilla(str(source))
     assert panel.reference_combo.currentText() == "Vanilla: c0m012.dat"
+
+
+@pytest.mark.ff8data("extracted_files/battle/c0m012.dat")
+def test_full_view_hides_the_ifrit_surroundings(qapp, tmp_path):
+    from PyQt6.QtCore import QSettings
+    from Ifrit import ifritmonsterwidget as imw
+
+    settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
+    widget = imw.IfritMonsterWidget(settings=settings, icon_path="Resources", game_data_folder="FF8GameData")
+    widget._ask_ram_budget = lambda *a: True
+    widget.load_file(str(BATTLE_DIR / "c0m012.dat"))
+    pane = widget._files[widget._active_index]['pane']
+    view = pane._3d_widget
+    view.full_view_btn.setChecked(True)
+    assert widget._left_panel.isHidden() and widget._toolbar.isHidden()
+    assert pane._tabs.tabBar().isHidden()
+    assert view.full_view_btn.text() == "⛶ Restore"
+    view.full_view_btn.setChecked(False)
+    assert not widget._left_panel.isHidden() and not widget._toolbar.isHidden()
+    assert not pane._tabs.tabBar().isHidden()
+    # A file closed (pane torn down) while in full view gives the surroundings back
+    view.full_view_btn.setChecked(True)
+    widget._destroy_current_pane()
+    assert not widget._left_panel.isHidden() and not widget._toolbar.isHidden()
+    widget.close()

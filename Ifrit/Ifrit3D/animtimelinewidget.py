@@ -6,13 +6,13 @@ reference - the file as it was opened, or a vanilla file the user picks. The dot
 of the change. A strip above lists every animation, with a dot on the changed ones.
 
 Clicking a cell jumps the 3D view to that frame and selects the bone (Ctrl+click adds it to the
-selection); right-click reverts cells to the reference. The comparison itself is FF8GameData.dat.
+selection); double-clicking a bone's name renames it; right-click reverts cells to the reference. The comparison itself is FF8GameData.dat.
 animdiff; this module only paints it and reports what the user clicked.
 """
 from PyQt6.QtCore import Qt, QRect, QRectF, QPoint, QSize, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPen, QBrush, QFont
-from PyQt6.QtWidgets import (QAbstractScrollArea, QComboBox, QHBoxLayout, QLabel, QMenu, QPushButton,
-                             QScrollArea, QSizePolicy, QToolTip, QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QAbstractScrollArea, QComboBox, QHBoxLayout, QLabel, QLineEdit, QMenu,
+                             QPushButton, QScrollArea, QSizePolicy, QToolTip, QVBoxLayout, QWidget)
 
 from FF8GameData.dat.animdiff import (ROW_POSITION, STATUS_CHANGED, STATUS_NEW, STATUS_REMOVED,
                                       raw_to_degrees)
@@ -61,6 +61,7 @@ class DopeSheetView(QAbstractScrollArea):
     """The painted grid. The name column and the frame header stay in place while the cells scroll."""
     cell_clicked = pyqtSignal(int, int, bool)            # frame (-1 = name column), bone (-1 = none), ctrl
     revert_requested = pyqtSignal(list)                  # [(row, frame), ...]
+    bone_renamed = pyqtSignal(int, str)                  # bone id, new name ("" = built-in name)
 
     NAME_WIDTH = 170
     ROW_HEIGHT = 18
@@ -70,6 +71,8 @@ class DopeSheetView(QAbstractScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._rows = []            # (row id, label, depth): ROW_SUMMARY, ROW_POSITION, then bone ids
+        self._names = {}           # bone id -> its bare name (what the rename field starts from)
+        self._rename_edit = None   # the inline name editor while renaming
         self._diff = None          # AnimationDiff of the shown animation, None = no reference
         self._changed_rows = set()
         self._nb_frames = 0
@@ -84,8 +87,11 @@ class DopeSheetView(QAbstractScrollArea):
 
     # ── Data ───────────────────────────────────────────────────────────────
     def set_rows(self, bone_rows):
-        """bone_rows: (bone id, label, depth) of every bone, in display order."""
-        self._rows = [(ROW_SUMMARY, "All bones", 0), (ROW_POSITION, "Model position", 0)] + list(bone_rows)
+        """bone_rows: (bone id, label, depth, name) of every bone, in display order."""
+        self._cancel_rename()
+        self._names = {bone: name for bone, _, _, name in bone_rows}
+        self._rows = ([(ROW_SUMMARY, "All bones", 0), (ROW_POSITION, "Model position", 0)]
+                      + [(bone, label, depth) for bone, label, depth, _ in bone_rows])
         self._update_scrollbars()
         self.viewport().update()
 
@@ -310,11 +316,50 @@ class DopeSheetView(QAbstractScrollArea):
             if row is not None and frame is not None and frame >= 0 and row >= ROW_POSITION:
                 QToolTip.showText(event.globalPos(), describe_cell(self._diff, row, frame, self.row_label(row)))
             elif row is not None and frame == -1 and row >= 0:
-                QToolTip.showText(event.globalPos(), f"{self.row_label(row)} - click to select this bone")
+                QToolTip.showText(event.globalPos(), f"{self.row_label(row)}\n"
+                                  "Click: select this bone · Double-click: rename it")
             else:
                 QToolTip.hideText()
             return True
         return super().event(event)
+
+    # ── Renaming (double-click a bone's name) ──────────────────────────────
+    def mouseDoubleClickEvent(self, event):
+        frame, row_index = self.hit(event.position().toPoint())
+        row = self._row_at(row_index)
+        if frame == -1 and row is not None and row >= 0:
+            self.start_rename(row)
+            return
+        super().mouseDoubleClickEvent(event)
+
+    def start_rename(self, bone_id: int):
+        """Open a name field over the bone's name cell: Enter keeps the name, Escape cancels, an
+        empty name goes back to the built-in one."""
+        index = next((i for i, (row, _, _) in enumerate(self._rows) if row == bone_id), None)
+        if index is None:
+            return
+        self._cancel_rename()
+        edit = _RenameEdit(self.viewport())
+        edit.setText(self._names.get(bone_id, f"Bone {bone_id}"))
+        edit.setPlaceholderText("Built-in name")
+        edit.setGeometry(2, self.row_y(index) - 1, self.NAME_WIDTH - 4, self.ROW_HEIGHT + 2)
+        edit.selectAll()
+        edit.committed.connect(lambda text, b=bone_id: self._finish_rename(b, text))
+        edit.cancelled.connect(self._cancel_rename)
+        self._rename_edit = edit
+        edit.show()
+        edit.setFocus()
+
+    def _finish_rename(self, bone_id: int, text: str):
+        self._cancel_rename()
+        if text.strip() != self._names.get(bone_id, ""):
+            self.bone_renamed.emit(bone_id, text.strip())
+
+    def _cancel_rename(self):
+        edit, self._rename_edit = self._rename_edit, None
+        if edit is not None:
+            edit.hide()
+            edit.deleteLater()
 
     def wheelEvent(self, event):
         if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -367,6 +412,29 @@ class DopeSheetView(QAbstractScrollArea):
         if not diff.cells:
             return "Same as the reference"
         return "Cannot revert"
+
+
+class _RenameEdit(QLineEdit):
+    """The inline name field: Enter or leaving it commits once, Escape cancels."""
+    committed = pyqtSignal(str)
+    cancelled = pyqtSignal()
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self._done = False
+        self.editingFinished.connect(self._commit)
+
+    def _commit(self):
+        if not self._done:
+            self._done = True
+            self.committed.emit(self.text())
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self._done = True
+            self.cancelled.emit()
+            return
+        super().keyPressEvent(event)
 
 
 class AnimationStrip(QWidget):
@@ -498,7 +566,8 @@ class AnimTimelinePanel(QWidget):
         self.status_label = QLabel("")
         self.status_label.setStyleSheet("color:#aaa;")
         controls.addWidget(self.status_label, 1)
-        hint = QLabel("Click: go to frame/bone · Right-click: revert · Ctrl+wheel: zoom")
+        hint = QLabel("Click: go to frame/bone · Double-click a name: rename · Right-click: revert · "
+                      "Ctrl+wheel: zoom")
         hint.setStyleSheet("color:#888; font-size:10px;")
         controls.addWidget(hint)
         content_layout.addLayout(controls)

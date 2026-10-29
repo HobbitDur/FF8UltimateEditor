@@ -297,6 +297,7 @@ class IfritFilePane(QWidget):
 
     dirty_changed = pyqtSignal()   # emitted when this file first becomes edited-but-unsaved
     edited = pyqtSignal()          # emitted on EVERY real edit (drives undo snapshots)
+    full_view_toggled = pyqtSignal(bool)   # the 3D tab's "Full view" (the shell hides its side list)
 
     def __init__(self, ifrit_manager: IfritManager, path: str, settings: QSettings,
                  icon_path="Resources", weapon_provider=None, file_registry=None,
@@ -406,6 +407,9 @@ class IfritFilePane(QWidget):
         self._tabs.setCurrentIndex(settings.value("ifrit/current_tab", defaultValue=0, type=int))
         self._tabs.currentChanged.connect(self._on_tab_changed)
         layout.addWidget(self._tabs)
+        # The 3D tab's "Full view": no tab bar here, and the shell hides its file list and toolbar
+        self._3d_widget.enable_full_view()
+        self._3d_widget.full_view_toggled.connect(self._on_3d_full_view)
 
         # A QTabWidget (via its internal QStackedWidget) reports the size of its LARGEST page as
         # its own minimumSizeHint - even for tabs that are hidden or never shown. With every tab
@@ -589,6 +593,11 @@ class IfritFilePane(QWidget):
         _shrink_stack_to_current(tabs, self._tab_size_policies)
 
     # ── Lazy tab loading ──────────────────────────────────────────────
+
+    def _on_3d_full_view(self, on: bool):
+        """The 3D tab's "Full view": drop the tab bar here, the shell drops its list and toolbar."""
+        self._tabs.tabBar().setVisible(not on)
+        self.full_view_toggled.emit(on)
 
     def _on_tab_changed(self, index: int):
         self.settings.setValue("ifrit/current_tab", self._tabs.currentIndex())
@@ -956,6 +965,7 @@ class IfritMonsterWidget(QWidget):
 
         # ── Toolbar ──────────────────────────────────────────────────
         toolbar = QWidget()
+        self._toolbar = toolbar
         tl = QHBoxLayout(toolbar)
         tl.setContentsMargins(6, 4, 6, 4)
         tl.setSpacing(4)
@@ -1025,6 +1035,7 @@ class IfritMonsterWidget(QWidget):
         for signal in (model.rowsInserted, model.rowsRemoved, model.modelReset, model.dataChanged):
             signal.connect(self._fit_file_list_width)
         left_panel = QWidget()
+        self._left_panel = left_panel
         lp = QVBoxLayout(left_panel)
         lp.setContentsMargins(4, 4, 0, 4)
         lp.setSpacing(2)
@@ -1490,6 +1501,7 @@ class IfritMonsterWidget(QWidget):
         toggle), never from one of the pane's own signals, so deleting it on the spot is safe -
         and it makes the teardown this method promises (GL context + RAM freed NOW) actually
         happen now instead of at some later pump."""
+        self._set_full_view(False)        # the pane in full view is going away
         for f in self._files:
             pane = f.get('pane')
             if pane is None:
@@ -1502,6 +1514,11 @@ class IfritMonsterWidget(QWidget):
                 f['manager'].enemy.free_animation()         # drop the expanded animation
             except Exception:
                 pass
+
+    def _set_full_view(self, on: bool):
+        """The 3D tab's "Full view": hide the file list and the toolbar around the active pane."""
+        self._toolbar.setVisible(not on)
+        self._left_panel.setVisible(not on)
 
     def _build_pane(self, index: int, progress=None):
         """Fully load file[index]: extract its textures (VincentTim), expand its animation, and
@@ -1539,6 +1556,7 @@ class IfritMonsterWidget(QWidget):
                              anim_set_source=self.anim_set_source)
         pane.dirty_changed.connect(lambda entry=f: self._on_pane_dirty(entry))
         pane.edited.connect(self._on_active_edited)          # every edit -> (debounced) undo snapshot
+        pane.full_view_toggled.connect(self._set_full_view)
         pane.set_model_paths(self._opened_model_paths)
         f['pane'] = pane
         self._ensure_undo_stack(f)   # baseline = the just-loaded (== on-disk) model; kept across rebuilds

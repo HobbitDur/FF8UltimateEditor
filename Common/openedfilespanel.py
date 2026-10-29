@@ -51,6 +51,10 @@ class OpenedFilesPanel(QWidget):
         if expanded:
             self._fit_list_height()
         self._update_header()
+        # Tell the containers the panel's size changed: they cache it, and a collapse left the
+        # header as tall as the expanded list
+        self.layout().invalidate()
+        self.updateGeometry()
 
     def _update_header(self):
         arrow = "▾" if self.header_button.isChecked() else "▸"  # ▾ expanded / ▸ collapsed

@@ -2,10 +2,11 @@ import os
 import sys
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, QSettings, QEvent, QSize
+from PyQt6.QtCore import Qt, QSettings, QEvent, QSize, QTimer
 from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel, QFrame,
-                             QStackedWidget, QSizePolicy, QApplication, QScrollArea, QMessageBox)
+                             QStackedWidget, QSizePolicy, QApplication, QScrollArea, QMessageBox,
+                             QToolButton)
 
 from CCGroup.ccgroup import CCGroupWidget
 from Chocoboy.chocoboywidget import ChocoboyWidget
@@ -418,9 +419,34 @@ class FF8UltimateEditorWidget(QWidget):
         self._tool_host = _ToolHost(self.tool_stack, self._fit_tool_height)
         self._tool_scroll.setWidget(self._tool_host)
         self._fit_tool_height()
+        # The separator under the header carries a small button that hides the whole header
+        # (tool selector, file buttons, opened files, external programs) to give the tool more
+        # room; Ctrl+S and the other window shortcuts keep working while it is hidden.
+        self._header_toggle = QToolButton()
+        self._header_toggle.setAutoRaise(True)
+        self._header_toggle.setStyleSheet("QToolButton{font-size:10px; padding:0 6px;}")
+        self._header_toggle.clicked.connect(lambda: self.set_header_hidden(not self._header_scroll.isHidden()))
+        separator_row = QHBoxLayout()
+        separator_row.setContentsMargins(0, 0, 0, 0)
+        separator_row.setSpacing(4)
+        separator_row.addWidget(self._enhance_end_separator_line, 1)
+        separator_row.addWidget(self._header_toggle)
+        # The header's height follows the opened-files list (expanded/collapsed, more or fewer
+        # files). Refit once the panel has laid itself out, measuring afresh: the size the header
+        # had cached was still the expanded one, which left the strip at its expanded height.
+        def refit_header():
+            self._enhance_layout.invalidate()
+            self._fit_header_height()
+
+        def refit_header_later(*_):
+            QTimer.singleShot(0, refit_header)
+        self._opened_files_panel.header_button.toggled.connect(refit_header_later)
+        self.file_registry.file_changed.connect(refit_header_later)
+        self.file_registry.batch_finished.connect(refit_header_later)
         self._main_layout.addWidget(self._header_scroll)
-        self._main_layout.addWidget(self._enhance_end_separator_line)
+        self._main_layout.addLayout(separator_row)
         self._main_layout.addWidget(self._tool_scroll, 1)
+        self.set_header_hidden(self.settings.value("ui/header_hidden", False, type=bool))
 
         # 7. Initialize Launchers
         self.ifritGui_launcher = IfritGuiLauncher(os.path.join("ExternalTools", "IfritGui", "Ifrit.exe"), callback=None)
@@ -477,11 +503,24 @@ class FF8UltimateEditorWidget(QWidget):
         self.resize(initial)
 
     def _fit_header_height(self):
-        # Reserve the horizontal scrollbar's height so the collapsed header needs no
-        # vertical scrolling. A long expanded file list scrolls within the bounded strip.
-        height = (self._enhance_container.minimumSizeHint().height()
+        # Exactly the header's natural height, reserving the horizontal scrollbar's so the header
+        # needs no vertical scrolling; a long expanded file list scrolls within the bounded strip.
+        # A FIXED height, not only a minimum: expanding the opened-files list raised the minimum,
+        # and collapsing it again left the strip that tall.
+        height = (self._enhance_container.sizeHint().height()
                   + self._header_scroll.horizontalScrollBar().sizeHint().height())
-        self._header_scroll.setMinimumHeight(min(180, height))
+        if self._header_scroll.height() != min(180, height) or self._header_scroll.minimumHeight() != min(180, height):
+            self._header_scroll.setFixedHeight(min(180, height))
+
+    def set_header_hidden(self, hidden: bool):
+        """Hide/show the whole header strip (remembered for the next session)."""
+        self._header_scroll.setVisible(not hidden)
+        self._header_toggle.setText("▾ Show toolbar" if hidden else "▴ Hide toolbar")
+        self._header_toggle.setToolTip(
+            "Show the tool selector, the file buttons and the opened files again" if hidden else
+            "Hide the tool selector, the file buttons and the opened files to give the tool more "
+            "room (Ctrl+S still saves)")
+        self.settings.setValue("ui/header_hidden", hidden)
 
     def _launch_ifritGui(self):
         self.ifritGui_launcher.launch()

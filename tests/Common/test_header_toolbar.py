@@ -996,3 +996,38 @@ def test_folder_tool_gets_a_progress_reporter_only_if_it_takes_one(qapp):
         FileToolbarWidget._load_tool_folder(loader, "some/field", progress)
         FileToolbarWidget.close_progress(progress)
     assert calls == [("some/field", True), ("some/field", None)]   # True: not canceled
+
+
+def test_header_shrinks_back_when_the_opened_files_list_collapses(main_window, qapp):
+    """Expanding the list grows the header strip; collapsing it must give that height back
+    (it used to stay at the expanded height)."""
+    def settle():
+        for _ in range(6):
+            qapp.processEvents()
+    main_window.show()
+    settle()
+    panel = main_window._opened_files_panel
+    panel.header_button.setChecked(False)
+    settle()
+    collapsed = main_window._header_scroll.height()
+    for i in range(8):
+        main_window.file_registry.open_file(f"zzshrink{i}.bin", f"some/dir/zzshrink{i}.bin")
+    panel.header_button.setChecked(True)
+    settle()
+    assert main_window._header_scroll.height() > collapsed
+    panel.header_button.setChecked(False)
+    settle()
+    assert main_window._header_scroll.height() == collapsed
+    for i in range(8):
+        main_window.file_registry.close_file(f"zzshrink{i}.bin")
+
+
+def test_header_can_be_hidden_and_is_remembered(main_window, qapp):
+    main_window.show()
+    main_window.set_header_hidden(True)
+    assert main_window._header_scroll.isHidden()
+    assert main_window.settings.value("ui/header_hidden", type=bool) is True
+    assert "Show" in main_window._header_toggle.text()
+    main_window._header_toggle.click()
+    assert not main_window._header_scroll.isHidden()
+    assert main_window.settings.value("ui/header_hidden", type=bool) is False

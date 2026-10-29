@@ -99,6 +99,8 @@ class Ifrit3DWidget(QWidget):
     # in-view bone dragging (rotate ring / Shift+drag length), and glTF mesh import. Distinct from
     # animation_changed, which also fires on mere navigation and must NOT dirty the file.
     model_edited = pyqtSignal()
+    # "Full view" button: the host gives the whole tool area to this view (see enable_full_view)
+    full_view_toggled = pyqtSignal(bool)
     # Sections of the file rewritten by an action of this view outside its own animation data
     # (the 30 fps conversion rewrites the sequences and the camera): {section index}. The monster
     # pane reloads those tabs, so a tab still showing the old bytes cannot write them back.
@@ -446,6 +448,17 @@ class Ifrit3DWidget(QWidget):
             self._toolbar_spacer_action = toolbar_layout.addWidget(spacer)
 
             # Right side controls
+            # Full view, like Cid's "Map full screen": the host hides everything around this view
+            # (its file list, toolbar and tabs). Hidden until a host that does so turns it on.
+            self.full_view_btn = QPushButton("⛶ Full view")
+            self.full_view_btn.setCheckable(True)
+            self.full_view_btn.setStyleSheet(
+                "QPushButton{background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;}"
+                "QPushButton:checked{background:#315b82;}")
+            self.full_view_btn.setToolTip("Give the whole tool to the 3D editor (Escape restores)")
+            self.full_view_btn.toggled.connect(self._on_full_view_toggled)
+            self._full_view_action = toolbar_layout.addWidget(self.full_view_btn)
+            self._full_view_action.setVisible(False)
             reset_btn = QPushButton("Reset View")
             reset_btn.setStyleSheet("background:#4a6e8a; color:white; padding:4px 12px; border-radius:3px;")
             # via lambda, not the bound method, so it follows a rebuilt gl_widget (release/restore)
@@ -529,6 +542,7 @@ class Ifrit3DWidget(QWidget):
             self.timeline_panel.animation_clicked.connect(self._select_animation)
             self.timeline_panel.sheet.cell_clicked.connect(self._on_timeline_cell_clicked)
             self.timeline_panel.sheet.revert_requested.connect(self._timeline_revert)
+            self.timeline_panel.sheet.bone_renamed.connect(self._on_bone_renamed)
             self.frame_changed.connect(self.timeline_panel.sheet.set_current_frame)
             self.animation_changed.connect(self._timeline_show_current_animation)
             self.model_edited.connect(lambda: self._timeline_invalidate())
@@ -3072,6 +3086,21 @@ class Ifrit3DWidget(QWidget):
         self.update_skeleton()
         self.update_animated_mesh()
 
+    def enable_full_view(self):
+        """Show the "Full view" button: the caller hides its own surroundings on full_view_toggled."""
+        if not hasattr(self, 'full_view_btn'):
+            return
+        self._full_view_action.setVisible(True)
+        exit_full_view = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+        exit_full_view.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        exit_full_view.activated.connect(lambda: self.full_view_btn.setChecked(False))
+
+    def _on_full_view_toggled(self, checked: bool):
+        self.full_view_btn.setText("⛶ Restore" if checked else "⛶ Full view")
+        self.full_view_btn.setToolTip("Restore the editor (also: Escape)" if checked else
+                                      "Give the whole tool to the 3D editor (Escape restores)")
+        self.full_view_toggled.emit(checked)
+
     def _bone_names_key(self) -> str:
         """The model's file name, the key of its bones in the bone-name files."""
         return getattr(self.ifrit_manager.enemy, 'origin_file_name', "") or ""
@@ -3139,9 +3168,11 @@ class Ifrit3DWidget(QWidget):
             if bone_id in seen:
                 continue
             seen.add(bone_id)
-            rows.append((bone_id, self.bone_editor.bone_label(bone_id), depth))
+            rows.append((bone_id, self.bone_editor.bone_label(bone_id), depth,
+                         self.bone_editor.bone_name(bone_id)))
             stack.extend((c, depth + 1) for c in reversed(children.get(bone_id, [])))
-        rows += [(b, self.bone_editor.bone_label(b), 0) for b in range(len(bones)) if b not in seen]
+        rows += [(b, self.bone_editor.bone_label(b), 0, self.bone_editor.bone_name(b))
+                 for b in range(len(bones)) if b not in seen]
         self.timeline_panel.sheet.set_rows(rows)
 
     def _timeline_invalidate(self, anim_id=None):
