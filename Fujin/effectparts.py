@@ -18,12 +18,12 @@ import subprocess
 import tempfile
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QImage, QPixmap
+from PyQt6.QtGui import QColor, QImage, QPainter, QPixmap
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
-                             QSlider, QSpinBox, QTabWidget, QToolButton, QVBoxLayout, QWidget)
+                             QSizePolicy, QSlider, QSpinBox, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
-from FF8GameData.psxgpu.fxdiff import describe, differences
+from FF8GameData.psxgpu.fxdiff import differences, tick_runs
 from Fujin.partsequences import PartSequences, SequenceField
 from Fujin.recorderbuild import FFNX_EFFECTS, RECORDER
 
@@ -98,31 +98,94 @@ def defaults(schema):
 TARGET_PART = 0                     # what no effect part drew: in the lab recording, the target's model
 
 
+class DiffStrip(QWidget):
+    """Under a compared preview's slider: a cell per tick, red where the part draws differently with
+    the other value, amber where only other parts do; a click goes to that tick."""
+    clicked = pyqtSignal(int)
+
+    def __init__(self):
+        super().__init__()
+        self.setFixedHeight(10)
+        self.mine, self.others, self.count = set(), set(), 0
+        self.setToolTip("Red: this part draws differently at that tick with the compared value; amber: only "
+                        "other parts do. Click to go there.")
+
+    def set_ticks(self, mine, others, count):
+        self.mine, self.others, self.count = set(mine), set(others) - set(mine), count
+        self.update()
+
+    def mousePressEvent(self, event):
+        if self.count:
+            self.clicked.emit(min(self.count - 1, int(event.position().x() * self.count / max(1, self.width()))))
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QColor(60, 60, 66))
+        for ticks, colour in ((self.others, QColor(230, 170, 40)), (self.mine, QColor(235, 60, 60))):
+            for tick in ticks:
+                left = round(tick * self.width() / max(1, self.count))
+                right = round((tick + 1) * self.width() / max(1, self.count))
+                painter.fillRect(left, 0, max(1, right - left), self.height(), colour)
+
+
 class PartPreview(QWidget):
-    """One part of the lab recording, alone (or with the target as a reference), framed on where it
-    goes, playable; markers: {tick: what happens then} shown under the picture."""
+    """One part of the lab recording, alone (or with the target as a reference, as last drawn when
+    the effect hides it), framed on where it goes, playable; markers: {tick: what happens then}
+    shown under the picture. Compare (a field's "?"): the same part with another value of one
+    field, beside it, the ticks that change marked under the slider."""
     reference_toggled = pyqtSignal(bool)
 
-    def __init__(self, runner, part_ids, renderer, markers=lambda: {}):
+    def __init__(self, runner, part_ids, renderer, markers=lambda: {}, part_names=None):
         super().__init__()
         self.runner, self.part_ids, self.renderer, self.markers = runner, part_ids, renderer, markers
-        self._frames, self._view = {}, None
-        self.picture = QLabel()
-        self.picture.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.picture.setMinimumSize(PREVIEW_WIDTH, PREVIEW_WIDTH * 7 // 10)
-        self.picture.setStyleSheet("background: #101018; color: #C0C0C8;")
+        self.part_names = part_names or {}
+        self._frames, self._view, self._size = {}, None, None
+        self.variant, self.compared = None, None      # the compared recording; (field, record(value))
+        self.picture, self.picture_b = self._picture(), self._picture()
+        self.caption, self.caption_b = QLabel(), QLabel()
+        self.picture_b.hide()
+        self.caption.hide()
+        self.caption_b.hide()
         self.play_button = QPushButton("Play")
         self.play_button.setCheckable(True)
         self.play_button.toggled.connect(lambda on: self.timer.start() if on else self.timer.stop())
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.valueChanged.connect(self._show)
+        self.strip = DiffStrip()
+        self.strip.clicked.connect(self.slider.setValue)
+        self.strip.hide()
         self.frame_label = QLabel()
         self.reference = QCheckBox("Target")
-        self.reference.setToolTip("Draw the effect's target too, as a reference for where the part goes")
+        self.reference.setToolTip("Draw the effect's target too, as a reference for where the part goes (as "
+                                  "last drawn when the effect hides it, as Cure does while redrawing it)")
         self.reference.toggled.connect(self._reference_toggled)
         self.timer = QTimer(self)
         self.timer.setInterval(int(1000 / TICKS_PER_SECOND))
         self.timer.timeout.connect(lambda: self.slider.setValue((self.slider.value() + 1) % (self.slider.maximum() + 1)))
+        # the compare bar: which field, the other value, what changes
+        self.compare_title = QLabel()
+        self.compare_value = QSpinBox()
+        self.compare_value.setKeyboardTracking(False)
+        self.compare_value.valueChanged.connect(lambda _value: self._compare())
+        self.compare_note = QLabel()
+        self.compare_note.setWordWrap(True)
+        done = QPushButton("Done")
+        done.setToolTip("Stop comparing")
+        done.clicked.connect(self.stop_compare)
+        self.compare_bar = QWidget()
+        bar = QHBoxLayout(self.compare_bar)
+        bar.setContentsMargins(0, 0, 0, 0)
+        bar.addWidget(self.compare_title)
+        bar.addWidget(self.compare_value)
+        bar.addWidget(self.compare_note, 1)
+        bar.addWidget(done)
+        self.compare_bar.hide()
+        pictures = QHBoxLayout()
+        for caption, picture in ((self.caption, self.picture), (self.caption_b, self.picture_b)):
+            column = QVBoxLayout()
+            column.addWidget(caption)
+            column.addWidget(picture, 1)
+            pictures.addLayout(column, 1)
         controls = QHBoxLayout()
         controls.addWidget(self.play_button)
         controls.addWidget(self.slider, 1)
@@ -130,13 +193,30 @@ class PartPreview(QWidget):
         controls.addWidget(self.reference)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.picture, 1)
+        layout.addWidget(self.compare_bar)
+        layout.addLayout(pictures, 1)
         layout.addLayout(controls)
-        runner.recording_changed.connect(self.refresh)
+        layout.addWidget(self.strip)
+        runner.recording_changed.connect(lambda: self.refresh(again=True))
         self.refresh()
+
+    @staticmethod
+    def _picture():
+        picture = QLabel()
+        picture.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        picture.setMinimumSize(PREVIEW_WIDTH // 2, PREVIEW_WIDTH * 7 // 20)
+        # drawn at its own size: the picture never asks for more room than the layout gives it
+        picture.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
+        picture.setStyleSheet("background: #101018; color: #C0C0C8;")
+        return picture
 
     def shown_parts(self):
         return self.part_ids | {TARGET_PART} if self.reference.isChecked() else self.part_ids
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._frames = {}                       # drawn at the picture's size: again at the new one
+        self._show(self.slider.value())
 
     def set_reference(self, on):
         """The Target box, set from another tab's (one choice for all of them)."""
@@ -150,16 +230,29 @@ class PartPreview(QWidget):
         self.refresh()
         self.reference_toggled.emit(on)
 
-    def refresh(self):
-        """A new lab recording (or none): frame the part on it again."""
+    def _fit(self, recording):
+        """The part's box, and the target's too when it is shown: each fitted alone (the target's many
+        points would trim the part's few)."""
+        boxes = [recording.fit_view(parts=self.part_ids)]
+        if self.reference.isChecked() and recording.last_drawing(0, TARGET_PART) is not None:
+            boxes.append(recording.fit_view(parts={TARGET_PART}))
+        return boxes
+
+    def refresh(self, again=False):
+        """A new lab recording (or none): frame the part on it again (again: the values changed, the
+        compared recording is made again with them)."""
         self._frames, self._view = {}, None
         cast = self.runner.cast()
         body = cast.slots.get(cast.target, (None, None))[0]
         self.reference.setText(f"Target ({os.path.basename(body)})" if body else "Target")
         self.reference.setEnabled(bool(body))
         recording = self.runner.recording
+        if again and self.compared is not None and recording is not None:
+            self._compare()
+            return
         self.slider.blockSignals(True)
-        self.slider.setRange(0, max(0, len(recording.ticks) - 1) if recording else 0)
+        length = max(len(recording.ticks) if recording else 0, len(self.variant.ticks) if self.variant else 0)
+        self.slider.setRange(0, max(0, length - 1))
         self.slider.blockSignals(False)
         self.play_button.setEnabled(recording is not None)
         if recording is None:
@@ -168,28 +261,113 @@ class PartPreview(QWidget):
             self.picture.setText(self.runner.status.text() or "Recording...")
             self.frame_label.setText("")
             return
-        if not any(set(tick.parts) & self.part_ids for tick in recording.ticks):
+        recordings = [r for r in (recording, self.variant) if r is not None]
+        if not any(set(tick.parts) & self.part_ids for r in recordings for tick in r.ticks):
             self.picture.setPixmap(QPixmap())
             self.picture.setText("This part draws nothing with these values.")
             return
-        self._view = recording.fit_view(parts=self.shown_parts())
+        boxes = [box for r in recordings for box in self._fit(r)]
+        left, top = min(b[0] for b in boxes), min(b[1] for b in boxes)
+        right, bottom = max(b[0] + b[2] for b in boxes), max(b[1] + b[3] for b in boxes)
+        pad_x, pad_y = (right - left) * 0.06, (bottom - top) * 0.06
+        self._view = (int(left - pad_x), int(top - pad_y), int(right - left + 2 * pad_x), int(bottom - top + 2 * pad_y))
         self._show(self.slider.value())
+
+    def _draw(self, recording, tick, size):
+        if tick >= len(recording.ticks):
+            return None
+        # the whole view in the picture; the target as last drawn when the effect hides it (Cure
+        # redraws it itself, as its Overlay part)
+        scale = min(size[0] / max(1, self._view[2]), size[1] / max(1, self._view[3]))
+        under = None
+        if self.reference.isChecked() and TARGET_PART not in recording.ticks[tick].parts:
+            last = recording.last_drawing(tick, TARGET_PART)
+            under = (last, {TARGET_PART}) if last is not None else None
+        image, _gpu = recording.frame(tick, view=self._view, scale=scale, renderer=self.renderer(),
+                                      parts=self.shown_parts(), under=under)
+        height, width = image.shape[:2]
+        return QPixmap.fromImage(QImage(image.tobytes(), width, height, width * 3,
+                                        QImage.Format.Format_RGB888).copy())
 
     def _show(self, tick):
         recording = self.runner.recording
         if recording is None or self._view is None or not recording.ticks:
             return
-        tick = min(tick, len(recording.ticks) - 1)
-        if tick not in self._frames:
-            scale = PREVIEW_WIDTH / max(1, self._view[2])
-            image, _gpu = recording.frame(tick, view=self._view, scale=scale, renderer=self.renderer(),
-                                          parts=self.shown_parts())
-            height, width = image.shape[:2]
-            qimage = QImage(image.tobytes(), width, height, width * 3, QImage.Format.Format_RGB888).copy()
-            self._frames[tick] = QPixmap.fromImage(qimage)
-        self.picture.setPixmap(self._frames[tick])
+        tick = max(0, min(tick, self.slider.maximum()))
+        size = (max(PREVIEW_WIDTH // 2, self.picture.width()), max(PREVIEW_WIDTH * 7 // 20, self.picture.height()))
+        if size != self._size:
+            self._frames, self._size = {}, size
+        pairs = ((self.picture, recording, "a"),) + (((self.picture_b, self.variant, "b"),) if self.variant else ())
+        for picture, shown, side in pairs:
+            if (side, tick) not in self._frames:
+                self._frames[side, tick] = self._draw(shown, tick, size)
+            pixmap = self._frames[side, tick]
+            if pixmap is None:
+                picture.setPixmap(QPixmap())
+                picture.setText("The effect has ended.")
+            else:
+                picture.setPixmap(pixmap)
         marker = self.markers().get(tick)
-        self.frame_label.setText(f"tick {tick} / {len(recording.ticks) - 1}" + (f" - {marker}" if marker else ""))
+        self.frame_label.setText(f"tick {tick} / {self.slider.maximum()}" + (f" - {marker}" if marker else ""))
+
+    # ------------------------------------------------------------------ compare
+    def start_compare(self, field, current, other, record):
+        """Show the part with `field` at `other` beside it at `current`; record(value) -> the lab
+        recording with that value (None when it cannot be made)."""
+        self.compared = (field, record)
+        self.compare_title.setText(f"Compare {field['label']}: now {current}, with")
+        self.compare_value.blockSignals(True)
+        self.compare_value.setRange(field["min"], field["max"])
+        self.compare_value.setValue(other)
+        self.compare_value.blockSignals(False)
+        for widget in (self.compare_bar, self.picture_b, self.caption, self.caption_b, self.strip):
+            widget.show()
+        self._compare()
+
+    def stop_compare(self):
+        self.compared, self.variant = None, None
+        for widget in (self.compare_bar, self.picture_b, self.caption, self.caption_b, self.strip):
+            widget.hide()
+        self.refresh()
+
+    def _compare(self):
+        """Record the compared value, mark what changes, show both."""
+        field, record = self.compared
+        other = self.compare_value.value()
+        base = self.runner.recording
+        current = dict(self.runner.cast().params).get(field["key"], field["default"])
+        self.compare_title.setText(f"Compare {field['label']}: now {current}, with")
+        self.caption.setText(f"Now: {field['label']} {current}")
+        self.caption_b.setText(f"With {field['label']} {other}")
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            self.variant = record(other) if base is not None else None
+        finally:
+            QApplication.restoreOverrideCursor()
+        if base is None or self.variant is None:
+            self.compare_note.setText("The effect recorder could not record it.")
+            self.variant = None
+            self.refresh()
+            return
+        changes, _lengths = differences(base, self.variant, self.part_names)
+        mine = [entry for entry in changes if entry["part"] in self.part_ids]
+        others = [entry for entry in changes if entry["part"] not in self.part_ids and entry["part"] != TARGET_PART]
+        self.strip.set_ticks({t for e in mine for t in e["ticks"]}, {t for e in others for t in e["ticks"]},
+                             max(len(base.ticks), len(self.variant.ticks)))
+        if not changes:
+            note = "Nothing changes."
+        else:
+            note = " · ".join(f"{e['name']} ticks {tick_runs(e['ticks'])}" for e in mine) or "This part does not change"
+            if others:
+                note += (" - also " + ", ".join(e["name"] for e in others)
+                         + " (amber: the random numbers they draw shift)")
+        if len(base.ticks) != len(self.variant.ticks):
+            note += f" - lasts {len(self.variant.ticks)} ticks instead of {len(base.ticks)}"
+        self.compare_note.setText(note)
+        self.refresh()
+        first = min((t for e in mine for t in e["ticks"]), default=None)
+        if first is not None:
+            self.slider.setValue(first)
 
 
 class PartTab(QWidget):
@@ -222,8 +400,8 @@ class PartTab(QWidget):
             label.setToolTip(spin.toolTip())
             probe = QToolButton()
             probe.setText("?")
-            probe.setToolTip("What does it change? Records the effect with this value nudged by one and "
-                             "lists what draws differently")
+            probe.setToolTip("What does it change? Shows the part with another value of this field beside "
+                             "it, the ticks that change marked under the slider")
             probe.setEnabled(not sequence)
             probe.clicked.connect(lambda _checked, key=field["key"]: self.probe(key))
             row = QHBoxLayout()
@@ -232,9 +410,6 @@ class PartTab(QWidget):
             self.spins[field["key"]], self.labels[field["key"]] = spin, label
             form.addRow(label, row)
             self._mark(field["key"])
-        self.probe_text = QLabel()
-        self.probe_text.setWordWrap(True)
-        self.probe_text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         reset = QPushButton("Game values")
         reset.setToolTip("Put this part's parameters back to the game's values")
         reset.clicked.connect(self.reset)
@@ -243,14 +418,13 @@ class PartTab(QWidget):
         form_layout.addWidget(doc)
         form_layout.addLayout(form)
         form_layout.addWidget(reset)
-        form_layout.addWidget(self.probe_text)
         form_layout.addStretch(1)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(form_widget)
         scroll.setMinimumWidth(380)
         part_ids = {part["id"]} if part["id"] else set(effect_parts)      # 0: draws nothing, the whole effect
-        self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers)
+        self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers, part_names=self.part_names)
         self.images = PartImages(runner, part_ids, self.named_images, locate, part["title"])
         self.sequences = PartSequences(runner, part_ids, self.part_names)
         self.sequences.picked.connect(self.images.select)
@@ -284,33 +458,22 @@ class PartTab(QWidget):
         self.sequences.set_limits(self.frame_limits())
 
     def probe(self, key):
-        """What `key` changes: the effect recorded with it one lower (higher at its minimum), compared
-        with the shown recording, the differences listed under the form and the preview moved to
-        the first tick that changes."""
+        """What `key` changes: the preview compares the part at its value with another - the game's
+        when it is not at it, else a clearly different one (twice it, or 1 for 0) - recorded with
+        the effect's other values as they are."""
         field = next(field for field in self.fields if field["key"] == key)
-        base = self.runner.recording
-        if base is None:
-            self.probe_text.setText("What does it change: the recording is not ready yet.")
-            return
         value = self.spins[key].value()
-        nudged = value - 1 if value > field["min"] else value + 1
-        params = dict(self.runner.cast().params)
-        params[key] = nudged
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        try:
-            variant = self.runner.record_with(params)
-        finally:
-            QApplication.restoreOverrideCursor()
-        if variant is None:
-            self.probe_text.setText("What does it change: the effect recorder could not record it.")
-            return
-        changes, lengths = differences(base, variant, self.part_names)
-        self.probe_text.setText(f"<b>{field['label']} {value} → {nudged}</b><br>"
-                                + "<br>".join(line.replace("    ", "&nbsp;&nbsp;&nbsp;&nbsp;")
-                                              for line in describe(changes, lengths)))
-        first = min((entry["ticks"][0] for entry in changes), default=None)
-        if first is not None:
-            self.preview.slider.setValue(min(first, self.preview.slider.maximum()))
+        if value != field["default"]:
+            other = field["default"]
+        else:
+            other = value * 2 if value else 1
+            other = max(field["min"], min(field["max"], other))
+            if other == value:
+                other = max(field["min"], min(field["max"], value - 1 if value > field["min"] else value + 1))
+
+        def record(compared):
+            return self.runner.record_with(dict(self.runner.cast().params) | {key: compared})
+        self.preview.start_compare(field, value, other, record)
 
     def markers(self):
         """{tick: what happens}: a part drawing nothing has its tick parameters marked on the preview."""

@@ -259,11 +259,29 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     assert {0x1641F78, 0x1642238, 0x164205C} <= set(shown) and len(shown) < len(browser.sequences)
     browser.only_loaded.setChecked(False)
     assert browser.list.count() == len(browser.sequences) > 300
-    # What does it change: Ring End frames 4 -> 3, the ending's frame 4 no longer drawn
+    # What does it change: the part beside itself with another value, the changed ticks marked.
+    # Sparkles Frames 8 -> 16 (twice it): they live longer
+    tab = tabs["sparkles"]
+    tab.probe("sparkle.frames")
+    preview = tab.preview
+    assert preview.compare_value.value() == 16 and preview.variant is not None
+    assert not preview.picture_b.isHidden() and preview.caption_b.text() == "With Frames 16"
+    assert preview.strip.mine and preview.slider.value() == min(preview.strip.mine)
+    assert preview.compare_note.text().startswith("Sparkles ticks ")
+    # another value: recorded again; the game's value proposed once the field is changed
+    preview.compare_value.setValue(4)
+    assert preview.caption_b.text() == "With Frames 4" and preview.strip.mine
+    preview.stop_compare()
+    assert preview.picture_b.isHidden() and preview.variant is None
+    tab.spins["sparkle.frames"].setValue(12)
+    tab.probe("sparkle.frames")
+    assert preview.compare_value.value() == 8                  # the game's
+    preview.stop_compare()
+    tab.spins["sparkle.frames"].setValue(8)
+    # Ring End frames past its sequence's last frame: FFNx keeps the last one, nothing changes
     ring.probe("ring.end_frames")
-    text = ring.probe_text.text()
-    assert "End frames 4 → 3" in text and "Ring: draws differently" in text
-    assert "no longer draws sequence 0x1641FCC frames 4" in text
+    assert ring.preview.compare_value.value() == 8 and ring.preview.compare_note.text() == "Nothing changes."
+    ring.preview.stop_compare()
 
 
 def wait(qapp, view):

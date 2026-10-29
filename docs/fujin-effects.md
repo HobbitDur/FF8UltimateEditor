@@ -142,11 +142,15 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   the game's sequence for a value that is none (`fxp::sequence`) and a flipbook's last frame
   within its sequence (`fxp::last_frame`). A **Frames** field crosses the frames its sequence never
   plays (Sparkles: frames 9-26 of 27). **Browse all sequences…** lists them without choosing.
-  Every field's **?** answers *What does it change?*: the effect is recorded again with that value
-  one lower and compared with the shown recording, per part (`FF8GameData/psxgpu/fxdiff.py`): the
-  ticks drawn differently, the sprite frames no longer or now drawn, the length - and the preview
-  goes to the first tick that changes. Parts the value does not drive can change too (the random
-  numbers come from one stream).
+  Every field's **?** answers *What does it change?*: the preview shows the part twice, side by
+  side - now, and with another value of that field (the game's when the field is not at it, else
+  twice it; any value in the bar's box, Done to stop) recorded with the effect's other values as
+  they are. A strip under the slider marks the ticks that change (red: this part; amber: only other
+  parts - they draw from the same stream of random numbers, so a part drawing more or less shifts
+  their rolls), a click goes there, and the bar says which parts change when
+  (`FF8GameData/psxgpu/fxdiff.py`). The **Target** box draws the target as last drawn when the
+  effect hides it (Cure hides it while its Overlay redraws it), merged by depth with the part, both
+  framed together.
   The numbers come out of the port's code into one struct per
   part (FFNx `src/ff8/battle/fx/fx_params.h`: generic blocks every module can reuse - a tick
   window, a count per tick, a random range, a fraction, the effect library's glint style -

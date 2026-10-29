@@ -85,12 +85,21 @@ class EffectRecording:
         centre_x, centre_y = (low_x + high_x) / 2, (low_y + high_y) / 2
         return int(centre_x - width / 2), int(centre_y - height / 2), int(width), int(height)
 
-    def frame(self, tick_index, vram=None, view=None, scale=1.0, renderer=None, parts=None):
+    def last_drawing(self, tick_index, part):
+        """The tick at or before `tick_index` (else the first after it) that drew effect part
+        `part`, or None: an effect may hide what it redraws itself (Cure its target) - the
+        part as last drawn, as a reference."""
+        drawing = [index for index, tick in enumerate(self.ticks) if part in tick.parts]
+        before = [index for index in drawing if index <= tick_index]
+        return before[-1] if before else drawing[0] if drawing else None
+
+    def frame(self, tick_index, vram=None, view=None, scale=1.0, renderer=None, parts=None, under=None):
         """The RGB image of tick `tick_index` and the Gpu that drew it (its missing_pages / counts).
         view: (x, y, width, height) of the screen plane to draw, None = the game's window
         (GAME_WINDOW); scale: image pixels per packet unit; renderer: a glrender.PsxGlRenderer to
         draw with OpenGL (the same picture, fast enough to play), None = the software Gpu; parts:
-        draw only the packets of these effect parts (the uploads stay whole)."""
+        draw only the packets of these effect parts (the uploads stay whole); under: (tick index,
+        parts) of other packets drawn too, merged by depth (a reference as last drawn)."""
         from FF8GameData.psxgpu.gpu import GAME_WINDOW
         key = None
         if vram is None:
@@ -109,6 +118,11 @@ class EffectRecording:
         tick = self.ticks[tick_index]
         packets = tick.part_packets(parts)
         packets = packets if tick.ordered else sorted(packets, key=lambda p: (-p[0], -p[1]))
+        if under is not None and tick.ordered:
+            # draw-order lists: far first by depth key (no key, 2D: last); the reference first among equals
+            extra = self.ticks[under[0]].part_packets(under[1])
+            depth = lambda packet: packet[0] if packet[0] < 0x80000000 else -1
+            packets = sorted(extra + packets, key=lambda packet: -depth(packet))
         for _bucket, _order, words in packets:
             gpu.draw_packet(words)
         if renderer is not None:

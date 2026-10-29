@@ -235,7 +235,8 @@ class NativePreviewView(QWidget):
             "edits are included; after the first recording, editing a texture or using Undo / Redo refreshes "
             "this preview automatically.")
         self.intro.setWordWrap(True)
-        # the battle's actors, drawn or not: their pickers live in this group, greyed while it is off
+        # the battle's actors, drawn or not: their pickers live in this group, folded away while it is off
+        # (the Camera tab shows them too)
         self.actors_group = QGroupBox("Battle actors")
         self.actors_group.setCheckable(True)
         self.actors_group.setChecked(False)
@@ -243,8 +244,10 @@ class NativePreviewView(QWidget):
                                      "effect. Off: the effect alone - the actors picked here are still loaded, "
                                      "unseen (the effect's code places itself on its caster and target; one it "
                                      "redraws itself, as Cure does its target, is left out too - its own models, "
-                                     "as Protect's shield, stay).")
-        self.actors_group.toggled.connect(lambda _on: (self._cast_changed(), self._update_controls()))
+                                     "as Protect's shield, stay). The caster and target are also picked in the "
+                                     "Camera tab.")
+        self.actors_group.toggled.connect(lambda _on: (self._fold_actors(), self._cast_changed(),
+                                                       self._update_controls()))
         self._cast_key = None
         if cast_source is not None:
             # the battle setup is the Camera tab preview's own panel, shown here while this preview is:
@@ -312,7 +315,12 @@ class NativePreviewView(QWidget):
             panel = self.cast_source.cast
             if panel.parentWidget() is not self.actors_group:
                 self._actors_layout.addWidget(panel)
-                panel.show()
+            self._fold_actors()
+
+    def _fold_actors(self):
+        """Battle actors off: its pickers hidden, the group a single line."""
+        if self.cast_source is not None and self.cast_source.cast.parentWidget() is self.actors_group:
+            self.cast_source.cast.setVisible(self.actors_group.isChecked())
 
     # the battle setup's pickers (the Camera tab preview's panel)
     @property
