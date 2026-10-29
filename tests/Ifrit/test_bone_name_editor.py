@@ -54,6 +54,7 @@ def test_widget_rename_goes_to_the_user_file(qapp, tmp_path):
                 bone_data=SimpleNamespace(bones=[object()] * 3))))
         host._bone_names_key = lambda: Ifrit3DWidget._bone_names_key(host)
         host._refresh_bone_names = lambda: Ifrit3DWidget._refresh_bone_names(host)
+        host._timeline_set_rows = lambda: None          # no timeline panel in this stand-in
         host._refresh_bone_names()
         assert editor.bone_name(2) == "Head"
 
