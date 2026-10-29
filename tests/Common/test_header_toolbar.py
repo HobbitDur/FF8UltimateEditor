@@ -108,10 +108,13 @@ def test_ifrit_open_save_are_on_the_shared_toolbar(main_window):
     # No main binding - Import runs through the open_files() hook, Save through save_folder(). Its
     # bindings are complementary: kernel.bin names the spells/items/enemy attacks, scene.out
     # gives the linked monster parts drawn in the 3D view (Seifer's Gunblade...) and the battle
-    # previews' encounters, audio.fmt plays the Sequence tab's sounds, mngrp.bin its battle texts.
+    # previews' encounters, audio.fmt plays the Sequence tab's sounds, mngrp.bin its battle texts,
+    # and the exe / an FFNx .animset file give the anim set tab its animation sets.
+    from Ifrit.IfritAnimSet.ifritanimsetwidget import ANIM_SET_FILE_NAME, EXE_FILE_NAME
     assert tb._main_bindings() == []
     assert [b.file_name for b in tb._complementary_bindings()] == ["kernel.bin", "scene.out", "audio.fmt",
-                                                                    "mngrp.bin"]
+                                                                    "mngrp.bin", EXE_FILE_NAME,
+                                                                    ANIM_SET_FILE_NAME]
     assert callable(getattr(ifrit, "open_files", None)) and callable(getattr(ifrit, "save_folder", None))
     assert tb.import_button.isEnabled()          # enabled via open_files(), no bindings needed
     assert tb.save_button.isEnabled() is False   # nothing changed/loaded yet (can_save_folder False)

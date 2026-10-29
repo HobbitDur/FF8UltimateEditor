@@ -507,6 +507,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
         if not points and grid_half_size is None:
             return
         glDisable(GL_TEXTURE_2D)
+        glLineWidth(1.0)    # whatever was drawn last, the ground grid stays thin
         glBegin(GL_LINES)
         if grid_half_size is not None:
             glColor3f(0.32, 0.32, 0.38)
@@ -554,6 +555,7 @@ class FF8OpenGLWidget(QOpenGLWidget):
     def _draw_preview_markers(self):
         ground_y, target = getattr(self, '_preview_markers', (None, None))
         glDisable(GL_TEXTURE_2D)
+        glLineWidth(1.0)
         if ground_y is not None:
             # A quiet grid: large enough to still be there after a long 9E move.
             half_size = max(40., max(abs(float(v)) for v in target) * 1.2) if target is not None else 40.
@@ -1312,6 +1314,9 @@ class FF8OpenGLWidget(QOpenGLWidget):
                         glVertex3f(end[0], end[1], end[2])
                         glEnd()
 
+        # Back to thin lines: the width is GL state, and the next frame's ground grid would inherit
+        # these thick bones while the animation plays (paused, the rotation gizmo reset it)
+        glLineWidth(1.0)
         glEnable(GL_DEPTH_TEST)
 
     def draw_quads(self):

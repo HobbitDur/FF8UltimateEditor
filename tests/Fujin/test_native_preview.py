@@ -371,7 +371,12 @@ def test_edits_during_first_recording_request_a_fresh_snapshot(qapp, monkeypatch
     requests = []
     monkeypatch.setattr(view, "record", lambda keep_tick=False: requests.append(keep_tick))
     view._load_recorded(1, "discarded-recording.txt", 0, old_signature, 16, 0, "")
-    QTest.qWait(300)
+    # The re-record comes from the 250 ms edit debounce: wait for it, not a fixed 300 ms - a busy
+    # CI runner (Windows) fired it later than that and the test failed on an empty list
+    deadline = time.monotonic() + 5
+    while not requests and time.monotonic() < deadline:
+        QTest.qWait(20)
+    QTest.qWait(50)                                 # nothing more may follow the one request
     assert requests == [True] and view.recording is None
 
 

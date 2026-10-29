@@ -429,8 +429,8 @@ class FF8UltimateEditorWidget(QWidget):
         separator_row = QHBoxLayout()
         separator_row.setContentsMargins(0, 0, 0, 0)
         separator_row.setSpacing(4)
-        separator_row.addWidget(self._enhance_end_separator_line, 1)
         separator_row.addWidget(self._header_toggle)
+        separator_row.addWidget(self._enhance_end_separator_line, 1)
         # The header's height follows the opened-files list (expanded/collapsed, more or fewer
         # files). Refit once the panel has laid itself out, measuring afresh: the size the header
         # had cached was still the expanded one, which left the strip at its expanded height.
