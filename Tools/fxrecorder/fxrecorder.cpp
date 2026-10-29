@@ -19,6 +19,8 @@
 //   C t ex ey ez ax ay az         the battle camera words after the tick (eye, look-at)
 //   V t x y w h hexwords          a VRAM upload (queued by the tick, or done before it)
 //   B t x y w h u v               a VRAM-to-VRAM copy
+//   Q t part sequence frame       a sprite the tick drew: its sprite sequence (address, hex) and
+//                                 frame, the effect part drawing it (FF8GameData/psxgpu/spritesequence.py)
 //
 // Arguments: <effect id> exe=FF8_EN.exe magic=<folder of the mag files> battle=<folder of the battle
 // files> out=<file> [model=N: every slot gets c0mN.dat (default 0; -1 = no model)] [ticks=N]
@@ -58,6 +60,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include <utility>
 #ifdef FF8_FX_LAB
 #include "fx_port.h"
 #include "fx_params.h"
@@ -295,6 +298,26 @@ static int part_at(uint32_t node)
 		else break;
 	return part;
 }
+// every sprite the tick draws: InitEffectSequenceFromData (0x571C80) and its 18 copies in the
+// effect modules, called with a workspace whose +0 is the sprite sequence and +4 the frame (the
+// Q lines: tick, part, sequence, frame)
+struct SpriteDraw { uint32_t node, seq; int frame; };
+static std::vector<SpriteDraw> g_sprites;
+static const uint32_t SPRITE_INITS[] = { 0x571C80, 0x7435E0, 0x7583C0, 0x761330, 0x766900, 0x7721E0, 0x7758A0,
+	0x782AB0, 0x7AE960, 0x7BBFD0, 0x7D51F0, 0x7F2050, 0x80BB50, 0x899EF0, 0x8A0350, 0x8AA400, 0x8C4020,
+	0x8CD890, 0x8DD260 };
+template<int N> static uint32_t __cdecl s_sprite(uint32_t ws, uint32_t ot, uint32_t shift, uint32_t cursor)
+{
+	const uint32_t at = SPRITE_INITS[N];
+	if (g_rec && !IsBadReadPtr((void *)ws, 6))
+		g_sprites.push_back({ *(const uint32_t *)0x1CA8828, *(const uint32_t *)ws, *(const int16_t *)(ws + 4) });
+	unpatch(at);
+	uint32_t r = ((uint32_t (__cdecl *)(uint32_t, uint32_t, uint32_t, uint32_t))at)(ws, ot, shift, cursor);
+	repatch(at);
+	return r;
+}
+template<int... N> static void patch_sprites(std::integer_sequence<int, N...>) { (patch_jmp(SPRITE_INITS[N], (void *)s_sprite<N>), ...); }
+
 static void write_packet(uint32_t fn, uint32_t bucket, uint32_t pkt, int part = 0)
 {
 	if (IsBadReadPtr((void *)pkt, 4)) return;
@@ -348,6 +371,7 @@ static void write_tick(int t)
 	for (const Ins &r : drawn) write_packet(r.fn, r.bucket, r.pkt, r.part);
 	const int16_t *eye = (const int16_t *)0xB8B7F0, *at = (const int16_t *)0xB8B7F8;
 	fprintf(g_out, "C %d %d %d %d %d %d %d\n", t, eye[0], eye[1], eye[2], at[0], at[1], at[2]);
+	for (const SpriteDraw &s : g_sprites) fprintf(g_out, "Q %d %d %X %d\n", t, part_at(s.node), s.seq, s.frame);
 }
 
 // ---------------------------------------------------------------- battle memory
@@ -1008,6 +1032,7 @@ int main(int argc, char **argv)
 	patch_jmp(0x40A0F0, (void *)s_40A0F0);
 	patch_jmp(0x45C740, (void *)s_45C740); patch_jmp(0x45C7A0, (void *)s_45C7A0);
 	patch_jmp(0x45C870, (void *)s_45C870); patch_jmp(0x45C8E0, (void *)s_45C8E0);
+	patch_sprites(std::make_integer_sequence<int, sizeof(SPRITE_INITS) / sizeof(SPRITE_INITS[0])>());
 	uint32_t zero1[] = { 0x46B3A0, 0x46B3E0, 0x47E3C0, 0x4A2940, 0x4A2900, 0x4A8480, 0x501E40, 0x501F30, 0x504270, 0x506690, 0x5099A0, 0x403D99 };
 	for (uint32_t a : zero1) patch_jmp(a, (void *)s_zero1);
 	uint32_t zero2[] = { 0x46B450, 0x506BA0, 0x505C00, 0x505CE0, 0x46BD40, 0x512AA0, 0x512AC0 };
@@ -1092,7 +1117,7 @@ int main(int argc, char **argv)
 				*(int16_t *)0x1D977A2 = 0;
 				call0(0x5033E0);
 			}
-			g_ins.clear(); g_pending.clear();
+			g_ins.clear(); g_pending.clear(); g_sprites.clear();
 			g_rec = true;
 			render_actors();
 			g_rec = false;
@@ -1118,7 +1143,7 @@ int main(int argc, char **argv)
 		dump_vram_queue();                 // uploads queued by the setup / the loads applied before this tick
 		env_reset();
 		set_camera(t - cast_ticks);
-		g_ins.clear(); g_pending.clear();
+		g_ins.clear(); g_pending.clear(); g_sprites.clear();
 		g_rec = true;
 		int r = 0;
 		step_plan();

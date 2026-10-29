@@ -58,6 +58,15 @@ class TextureSheet:
     depth: int              # 0: 4-bit, 1: 8-bit (through `clut`), 2: 15-bit direct colour
     clut: int               # the palette's CLUT word (x / 16 in bits 0-5, y in bits 6-14); 0 for 15-bit
     pieces: dict = field(default_factory=dict)      # tick -> {(u0, v0, u1, v1)} in this sheet's texels
+    pages: dict = field(default_factory=dict)       # (texture page, CLUT) -> (u, v) of the page's texel 0, 0
+
+    def place(self, tpage, clut, rect):
+        """A rectangle of a page's texels (u0, v0, u1, v1) in this sheet's texels, None when this
+        sheet is not that page read with that palette."""
+        shift = self.pages.get((tpage & 0x1F, clut if self.depth < 2 else 0))
+        if shift is None or (tpage >> 7) & 3 != self.depth:
+            return None
+        return rect[0] + shift[0], rect[1] + shift[1], rect[2] + shift[0], rect[3] + shift[1]
 
     @property
     def texel_width(self):
@@ -120,6 +129,7 @@ def texture_sheets(recording, parts=None):
                                   TextureSheet(left, top, right - left, bottom - top, depth, clut))
         sheet.width, sheet.height = max(sheet.width, right - left), max(sheet.height, bottom - top)
         shift_u, shift_v = (page_x - left) * per_word, page_y - top
+        sheet.pages[page, clut] = (shift_u, shift_v)
         for tick, tick_pieces in by_tick.items():
             sheet.pieces.setdefault(tick, set()).update(
                 (u0 + shift_u, v0 + shift_v, u1 + shift_u, v1 + shift_v) for u0, v0, u1, v1 in tick_pieces)
@@ -139,6 +149,22 @@ def named_sheet(recording, x, y, clut, width, height):
     return sheet, (u0, v0, u0 + max(1, width), v0 + max(1, height))
 
 
+def texels_rgba(vram, tpage, clut, u0, v0, u1, v1):
+    """(v1 - v0, u1 - u0, 4) uint8: texels of a page through a palette, as a primitive samples them
+    (colour 0x0000 transparent)."""
+    us, vs = np.meshgrid(np.arange(u0, u1) & 0xFF, np.arange(v0, v1) & 0xFF)
+    return _rgba(Gpu(vram, 1, 1)._texels(us, vs, clut, tpage).astype(np.uint32))
+
+
+def _rgba(colours):
+    rgba = np.zeros(colours.shape + (4,), np.uint8)
+    rgba[..., 0] = (colours & 0x1F) * 255 // 31
+    rgba[..., 1] = ((colours >> 5) & 0x1F) * 255 // 31
+    rgba[..., 2] = ((colours >> 10) & 0x1F) * 255 // 31
+    rgba[..., 3] = np.where(colours == 0, 0, 255)
+    return rgba
+
+
 def sheet_rgba(vram, sheet):
     """The sheet as an (height, texel width, 4) uint8 image: its texels through its palette, the
     transparent ones (colour 0x0000) with alpha 0."""
@@ -151,9 +177,4 @@ def sheet_rgba(vram, sheet):
         indices = ((words[..., None] >> shifts) & ((1 << bits) - 1)).reshape(words.shape[0], -1)
         clut_x, clut_y = sheet.clut_xy
         colours = vram.words[clut_y, (clut_x + indices) % VRAM_W].astype(np.uint32)
-    rgba = np.zeros(colours.shape + (4,), np.uint8)
-    rgba[..., 0] = (colours & 0x1F) * 255 // 31
-    rgba[..., 1] = ((colours >> 5) & 0x1F) * 255 // 31
-    rgba[..., 2] = ((colours >> 10) & 0x1F) * 255 // 31
-    rgba[..., 3] = np.where(colours == 0, 0, 255)
-    return rgba
+    return _rgba(colours)

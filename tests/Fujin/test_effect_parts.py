@@ -58,6 +58,11 @@ def test_cure_parameter_table():
     assert all(field["min"] <= field["default"] <= field["max"] for field in schema["fields"])
 
 
+def untag(lines):
+    """A recording's lines without their part tags (a packet's, a sprite's): what the original code draws."""
+    return [re.sub(r"^(P|Q \d+) \d+ ", r"\1 0 ", line) for line in lines]
+
+
 def record(tmp_path, tag, *extra):
     from Fujin.recorderbuild import RECORDER
     out = tmp_path / f"{tag}.txt"
@@ -77,8 +82,7 @@ def test_cure_port_is_the_original_and_its_parameters_change_it(tmp_path):
     original, _log = record(tmp_path, "original")
     native, log = record(tmp_path, "native", "native=1")
     assert "ported task functions for effect 1" in log
-    untagged = [re.sub(r"^P \d+ ", "P 0 ", line) for line in native]
-    assert untagged == original and len(original) > 10000
+    assert untag(native) == original and len(original) > 10000
     parts = {int(line.split()[1]) for line in native if line.startswith("P ")}
     assert parts == {0, 1, 2, 3, 4, 5, 6}                         # the actors (0) and Cure's six parts
     params = tmp_path / "params.txt"
@@ -184,6 +188,57 @@ def test_cure_part_tabs_show_the_images_their_pieces_come_from(qapp, tmp_path):
     card = fujin.textures.panel.cards[0]
     assert card.outline == ("Sparkles", [(32, 96, 48, 112), (32, 112, 48, 128), (48, 96, 64, 112)])
     assert card.row == 0 and "outlined: the pieces Sparkles takes" in card.info.text()
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_sprite_sequences_read_from_the_exe():
+    from FF8GameData.psxgpu.spritesequence import exe_sequences, piece_rect
+    sequences = exe_sequences(str(EXE))
+    assert len(sequences) > 300
+    sparkle = sequences[0x1642238]                      # Cure's sparkles: 27 frames of one 16 x 16 piece
+    assert len(sparkle.frames) == 27 and sparkle.parameters == (0, 0, 0, 0)
+    piece = sparkle.frames[0].pieces[0]
+    assert piece_rect(piece) == (32, 96, 48, 112) and (piece.x, piece.y) == (-8, -8)
+    assert piece.clut_xy == (320, 240) and piece.page_xy == (384, 256) and piece.depth == 1
+    assert piece.semi_transparent and piece.blend_mode == 1 and not piece.transformed
+    ring = sequences[0x1641F78]                         # its 2nd palette row through parameter 1
+    assert ring.parameters == (0, 1, 0, 0) and [len(f.pieces) for f in ring.frames] == [2, 1]
+    assert {p.clut_for(ring.parameters) >> 6 for p in ring.frames[0].pieces} == {240, 241}
+
+
+@pytest.mark.ff8data(*CURE_FILES)
+def test_cure_part_tabs_show_their_sprite_sequences(qapp):
+    from Fujin.fujinwidget import FujinWidget
+    cure_schema()
+    fujin = FujinWidget()
+    fujin.import_paths([str(MAGIC / "mag000-049.tim")])
+    fujin.camera_editor.exe_binding.open_path(str(EXE))
+    fujin.native_preview.textures_binding.open_path(str(BATTLE / "a8def.tim"))
+    fujin.camera_editor.preview.add_models([str(BATTLE / name) for name in ("d0c000.dat", "d0w000.dat", "c0m009.dat")])
+    fujin.select_effect(1)
+    tabs = {tab.part["key"]: tab for tab in fujin.part_tabs}
+    fujin.tabs.setCurrentIndex(2)
+    fujin.choreography.setCurrentWidget(tabs["ring"])
+    wait(qapp, fujin.lab)
+    # the recorder says which sequence and frame each sprite is, and the part drawing it
+    drawn = {(part, address) for tick in fujin.lab.recording.ticks for part, address, _frame in tick.sprites}
+    assert drawn == {(1, 0x1641F78), (1, 0x1641FCC), (2, 0x1642504), (4, 0x1642238), (5, 0x164205C)}
+    rows = {key: [(sequence.address, sorted(frames)) for sequence, frames, _thumbs in tab.sequences.rows]
+            for key, tab in tabs.items()}
+    assert rows["ring"] == [(0x1641F78, [0]), (0x1641FCC, [0, 1, 2, 3, 4])]
+    assert rows["glow"] == [(0x1642504, [0])] and rows["sparkles"][0][0] == 0x1642238
+    assert rows["overlay"] == [] and rows["glints"] == []
+    assert len(rows["emitter"]) == 5                   # the whole effect
+    # the tick: frames drawn then framed; a click lists the frame's pieces and outlines them
+    sequences = tabs["ring"].sequences
+    tabs["ring"].preview.slider.setValue(25)
+    _sequence, frames, thumbs = sequences.rows[1]
+    assert [thumb.index for thumb in thumbs if thumb.now] == [index for index, ticks in frames.items() if 25 in ticks]
+    sequences.pick(0x1641FCC, 2)
+    assert sequences.table.rowCount() == 1 and sequences.table.item(0, 0).text() == "48, 96 - 16 x 16"
+    assert "B + F" in sequences.table.item(0, 5).text()
+    view = next(v for v in tabs["ring"].images.views if v.sheet.clut_xy == (320, 240))
+    assert view.selected == [(48, 96, 64, 112)]
 
 
 def wait(qapp, view):
@@ -317,7 +372,7 @@ def test_hypnotize_port_and_its_pc_screen_units(tmp_path):
         return out.read_text().splitlines()
 
     original, native = hypnotize("original"), hypnotize("native", "native=1")
-    assert [re.sub(r"^P \d+ ", "P 0 ", line) for line in native] == original
+    assert untag(native) == original
     parts = lambda lines: set().union(*(set(tick.parts) for tick in parse_recording(lines, 133).ticks))
     assert parts(native) == {0, 2, 3, 4}                          # no main layout on PC
     params = tmp_path / "params.txt"
@@ -346,7 +401,7 @@ def test_potion_shares_cures_parameters_but_keeps_its_own(tmp_path):
         return out.read_text().splitlines()
 
     potion_original, potion_native = effect(50, "original"), effect(50, "native", "native=1")
-    assert [re.sub(r"^P \d+ ", "P 0 ", line) for line in potion_native] == potion_original
+    assert untag(potion_native) == potion_original
     params = tmp_path / "params.txt"
     params.write_text("ring.radius.num 4\nring.radius_max 2048\n")
     assert effect(50, "wide", "native=1", f"params={params}") != potion_native

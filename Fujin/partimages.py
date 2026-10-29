@@ -17,6 +17,7 @@ SHEET_HEIGHT = 200                  # an image's height on screen (pixels), its 
 TAKEN = QColor(255, 200, 40)        # a piece the part takes during the effect
 NOW = QColor(40, 220, 255)          # a piece it draws at the preview's tick
 NAMED = QColor(255, 80, 220)        # an image the part's values name (dashed)
+PICKED = QColor(255, 150, 30)       # the pieces of the sprite frame picked in the Sprite sequences tab (dashed)
 CHECKER = (QColor(70, 70, 78), QColor(52, 52, 58))
 LEGEND = ("<span style='color:#FFC828'>&#9633;</span> taken during the effect &nbsp; "
           "<span style='color:#28DCFF'>&#9632;</span> drawn at this tick")
@@ -40,6 +41,7 @@ class SheetView(QWidget):
     def __init__(self, sheet, rgba, named=None):
         super().__init__()
         self.sheet, self.tick, self.named = sheet, None, named
+        self.selected = []          # pieces a sprite sequence frame takes (this sheet's texels), dashed orange
         height, width = rgba.shape[:2]
         self.image = QImage(rgba.tobytes(), width, height, width * 4, QImage.Format.Format_RGBA8888).copy()
         self.zoom = SHEET_HEIGHT / max(1, height)
@@ -75,6 +77,9 @@ class SheetView(QWidget):
         if self.named:
             painter.setPen(QPen(NAMED, 2, Qt.PenStyle.DashLine))
             painter.drawRect(self._rect(self.named))
+        painter.setPen(QPen(PICKED, 2, Qt.PenStyle.DashLine))
+        for piece in self.selected:
+            painter.drawRect(self._rect(piece))
 
     def mouseMoveEvent(self, event):
         u, v = event.position().x() / self.zoom, event.position().y() / self.zoom
@@ -178,3 +183,10 @@ class PartImages(QWidget):
         self.tick = tick
         for view in self.views:
             view.set_tick(tick)
+
+    def select(self, pieces):
+        """Outline, dashed orange, the pieces [(tpage, clut, (u0, v0, u1, v1))] of a sprite frame on
+        the images they come from."""
+        for view in self.views:
+            view.selected = [r for r in (view.sheet.place(tpage, clut, rect) for tpage, clut, rect in pieces) if r]
+            view.update()

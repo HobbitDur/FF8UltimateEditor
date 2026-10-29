@@ -12,6 +12,8 @@ second); its "between" dump lists, per real tick:
     C t ex ey ez ax ay az the battle camera after the tick (eye, look-at)
     V t x y w h hexwords  (vram=1) a VRAM upload the tick queued: a w x h rectangle at (x, y)
     B t x y w h u v       (vram=1) a VRAM-to-VRAM copy the tick queued
+    Q t part seq frame    (Tools/fxrecorder) a sprite the tick drew: the effect part, its sprite
+                          sequence's address (hex) and frame (FF8GameData/psxgpu/spritesequence.py)
 
 Other blocks (H, Z, O: 30 fps held frames; S: spawned tasks) are skipped. The packets are drawn in
 reverse insertion order within an OT bucket and buckets from the highest address down, the
@@ -31,6 +33,7 @@ class EffectTick:
     camera: tuple = None                            # (eye xyz, look-at xyz)
     uploads: list = field(default_factory=list)     # [("V", x, y, w, h, words) | ("B", x, y, w, h, u, v)]
     ordered: bool = False   # the packets are in draw order already ("R t n ordered": the recorder's walk)
+    sprites: list = field(default_factory=list)     # [(part, sequence address, frame)] drawn (Q lines)
 
     def part_packets(self, parts=None):
         """The packets of these effect parts (all of them for None)."""
@@ -170,6 +173,9 @@ def parse_recording(lines, effect_id=None) -> EffectRecording:
             index = int(parts[1])
             values = tuple(int(value) for value in parts[2:8])
             by_index.setdefault(index, EffectTick(index)).camera = (values[:3], values[3:])
+        elif kind == "Q" and len(parts) >= 5:
+            by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).sprites.append(
+                (int(parts[2]), int(parts[3], 16), int(parts[4])))
         elif kind == "V" and len(parts) >= 7:
             index, x, y, w, h = (int(value) for value in parts[1:6])
             upload = ("V", x, y, w, h, _hex_words(parts[6]))

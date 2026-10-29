@@ -125,7 +125,17 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   disc - a pass the PC never draws). An image loaded from one of the effect's TIM files says so,
   and **Show in Textures** opens that TIM in the Textures tab, palette row chosen and the pieces
   outlined (`FF8GameData/psxgpu/texuse.py` finds them in the recording, `Fujin/partimages.py`
-  shows them). The numbers come out of the port's code into one struct per
+  shows them). Beside it, the **Sprite sequences** tab: the flipbooks the part draws its sprites
+  from. They are data of FF8_EN.exe (about 330, signature `24 05 01 00`, file offset = address -
+  0x400000: frame count, frame offsets, then per frame its pieces, 20 bytes each - texels u, v,
+  size, palette, page, intensity, GPU code, place in the sprite, angle, scale -
+  `FF8GameData/psxgpu/spritesequence.py`); the recorder hooks `InitEffectSequenceFromData`
+  (0x571C80) and its 18 copies and writes, per tick, which part drew which sequence and frame (`Q`
+  lines). Each sequence is a row of its frames, drawn from the recording's video memory (the frames
+  the part never draws dimmed, those of the preview's tick framed blue); a click lists the frame's
+  pieces and outlines them dashed orange on the Images tab (Cure: Ring `0x1641F78` and its ending
+  `0x1641FCC`, Ground glow `0x1642504`, Sparkles `0x1642238`, Motes `0x164205C`). Read only for now.
+  The numbers come out of the port's code into one struct per
   part (FFNx `src/ff8/battle/fx/fx_params.h`: generic blocks every module can reuse - a tick
   window, a count per tick, a random range, a fraction, the effect library's glint style -
   `HealRingParams` in `mag_heal_ring.h`, shared by Cure and Potion - one struct, parts and field

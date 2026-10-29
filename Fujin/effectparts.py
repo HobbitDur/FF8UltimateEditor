@@ -6,7 +6,8 @@ made of, the game's values by default) and shows that part alone: the effect is 
 the effect recorder running the port with the edited parameters and only its target drawn (Fujin's
 lab recording), every primitive carrying the part that drew it (0: the target itself), and each
 tab draws only its own, framed on where that part goes - with the target as a reference when its
-Target box is ticked. Under it, the images the part takes its pieces from (Fujin.partimages). A
+Target box is ticked. Under it, the images the part takes its pieces from (Fujin.partimages) and
+the sprite sequences it draws (Fujin.partsequences). A
 part that draws nothing (Cure's emitter: when the sound plays, when the HP
 are given) shows the whole effect, its ticks marked. The parameter table comes from the recorder
 itself (`fxrecorder <effect> schema=<file>`), so it is always the one of the port it runs.
@@ -19,9 +20,10 @@ import tempfile
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import (QCheckBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider,
-                             QSpinBox, QVBoxLayout, QWidget)
+                             QSpinBox, QTabWidget, QVBoxLayout, QWidget)
 
-from Fujin.partimages import PartImages
+from Fujin.partimages import SHEET_HEIGHT, PartImages
+from Fujin.partsequences import PartSequences
 from Fujin.recorderbuild import FFNX_EFFECTS, RECORDER
 
 PREVIEW_WIDTH = 320                 # the part preview's picture width (pixels)
@@ -229,10 +231,17 @@ class PartTab(QWidget):
         part_ids = {part["id"]} if part["id"] else set(effect_parts)      # 0: draws nothing, the whole effect
         self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers)
         self.images = PartImages(runner, part_ids, self.named_images, locate, part["title"])
+        self.sequences = PartSequences(runner, part_ids)
+        self.sequences.picked.connect(self.images.select)
         self.preview.slider.valueChanged.connect(self.images.set_tick)
+        self.preview.slider.valueChanged.connect(self.sequences.set_tick)
+        self.below = QTabWidget()
+        self.below.addTab(self.images, "Images")
+        self.below.addTab(self.sequences, "Sprite sequences")
+        self.below.setFixedHeight(SHEET_HEIGHT + 150)
         right = QVBoxLayout()
         right.addWidget(self.preview, 1)
-        right.addWidget(self.images)
+        right.addWidget(self.below)
         layout = QHBoxLayout(self)
         layout.addWidget(scroll)
         layout.addLayout(right, 1)
