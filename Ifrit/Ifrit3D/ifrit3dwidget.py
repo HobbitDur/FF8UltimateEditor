@@ -502,10 +502,13 @@ class Ifrit3DWidget(QWidget):
             self.bone_editor.reset_skeleton_requested.connect(self._on_reset_skeleton_requested)
             self.bone_editor.bone_renamed.connect(self._on_bone_renamed)
             propagate_cb = self.bone_editor.propagate_rotation_cb
+            propagate_cb.setChecked(self.settings.value("ifrit/3d/propagate_rotation", True, type=bool))
             self._propagate_action.setChecked(propagate_cb.isChecked())
             self._propagate_action.setToolTip(propagate_cb.toolTip())
             self._propagate_action.toggled.connect(propagate_cb.setChecked)
             propagate_cb.toggled.connect(self._propagate_action.setChecked)
+            propagate_cb.toggled.connect(            # remembered across files/sessions
+                lambda checked: self.settings.setValue("ifrit/3d/propagate_rotation", checked))
             self.bone_editor.animation_rotation_changed.connect(self._on_animation_rotation_changed)
             self.bone_editor.animation_position_changed.connect(self.on_frame_position_changed)
             self.bone_editor.position_interpolation_requested.connect(
