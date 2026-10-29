@@ -344,6 +344,25 @@ class IfritAnimSetWidget(QWidget):
         top.addWidget(self.save_exe_button)
         top.addWidget(self.export_button)
 
+        # The 3D view (a GL widget) and the sequence editor are built on the first load only: most
+        # files (monsters) never show this tab, and every pane is built with it.
+        self._icon_path = icon_path
+        self.view_3d = None
+        self.seq_widget = None
+        self.seq_text = None
+        self.inner_tabs = QTabWidget()
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.addLayout(top)
+        layout.addWidget(self.source_label)
+        layout.addWidget(self.inner_tabs, 1)
+        self._update_buttons()
+
+    def _ensure_views(self):
+        """Build the 3D view and the sequence view (once, on the first load)."""
+        if self.view_3d is not None:
+            return
         self.view_3d = AnimSet3DWidget(self.set_view, show_controls=True)
         self.view_3d.real30_handler = lambda mode: self.convert_to_30fps(confirm=False, mode=mode, inform=True)
         self.view_3d.model_edited.connect(self._on_model_edited)
@@ -359,13 +378,11 @@ class IfritAnimSetWidget(QWidget):
                 signal = getattr(bone_editor, name, None)
                 if signal is not None:
                     signal.connect(self.body_edited.emit)
-        self.inner_tabs = QTabWidget()
         self.inner_tabs.addTab(self.view_3d, "Animations")
-        self.seq_widget = None
-        self.seq_text = None
         if self.pool == BODY:
             from Ifrit.IfritSeq.ifritseqwidget import IfritSeqWidget
-            self.seq_widget = IfritSeqWidget(self.set_view, icon_path=icon_path, file_registry=file_registry)
+            self.seq_widget = IfritSeqWidget(self.set_view, icon_path=self._icon_path,
+                                             file_registry=self.file_registry)
             self.seq_widget.data_edited.connect(self._on_set_edit)
             self.inner_tabs.addTab(self.seq_widget, "Sequences")
         else:
@@ -374,13 +391,6 @@ class IfritAnimSetWidget(QWidget):
             self.seq_text.setReadOnly(True)
             self.seq_text.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
             self.inner_tabs.addTab(self.seq_text, "Sequences (body, read-only)")
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.addLayout(top)
-        layout.addWidget(self.source_label)
-        layout.addWidget(self.inner_tabs, 1)
-        self._update_buttons()
 
     # ------------------------------------------------------------------ what is shown
     def _bone_data(self):
@@ -406,6 +416,7 @@ class IfritAnimSetWidget(QWidget):
     def load(self, path):
         """(Re)fill the set list for the file `path` (sources may have changed)."""
         self.path = path
+        self._ensure_views()
         current = self._current_info()
         self._infos = self.set_infos() if self.source.has_data() else []
         self.set_selector.blockSignals(True)
