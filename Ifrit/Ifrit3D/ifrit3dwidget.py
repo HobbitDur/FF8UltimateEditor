@@ -258,6 +258,12 @@ class Ifrit3DWidget(QWidget):
             self._gizmo_action.setToolTip("Rings around the selected bone, for dragging to rotate it.")
             self._gizmo_action.toggled.connect(self._on_gizmo_toggle)
             self._skeleton_menu.addAction(self._gizmo_action)
+            # Same switch as the Rotation tab's "Apply to all following frames" checkbox (kept in
+            # step with it once the bone editor exists, below): what a ring drag does to the frames
+            # after the current one.
+            self._propagate_action = QAction("Apply to all following frames", self, checkable=True)
+            self._propagate_action.setChecked(True)
+            self._skeleton_menu.addAction(self._propagate_action)
             # Apply every restored view toggle to the GL widget (setChecked above did not fire the
             # handlers when the value matched the widget's initial state, so push them explicitly;
             # _show_hidden_faces is read straight into the geometry build by load_file()).
@@ -495,6 +501,11 @@ class Ifrit3DWidget(QWidget):
             self.bone_editor.add_bone_requested.connect(self._on_add_bone_requested)
             self.bone_editor.reset_skeleton_requested.connect(self._on_reset_skeleton_requested)
             self.bone_editor.bone_renamed.connect(self._on_bone_renamed)
+            propagate_cb = self.bone_editor.propagate_rotation_cb
+            self._propagate_action.setChecked(propagate_cb.isChecked())
+            self._propagate_action.setToolTip(propagate_cb.toolTip())
+            self._propagate_action.toggled.connect(propagate_cb.setChecked)
+            propagate_cb.toggled.connect(self._propagate_action.setChecked)
             self.bone_editor.animation_rotation_changed.connect(self._on_animation_rotation_changed)
             self.bone_editor.animation_position_changed.connect(self.on_frame_position_changed)
             self.bone_editor.position_interpolation_requested.connect(
@@ -1693,12 +1704,12 @@ class Ifrit3DWidget(QWidget):
     def share_view_toggles(self, other):
         """Keep the view toggles of this view and `other` in step (two views of the same file:
         Ifrit's 3D and Entrance tabs): texture, wireframe, hidden faces, axis, skeleton, rotation
-        handle and playback fps. Both start from the same saved settings; changing one changes
+        handle, "apply to all following frames" and playback fps. Both start from the same saved settings; changing one changes
         the other (setChecked / setValue of an unchanged value emits nothing: no loop)."""
         if not hasattr(self, 'cb_texture') or not hasattr(other, 'cb_texture'):
             return
         for name in ('cb_texture', 'cb_wire', 'cb_hidden_faces', 'cb_axis', 'cb_ground', 'cb_skeleton',
-                     '_gizmo_action'):
+                     '_gizmo_action', '_propagate_action'):
             mine, theirs = getattr(self, name), getattr(other, name)
             mine.toggled.connect(theirs.setChecked)
             theirs.toggled.connect(mine.setChecked)
