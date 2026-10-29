@@ -52,3 +52,6 @@ ToolDownload/*
 # Tools/fxrecorder/build.bat); CI builds it for releases
 Tools/fxrecorder/*.exe
 Tools/fxrecorder/obj/
+
+# The user's own data next to the app (bone renames...), never committed or shipped
+UserData/

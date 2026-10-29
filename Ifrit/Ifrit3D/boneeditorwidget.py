@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (QFormLayout, QSpinBox, QDoubleSpinBox,
                              QPushButton, QVBoxLayout, QHBoxLayout,
-                             QLabel, QWidget, QTabWidget, QCheckBox,
+                             QLabel, QWidget, QTabWidget, QCheckBox, QLineEdit,
                              QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy)
 from PyQt6.QtCore import Qt, pyqtSignal
 
@@ -14,6 +14,7 @@ class AnimEditor(QWidget):
     bone_parent_changed = pyqtSignal(int, int)
     add_bone_requested = pyqtSignal(int)       # parent bone id
     reset_skeleton_requested = pyqtSignal()
+    bone_renamed = pyqtSignal(int, str)        # bone id, new name ("" = back to the shipped name)
     animation_rotation_changed = pyqtSignal(int, int, int, float, float, float)
     animation_position_changed = pyqtSignal(int, int, float, float, float)
     # One position axis (0=X, 1=Y, 2=Z) to be re-valued between two existing frames, from its
@@ -32,6 +33,8 @@ class AnimEditor(QWidget):
         self.bone_count = 0
         self._updating = False  # Flag to prevent recursive updates
         self._compare_bone_ids = []   # bones currently shown in the multi-select comparison tables
+        self._bone_names = []         # readable name of each bone (see set_bone_names)
+        self._user_named = set()      # bones whose name is the user's own rename
 
         # Track expanded state
         self.expanded = False
@@ -89,6 +92,14 @@ class AnimEditor(QWidget):
         self.bone_spin.valueChanged.connect(self._on_bone_selected)
         bone_sel_layout.addWidget(QLabel("Bone ID:"))
         bone_sel_layout.addWidget(self.bone_spin)
+        # The bone's readable name, renamed in place (saved in the user's bone-name file, not in
+        # the .dat - hence view-only for the editor's "file modified" tracking)
+        self.bone_name_edit = QLineEdit()
+        self.bone_name_edit.setPlaceholderText("Bone name")
+        self.bone_name_edit.setMinimumWidth(140)
+        self.bone_name_edit.setProperty("ifritViewOnly", True)
+        self.bone_name_edit.editingFinished.connect(self._on_bone_name_edited)
+        bone_sel_layout.addWidget(self.bone_name_edit)
 
         # Current frame info
         self.frame_info = QLabel("Frame: 0")
@@ -387,7 +398,8 @@ class AnimEditor(QWidget):
             self.anim_rotz.blockSignals(False)
 
             # Update info
-            self.info_label.setText(f"Bone {bone_id}")
+            self.info_label.setText(self.bone_label(bone_id))
+            self._show_bone_name(bone_id)
 
             # Update bone spin if different
             if self.bone_spin.value() != bone_id:
@@ -491,9 +503,8 @@ class AnimEditor(QWidget):
             width += table.columnWidth(col)
         table.setMaximumWidth(width)
 
-    @staticmethod
-    def _bone_id_item(bone_id):
-        item = QTableWidgetItem(str(bone_id))
+    def _bone_id_item(self, bone_id):
+        item = QTableWidgetItem(self.bone_label(bone_id))
         item.setFlags(Qt.ItemFlag.ItemIsEnabled)   # read-only label cell
         return item
 
@@ -615,6 +626,47 @@ class AnimEditor(QWidget):
         #self.anim_info.setText(f"Current Animation: {anim_id}, Frame: {frame_id}")
         #self.position_info.setText(f"Current Animation: {anim_id}, Frame: {frame_id}")
         self._update_tab_states()
+
+    # ── Bone names ─────────────────────────────────────────────────────────
+    def set_bone_names(self, names, user_named=()):
+        """Readable name of each bone, and the ids of those the user renamed (shown in italics)."""
+        self._bone_names = list(names)
+        self._user_named = set(user_named)
+        self._show_bone_name(self.bone_spin.value())
+        if self.isEnabled():
+            self.info_label.setText(self.bone_label(self.bone_spin.value()))
+        for table in (self.static_compare, self.rot_compare, self.scale_compare):
+            for row, bone in enumerate(self._compare_bone_ids[:table.rowCount()]):
+                table.setItem(row, 0, self._bone_id_item(bone))
+
+    def bone_name(self, bone_id: int) -> str:
+        if 0 <= bone_id < len(self._bone_names):
+            return self._bone_names[bone_id]
+        return f"Bone {bone_id}"
+
+    def bone_label(self, bone_id: int) -> str:
+        """"9 · Head": the id stays visible, the scripts and the file speak in ids."""
+        name = self.bone_name(bone_id)
+        return f"Bone {bone_id}" if name == f"Bone {bone_id}" else f"{bone_id} · {name}"
+
+    def _show_bone_name(self, bone_id: int):
+        self.bone_name_edit.blockSignals(True)
+        self.bone_name_edit.setText(self.bone_name(bone_id))
+        font = self.bone_name_edit.font()
+        font.setItalic(bone_id in self._user_named)
+        self.bone_name_edit.setFont(font)
+        self.bone_name_edit.setToolTip(
+            "Your own name for this bone (clear it to go back to the built-in name)."
+            if bone_id in self._user_named else
+            "Built-in name, guessed from the model's pose. Type a new one to rename the bone:\n"
+            "it is saved in your own bone-name file, the .dat is not changed.")
+        self.bone_name_edit.blockSignals(False)
+
+    def _on_bone_name_edited(self):
+        bone_id = self.bone_spin.value()
+        text = self.bone_name_edit.text().strip()
+        if text != self.bone_name(bone_id):
+            self.bone_renamed.emit(bone_id, text)
 
     def set_bone_range(self, max_bone: int):
         """Set the maximum bone ID"""

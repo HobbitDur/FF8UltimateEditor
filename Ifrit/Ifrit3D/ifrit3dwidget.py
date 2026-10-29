@@ -73,7 +73,9 @@ from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_nb_pa
                                           get_max_frame_for_animation,
                                           MAX_ANIMATION_FRAME, MAX_SLOW_SAFE_ANIMATION_FRAME)
 from Ifrit.ifritmanager import IfritManager
+from FF8GameData.dat.bonenames import SOURCE_USER
 from Ifrit.Ifrit3D.boneeditorwidget import AnimEditor
+from Ifrit.Ifrit3D.bonenamestore import shared_bone_names
 from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
 from Ifrit.Ifrit3D.gltfexporter import GltfExporter
 from Ifrit.Ifrit3D.gltfimporter import GltfImporter
@@ -476,6 +478,7 @@ class Ifrit3DWidget(QWidget):
             self.bone_editor.bone_parent_changed.connect(self._on_bone_parent_changed)
             self.bone_editor.add_bone_requested.connect(self._on_add_bone_requested)
             self.bone_editor.reset_skeleton_requested.connect(self._on_reset_skeleton_requested)
+            self.bone_editor.bone_renamed.connect(self._on_bone_renamed)
             self.bone_editor.animation_rotation_changed.connect(self._on_animation_rotation_changed)
             self.bone_editor.animation_position_changed.connect(self.on_frame_position_changed)
             self.bone_editor.position_interpolation_requested.connect(
@@ -924,6 +927,7 @@ class Ifrit3DWidget(QWidget):
                 self.bone_editor.setVisible(True)
                 bone_count = len(self.ifrit_manager.enemy.bone_data.bones) - 1
                 self.bone_editor.set_bone_range(bone_count)
+                self._refresh_bone_names()
                 if keep_view:
                     # Keep the joint being worked on (undoing an "add bone" can delete it, hence
                     # the clamp) so the gizmo does not jump back to the root.
@@ -3034,9 +3038,36 @@ class Ifrit3DWidget(QWidget):
         self._pause_playback()
         new_id = self.ifrit_manager.add_bone(parent_id)
         self.bone_editor.set_bone_range(len(bones) - 1)
+        self._refresh_bone_names()
         self.bone_editor.bone_spin.setValue(new_id)  # select it (refresh chain)
         self.update_skeleton()
         self.update_animated_mesh()
+
+    def _bone_names_key(self) -> str:
+        """The model's file name, the key of its bones in the bone-name files."""
+        return getattr(self.ifrit_manager.enemy, 'origin_file_name', "") or ""
+
+    def _refresh_bone_names(self):
+        """Hand the bone editor the readable name of every bone of the loaded model."""
+        if not hasattr(self, 'bone_editor') or not self.ifrit_manager.enemy.bone_data:
+            return
+        store = shared_bone_names()
+        key = self._bone_names_key()
+        nb_bones = len(self.ifrit_manager.enemy.bone_data.bones)
+        self.bone_editor.bone_name_edit.setEnabled(bool(key))   # no file name, nowhere to keep names
+        self.bone_editor.set_bone_names(
+            store.names(key, nb_bones),
+            {bone for bone in range(nb_bones) if store.source(key, bone) == SOURCE_USER})
+
+    def _on_bone_renamed(self, bone_id: int, name: str):
+        """Save the user's name for a bone (an empty name goes back to the built-in one)."""
+        if not self._bone_names_key():
+            return
+        try:
+            shared_bone_names().rename(self._bone_names_key(), bone_id, name)
+        except (OSError, RuntimeError) as e:
+            QMessageBox.warning(self, "Rename bone", f"The bone name could not be saved:\n{e}")
+        self._refresh_bone_names()
 
     def _on_reset_skeleton_requested(self):
         """Start a skeleton from scratch: keep only the root joint."""
@@ -3056,6 +3087,7 @@ class Ifrit3DWidget(QWidget):
         self._pause_playback()
         self.ifrit_manager.reset_skeleton()
         self.bone_editor.set_bone_range(0)
+        self._refresh_bone_names()
         self.bone_editor.bone_spin.setValue(0)
         self._update_bone_editor_selection()
         self.update_skeleton()
