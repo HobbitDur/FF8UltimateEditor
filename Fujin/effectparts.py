@@ -6,7 +6,8 @@ made of, the game's values by default) and shows that part alone: the effect is 
 the effect recorder running the port with the edited parameters and only its target drawn (Fujin's
 lab recording), every primitive carrying the part that drew it (0: the target itself), and each
 tab draws only its own, framed on where that part goes - with the target as a reference when its
-Target box is ticked. A part that draws nothing (Cure's emitter: when the sound plays, when the HP
+Target box is ticked. Under it, the images the part takes its pieces from (Fujin.partimages). A
+part that draws nothing (Cure's emitter: when the sound plays, when the HP
 are given) shows the whole effect, its ticks marked. The parameter table comes from the recorder
 itself (`fxrecorder <effect> schema=<file>`), so it is always the one of the port it runs.
 """
@@ -20,6 +21,7 @@ from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import (QCheckBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSlider,
                              QSpinBox, QVBoxLayout, QWidget)
 
+from Fujin.partimages import PartImages
 from Fujin.recorderbuild import FFNX_EFFECTS, RECORDER
 
 PREVIEW_WIDTH = 320                 # the part preview's picture width (pixels)
@@ -192,7 +194,7 @@ class PartTab(QWidget):
     the whole effect (effect_parts: every drawing part's id), its tick parameters marked on it."""
     value_changed = pyqtSignal(str, int)      # key, new value
 
-    def __init__(self, part, fields, values, runner, renderer, effect_parts=frozenset()):
+    def __init__(self, part, fields, values, runner, renderer, effect_parts=frozenset(), locate=None):
         super().__init__()
         self.part, self.fields = part, fields
         self.spins, self.labels = {}, {}
@@ -226,9 +228,14 @@ class PartTab(QWidget):
         scroll.setMinimumWidth(280)
         part_ids = {part["id"]} if part["id"] else set(effect_parts)      # 0: draws nothing, the whole effect
         self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers)
+        self.images = PartImages(runner, part_ids, self.named_images, locate, part["title"])
+        self.preview.slider.valueChanged.connect(self.images.set_tick)
+        right = QVBoxLayout()
+        right.addWidget(self.preview, 1)
+        right.addWidget(self.images)
         layout = QHBoxLayout(self)
         layout.addWidget(scroll)
-        layout.addWidget(self.preview, 1)
+        layout.addLayout(right, 1)
 
     def markers(self):
         """{tick: what happens}: a part drawing nothing has its tick parameters marked on the preview."""
@@ -240,6 +247,24 @@ class PartTab(QWidget):
                 tick = self.spins[field["key"]].value()
                 marks[tick] = ", ".join(filter(None, (marks.get(tick), field["label"].replace(" tick", ""))))
         return marks
+
+    def named_images(self):
+        """[(label, VRAM x, y, CLUT word, width, height)] of the images this part's values name: a
+        tex_x / tex_y / clut_x / clut_y group (Cure's overlay: its projected image), sized by the
+        group's width / height."""
+        names = {field["key"]: field for field in self.fields}
+        images = []
+        for key in names:
+            if not key.endswith(".tex_x"):
+                continue
+            group = key[:-len("tex_x")]
+            value = lambda name, default=0: (self.spins[group + name].value() if group + name in self.spins
+                                             else default)
+            if group + "tex_y" in names:
+                clut = (value("clut_x") // 16) | (value("clut_y") << 6)
+                images.append((names[key]["label"].replace(" VRAM x", ""), value("tex_x"), value("tex_y"),
+                               clut, value("width", 256), value("height", 256)))
+        return images
 
     def _default(self, key):
         return next(field["default"] for field in self.fields if field["key"] == key)

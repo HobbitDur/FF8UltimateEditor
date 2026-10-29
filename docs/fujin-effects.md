@@ -117,7 +117,15 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   module is a relocated copy of Cure's; Hypnotize: Timing, Main layout,
   Rings, Target layouts, Sprites): the part's parameters as a form
   (bold = not the game's value, **Game values** resets them) beside a small preview of that part
-  alone, framed on where it goes. The numbers come out of the port's code into one struct per
+  alone, framed on where it goes. Under the preview, the part's **images**: each picture of video
+  memory it takes texels from (a TIM, the target's own texture), whole, read with the depth and
+  palette its primitives use, every piece it takes during the effect outlined and the ones it
+  draws at the preview's tick filled (hover a piece: its place and ticks); an image the part's
+  own values name is outlined dashed (Cure's overlay: the light picture it projects, the glow's
+  disc - a pass the PC never draws). An image loaded from one of the effect's TIM files says so,
+  and **Show in Textures** opens that TIM in the Textures tab, palette row chosen and the pieces
+  outlined (`FF8GameData/psxgpu/texuse.py` finds them in the recording, `Fujin/partimages.py`
+  shows them). The numbers come out of the port's code into one struct per
   part (FFNx `src/ff8/battle/fx/fx_params.h`: generic blocks every module can reuse - a tick
   window, a count per tick, a random range, a fraction, the effect library's glint style -
   `HealRingParams` in `mag_heal_ring.h`, shared by Cure and Potion - one struct, parts and field

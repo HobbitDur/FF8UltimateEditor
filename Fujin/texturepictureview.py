@@ -19,7 +19,7 @@ import struct
 import numpy as np
 from PIL import Image
 from PyQt6.QtCore import Qt, QSignalBlocker, pyqtSignal
-from PyQt6.QtGui import QColor, QImage, QPainter, QPixmap
+from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap
 from PyQt6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QFrame, QGroupBox, QHBoxLayout, QInputDialog,
                              QLabel, QMenu, QMessageBox, QPushButton, QScrollArea, QSpinBox, QVBoxLayout,
                              QWidget)
@@ -34,6 +34,7 @@ MAG_TEXTURE_NOTE = ("A MAG file's textures are raw VRAM blocks: their size and c
                     "effect's game code, so they cannot be shown as pictures here (their bytes are in "
                     "this tab's Sections). Choreography's 3D playback draws the GF summons' textures.")
 PNG_FILTER = "PNG image (*.png)"
+OUTLINE = QColor(255, 200, 40)          # pieces a Choreography part tab points at
 VRAM_WIDTH, VRAM_HEIGHT = 1024, 512     # PlayStation video memory, in 16-bit units
 STP = 0x8000
 STP_HELP = ('Semi-transparent: the colour is blended with what is behind it when the effect draws the '
@@ -64,6 +65,28 @@ def _u32(data, offset):
 
 def _u16(data, offset):
     return int.from_bytes(data[offset:offset + 2], "little")
+
+
+def sheet_in_tim(texture, x, y, depth, clut_xy, pieces):
+    """(palette row, [(u0, v0, u1, v1)] in the TIM's texels) when the TIM loads the VRAM image
+    the pieces are taken from - (x, y) in 16-bit units, its depth and palette place, pieces in its
+    texels from (x, y) - or None."""
+    places = texture.vram()
+    picture, palette = places["picture"], places["palette"]
+    if picture is None or texture.depth != depth:
+        return None
+    per_word = {0: 4, 1: 2}.get(depth, 1)
+    left, top, width, height = picture
+    shift_u, shift_v = (x - left) * per_word, y - top
+    rects = [(u0 + shift_u, v0 + shift_v, u1 + shift_u, v1 + shift_v) for u0, v0, u1, v1 in pieces]
+    rects = [r for r in rects if r[2] > 0 and r[3] > 0 and r[0] < width * per_word and r[1] < height]
+    if not rects:
+        return None
+    if depth >= 2:
+        return 0, rects
+    if palette is None or clut_xy[0] != palette[0] or not 0 <= clut_xy[1] - palette[1] < palette[3]:
+        return None
+    return clut_xy[1] - palette[1], rects
 
 
 def tim_extent(data, offset):
@@ -309,6 +332,7 @@ class _TimCard(QGroupBox):
         self.swatches.menu_requested.connect(self._menu)
         self.swatches.clicked.connect(self._pick_colour)
         self.colour = None                  # (row, index) of the clicked swatch
+        self.outline = None                 # (label, [(u0, v0, u1, v1)]): pieces a part tab points at
         self.colour_info = QLabel("Click a colour of the palette.")
         self.colour_info.setWordWrap(True)
         self.semi = QCheckBox("Semi-transparent")
@@ -401,6 +425,12 @@ class _TimCard(QGroupBox):
         canvas = _checker(width * zoom, height * zoom)
         painter = QPainter(canvas)
         painter.drawImage(canvas.rect(), _qimage(rgba))
+        if self.outline:
+            label, rects = self.outline
+            painter.setPen(QPen(OUTLINE, 2))
+            for u0, v0, u1, v1 in rects:
+                painter.drawRect(u0 * zoom, v0 * zoom, (u1 - u0) * zoom, (v1 - v0) * zoom)
+            self.info.setText(self.info.text() + f" · outlined: the pieces {label} takes")
         painter.end()
         self.picture.setPixmap(QPixmap.fromImage(canvas))
         for (part, axis), box in self.vram_boxes.items():
@@ -625,6 +655,16 @@ class TexturePictureView(QWidget):
             self.note.setText(MAG_TEXTURE_NOTE)
         else:
             self.note.setText("No picture: no file with textures is imported for this effect.")
+
+    def outline(self, index, row, rects, label):
+        """Show TIM `index` with palette `row`, the pieces a part takes outlined (Choreography's
+        part tabs); the other TIMs without outline."""
+        for number, card in enumerate(self.cards):
+            card.outline = (label, rects) if number == index else None
+            if number == index and 0 <= row < card.palette.count() and card.palette.currentIndex() != row:
+                card.palette.setCurrentIndex(row)           # redraws it
+            else:
+                card._draw()
 
     def _zoom_changed(self, _index):
         for card in self.cards:

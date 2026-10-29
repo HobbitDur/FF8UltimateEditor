@@ -23,7 +23,7 @@ from Fujin.effectcatalog import EffectCatalog, filename_effect
 from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
-from Fujin.texturepictureview import TexturePictureView
+from Fujin.texturepictureview import TexturePictureView, TimTexture, sheet_in_tim, tim_blocks
 from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults as schema_defaults, effect_schema,
                                recorder_has_ports)
 from Fujin.nativepreview import NativePreviewView, gl_renderer
@@ -798,7 +798,7 @@ class FujinWidget(QWidget):
         drawing = frozenset(part["id"] for part in schema["parts"] if part["id"])
         for part in schema["parts"]:
             fields = [field for field in schema["fields"] if field["part"] == part["key"]]
-            tab = PartTab(part, fields, values, self.lab, gl_renderer, drawing)
+            tab = PartTab(part, fields, values, self.lab, gl_renderer, drawing, self._locate_texture)
             tab.value_changed.connect(self._param_changed)
             tab.preview.reference_toggled.connect(self._part_reference)
             self.part_tabs.append(tab)
@@ -821,6 +821,28 @@ class FujinWidget(QWidget):
         self.parts_note.setText("" if self._parts_schema is not None and not building else
                                 PORTS_BUILDING if building else "" if recorder_has_ports() else PORTS_MISSING)
         self.parts_note.setVisible(bool(self.parts_note.text()))
+
+    def _locate_texture(self, sheet, pieces, label):
+        """(file name, show) of the effect's TIM a part tab's image is loaded from (Textures tab's
+        sources), show() opening it there with the pieces outlined; None when none loads it."""
+        for source in range(self.textures.sources.count()):
+            manager = self.resolve(self.textures.sources.itemData(source))
+            if manager is None or manager.document.format != "PlayStation TIM":
+                continue
+            for index, (offset, _section) in enumerate(tim_blocks(manager)):
+                found = sheet_in_tim(TimTexture(manager, offset), sheet.x, sheet.y, sheet.depth, sheet.clut_xy,
+                                     pieces)
+                if found:
+                    name = os.path.basename(manager.file_path) + (f" (TIM{index})" if index else "")
+
+                    def show(source=source, index=index, found=found):
+                        self.textures.sources.setCurrentIndex(source)
+                        self.tabs.setCurrentWidget(self.textures)
+                        self.textures.activate()
+                        self.textures.display.setCurrentIndex(0)
+                        self.textures.panel.outline(index, found[0], found[1], label)
+                    return name, show
+        return None
 
     def _part_reference(self, on):
         """A part preview's Target box: the same for every part tab."""

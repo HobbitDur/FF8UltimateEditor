@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 from PyQt6.QtTest import QTest
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QLabel, QPushButton
 
 ROOT = Path(__file__).resolve().parents[2]
 EXE = ROOT / "extracted_files/FF8_EN.exe"
@@ -141,6 +141,49 @@ def test_cure_part_tabs_edit_preview_and_save(qapp, tmp_path):
     assert fujin.import_parameters([str(tmp_path / "effect_001.fxparams")]) == [1]
     ring = next(tab for tab in fujin.part_tabs if tab.part["key"] == "ring")
     assert fujin.effect_params == {1: {"ring.substeps": 6}} and ring.spins["ring.substeps"].value() == 6
+
+
+@pytest.mark.ff8data(*CURE_FILES)
+def test_cure_part_tabs_show_the_images_their_pieces_come_from(qapp, tmp_path):
+    from Fujin.fujinwidget import FujinWidget
+    from FF8GameData.psxgpu.texuse import texture_sheets
+    cure_schema()
+    fujin = FujinWidget()
+    fujin.import_paths([str(MAGIC / "mag000-049.tim")])
+    fujin.camera_editor.exe_binding.open_path(str(EXE))
+    fujin.native_preview.textures_binding.open_path(str(BATTLE / "a8def.tim"))
+    fujin.camera_editor.preview.add_models([str(BATTLE / name) for name in ("d0c000.dat", "d0w000.dat", "c0m009.dat")])
+    fujin.select_effect(1)
+    tabs = {tab.part["key"]: tab for tab in fujin.part_tabs}
+    fujin.tabs.setCurrentIndex(2)
+    fujin.choreography.setCurrentWidget(tabs["sparkles"])
+    wait(qapp, fujin.lab)
+    # the sparkles: 3 flipbook frames of the effect's TIM (mag000-049.tim: VRAM 384,256, 8-bit, palette row 0)
+    sparkles = tabs["sparkles"].images
+    assert [(v.sheet.x, v.sheet.y, v.sheet.depth, v.sheet.clut_xy) for v in sparkles.views] == [(384, 256, 1, (320, 240))]
+    assert sparkles.views[0].pieces == [(32, 96, 48, 112), (32, 112, 48, 128), (48, 96, 64, 112)]
+    assert sparkles.views[0].image.size().width() == 512 and sparkles.views[0].image.size().height() == 256
+    # following the preview's tick: the pieces drawn then
+    tabs["sparkles"].preview.slider.setValue(6)
+    assert sparkles.views[0].tick == 6 and sparkles.views[0].sheet.pieces[6]
+    # the overlay: the target's own texture, and the image its values name (the light it projects)
+    overlay = tabs["overlay"].images
+    titles = [label.text() for label in overlay.findChildren(QLabel)]
+    assert any("the target's own texture" in title for title in titles)
+    named = [view for view in overlay.views if view.named]
+    assert len(named) == 1 and named[0].named == (256, 128, 384, 256) and named[0].sheet.clut_xy == (320, 241)
+    # the glints draw plain colours; the emitter (draws nothing) shows the whole effect's images
+    assert not tabs["glints"].images.views and "no textured" in tabs["glints"].images.note.text()
+    every = texture_sheets(fujin.lab.recording, {1, 2, 3, 4, 5, 6})
+    assert len(tabs["emitter"].images.views) == len(every) == 3
+    # the link: from the TIM, shown in the Textures tab with the pieces outlined
+    buttons = [b for b in sparkles.findChildren(QPushButton) if b.text() == "Show in Textures"]
+    assert len(buttons) == 1 and any("From mag000-049.tim" in l.text() for l in sparkles.findChildren(QLabel))
+    buttons[0].click()
+    assert fujin.tabs.currentWidget() is fujin.textures
+    card = fujin.textures.panel.cards[0]
+    assert card.outline == ("Sparkles", [(32, 96, 48, 112), (32, 112, 48, 128), (48, 96, 64, 112)])
+    assert card.row == 0 and "outlined: the pieces Sparkles takes" in card.info.text()
 
 
 def wait(qapp, view):
