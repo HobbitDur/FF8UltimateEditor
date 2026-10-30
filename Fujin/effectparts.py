@@ -19,12 +19,13 @@ import tempfile
 
 from PyQt6.QtCore import QPointF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap, QPolygonF
-from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                              QSizePolicy, QSlider, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
 from FF8GameData.psxgpu.fxdiff import differences, tick_runs
 from Fujin.partsequences import PartSequences, SequenceField
+from FF8GameData.psxgpu.spritesequence import exe_sequences
 from Fujin.recorderbuild import FFNX_EFFECTS, RECORDER
 
 PREVIEW_WIDTH = 320                 # the part preview's picture width (pixels)
@@ -169,22 +170,31 @@ class PartPreview(QWidget):
         self.timer = QTimer(self)
         self.timer.setInterval(int(1000 / TICKS_PER_SECOND))
         self.timer.timeout.connect(lambda: self.slider.setValue((self.slider.value() + 1) % (self.slider.maximum() + 1)))
-        # the compare bar: which field, the other value, what changes
+        # the compare bar: which field or group, its other values, what changes
         self.compare_title = QLabel()
-        self.compare_value = FieldSpin()
-        self.compare_value.valueChanged.connect(lambda _value: self._compare())
+        self.compare_spins = {}                         # key -> its other value (FieldSpin)
+        self.compare_values = QHBoxLayout()
         self.compare_note = QLabel()
         self.compare_note.setWordWrap(True)
         done = QPushButton("Done")
         done.setToolTip("Stop comparing")
         done.clicked.connect(self.stop_compare)
         self.compare_bar = QWidget()
-        bar = QHBoxLayout(self.compare_bar)
+        # long texts wrap: the bar never widens the window
+        for label in (self.compare_title, self.compare_note, self.caption, self.caption_b):
+            label.setWordWrap(True)
+            label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        top = QHBoxLayout()
+        top.addWidget(self.compare_title, 1)
+        top.addWidget(done)
+        values = QHBoxLayout()
+        values.addLayout(self.compare_values)
+        values.addStretch(1)
+        bar = QVBoxLayout(self.compare_bar)
         bar.setContentsMargins(0, 0, 0, 0)
-        bar.addWidget(self.compare_title)
-        bar.addWidget(self.compare_value)
-        bar.addWidget(self.compare_note, 1)
-        bar.addWidget(done)
+        bar.addLayout(top)
+        bar.addLayout(values)
+        bar.addWidget(self.compare_note)
         self.compare_bar.hide()
         pictures = QHBoxLayout()
         for caption, picture in ((self.caption, self.picture), (self.caption_b, self.picture_b)):
@@ -344,19 +354,40 @@ class PartPreview(QWidget):
         self.frame_label.setText(f"tick {tick} / {self.slider.maximum()}" + (f" - {marker}" if marker else ""))
 
     # ------------------------------------------------------------------ compare
-    def start_compare(self, field, current, other, record):
-        """Show the part with `field` at `other` beside it at `current`; record(value) -> the lab
-        recording with that value (None when it cannot be made)."""
-        self.compared = (field, record)
-        self.compare_title.setText(f"Compare {field['label']}: now {shown_value(field, current)}, with")
-        self.compare_value.blockSignals(True)
-        self.compare_value.set_field(field)
-        self.compare_value.setRange(field["min"], field["max"])
-        self.compare_value.setValue(other)
-        self.compare_value.blockSignals(False)
+    @property
+    def compare_value(self):
+        """The compared field's other value (a group's first one)."""
+        return next(iter(self.compare_spins.values()))
+
+    def start_compare(self, label, fields, others, record):
+        """Show the part with `fields` (one field, or a group's: values edited together, `label`)
+        at `others` ({key: value}) beside it as it is; record({key: value}) -> the lab recording
+        with them (None when it cannot be made)."""
+        self.compared = (label, fields, record)
+        while self.compare_values.count():
+            item = self.compare_values.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        self.compare_spins = {}
+        for field in fields:
+            if len(fields) > 1:
+                self.compare_values.addWidget(QLabel(field["label"]))
+            spin = FieldSpin(field)
+            spin.setRange(field["min"], field["max"])
+            spin.setValue(others[field["key"]])
+            spin.setToolTip(field["doc"])
+            spin.valueChanged.connect(lambda _value: self._compare())
+            self.compare_values.addWidget(spin)
+            self.compare_spins[field["key"]] = spin
         for widget in (self.compare_bar, self.picture_b, self.caption, self.caption_b, self.strip):
             widget.show()
         self._compare()
+
+    @staticmethod
+    def _values_text(fields, values):
+        if len(fields) == 1:
+            return shown_value(fields[0], values[fields[0]["key"]])
+        return ", ".join(f"{field['label']} {shown_value(field, values[field['key']])}" for field in fields)
 
     def stop_compare(self):
         self.compared, self.variant = None, None
@@ -365,17 +396,18 @@ class PartPreview(QWidget):
         self.refresh()
 
     def _compare(self):
-        """Record the compared value, mark what changes, show both."""
-        field, record = self.compared
-        other = self.compare_value.value()
+        """Record the compared values, mark what changes, show both."""
+        label, fields, record = self.compared
+        others = {key: spin.value() for key, spin in self.compare_spins.items()}
         base = self.runner.recording
-        current = dict(self.runner.cast().params).get(field["key"], field["default"])
-        self.compare_title.setText(f"Compare {field['label']}: now {shown_value(field, current)}, with")
-        self.caption.setText(f"Now: {field['label']} {shown_value(field, current)}")
-        self.caption_b.setText(f"With {field['label']} {shown_value(field, other)}")
+        params = dict(self.runner.cast().params)
+        currents = {field["key"]: params.get(field["key"], field["default"]) for field in fields}
+        self.compare_title.setText(f"Compare {label}: now {self._values_text(fields, currents)}, with")
+        self.caption.setText(f"Now: {label} {self._values_text(fields, currents)}")
+        self.caption_b.setText(f"With {label} {self._values_text(fields, others)}")
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
-            self.variant = record(other) if base is not None else None
+            self.variant = record(others) if base is not None else None
         finally:
             QApplication.restoreOverrideCursor()
         if base is None or self.variant is None:
@@ -394,7 +426,7 @@ class PartPreview(QWidget):
             note = " · ".join(f"{e['name']} ticks {tick_runs(e['ticks'])}" for e in mine) or "This part does not change"
             if others:
                 note += (" - also " + ", ".join(e["name"] for e in others)
-                         + " (amber: the random numbers they draw shift)")
+                         + " (amber: they hang on this part, or the random numbers they draw shift)")
         if len(base.ticks) != len(self.variant.ticks):
             note += f" - lasts {len(self.variant.ticks)} ticks instead of {len(base.ticks)}"
         self.compare_note.setText(note)
@@ -402,6 +434,11 @@ class PartPreview(QWidget):
         first = min((t for e in mine for t in e["ticks"]), default=None)
         if first is not None:
             self.slider.setValue(first)
+
+
+def _in_group(key, group_key):
+    """Whether field `key` is one of a group's (FFNx fx_params.h Group: a sub-structure's fields)."""
+    return key == group_key or key.startswith(group_key + ".") or key.startswith(group_key + "[")
 
 
 UNITS = {"angle": (360 / 4096, 2, "", "°"),          # unit -> (shown per raw unit, decimals, prefix, suffix)
@@ -493,20 +530,24 @@ class PartTab(QWidget):
     """A part's parameters (a form) beside its preview. A part that draws nothing (id 0) previews
     the whole effect (effect_parts: every drawing part's id), its tick parameters marked on it.
     A Sequence field (type "seq") picks a sprite sequence of the exe; a Frames field marks the
-    frames its sequence plays; each field's "?" records the effect with it nudged and says what
-    draws differently (part_names: {part id: title})."""
+    frames its sequence plays. The values edited together (a group: FFNx fx_params.h Group, one
+    sub-structure - Cure's ring radius: times, divided by, at most) share a box; a group's "?",
+    or an ungrouped field's, records the effect with other values and shows what draws
+    differently (part_names: {part id: title})."""
     value_changed = pyqtSignal(str, int)      # key, new value
 
     def __init__(self, part, fields, values, runner, renderer, effect_parts=frozenset(), locate=None,
-                 part_names=None):
+                 part_names=None, groups=()):
         super().__init__()
         self.part, self.fields, self.runner = part, fields, runner
         self.part_names = part_names or {}
+        self.groups = {group["key"]: group for group in groups if any(_in_group(f["key"], group["key"]) for f in fields)}
         self.spins, self.labels = {}, {}
         doc = QLabel(part["doc"] + ("" if part["id"] else
                                     ". It draws nothing: the preview shows the whole effect, its ticks marked."))
         doc.setWordWrap(True)
         form = QFormLayout()
+        boxes = {}                                      # group key -> its form
         for field in fields:
             sequence = field.get("type") == "seq"
             spin = SequenceField(runner, self.part_names) if sequence else FieldSpin(field)
@@ -517,17 +558,17 @@ class PartTab(QWidget):
             spin.valueChanged.connect(lambda value, key=field["key"]: self._changed(key, value))
             label = QLabel(field["label"])
             label.setToolTip(spin.toolTip())
-            probe = QToolButton()
-            probe.setText("?")
-            probe.setToolTip("What does it change? Shows the part with another value of this field beside "
-                             "it, the ticks that change marked under the slider")
-            probe.setEnabled(not sequence)
-            probe.clicked.connect(lambda _checked, key=field["key"]: self.probe(key))
-            row = QHBoxLayout()
-            row.addWidget(spin, 1)
-            row.addWidget(probe)
             self.spins[field["key"]], self.labels[field["key"]] = spin, label
-            form.addRow(label, row)
+            group = self.group_of(field["key"])
+            if group is None:
+                row = QHBoxLayout()
+                row.addWidget(spin, 1)
+                row.addWidget(self._probe_button(field["key"], "this field", enabled=not sequence))
+                form.addRow(label, row)
+            else:
+                if group["key"] not in boxes:
+                    boxes[group["key"]] = self._group_box(group, form)
+                boxes[group["key"]].addRow(label, spin)
             self._mark(field["key"])
         self._ratios()
         reset = QPushButton("Game values")
@@ -560,40 +601,104 @@ class PartTab(QWidget):
         layout = QHBoxLayout(self)
         layout.addWidget(scroll)
         layout.addLayout(right, 1)
+        runner.recording_changed.connect(self._update_limits)      # the exe may come after the tab
         self._update_limits()
+
+    def group_of(self, key):
+        """The group (values edited together) field `key` belongs to, or None."""
+        groups = [group for group in self.groups.values() if _in_group(key, group["key"])]
+        return max(groups, key=lambda group: len(group["key"]), default=None)
+
+    def group_fields(self, group_key):
+        return [field for field in self.fields if self.group_of(field["key"]) is self.groups[group_key]]
+
+    def _probe_button(self, key, what, enabled=True):
+        probe = QToolButton()
+        probe.setText("?")
+        probe.setToolTip(f"What does it change? Shows the part with other values of {what} beside it, the "
+                         "ticks that change marked under the slider")
+        probe.setEnabled(enabled)
+        probe.clicked.connect(lambda _checked: self.probe(key))
+        return probe
+
+    def _group_box(self, group, form):
+        """A group's box in the form: its doc and "?" on top, its fields under (their form)."""
+        box = QGroupBox(group["label"])
+        box.setToolTip(group["doc"])
+        doc = QLabel(group["doc"])
+        doc.setWordWrap(True)
+        doc.setStyleSheet("color: gray;")
+        top = QHBoxLayout()
+        top.addWidget(doc, 1)
+        top.addWidget(self._probe_button(group["key"], "these values together"), 0, Qt.AlignmentFlag.AlignTop)
+        fields = QFormLayout()
+        layout = QVBoxLayout(box)
+        layout.addLayout(top)
+        layout.addLayout(fields)
+        form.addRow(box)
+        return fields
+
+    def _title(self, key):
+        """A field's name with its group's (the Sequences tab's notes: "Ring Ending flipbook")."""
+        group = self.group_of(key)
+        return group["label"] if group else next(field["label"] for field in self.fields if field["key"] == key)
 
     def frame_limits(self):
         """{sequence address: (Frames field label, last frame played)}: a "frames" field and the
-        "seq" field beside it (ring.end_frames - ring.end_seq, sparkle.frames - sparkle.seq)."""
+        "seq" field beside it (ring.ending.frames - ring.ending.seq, sparkle.frames - sparkle.seq)."""
         limits = {}
         for field in self.fields:
             key = field["key"]
             sequence = key[:-len("frames")] + "seq" if key.endswith("frames") else None
             if sequence in self.spins:
-                limits[self.spins[sequence].value()] = (f"{self.part['title']} {field['label']}",
+                limits[self.spins[sequence].value()] = (f"{self.part['title']} {self._title(key)}",
                                                          self.spins[key].value())
         return limits
 
     def _update_limits(self):
+        """A frames field goes no further than its sequence's last frame (FFNx plays no more:
+        fx_params.h last_frame); the Sequences tab marks the frames played."""
+        sequences = exe_sequences(self.runner.exe_path()) if self.runner.exe_path() else {}
+        for field in self.fields:
+            key = field["key"]
+            owner = self.spins.get(key[:-len("frames")] + "seq") if key.endswith("frames") else None
+            sequence = sequences.get(owner.value()) if owner is not None else None
+            if sequence is not None and sequence.frames:
+                last = min(field["max"], len(sequence.frames) - 1)
+                spin = self.spins[key]
+                spin.setRange(field["min"], last)
+                spin.hint(f"last frame {last}")
+                if spin.value() > last:
+                    spin.setValue(last)
         self.sequences.set_limits(self.frame_limits())
 
     def probe(self, key):
-        """What `key` changes: the preview compares the part at its value with another - the game's
-        when it is not at it, else a clearly different one (twice it, or 1 for 0) - recorded with
-        the effect's other values as they are."""
-        field = next(field for field in self.fields if field["key"] == key)
-        value = self.spins[key].value()
-        if value != field["default"]:
-            other = field["default"]
+        """What a field or a group (values edited together; a grouped field probes its group)
+        changes: the preview compares the part as it is with other values - the game's when they
+        are not at them, else clearly different ones (the first value twice, or 1 for 0, and a
+        "max" twice: Cure's ring radius x 4, at most 2048) - recorded with the effect's other
+        values as they are."""
+        group = self.groups.get(key) or self.group_of(key)
+        fields = self.group_fields(group["key"]) if group else [f for f in self.fields if f["key"] == key]
+        values = {field["key"]: self.spins[field["key"]].value() for field in fields}
+        clamp = lambda field, value: max(field["min"], min(field["max"], value))
+        if any(values[field["key"]] != field["default"] for field in fields):
+            others = {field["key"]: field["default"] for field in fields}
         else:
-            other = value * 2 if value else 1
-            other = max(field["min"], min(field["max"], other))
-            if other == value:
-                other = max(field["min"], min(field["max"], value - 1 if value > field["min"] else value + 1))
+            others = dict(values)
+            first = next(field for field in fields if field.get("type") != "seq")
+            for field in fields:
+                if field is first or field["key"].endswith(".max") and field.get("type") != "seq":
+                    value = values[field["key"]]
+                    others[field["key"]] = clamp(field, value * 2 if value else 1)
+            if others == values:
+                value = values[first["key"]]
+                others[first["key"]] = clamp(first, value - 1 if value > first["min"] else value + 1)
 
         def record(compared):
-            return self.runner.record_with(dict(self.runner.cast().params) | {key: compared})
-        self.preview.start_compare(field, value, other, record)
+            return self.runner.record_with(dict(self.runner.cast().params) | compared)
+        label = group["label"] if group else fields[0]["label"]
+        self.preview.start_compare(label, [f for f in fields if f.get("type") != "seq"], others, record)
 
     def markers(self):
         """{tick: what happens}: a part drawing nothing has its tick parameters marked on the preview."""
@@ -620,7 +725,7 @@ class PartTab(QWidget):
                                              else default)
             if group + "tex_y" in names:
                 clut = (value("clut_x") // 16) | (value("clut_y") << 6)
-                images.append((names[key]["label"].replace(" VRAM x", ""), value("tex_x"), value("tex_y"),
+                images.append((self._title(key), value("tex_x"), value("tex_y"),
                                clut, value("width", 256), value("height", 256)))
         return images
 

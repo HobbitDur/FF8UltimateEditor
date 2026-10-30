@@ -118,9 +118,12 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   Rings, Target layouts, Sprites): the part's parameters as a form
   (bold = not the game's value, **Game values** resets them; a value in its unit when the port gives
   one - fx_params.h `Unit`: an angle in degrees, a size as x 1 = its own - the raw value greyed
-  beside it; a fraction's value, as Cure's ring radius x / , greyed beside its divisor. Cure's
-  ring: each tick it takes **Steps per tick** steps of **Step angle** around the target, drawn at
-  the last one, a sparkle born at each) beside a small preview of that part
+  beside it; a fraction's value greyed beside its divisor; a frames field stops at its sequence's
+  last frame. The values that set one thing together share a box with one **?**: one
+  sub-structure in the port, named in its group table - fx_params.h `Group` - as Cure's ring
+  **Radius**: the target's radius x Times / Divided by, At most; its **Steps**: each tick it takes
+  Per tick steps of Angle around the target, drawn at the last one, a sparkle born at each)
+  beside a small preview of that part
   alone, framed on where it goes. Under the preview, the part's **images**: each picture of video
   memory it takes texels from (a TIM, the target's own texture), whole, read with the depth and
   palette its primitives use, every piece it takes during the effect outlined and the ones it
@@ -146,10 +149,10 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   the game's sequence for a value that is none (`fxp::sequence`) and a flipbook's last frame
   within its sequence (`fxp::last_frame`). A **Frames** field crosses the frames its sequence never
   plays (Sparkles: frames 9-26 of 27). **Browse all sequences…** lists them without choosing.
-  Every field's **?** answers *What does it change?*: the preview shows the part twice, side by
-  side - now, and with another value of that field (the game's when the field is not at it, else
-  twice it; any value in the bar's box, Done to stop) recorded with the effect's other values as
-  they are. A strip under the slider marks the ticks that change (red: this part; amber: only other
+  A group's **?** (an ungrouped field's own) answers *What does it change?*: the preview shows the
+  part twice, side by side - now, and with other values of the group (the game's when they are not
+  at them, else the first value twice and a "max" twice: the ring radius x 4, at most 2048; any
+  values in the bar's boxes, Done to stop) recorded with the effect's other values as they are. A strip under the slider marks the ticks that change (red: this part; amber: only other
   parts - they draw from the same stream of random numbers, so a part drawing more or less shifts
   their rolls), a click goes there, and the bar says which parts change when
   (`FF8GameData/psxgpu/fxdiff.py`). The **Target** box draws the target as last drawn when the
@@ -157,7 +160,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   framed together.
   The numbers come out of the port's code into one struct per
   part (FFNx `src/ff8/battle/fx/fx_params.h`: generic blocks every module can reuse - a tick
-  window, a count per tick, a random range, a fraction, the effect library's glint style -
+  window, a count per tick, a random range (on three axes), a size scaled from the target's and
+  capped, a random share, the effect library's glint style -
   `HealRingParams` in `mag_heal_ring.h`, shared by Cure and Potion - one struct, parts and field
   table, each module with its own live values, so Potion and Cure are edited apart -
   `HypnotizeParams` in `mag133_hypnotize.cpp`, defaults = the

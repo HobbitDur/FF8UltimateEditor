@@ -965,7 +965,15 @@ static std::string json_text(const char *t)
 	}
 	return out + "\"";
 }
-// schema=<file>: the effect's parts and parameter fields with the game's values, as JSON
+// the values edited together (fx_params.h Group; older sources have none)
+template<class M> static void write_groups(FILE *f, const M &m)
+{
+	if constexpr (requires { m.groups; })
+		for (int i = 0; i < m.group_count; i++)
+			fprintf(f, "%s\n  {\"key\": %s, \"label\": %s, \"doc\": %s}", i ? "," : "", json_text(m.groups[i].key).c_str(),
+			        json_text(m.groups[i].label).c_str(), json_text(m.groups[i].doc).c_str());
+}
+// schema=<file>: the effect's parts, parameter fields with the game's values and groups, as JSON
 static int lab_schema()
 {
 	lab_register();
@@ -986,6 +994,8 @@ static int lab_schema()
 		        d.type == ff8fx::fxp::I16 ? "\"i16\"" : d.type == ff8fx::fxp::U8 ? "\"u8\"" : d.type == ff8fx::fxp::Seq ? "\"seq\"" : "\"i32\"",
 		        d.min, d.max, field_value(m->defaults, d), field_unit(d));
 	}
+	fprintf(f, "],\n \"groups\": [");
+	write_groups(f, *m);
 	fprintf(f, "]}\n");
 	fclose(f);
 	printf("schema: effect %d, %d parts, %d fields\n", O.eff, m->part_count, m->field_count);

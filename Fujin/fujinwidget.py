@@ -799,7 +799,8 @@ class FujinWidget(QWidget):
         names = {0: "The target"} | {part["id"]: part["title"] for part in schema["parts"] if part["id"]}
         for part in schema["parts"]:
             fields = [field for field in schema["fields"] if field["part"] == part["key"]]
-            tab = PartTab(part, fields, values, self.lab, gl_renderer, drawing, self._locate_texture, names)
+            tab = PartTab(part, fields, values, self.lab, gl_renderer, drawing, self._locate_texture, names,
+                          schema.get("groups", []))
             tab.value_changed.connect(self._param_changed)
             tab.preview.reference_toggled.connect(self._part_reference)
             self.part_tabs.append(tab)

@@ -53,8 +53,8 @@ def test_cure_parameter_table():
     schema = cure_schema()
     assert [part["key"] for part in schema["parts"]] == ["emitter", "ring", "glow", "overlay", "sparkles", "motes", "glints"]
     fields = {field["key"]: field for field in schema["fields"]}
-    assert fields["ring.substeps"]["default"] == 4 and fields["ring.angle_step"]["default"] == 0x80
-    assert fields["emitter.heal_tick"]["default"] == 15 and fields["glow.grey"]["default"] == 0x3C
+    assert fields["ring.steps.per_tick"]["default"] == 4 and fields["ring.steps.angle"]["default"] == 0x80
+    assert fields["emitter.heal_tick"]["default"] == 15 and fields["glow.brightness.start"]["default"] == 0x3C
     assert fields["mote.count.count[1]"]["part"] == "motes" and fields["sparkle.window.last"]["default"] == 16
     assert all(field["min"] <= field["default"] <= field["max"] for field in schema["fields"])
 
@@ -87,7 +87,7 @@ def test_cure_port_is_the_original_and_its_parameters_change_it(tmp_path):
     parts = {int(line.split()[1]) for line in native if line.startswith("P ")}
     assert parts == {0, 1, 2, 3, 4, 5, 6}                         # the actors (0) and Cure's six parts
     params = tmp_path / "params.txt"
-    params.write_text("ring.radius.num 4\nring.radius_max 2048\n")
+    params.write_text("ring.radius.num 4\nring.radius.max 2048\n")
     wide, log = record(tmp_path, "wide", "native=1", f"params={params}")
     assert "params: 2 values set" in log and wide != native
     from FF8GameData.psxgpu.fxdump import parse_recording
@@ -149,15 +149,15 @@ def test_cure_part_tabs_edit_preview_and_save(qapp, tmp_path):
     assert fujin.lab.recording is not recording and fujin.lab.cast().params == (("ring.radius.num", 4),)
     ring.spins["ring.radius.num"].setValue(2)                    # back to the game's: nothing kept
     assert fujin.effect_params == {1: {}}
-    ring.spins["ring.substeps"].setValue(6)
+    ring.spins["ring.steps.per_tick"].setValue(6)
     assert fujin.save_files(str(tmp_path))
     saved = json.loads((tmp_path / "effect_001.fxparams").read_text(encoding="utf-8"))
-    assert saved == {"effect": 1, "name": fujin.catalog.name(1), "params": {"ring.substeps": 6}}
+    assert saved == {"effect": 1, "name": fujin.catalog.name(1), "params": {"ring.steps.per_tick": 6}}
     assert not fujin.can_save_folder()
     fujin.effect_params.clear()
     assert fujin.import_parameters([str(tmp_path / "effect_001.fxparams")]) == [1]
     ring = next(tab for tab in fujin.part_tabs if tab.part["key"] == "ring")
-    assert fujin.effect_params == {1: {"ring.substeps": 6}} and ring.spins["ring.substeps"].value() == 6
+    assert fujin.effect_params == {1: {"ring.steps.per_tick": 6}} and ring.spins["ring.steps.per_tick"].value() == 6
 
 
 @pytest.mark.ff8data(*CURE_FILES)
@@ -258,9 +258,17 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     assert [thumb.index for thumb in thumbs if thumb.beyond] == list(range(9, 27))
     assert "plays frames 0-8 (Sparkles Lifetime (frames))" in title.text()
     ring = tabs["ring"]
-    ring.spins["ring.end_frames"].setValue(2)
+    ring.spins["ring.ending.frames"].setValue(2)
     assert [thumb.index for thumb in ring.sequences.rows[1][2] if thumb.beyond] == [3, 4]
-    ring.spins["ring.end_frames"].setValue(4)
+    ring.spins["ring.ending.frames"].setValue(4)
+    # a frames field goes no further than its sequence's last frame (the ending flipbook: 5 frames)
+    assert "Ring Ending flipbook" in ring.sequences.rows[1][3].text()
+    ring.spins["ring.ending.frames"].setValue(8)
+    assert ring.spins["ring.ending.frames"].value() == 4 and "last frame 4" in ring.spins["ring.ending.frames"].raw_label.text()
+    assert tabs["sparkles"].spins["sparkle.frames"].box.maximum() == 26
+    # values edited together share a box and one compare: the ring radius (times, divided by, at most)
+    assert ring.group_of("ring.radius.max")["label"] == "Radius"
+    assert ring.labels["ring.radius.num"].parent().title() == "Radius"
     # Sequence fields: the address, the exe's sequences to choose from
     field = ring.spins["ring.seq"]
     assert field.value() == 0x1641F78 and field.label.text() == "0x1641F78 (2 frames)"
@@ -290,12 +298,19 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     assert preview.compare_value.value() == 8                  # the game's
     preview.stop_compare()
     tab.spins["sparkle.frames"].setValue(8)
-    # Ring End frames past its sequence's last frame: FFNx keeps the last one, nothing changes
-    ring.probe("ring.end_frames")
-    assert ring.preview.compare_value.value() == 8 and ring.preview.compare_note.text() == "Nothing changes."
+    # a group's compare: all its values at once - the radius twice as large, its cap too
+    ring.probe("ring.radius.den")                                # a grouped field probes its group
+    others = {key: spin.value() for key, spin in ring.preview.compare_spins.items()}
+    assert others == {"ring.radius.num": 4, "ring.radius.den": 1, "ring.radius.max": 2048}
+    assert ring.preview.caption_b.text() == "With Radius Times 4, Divided by 1, At most 2048"
+    assert ring.preview.strip.mine
+    # the same values: nothing changes
+    ring.preview.compare_spins["ring.radius.num"].setValue(2)
+    ring.preview.compare_spins["ring.radius.max"].setValue(1024)
+    assert ring.preview.compare_note.text() == "Nothing changes."
     ring.preview.stop_compare()
     # units: an angle in degrees (the raw value greyed beside it), a fraction's value beside its divisor
-    angle = ring.spins["ring.angle_step"]
+    angle = ring.spins["ring.steps.angle"]
     assert angle.box.suffix() == "°" and abs(angle.box.value() - 11.25) < 1e-9 and angle.raw_label.text() == "raw 128"
     angle.box.setValue(12.0)                                     # to the nearest raw value
     assert angle.value() == 137 and angle.raw_label.text() == "raw 137"
@@ -455,9 +470,9 @@ def test_potion_shares_cures_parameters_but_keeps_its_own(tmp_path):
     same = lambda fields: [dict(f, default=None) if f["type"] == "seq" else f for f in fields]
     assert same(potion["fields"]) == same(cure["fields"])
     sequences = lambda schema: {f["key"]: f["default"] for f in schema["fields"] if f["type"] == "seq"}
-    assert sequences(cure) == {"ring.seq": 0x1641F78, "ring.end_seq": 0x1641FCC, "glow.seq": 0x1642504,
+    assert sequences(cure) == {"ring.seq": 0x1641F78, "ring.ending.seq": 0x1641FCC, "glow.seq": 0x1642504,
                                "sparkle.seq": 0x1642238, "mote.seq": 0x164205C}
-    assert sequences(potion) == {"ring.seq": 0x15AD52C, "ring.end_seq": 0x15AD580, "glow.seq": 0x15ADAB8,
+    assert sequences(potion) == {"ring.seq": 0x15AD52C, "ring.ending.seq": 0x15AD580, "glow.seq": 0x15ADAB8,
                                  "sparkle.seq": 0x15AD7EC, "mote.seq": 0x15AD610}
 
     def effect(effect_id, tag, *extra):
@@ -473,7 +488,7 @@ def test_potion_shares_cures_parameters_but_keeps_its_own(tmp_path):
     potion_original, potion_native = effect(50, "original"), effect(50, "native", "native=1")
     assert untag(potion_native) == potion_original
     params = tmp_path / "params.txt"
-    params.write_text("ring.radius.num 4\nring.radius_max 2048\n")
+    params.write_text("ring.radius.num 4\nring.radius.max 2048\n")
     assert effect(50, "wide", "native=1", f"params={params}") != potion_native
     # another sprite sequence for the sparkles: drawn instead; a value that is no sequence: the game's
     params.write_text(f"sparkle.seq {0x15AD610}\n")
