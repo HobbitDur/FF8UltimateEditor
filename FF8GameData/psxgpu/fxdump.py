@@ -15,6 +15,9 @@ second); its "between" dump lists, per real tick:
     Q t part seq frame [x y]  (Tools/fxrecorder) a sprite the tick drew: the effect part, its sprite
                           sequence's address (hex) and frame (FF8GameData/psxgpu/spritesequence.py),
                           the middle of its packets' screen box (packet units)
+    N t slot amount flags hit  (Tools/fxrecorder) an action result the effect gave a target: the
+                          battle then shows its number (BattleFx_DamageNumbers_Spawn)
+    S t address           (Tools/fxrecorder) a sound the effect played: its sound block's address
 
 Other blocks (H, Z, O: 30 fps held frames; S: spawned tasks) are skipped. The packets are drawn in
 reverse insertion order within an OT bucket and buckets from the highest address down, the
@@ -36,6 +39,8 @@ class EffectTick:
     ordered: bool = False   # the packets are in draw order already ("R t n ordered": the recorder's walk)
     sprites: list = field(default_factory=list)     # [(part, sequence address, frame)] drawn (Q lines)
     places: list = field(default_factory=list)      # per sprite: its screen middle (x, y), or None
+    results: list = field(default_factory=list)     # [(target slot, amount, result flags, hit type)] given (N lines)
+    sounds: list = field(default_factory=list)      # [sound block address] played (S lines)
 
     def part_packets(self, parts=None):
         """The packets of these effect parts (all of them for None)."""
@@ -223,6 +228,10 @@ def parse_recording(lines, effect_id=None) -> EffectRecording:
             tick = by_index.setdefault(int(parts[1]), EffectTick(int(parts[1])))
             tick.sprites.append((int(parts[2]), int(parts[3], 16), int(parts[4])))
             tick.places.append((int(parts[5]), int(parts[6])) if len(parts) >= 7 else None)
+        elif kind == "N" and len(parts) >= 6:
+            by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).results.append(tuple(int(v) for v in parts[2:6]))
+        elif kind == "S" and len(parts) >= 3:
+            by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).sounds.append(int(parts[2], 16))
         elif kind == "V" and len(parts) >= 7:
             index, x, y, w, h = (int(value) for value in parts[1:6])
             upload = ("V", x, y, w, h, _hex_words(parts[6]))

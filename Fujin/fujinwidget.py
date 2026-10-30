@@ -784,7 +784,10 @@ class FujinWidget(QWidget):
 
     def _build_part_tabs(self):
         """Choreography's part tabs for the selected effect: one per part of its C++ port's
-        parameter table (none when FFNx has no port with parameters for it)."""
+        parameter table (none when FFNx has no port with parameters for it). The part tab shown
+        stays shown when the new tabs have one of the same key."""
+        shown = self.choreography.currentWidget()
+        shown_key = shown.part["key"] if shown in self.part_tabs else None
         for tab in self.part_tabs:
             self.choreography.removeTab(self.choreography.indexOf(tab))
             tab.deleteLater()
@@ -806,16 +809,22 @@ class FujinWidget(QWidget):
             self.part_tabs.append(tab)
             self.choreography.addTab(tab, part["title"])
             self.choreography.setTabToolTip(self.choreography.count() - 1, part["doc"])
+            if part["key"] == shown_key:
+                self.choreography.setCurrentWidget(tab)
 
     def _recorder_built(self):
         """The recorder's build started or ended (the updater brought FFNx's effect sources): the
         part tabs of the new recorder, kept as they are when its parameter table did not change."""
         if recorder_build().building:
             self._show_parts_note()
-        elif self.current_effect is not None and effect_schema(self.current_effect) != self._parts_schema:
+            return
+        if self.current_effect is not None and effect_schema(self.current_effect) != self._parts_schema:
             self._build_part_tabs()
         else:
             self._show_parts_note()
+        # the old recorder's recording goes: the tab shown records again with the new one
+        self.lab.params_changed()
+        self._record_parts()
 
     def _show_parts_note(self):
         """Why there are no part tabs: the recorder is being built, or lacks FFNx's effect sources."""

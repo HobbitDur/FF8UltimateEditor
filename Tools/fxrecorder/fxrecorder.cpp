@@ -19,6 +19,8 @@
 //   C t ex ey ez ax ay az         the battle camera words after the tick (eye, look-at)
 //   V t x y w h hexwords          a VRAM upload (queued by the tick, or done before it)
 //   B t x y w h u v               a VRAM-to-VRAM copy
+//   N t slot amount flags hit    an action result the effect gave a target (its number then shows)
+//   S t address                   a sound it played (its sound block in memory)
 //   Q t part sequence frame [x y] a sprite the tick drew: its sprite sequence (address, hex) and
 //                                 frame, the effect part drawing it (FF8GameData/psxgpu/spritesequence.py),
 //                                 the middle of its packets' screen box (packet units)
@@ -280,6 +282,24 @@ struct Ins { uint32_t fn, bucket, pkt; int part = 0; };
 static std::vector<Ins> g_ins;
 static bool g_rec = false;
 static void note_ins(uint32_t fn, uint32_t bucket, uint32_t packet) { if (g_rec) g_ins.push_back({ fn, bucket, packet }); }
+// what the effect asks the battle, stubbed but noted (N / S lines): an action result given to a target
+// (ApplyActionResultToTarget 0x506690, ApplyActionResultToTargets 0x506BA0: the battle then shows its
+// number, BattleFx_DamageNumbers_Spawn) and a sound played (BdPlaySE 0x501330, BdPlaySE3D 0x5013A0:
+// its sound block's address)
+struct BattleEvent { char kind; uint32_t a, b, c, d; };
+static std::vector<BattleEvent> g_events;
+static void note_result(uint32_t r)
+{
+	if (g_rec && !IsBadReadPtr((void *)r, 8))
+		g_events.push_back({ 'N', *(const uint8_t *)r, *(const uint16_t *)(r + 6), *(const uint8_t *)(r + 2), *(const uint8_t *)(r + 3) });
+}
+static int __cdecl s_result(uint32_t r) { note_result(r); return 0; }
+static int __cdecl s_results(uint32_t targets, uint32_t count)
+{
+	for (uint32_t k = 0; k < count && k < 8; k++) note_result(targets + 24 * k);
+	return 0;
+}
+static int __cdecl s_sound(uint32_t sound, uint32_t, uint32_t) { if (g_rec) g_events.push_back({ 'S', sound, 0, 0, 0 }); return 0; }
 #define INS_WRAP(ADDR, ...) unpatch(ADDR); ((void (__cdecl *)(__VA_ARGS__))ADDR)
 static void __cdecl s_45C740(uint32_t a, uint32_t b, uint32_t c) { INS_WRAP(0x45C740, uint32_t, uint32_t, uint32_t)(a, b, c); repatch(0x45C740); note_ins(0x45C740, a, b); }
 static void __cdecl s_45C7A0(uint32_t a, uint32_t b) { INS_WRAP(0x45C7A0, uint32_t, uint32_t)(a, b); repatch(0x45C7A0); note_ins(0x45C7A0, a, b); }
@@ -415,6 +435,9 @@ static void write_tick(int t)
 	for (const SpriteDraw &s : g_sprites)
 		if (s.placed) fprintf(g_out, "Q %d %d %X %d %d %d\n", t, part_at(s.node), s.seq, s.frame, s.x, s.y);
 		else fprintf(g_out, "Q %d %d %X %d\n", t, part_at(s.node), s.seq, s.frame);
+	for (const BattleEvent &e : g_events)
+		if (e.kind == 'N') fprintf(g_out, "N %d %u %u %u %u\n", t, e.a, e.b, e.c, e.d);
+		else fprintf(g_out, "S %d %X\n", t, e.a);
 }
 
 // ---------------------------------------------------------------- battle memory
@@ -1094,12 +1117,14 @@ int main(int argc, char **argv)
 	patch_jmp(0x45C740, (void *)s_45C740); patch_jmp(0x45C7A0, (void *)s_45C7A0);
 	patch_jmp(0x45C870, (void *)s_45C870); patch_jmp(0x45C8E0, (void *)s_45C8E0);
 	patch_sprites(std::make_integer_sequence<int, sizeof(SPRITE_INITS) / sizeof(SPRITE_INITS[0])>());
-	uint32_t zero1[] = { 0x46B3A0, 0x46B3E0, 0x47E3C0, 0x4A2940, 0x4A2900, 0x4A8480, 0x501E40, 0x501F30, 0x504270, 0x506690, 0x5099A0, 0x403D99 };
+	uint32_t zero1[] = { 0x46B3A0, 0x46B3E0, 0x47E3C0, 0x4A2940, 0x4A2900, 0x4A8480, 0x501E40, 0x501F30, 0x504270, 0x5099A0, 0x403D99 };
 	for (uint32_t a : zero1) patch_jmp(a, (void *)s_zero1);
-	uint32_t zero2[] = { 0x46B450, 0x506BA0, 0x505C00, 0x505CE0, 0x46BD40, 0x512AA0, 0x512AC0 };
+	uint32_t zero2[] = { 0x46B450, 0x505C00, 0x505CE0, 0x46BD40, 0x512AA0, 0x512AC0 };
 	for (uint32_t a : zero2) patch_jmp(a, (void *)s_zero2);
-	uint32_t zero3[] = { 0x501330, 0x5013A0, 0x5018C0, 0x501460, 0x46BBC0, 0x47CF50 };
+	uint32_t zero3[] = { 0x5018C0, 0x501460, 0x46BBC0, 0x47CF50 };
 	for (uint32_t a : zero3) patch_jmp(a, (void *)s_zero3);
+	patch_jmp(0x506690, (void *)s_result); patch_jmp(0x506BA0, (void *)s_results);
+	patch_jmp(0x501330, (void *)s_sound); patch_jmp(0x5013A0, (void *)s_sound);
 	patch_jmp(0x50A730, (void *)s_zero0);
 	patch_jmp(0x46BB40, (void *)s_46BB40);
 	patch_jmp(0x501860, (void *)s_501860);
@@ -1178,7 +1203,7 @@ int main(int argc, char **argv)
 				*(int16_t *)0x1D977A2 = 0;
 				call0(0x5033E0);
 			}
-			g_ins.clear(); g_pending.clear(); g_sprites.clear();
+			g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear();
 			g_rec = true;
 			render_actors();
 			g_rec = false;
@@ -1204,7 +1229,7 @@ int main(int argc, char **argv)
 		dump_vram_queue();                 // uploads queued by the setup / the loads applied before this tick
 		env_reset();
 		set_camera(t - cast_ticks);
-		g_ins.clear(); g_pending.clear(); g_sprites.clear();
+		g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear();
 		g_rec = true;
 		int r = 0;
 		step_plan();

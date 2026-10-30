@@ -257,16 +257,21 @@ class ToolUpdateWidget(QWidget):
         tool_list = self._current_tool_list
         if "Self" in tool_list:
             self.self_update_request = True
+        if self.progress_install_index >= len(tool_list):
+            progress_name = "FF8UltimateEditor"
+        else:
+            progress_name = tool_list[self.progress_install_index]
         if advancement >= 0 and max_size >= 0:
-            if self.progress_install_index >= len(tool_list):
-                progress_name = "FF8UltimateEditor"
-            else:
-                progress_name = tool_list[self.progress_install_index]
             self.progress_current_download.setFormat(f"Downloading {progress_name}")
             self.progress_current_download.setRange(0, max_size)
             self.progress_current_download.setValue(advancement)
+        elif advancement >= 0:
+            # no size given (GitHub's source archives, as FFNxEffects): what came so far
+            self.progress_current_download.setFormat(f"Downloading {progress_name}: {advancement / 1e6:.1f} MB")
+            self.progress_current_download.setRange(0, max(1, advancement))
+            self.progress_current_download.setValue(advancement)
         else:
-            self.progress_current_download.setFormat("No download information")
+            self.progress_current_download.setFormat(f"Downloading {progress_name}")
 
 
     def install_click(self):
