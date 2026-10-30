@@ -60,8 +60,9 @@ def test_cure_parameter_table():
 
 
 def untag(lines):
-    """A recording's lines without their part tags (a packet's, a sprite's): what the original code draws."""
-    return [re.sub(r"^(P|Q \d+) \d+ ", r"\1 0 ", line) for line in lines]
+    """A recording's lines without their part tags (a packet's, a sprite's) nor the values the port
+    noted (M lines: FX_NOTE): what the original code draws."""
+    return [re.sub(r"^(P|Q \d+) \d+ ", r"\1 0 ", line) for line in lines if not line.startswith("M ")]
 
 
 def record(tmp_path, tag, *extra):
