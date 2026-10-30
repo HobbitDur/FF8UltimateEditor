@@ -802,8 +802,11 @@ class FujinWidget(QWidget):
         names = {0: "The target"} | {part["id"]: part["title"] for part in schema["parts"] if part["id"]}
         for part in schema["parts"]:
             fields = [field for field in schema["fields"] if field["part"] == part["key"]]
+            # Cure's ring spawns the other parts: their windows count its ticks
+            ring = next((p for p in schema["parts"] if p["key"] == "ring"), None)
+            spawner = (ring["id"], ring["title"]) if ring and part is not ring and part["id"] else None
             tab = PartTab(part, fields, values, self.lab, gl_renderer, drawing, self._locate_texture, names,
-                          schema.get("groups", []), self.sound_panel)
+                          schema.get("groups", []), self.sound_panel, spawner)
             tab.value_changed.connect(self._param_changed)
             tab.preview.reference_toggled.connect(self._part_reference)
             self.part_tabs.append(tab)

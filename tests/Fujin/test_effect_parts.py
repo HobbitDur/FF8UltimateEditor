@@ -359,6 +359,19 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
         assert polygons == 2 * alive, index
     # the climb is a speed: where the ring ends, about (ending flipbook 20 + 4 frames, every 20 ticks)
     assert ring.spins["ring.climb.ticks"].raw_label.text() == "ends ~ 1.25 x (height + 256) up"
+    # the glow's brightness over its duration: 60 - 3 a tick reaches 3 at tick 19 (the game stops at 20);
+    # drawn longer, the byte wraps (0 -> 253) and the glow comes back bright
+    glow = tabs["glow"].spins["glow.brightness.ticks"]
+    assert glow.raw_label.text() == "grey 3 at its last tick (19)"
+    glow.setValue(40)
+    assert glow.raw_label.text() == "comes back at tick 21: grey wraps 0 -> 253"
+    glow.setValue(20)
+    # a spawn window counts the ring's ticks: the ring lives to its tick 24 (ending flipbook 20 + 4)
+    to_tick = tabs["sparkles"].spins["sparkle.window.last"]
+    assert to_tick.raw_label.text() == "Ring lives to tick 24"
+    to_tick.setValue(40)
+    assert to_tick.raw_label.text() == "Ring lives to tick 24: later ones do nothing"
+    to_tick.setValue(16)
 
 
 def wait(qapp, view):

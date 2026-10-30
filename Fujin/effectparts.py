@@ -607,9 +607,10 @@ class PartTab(QWidget):
     value_changed = pyqtSignal(str, int)      # key, new value
 
     def __init__(self, part, fields, values, runner, renderer, effect_parts=frozenset(), locate=None,
-                 part_names=None, groups=(), sounds=None):
+                 part_names=None, groups=(), sounds=None, spawner=None):
         super().__init__()
         self.part, self.fields, self.runner = part, fields, runner
+        self.spawner = spawner                          # (part id, title) whose ticks its windows count
         self.sounds = sounds                            # Fujin's Sound tab: plays audio.dat entries
         self.part_names = part_names or {}
         self.groups = {group["key"]: group for group in groups if any(_in_group(f["key"], group["key"]) for f in fields)}
@@ -749,6 +750,21 @@ class PartTab(QWidget):
                 if spin.value() > last:
                     spin.setValue(last)
         self.sequences.set_limits(self.frame_limits())
+        self._spawn_hints()
+
+    def _spawn_hints(self):
+        """A window of the spawner's ticks (Cure's sparkles, motes, glints: the ring's) past the
+        spawner's life does nothing: its last tick, from the recording, beside each window's end."""
+        recording = self.runner.recording
+        if self.spawner is None or recording is None:
+            return
+        drawn = [index for index, tick in enumerate(recording.ticks) if self.spawner[0] in tick.parts]
+        if not drawn:
+            return
+        last = drawn[-1] - drawn[0]
+        for key, spin in self.spins.items():
+            if key.endswith("window.last") and isinstance(spin, FieldSpin):
+                spin.hint(f"{self.spawner[1]} lives to tick {last}" + (": later ones do nothing" if spin.value() > last else ""))
 
     def probe(self, key):
         """What a field or a group (values edited together; a grouped field probes its group)
@@ -832,6 +848,15 @@ class PartTab(QWidget):
         if every and start is not None and frames is not None:
             above = value("ring.climb.above")
             self.spins["ring.climb.ticks"].hint(f"ends ~ {(start + frames + 1) / every:.2f} x (height + {above}) up")
+        # a fading brightness (Cure's ground glow: grey = start - tick x fade, bytes): where it
+        # reaches its lowest, and whether it wraps and comes back within its duration
+        ticks, start, fade = value("glow.brightness.ticks"), value("glow.brightness.start"), value("glow.brightness.fade")
+        if ticks is not None and start is not None and fade is not None:
+            grey = [(start - ((tick * fade) & 0xFF)) & 0xFF for tick in range(max(1, ticks))]
+            back = next((tick for tick in range(1, len(grey)) if grey[tick] > grey[tick - 1]), None)
+            self.spins["glow.brightness.ticks"].hint(
+                f"comes back at tick {back}: grey wraps {grey[back - 1]} -> {grey[back]}" if back is not None else
+                f"grey {grey[-1]} at its last tick ({len(grey) - 1})")
 
     def values(self):
         """{key: value} of the tab's fields as they are."""
