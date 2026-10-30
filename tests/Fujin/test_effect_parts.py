@@ -346,6 +346,21 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     ring.splitter.setSizes([420, 800])
     ring._panel_moved()
     assert PANEL["width"] == ring.splitter.sizes()[0]
+    # the sizes the port measured (FX_NOTE): the target 534 wide, 1223 high - the ring's radius x 2
+    # asked 1068, capped by At most to 1024; it rises 18 a step for its 25 ticks: 1800 over the feet
+    from Fujin.partgeometry import geometry
+    found = geometry(fujin.lab.recording, ring.values())
+    assert (found["target radius"], found["target height"], found["ring radius"], found["asked"]) == (534, 1223, 1024, 1068)
+    assert (found["rise"], found["ring ticks"], found["end"]) == (18, 25, 1800)
+    assert "capped by At most 1024" in ring.geometry.text.text()
+    # the Emitter's timeline: when each part draws, the sound, the HP number (10 ticks)
+    rows = {name: ticks for name, ticks, *_rest in tabs["emitter"].preview.timeline.rows}
+    assert len(rows["Ring"]) == 25 and len(rows["HP number"]) == 10 and len(rows["♪ Sound"]) == 1
+    # random ranges drawn under their group; a colour's swatch; hovering a group highlights the paths
+    assert tabs["sparkles"].ranges and tabs["motes"].ranges
+    assert "rgb(128,128,128)" in tabs["sparkles"].spins["sparkle.colour.b"].raw_label.text()
+    from Fujin.partlife import glow_brightness
+    assert glow_brightness(tabs["glow"].values())[:3] == [(0, 60), (1, 57), (2, 54)]
     # Textures: what the effect draws from its TIM, the rest dimmed (it shares the TIM with others)
     fujin.textures.activate()
     card = fujin.textures.panel.cards[0]

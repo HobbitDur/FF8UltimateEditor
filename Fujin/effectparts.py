@@ -17,13 +17,14 @@ import os
 import subprocess
 import tempfile
 
-from PyQt6.QtCore import QPoint, QPointF, QRectF, Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QEvent, QPoint, QPointF, QRectF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                              QSizePolicy, QSlider, QSplitter, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
 from Fujin.partlife import PartLife
+from Fujin.partgeometry import GeometryView, geometry
 from Fujin.battleevents import HEAL_COLOUR, HIT_COLOUR, NUMBER_TICKS, SoundField, number_state, sound_archive_id
 from FF8GameData.psxgpu.gpu import SUBPIXEL
 from FF8GameData.psxgpu.fxdiff import differences, tick_runs
@@ -145,20 +146,22 @@ class ChangeRows(QWidget):
     draws differently with the other values (the tab's own parts red, the others amber, a part that
     never changes greyed "no change"), its cells under the slider's own tick positions, the slider's
     tick a line across them; a click or a drag moves the slider. mine: the ticks the tab's parts
-    change at."""
+    change at. A row may give its own colour (name, ticks, own, colour): the Emitter's timeline,
+    when each part draws; `verb` says what a lit cell means in the tooltip."""
     ROW = 13
 
     def __init__(self, slider):
         super().__init__()
         self.slider = slider
-        self.rows, self.mine = [], set()                # rows: [(name, ticks, own part)]
+        self.rows, self.mine = [], set()                # rows: [(name, ticks, own part[, colour])]
+        self.verb = ("draws differently", "is the same", "no change")
         self.setMouseTracking(True)
         slider.valueChanged.connect(lambda _value: self.update())
         slider.rangeChanged.connect(lambda _low, _high: self.update())
 
     def set_rows(self, rows):
         self.rows = rows
-        self.mine = {tick for _name, ticks, own in rows if own for tick in ticks}
+        self.mine = {tick for _name, ticks, own, *_colour in rows if own for tick in ticks}
         self.setFixedHeight(max(1, len(rows)) * self.ROW + 2)
         self.update()
 
@@ -184,10 +187,10 @@ class ChangeRows(QWidget):
             self.slider.setValue(self._tick_at(event.position().x()))
         row = int(event.position().y() // self.ROW)
         if 0 <= row < len(self.rows):
-            name, ticks, _own = self.rows[row]
+            name, ticks = self.rows[row][:2]
             tick = self._tick_at(event.position().x())
-            self.setToolTip(f"tick {tick}: {name} " + ("draws differently" if tick in ticks else "is the same")
-                            if ticks else f"{name}: no change")
+            self.setToolTip(f"tick {tick}: {name} " + (self.verb[0] if tick in ticks else self.verb[1])
+                            if ticks else f"{name}: {self.verb[2]}")
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -195,7 +198,7 @@ class ChangeRows(QWidget):
         names = int(left - step / 2 - 6)
         font = painter.font()
         font.setPixelSize(self.ROW - 2)
-        for index, (name, ticks, own) in enumerate(self.rows):
+        for index, (name, ticks, own, *given) in enumerate(self.rows):
             y = index * self.ROW
             font.setBold(own)
             painter.setFont(font)
@@ -211,8 +214,8 @@ class ChangeRows(QWidget):
                 painter.setFont(small)
                 painter.setPen(QColor(170, 170, 175))
                 painter.drawText(QRectF(track.left() + 4, y, track.width(), self.ROW),
-                                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, "no change")
-            colour = QColor(235, 60, 60) if own else QColor(230, 170, 40)
+                                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, self.verb[2])
+            colour = given[0] if given else QColor(235, 60, 60) if own else QColor(230, 170, 40)
             for tick in ticks:
                 painter.fillRect(QRectF(left + (tick - 0.5) * step, y + 2, max(1.0, step - 1), self.ROW - 4), colour)
         x = left + self.slider.value() * step
@@ -227,11 +230,13 @@ class PartPreview(QWidget):
     field, beside it, the ticks that change marked under the slider."""
     reference_toggled = pyqtSignal(bool)
 
-    def __init__(self, runner, part_ids, renderer, markers=lambda: {}, part_names=None, sounds=None, heals=False):
+    def __init__(self, runner, part_ids, renderer, markers=lambda: {}, part_names=None, sounds=None, heals=False,
+                 timeline=False):
         super().__init__()
         self.runner, self.part_ids, self.renderer, self.markers = runner, part_ids, renderer, markers
         self.part_names = part_names or {}
         self.sounds, self.heals = sounds, heals         # Fujin's Sound tab plays; a result's number is a heal
+        self.highlight = False                          # a group of the tab hovered: the paths stand out
         self._frames, self._view, self._size = {}, None, None
         self.variant, self.compared = None, None      # the compared recording; (field, record(value))
         self.picture, self.picture_b = self._picture(), self._picture()
@@ -311,6 +316,13 @@ class PartPreview(QWidget):
         self.changes = Collapsible("What changes, part by part", self.strip)
         self.changes.hide()
         layout.addWidget(self.changes)
+        # the whole effect's timeline (a part drawing nothing: the Emitter): when each part draws,
+        # when the sound plays and the HP number shows, under the slider as the change rows
+        self.timeline = ChangeRows(self.slider) if timeline else None
+        if self.timeline is not None:
+            self.timeline.verb = ("draws", "draws nothing", "nothing")
+            self.timeline_fold = Collapsible("Timeline: when each part draws", self.timeline)
+            layout.addWidget(self.timeline_fold)
         # the pictures take what room is left (their preferred size is no minimum: the tab fits 1080p)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
         self.setMinimumHeight(PREVIEW_WIDTH * 7 // 20 + 40)
@@ -318,6 +330,7 @@ class PartPreview(QWidget):
         # for another effect, the runner stays)
         runner.recording_changed.connect(self._recording_changed)
         self.refresh()
+        self._fill_timeline()
 
     @staticmethod
     def _picture():
@@ -331,6 +344,27 @@ class PartPreview(QWidget):
 
     def _recording_changed(self):
         self.refresh(again=True)
+        self._fill_timeline()
+
+    TIMELINE_COLOURS = [QColor(70, 160, 230), QColor(60, 190, 150), QColor(170, 120, 230), QColor(230, 140, 80),
+                        QColor(220, 90, 150), QColor(150, 190, 70), QColor(90, 200, 220), QColor(200, 180, 60)]
+
+    def _fill_timeline(self):
+        """The timeline's rows from the lab recording: each part's drawing ticks, the sounds, the
+        battle's numbers (10 ticks each)."""
+        recording = self.runner.recording
+        if self.timeline is None or recording is None:
+            return
+        rows = []
+        for index, part in enumerate(sorted(self.part_ids)):
+            ticks = {tick for tick, drawn in enumerate(recording.ticks) if part in drawn.parts}
+            rows.append((self.part_names.get(part, f"part {part}"), ticks, False,
+                         self.TIMELINE_COLOURS[index % len(self.TIMELINE_COLOURS)]))
+        rows.append(("♪ Sound", {tick for tick, drawn in enumerate(recording.ticks) if drawn.sounds}, False,
+                     QColor(240, 240, 240)))
+        shown = {start + age for start, drawn in enumerate(recording.ticks) if drawn.results for age in range(NUMBER_TICKS)}
+        rows.append(("HP number", {tick for tick in shown if tick < len(recording.ticks)}, False, QColor(110, 210, 110)))
+        self.timeline.set_rows(rows)
 
     def shown_parts(self):
         return self.part_ids | {TARGET_PART} if self.reference.isChecked() else self.part_ids
@@ -466,6 +500,11 @@ class PartPreview(QWidget):
             if archive is not None and self.sounds._can_play(archive):
                 self.sounds.play(archive)
 
+    def set_highlight(self, on):
+        if on != self.highlight:
+            self.highlight = on
+            self._redraw()
+
     def _draw_paths(self, pixmap, recording, scale):
         """The part's sprite paths over the whole effect (fxdump.sprite_paths) on its picture."""
         if id(recording) not in self._paths:
@@ -474,7 +513,7 @@ class PartPreview(QWidget):
         point = lambda px, py: QPointF((px - x) * scale, (py - y) * scale)
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        pen = QPen(PATH_COLOUR, 1)
+        pen = QPen(QColor(255, 220, 60) if self.highlight else PATH_COLOUR, 2 if self.highlight else 1)
         pen.setCosmetic(True)
         painter.setPen(pen)
         for path in self._paths[id(recording)]:
@@ -696,6 +735,50 @@ class FieldSpin(QWidget):
         self.setValue(round(shown / self.factor))
 
 
+class RangeGlyph(QWidget):
+    """A group's random ranges drawn: per axis, its [min, max] lit on the field's span with 0
+    marked; an angle's range as an arc of a circle (0 at the top, turning clockwise)."""
+    ROW = 12
+
+    def __init__(self, pairs):
+        super().__init__()
+        self.pairs = pairs                              # [(name, min spin, max spin, min field)]
+        angles = all(field.get("unit") == "angle" for _name, _low, _high, field in pairs)
+        self.angles = angles
+        self.setFixedHeight(34 if angles else len(pairs) * self.ROW + 4)
+        self.setToolTip("The ranges these values roll in: min to max, lit" + ("" if angles else ", 0 marked"))
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        if self.angles:
+            _name, low, high, _field = self.pairs[0]
+            box = QRectF(4, 2, 30, 30)
+            painter.setPen(QPen(QColor(110, 110, 115), 1))
+            painter.drawEllipse(box)
+            start, span = low.value() * 360 / 4096, (high.value() - low.value()) * 360 / 4096
+            painter.setPen(QPen(PATH_COLOUR, 3))
+            painter.drawArc(box, int((90 - start) * 16), int(-span * 16))
+            painter.setPen(self.palette().windowText().color())
+            painter.drawText(QRectF(40, 2, self.width() - 40, 30), Qt.AlignmentFlag.AlignVCenter,
+                             f"{low.value() * 360 / 4096:.0f}° to {high.value() * 360 / 4096:.0f}°")
+            return
+        for index, (name, low, high, _field) in enumerate(self.pairs):
+            y = 2 + index * self.ROW
+            lowest, highest = min(low.limits()[0], high.limits()[0]), max(low.limits()[1], high.limits()[1])
+            span = max(1, highest - lowest)
+            track = QRectF(30, y + 3, self.width() - 34, self.ROW - 6)
+            painter.setPen(self.palette().windowText().color())
+            painter.drawText(QRectF(0, y, 28, self.ROW), Qt.AlignmentFlag.AlignVCenter, name)
+            painter.fillRect(track, QColor(60, 60, 66))
+            x = lambda value: track.left() + (value - lowest) * track.width() / span
+            painter.fillRect(QRectF(x(min(low.value(), high.value())), track.top(),
+                                    max(2.0, abs(x(high.value()) - x(low.value()))), track.height()), PATH_COLOUR)
+            if lowest < 0 < highest:
+                painter.setPen(QPen(QColor(240, 240, 240), 1))
+                painter.drawLine(QPointF(x(0), track.top() - 2), QPointF(x(0), track.bottom() + 2))
+
+
 class PartTab(QWidget):
     """A part's parameters (a form) beside its preview. A part that draws nothing (id 0) previews
     the whole effect (effect_parts: every drawing part's id), its tick parameters marked on it.
@@ -744,6 +827,7 @@ class PartTab(QWidget):
                 boxes[group["key"]].addRow(label, spin)
             self._mark(field["key"])
         self._ratios()
+        self._add_ranges()
         reset = QPushButton("Game values")
         reset.setToolTip("Put this part's parameters back to the game's values")
         reset.clicked.connect(self.reset)
@@ -760,7 +844,7 @@ class PartTab(QWidget):
         # a result's number is a heal when the part gives HP (Cure's emitter: Heal tick)
         heals = any(f["key"].endswith("heal_tick") for f in fields)
         self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers, part_names=self.part_names,
-                                   sounds=sounds, heals=heals)
+                                   sounds=sounds, heals=heals, timeline=not part["id"])
         self.images = PartImages(runner, part_ids, self.named_images, locate, part["title"])
         self.sequences = PartSequences(runner, part_ids, self.part_names)
         self.sequences.picked.connect(self.images.select)
@@ -772,6 +856,13 @@ class PartTab(QWidget):
         self.life = PartLife(self.values())
         if self.life.has_content():                     # spawn windows, a glint's style
             self.below.addTab(self.life, "Life")
+        # Cure's ring and motes: where they go around the target, from the sizes the port measured
+        self.geometry = GeometryView() if part["key"] in ("ring", "motes") else None
+        if self.geometry is not None:
+            self.below.insertTab(0, self.geometry, "Geometry")
+            self.below.setCurrentIndex(0)
+            self.geometry.set_geometry(geometry(runner.recording, self.values()))
+            runner.recording_changed.connect(self._geometry_changed)
         self.below.setFixedHeight(SHEET_HEIGHT + 150)
         self.below_fold = Collapsible("Images, sprite sequences, life", self.below)
         right_widget = QWidget()
@@ -826,7 +917,28 @@ class PartTab(QWidget):
         layout.addLayout(top)
         layout.addLayout(fields)
         form.addRow(box)
+        box.installEventFilter(self)                    # hovered: the part's paths stand out
+        self._boxes = getattr(self, "_boxes", {})
+        self._boxes[group["key"]] = (box, layout)
         return fields
+
+    def eventFilter(self, watched, event):
+        if event.type() in (QEvent.Type.Enter, QEvent.Type.Leave) and hasattr(self, "preview"):
+            self.preview.set_highlight(event.type() == QEvent.Type.Enter)
+        return super().eventFilter(watched, event)
+
+    def _add_ranges(self):
+        """Under a group of min / max pairs (a random range: Cure's sparkle speeds, the motes' angles,
+        drop, rise), the ranges drawn (RangeGlyph)."""
+        self.ranges = []
+        for key, (box, layout) in getattr(self, "_boxes", {}).items():
+            pairs = [(f["key"][:-len(".min")], f) for f in self.fields
+                     if f["key"].endswith(".min") and _in_group(f["key"], key) and f["key"][:-4] + ".max" in self.spins]
+            if pairs:
+                glyph = RangeGlyph([(name.rsplit(".", 1)[-1], self.spins[name + ".min"], self.spins[name + ".max"], f)
+                                    for name, f in pairs])
+                layout.addWidget(glyph)
+                self.ranges.append(glyph)
 
     def _title(self, key):
         """A field's name with its group's (the Sequences tab's notes: "Ring Ending flipbook")."""
@@ -952,6 +1064,14 @@ class PartTab(QWidget):
             numerator = key[:-len("den")] + "num" if key.endswith(".den") else None
             if numerator in self.spins and spin.value():
                 spin.hint(f"= x {self.spins[numerator].value() / spin.value():.2f}")
+        # a colour multiplier (r, g, b: 128 = unchanged): its swatch - a mid grey texel as it comes out
+        # (a white one saturates past 128)
+        for key, spin in self.spins.items():
+            base = key[:-len(".b")] if key.endswith(".b") else None
+            if base and base + ".r" in self.spins and base + ".g" in self.spins:
+                rgb = [self.spins[base + c].value() for c in (".r", ".g", ".b")]
+                spin.hint(f'<span style="background-color: rgb({rgb[0]},{rgb[1]},{rgb[2]})">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>'
+                          f' a mid grey comes out as this')
         # a climb speed (Cure's ring: target height + above every N ticks) over the ring's life (its
         # ending flipbook's start + frames): where it ends, about
         value = lambda name: self.spins[name].value() if name in self.spins else None
@@ -978,6 +1098,9 @@ class PartTab(QWidget):
     def _panel_moved(self):
         PANEL["width"] = self.splitter.sizes()[0]
 
+    def _geometry_changed(self):
+        self.geometry.set_geometry(geometry(self.runner.recording, self.values()))
+
     def values(self):
         """{key: value} of the tab's fields as they are."""
         return {key: spin.value() for key, spin in self.spins.items()}
@@ -985,6 +1108,10 @@ class PartTab(QWidget):
     def _changed(self, key, value):
         self._mark(key)
         self._ratios()
+        for glyph in self.ranges:
+            glyph.update()
+        if self.geometry is not None:
+            self.geometry.set_geometry(geometry(self.runner.recording, self.values()))
         self.life.set_values(self.values())
         self._update_limits()
         self.preview._show(self.preview.slider.value())      # its tick markers

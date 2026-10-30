@@ -54,6 +54,15 @@ def glint_life(values, prefix="glint.style."):
     return life
 
 
+def glow_brightness(values, prefix="glow.brightness."):
+    """[(tick, grey)] of a fading glow over its duration, as the port computes it (Cure's ground
+    glow: start - (tick x fade), bytes - below 0 it wraps), or [] without one."""
+    if prefix + "ticks" not in values:
+        return []
+    start, fade = values.get(prefix + "start", 0), values.get(prefix + "fade", 0)
+    return [(tick, (start - ((tick * fade) & 0xFF)) & 0xFF) for tick in range(max(0, values[prefix + "ticks"]))]
+
+
 class _Chart(QWidget):
     MARGIN = 26
 
@@ -151,6 +160,38 @@ class GlintLifeChart(_Chart):
         self._axes(painter, plot, [row[0] for row in self.life])
 
 
+class GlowChart(_Chart):
+    """A glow's brightness tick by tick: a bar per tick, as grey as the glow adds."""
+
+    def __init__(self):
+        super().__init__()
+        self.rows = []
+
+    def set_rows(self, rows):
+        self.rows = rows
+        self.update()
+
+    def mouseMoveEvent(self, event):
+        plot = self._plot()
+        if self.rows:
+            index = int((event.position().x() - plot.left()) * len(self.rows) / plot.width())
+            if 0 <= index < len(self.rows):
+                self.setToolTip(f"ring tick {self.rows[index][0]}: grey {self.rows[index][1]}")
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        plot = self._plot()
+        if not self.rows:
+            return
+        slot = plot.width() / len(self.rows)
+        painter.fillRect(plot, QColor(30, 30, 36))
+        for index, (_tick, grey) in enumerate(self.rows):
+            height = plot.height() * grey / 255
+            painter.fillRect(QRectF(plot.left() + index * slot + 1, plot.bottom() - height, max(1.0, slot - 2), height),
+                             QColor(grey, grey, grey))
+        self._axes(painter, plot, [tick for tick, _grey in self.rows])
+
+
 class PartLife(QWidget):
     """Under a part's preview (Life): when its pieces are born, and a glint's life - both from the
     tab's values, redrawn as they change. has_content(): whether the part has any of them."""
@@ -163,6 +204,15 @@ class PartLife(QWidget):
         self.glint_title = QLabel("One glint's life, tick by tick: width (solid) and height (dashed), each as a share "
                                   "of its largest; under them its centre and tip colours")
         self.glint_title.setWordWrap(True)
+        self.glow = GlowChart()
+        self.glow_title = QLabel("The glow's brightness tick by tick (additive grey: 0 adds nothing; past 0 the "
+                                 "byte wraps to 255 and it comes back bright)")
+        self.glow_title.setWordWrap(True)
+        glow = QVBoxLayout()
+        glow.addWidget(self.glow_title)
+        glow.addWidget(self.glow, 1)
+        self.glow_column = QWidget()
+        self.glow_column.setLayout(glow)
         left, right = QVBoxLayout(), QVBoxLayout()
         left.addWidget(self.glint_title)
         left.addWidget(self.glint, 1)
@@ -172,14 +222,18 @@ class PartLife(QWidget):
         self.glint_column.setLayout(left)
         self.births_column.setLayout(right)
         layout = QHBoxLayout(self)
+        layout.addWidget(self.glow_column, 3)
         layout.addWidget(self.glint_column, 3)
         layout.addWidget(self.births_column, 2)
         self.set_values(values)
 
     def has_content(self):
-        return not self.glint_column.isHidden() or not self.births_column.isHidden()
+        return any(not column.isHidden() for column in (self.glow_column, self.glint_column, self.births_column))
 
     def set_values(self, values):
+        glow = glow_brightness(values)
+        self.glow.set_rows(glow)
+        self.glow_column.setHidden(not glow)
         life = glint_life(values)
         self.glint.set_life(life)
         self.glint_column.setHidden(not life)

@@ -168,7 +168,13 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   their rolls), a click goes there, and the bar says which parts change when
   (`FF8GameData/psxgpu/fxdiff.py`). The **Target** box draws the target as last drawn when the
   effect hides it (Cure hides it while its Overlay redraws it), merged by depth with the part, both
-  framed together. The **Textures** tab's **Used by the effect** box dims what the effect's recording
+  framed together. The Emitter's **Timeline** (under its slider, part of it): a row per part lit
+  where it draws, the sound, the HP number. The Ring and Motes tabs' **Geometry**: a side and a top
+  view of the target (its radius and height as the port measured them: FFNx `FX_NOTE`, the
+  recorder's M lines), the ring's helix up to where it ends, its circle and the one its cap
+  forbids, the motes' circle. A group of min / max values draws its ranges (an angle as an arc), a
+  colour group its swatch, the Life tab a glow's brightness tick by tick; hovering a group lights
+  the part's paths. framed together. The **Textures** tab's **Used by the effect** box dims what the effect's recording
   never draws from each TIM and outlines the pieces it does, saying how much of the picture and which
   palette rows (a TIM may be shared: Cure uses 13 pieces, 22% of mag000-049.tim). While comparing, under the slider and part of it, one row per part lit at
   the ticks it draws differently (the tab's own red, others amber, "no change" greyed); a click or
