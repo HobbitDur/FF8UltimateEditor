@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayou
                              QSizePolicy, QSlider, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
+from Fujin.partlife import PartLife
 from FF8GameData.psxgpu.fxdiff import differences, tick_runs
 from Fujin.partsequences import PartSequences, SequenceField
 from FF8GameData.psxgpu.spritesequence import exe_sequences
@@ -603,6 +604,9 @@ class PartTab(QWidget):
         self.below = QTabWidget()
         self.below.addTab(self.images, "Images")
         self.below.addTab(self.sequences, "Sprite sequences")
+        self.life = PartLife(self.values())
+        if self.life.has_content():                     # spawn windows, a glint's style
+            self.below.addTab(self.life, "Life")
         self.below.setFixedHeight(SHEET_HEIGHT + 150)
         right = QVBoxLayout()
         right.addWidget(self.preview, 1)
@@ -764,9 +768,14 @@ class PartTab(QWidget):
             above = value("ring.climb.above")
             self.spins["ring.climb.ticks"].hint(f"ends ~ {(start + frames + 1) / every:.2f} x (height + {above}) up")
 
+    def values(self):
+        """{key: value} of the tab's fields as they are."""
+        return {key: spin.value() for key, spin in self.spins.items()}
+
     def _changed(self, key, value):
         self._mark(key)
         self._ratios()
+        self.life.set_values(self.values())
         self._update_limits()
         self.preview._show(self.preview.slider.value())      # its tick markers
         self.value_changed.emit(key, value)
@@ -783,3 +792,4 @@ class PartTab(QWidget):
             spin.blockSignals(False)
             self._mark(field["key"])
         self._ratios()
+        self.life.set_values(self.values())

@@ -330,6 +330,22 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     assert angle.value() == 137 and angle.raw_label.text() == "raw 137"
     angle.setValue(128)
     assert ring.spins["ring.radius.den"].raw_label.text() == "= x 2.00"
+    # Life: the glints' births and one glint's life, from the values, are what the recording draws -
+    # at each tick, 2 primitives (a triangle, a quad) per glint alive
+    from Fujin.partlife import births, glint_life
+    glints = tabs["glints"]
+    assert glints.below.indexOf(glints.life) >= 0 and tabs["motes"].below.indexOf(tabs["motes"].life) >= 0
+    assert ring.below.indexOf(ring.life) < 0                     # nothing born on a window of its own
+    life, born = glint_life(glints.values()), births(glints.values())["glint."]
+    assert len(life) == 16 and life[8][1:3] == (2048, 128) and life[-1][1:3] == (1600, 16)
+    assert sum(n for _tick, n in born) == 20
+    recording = fujin.lab.recording
+    ring0 = next(index for index, tick in enumerate(recording.ticks) if 1 in tick.parts)
+    for index, tick in enumerate(recording.ticks):
+        alive = sum(n for start, n in born if 0 <= index - ring0 - start < len(life))
+        polygons = sum(1 for (_bucket, _order, words), part in zip(tick.packets, tick.parts)
+                       if part == 6 and 0x20 <= words[0] >> 24 < 0x40)
+        assert polygons == 2 * alive, index
     # the climb is a speed: where the ring ends, about (ending flipbook 20 + 4 frames, every 20 ticks)
     assert ring.spins["ring.climb.ticks"].raw_label.text() == "ends ~ 1.25 x (height + 256) up"
 

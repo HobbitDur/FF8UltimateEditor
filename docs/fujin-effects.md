@@ -133,7 +133,12 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   disc - a pass the PC never draws). An image loaded from one of the effect's TIM files says so,
   and **Show in Textures** opens that TIM in the Textures tab, palette row chosen and the pieces
   outlined (`FF8GameData/psxgpu/texuse.py` finds them in the recording, `Fujin/partimages.py`
-  shows them). Beside it, the **Sprite sequences** tab: the flipbooks the part draws its sprites
+  shows them). A **Life** tab, for a part that spawns pieces on a window of ticks or has a glint
+  style (`Fujin/partlife.py`, from the tab's values as the port runs them): how many are born per
+  tick of their spawner (Cure's motes and glints, Hypnotize's layouts and sprites), and one glint's
+  life - width and height tick by tick, its centre and tip colours under them (Cure: 20 glints,
+  each drawn 16 ticks; a test checks both against the glint primitives the recording draws).
+  Beside it, the **Sprite sequences** tab: the flipbooks the part draws its sprites
   from. They are data of FF8_EN.exe (about 330, signature `24 05 01 00`, file offset = address -
   0x400000: frame count, frame offsets, then per frame its pieces, 20 bytes each - texels u, v,
   size, palette, page, intensity, GPU code, place in the sprite, angle, scale -
