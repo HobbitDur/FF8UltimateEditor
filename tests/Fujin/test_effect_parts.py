@@ -510,8 +510,10 @@ def test_potion_shares_cures_parameters_but_keeps_its_own(tmp_path):
     potion = effect_schema(50)
     assert potion is not None and potion["name"] == "Potion"
     assert potion["parts"] == cure["parts"]
-    same = lambda fields: [dict(f, default=None) if f["type"] == "seq" else f for f in fields]
+    same = lambda fields: [dict(f, default=None) if f["type"] in ("seq", "sound") else f for f in fields]
     assert same(potion["fields"]) == same(cure["fields"])
+    sound = lambda schema: next(f["default"] for f in schema["fields"] if f["type"] == "sound")
+    assert sound(cure) == 0x16417C4 and sound(potion) == 0x15ACD78      # each its own sound block
     sequences = lambda schema: {f["key"]: f["default"] for f in schema["fields"] if f["type"] == "seq"}
     assert sequences(cure) == {"ring.seq": 0x1641F78, "ring.ending.seq": 0x1641FCC, "glow.seq": 0x1642504,
                                "sparkle.seq": 0x1642238, "mote.seq": 0x164205C}
