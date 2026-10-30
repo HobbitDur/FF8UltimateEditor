@@ -1025,12 +1025,12 @@ def test_header_shrinks_back_when_the_opened_files_list_collapses(main_window, q
         main_window.file_registry.close_file(f"zzshrink{i}.bin")
 
 
-def test_header_can_be_hidden_and_is_remembered(main_window, qapp):
+def test_header_can_be_hidden_for_the_session_only(main_window, qapp):
+    """Hidden for this session: the tool always starts with the toolbar shown (nothing remembered)."""
     main_window.show()
     main_window.set_header_hidden(True)
     assert main_window._header_scroll.isHidden()
-    assert main_window.settings.value("ui/header_hidden", type=bool) is True
+    assert main_window.settings.value("ui/header_hidden") is None
     assert "Show" in main_window._header_toggle.text()
     main_window._header_toggle.click()
     assert not main_window._header_scroll.isHidden()
-    assert main_window.settings.value("ui/header_hidden", type=bool) is False

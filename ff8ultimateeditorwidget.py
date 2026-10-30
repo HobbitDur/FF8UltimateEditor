@@ -446,7 +446,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._main_layout.addWidget(self._header_scroll)
         self._main_layout.addLayout(separator_row)
         self._main_layout.addWidget(self._tool_scroll, 1)
-        self.set_header_hidden(self.settings.value("ui/header_hidden", False, type=bool))
+        self.set_header_hidden(False)                    # always shown at start, not remembered
 
         # 7. Initialize Launchers
         self.ifritGui_launcher = IfritGuiLauncher(os.path.join("ExternalTools", "IfritGui", "Ifrit.exe"), callback=None)
@@ -513,14 +513,13 @@ class FF8UltimateEditorWidget(QWidget):
             self._header_scroll.setFixedHeight(min(180, height))
 
     def set_header_hidden(self, hidden: bool):
-        """Hide/show the whole header strip (remembered for the next session)."""
+        """Hide/show the whole header strip (for this session: the tool starts with it shown)."""
         self._header_scroll.setVisible(not hidden)
         self._header_toggle.setText("▾ Show toolbar" if hidden else "▴ Hide toolbar")
         self._header_toggle.setToolTip(
             "Show the tool selector, the file buttons and the opened files again" if hidden else
             "Hide the tool selector, the file buttons and the opened files to give the tool more "
             "room (Ctrl+S still saves)")
-        self.settings.setValue("ui/header_hidden", hidden)
 
     def _launch_ifritGui(self):
         self.ifritGui_launcher.launch()
