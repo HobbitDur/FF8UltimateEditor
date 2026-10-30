@@ -168,6 +168,13 @@ def pytest_sessionfinish(session, exitstatus):
     _QAPPLICATION = None
     if app is None:
         return
+    # A tool a test left with unsaved edits makes the main window's closeEvent ask "Discard?" -
+    # a modal box nobody answers here (the per-test _no_blocking_dialog guard is gone by now), so
+    # the run used to finish its tests and then hang forever. Teardown discards.
+    from PyQt6.QtWidgets import QMessageBox
+    discard = staticmethod(lambda *args, **kwargs: QMessageBox.StandardButton.Discard)
+    for name in ("warning", "question", "information", "critical"):
+        setattr(QMessageBox, name, discard)
     app.closeAllWindows()
     for widget in list(app.topLevelWidgets()):
         widget.deleteLater()
