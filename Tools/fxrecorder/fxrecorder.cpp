@@ -948,6 +948,13 @@ static int32_t field_value(const void *base, const ff8fx::fxp::Field &f)
 	const uint8_t *at = (const uint8_t *)base + f.offset;
 	return f.type == ff8fx::fxp::I16 ? *(const int16_t *)at : f.type == ff8fx::fxp::U8 ? *at : *(const int32_t *)at;
 }
+// how an editor shows a field (fx_params.h Unit; older sources have none: plain)
+template<class F> static const char *field_unit(const F &f)
+{
+	if constexpr (requires { f.unit; })
+		return f.unit == 1 ? "angle" : f.unit == 2 ? "scale" : "plain";
+	return "plain";
+}
 static std::string json_text(const char *t)
 {
 	std::string out = "\"";
@@ -974,10 +981,10 @@ static int lab_schema()
 	for (int i = 0; i < m->field_count; i++)
 	{
 		const ff8fx::fxp::Field &d = m->fields[i];
-		fprintf(f, "%s\n  {\"part\": %s, \"key\": %s, \"label\": %s, \"doc\": %s, \"type\": %s, \"min\": %d, \"max\": %d, \"default\": %d}",
+		fprintf(f, "%s\n  {\"part\": %s, \"key\": %s, \"label\": %s, \"doc\": %s, \"type\": %s, \"min\": %d, \"max\": %d, \"default\": %d, \"unit\": \"%s\"}",
 		        i ? "," : "", json_text(d.part).c_str(), json_text(d.key).c_str(), json_text(d.label).c_str(), json_text(d.doc).c_str(),
 		        d.type == ff8fx::fxp::I16 ? "\"i16\"" : d.type == ff8fx::fxp::U8 ? "\"u8\"" : d.type == ff8fx::fxp::Seq ? "\"seq\"" : "\"i32\"",
-		        d.min, d.max, field_value(m->defaults, d));
+		        d.min, d.max, field_value(m->defaults, d), field_unit(d));
 	}
 	fprintf(f, "]}\n");
 	fclose(f);

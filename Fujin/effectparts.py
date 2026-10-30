@@ -19,8 +19,8 @@ import tempfile
 
 from PyQt6.QtCore import QPointF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap, QPolygonF
-from PyQt6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
-                             QSizePolicy, QSlider, QSpinBox, QTabWidget, QToolButton, QVBoxLayout, QWidget)
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+                             QSizePolicy, QSlider, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
 from FF8GameData.psxgpu.fxdiff import differences, tick_runs
@@ -171,8 +171,7 @@ class PartPreview(QWidget):
         self.timer.timeout.connect(lambda: self.slider.setValue((self.slider.value() + 1) % (self.slider.maximum() + 1)))
         # the compare bar: which field, the other value, what changes
         self.compare_title = QLabel()
-        self.compare_value = QSpinBox()
-        self.compare_value.setKeyboardTracking(False)
+        self.compare_value = FieldSpin()
         self.compare_value.valueChanged.connect(lambda _value: self._compare())
         self.compare_note = QLabel()
         self.compare_note.setWordWrap(True)
@@ -349,8 +348,9 @@ class PartPreview(QWidget):
         """Show the part with `field` at `other` beside it at `current`; record(value) -> the lab
         recording with that value (None when it cannot be made)."""
         self.compared = (field, record)
-        self.compare_title.setText(f"Compare {field['label']}: now {current}, with")
+        self.compare_title.setText(f"Compare {field['label']}: now {shown_value(field, current)}, with")
         self.compare_value.blockSignals(True)
+        self.compare_value.set_field(field)
         self.compare_value.setRange(field["min"], field["max"])
         self.compare_value.setValue(other)
         self.compare_value.blockSignals(False)
@@ -370,9 +370,9 @@ class PartPreview(QWidget):
         other = self.compare_value.value()
         base = self.runner.recording
         current = dict(self.runner.cast().params).get(field["key"], field["default"])
-        self.compare_title.setText(f"Compare {field['label']}: now {current}, with")
-        self.caption.setText(f"Now: {field['label']} {current}")
-        self.caption_b.setText(f"With {field['label']} {other}")
+        self.compare_title.setText(f"Compare {field['label']}: now {shown_value(field, current)}, with")
+        self.caption.setText(f"Now: {field['label']} {shown_value(field, current)}")
+        self.caption_b.setText(f"With {field['label']} {shown_value(field, other)}")
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             self.variant = record(other) if base is not None else None
@@ -404,6 +404,91 @@ class PartPreview(QWidget):
             self.slider.setValue(first)
 
 
+UNITS = {"angle": (360 / 4096, 2, "", "°"),          # unit -> (shown per raw unit, decimals, prefix, suffix)
+         "scale": (1 / 4096, 3, "x ", "")}
+FIELD_WIDTH = 110                   # a field's value box (pixels): its raw value / hint beside it
+
+
+def shown_value(field, raw):
+    """A field's raw value as an editor shows it (fx_params.h Unit: an angle in degrees, a size
+    as x 1 = its own)."""
+    unit = UNITS.get(field.get("unit"))
+    if unit is None:
+        return str(raw)
+    factor, decimals, prefix, suffix = unit
+    return f"{prefix}{raw * factor:.{decimals}f}{suffix}"
+
+
+class FieldSpin(QWidget):
+    """A field's value: a narrow box in the field's unit (fx_params.h Unit: degrees for an angle,
+    x for a size; the raw value greyed beside it) - the QSpinBox calls a part tab makes, in raw
+    values (value, setValue, setRange, valueChanged). hint(): another grey note beside it."""
+    valueChanged = pyqtSignal(int)
+
+    def __init__(self, field=None):
+        super().__init__()
+        self.box = QDoubleSpinBox()
+        self.box.setKeyboardTracking(False)
+        self.box.setFixedWidth(FIELD_WIDTH)
+        self.box.valueChanged.connect(self._edited)
+        self.raw_label = QLabel()
+        self.raw_label.setStyleSheet("color: gray;")
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.box)
+        layout.addWidget(self.raw_label, 1)
+        self._raw, self._range, self._hint, self.factor = 0, (0, 0), "", 1
+        self.set_field(field or {})
+
+    def set_field(self, field):
+        self.field = field
+        self.factor, decimals, prefix, suffix = UNITS.get(field.get("unit"), (1, 0, "", ""))
+        self.box.blockSignals(True)
+        self.box.setDecimals(decimals)
+        self.box.setPrefix(prefix)
+        self.box.setSuffix(suffix)
+        self.box.setSingleStep(1 if self.factor == 1 or field.get("unit") == "angle" else 0.05)
+        self.box.blockSignals(False)
+        self.setRange(*self._range)
+        self.setValue(self._raw)
+
+    def value(self):
+        return self._raw
+
+    def setRange(self, low, high):
+        self._range = (low, high)
+        self.box.blockSignals(True)
+        self.box.setRange(low * self.factor, high * self.factor)
+        self.box.blockSignals(False)
+
+    def setValue(self, raw):
+        raw = max(self._range[0], min(self._range[1], int(raw)))
+        changed = raw != self._raw
+        self._raw = raw
+        self.box.blockSignals(True)
+        self.box.setValue(raw * self.factor)
+        self.box.blockSignals(False)
+        self._note()
+        if changed:
+            self.valueChanged.emit(raw)
+
+    def setToolTip(self, text):
+        super().setToolTip(text)
+        self.box.setToolTip(text)
+
+    def hint(self, text):
+        self._hint = text
+        self._note()
+
+    def _note(self):
+        raw = f"raw {self._raw}" if self.factor != 1 else ""
+        self.raw_label.setText("  ".join(filter(None, (raw, self._hint))))
+
+    def _edited(self, shown):
+        # to the nearest raw value, the box showing it exactly
+        self.setValue(round(shown / self.factor))
+
+
 class PartTab(QWidget):
     """A part's parameters (a form) beside its preview. A part that draws nothing (id 0) previews
     the whole effect (effect_parts: every drawing part's id), its tick parameters marked on it.
@@ -424,10 +509,10 @@ class PartTab(QWidget):
         form = QFormLayout()
         for field in fields:
             sequence = field.get("type") == "seq"
-            spin = SequenceField(runner, self.part_names) if sequence else QSpinBox()
+            spin = SequenceField(runner, self.part_names) if sequence else FieldSpin(field)
             spin.setRange(field["min"], field["max"])
             spin.setValue(values.get(field["key"], field["default"]))
-            game = f"0x{field['default']:X}" if sequence else field["default"]
+            game = f"0x{field['default']:X}" if sequence else shown_value(field, field["default"])
             spin.setToolTip(f"{field['doc']}\nThe game's value: {game}".strip())
             spin.valueChanged.connect(lambda value, key=field["key"]: self._changed(key, value))
             label = QLabel(field["label"])
@@ -444,6 +529,7 @@ class PartTab(QWidget):
             self.spins[field["key"]], self.labels[field["key"]] = spin, label
             form.addRow(label, row)
             self._mark(field["key"])
+        self._ratios()
         reset = QPushButton("Game values")
         reset.setToolTip("Put this part's parameters back to the game's values")
         reset.clicked.connect(self.reset)
@@ -546,8 +632,17 @@ class PartTab(QWidget):
         font.setBold(self.spins[key].value() != self._default(key))     # bold: not the game's value
         self.labels[key].setFont(font)
 
+    def _ratios(self):
+        """A fraction's value (a "num" field and its "den": Cure's ring radius x / ) greyed beside
+        its divisor."""
+        for key, spin in self.spins.items():
+            numerator = key[:-len("den")] + "num" if key.endswith(".den") else None
+            if numerator in self.spins and spin.value():
+                spin.hint(f"= x {self.spins[numerator].value() / spin.value():.2f}")
+
     def _changed(self, key, value):
         self._mark(key)
+        self._ratios()
         self._update_limits()
         self.preview._show(self.preview.slider.value())      # its tick markers
         self.value_changed.emit(key, value)
@@ -563,3 +658,4 @@ class PartTab(QWidget):
             spin.setValue(values.get(field["key"], field["default"]))
             spin.blockSignals(False)
             self._mark(field["key"])
+        self._ratios()

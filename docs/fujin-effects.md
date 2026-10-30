@@ -116,7 +116,11 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   Emitter, Ring, Ground glow, Overlay, Sparkles, Motes, Glints, and the same for Potion, whose
   module is a relocated copy of Cure's; Hypnotize: Timing, Main layout,
   Rings, Target layouts, Sprites): the part's parameters as a form
-  (bold = not the game's value, **Game values** resets them) beside a small preview of that part
+  (bold = not the game's value, **Game values** resets them; a value in its unit when the port gives
+  one - fx_params.h `Unit`: an angle in degrees, a size as x 1 = its own - the raw value greyed
+  beside it; a fraction's value, as Cure's ring radius x / , greyed beside its divisor. Cure's
+  ring: each tick it takes **Steps per tick** steps of **Step angle** around the target, drawn at
+  the last one, a sparkle born at each) beside a small preview of that part
   alone, framed on where it goes. Under the preview, the part's **images**: each picture of video
   memory it takes texels from (a TIM, the target's own texture), whole, read with the depth and
   palette its primitives use, every piece it takes during the effect outlined and the ones it
@@ -168,7 +172,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   once. The **Path** box (on by default) draws where each sprite of the part goes over the whole
   effect: a thin purple line from where it is drawn one tick to where it is drawn the next, a dot
   where it appears (Cure's ring: its helix, 8 ticks a turn; its sparkles: one line each, their
-  dots on the ring's places). The recorder writes each sprite's screen middle on its Q line and
+  dots on the ring's steps). The recorder writes each sprite's screen middle on its Q line and
   `EffectRecording.sprite_paths` joins a tick's sprites to the last tick's nearest ones of the
   same part, sequence and next frame (the recording does not say which particle drew one). A part that draws nothing (Cure's Emitter: when the sound plays, when the HP are given)
   shows the whole effect with its ticks marked under the picture. An edit records again; the

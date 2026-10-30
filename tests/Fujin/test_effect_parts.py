@@ -256,7 +256,7 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     sparkles = tabs["sparkles"].sequences
     _sequence, _frames, thumbs, title, _text = sparkles.rows[0]
     assert [thumb.index for thumb in thumbs if thumb.beyond] == list(range(9, 27))
-    assert "plays frames 0-8 (Sparkles Frames)" in title.text()
+    assert "plays frames 0-8 (Sparkles Lifetime (frames))" in title.text()
     ring = tabs["ring"]
     ring.spins["ring.end_frames"].setValue(2)
     assert [thumb.index for thumb in ring.sequences.rows[1][2] if thumb.beyond] == [3, 4]
@@ -277,12 +277,12 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     tab.probe("sparkle.frames")
     preview = tab.preview
     assert preview.compare_value.value() == 16 and preview.variant is not None
-    assert not preview.picture_b.isHidden() and preview.caption_b.text() == "With Frames 16"
+    assert not preview.picture_b.isHidden() and preview.caption_b.text() == "With Lifetime (frames) 16"
     assert preview.strip.mine and preview.slider.value() == min(preview.strip.mine)
     assert preview.compare_note.text().startswith("Sparkles ticks ")
     # another value: recorded again; the game's value proposed once the field is changed
     preview.compare_value.setValue(4)
-    assert preview.caption_b.text() == "With Frames 4" and preview.strip.mine
+    assert preview.caption_b.text() == "With Lifetime (frames) 4" and preview.strip.mine
     preview.stop_compare()
     assert preview.picture_b.isHidden() and preview.variant is None
     tab.spins["sparkle.frames"].setValue(12)
@@ -294,6 +294,13 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     ring.probe("ring.end_frames")
     assert ring.preview.compare_value.value() == 8 and ring.preview.compare_note.text() == "Nothing changes."
     ring.preview.stop_compare()
+    # units: an angle in degrees (the raw value greyed beside it), a fraction's value beside its divisor
+    angle = ring.spins["ring.angle_step"]
+    assert angle.box.suffix() == "°" and abs(angle.box.value() - 11.25) < 1e-9 and angle.raw_label.text() == "raw 128"
+    angle.box.setValue(12.0)                                     # to the nearest raw value
+    assert angle.value() == 137 and angle.raw_label.text() == "raw 137"
+    angle.setValue(128)
+    assert ring.spins["ring.radius.den"].raw_label.text() == "= x 2.00"
 
 
 def wait(qapp, view):
