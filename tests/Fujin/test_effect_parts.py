@@ -339,6 +339,13 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     assert ring.minimumSizeHint().height() <= 560
     ring.preview.stop_compare()
     assert ring.minimumSizeHint().height() <= 560
+    # one picture takes the whole width when not comparing; the parameter panel's width is one
+    # choice for every part tab (a splitter, nothing forced)
+    assert ring.preview.columns[1].isHidden()
+    from Fujin.effectparts import PANEL
+    ring.splitter.setSizes([420, 800])
+    ring._panel_moved()
+    assert PANEL["width"] == ring.splitter.sizes()[0]
     # Textures: what the effect draws from its TIM, the rest dimmed (it shares the TIM with others)
     fujin.textures.activate()
     card = fujin.textures.panel.cards[0]

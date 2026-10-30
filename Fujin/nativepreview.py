@@ -45,7 +45,7 @@ from PyQt6 import sip
 from PyQt6.QtCore import QProcess, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import (QComboBox, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
-                             QSlider, QVBoxLayout, QWidget)
+                             QSizePolicy, QSlider, QVBoxLayout, QWidget)
 
 from Common.filebinding import FileBinding
 from Fujin.recorderbuild import RECORDER, recorder_build    # built from source at startup, never in git
@@ -271,6 +271,8 @@ class NativePreviewView(QWidget):
         self.picture = QLabel()
         self.picture.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.picture.setStyleSheet("background: #101018;")
+        # drawn at the view's size: the picture never asks for more room than the view gives it
+        self.picture.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setWidget(self.picture)
@@ -693,7 +695,10 @@ class NativePreviewView(QWidget):
         tick = min(tick, len(self.recording.ticks) - 1)
         pixmap, gpu = self.frame(tick)
         area = self.scroll.viewport().size()
-        if area.width() > pixmap.width() and area.height() > pixmap.height():   # fill the view, keep the shape
+        if area.width() > 1 and area.height() > 1 and pixmap.size() != pixmap.size().scaled(
+                area, Qt.AspectRatioMode.KeepAspectRatio):
+            # fit the view whole, keeping the shape: larger, or smaller when the view is (its bottom
+            # was cut by a smaller view)
             pixmap = pixmap.scaled(area, Qt.AspectRatioMode.KeepAspectRatio,
                                    Qt.TransformationMode.SmoothTransformation)
         self.picture.setPixmap(pixmap)

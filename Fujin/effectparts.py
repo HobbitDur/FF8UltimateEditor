@@ -20,7 +20,7 @@ import tempfile
 from PyQt6.QtCore import QPoint, QPointF, QRectF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
-                             QSizePolicy, QSlider, QTabWidget, QToolButton, QVBoxLayout, QWidget)
+                             QSizePolicy, QSlider, QSplitter, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
 from Fujin.partlife import PartLife
@@ -104,6 +104,7 @@ TARGET_PART = 0                     # what no effect part drew: in the lab recor
 
 
 _FOLDED = {}                        # Collapsible title -> folded: one choice for every part tab (this session)
+PANEL = {"width": 300}              # a part tab's parameter panel width (pixels), the same in every tab
 
 
 class Collapsible(QWidget):
@@ -285,11 +286,17 @@ class PartPreview(QWidget):
         bar.addWidget(self.compare_note)
         self.compare_bar.hide()
         pictures = QHBoxLayout()
+        # a column per picture, the compared one hidden when not comparing (not keeping half the width)
+        self.columns = []
         for caption, picture in ((self.caption, self.picture), (self.caption_b, self.picture_b)):
-            column = QVBoxLayout()
+            column_widget = QWidget()
+            column = QVBoxLayout(column_widget)
+            column.setContentsMargins(0, 0, 0, 0)
             column.addWidget(caption)
             column.addWidget(picture, 1)
-            pictures.addLayout(column, 1)
+            pictures.addWidget(column_widget, 1)
+            self.columns.append(column_widget)
+        self.columns[1].hide()
         controls = QHBoxLayout()
         controls.addWidget(self.play_button)
         controls.addWidget(self.slider, 1)
@@ -533,7 +540,7 @@ class PartPreview(QWidget):
             spin.valueChanged.connect(lambda _value: self._compare())
             self.compare_values.addWidget(spin)
             self.compare_spins[field["key"]] = spin
-        for widget in (self.compare_bar, self.picture_b, self.caption, self.caption_b, self.changes):
+        for widget in (self.compare_bar, self.columns[1], self.picture_b, self.caption, self.caption_b, self.changes):
             widget.show()
         self._compare()
 
@@ -545,7 +552,7 @@ class PartPreview(QWidget):
 
     def stop_compare(self):
         self.compared, self.variant = None, None
-        for widget in (self.compare_bar, self.picture_b, self.caption, self.caption_b, self.changes):
+        for widget in (self.compare_bar, self.columns[1], self.picture_b, self.caption, self.caption_b, self.changes):
             widget.hide()
         self.refresh()
 
@@ -749,7 +756,6 @@ class PartTab(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(form_widget)
-        scroll.setMinimumWidth(380)
         part_ids = {part["id"]} if part["id"] else set(effect_parts)      # 0: draws nothing, the whole effect
         # a result's number is a heal when the part gives HP (Cure's emitter: Heal tick)
         heals = any(f["key"].endswith("heal_tick") for f in fields)
@@ -768,12 +774,23 @@ class PartTab(QWidget):
             self.below.addTab(self.life, "Life")
         self.below.setFixedHeight(SHEET_HEIGHT + 150)
         self.below_fold = Collapsible("Images, sprite sequences, life", self.below)
-        right = QVBoxLayout()
+        right_widget = QWidget()
+        right = QVBoxLayout(right_widget)
+        right.setContentsMargins(0, 0, 0, 0)
         right.addWidget(self.preview, 1)
         right.addWidget(self.below_fold)
+        # the parameters beside the preview, the line between them dragged at will (no width forced,
+        # the same in every part tab); the preview takes the room the parameters leave
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.addWidget(scroll)
+        self.splitter.addWidget(right_widget)
+        self.splitter.setStretchFactor(0, 0)
+        self.splitter.setStretchFactor(1, 1)
+        self.splitter.setChildrenCollapsible(False)
+        self.splitter.splitterMoved.connect(lambda _position, _index: self._panel_moved())
         layout = QHBoxLayout(self)
-        layout.addWidget(scroll)
-        layout.addLayout(right, 1)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.splitter)
         runner.recording_changed.connect(self._update_limits)      # the exe may come after the tab
         self._update_limits()
 
@@ -951,6 +968,15 @@ class PartTab(QWidget):
             self.spins["glow.brightness.ticks"].hint(
                 f"comes back at tick {back}: grey wraps {grey[back - 1]} -> {grey[back]}" if back is not None else
                 f"grey {grey[-1]} at its last tick ({len(grey) - 1})")
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        total = sum(self.splitter.sizes())
+        if total and self.splitter.sizes()[0] != PANEL["width"]:
+            self.splitter.setSizes([PANEL["width"], max(1, total - PANEL["width"])])
+
+    def _panel_moved(self):
+        PANEL["width"] = self.splitter.sizes()[0]
 
     def values(self):
         """{key: value} of the tab's fields as they are."""
