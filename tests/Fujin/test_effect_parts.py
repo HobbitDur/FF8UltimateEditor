@@ -138,8 +138,19 @@ def test_cure_part_tabs_edit_preview_and_save(qapp, tmp_path):
     # the emitter draws nothing: its tab shows the whole effect, the sound and heal ticks marked
     emitter = next(tab for tab in fujin.part_tabs if tab.part["key"] == "emitter")
     assert emitter.preview.part_ids == {1, 2, 3, 4, 5, 6}
-    emitter.preview.slider.setValue(15)
-    assert emitter.preview.frame_label.text().endswith("- Heal")
+    # what the effect asks the battle, as the recorder notes it: the sound at the emitter's tick 0
+    # (the ring's first, tick 3), the HP at its tick 15 (18) - the number shown above the target
+    ring0 = next(index for index, tick in enumerate(recording.ticks) if 1 in tick.parts)
+    assert recording.ticks[ring0].sounds == [0x16417C4] and recording.ticks[ring0 + 15].results
+    emitter.preview.slider.setValue(ring0 + 15)
+    assert emitter.preview.frame_label.text().endswith("- HP number shows")
+    emitter.preview.slider.setValue(ring0)
+    assert emitter.preview.frame_label.text().endswith("- ♪ sound")
+    from Fujin.battleevents import number_state, sound_archive_id
+    assert number_state(0, True) == (-12, 1.0, 0.0) and number_state(9, True) == (-21, 0.6, 0.5)
+    assert number_state(10, True) is None
+    assert emitter.spins["emitter.sound"].value() == 0x16417C4
+    assert sound_archive_id(str(EXE), 0x16417C4) == emitter.spins["emitter.sound"].archive_id() is not None
     assert fujin.choreography.currentWidget() is ring
     ring.spins["ring.radius.num"].setValue(4)
     assert fujin.effect_params == {1: {"ring.radius.num": 4}} and fujin.can_save_folder()

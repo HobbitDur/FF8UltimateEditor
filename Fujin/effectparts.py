@@ -17,13 +17,15 @@ import os
 import subprocess
 import tempfile
 
-from PyQt6.QtCore import QPointF, Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QPointF, QRectF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap, QPolygonF
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                              QSizePolicy, QSlider, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
 from Fujin.partlife import PartLife
+from Fujin.battleevents import HEAL_COLOUR, HIT_COLOUR, NUMBER_TICKS, SoundField, number_state, sound_archive_id
+from FF8GameData.psxgpu.gpu import SUBPIXEL
 from FF8GameData.psxgpu.fxdiff import differences, tick_runs
 from Fujin.partsequences import PartSequences, SequenceField
 from FF8GameData.psxgpu.spritesequence import exe_sequences
@@ -138,10 +140,11 @@ class PartPreview(QWidget):
     field, beside it, the ticks that change marked under the slider."""
     reference_toggled = pyqtSignal(bool)
 
-    def __init__(self, runner, part_ids, renderer, markers=lambda: {}, part_names=None):
+    def __init__(self, runner, part_ids, renderer, markers=lambda: {}, part_names=None, sounds=None, heals=False):
         super().__init__()
         self.runner, self.part_ids, self.renderer, self.markers = runner, part_ids, renderer, markers
         self.part_names = part_names or {}
+        self.sounds, self.heals = sounds, heals         # Fujin's Sound tab plays; a result's number is a heal
         self._frames, self._view, self._size = {}, None, None
         self.variant, self.compared = None, None      # the compared recording; (field, record(value))
         self.picture, self.picture_b = self._picture(), self._picture()
@@ -154,6 +157,7 @@ class PartPreview(QWidget):
         self.play_button.toggled.connect(lambda on: self.timer.start() if on else self.timer.stop())
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.valueChanged.connect(self._show)
+        self.slider.valueChanged.connect(self._play_sounds)
         self.strip = DiffStrip()
         self.strip.clicked.connect(self.slider.setValue)
         self.strip.hide()
@@ -262,6 +266,13 @@ class PartPreview(QWidget):
         boxes = [recording.fit_view(parts=self.part_ids)]
         if self.reference.isChecked() and recording.last_drawing(0, TARGET_PART) is not None:
             boxes.append(recording.fit_view(parts={TARGET_PART}))
+        # where the battle's numbers rise (up to 21 pixels over the target, 12 high)
+        for start, tick in enumerate(recording.ticks):
+            drawn = recording.last_drawing(start, TARGET_PART) if tick.results else None
+            box = recording.part_box(drawn, {TARGET_PART}) if drawn is not None else None
+            if box is not None:
+                middle = (box[0] + box[2]) / 2
+                boxes.append((middle - 20 * SUBPIXEL, box[1] - 34 * SUBPIXEL, 40 * SUBPIXEL, 34 * SUBPIXEL))
         return boxes
 
     def refresh(self, again=False):
@@ -316,7 +327,49 @@ class PartPreview(QWidget):
                                           QImage.Format.Format_RGB888).copy())
         if self.path.isChecked():
             self._draw_paths(pixmap, recording, scale)
+        self._draw_numbers(pixmap, recording, tick, scale)
         return pixmap
+
+    def _draw_numbers(self, pixmap, recording, tick, scale):
+        """The battle's number of each action result given in the last 10 ticks, above its target as
+        the game moves it (Fujin.battleevents) - a stand-in: the amount comes from the battle."""
+        shown = [(start, result) for start in range(max(0, tick - NUMBER_TICKS + 1), tick + 1)
+                 for result in recording.ticks[start].results]
+        if not shown:
+            return
+        painter = QPainter(pixmap)
+        font = painter.font()
+        font.setBold(True)
+        font.setPixelSize(max(8, round(12 * SUBPIXEL * scale)))
+        painter.setFont(font)
+        for start, (_slot, _amount, _flags, hit) in shown:
+            heal = self.heals or bool(hit & 1)
+            drawn = recording.last_drawing(start, TARGET_PART)
+            box = recording.part_box(drawn, {TARGET_PART}) if drawn is not None else None
+            state = number_state(tick - start, heal)
+            if box is None or state is None:
+                continue
+            offset, opacity, dark = state
+            red, green, blue = (HEAL_COLOUR if heal else HIT_COLOUR)
+            colour = QColor(*(min(255, round(2 * c * (1 - dark))) for c in (red, green, blue)))
+            colour.setAlphaF(opacity)
+            x = ((box[0] + box[2]) / 2 - self._view[0]) * scale
+            y = (box[1] + offset * SUBPIXEL - self._view[1]) * scale
+            painter.setPen(colour)
+            painter.drawText(QRectF(x - 200, y - font.pixelSize(), 400, font.pixelSize() * 1.2),
+                             Qt.AlignmentFlag.AlignCenter, "+HP" if heal else "HP")
+        painter.end()
+
+    def _play_sounds(self, tick):
+        """While playing: the sounds the effect plays at this tick (Fujin's Sound tab plays them)."""
+        recording = self.runner.recording
+        if (self.sounds is None or not self.timer.isActive() or recording is None
+                or not 0 <= tick < len(recording.ticks) or not self.runner.exe_path()):
+            return
+        for address in recording.ticks[tick].sounds:
+            archive = sound_archive_id(self.runner.exe_path(), address)
+            if archive is not None and self.sounds._can_play(archive):
+                self.sounds.play(archive)
 
     def _draw_paths(self, pixmap, recording, scale):
         """The part's sprite paths over the whole effect (fxdump.sprite_paths) on its picture."""
@@ -356,7 +409,14 @@ class PartPreview(QWidget):
                 picture.setText("The effect has ended.")
             else:
                 picture.setPixmap(pixmap)
-        marker = self.markers().get(tick)
+        # what the effect asks the battle at this tick, as recorded; a recording without these lines
+        # (an older recorder): the part's tick fields (counted from its own start, not the slider's)
+        if any(t.sounds or t.results for t in recording.ticks):
+            asked = recording.ticks[tick] if tick < len(recording.ticks) else None
+            marker = ", ".join((["♪ sound"] if asked and asked.sounds else []) +
+                               (["HP number shows"] if asked and asked.results else []))
+        else:
+            marker = self.markers().get(tick)
         self.frame_label.setText(f"tick {tick} / {self.slider.maximum()}" + (f" - {marker}" if marker else ""))
 
     # ------------------------------------------------------------------ compare
@@ -547,9 +607,10 @@ class PartTab(QWidget):
     value_changed = pyqtSignal(str, int)      # key, new value
 
     def __init__(self, part, fields, values, runner, renderer, effect_parts=frozenset(), locate=None,
-                 part_names=None, groups=()):
+                 part_names=None, groups=(), sounds=None):
         super().__init__()
         self.part, self.fields, self.runner = part, fields, runner
+        self.sounds = sounds                            # Fujin's Sound tab: plays audio.dat entries
         self.part_names = part_names or {}
         self.groups = {group["key"]: group for group in groups if any(_in_group(f["key"], group["key"]) for f in fields)}
         self.spins, self.labels = {}, {}
@@ -559,8 +620,9 @@ class PartTab(QWidget):
         form = QFormLayout()
         boxes = {}                                      # group key -> its form
         for field in fields:
-            sequence = field.get("type") == "seq"
-            spin = SequenceField(runner, self.part_names) if sequence else FieldSpin(field)
+            sequence = field.get("type") in ("seq", "sound")      # an address: no compare
+            spin = (SequenceField(runner, self.part_names) if field.get("type") == "seq" else
+                    SoundField(runner, sounds) if field.get("type") == "sound" else FieldSpin(field))
             spin.setRange(field["min"], field["max"])
             spin.setValue(values.get(field["key"], field["default"]))
             game = f"0x{field['default']:X}" if sequence else shown_value(field, field["default"])
@@ -595,7 +657,10 @@ class PartTab(QWidget):
         scroll.setWidget(form_widget)
         scroll.setMinimumWidth(380)
         part_ids = {part["id"]} if part["id"] else set(effect_parts)      # 0: draws nothing, the whole effect
-        self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers, part_names=self.part_names)
+        # a result's number is a heal when the part gives HP (Cure's emitter: Heal tick)
+        heals = any(f["key"].endswith("heal_tick") for f in fields)
+        self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers, part_names=self.part_names,
+                                   sounds=sounds, heals=heals)
         self.images = PartImages(runner, part_ids, self.named_images, locate, part["title"])
         self.sequences = PartSequences(runner, part_ids, self.part_names)
         self.sequences.picked.connect(self.images.select)
@@ -702,9 +767,9 @@ class PartTab(QWidget):
             others = {field["key"]: field["default"] for field in fields}
         else:
             others = dict(values)
-            first = next(field for field in fields if field.get("type") != "seq")
+            first = next(field for field in fields if field.get("type") not in ("seq", "sound"))
             for field in fields:
-                if field is first or field["key"].endswith(".max") and field.get("type") != "seq":
+                if field is first or field["key"].endswith(".max") and field.get("type") not in ("seq", "sound"):
                     value = values[field["key"]]
                     others[field["key"]] = clamp(field, value * 2 if value else 1)
             if others == values:
@@ -714,7 +779,7 @@ class PartTab(QWidget):
         def record(compared):
             return self.runner.record_with(dict(self.runner.cast().params) | compared)
         label = group["label"] if group else fields[0]["label"]
-        self.preview.start_compare(label, [f for f in fields if f.get("type") != "seq"], others, record)
+        self.preview.start_compare(label, [f for f in fields if f.get("type") not in ("seq", "sound")], others, record)
 
     def markers(self):
         """{tick: what happens}: a part drawing nothing has its tick parameters marked on the preview."""

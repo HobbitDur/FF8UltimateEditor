@@ -92,6 +92,28 @@ class EffectRecording:
         centre_x, centre_y = (low_x + high_x) / 2, (low_y + high_y) / 2
         return int(centre_x - width / 2), int(centre_y - height / 2), int(width), int(height)
 
+    def part_box(self, tick_index, parts):
+        """(left, top, right, bottom) of what these parts drew at tick `tick_index` (packet units),
+        or None."""
+        from FF8GameData.psxgpu.gpu import _raw_xy
+        points = []
+        for _bucket, _order, words in self.ticks[tick_index].part_packets(parts):
+            code = words[0] >> 24 if words else 0
+            if 0x20 <= code < 0x40:
+                index = 1
+                for point in range(4 if code & 8 else 3):
+                    if point and code & 0x10:
+                        index += 1
+                    if index < len(words):
+                        points.append(_raw_xy(words[index]))
+                    index += 1 + bool(code & 4)
+            elif 0x60 <= code < 0x80 and len(words) > 1:
+                points.append(_raw_xy(words[1]))
+        if not points:
+            return None
+        xs, ys = [x for x, _y in points], [y for _x, y in points]
+        return min(xs), min(ys), max(xs), max(ys)
+
     def last_drawing(self, tick_index, part):
         """The tick at or before `tick_index` (else the first after it) that drew effect part
         `part`, or None: an effect may hide what it redraws itself (Cure its target) - the

@@ -1014,7 +1014,7 @@ static int lab_schema()
 		const ff8fx::fxp::Field &d = m->fields[i];
 		fprintf(f, "%s\n  {\"part\": %s, \"key\": %s, \"label\": %s, \"doc\": %s, \"type\": %s, \"min\": %d, \"max\": %d, \"default\": %d, \"unit\": \"%s\"}",
 		        i ? "," : "", json_text(d.part).c_str(), json_text(d.key).c_str(), json_text(d.label).c_str(), json_text(d.doc).c_str(),
-		        d.type == ff8fx::fxp::I16 ? "\"i16\"" : d.type == ff8fx::fxp::U8 ? "\"u8\"" : d.type == ff8fx::fxp::Seq ? "\"seq\"" : "\"i32\"",
+		        d.type == ff8fx::fxp::I16 ? "\"i16\"" : d.type == ff8fx::fxp::U8 ? "\"u8\"" : d.type == ff8fx::fxp::Seq ? "\"seq\"" : (int)d.type == 4 ? "\"sound\"" : "\"i32\"",
 		        d.min, d.max, field_value(m->defaults, d), field_unit(d));
 	}
 	fprintf(f, "],\n \"groups\": [");

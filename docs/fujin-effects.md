@@ -123,6 +123,11 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   sub-structure in the port, named in its group table - fx_params.h `Group` - as Cure's ring
   **Radius**: the target's radius x Times / Divided by, At most; its **Steps**: each tick it takes
   Per tick steps of Angle around the target, drawn at the last one, a sparkle born at each)
+  - the recorder also notes what the effect asks the battle - the sounds it plays, the results it
+  gives (the battle's numbers): the slider says when (♪ sound, HP number shows), Play plays the
+  sounds (Sound tab's archive: audio.fmt + audio.dat) and the preview draws a stand-in number above
+  the target as the game moves it, 10 ticks (`Fujin/battleevents.py`); a **Sound** field (type
+  `sound`: the block's address, its world id an audio.dat entry) plays with its button
   - every group and field says the formula the port uses, the ring's **Climb speed** with where it
   ends, about) beside a small preview of that part
   alone, framed on where it goes. Under the preview, the part's **images**: each picture of video
