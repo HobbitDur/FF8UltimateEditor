@@ -12,7 +12,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QApplication, QLabel, QPushButton
 
@@ -158,6 +158,17 @@ def test_cure_part_tabs_edit_preview_and_save(qapp, tmp_path):
     assert fujin.import_parameters([str(tmp_path / "effect_001.fxparams")]) == [1]
     ring = next(tab for tab in fujin.part_tabs if tab.part["key"] == "ring")
     assert fujin.effect_params == {1: {"ring.steps.per_tick": 6}} and ring.spins["ring.steps.per_tick"].value() == 6
+    # the tabs rebuilt for another effect: the old ones no longer hear the lab's recordings
+    errors = []
+    hook = sys.excepthook
+    sys.excepthook = lambda kind, value, trace: errors.append(value)
+    try:
+        fujin.select_effect(50)
+        QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
+        fujin.lab.recording_changed.emit()
+    finally:
+        sys.excepthook = hook
+    assert errors == []
 
 
 @pytest.mark.ff8data(*CURE_FILES)

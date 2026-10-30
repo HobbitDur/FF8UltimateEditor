@@ -214,7 +214,9 @@ class PartPreview(QWidget):
         layout.addLayout(pictures, 1)
         layout.addLayout(controls)
         layout.addWidget(self.strip)
-        runner.recording_changed.connect(lambda: self.refresh(again=True))
+        # a method, not a lambda: Qt drops the connection with the preview (a part tab is rebuilt
+        # for another effect, the runner stays)
+        runner.recording_changed.connect(self._recording_changed)
         self.refresh()
 
     @staticmethod
@@ -226,6 +228,9 @@ class PartPreview(QWidget):
         picture.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         picture.setStyleSheet("background: #101018; color: #C0C0C8;")
         return picture
+
+    def _recording_changed(self):
+        self.refresh(again=True)
 
     def shown_parts(self):
         return self.part_ids | {TARGET_PART} if self.reference.isChecked() else self.part_ids
