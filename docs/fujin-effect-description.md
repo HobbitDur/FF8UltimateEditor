@@ -163,6 +163,10 @@ Potion's description is the same with its own sequences and sound.
 
 1. **Port Init and the loader** for Cure and Potion, so the whole effect runs from FFNx code, and
    route all module memory through the accessors. Check: the port tests still pass.
+   *Done (FFNx edcbd086):* both modules port their `Init` and `FL`, registered like the task
+   functions; FFNx's `install()` points every dispatch slot whose original has a port at the port
+   (the recorder replaces them with a jump, as for the tasks). Every module address is named in the
+   module's address block. The recordings of both effects stay identical to the original's.
 2. **Resources as parameters:** texture file name, camera track.
 3. **Split the heal ring into the libraries above** (behaviours, renderers, inputs), each with a
    stable interface, Cure rebuilt from them in C++. Check: port tests.
