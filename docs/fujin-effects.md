@@ -123,7 +123,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   sub-structure in the port, named in its group table - fx_params.h `Group` - as Cure's ring
   **Radius**: the target's radius x Times / Divided by, At most; its **Steps**: each tick it takes
   Per tick steps of Angle around the target, drawn at the last one, a sparkle born at each)
-  beside a small preview of that part
+  - every group and field says the formula the port uses, the ring's **Climb speed** with where it
+  ends, about) beside a small preview of that part
   alone, framed on where it goes. Under the preview, the part's **images**: each picture of video
   memory it takes texels from (a TIM, the target's own texture), whole, read with the depth and
   palette its primitives use, every piece it takes during the effect outlined and the ones it

@@ -330,6 +330,8 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     assert angle.value() == 137 and angle.raw_label.text() == "raw 137"
     angle.setValue(128)
     assert ring.spins["ring.radius.den"].raw_label.text() == "= x 2.00"
+    # the climb is a speed: where the ring ends, about (ending flipbook 20 + 4 frames, every 20 ticks)
+    assert ring.spins["ring.climb.ticks"].raw_label.text() == "ends ~ 1.25 x (height + 256) up"
 
 
 def wait(qapp, view):

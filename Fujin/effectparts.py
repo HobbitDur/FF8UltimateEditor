@@ -756,6 +756,13 @@ class PartTab(QWidget):
             numerator = key[:-len("den")] + "num" if key.endswith(".den") else None
             if numerator in self.spins and spin.value():
                 spin.hint(f"= x {self.spins[numerator].value() / spin.value():.2f}")
+        # a climb speed (Cure's ring: target height + above every N ticks) over the ring's life (its
+        # ending flipbook's start + frames): where it ends, about
+        value = lambda name: self.spins[name].value() if name in self.spins else None
+        every, start, frames = value("ring.climb.ticks"), value("ring.ending.tick"), value("ring.ending.frames")
+        if every and start is not None and frames is not None:
+            above = value("ring.climb.above")
+            self.spins["ring.climb.ticks"].hint(f"ends ~ {(start + frames + 1) / every:.2f} x (height + {above}) up")
 
     def _changed(self, key, value):
         self._mark(key)
