@@ -43,7 +43,12 @@ AUDIT_BLOCK = re.compile(r"\[FF8_EFFECT_AUDIT\].*?\[/FF8_EFFECT_AUDIT\]\s*", re.
 def _function_comment(ea):
     import idc
     parts = [idc.get_func_cmt(ea, False) or "", idc.get_func_cmt(ea, True) or ""]
-    text = "\n\n".join(part.strip() for part in parts if part and part.strip())
+    # the regular and the repeatable comment, once each (a tool may write the same text in both)
+    kept = []
+    for part in (part.strip() for part in parts):
+        if part and part not in kept:
+            kept.append(part)
+    text = "\n\n".join(kept)
     return AUDIT_BLOCK.sub("", text).strip()   # the audit text comes from this json: not fed back
 
 
