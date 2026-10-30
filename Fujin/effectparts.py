@@ -17,8 +17,8 @@ import os
 import subprocess
 import tempfile
 
-from PyQt6.QtCore import QPointF, QRectF, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap, QPolygonF
+from PyQt6.QtCore import QPoint, QPointF, QRectF, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                              QSizePolicy, QSlider, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
@@ -103,34 +103,119 @@ def defaults(schema):
 TARGET_PART = 0                     # what no effect part drew: in the lab recording, the target's model
 
 
-class DiffStrip(QWidget):
-    """Under a compared preview's slider: a cell per tick, red where the part draws differently with
-    the other value, amber where only other parts do; a click goes to that tick."""
-    clicked = pyqtSignal(int)
+_FOLDED = {}                        # Collapsible title -> folded: one choice for every part tab (this session)
 
-    def __init__(self):
+
+class Collapsible(QWidget):
+    """A title to click and what it folds away (the part tabs' change rows, their images and
+    sequences), folded or not in every part tab at once (_FOLDED)."""
+    _all = []
+
+    def __init__(self, title, content):
         super().__init__()
-        self.setFixedHeight(10)
-        self.mine, self.others, self.count = set(), set(), 0
-        self.setToolTip("Red: this part draws differently at that tick with the compared value; amber: only "
-                        "other parts do. Click to go there.")
+        self.title, self.content = title, content
+        self.header = QToolButton()
+        self.header.setAutoRaise(True)
+        self.header.clicked.connect(lambda: self.fold(not self.is_folded()))
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(self.header)
+        layout.addWidget(content)
+        Collapsible._all.append(self)
+        self.destroyed.connect(lambda _object=None, me=self: Collapsible._all.remove(me) if me in Collapsible._all else None)
+        self.fold(_FOLDED.get(title, False))
 
-    def set_ticks(self, mine, others, count):
-        self.mine, self.others, self.count = set(mine), set(others) - set(mine), count
+    def fold(self, folded):
+        _FOLDED[self.title] = folded
+        self.content.setHidden(folded)
+        self.header.setText(("▸ " if folded else "▾ ") + self.title)
+        self.header.setToolTip(f"Show {self.title.lower()}" if folded else f"Fold {self.title.lower()} away to give the preview more room")
+        for other in Collapsible._all:
+            if other is not self and other.title == self.title and other.content.isHidden() != folded:
+                other.fold(folded)
+
+    def is_folded(self):
+        return self.content.isHidden()
+
+
+class ChangeRows(QWidget):
+    """Under a compared preview's slider, part of it: one row per part, a cell lit at each tick it
+    draws differently with the other values (the tab's own parts red, the others amber, a part that
+    never changes greyed "no change"), its cells under the slider's own tick positions, the slider's
+    tick a line across them; a click or a drag moves the slider. mine: the ticks the tab's parts
+    change at."""
+    ROW = 16
+
+    def __init__(self, slider):
+        super().__init__()
+        self.slider = slider
+        self.rows, self.mine = [], set()                # rows: [(name, ticks, own part)]
+        self.setMouseTracking(True)
+        slider.valueChanged.connect(lambda _value: self.update())
+        slider.rangeChanged.connect(lambda _low, _high: self.update())
+
+    def set_rows(self, rows):
+        self.rows = rows
+        self.mine = {tick for _name, ticks, own in rows if own for tick in ticks}
+        self.setFixedHeight(max(1, len(rows)) * self.ROW + 2)
         self.update()
 
+    def _track(self):
+        """(x of tick 0, pixels per tick) along the slider's groove, in this widget."""
+        from PyQt6.QtWidgets import QStyle, QStyleOptionSlider
+        option = QStyleOptionSlider()
+        self.slider.initStyleOption(option)
+        handle = self.slider.style().pixelMetric(QStyle.PixelMetric.PM_SliderLength, option, self.slider)
+        left = self.mapFromGlobal(self.slider.mapToGlobal(QPoint(0, 0))).x() + handle / 2
+        span = max(1, self.slider.width() - handle)
+        return left, span / max(1, self.slider.maximum())
+
+    def _tick_at(self, x):
+        left, step = self._track()
+        return max(0, min(self.slider.maximum(), round((x - left) / step)))
+
     def mousePressEvent(self, event):
-        if self.count:
-            self.clicked.emit(min(self.count - 1, int(event.position().x() * self.count / max(1, self.width()))))
+        self.slider.setValue(self._tick_at(event.position().x()))
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            self.slider.setValue(self._tick_at(event.position().x()))
+        row = int(event.position().y() // self.ROW)
+        if 0 <= row < len(self.rows):
+            name, ticks, _own = self.rows[row]
+            tick = self._tick_at(event.position().x())
+            self.setToolTip(f"tick {tick}: {name} " + ("draws differently" if tick in ticks else "is the same")
+                            if ticks else f"{name}: no change")
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor(60, 60, 66))
-        for ticks, colour in ((self.others, QColor(230, 170, 40)), (self.mine, QColor(235, 60, 60))):
+        left, step = self._track()
+        names = int(left - step / 2 - 6)
+        font = painter.font()
+        for index, (name, ticks, own) in enumerate(self.rows):
+            y = index * self.ROW
+            font.setBold(own)
+            painter.setFont(font)
+            painter.setPen(QColor(150, 150, 155) if not ticks else self.palette().windowText().color())
+            painter.drawText(QRectF(0, y, max(0, names), self.ROW), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
+                             painter.fontMetrics().elidedText(name, Qt.TextElideMode.ElideRight, max(0, names)))
+            track = QRectF(left - step / 2, y + 2, step * (self.slider.maximum() + 1), self.ROW - 4)
+            painter.fillRect(track, QColor(60, 60, 66))
+            if not ticks:
+                small = QFont(font)
+                small.setBold(False)
+                small.setPixelSize(self.ROW - 5)
+                painter.setFont(small)
+                painter.setPen(QColor(170, 170, 175))
+                painter.drawText(QRectF(track.left() + 4, y, track.width(), self.ROW),
+                                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, "no change")
+            colour = QColor(235, 60, 60) if own else QColor(230, 170, 40)
             for tick in ticks:
-                left = round(tick * self.width() / max(1, self.count))
-                right = round((tick + 1) * self.width() / max(1, self.count))
-                painter.fillRect(left, 0, max(1, right - left), self.height(), colour)
+                painter.fillRect(QRectF(left + (tick - 0.5) * step, y + 2, max(1.0, step - 1), self.ROW - 4), colour)
+        x = left + self.slider.value() * step
+        painter.setPen(QPen(QColor(90, 160, 255), 2))
+        painter.drawLine(QPointF(x, 0), QPointF(x, self.height()))
 
 
 class PartPreview(QWidget):
@@ -158,8 +243,7 @@ class PartPreview(QWidget):
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.valueChanged.connect(self._show)
         self.slider.valueChanged.connect(self._play_sounds)
-        self.strip = DiffStrip()
-        self.strip.clicked.connect(self.slider.setValue)
+        self.strip = ChangeRows(self.slider)
         self.strip.hide()
         self.frame_label = QLabel()
         self.reference = QCheckBox("Target")
@@ -218,7 +302,9 @@ class PartPreview(QWidget):
         layout.addWidget(self.compare_bar)
         layout.addLayout(pictures, 1)
         layout.addLayout(controls)
-        layout.addWidget(self.strip)
+        self.changes = Collapsible("What changes, part by part", self.strip)
+        self.changes.hide()
+        layout.addWidget(self.changes)
         # a method, not a lambda: Qt drops the connection with the preview (a part tab is rebuilt
         # for another effect, the runner stays)
         runner.recording_changed.connect(self._recording_changed)
@@ -445,7 +531,7 @@ class PartPreview(QWidget):
             spin.valueChanged.connect(lambda _value: self._compare())
             self.compare_values.addWidget(spin)
             self.compare_spins[field["key"]] = spin
-        for widget in (self.compare_bar, self.picture_b, self.caption, self.caption_b, self.strip):
+        for widget in (self.compare_bar, self.picture_b, self.caption, self.caption_b, self.changes):
             widget.show()
         self._compare()
 
@@ -457,7 +543,7 @@ class PartPreview(QWidget):
 
     def stop_compare(self):
         self.compared, self.variant = None, None
-        for widget in (self.compare_bar, self.picture_b, self.caption, self.caption_b, self.strip):
+        for widget in (self.compare_bar, self.picture_b, self.caption, self.caption_b, self.changes):
             widget.hide()
         self.refresh()
 
@@ -484,15 +570,19 @@ class PartPreview(QWidget):
         changes, _lengths = differences(base, self.variant, self.part_names)
         mine = [entry for entry in changes if entry["part"] in self.part_ids]
         others = [entry for entry in changes if entry["part"] not in self.part_ids and entry["part"] != TARGET_PART]
-        self.strip.set_ticks({t for e in mine for t in e["ticks"]}, {t for e in others for t in e["ticks"]},
-                             max(len(base.ticks), len(self.variant.ticks)))
+        # a row per part either recording draws (the target only when it changes), in part order
+        changed = {entry["part"]: entry["ticks"] for entry in changes}
+        drawn = {part for recording in (base, self.variant) for tick in recording.ticks for part in tick.parts}
+        shown = sorted(part for part in drawn | set(changed) if part != TARGET_PART or part in changed)
+        self.strip.set_rows([(self.part_names.get(part, f"part {part}"), set(changed.get(part, ())),
+                              part in self.part_ids) for part in shown])
         if not changes:
             note = "Nothing changes."
         else:
             note = " · ".join(f"{e['name']} ticks {tick_runs(e['ticks'])}" for e in mine) or "This part does not change"
             if others:
                 note += (" - also " + ", ".join(e["name"] for e in others)
-                         + " (amber: they hang on this part, or the random numbers they draw shift)")
+                         + " (amber rows: they hang on this part, or the random numbers they draw shift)")
         if len(base.ticks) != len(self.variant.ticks):
             note += f" - lasts {len(self.variant.ticks)} ticks instead of {len(base.ticks)}"
         self.compare_note.setText(note)
@@ -674,9 +764,10 @@ class PartTab(QWidget):
         if self.life.has_content():                     # spawn windows, a glint's style
             self.below.addTab(self.life, "Life")
         self.below.setFixedHeight(SHEET_HEIGHT + 150)
+        self.below_fold = Collapsible("Images, sprite sequences, life", self.below)
         right = QVBoxLayout()
         right.addWidget(self.preview, 1)
-        right.addWidget(self.below)
+        right.addWidget(self.below_fold)
         layout = QHBoxLayout(self)
         layout.addWidget(scroll)
         layout.addLayout(right, 1)

@@ -323,6 +323,18 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     assert preview.compare_value.value() == 8                  # the game's
     preview.stop_compare()
     tab.spins["sparkle.frames"].setValue(8)
+    # the change rows: one per part, the ring's own red, the parts that follow it lit too; the
+    # motes (their own circle) and glints (the target's centre) unchanged
+    ring.probe("ring.radius")
+    rows = {name: (ticks, own) for name, ticks, own in ring.preview.strip.rows}
+    assert rows["Ring"][1] and rows["Ring"][0] and rows["Sparkles"][0] and not rows["Sparkles"][1]
+    assert not rows["Motes"][0] and not rows["Glints"][0]
+    # folding: the rows, the images / sequences / life - in every part tab at once
+    ring.below_fold.header.click()
+    assert tabs["sparkles"].below_fold.is_folded() and ring.below.isHidden()
+    ring.below_fold.header.click()
+    assert not tabs["sparkles"].below_fold.is_folded()
+    ring.preview.stop_compare()
     # a group's compare: all its values at once - the radius twice as large, its cap too
     ring.probe("ring.radius.den")                                # a grouped field probes its group
     others = {key: spin.value() for key, spin in ring.preview.compare_spins.items()}
