@@ -127,7 +127,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   gives (the battle's numbers): the slider says when (♪ sound, HP number shows), Play plays the
   sounds (Sound tab's archive: audio.fmt + audio.dat) and the preview draws a stand-in number above
   the target as the game moves it, 10 ticks (`Fujin/battleevents.py`); a **Sound** field (type
-  `sound`: the block's address, its world id an audio.dat entry) plays with its button
+  `sound`: the block's address, its world id an audio.dat entry) plays with its button; a file
+  field (type `file`, fx_params.h `FileName`: Cure's and Potion's **Files** tab, the TIM their
+  ported loader reads) is the name of a magic-folder file, empty for the game's own
   - every group and field says the formula the port uses, the ring's **Climb speed** with where it
   ends, about) beside a small preview of that part
   alone, framed on where it goes. Under the preview, the part's **images**: each picture of video

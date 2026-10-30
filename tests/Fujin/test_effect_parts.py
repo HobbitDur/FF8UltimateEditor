@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EXE = ROOT / "extracted_files/FF8_EN.exe"
 MAGIC, BATTLE = ROOT / "extracted_files/magic", ROOT / "extracted_files/battle"
 CURE_FILES = ("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim", "extracted_files/battle/a8def.tim",
-              "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+              "extracted_files/magic/mag001.tim", "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
 
 
 @pytest.fixture(scope="module")
@@ -51,12 +51,14 @@ def test_recording_lines_carry_their_part():
 
 def test_cure_parameter_table():
     schema = cure_schema()
-    assert [part["key"] for part in schema["parts"]] == ["emitter", "ring", "glow", "overlay", "sparkles", "motes", "glints"]
+    assert [part["key"] for part in schema["parts"]] == ["emitter", "ring", "glow", "overlay", "sparkles", "motes", "glints",
+                                                         "files"]
     fields = {field["key"]: field for field in schema["fields"]}
     assert fields["ring.steps.per_tick"]["default"] == 4 and fields["ring.steps.angle"]["default"] == 0x80
     assert fields["emitter.heal_tick"]["default"] == 15 and fields["glow.brightness.start"]["default"] == 0x3C
     assert fields["mote.count.count[1]"]["part"] == "motes" and fields["sparkle.window.last"]["default"] == 16
-    assert all(field["min"] <= field["default"] <= field["max"] for field in schema["fields"])
+    assert all(field["min"] <= field["default"] <= field["max"] for field in schema["fields"] if field["type"] != "file")
+    assert all(len(field["default"]) <= field["max"] for field in schema["fields"] if field["type"] == "file")
 
 
 def untag(lines):
@@ -97,6 +99,23 @@ def test_cure_port_is_the_original_and_its_parameters_change_it(tmp_path):
 
 
 @pytest.mark.ff8data(*CURE_FILES)
+def test_cure_texture_file_is_a_parameter(tmp_path):
+    """The file the ported loader reads is a text parameter: empty (the game's) by default, the game's
+    own name changes nothing, another TIM is uploaded and drawn from instead."""
+    field = next(f for f in cure_schema()["fields"] if f["key"] == "files.texture")
+    assert field["type"] == "file" and field["default"] == "" and field["part"] == "files"
+    native, _log = record(tmp_path, "native", "native=1")
+    params = tmp_path / "params.txt"
+    params.write_text("files.texture mag000-049.tim\n")
+    same, log = record(tmp_path, "same", "native=1", f"params={params}")
+    assert "params: 1 values set" in log and same == native
+    params.write_text("files.texture mag001.tim\n")
+    other, _log = record(tmp_path, "other", "native=1", f"params={params}")
+    upload = lambda lines: [line for line in lines if line.startswith("V ")]
+    assert upload(other) != upload(native)
+
+
+@pytest.mark.ff8data(*CURE_FILES)
 def test_cure_part_tabs_edit_preview_and_save(qapp, tmp_path):
     from Fujin.fujinwidget import FujinWidget
     cure_schema()
@@ -107,7 +126,7 @@ def test_cure_part_tabs_edit_preview_and_save(qapp, tmp_path):
     fujin.camera_editor.preview.add_models([str(BATTLE / name) for name in ("d0c000.dat", "d0w000.dat", "c0m009.dat")])
     fujin.select_effect(1)
     titles = [fujin.choreography.tabText(i) for i in range(fujin.choreography.count())]
-    assert titles[-7:] == ["Emitter", "Ring", "Ground glow", "Overlay", "Sparkles", "Motes", "Glints"]
+    assert titles[-8:] == ["Emitter", "Ring", "Ground glow", "Overlay", "Sparkles", "Motes", "Glints", "Files"]
     ring = next(tab for tab in fujin.part_tabs if tab.part["key"] == "ring")
     fujin.tabs.setCurrentIndex(2)
     fujin.choreography.setCurrentWidget(ring)                    # shown: the lab records

@@ -927,7 +927,8 @@ class FujinWidget(QWidget):
             try:
                 with open(path, encoding="utf-8") as file:
                     data = json.load(file)
-                self.effect_params[int(data["effect"])] = {str(k): int(v) for k, v in data.get("params", {}).items()}
+                self.effect_params[int(data["effect"])] = {str(k): v if isinstance(v, str) else int(v)
+                                                       for k, v in data.get("params", {}).items()}
                 loaded.append(int(data["effect"]))
             except (OSError, ValueError, KeyError, TypeError) as error:
                 QMessageBox.warning(self, "Fujin", f"Cannot read {os.path.basename(path)}: {error}")

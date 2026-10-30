@@ -19,7 +19,7 @@ import tempfile
 
 from PyQt6.QtCore import QEvent, QPoint, QPointF, QRectF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF
-from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea,
                              QSizePolicy, QSlider, QSplitter, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
@@ -660,6 +660,38 @@ def shown_value(field, raw):
     factor, decimals, prefix, suffix = unit
     return f"{prefix}{raw * factor:.{decimals}f}{suffix}"
 
+# the field types whose value names something (an exe address, a file): shown as such, never compared
+REFERENCE_TYPES = ("seq", "sound", "file")
+
+
+class FileField(QLineEdit):
+    """A File parameter (fx_params.h FileName): a file of the magic folder the effect's loader reads,
+    empty for the game's own - the QSpinBox calls a part tab makes (value, setValue, setRange,
+    valueChanged), the change sent once the name is typed."""
+    valueChanged = pyqtSignal(str)
+
+    def __init__(self, field):
+        super().__init__()
+        self._value = ""
+        self.setMaxLength(field["max"])
+        self.setPlaceholderText("the game's file")
+        self.editingFinished.connect(lambda: self.setValue(self.text().strip()))
+
+    def value(self):
+        return self._value
+
+    def setValue(self, value):
+        value = str(value or "")
+        if self.text() != value:
+            self.setText(value)
+        if value != self._value:
+            self._value = value
+            if not self.signalsBlocked():
+                self.valueChanged.emit(value)
+
+    def setRange(self, _low, _high):
+        pass
+
 
 class FieldSpin(QWidget):
     """A field's value: a narrow box in the field's unit (fx_params.h Unit: degrees for an angle,
@@ -804,12 +836,14 @@ class PartTab(QWidget):
         form = QFormLayout()
         boxes = {}                                      # group key -> its form
         for field in fields:
-            sequence = field.get("type") in ("seq", "sound")      # an address: no compare
+            sequence = field.get("type") in REFERENCE_TYPES        # an address, a file: no compare
             spin = (SequenceField(runner, self.part_names) if field.get("type") == "seq" else
-                    SoundField(runner, sounds) if field.get("type") == "sound" else FieldSpin(field))
+                    SoundField(runner, sounds) if field.get("type") == "sound" else
+                    FileField(field) if field.get("type") == "file" else FieldSpin(field))
             spin.setRange(field["min"], field["max"])
             spin.setValue(values.get(field["key"], field["default"]))
-            game = f"0x{field['default']:X}" if sequence else shown_value(field, field["default"])
+            game = (field["default"] or "its own" if field.get("type") == "file" else
+                    f"0x{field['default']:X}" if sequence else shown_value(field, field["default"]))
             spin.setToolTip(f"{field['doc']}\nThe game's value: {game}".strip())
             spin.valueChanged.connect(lambda value, key=field["key"]: self._changed(key, value))
             label = QLabel(field["label"])
@@ -1006,9 +1040,9 @@ class PartTab(QWidget):
             others = {field["key"]: field["default"] for field in fields}
         else:
             others = dict(values)
-            first = next(field for field in fields if field.get("type") not in ("seq", "sound"))
+            first = next(field for field in fields if field.get("type") not in REFERENCE_TYPES)
             for field in fields:
-                if field is first or field["key"].endswith(".max") and field.get("type") not in ("seq", "sound"):
+                if field is first or field["key"].endswith(".max") and field.get("type") not in REFERENCE_TYPES:
                     value = values[field["key"]]
                     others[field["key"]] = clamp(field, value * 2 if value else 1)
             if others == values:
@@ -1018,7 +1052,7 @@ class PartTab(QWidget):
         def record(compared):
             return self.runner.record_with(dict(self.runner.cast().params) | compared)
         label = group["label"] if group else fields[0]["label"]
-        self.preview.start_compare(label, [f for f in fields if f.get("type") not in ("seq", "sound")], others, record)
+        self.preview.start_compare(label, [f for f in fields if f.get("type") not in REFERENCE_TYPES], others, record)
 
     def markers(self):
         """{tick: what happens}: a part drawing nothing has its tick parameters marked on the preview."""

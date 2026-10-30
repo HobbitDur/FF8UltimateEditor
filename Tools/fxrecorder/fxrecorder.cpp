@@ -1017,10 +1017,13 @@ static int lab_schema()
 	for (int i = 0; i < m->field_count; i++)
 	{
 		const ff8fx::fxp::Field &d = m->fields[i];
-		fprintf(f, "%s\n  {\"part\": %s, \"key\": %s, \"label\": %s, \"doc\": %s, \"type\": %s, \"min\": %d, \"max\": %d, \"default\": %d, \"unit\": \"%s\"}",
+		// a file name field (type 5; older sources have none): its game value is text
+		const bool text = (int)d.type == 5;
+		const std::string game = text ? json_text((const char *)m->defaults + d.offset) : std::to_string(field_value(m->defaults, d));
+		fprintf(f, "%s\n  {\"part\": %s, \"key\": %s, \"label\": %s, \"doc\": %s, \"type\": %s, \"min\": %d, \"max\": %d, \"default\": %s, \"unit\": \"%s\"}",
 		        i ? "," : "", json_text(d.part).c_str(), json_text(d.key).c_str(), json_text(d.label).c_str(), json_text(d.doc).c_str(),
-		        d.type == ff8fx::fxp::I16 ? "\"i16\"" : d.type == ff8fx::fxp::U8 ? "\"u8\"" : d.type == ff8fx::fxp::Seq ? "\"seq\"" : (int)d.type == 4 ? "\"sound\"" : "\"i32\"",
-		        d.min, d.max, field_value(m->defaults, d), field_unit(d));
+		        d.type == ff8fx::fxp::I16 ? "\"i16\"" : d.type == ff8fx::fxp::U8 ? "\"u8\"" : d.type == ff8fx::fxp::Seq ? "\"seq\"" : (int)d.type == 4 ? "\"sound\"" : text ? "\"file\"" : "\"i32\"",
+		        d.min, d.max, game.c_str(), field_unit(d));
 	}
 	fprintf(f, "],\n \"groups\": [");
 	write_groups(f, *m);
@@ -1042,16 +1045,18 @@ static void lab_install()
 	if (!m) { printf("params: effect %d has no parameters\n", O.eff); return; }
 	FILE *f = fopen(O.params.c_str(), "r");
 	if (!f) { printf("cannot read %s\n", O.params.c_str()); return; }
-	char key[128];
-	long value;
+	// one "key value" per line; a file name field's value is its text (no spaces)
+	char key[128], text[128];
 	int set = 0;
-	while (fscanf(f, "%127s %ld", key, &value) == 2)
+	while (fscanf(f, "%127s %127s", key, text) == 2)
 	{
 		const ff8fx::fxp::Field *d = nullptr;
 		for (int i = 0; i < m->field_count && !d; i++) if (strcmp(m->fields[i].key, key) == 0) d = &m->fields[i];
 		if (!d) { printf("params: unknown %s\n", key); continue; }
 		uint8_t *at = (uint8_t *)m->params + d->offset;
-		if (d->type == ff8fx::fxp::I16) *(int16_t *)at = (int16_t)value;
+		const long value = strtol(text, nullptr, 10);
+		if ((int)d->type == 5) { memset(at, 0, d->max + 1); strncpy((char *)at, text, d->max); }
+		else if (d->type == ff8fx::fxp::I16) *(int16_t *)at = (int16_t)value;
 		else if (d->type == ff8fx::fxp::U8) *at = (uint8_t)value;
 		else *(int32_t *)at = (int32_t)value;
 		set++;

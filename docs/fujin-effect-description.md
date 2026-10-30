@@ -168,6 +168,14 @@ Potion's description is the same with its own sequences and sound.
    (the recorder replaces them with a jump, as for the tasks). Every module address is named in the
    module's address block. The recordings of both effects stay identical to the original's.
 2. **Resources as parameters:** texture file name, camera track.
+   *Done (FFNx bcc75c05):* the texture is `files.texture`, a new parameter type (`File`, a
+   magic-folder file name, empty = the game's) the ported loader reads; the recorder takes it as
+   text and Fujin shows it in a **Files** tab. The camera needs no parameter: FFNx already plays
+   `<direct>/exe/effect_NNN.bcam` for any effect id (FFNx PR #1047, `effect_camera.cpp`), and it
+   wraps whatever setup the dispatch slot holds, so the ported one and a new slot's alike.
+   Found on the way: FFNx never loads parameters in game. They only reach the ports in the
+   recorder (`params=`); Fujin's exported `effect_NNN.fxparams` has no reader yet. The host (step
+   4) has to load them, the same way as the camera files.
 3. **Split the heal ring into the libraries above** (behaviours, renderers, inputs), each with a
    stable interface, Cure rebuilt from them in C++. Check: port tests.
 4. **The description format and its loader**, and the runtime that builds an effect from it. Check:

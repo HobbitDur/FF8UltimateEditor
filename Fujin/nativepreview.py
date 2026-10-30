@@ -545,7 +545,9 @@ class NativePreviewView(QWidget):
             if cast.params:
                 path = os.path.join(folder, "params.txt")
                 with open(path, "w", encoding="ascii") as file:
-                    file.write("".join(f"{key} {int(value)}\n" for key, value in cast.params))
+                    # a file name as its text, an empty one (the game's) not at all
+                    file.write("".join(f"{key} {value if isinstance(value, str) else int(value)}\n"
+                                       for key, value in cast.params if value != ""))
                 args.append(f"params={path}")
         # what each actor plays (worked out from its dat's sequences, FF8GameData.dat.actoranimplan):
         # its idle loop, and the caster's cast before and while the effect runs, seen wide
