@@ -1829,10 +1829,27 @@ class FF8OpenGLWidget(QOpenGLWidget):
 
         # Use the maximum dimension for the base distance
         self.zoom = max_dim * zoom_factor
+        # The camera orbits the root (reference_position), often at the model's feet rather than
+        # its middle: back off further when this front view would cut the model off (a crate
+        # standing on its root, gpbigin6 o199, lost its top half at max_dim * 1.5).
+        self.zoom = max(self.zoom, self._front_view_fit_distance())
 
         self.pan_x = 0.0
         self.pan_y = 0.0
         self.update()
+
+    def _front_view_fit_distance(self, margin=1.1):
+        """Camera distance at which every vertex fits the default view (rot_x 0, rot_y 180,
+        45 degree vertical field of view, centred on reference_position), with `margin` room."""
+        placement, _yaw = getattr(self, '_preview_model_transform', ((0., 0., 0.), 0.))
+        offset = np.add(self.model_translation, placement) - np.asarray(self.reference_position)
+        points = self.vertices_array + offset
+        tan_v = math.tan(math.radians(22.5)) / margin
+        aspect = self.width() / self.height() if self.width() > 1 and self.height() > 1 else 1.0
+        tan_h = tan_v * aspect
+        # rot_y 180 turns (x, y, z) into (-x, y, -z): a vertex stands d + z in front of the eye
+        need = np.maximum(np.abs(points[:, 1]) / tan_v, np.abs(points[:, 0]) / tan_h) - points[:, 2]
+        return float(need.max())
 
     def set_show_triangles(self, show):
         self.show_triangles = show

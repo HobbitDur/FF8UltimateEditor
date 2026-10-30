@@ -136,13 +136,23 @@ class SeedWidget(QWidget):
         field character model (view-only - only chara.one is ever written back)."""
         return [self.chara_one_binding, self.mch_binding]
 
+    def auto_import_bindings(self):
+        # The standalone .mch is reopened only when picked by hand (auto_import_sources): its
+        # folder is main_chr, where a folder scan finds every d0xx.mch and can't choose one.
+        return [self.chara_one_binding]
+
     def auto_import_sources(self):
+        mch = AutoImportSource.for_binding(self.mch_binding)
+        mch.selection_only = True
+        sources = [mch]
         key = type(self).__name__
         folder = self.file_registry.last_folder(key)
         if not folder and self.settings:
             folder = self.settings.value("seed/main_chr_folder", "", type=str)
-        return [AutoImportSource(key, ("chara.one", "*.mch"), lambda _paths: self.load_folder(folder),
-                                 folder=folder, recursive=True)] if folder else []
+        if folder:
+            sources.append(AutoImportSource(key, ("chara.one", "*.mch"), lambda _paths: self.load_folder(folder),
+                                            folder=folder, recursive=True))
+        return sources
 
     def load_folder(self, folder_path, progress=None):
         """The header's Open-folder button. Every chara.one inside the folder (e.g. the 'field'

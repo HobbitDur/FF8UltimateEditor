@@ -95,3 +95,36 @@ def test_find_chara_ones_reports_each_folder_and_can_stop(tmp_path):
     assert len(found) == 2 and reports and reports[-1] == 2
     # Stopped at the first folder walked (the field folder itself, no chara.one directly in it)
     assert SeedManager.find_chara_ones(field, lambda root, count: False) == []
+
+
+def test_auto_upload_never_scans_main_chr_for_the_standalone_mch(tmp_path, monkeypatch):
+    """Opening a folder remembers main_chr as the .mch folder: Auto-upload must not scan it (every
+    d0xx.mch matches) and report 'Several matching files'; it reopens only a .mch picked by hand."""
+    from unittest.mock import Mock
+    from PyQt6.QtWidgets import QMessageBox, QStackedWidget
+    from Common.fileregistry import FileRegistry
+    from Common.filetoolbarwidget import FileToolbarWidget
+    from Seed.seedwidget import SeedWidget
+
+    main_chr = tmp_path / "main_chr"
+    main_chr.mkdir()
+    for name in ("d000.mch", "d001.mch"):
+        (main_chr / name).write_bytes(b"stub")
+    registry = FileRegistry()
+    widget = SeedWidget(file_registry=registry)
+    registry.remember_folder(widget.mch_binding.file_name, str(main_chr))
+    stack = QStackedWidget()
+    stack.addWidget(widget)
+    bar = FileToolbarWidget(stack, registry)
+    warning = Mock()
+    monkeypatch.setattr(QMessageBox, "warning", warning)
+    monkeypatch.setattr(QMessageBox, "information", Mock())
+    opened = Mock()
+    monkeypatch.setattr(widget.mch_binding, "open_path", opened)
+    bar.auto_upload_button.click()
+    warning.assert_not_called()
+    opened.assert_not_called()
+
+    registry.remember_files(widget.mch_binding.file_name, [str(main_chr / "d001.mch")])
+    bar.auto_upload_button.click()
+    opened.assert_called_once_with(str(main_chr / "d001.mch"))
