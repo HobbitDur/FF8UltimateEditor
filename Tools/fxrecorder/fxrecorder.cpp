@@ -19,8 +19,9 @@
 //   C t ex ey ez ax ay az         the battle camera words after the tick (eye, look-at)
 //   V t x y w h hexwords          a VRAM upload (queued by the tick, or done before it)
 //   B t x y w h u v               a VRAM-to-VRAM copy
-//   Q t part sequence frame       a sprite the tick drew: its sprite sequence (address, hex) and
-//                                 frame, the effect part drawing it (FF8GameData/psxgpu/spritesequence.py)
+//   Q t part sequence frame [x y] a sprite the tick drew: its sprite sequence (address, hex) and
+//                                 frame, the effect part drawing it (FF8GameData/psxgpu/spritesequence.py),
+//                                 the middle of its packets' screen box (packet units)
 //
 // Arguments: <effect id> exe=FF8_EN.exe magic=<folder of the mag files> battle=<folder of the battle
 // files> out=<file> [model=N: every slot gets c0mN.dat (default 0; -1 = no model)] [ticks=N]
@@ -61,6 +62,7 @@
 #include <map>
 #include <algorithm>
 #include <utility>
+#include <limits.h>
 #ifdef FF8_FX_LAB
 #include "fx_port.h"
 #include "fx_params.h"
@@ -300,20 +302,59 @@ static int part_at(uint32_t node)
 }
 // every sprite the tick draws: InitEffectSequenceFromData (0x571C80) and its 18 copies in the
 // effect modules, called with a workspace whose +0 is the sprite sequence and +4 the frame (the
-// Q lines: tick, part, sequence, frame)
-struct SpriteDraw { uint32_t node, seq; int frame; };
+// Q lines: tick, part, sequence, frame, and the middle of the screen box of the packets it wrote: the
+// ones between the packet cursor it was given and the one it returns)
+struct SpriteDraw { uint32_t node, seq; int frame; bool placed; int x, y; };
 static std::vector<SpriteDraw> g_sprites;
 static const uint32_t SPRITE_INITS[] = { 0x571C80, 0x7435E0, 0x7583C0, 0x761330, 0x766900, 0x7721E0, 0x7758A0,
 	0x782AB0, 0x7AE960, 0x7BBFD0, 0x7D51F0, 0x7F2050, 0x80BB50, 0x899EF0, 0x8A0350, 0x8AA400, 0x8C4020,
 	0x8CD890, 0x8DD260 };
+// the screen box of the polygons / sprites in the packets from `begin` to `end` (tag word + len words each)
+static bool packets_box(uint32_t begin, uint32_t end, int &x, int &y)
+{
+	int lo_x = INT_MAX, lo_y = INT_MAX, hi_x = INT_MIN, hi_y = INT_MIN;
+	auto add = [&](uint32_t word) {
+		const int px = (int16_t)(word & 0xFFFF), py = (int16_t)(word >> 16);
+		lo_x = std::min(lo_x, px); hi_x = std::max(hi_x, px); lo_y = std::min(lo_y, py); hi_y = std::max(hi_y, py);
+	};
+	if (end <= begin || end - begin > 0x10000) return false;
+	for (uint32_t p = begin; p < end;)
+	{
+		if (IsBadReadPtr((void *)p, 4)) return false;
+		const uint32_t len = *(const uint8_t *)(p + 3);
+		if (len == 0 || IsBadReadPtr((void *)(p + 4), len * 4)) break;
+		const uint32_t *w = (const uint32_t *)(p + 4);
+		const uint32_t code = w[0] >> 24;
+		if (code >= 0x20 && code < 0x40)
+		{
+			for (uint32_t point = 0, k = 1; point < (code & 8 ? 4u : 3u); point++)
+			{
+				if (point && (code & 0x10)) k++;
+				if (k < len) add(w[k]);
+				k += 1 + ((code & 4) != 0);
+			}
+		}
+		else if (code >= 0x60 && code < 0x80 && len > 1) add(w[1]);
+		p += 4 + len * 4;
+	}
+	if (lo_x > hi_x) return false;
+	x = (lo_x + hi_x) / 2; y = (lo_y + hi_y) / 2;
+	return true;
+}
 template<int N> static uint32_t __cdecl s_sprite(uint32_t ws, uint32_t ot, uint32_t shift, uint32_t cursor)
 {
 	const uint32_t at = SPRITE_INITS[N];
-	if (g_rec && !IsBadReadPtr((void *)ws, 6))
-		g_sprites.push_back({ *(const uint32_t *)0x1CA8828, *(const uint32_t *)ws, *(const int16_t *)(ws + 4) });
+	const bool noted = g_rec && !IsBadReadPtr((void *)ws, 6);
+	if (noted)
+		g_sprites.push_back({ *(const uint32_t *)0x1CA8828, *(const uint32_t *)ws, *(const int16_t *)(ws + 4), false, 0, 0 });
 	unpatch(at);
 	uint32_t r = ((uint32_t (__cdecl *)(uint32_t, uint32_t, uint32_t, uint32_t))at)(ws, ot, shift, cursor);
 	repatch(at);
+	if (noted)
+	{
+		SpriteDraw &s = g_sprites.back();
+		s.placed = packets_box(cursor, r, s.x, s.y);
+	}
 	return r;
 }
 template<int... N> static void patch_sprites(std::integer_sequence<int, N...>) { (patch_jmp(SPRITE_INITS[N], (void *)s_sprite<N>), ...); }
@@ -371,7 +412,9 @@ static void write_tick(int t)
 	for (const Ins &r : drawn) write_packet(r.fn, r.bucket, r.pkt, r.part);
 	const int16_t *eye = (const int16_t *)0xB8B7F0, *at = (const int16_t *)0xB8B7F8;
 	fprintf(g_out, "C %d %d %d %d %d %d %d\n", t, eye[0], eye[1], eye[2], at[0], at[1], at[2]);
-	for (const SpriteDraw &s : g_sprites) fprintf(g_out, "Q %d %d %X %d\n", t, part_at(s.node), s.seq, s.frame);
+	for (const SpriteDraw &s : g_sprites)
+		if (s.placed) fprintf(g_out, "Q %d %d %X %d %d %d\n", t, part_at(s.node), s.seq, s.frame, s.x, s.y);
+		else fprintf(g_out, "Q %d %d %X %d\n", t, part_at(s.node), s.seq, s.frame);
 }
 
 // ---------------------------------------------------------------- battle memory

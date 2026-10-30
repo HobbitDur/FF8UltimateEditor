@@ -17,8 +17,8 @@ import os
 import subprocess
 import tempfile
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QImage, QPainter, QPixmap
+from PyQt6.QtCore import QPointF, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap, QPolygonF
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                              QSizePolicy, QSlider, QSpinBox, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
@@ -28,6 +28,7 @@ from Fujin.partsequences import PartSequences, SequenceField
 from Fujin.recorderbuild import FFNX_EFFECTS, RECORDER
 
 PREVIEW_WIDTH = 320                 # the part preview's picture width (pixels)
+PATH_COLOUR = QColor(190, 90, 255, 200)     # the part's sprite paths
 TICKS_PER_SECOND = 15
 
 _SCHEMAS = {}                       # (recorder build, effect) -> schema or None
@@ -159,6 +160,12 @@ class PartPreview(QWidget):
         self.reference.setToolTip("Draw the effect's target too, as a reference for where the part goes (as "
                                   "last drawn when the effect hides it, as Cure does while redrawing it)")
         self.reference.toggled.connect(self._reference_toggled)
+        self.path = QCheckBox("Path")
+        self.path.setChecked(True)
+        self.path.setToolTip("Where each sprite of the part goes over the whole effect: a thin purple line from "
+                             "where it is drawn one tick to where it is drawn the next, a dot where it appears")
+        self.path.toggled.connect(lambda _on: self._redraw())
+        self._paths = {}                                # id(recording) -> its sprite paths for this part
         self.timer = QTimer(self)
         self.timer.setInterval(int(1000 / TICKS_PER_SECOND))
         self.timer.timeout.connect(lambda: self.slider.setValue((self.slider.value() + 1) % (self.slider.maximum() + 1)))
@@ -190,6 +197,7 @@ class PartPreview(QWidget):
         controls.addWidget(self.play_button)
         controls.addWidget(self.slider, 1)
         controls.addWidget(self.frame_label)
+        controls.addWidget(self.path)
         controls.addWidget(self.reference)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -215,7 +223,10 @@ class PartPreview(QWidget):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self._frames = {}                       # drawn at the picture's size: again at the new one
+        self._redraw()                          # drawn at the picture's size: again at the new one
+
+    def _redraw(self):
+        self._frames = {}
         self._show(self.slider.value())
 
     def set_reference(self, on):
@@ -241,7 +252,7 @@ class PartPreview(QWidget):
     def refresh(self, again=False):
         """A new lab recording (or none): frame the part on it again (again: the values changed, the
         compared recording is made again with them)."""
-        self._frames, self._view = {}, None
+        self._frames, self._view, self._paths = {}, None, {}
         cast = self.runner.cast()
         body = cast.slots.get(cast.target, (None, None))[0]
         self.reference.setText(f"Target ({os.path.basename(body)})" if body else "Target")
@@ -286,8 +297,31 @@ class PartPreview(QWidget):
         image, _gpu = recording.frame(tick, view=self._view, scale=scale, renderer=self.renderer(),
                                       parts=self.shown_parts(), under=under)
         height, width = image.shape[:2]
-        return QPixmap.fromImage(QImage(image.tobytes(), width, height, width * 3,
-                                        QImage.Format.Format_RGB888).copy())
+        pixmap = QPixmap.fromImage(QImage(image.tobytes(), width, height, width * 3,
+                                          QImage.Format.Format_RGB888).copy())
+        if self.path.isChecked():
+            self._draw_paths(pixmap, recording, scale)
+        return pixmap
+
+    def _draw_paths(self, pixmap, recording, scale):
+        """The part's sprite paths over the whole effect (fxdump.sprite_paths) on its picture."""
+        if id(recording) not in self._paths:
+            self._paths[id(recording)] = recording.sprite_paths(self.part_ids)
+        x, y = self._view[0], self._view[1]
+        point = lambda px, py: QPointF((px - x) * scale, (py - y) * scale)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        pen = QPen(PATH_COLOUR, 1)
+        pen.setCosmetic(True)
+        painter.setPen(pen)
+        for path in self._paths[id(recording)]:
+            if len(path) > 1:
+                painter.drawPolyline(QPolygonF([point(px, py) for _tick, px, py in path]))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(PATH_COLOUR)
+        for path in self._paths[id(recording)]:
+            painter.drawEllipse(point(path[0][1], path[0][2]), 1.8, 1.8)
+        painter.end()
 
     def _show(self, tick):
         recording = self.runner.recording

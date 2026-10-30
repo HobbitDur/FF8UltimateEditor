@@ -165,7 +165,12 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   (`actors=2`: no party, no cast) and each primitive tagged with the part that drew it
   (`FX_PART`, nothing in the game's build; untagged = part 0 = the target). Each preview's
   **Target** box adds the target (its file named on the box) as a reference, in every tab at
-  once. A part that draws nothing (Cure's Emitter: when the sound plays, when the HP are given)
+  once. The **Path** box (on by default) draws where each sprite of the part goes over the whole
+  effect: a thin purple line from where it is drawn one tick to where it is drawn the next, a dot
+  where it appears (Cure's ring: its helix, 8 ticks a turn; its sparkles: one line each, their
+  dots on the ring's places). The recorder writes each sprite's screen middle on its Q line and
+  `EffectRecording.sprite_paths` joins a tick's sprites to the last tick's nearest ones of the
+  same part, sequence and next frame (the recording does not say which particle drew one). A part that draws nothing (Cure's Emitter: when the sound plays, when the HP are given)
   shows the whole effect with its ticks marked under the picture. An edit records again; the
   Overview's preview runs the port with the edited parameters too. Save writes them as
   `effect_NNN.fxparams` (JSON, only the values not at the game's) into the export folder, with

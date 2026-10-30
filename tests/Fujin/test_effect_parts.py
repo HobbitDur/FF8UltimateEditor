@@ -123,6 +123,18 @@ def test_cure_part_tabs_edit_preview_and_save(qapp, tmp_path):
     assert all(tab.preview.reference.isChecked() for tab in fujin.part_tabs)
     assert ring.preview.shown_parts() == {0, 1} and ring.preview.picture.pixmap().toImage() != alone
     ring.preview.reference.setChecked(False)
+    # the paths: the ring is one sprite from tick 3 on (its ending flipbook too); a sparkle is born
+    # at each of the ring's 4 places per tick, ticks 1-16 of the ring, and lives 9 ticks (frames 0-8)
+    ring_paths = recording.sprite_paths({1})
+    assert len(ring_paths) == 1 and ring_paths[0][0][0] == 3 and len(ring_paths[0]) > 20
+    sparkle_paths = recording.sprite_paths({4})
+    assert len(sparkle_paths) == 64 and all(len(path) == 9 for path in sparkle_paths)
+    ring.preview.slider.setValue(5)
+    with_path = ring.preview.picture.pixmap().toImage()
+    ring.preview.path.setChecked(False)
+    assert ring.preview.picture.pixmap().toImage() != with_path
+    ring.preview.path.setChecked(True)
+    assert ring.preview.picture.pixmap().toImage() == with_path
     # the emitter draws nothing: its tab shows the whole effect, the sound and heal ticks marked
     emitter = next(tab for tab in fujin.part_tabs if tab.part["key"] == "emitter")
     assert emitter.preview.part_ids == {1, 2, 3, 4, 5, 6}

@@ -12,8 +12,9 @@ second); its "between" dump lists, per real tick:
     C t ex ey ez ax ay az the battle camera after the tick (eye, look-at)
     V t x y w h hexwords  (vram=1) a VRAM upload the tick queued: a w x h rectangle at (x, y)
     B t x y w h u v       (vram=1) a VRAM-to-VRAM copy the tick queued
-    Q t part seq frame    (Tools/fxrecorder) a sprite the tick drew: the effect part, its sprite
-                          sequence's address (hex) and frame (FF8GameData/psxgpu/spritesequence.py)
+    Q t part seq frame [x y]  (Tools/fxrecorder) a sprite the tick drew: the effect part, its sprite
+                          sequence's address (hex) and frame (FF8GameData/psxgpu/spritesequence.py),
+                          the middle of its packets' screen box (packet units)
 
 Other blocks (H, Z, O: 30 fps held frames; S: spawned tasks) are skipped. The packets are drawn in
 reverse insertion order within an OT bucket and buckets from the highest address down, the
@@ -34,6 +35,7 @@ class EffectTick:
     uploads: list = field(default_factory=list)     # [("V", x, y, w, h, words) | ("B", x, y, w, h, u, v)]
     ordered: bool = False   # the packets are in draw order already ("R t n ordered": the recorder's walk)
     sprites: list = field(default_factory=list)     # [(part, sequence address, frame)] drawn (Q lines)
+    places: list = field(default_factory=list)      # per sprite: its screen middle (x, y), or None
 
     def part_packets(self, parts=None):
         """The packets of these effect parts (all of them for None)."""
@@ -92,6 +94,36 @@ class EffectRecording:
         drawing = [index for index, tick in enumerate(self.ticks) if part in tick.parts]
         before = [index for index in drawing if index <= tick_index]
         return before[-1] if before else drawing[0] if drawing else None
+
+    def sprite_paths(self, parts):
+        """Where each sprite of these effect parts goes, tick after tick: [[(tick, x, y), ...]], one
+        list per sprite (screen middles of the Q lines). A recording does not say which particle drew
+        a sprite, so a tick's sprites are joined to the last tick's nearest ones of the same part
+        that can be them: same sequence, same frame or the next one (a part drawing one sprite may
+        also switch its sequence, as Cure's ring its ending flipbook)."""
+        paths, last = [], []                                # last: [(part, seq, frame, x, y, path)]
+        for tick in self.ticks:
+            now = [(part, seq, frame, *place) for (part, seq, frame), place in zip(tick.sprites, tick.places)
+                   if part in parts and place is not None]
+            alone = {part for part in parts if sum(1 for s in now if s[0] == part) == 1
+                     and sum(1 for s in last if s[0] == part) == 1}
+            pairs = sorted(((s[3] - a[3]) ** 2 + (s[4] - a[4]) ** 2, i, j)
+                           for i, s in enumerate(now) for j, a in enumerate(last)
+                           if s[0] == a[0] and (s[0] in alone or s[1] == a[1] and s[2] - a[2] in (0, 1)))
+            joined, taken, following = {}, set(), []
+            for _distance, i, j in pairs:
+                if i not in joined and j not in taken:
+                    joined[i] = last[j][5]
+                    taken.add(j)
+            for i, sprite in enumerate(now):
+                path = joined.get(i)
+                if path is None:
+                    path = []
+                    paths.append(path)
+                path.append((tick.index, sprite[3], sprite[4]))
+                following.append((*sprite, path))
+            last = following
+        return paths
 
     def frame(self, tick_index, vram=None, view=None, scale=1.0, renderer=None, parts=None, under=None):
         """The RGB image of tick `tick_index` and the Gpu that drew it (its missing_pages / counts).
@@ -188,8 +220,9 @@ def parse_recording(lines, effect_id=None) -> EffectRecording:
             values = tuple(int(value) for value in parts[2:8])
             by_index.setdefault(index, EffectTick(index)).camera = (values[:3], values[3:])
         elif kind == "Q" and len(parts) >= 5:
-            by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).sprites.append(
-                (int(parts[2]), int(parts[3], 16), int(parts[4])))
+            tick = by_index.setdefault(int(parts[1]), EffectTick(int(parts[1])))
+            tick.sprites.append((int(parts[2]), int(parts[3], 16), int(parts[4])))
+            tick.places.append((int(parts[5]), int(parts[6])) if len(parts) >= 7 else None)
         elif kind == "V" and len(parts) >= 7:
             index, x, y, w, h = (int(value) for value in parts[1:6])
             upload = ("V", x, y, w, h, _hex_words(parts[6]))
