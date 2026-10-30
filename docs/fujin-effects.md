@@ -168,7 +168,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   their rolls), a click goes there, and the bar says which parts change when
   (`FF8GameData/psxgpu/fxdiff.py`). The **Target** box draws the target as last drawn when the
   effect hides it (Cure hides it while its Overlay redraws it), merged by depth with the part, both
-  framed together. While comparing, under the slider and part of it, one row per part lit at
+  framed together. The **Textures** tab's **Used by the effect** box dims what the effect's recording
+  never draws from each TIM and outlines the pieces it does, saying how much of the picture and which
+  palette rows (a TIM may be shared: Cure uses 13 pieces, 22% of mag000-049.tim). While comparing, under the slider and part of it, one row per part lit at
   the ticks it draws differently (the tab's own red, others amber, "no change" greyed); a click or
   a drag moves the slider. The rows and the images / sequences / life fold away (a click on their
   title, every part tab at once) to give the preview room.

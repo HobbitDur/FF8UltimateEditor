@@ -24,6 +24,7 @@ from Fujin.effectresourceview import EffectResourceView
 from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
 from Fujin.texturepictureview import TexturePictureView, TimTexture, sheet_in_tim, tim_blocks
+from FF8GameData.psxgpu.texuse import texture_sheets
 from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults as schema_defaults, effect_schema,
                                recorder_has_ports)
 from Fujin.nativepreview import NativePreviewView, gl_renderer
@@ -172,6 +173,10 @@ class FujinWidget(QWidget):
         self.object_view = MagObjectView(self.file_registry)
         self.models = EffectResourceView("models", self.resolve, self.object_view, "3D view")
         self.textures = EffectResourceView("textures", self.resolve, TexturePictureView(self.file_registry), "Textures")
+        self.textures.panel.uses_provider = self._texture_uses     # what the effect draws from each TIM
+        self._sheets = (None, [])                                    # (recording, its texture sheets)
+        self.lab.recording_changed.connect(self.textures.panel.refresh_uses)
+        self.native_preview.recording_changed.connect(self.textures.panel.refresh_uses)
         self.sound_panel = SoundPanel(self.file_registry)
         self.sound = EffectResourceView("sound", self.resolve, self.sound_panel, "Sounds and vibration")
         self.tabs.addTab(self.models, "Models / animation")
@@ -857,6 +862,28 @@ class FujinWidget(QWidget):
                         self.textures.panel.outline(index, found[0], found[1], label)
                     return name, show
         return None
+
+    def _texture_uses(self, manager):
+        """({TIM index: (rects, palette rows)}, note) of what the effect's recording draws from the
+        TIMs of `manager` (a part tab's recording, else the Overview's), None without one."""
+        recording = self.lab.recording or self.native_preview.recording
+        if recording is None or not recording.ticks or manager is None:
+            return None
+        if self._sheets[0] is not recording:
+            parts = {part for tick in recording.ticks for part in tick.parts} - {0}
+            self._sheets = (recording, texture_sheets(recording, parts or None))
+        uses = {}
+        for index, (offset, _section) in enumerate(tim_blocks(manager)):
+            texture = TimTexture(manager, offset)
+            rects, rows = set(), set()
+            for sheet in self._sheets[1]:
+                found = sheet_in_tim(texture, sheet.x, sheet.y, sheet.depth, sheet.clut_xy, sheet.all_pieces())
+                if found:
+                    rows.add(found[0])
+                    rects.update(found[1])
+            uses[index] = (sorted(rects), rows)
+        source = "a part tab's recording" if recording is self.lab.recording else "the Overview's recording"
+        return uses, f"From {source}: dimmed what the effect never draws from, outlined the pieces it does"
 
     def _part_reference(self, on):
         """A part preview's Target box: the same for every part tab."""

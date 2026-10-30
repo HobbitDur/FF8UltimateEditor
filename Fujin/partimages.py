@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QScrollAre
 
 from FF8GameData.psxgpu.texuse import DEPTH_NAMES, named_sheet, sheet_rgba, texture_sheets
 
-SHEET_HEIGHT = 200                  # an image's height on screen (pixels), its width keeping the ratio
+SHEET_HEIGHT = 160                  # an image's height on screen (pixels), its width keeping the ratio
 TAKEN = QColor(255, 200, 40)        # a piece the part takes during the effect
 NOW = QColor(40, 220, 255)          # a piece it draws at the preview's tick
 NAMED = QColor(255, 80, 220)        # an image the part's values name (dashed)

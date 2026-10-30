@@ -19,7 +19,7 @@ import struct
 import numpy as np
 from PIL import Image
 from PyQt6.QtCore import Qt, QSignalBlocker, pyqtSignal
-from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap
+from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap, QRegion
 from PyQt6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QFrame, QGroupBox, QHBoxLayout, QInputDialog,
                              QLabel, QMenu, QMessageBox, QPushButton, QScrollArea, QSpinBox, QVBoxLayout,
                              QWidget)
@@ -35,6 +35,7 @@ MAG_TEXTURE_NOTE = ("A MAG file's textures are raw VRAM blocks: their size and c
                     "this tab's Sections). Choreography's 3D playback draws the GF summons' textures.")
 PNG_FILTER = "PNG image (*.png)"
 OUTLINE = QColor(255, 200, 40)          # pieces a Choreography part tab points at
+USED = QColor(70, 200, 255)             # pieces the effect's recording draws from
 VRAM_WIDTH, VRAM_HEIGHT = 1024, 512     # PlayStation video memory, in 16-bit units
 STP = 0x8000
 STP_HELP = ('Semi-transparent: the colour is blended with what is behind it when the effect draws the '
@@ -333,6 +334,7 @@ class _TimCard(QGroupBox):
         self.swatches.clicked.connect(self._pick_colour)
         self.colour = None                  # (row, index) of the clicked swatch
         self.outline = None                 # (label, [(u0, v0, u1, v1)]): pieces a part tab points at
+        self.uses = None                    # (rects, palette rows): what the effect draws from it, None: unknown
         self.colour_info = QLabel("Click a colour of the palette.")
         self.colour_info.setWordWrap(True)
         self.semi = QCheckBox("Semi-transparent")
@@ -425,6 +427,23 @@ class _TimCard(QGroupBox):
         canvas = _checker(width * zoom, height * zoom)
         painter = QPainter(canvas)
         painter.drawImage(canvas.rect(), _qimage(rgba))
+        if self.uses is not None:
+            rects, rows = self.uses
+            # what the effect never draws from, dimmed; what it does, outlined
+            used = QRegion()
+            for u0, v0, u1, v1 in rects:
+                used = used.united(QRegion(u0 * zoom, v0 * zoom, (u1 - u0) * zoom, (v1 - v0) * zoom))
+            painter.setClipRegion(QRegion(canvas.rect()).subtracted(used))
+            painter.fillRect(canvas.rect(), QColor(0, 0, 0, 170))
+            painter.setClipping(False)
+            painter.setPen(QPen(USED, 1))
+            for u0, v0, u1, v1 in rects:
+                painter.drawRect(u0 * zoom, v0 * zoom, (u1 - u0) * zoom - 1, (v1 - v0) * zoom - 1)
+            area = self._used_share(rects, width, height)
+            palettes = (" with palette rows " + ", ".join(str(r) for r in sorted(rows))) if rows and self.rows else ""
+            self.info.setText(self.info.text() + (f" · used by the effect: {len(rects)} pieces, {area:.0f}% of the "
+                                                  f"picture{palettes} (the rest dimmed)" if rects else
+                                                  " · the effect draws nothing from it (dimmed)"))
         if self.outline:
             label, rects = self.outline
             painter.setPen(QPen(OUTLINE, 2))
@@ -465,6 +484,14 @@ class _TimCard(QGroupBox):
                 painter.drawRect(0, top - 1, PER_LINE * SWATCH + 1, lines * SWATCH + 1)
         painter.end()
         self.swatches.setPixmap(QPixmap.fromImage(strip))
+
+    @staticmethod
+    def _used_share(rects, width, height):
+        """How much of the picture the rectangles cover, in %."""
+        covered = np.zeros((height, width), bool)
+        for u0, v0, u1, v1 in rects:
+            covered[max(0, v0):max(0, v1), max(0, u0):max(0, u1)] = True
+        return 100 * covered.mean() if covered.size else 0
 
     def _swatch_layout(self):
         colours = len(self.rows[0])
@@ -608,6 +635,15 @@ class TexturePictureView(QWidget):
         super().__init__(parent)
         self.registry = registry
         self.cards = []
+        self.manager = None
+        # uses_provider(manager) -> ({TIM index: (rects, palette rows)}, note) or None: what the
+        # effect's recording draws from each TIM of the file (Fujin sets it)
+        self.uses_provider = None
+        self.used = QCheckBox("Used by the effect")
+        self.used.setChecked(True)
+        self.used.setToolTip("Dim what the effect never draws from and outline the pieces it does, from its "
+                             "recording (an image may be shared by several effects: each uses its own part)")
+        self.used.toggled.connect(lambda _on: self.refresh_uses())
         self.zoom = QComboBox()
         for label, value in ZOOMS:
             self.zoom.addItem(label, value)
@@ -618,6 +654,7 @@ class TexturePictureView(QWidget):
         top = QHBoxLayout()
         top.addWidget(QLabel("Zoom:"))
         top.addWidget(self.zoom)
+        top.addWidget(self.used)
         top.addWidget(self.note, 1)
         self.content = QWidget()
         self.content_layout = QVBoxLayout(self.content)
@@ -634,6 +671,7 @@ class TexturePictureView(QWidget):
     def set_manager(self, manager):
         """Draw the pictures of a file (EffectResourceView calls it with the selected source)."""
         rows = [card.palette.currentIndex() for card in self.cards]
+        self.manager = manager
         for card in self.cards:
             card.hide()                 # gone at once, not when the deferred delete runs
             card.deleteLater()
@@ -655,6 +693,20 @@ class TexturePictureView(QWidget):
             self.note.setText(MAG_TEXTURE_NOTE)
         else:
             self.note.setText("No picture: no file with textures is imported for this effect.")
+        self.refresh_uses()
+
+    def refresh_uses(self):
+        """Show what the effect draws from each TIM (uses_provider), or nothing when the box is off."""
+        found = self.uses_provider(self.manager) if self.uses_provider and self.used.isChecked() and self.cards else None
+        uses, note = found if found else ({}, "")
+        self.used.setToolTip(note or self.used.toolTip())
+        for index, card in enumerate(self.cards):
+            card.uses = uses.get(index, ([], set())) if found else None
+            rows = card.uses[1] if card.uses else set()
+            if rows and card.row not in rows and min(rows) < card.palette.count():
+                card.palette.setCurrentIndex(min(rows))         # drawn with a palette it uses (redraws)
+            else:
+                card._draw()
 
     def outline(self, index, row, rects, label):
         """Show TIM `index` with palette `row`, the pieces a part takes outlined (Choreography's

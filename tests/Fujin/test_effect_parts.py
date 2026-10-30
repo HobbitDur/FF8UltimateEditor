@@ -334,7 +334,19 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     assert tabs["sparkles"].below_fold.is_folded() and ring.below.isHidden()
     ring.below_fold.header.click()
     assert not tabs["sparkles"].below_fold.is_folded()
+    # a part tab fits 1080p, comparing or not (the preview takes what room is left)
+    ring.probe("ring.radius")
+    assert ring.minimumSizeHint().height() <= 560
     ring.preview.stop_compare()
+    assert ring.minimumSizeHint().height() <= 560
+    # Textures: what the effect draws from its TIM, the rest dimmed (it shares the TIM with others)
+    fujin.textures.activate()
+    card = fujin.textures.panel.cards[0]
+    rects, rows = card.uses
+    assert len(rects) == 13 and rows == {0, 1} and "22% of the picture" in card.info.text()
+    fujin.textures.panel.used.setChecked(False)
+    assert card.uses is None
+    fujin.textures.panel.used.setChecked(True)
     # a group's compare: all its values at once - the radius twice as large, its cap too
     ring.probe("ring.radius.den")                                # a grouped field probes its group
     others = {key: spin.value() for key, spin in ring.preview.compare_spins.items()}

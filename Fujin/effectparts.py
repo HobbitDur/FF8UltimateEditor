@@ -145,7 +145,7 @@ class ChangeRows(QWidget):
     never changes greyed "no change"), its cells under the slider's own tick positions, the slider's
     tick a line across them; a click or a drag moves the slider. mine: the ticks the tab's parts
     change at."""
-    ROW = 16
+    ROW = 13
 
     def __init__(self, slider):
         super().__init__()
@@ -193,6 +193,7 @@ class ChangeRows(QWidget):
         left, step = self._track()
         names = int(left - step / 2 - 6)
         font = painter.font()
+        font.setPixelSize(self.ROW - 2)
         for index, (name, ticks, own) in enumerate(self.rows):
             y = index * self.ROW
             font.setBold(own)
@@ -205,7 +206,7 @@ class ChangeRows(QWidget):
             if not ticks:
                 small = QFont(font)
                 small.setBold(False)
-                small.setPixelSize(self.ROW - 5)
+                small.setPixelSize(self.ROW - 3)
                 painter.setFont(small)
                 painter.setPen(QColor(170, 170, 175))
                 painter.drawText(QRectF(track.left() + 4, y, track.width(), self.ROW),
@@ -264,25 +265,23 @@ class PartPreview(QWidget):
         self.compare_spins = {}                         # key -> its other value (FieldSpin)
         self.compare_values = QHBoxLayout()
         self.compare_note = QLabel()
-        self.compare_note.setWordWrap(True)
         done = QPushButton("Done")
         done.setToolTip("Stop comparing")
         done.clicked.connect(self.stop_compare)
         self.compare_bar = QWidget()
-        # long texts wrap: the bar never widens the window
+        # one line each, cut at the edge (no word wrap: its height-for-width made the tab ask far more
+        # height than it uses), the bar never widening the window; the whole text as a tooltip
         for label in (self.compare_title, self.compare_note, self.caption, self.caption_b):
-            label.setWordWrap(True)
-            label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+            label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+        # two lines: what is compared and the other values, then what changes
         top = QHBoxLayout()
         top.addWidget(self.compare_title, 1)
+        top.addLayout(self.compare_values)
         top.addWidget(done)
-        values = QHBoxLayout()
-        values.addLayout(self.compare_values)
-        values.addStretch(1)
         bar = QVBoxLayout(self.compare_bar)
         bar.setContentsMargins(0, 0, 0, 0)
+        bar.setSpacing(2)
         bar.addLayout(top)
-        bar.addLayout(values)
         bar.addWidget(self.compare_note)
         self.compare_bar.hide()
         pictures = QHBoxLayout()
@@ -305,6 +304,9 @@ class PartPreview(QWidget):
         self.changes = Collapsible("What changes, part by part", self.strip)
         self.changes.hide()
         layout.addWidget(self.changes)
+        # the pictures take what room is left (their preferred size is no minimum: the tab fits 1080p)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
+        self.setMinimumHeight(PREVIEW_WIDTH * 7 // 20 + 40)
         # a method, not a lambda: Qt drops the connection with the preview (a part tab is rebuilt
         # for another effect, the runner stays)
         runner.recording_changed.connect(self._recording_changed)
@@ -586,6 +588,7 @@ class PartPreview(QWidget):
         if len(base.ticks) != len(self.variant.ticks):
             note += f" - lasts {len(self.variant.ticks)} ticks instead of {len(base.ticks)}"
         self.compare_note.setText(note)
+        self.compare_note.setToolTip(note)
         self.refresh()
         first = min((t for e in mine for t in e["ticks"]), default=None)
         if first is not None:
