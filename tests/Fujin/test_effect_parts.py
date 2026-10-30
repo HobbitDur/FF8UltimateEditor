@@ -266,6 +266,9 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     ring.spins["ring.ending.frames"].setValue(8)
     assert ring.spins["ring.ending.frames"].value() == 4 and "last frame 4" in ring.spins["ring.ending.frames"].raw_label.text()
     assert tabs["sparkles"].spins["sparkle.frames"].box.maximum() == 26
+    ring.probe("ring.ending")                                    # the compare keeps the form's limits
+    assert ring.preview.compare_spins["ring.ending.frames"].limits() == (0, 4)
+    ring.preview.stop_compare()
     # values edited together share a box and one compare: the ring radius (times, divided by, at most)
     assert ring.group_of("ring.radius.max")["label"] == "Radius"
     assert ring.labels["ring.radius.num"].parent().title() == "Radius"

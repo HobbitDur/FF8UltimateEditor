@@ -492,6 +492,10 @@ class FieldSpin(QWidget):
     def value(self):
         return self._raw
 
+    def limits(self):
+        """(lowest, highest) raw value."""
+        return self._range
+
     def setRange(self, low, high):
         self._range = (low, high)
         self.box.blockSignals(True)
@@ -680,6 +684,9 @@ class PartTab(QWidget):
         values as they are."""
         group = self.groups.get(key) or self.group_of(key)
         fields = self.group_fields(group["key"]) if group else [f for f in self.fields if f["key"] == key]
+        # the form's limits (a frames field: its sequence's last frame), not only the port's
+        fields = [dict(field, min=self.spins[field["key"]].limits()[0], max=self.spins[field["key"]].limits()[1])
+                  if isinstance(self.spins[field["key"]], FieldSpin) else field for field in fields]
         values = {field["key"]: self.spins[field["key"]].value() for field in fields}
         clamp = lambda field, value: max(field["min"], min(field["max"], value))
         if any(values[field["key"]] != field["default"] for field in fields):
