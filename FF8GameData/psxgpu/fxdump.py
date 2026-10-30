@@ -18,6 +18,7 @@ second); its "between" dump lists, per real tick:
     N t slot amount flags hit  (Tools/fxrecorder) an action result the effect gave a target: the
                           battle then shows its number (BattleFx_DamageNumbers_Spawn)
     S t address           (Tools/fxrecorder) a sound the effect played: its sound block's address
+    M t value name        (Tools/fxrecorder) a value the port measured (FX_NOTE: the target's size...)
 
 Other blocks (H, Z, O: 30 fps held frames; S: spawned tasks) are skipped. The packets are drawn in
 reverse insertion order within an OT bucket and buckets from the highest address down, the
@@ -41,6 +42,7 @@ class EffectTick:
     places: list = field(default_factory=list)      # per sprite: its screen middle (x, y), or None
     results: list = field(default_factory=list)     # [(target slot, amount, result flags, hit type)] given (N lines)
     sounds: list = field(default_factory=list)      # [sound block address] played (S lines)
+    notes: list = field(default_factory=list)       # [(name, value)] the port measured (M lines)
 
     def part_packets(self, parts=None):
         """The packets of these effect parts (all of them for None)."""
@@ -113,6 +115,10 @@ class EffectRecording:
             return None
         xs, ys = [x for x, _y in points], [y for _x, y in points]
         return min(xs), min(ys), max(xs), max(ys)
+
+    def notes(self, name):
+        """[(tick index, value)] the port noted under `name` (M lines: the target's radius...)."""
+        return [(index, value) for index, tick in enumerate(self.ticks) for noted, value in tick.notes if noted == name]
 
     def last_drawing(self, tick_index, part):
         """The tick at or before `tick_index` (else the first after it) that drew effect part
@@ -252,6 +258,9 @@ def parse_recording(lines, effect_id=None) -> EffectRecording:
             tick.places.append((int(parts[5]), int(parts[6])) if len(parts) >= 7 else None)
         elif kind == "N" and len(parts) >= 6:
             by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).results.append(tuple(int(v) for v in parts[2:6]))
+        elif kind == "M" and len(parts) >= 4:
+            name = line.split(None, 3)[3].strip()
+            by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).notes.append((name, int(parts[2])))
         elif kind == "S" and len(parts) >= 3:
             by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).sounds.append(int(parts[2], 16))
         elif kind == "V" and len(parts) >= 7:

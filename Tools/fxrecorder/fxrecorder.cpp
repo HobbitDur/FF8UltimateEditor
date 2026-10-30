@@ -21,6 +21,7 @@
 //   B t x y w h u v               a VRAM-to-VRAM copy
 //   N t slot amount flags hit    an action result the effect gave a target (its number then shows)
 //   S t address                   a sound it played (its sound block in memory)
+//   M t value name                a value the port measured then (FX_NOTE, effect lab builds)
 //   Q t part sequence frame [x y] a sprite the tick drew: its sprite sequence (address, hex) and
 //                                 frame, the effect part drawing it (FF8GameData/psxgpu/spritesequence.py),
 //                                 the middle of its packets' screen box (packet units)
@@ -311,6 +312,9 @@ static void __cdecl s_45C8E0(uint32_t a, uint32_t b) { INS_WRAP(0x45C8E0, uint32
 static std::vector<std::pair<uint32_t, int>> g_part_marks;
 #ifdef FF8_FX_LAB
 namespace ff8fx { void fx_part(int id) { g_part_marks.push_back({ *(const uint32_t *)0x1CA8828, id }); } }
+// values a port measures (FX_NOTE: the target's size, the radius it takes...): M lines, with their tick
+static std::vector<std::pair<std::string, int32_t>> g_notes;
+namespace ff8fx { void fx_note(const char *name, int32_t value) { if (g_rec) g_notes.push_back({ name, value }); } }
 #endif
 static int part_at(uint32_t node)
 {
@@ -438,6 +442,7 @@ static void write_tick(int t)
 	for (const BattleEvent &e : g_events)
 		if (e.kind == 'N') fprintf(g_out, "N %d %u %u %u %u\n", t, e.a, e.b, e.c, e.d);
 		else fprintf(g_out, "S %d %X\n", t, e.a);
+	for (const auto &n : g_notes) fprintf(g_out, "M %d %d %s\n", t, n.second, n.first.c_str());
 }
 
 // ---------------------------------------------------------------- battle memory
@@ -1203,7 +1208,7 @@ int main(int argc, char **argv)
 				*(int16_t *)0x1D977A2 = 0;
 				call0(0x5033E0);
 			}
-			g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear();
+			g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear(); g_notes.clear();
 			g_rec = true;
 			render_actors();
 			g_rec = false;
@@ -1229,7 +1234,7 @@ int main(int argc, char **argv)
 		dump_vram_queue();                 // uploads queued by the setup / the loads applied before this tick
 		env_reset();
 		set_camera(t - cast_ticks);
-		g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear();
+		g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear(); g_notes.clear();
 		g_rec = true;
 		int r = 0;
 		step_plan();
