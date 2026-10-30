@@ -178,6 +178,21 @@ Potion's description is the same with its own sequences and sound.
    4) has to load them, the same way as the camera files.
 3. **Split the heal ring into the libraries above** (behaviours, renderers, inputs), each with a
    stable interface, Cure rebuilt from them in C++. Check: port tests.
+   *Done (FFNx 26bea9eb):*
+   - `fx_parts.h`: the effect library's node header and calls; the inputs (target anchor, bounds
+     bottom / radius / height, caster bones); behaviours (`FlipbookExpired`, `Drift`,
+     `RollVelocity`, `OnCircle`, `HelixPlace`, `FadingGrey`); renderers (`DrawSprite`,
+     `DrawGroundFlipbook`, `SpawnGlint`). Each takes plain values, not a module's nodes or memory.
+   - `fx_overlay.h`: the projector overlay renderer, its look (colour, distance, back faces)
+     passed in.
+   - `mag_heal_ring_code.h`: `HealRing<Layout>`, the heal-ring module written once from those
+     pieces. A `Layout` says where one copy is: its original functions, its exe data, its memory.
+     `mag001_cure.cpp` and `mag050_potion.cpp` are now only their layouts (about 2,300 lines of
+     duplicated code gone). Recordings of both stay identical to the original's.
+   - What is still code in the module: the phase order of each task, which part spawns which,
+     and which input feeds which value. That is what the description (step 4) has to carry.
+   - The True30FPS branch's per-module 30 fps memos (`mag001_cure_held.inc`...) have to follow
+     the template when that branch takes this one.
 4. **The description format and its loader**, and the runtime that builds an effect from it. Check:
    Cure and Potion from their descriptions alone pass the port tests.
 5. **Hypnotize** through the same path, adding what its parts need to the libraries. This measures
