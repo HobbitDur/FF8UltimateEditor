@@ -4,7 +4,8 @@ builds it when it starts, in the background, whenever it is missing or older tha
 (a fresh clone, a pull that changed it, FFNx's effect sources updated), with the local Visual
 Studio C++ tools (Tools/fxrecorder/build.bat). The effect preview waits for it and says why when it
 cannot be built. FFNx's effect sources (ExternalTools/FFNx/fx, the updater's FFNxEffects) are
-built in when present: the effects' C++ ports and their parameters (Choreography's part tabs).
+built in when present: the effects' C++ ports and their parameters (Choreography's part tabs). The
+same build makes FujinEffects.dll (Tools/fxhost), which Save ships with the effects' programs.
 """
 import subprocess
 import sys
@@ -16,7 +17,12 @@ from Common.apppaths import app_path
 
 FOLDER = app_path("Tools", "fxrecorder")
 RECORDER = FOLDER / "fxrecorder.exe"
-SOURCES = (FOLDER / "fxrecorder.cpp", FOLDER / "build.bat")
+# the effect runtime both run (Tools/fxhost): the recorder for program=, FujinEffects.dll in the game
+# (the recorder's build.bat builds it too, with FFNx's effect sources)
+HOST_FOLDER = app_path("Tools", "fxhost")
+HOST_DLL = HOST_FOLDER / "FujinEffects.dll"
+SOURCES = (FOLDER / "fxrecorder.cpp", FOLDER / "build.bat", HOST_FOLDER / "fxprogram.h", HOST_FOLDER / "fxhost.cpp",
+           HOST_FOLDER / "build.bat")
 FFNX_EFFECTS = app_path("ExternalTools", "FFNx", "fx")     # FFNx's effect sources (the updater)
 NO_COMPILER = 9009                  # build.bat's exit code when no Visual Studio C++ tools are found
 

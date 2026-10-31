@@ -48,7 +48,9 @@
 // lines, the port's parameters (fx_params.h) instead of the game's] [schema=<file>: write the
 // effect's parameter table as JSON and stop - no exe needed] [program=<file>: the effect run from
 // its description (Fujin/effectprogram.py compiles it, Tools/fxhost/fxprogram.h runs it), params=
-// setting its parameters; it stands in for the exe's functions it names, or takes the effect's slot]. Each primitive a port draws carries
+// setting its parameters; it stands in for the exe's functions it names, or takes the effect's slot]
+// [host=<FujinEffects.dll> hostdir=<folder>: the game's host of Fujin's effects (Tools/fxhost)
+// installs the programs of <folder>/direct/exe, as in the game]. Each primitive a port draws carries
 // the part it belongs to (FX_PART): the P lines' first number. [keepparts=1: with actors=0, what a
 // part draws stays even in an actor's texture (Cure's overlay redraws its target): only the actors'
 // own drawing goes] [actors=2: only the effect's targets are drawn (the effect against one monster, no
@@ -91,6 +93,7 @@ struct Opt
 	bool native = false;              // native=1: the effect's C++ port (effect lab builds)
 	std::string params, schema;       // params=<file>: its parameters / schema=<file>: write their table
 	std::string program;              // program=<file>: the effect run from its description (Tools/fxhost)
+	std::string host, hostdir;        // host=<FujinEffects.dll> hostdir=<folder>: it installs <folder>'s programs
 	bool cast() const { for (int k = 0; k < 7; k++) if (!body[k].empty()) return true; return false; }
 };
 static Opt O;
@@ -898,6 +901,8 @@ static bool parse(int argc, char **argv)
 		else if (k == "keepparts") g_keep_parts = atoi(v.c_str());
 		else if (k == "params") O.params = v;
 		else if (k == "program") O.program = v;
+		else if (k == "host") O.host = v;
+		else if (k == "hostdir") O.hostdir = v;
 		else if (k == "schema") O.schema = v;
 		else if (k == "model") O.model = atoi(v.c_str());
 		else if (k == "ticks") O.ticks = atoi(v.c_str());
@@ -1183,6 +1188,15 @@ int main(int argc, char **argv)
 	patch_jmp(0x49ED30, (void *)s_49ED30); patch_jmp(0x4A2D60, (void *)s_4A2D60); patch_jmp(0x49F0A0, (void *)s_49F0A0);
 	patch_jmp(0x5099D0, (void *)s_5099D0); patch_jmp(0x508C90, (void *)s_508C90); patch_jmp(0x5095B0, (void *)s_5095B0);
 	patch_jmp(0x508F90, (void *)s_508F90); patch_jmp(0x509440, (void *)s_509440);
+	if (!O.host.empty())
+	{
+		HMODULE dll = LoadLibraryA(O.host.c_str());
+		typedef int (__cdecl *InstallFn)(const wchar_t *);
+		InstallFn install = dll ? (InstallFn)GetProcAddress(dll, "FujinEffects_Install") : nullptr;
+		if (!install) { printf("host: cannot load %s\n", O.host.c_str()); return 4; }
+		const std::wstring folder(O.hostdir.begin(), O.hostdir.end());
+		printf("host: %d programs installed\n", install(folder.c_str()));
+	}
 	if (!O.program.empty())
 	{
 #ifdef FF8_FX_LAB

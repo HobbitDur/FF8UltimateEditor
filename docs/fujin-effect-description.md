@@ -252,3 +252,49 @@ Potion's description is the same with its own sequences and sound.
 6. **Fujin:** edit the description (parts, links, bindings) beside the parameters, and write the
    host DLL's files for a free slot (224, 225, 346-400; the game's dispatcher `Magic_GetIDLoad`
    0x50AF20 reads `MagicList_Logic` / `MagicList_TextureLoad` and falls back to slot 0 when empty).
+   *Done:*
+   - **`FujinEffects.dll`** (`Tools/fxhost/fxhost.cpp`): one generic DLL for every effect.
+     - The recorder's `build.bat` builds it from the same sources (FFNx's effect sources and
+       `fxprogram.h`); CI ships it in the release (`Tools/fxhost`).
+     - On load it starts a thread (no file reading inside `DllMain`). The thread reads
+       `<game>/direct/exe/effect_NNN.fxprog`, next to FFNx's `.bcam` cameras, with `CreateFileW`,
+       which Junction VIII redirects to a mod folder's file.
+     - For each program found, it points the effect's two dispatch slots at that slot's own file
+       loader and setup. The program then runs by itself: the `function` addresses are dropped, and
+       its own director, setup and tasks run.
+     - A vanilla effect with a program (Cure with edited parameters) is replaced by it. A free slot
+       becomes a new effect.
+     - Programs carry their parameter values, so **parameters now reach the game**.
+     - Each slot also gets its own director function, which selects its program every tick, so
+       several programs can be installed at once.
+     - It coexists with FFNx: FFNx only rewrites a slot that still holds an original it has a port
+       for, and its camera files wrap any setup.
+     - Messages go to `%LOCALAPPDATA%\FujinEffects.log`.
+     - The recorder loads it as the game does: `host=<dll> hostdir=<game folder>`.
+   - **Install for the game:** Fujin's Save folder is the mod's content. Put `FujinEffects.dll` at
+     the mod's root, with `<LoadLibrary>FujinEffects.dll</LoadLibrary>` in its `mod.xml`. The
+     `direct/exe/*.fxprog` files go in the mod's folder. A new effect plays when a kernel.bin entry
+     names its effect id (SolomonRing: the spell's or attack's effect).
+   - **Fujin:**
+     - Choreography has a **Description** tab: the effect's description as JSON. Apply checks that
+       it compiles; an edited description of Fujin's goes back with *Fujin's description*.
+     - **New effect from this…** copies the shown description into a free slot. It has its own
+       name, keeps its parameters, and records `base` (whose files, exe data and memory it uses).
+     - Its part tabs and both previews run from its program (`program=` in the recorder).
+     - **Save** writes:
+       - `direct/exe/effect_NNN.fxprog` for every described effect with a change (edited
+         parameters, edited description, new effect);
+       - `effect_NNN.fxdesc` for the descriptions held here (Import complementary reads them back);
+       - `FujinEffects.dll`.
+   - **Checked** (`tests/Fujin/test_effect_host.py`):
+     - The DLL in the recorder, from a saved-style game folder:
+       - Cure copied as effect 224 records Cure;
+       - Cure with edited parameters records FFNx's port with them;
+       - Hypnotize records itself.
+     - The Description tab: apply errors, edit, New effect, Save, Import, reset and delete.
+   - **Not done yet:**
+     - Tried in the real game.
+     - A new effect's own memory: it shares its base's exe memory, which is safe because only one
+       magic effect runs at a time.
+     - Its own data from files: flipbooks, sounds and layouts are still the exe's.
+     - A structured editor: the description is edited as JSON text.

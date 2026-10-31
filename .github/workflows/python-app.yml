@@ -251,6 +251,8 @@ jobs:
         pyinstaller -n FF8UltimateEditor -F --specpath release/build --distpath release --noconsole --workpath release/build --onefile --icon=../../Resources/hobbitdur.ico main.py
         mkdir -p release/Tools/fxrecorder
         cp Tools/fxrecorder/fxrecorder.exe release/Tools/fxrecorder/
+        mkdir -p release/Tools/fxhost
+        cp Tools/fxhost/FujinEffects.dll release/Tools/fxhost/
         mkdir -p release/Resources
         mkdir -p release/ExternalTools/Junkshop
         mkdir -p release/ExternalTools/Quezacotl

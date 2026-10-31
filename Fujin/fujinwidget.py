@@ -28,6 +28,10 @@ from FF8GameData.psxgpu.texuse import texture_sheets
 from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults as schema_defaults, effect_schema,
                                recorder_has_ports)
 from Fujin.nativepreview import NativePreviewView, gl_renderer
+from Fujin.effectdescriptionview import EffectDescriptionView
+from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, compile_program, description_schema, load_description,
+                                 new_effect, program_file_name)
+from Fujin.recorderbuild import HOST_DLL
 from Fujin.recorderbuild import recorder_build
 from Fujin.soundpanel import SoundPanel
 from Fujin.objectview import MagObjectView
@@ -51,6 +55,8 @@ class FujinWidget(QWidget):
         self._refresh_pending = False
         self._exported_signature = ()
         self.effect_params = {}          # effect id -> {key: value} of its parameters not at the game's value
+        self.descriptions = {}           # effect id -> its description as edited here (Fujin's changed, or a new effect)
+        self._shipped = {}               # effect id -> Fujin's description (or None), read once
         self._owned_cam_exports = {}
         self._saved_note = ""            # what the last Save wrote, shown until the next change
         self._resource_effects = None          # resource key -> effect ids using it (built once)
@@ -89,14 +95,14 @@ class FujinWidget(QWidget):
             self.file_registry, exe_path=lambda: self.camera_editor.exe_binding.current_path or "",
             effect_files=self._preview_effect_files,
             file_edits=self._preview_file_edits,
-            cast_source=self.camera_editor.preview, params=self.effect_parameters,
+            cast_source=self.camera_editor.preview, params=self.effect_parameters, program=self.effect_program,
             camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
         # Choreography's part tabs: the effect recorded once more, its C++ port alone (no actors),
         # with the edited parameters; each tab shows its part of that recording (Fujin.effectparts)
         self.lab = NativePreviewView(
             self.file_registry, exe_path=lambda: self.camera_editor.exe_binding.current_path or "",
             effect_files=self._preview_effect_files, file_edits=self._preview_file_edits,
-            cast_source=self.camera_editor.preview, params=self.effect_parameters, lab=True,
+            cast_source=self.camera_editor.preview, params=self.effect_parameters, lab=True, program=self.effect_program,
             camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
         self.lab.setParent(self)
         self.lab.hide()
@@ -154,6 +160,12 @@ class FujinWidget(QWidget):
         # the effect's MAG workspace: data its code works on, not decoded yet (only when it has some)
         self.workspace = EffectResourceView("workspace", self.resolve)
         self.workspace_tab = self.choreography.addTab(self.workspace, "Workspace data")
+        # the effect's description (its parts, tasks, director): what Save compiles for FujinEffects.dll
+        self.description_view = EffectDescriptionView()
+        self.description_view.applied.connect(self._description_applied)
+        self.description_view.new_requested.connect(self.new_effect_dialog)
+        self.description_view.reset_requested.connect(self._description_reset)
+        self.choreography.addTab(self.description_view, "Description")
         self.choreography.currentChanged.connect(self._activate_tab)
         self.choreography.currentChanged.connect(lambda _index: self._record_parts())
         # Why there is no MAG script, when there is none (the greyed tab says it too)
@@ -242,7 +254,9 @@ class FujinWidget(QWidget):
                 ("Sound preview: audio.fmt + audio.dat (battle sound archive)", self.sound_panel.import_archive),
                 ("Effect preview: a8def.tim (the battle's shared effect textures)",
                  self.native_preview.import_shared_textures),
-                ("Effect parameters: effect_NNN.fxparams (Choreography's part tabs)", self.import_parameters)]
+                ("Effect parameters: effect_NNN.fxparams (Choreography's part tabs)", self.import_parameters),
+                ("Effect descriptions: effect_NNN.fxdesc (new and edited effects, Choreography's Description)",
+                 self.import_descriptions)]
 
     def auto_import_sources(self):
         preview = self.camera_editor.preview
@@ -412,18 +426,24 @@ class FujinWidget(QWidget):
                 item.setData(Qt.ItemDataRole.UserRole, effect)
                 self.effect_list.addItem(item)
 
+    def effect_name(self, effect):
+        """The effect's name: a new effect's own, else the catalog's."""
+        description = self.descriptions.get(effect)
+        return description["name"] if description is not None and "base" in description else self.catalog.name(effect)
+
     def _effect_text(self, effect, modified=False):
         created = self.camera_editor.manager.camera_kind(effect) == "created"
-        return f"{'* ' if modified else ''}{effect:03d} — {self.catalog.name(effect)}" + (" (.bcam camera)" if created else "")
+        new = " (new effect)" if "base" in self.descriptions.get(effect, {}) else ""
+        return f"{'* ' if modified else ''}{effect:03d} — {self.effect_name(effect)}{new}" + (" (.bcam camera)" if created else "")
 
     def modified_effects(self):
         """The effects with unsaved changes: a camera track or a native resource changed since the
         last export, or a modified MAG file that the effect uses."""
         exported = dict(self._exported_signature)
         unsaved = {key for key, digest in self._native_signature() if exported.get(key) != digest}
-        effects = {int(key.split(":", 1)[1]) for key in unsaved if key.startswith("camera:")}
+        effects = {int(key.split(":", 1)[1]) for key in unsaved if key.split(":", 1)[0] in ("camera", "params", "desc")}
         dirty = {os.path.basename(m.file_path).lower() for m in self.mag_editor.managers.values() if m.modified}
-        dirty |= {key for key in unsaved if not key.startswith("camera:")}
+        dirty |= {key for key in unsaved if key.split(":", 1)[0] not in ("camera", "params", "desc")}
         if dirty and self._resource_effects is None:
             self._resource_effects = {}
             for effect in self.catalog.effect_ids():
@@ -464,7 +484,7 @@ class FujinWidget(QWidget):
             return {}
         extra = [os.path.basename(m.file_path) for m in self.mag_editor.managers.values()]
         return {resource.key: bytes(manager.data)
-                for resource in self.catalog.resources(self.current_effect, extra)
+                for resource in self.catalog.resources(self._files_effect(self.current_effect), extra)
                 if resource.source == "File" and (manager := self.resolve(resource)) is not None}
 
     def _preview_file_edits(self):
@@ -473,7 +493,7 @@ class FujinWidget(QWidget):
             return {}
         extra = [os.path.basename(m.file_path) for m in self.mag_editor.managers.values()]
         return {resource.key: bytes(manager.data)
-                for resource in self.catalog.resources(self.current_effect, extra)
+                for resource in self.catalog.resources(self._files_effect(self.current_effect), extra)
                 if resource.source == "File" and (manager := self.resolve(resource)) is not None
                 and manager.modified}
 
@@ -482,9 +502,10 @@ class FujinWidget(QWidget):
         if item:
             self.current_effect = item.data(Qt.ItemDataRole.UserRole)
             self.camera_editor.select_effect(self.current_effect)
-            self.native_preview.set_effect(self.current_effect, self.catalog.name(self.current_effect))
-            self.lab.set_effect(self.current_effect, self.catalog.name(self.current_effect))
+            self.native_preview.set_effect(self.current_effect, self.effect_name(self.current_effect))
+            self.lab.set_effect(self.current_effect, self.effect_name(self.current_effect))
             self._build_part_tabs()
+            self._show_description()
             self._refresh()
 
     def _schedule_refresh(self):
@@ -763,6 +784,14 @@ class FujinWidget(QWidget):
         for key, manager in self.native.managers.items():
             if manager.modified:
                 pending.append(f"<li>{esc(key)}: effects_EN.hext (native data)</li>")
+        exported = dict(self._exported_signature)
+        for effect in sorted(set(self.descriptions) | set(self.effect_params)):
+            if self.description(effect) is None or not (effect in self.descriptions or self.effect_params.get(effect)):
+                continue
+            if any(exported.get(key) != digest for key, digest in self._native_signature()
+                   if key in (f"desc:{effect}", f"params:{effect}")):
+                pending.append(f"<li>Effect {effect} ({esc(self.effect_name(effect))}): {CAM_FFNX_FOLDER}/"
+                               f"{program_file_name(effect)}, run in the game by {HOST_DLL.name}</li>")
         unsaved = self.can_save_folder()
         self.changes.setHtml(f"<h2>{'Unsaved changes' if unsaved else 'All changes saved'}</h2>"
             "<p>Save (header toolbar or Ctrl+S) writes MAG edits into the imported files. Exe edits (camera tracks, "
@@ -780,7 +809,129 @@ class FujinWidget(QWidget):
                   for effect, t in sorted(self.camera_editor.manager.tracks.items())]
         result += [(key, hashlib.sha256(m.data).digest()) for key, m in sorted(self.native.managers.items())]
         result += [(f"params:{effect}", tuple(sorted(values.items()))) for effect, values in sorted(self.effect_params.items())]
+        result += [(f"desc:{effect}", json.dumps(description, sort_keys=True)) for effect, description in sorted(self.descriptions.items())]
         return tuple(result)
+
+    # ------------------------------------------------------------------ effect descriptions (Description tab)
+    def shipped_description(self, effect):
+        if effect not in self._shipped:
+            self._shipped[effect] = load_description(effect)
+        return self._shipped[effect]
+
+    def description(self, effect):
+        """The effect's description as Fujin holds it (edited, new or Fujin's), or None."""
+        return self.descriptions.get(effect) or self.shipped_description(effect)
+
+    def _files_effect(self, effect):
+        """The effect whose files an effect reads: a new effect's base."""
+        return self.descriptions.get(effect, {}).get("base", effect)
+
+    def _schema(self, effect):
+        """The parameter table of an effect's part tabs: its description's when edited here, else the
+        recorder's (FFNx's port)."""
+        if effect is None:
+            return None
+        if effect in self.descriptions:
+            return description_schema(self.descriptions[effect])
+        return effect_schema(effect)
+
+    def effect_program(self, effect):
+        """The program an effect's previews run (one whose description is edited here, or a new
+        effect), with its edited parameters; None: its exe code or FFNx's port."""
+        if effect not in self.descriptions:
+            return None
+        try:
+            return compile_program(self.descriptions[effect], self.effect_params.get(effect))
+        except (DescriptionError, KeyError, TypeError, ValueError):
+            return None
+
+    def _show_description(self):
+        effect = self.current_effect
+        kind = "new" if "base" in self.descriptions.get(effect, {}) else "edited" if effect in self.descriptions else "shipped"
+        self.description_view.show_description(effect, self.description(effect) if effect is not None else None, kind)
+
+    def _description_applied(self, description):
+        effect = self.current_effect
+        if "base" not in description and description == self.shipped_description(effect):
+            self.descriptions.pop(effect, None)          # back to Fujin's own
+        else:
+            self.descriptions[effect] = description
+        self._description_changed()
+
+    def _description_reset(self):
+        effect = self.current_effect
+        new = "base" in self.descriptions.get(effect, {})
+        self.descriptions.pop(effect, None)
+        if new:
+            self.effect_params.pop(effect, None)
+        self._description_changed()
+
+    def _description_changed(self):
+        self._mark_modified_effects()
+        self._update_effect_rows(refresh=False)
+        self.native_preview.set_effect(self.current_effect, self.effect_name(self.current_effect))
+        self._build_part_tabs()
+        self._show_description()
+        self._params_edited()
+
+    def new_effect_dialog(self, effect_id=None, name=None):
+        """A copy of the shown effect's description as a new effect in a free slot (asked for when
+        not given); the new effect is selected. Its id, or None."""
+        from PyQt6.QtWidgets import QInputDialog
+        source = self.description(self.current_effect)
+        if source is None:
+            return None
+        free = [e for e in FREE_EFFECTS if e not in self.descriptions]
+        if not free:
+            QMessageBox.information(self, "Fujin", "Every free slot of the effect table holds a new effect already.")
+            return None
+        if effect_id is None:
+            choice, ok = QInputDialog.getItem(self, "New effect", "Effect id (a free slot of the game's effect table):",
+                                              [str(e) for e in free], 0, False)
+            if not ok:
+                return None
+            effect_id = int(choice)
+        if name is None:
+            name, ok = QInputDialog.getText(self, "New effect", "Name:", text=f"New {source['name']}")
+            if not ok or not name.strip():
+                return None
+        if effect_id not in free:
+            raise ValueError(f"effect {effect_id} is not a free slot")
+        self.descriptions[effect_id] = new_effect(source, effect_id, name.strip())
+        if self.effect_params.get(self.current_effect):
+            self.effect_params[effect_id] = dict(self.effect_params[self.current_effect])
+        self._update_effect_rows(refresh=False)
+        self._mark_modified_effects()
+        self.select_effect(effect_id)
+        self.tabs.setCurrentIndex(2)
+        self.choreography.setCurrentWidget(self.description_view)
+        return effect_id
+
+    def import_descriptions(self, paths=None):
+        """Header Import complementary: effect descriptions (effect_NNN.fxdesc, what Save writes)."""
+        if paths is None:
+            paths = QFileDialog.getOpenFileNames(self, "Import effect descriptions (effect_NNN.fxdesc)",
+                                                 self.file_registry.last_folder("Fujin effect export") or os.getcwd(),
+                                                 "Effect descriptions (*.fxdesc)")[0]
+        clean = self._native_signature() == self._exported_signature
+        loaded = []
+        for path in paths:
+            try:
+                with open(path, encoding="utf-8") as file:
+                    description = json.load(file)
+                compile_program(description)
+                self.descriptions[int(description["effect"])] = description
+                loaded.append(int(description["effect"]))
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                QMessageBox.warning(self, "Fujin", f"Cannot read {os.path.basename(path)}: {error}")
+        if loaded and clean:
+            self._exported_signature = self._native_signature()
+        if loaded:
+            self._update_effect_rows(refresh=False)
+            self._mark_modified_effects()
+            if self.current_effect in loaded:
+                self._description_changed()
+        return loaded
 
     # ------------------------------------------------------------------ effect parameters (part tabs)
     def effect_parameters(self, effect_id):
@@ -798,7 +949,7 @@ class FujinWidget(QWidget):
             tab.deleteLater()
         self.part_tabs = []
         effect = self.current_effect
-        schema = self._parts_schema = effect_schema(effect) if effect is not None else None
+        schema = self._parts_schema = self._schema(effect)
         self._show_parts_note()
         if schema is None:
             return
@@ -826,7 +977,7 @@ class FujinWidget(QWidget):
         if recorder_build().building:
             self._show_parts_note()
             return
-        if self.current_effect is not None and effect_schema(self.current_effect) != self._parts_schema:
+        if self.current_effect is not None and self._schema(self.current_effect) != self._parts_schema:
             self._build_part_tabs()
         else:
             self._show_parts_note()
@@ -892,7 +1043,7 @@ class FujinWidget(QWidget):
 
     def _param_changed(self, key, value):
         effect = self.current_effect
-        schema = effect_schema(effect)
+        schema = self._schema(effect)
         if schema is None:
             return
         values = self.effect_params.setdefault(effect, {})
@@ -986,6 +1137,22 @@ class FujinWidget(QWidget):
                     outputs[folder / f"effect_{effect:03d}.fxparams"] = json.dumps(
                         {"effect": effect, "name": self.catalog.name(effect), "params": dict(sorted(values.items()))},
                         indent=1).encode("utf-8")
+                # FujinEffects.dll's programs: the effects described here, with their parameters
+                programs = 0
+                for effect in sorted(set(self.descriptions) | set(self.effect_params)):
+                    description = self.description(effect)
+                    if description is None or (effect not in self.descriptions and not self.effect_params.get(effect)):
+                        continue
+                    try:
+                        program = compile_program(description, self.effect_params.get(effect))
+                    except DescriptionError as error:
+                        raise ValueError(f"Effect {effect}'s description: {error}") from None
+                    outputs[folder / CAM_FFNX_FOLDER / program_file_name(effect)] = program.encode("ascii")
+                    programs += 1
+                for effect, description in sorted(self.descriptions.items()):
+                    outputs[folder / f"effect_{effect:03d}.fxdesc"] = (json.dumps(description, indent=1) + "\n").encode("utf-8")
+                if programs and HOST_DLL.is_file():
+                    outputs[folder / HOST_DLL.name] = HOST_DLL.read_bytes()
                 for path, digest in self._owned_cam_exports.items():
                     if path not in outputs and path.is_relative_to(folder):
                         if path.exists() and hashlib.sha256(path.read_bytes()).digest() != digest:

@@ -82,6 +82,7 @@ namespace fxprog
 		std::string name;
 		std::map<std::string, uint32_t> memory;
 		uint32_t file_loader = 0, setup = 0, root = 0, camera = 0, texture_name = 0;
+		uint32_t director_fn = 0;                       // the director task the setup starts (0: DirectorTask)
 		int texture_param = -1, director_spawns = -1;
 		int director = PER_ACTION, director_start = 1;
 		Step director_place;
@@ -683,7 +684,7 @@ namespace fxprog
 		Caster() = Entity(ctx->attacker);
 		TaskQueue *root_queue = (TaskQueue *)Mem("root_queue");
 		InitTaskQueuePool(root_queue, (void *)Mem("root_pool"), sizeof(MasterNode), 1);
-		TaskNode *m = AddTaskToQueue(root_queue, g.root ? g.root : (uint32_t)DirectorTask);
+		TaskNode *m = AddTaskToQueue(root_queue, g.root ? g.root : g.director_fn ? g.director_fn : (uint32_t)DirectorTask);
 		Memset32(m + 1, 0, 2);
 		PlayCameraAnimation((const void *)g.camera);
 		return root_queue;
@@ -697,7 +698,7 @@ namespace fxprog
 		var<uint32_t>(Mem("init_flag_b")) = 0;
 		TaskQueue *root_queue = (TaskQueue *)Mem("root_queue");
 		InitTaskQueuePool(root_queue, (void *)Mem("root_pool"), 0x64, 2);
-		RootNode *r = (RootNode *)AddEffectTask(root_queue, g.root ? g.root : (uint32_t)DirectorTask, 0x64, nullptr);
+		RootNode *r = (RootNode *)AddEffectTask(root_queue, g.root ? g.root : g.director_fn ? g.director_fn : (uint32_t)DirectorTask, 0x64, nullptr);
 		const ActionData *a = ctx->actions + r->h.action;
 		r->h.ctx = ctx;
 		r->h.attacker = a->attacker;
@@ -743,20 +744,29 @@ namespace fxprog
 		return s;
 	}
 
-	// the program in `path` (Fujin/effectprogram.py writes it); "" when it loaded, else what is wrong
-	inline std::string Load(const char *path, Program &g)
+	// the program `text` (Fujin/effectprogram.py writes it); "" when it parsed, else what is wrong
+	inline std::string Parse(const std::string &text, Program &g)
 	{
-		FILE *f = fopen(path, "r");
-		if (!f) return std::string("cannot read ") + path;
 		std::string error;
-		char line[4096];
 		int number = 0;
 		Task *task = nullptr;
-		while (error.empty() && fgets(line, sizeof(line), f))
+		size_t at = 0;
+		while (error.empty() && at < text.size())
 		{
+			size_t end = text.find('\n', at);
+			if (end == std::string::npos) end = text.size();
+			const std::string line = text.substr(at, end - at);
+			at = end + 1;
 			number++;
 			std::vector<std::string> w;
-			for (char *t = strtok(line, " \t\r\n"); t; t = strtok(nullptr, " \t\r\n")) w.push_back(t);
+			for (size_t i = 0; i < line.size();)
+			{
+				while (i < line.size() && strchr(" \t\r", line[i])) i++;
+				size_t j = i;
+				while (j < line.size() && !strchr(" \t\r", line[j])) j++;
+				if (j > i) w.push_back(line.substr(i, j - i));
+				i = j;
+			}
 			if (w.empty() || w[0][0] == '#') continue;
 			const std::string &d = w[0];
 			auto need = [&](size_t n) { if (w.size() < n) error = "line " + std::to_string(number) + ": " + d + " needs more"; return error.empty(); };
@@ -880,7 +890,6 @@ namespace fxprog
 			}
 			else if (error.empty()) error = "line " + std::to_string(number) + ": unknown " + d;
 		}
-		fclose(f);
 		if (error.empty() && (int)g.tasks.size() > (int)(sizeof(THUNKS) / sizeof(THUNKS[0]))) error = "too many tasks";
 		if (error.empty() && (g.director_spawns < 0 || g.director_spawns >= (int)g.tasks.size())) error = "the director spawns no task";
 		for (size_t k = 0; error.empty() && k < g.tasks.size(); k++)
@@ -892,6 +901,25 @@ namespace fxprog
 				if (sp.task >= (int)g.tasks.size() || (sp.task < 0 && sp.place.op != GLINT)) error = "task " + t.key + ": a spawn of no task";
 		}
 		return error;
+	}
+
+	// the program in `path`
+	inline std::string Load(const char *path, Program &g)
+	{
+		FILE *f = fopen(path, "rb");
+		if (!f) return std::string("cannot read ") + path;
+		std::string text;
+		char block[4096];
+		for (size_t n; (n = fread(block, 1, sizeof(block), f)) > 0;) text.append(block, n);
+		fclose(f);
+		return Parse(text, g);
+	}
+
+	// the program run by itself, as a new effect: no exe function stands in for it
+	inline void Detach(Program &g)
+	{
+		g.file_loader = g.setup = g.root = 0;
+		for (Task &t : g.tasks) t.function = 0;
 	}
 
 	// the parameter `key` set to `text` (a number, or a file name); false when there is none

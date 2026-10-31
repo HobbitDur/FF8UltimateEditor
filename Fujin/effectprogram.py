@@ -58,8 +58,10 @@ def _number(value):
     return int(value, 0) if isinstance(value, str) else int(value)
 
 
-def compile_program(description):
-    """The program text of `description` (a dict); DescriptionError says what is wrong."""
+def compile_program(description, values=None):
+    """The program text of `description` (a dict), its parameters at `values` (key: value, the
+    others at the game's); DescriptionError says what is wrong."""
+    values = values or {}
     params = {param["key"]: index for index, param in enumerate(description["params"])}
     tasks = {task["key"]: index for index, task in enumerate(description["tasks"])}
     pools = {pool["key"]: index for index, pool in enumerate(description["pools"])}
@@ -144,10 +146,13 @@ def compile_program(description):
     else:
         lines.append(f"director per_action {tasks[director['spawns']]}")
     for param in description["params"]:
+        current = values.get(param["key"], param["default"])
         if param["type"] == "file":
-            lines.append(f"param {param['key']} file {param['default'] or '-'} -")
+            if " " in str(current or ""):
+                raise DescriptionError(f"parameter {param['key']}: a file name without spaces")
+            lines.append(f"param {param['key']} file {current or '-'} -")
         else:
-            lines.append(f"param {param['key']} {param['type']} {_number(param['default'])} {_number(param['default'])}")
+            lines.append(f"param {param['key']} {param['type']} {_number(current)} {_number(param['default'])}")
     for task in description["tasks"]:
         where = f"task {task['key']}"
         if task["pool"] not in pools:
@@ -199,6 +204,44 @@ def compile_program(description):
     return "\n".join(lines) + "\n"
 
 
-def write_program(description, path):
-    Path(path).write_text(compile_program(description), encoding="ascii")
+def write_program(description, path, values=None):
+    Path(path).write_text(compile_program(description, values), encoding="ascii")
     return path
+
+
+def program_file_name(effect_id):
+    """The file name FujinEffects.dll reads an effect's program from (game folder: direct/exe)."""
+    return f"effect_{effect_id:03d}.fxprog"
+
+
+# the dispatch slots the game leaves empty (Magic_GetIDLoad 0x50AF20 falls back to effect 0 there):
+# effect ids a new effect can take
+FREE_EFFECTS = (224, 225) + tuple(range(346, 401))
+
+
+def described_effects():
+    """The effect ids Fujin ships a description of."""
+    return sorted(int(path.stem.split("_")[1]) for path in DESCRIPTIONS.glob("effect_*.json"))
+
+
+def new_effect(description, effect_id, name):
+    """A new effect (a copy of `description` as effect `effect_id`): it runs by itself, standing in
+    for no exe function; it keeps the exe data and memory of the effect it is made from ("base"),
+    which never runs at the same time."""
+    new = json.loads(json.dumps(description))
+    new["base"] = description.get("base", description["effect"])
+    new["effect"], new["name"] = effect_id, name
+    (new.get("copy") or {}).pop("functions", None)
+    for task in new["tasks"]:
+        task.pop("function", None)
+    return new
+
+
+def description_schema(description):
+    """A description's parameter table in the shape of the recorder's schema (Choreography's part
+    tabs): its parts, fields (numbers as numbers: a description keeps sequences and sounds as "0x..."
+    text) and groups."""
+    fields = [param if param["type"] == "file" else dict(param, default=_number(param["default"]))
+              for param in description["params"]]
+    return {"effect": description["effect"], "name": description["name"], "parts": description["parts"],
+            "fields": fields, "groups": description.get("groups", [])}

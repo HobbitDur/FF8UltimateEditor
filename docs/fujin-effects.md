@@ -214,6 +214,17 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   channels: `VanillaDecompiledForFutur30FPS` (the ports) plus the editor's parameter rework on
   top, such as Cure and Potion sharing `mag_heal_ring.h` - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
   built again with them); the release's CI does the same before building the recorder.
+  **Description** (Choreography, for the effects Fujin describes: Cure, Potion, Hypnotize): the
+  effect's description as JSON (its parts, tasks, director, pools: see
+  [fujin-effect-description.md](fujin-effect-description.md)). Apply checks that it compiles; **New
+  effect from this…** copies it into a free slot of the game's effect table (224, 225, 346-400)
+  under a name of its own. An effect described here records from its program in both previews.
+  Save also writes `direct/exe/effect_NNN.fxprog` (the program with its parameters) for every
+  described effect with a change, `effect_NNN.fxdesc` for the descriptions held here (Import
+  complementary reads them back) and `FujinEffects.dll`, the game's host of these programs. Put
+  the DLL at a Junction VIII mod's root (`<LoadLibrary>FujinEffects.dll</LoadLibrary>` in
+  `mod.xml`) and the `direct/exe` files in its folder. A new effect plays when a kernel.bin entry
+  names its effect id.
   Cure's Overlay hides the target while the ring climbs and redraws it itself, twice per
   polygon: flat with its own texture (what the preview shows - the target as it is), and, where
   it faces the ring and falls in the projected window, gouraud with Cure's light texture

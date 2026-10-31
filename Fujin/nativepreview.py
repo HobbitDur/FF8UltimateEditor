@@ -95,12 +95,15 @@ class BattleCast:
     native: bool = False                               # the effect's C++ port (FFNx) instead of the exe's code
     params: tuple = ()                                 # ((key, value), ..) its parameters not at the game's value
     lab: bool = False                                  # only the target drawn (actors=2): Choreography's part tabs
+    program: str = ""                                  # the effect run from this program (a description of Fujin's)
 
     def key(self):
         """The cache tag of this cast: its files (where they are and their state on disk), roles,
         whether the actors are drawn and the recorder build (a new one records anew)."""
         parts = [f"c{self.caster}t{self.target}a{int(self.actors)}n{int(self.native)}l{int(self.lab)}"]
         parts += [f"{key}={value}" for key, value in self.params]
+        if self.program:
+            parts.append("program|" + hashlib.sha256(self.program.encode("ascii")).hexdigest())
         try:
             parts.append(f"recorder|{RECORDER.stat().st_mtime_ns}")
         except OSError:
@@ -188,13 +191,16 @@ class NativePreviewView(QWidget):
     battle_cast() gives the battle), or None for the battle folder's test dummy;
     params(effect_id) -> {key: value} of the effect's edited parameters (FFNx fx_params.h): when
     there are some, the recorder runs the effect's C++ port with them (native=1);
+    program(effect_id) -> the text of the program the effect runs from (a description Fujin holds:
+    a new effect, or one whose description was edited), or None: the recorder runs it (program=);
     lab: always the C++ port, of the actors only its target (the part tabs' reference) - its parts tagged (Fujin's
     Choreography part tabs show it part by part)."""
 
     def __init__(self, file_registry, exe_path=None, effect_files=None, camera_track=None, file_edits=None,
-                 cast_source=None, params=None, lab=False):
+                 cast_source=None, params=None, lab=False, program=None):
         super().__init__()
         self.params = params or (lambda _effect: {})
+        self.program = program or (lambda _effect: None)
         self.lab = lab
         self.effect_id, self.effect_name = None, ""
         self.recording = None
@@ -364,9 +370,11 @@ class NativePreviewView(QWidget):
             elif body:
                 not_imported.append(os.path.basename(body))
         params = tuple(sorted(self.params(self.effect_id).items())) if self.effect_id is not None else ()
+        program = (self.program(self.effect_id) if self.effect_id is not None else None) or ""
         return BattleCast(slots, cast.caster, cast.target, cast.positions, cast.yaws, cast.camera,
                           sorted(set(not_imported)), cast.idle, cast.cast_before, cast.cast_during, cast.cast_camera,
-                          self.actors_group.isChecked() and not self.lab, self.lab or bool(params), params, self.lab)
+                          self.actors_group.isChecked() and not self.lab, self.lab or bool(params), params, self.lab,
+                          program)
 
     def _cast_changed(self):
         """Show the recording already made with this cast, if any."""
@@ -540,15 +548,20 @@ class NativePreviewView(QWidget):
             args.append("actors=2")          # only the target drawn (untagged: part 0), no cast
         elif not cast.actors:
             args.append("actors=0")          # the effect alone: no cast either
-        if cast.native:
+        if cast.program:
+            path = os.path.join(folder, "effect.fxprog")
+            with open(path, "w", encoding="ascii") as file:
+                file.write(cast.program)
+            args.append(f"program={path}")   # the effect run from its description (its parameters in it)
+        elif cast.native:
             args.append("native=1")          # the effect's C++ port (FFNx), with its parameters
-            if cast.params:
-                path = os.path.join(folder, "params.txt")
-                with open(path, "w", encoding="ascii") as file:
-                    # a file name as its text, an empty one (the game's) not at all
-                    file.write("".join(f"{key} {value if isinstance(value, str) else int(value)}\n"
-                                       for key, value in cast.params if value != ""))
-                args.append(f"params={path}")
+        if cast.params and (cast.program or cast.native):
+            path = os.path.join(folder, "params.txt")
+            with open(path, "w", encoding="ascii") as file:
+                # a file name as its text, an empty one (the game's) not at all
+                file.write("".join(f"{key} {value if isinstance(value, str) else int(value)}\n"
+                                   for key, value in cast.params if value != ""))
+            args.append(f"params={path}")
         # what each actor plays (worked out from its dat's sequences, FF8GameData.dat.actoranimplan):
         # its idle loop, and the caster's cast before and while the effect runs, seen wide
         args += [f"idle{slot}={animation}" for slot, animation in sorted(cast.idle.items()) if slot in cast.slots]

@@ -52,6 +52,11 @@ ToolDownload/*
 # Tools/fxrecorder/build.bat); CI builds it for releases
 Tools/fxrecorder/*.exe
 Tools/fxrecorder/obj/
+# the game host of Fujin's effects, built with it
+Tools/fxhost/*.dll
+Tools/fxhost/*.lib
+Tools/fxhost/*.exp
+Tools/fxhost/obj/
 
 # The user's own data next to the app (bone renames...), never committed or shipped
 UserData/

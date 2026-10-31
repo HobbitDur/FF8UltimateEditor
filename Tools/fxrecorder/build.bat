@@ -37,4 +37,6 @@ set LAB=/DFF8_FX_LAB /I"%FX%" !MODULES!
 cl /nologo /std:c++20 /EHa /W3 /O1 /MT /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS fxrecorder.cpp %LAB% /Foobj\ /Fefxrecorder.exe /link /BASE:0x10000000 /DYNAMICBASE:NO /FIXED /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%
 echo build fxrecorder.exe exit %E%
+rem the game's host of Fujin's effects (Tools\fxhost: FujinEffects.dll), from the same sources
+if "%E%"=="0" if not "%LAB%"=="" call "%~dp0..\fxhost\build.bat"
 exit /b %E%
