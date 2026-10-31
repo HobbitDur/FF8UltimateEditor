@@ -195,6 +195,31 @@ Potion's description is the same with its own sequences and sound.
      the template when that branch takes this one.
 4. **The description format and its loader**, and the runtime that builds an effect from it. Check:
    Cure and Potion from their descriptions alone pass the port tests.
+   *Done:*
+   - **Descriptions:** `FF8GameData/Resources/json/effects/effect_001.json` (Cure) and
+     `effect_050.json` (Potion). Each holds the parameters with the game's values, parts and
+     groups (what Fujin's part tabs show), and the tasks: each task's pool, every-tick actions,
+     phases (each-tick actions, a wait condition, actions), motion, per-step and per-tick spawns
+     (window, count schedule, placement), events and draws (part tag, flag gate, tick limit,
+     renderer). It also says where an effect of the exe has its copy (the functions it stands in
+     for, its memory).
+   - **Compiler:** `Fujin/effectprogram.py` resolves names (`$key` parameters, tasks, pools, parts,
+     flags), checks every operation's arguments, and writes a program: one directive per line.
+   - **Runtime:** `Tools/fxhost/fxprogram.h` (C++, uses FFNx's parts library). Each directive is a
+     call into the library; a task's tick runs every-tick actions, phase, motion and step spawns,
+     spawns, events, draws, then counter and end. Also the per-action director, the setup and the
+     file loader. The recorder runs it with `program=<file>`, `params=` setting its parameters.
+     It is C++ because effects run as native code next to the game's engine functions, in the
+     recorder for the preview and, later, in the game itself: one runtime for both.
+   - **Checked** (`tests/Fujin/test_effect_program.py`):
+     - Cure and Potion run from their programs record exactly what the exe's code records.
+     - With parameters, a program records exactly what FFNx's port records with the same values.
+     - Cure's description with no exe functions, set as effect 224 (a free slot), runs as a new
+       effect and records exactly Cure.
+     - Editing the description changes the effect (the ring without per-step sparkles: no
+       sparkles; motes with a sparkle's random velocity).
+   - Still tied to the exe: a description uses existing memory (Cure's) and exe data (flipbooks,
+     sound, camera). Own memory and data from files come with the host DLL (step 6).
 5. **Hypnotize** through the same path, adding what its parts need to the libraries. This measures
    how general the libraries really are.
 6. **Fujin:** edit the description (parts, links, bindings) beside the parameters, and write the

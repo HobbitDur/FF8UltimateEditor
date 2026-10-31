@@ -46,7 +46,9 @@
 // Effect lab (built with FFNx's effect sources, see build.bat; FF8_FX_LAB): [native=1: the effect
 // runs its C++ port (FFNx src/ff8/battle/fx) instead of the exe's code] [params=<file>: "key value"
 // lines, the port's parameters (fx_params.h) instead of the game's] [schema=<file>: write the
-// effect's parameter table as JSON and stop - no exe needed]. Each primitive a port draws carries
+// effect's parameter table as JSON and stop - no exe needed] [program=<file>: the effect run from
+// its description (Fujin/effectprogram.py compiles it, Tools/fxhost/fxprogram.h runs it), params=
+// setting its parameters; it stands in for the exe's functions it names, or takes the effect's slot]. Each primitive a port draws carries
 // the part it belongs to (FX_PART): the P lines' first number. [keepparts=1: with actors=0, what a
 // part draws stays even in an actor's texture (Cure's overlay redraws its target): only the actors'
 // own drawing goes] [actors=2: only the effect's targets are drawn (the effect against one monster, no
@@ -69,6 +71,7 @@
 #ifdef FF8_FX_LAB
 #include "fx_port.h"
 #include "fx_params.h"
+#include "../fxhost/fxprogram.h"
 #endif
 
 // ---------------------------------------------------------------- options
@@ -87,6 +90,7 @@ struct Opt
 	bool castcam = false; int16_t castcam_pose[6] = {}; // castcam=ex,ey,ez,ax,ay,az: the view while casting
 	bool native = false;              // native=1: the effect's C++ port (effect lab builds)
 	std::string params, schema;       // params=<file>: its parameters / schema=<file>: write their table
+	std::string program;              // program=<file>: the effect run from its description (Tools/fxhost)
 	bool cast() const { for (int k = 0; k < 7; k++) if (!body[k].empty()) return true; return false; }
 };
 static Opt O;
@@ -893,6 +897,7 @@ static bool parse(int argc, char **argv)
 		else if (k == "native") O.native = atoi(v.c_str()) != 0;
 		else if (k == "keepparts") g_keep_parts = atoi(v.c_str());
 		else if (k == "params") O.params = v;
+		else if (k == "program") O.program = v;
 		else if (k == "schema") O.schema = v;
 		else if (k == "model") O.model = atoi(v.c_str());
 		else if (k == "ticks") O.ticks = atoi(v.c_str());
@@ -1064,6 +1069,36 @@ static void lab_install()
 	fclose(f);
 	printf("params: %d values set\n", set);
 }
+
+// program=<file>: the effect run from its description; it replaces the exe's functions it names
+// (a jump from each original to the program's), or takes the effect's dispatch slots
+static fxprog::Program g_program;
+static void program_install()
+{
+	const std::string error = fxprog::Load(O.program.c_str(), g_program);
+	if (!error.empty()) { printf("program: %s\n", error.c_str()); exit(4); }
+	fxprog::g_program = &g_program;
+	const int slot = O.eff - 1;
+	if (g_program.file_loader) patch_jmp(g_program.file_loader, (void *)fxprog::FileLoader);
+	else *(uint32_t *)(0xC81DB8 + 4 * slot) = (uint32_t)fxprog::FileLoader;      // MagicList_TextureLoad
+	if (g_program.setup) patch_jmp(g_program.setup, (void *)fxprog::Setup);
+	else *(uint32_t *)(0xC81774 + 4 * slot) = (uint32_t)fxprog::Setup;           // MagicList_Logic
+	if (g_program.root) patch_jmp(g_program.root, (void *)fxprog::DirectorTask);
+	for (size_t k = 0; k < g_program.tasks.size(); k++)
+		if (g_program.tasks[k].function) patch_jmp(g_program.tasks[k].function, (void *)fxprog::THUNKS[k]);
+	int set = 0;
+	if (!O.params.empty())
+		if (FILE *f = fopen(O.params.c_str(), "r"))
+		{
+			char key[128], text[128];
+			while (fscanf(f, "%127s %127s", key, text) == 2)
+				if (fxprog::SetParam(g_program, key, text)) set++;
+				else printf("params: unknown %s\n", key);
+			fclose(f);
+		}
+	printf("program: %s, %d tasks, %d params, %d set\n", g_program.name.c_str(), (int)g_program.tasks.size(),
+	       (int)g_program.params.size(), set);
+}
 #endif
 
 int main(int argc, char **argv)
@@ -1148,7 +1183,15 @@ int main(int argc, char **argv)
 	patch_jmp(0x49ED30, (void *)s_49ED30); patch_jmp(0x4A2D60, (void *)s_4A2D60); patch_jmp(0x49F0A0, (void *)s_49F0A0);
 	patch_jmp(0x5099D0, (void *)s_5099D0); patch_jmp(0x508C90, (void *)s_508C90); patch_jmp(0x5095B0, (void *)s_5095B0);
 	patch_jmp(0x508F90, (void *)s_508F90); patch_jmp(0x509440, (void *)s_509440);
-	if (O.native)
+	if (!O.program.empty())
+	{
+#ifdef FF8_FX_LAB
+		program_install();
+#else
+		printf("program: this recorder was built without FFNx's effect sources\n");
+#endif
+	}
+	else if (O.native)
 	{
 #ifdef FF8_FX_LAB
 		lab_install();

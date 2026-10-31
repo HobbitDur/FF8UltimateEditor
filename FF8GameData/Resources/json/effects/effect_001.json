@@ -1,0 +1,1730 @@
+{
+ "format": 1,
+ "effect": 1,
+ "name": "Cure",
+ "doc": "The heal ring of Cure (spell): a light climbing around the target in a helix, sparkles, motes and glints, the target redrawn lit by a projected image, a ground glow.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8D69E0",
+   "setup": "0x8D6A00",
+   "root": "0x8D6B30"
+  },
+  "memory": {
+   "texture_file": "0x277AEC0",
+   "packet_cursor": "0x277AEC4",
+   "packet_limit": "0x277AEEC",
+   "arena_a": "0x278C79C",
+   "limit_a": "0x2783E1C",
+   "arena_b": "0x278C798",
+   "limit_b": "0x2783E18",
+   "arena_top": "0x278C7E4",
+   "init_flag_a": "0x278C7E0",
+   "init_flag_b": "0x2783E10",
+   "cam_ptr_a": "0x278C7DC",
+   "cam_ptr_b": "0x277AEF0",
+   "root_queue": "0x277AFC0",
+   "root_pool": "0x277AEF8",
+   "overlay_ctx": "0x278C7E8",
+   "overlay_a00": "0x277AEC8",
+   "overlay_sprite": "0x278C7A0",
+   "overlay_verts": "0x2783E28"
+  }
+ },
+ "resources": {
+  "texture": {
+   "param": "files.texture",
+   "game_name": "0x164252C"
+  },
+  "camera": "0x16417C8"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter"
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x278A228",
+   "storage": "0x278C628",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "particles",
+   "queue": "0x277BF70",
+   "storage": "0x277BF80",
+   "size": 108,
+   "count": 300
+  },
+  {
+   "key": "glints",
+   "queue": "0x278C788",
+   "storage": "0x278A238",
+   "size": 92,
+   "count": 100,
+   "part": "glints"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "The cast on one target: when its sound plays and its HP are given (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "ring",
+   "title": "Ring",
+   "doc": "The light climbing in a helix around the target, in steps; it spawns the sparkles, motes and glints"
+  },
+  {
+   "id": 2,
+   "key": "glow",
+   "title": "Ground glow",
+   "doc": "An additive glow on the ground under the ring, fading out"
+  },
+  {
+   "id": 3,
+   "key": "overlay",
+   "title": "Overlay",
+   "doc": "The target redrawn lit by an image projected from the ring"
+  },
+  {
+   "id": 4,
+   "key": "sparkles",
+   "title": "Sparkles",
+   "doc": "Flipbooks born at each step of the ring, drifting out and down"
+  },
+  {
+   "id": 5,
+   "key": "motes",
+   "title": "Motes",
+   "doc": "Flipbooks rising on a circle around the target"
+  },
+  {
+   "id": 6,
+   "key": "glints",
+   "title": "Glints",
+   "doc": "The shared effect library's glints: streaks at the target's centre (they never move), growing then shrinking, spinning"
+  },
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The files the effect loads from the magic folder (draws nothing)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "ring.start",
+   "label": "Start",
+   "doc": "The emitter starts the ring at its tick Delay (0: its first), Above over the target's feet; it climbs from there"
+  },
+  {
+   "key": "ring.colour",
+   "label": "Colour",
+   "doc": "Each piece's colour = its own x this / 128 (128: as it is), one value per channel"
+  },
+  {
+   "key": "ring.steps",
+   "label": "Steps",
+   "doc": "step n = ring tick x Per tick + k (k = 0 .. Per tick - 1); its angle = n x Angle. Each ring tick the ring goes through its Per tick steps and is drawn at the last one; a sparkle is born at every step. It turns Per tick x Angle per tick"
+  },
+  {
+   "key": "ring.radius",
+   "label": "Radius",
+   "doc": "radius = target's radius x Times / Divided by (whole numbers), then at most At most. At step n the ring is at centre + (sin(angle) x radius, height, cos(angle) x radius)"
+  },
+  {
+   "key": "ring.climb",
+   "label": "Climb speed",
+   "doc": "rise per step = ((target's height + Target height +) / Every) / Per tick (whole numbers, rounded toward 0). The ring starts at the target's feet and rises at this speed until it ends (its ending flipbook done, its sparkles and motes gone): after Every ticks it is Target height + over the target's top, then it goes on"
+  },
+  {
+   "key": "ring.ending",
+   "label": "Ending flipbook",
+   "doc": "From ring tick From tick the ring plays this sequence, one frame per tick, up to Last frame, then ends once its sparkles and motes are gone: it lives about From tick + Last frame + 1 ticks"
+  },
+  {
+   "key": "glow.placement",
+   "label": "Placement",
+   "doc": "Its sequence's frame Frame, turned by Tilt about the x axis (90 degrees: lying flat), Height over the ground, under the ring"
+  },
+  {
+   "key": "glow.brightness",
+   "label": "Brightness",
+   "doc": "Drawn while ring tick < Duration, its grey = Start - (ring tick x Lost per tick), one byte each: below 0 it wraps to 255 and the glow comes back bright. Additive: 0 adds nothing. The game stops at 20 = Start / Lost per tick, when it reaches 0"
+  },
+  {
+   "key": "overlay.image",
+   "label": "Projected image",
+   "doc": "The target is redrawn with this image projected from the ring (a slide projector): a target point seen from the ring at screen (x, y) takes texel image corner + (x - 160, y - 120) + window / 2, inside the Width x Height window, with this palette"
+  },
+  {
+   "key": "overlay.rgb",
+   "label": "Light colour",
+   "doc": "redrawn colour = texel x this / 128 (128 = the image as it is)"
+  },
+  {
+   "key": "sparkle.window",
+   "label": "Born",
+   "doc": "A sparkle is born at each ring step while From tick <= ring tick <= To tick: Per tick sparkles per ring tick. The ring only spawns while it lives: until its ending flipbook is done (From tick + Last frame: ring tick 24 with the game's), later ticks do nothing"
+  },
+  {
+   "key": "sparkle.colour",
+   "label": "Colour",
+   "doc": "Each piece's colour = its own x this / 128 (128: as it is), one value per channel"
+  },
+  {
+   "key": "sparkle.speed",
+   "label": "Speed",
+   "doc": "Rolled once at birth, x then z then y, each min + random % (max - min + 1); then position += speed every tick (y goes down: a positive y falls)"
+  },
+  {
+   "key": "mote.window",
+   "label": "Born",
+   "doc": "Motes are born while From tick <= ring tick <= To tick. The ring only spawns while it lives: until its ending flipbook is done (From tick + Last frame: ring tick 24 with the game's), later ticks do nothing"
+  },
+  {
+   "key": "mote.count",
+   "label": "How many",
+   "doc": "Motes per ring tick = the count of the last rate whose from tick <= ring tick"
+  },
+  {
+   "key": "mote.colour",
+   "label": "Colour",
+   "doc": "Each piece's colour = its own x this / 128 (128: as it is), one value per channel"
+  },
+  {
+   "key": "mote.radius",
+   "label": "Circle",
+   "doc": "circle radius = target's radius x Times / Divided by (whole numbers), then at most At most; centred on the target"
+  },
+  {
+   "key": "mote.angle",
+   "label": "Place on the circle",
+   "doc": "angle = min + random % (max - min + 1) (4096 = a full turn), rolled at birth"
+  },
+  {
+   "key": "mote.drop",
+   "label": "Drop",
+   "doc": "Born below the ring by (the ring's height over the target's feet) x (min + random % (max - min + 1)) / Divided by, rolled at birth"
+  },
+  {
+   "key": "mote.rise",
+   "label": "Rise speed",
+   "doc": "Rises min + random % (max - min + 1) every tick, rolled once (its first tick)"
+  },
+  {
+   "key": "glint.window",
+   "label": "Born",
+   "doc": "Glints are born while From tick <= ring tick <= To tick, at the target's centre (every tick they go back there: the middle of its line anchor, at the height of its bounds centre). The ring only spawns while it lives: until its ending flipbook is done (From tick + Last frame: ring tick 24 with the game's), later ticks do nothing"
+  },
+  {
+   "key": "glint.count",
+   "label": "How many",
+   "doc": "Glints per ring tick = the count of the last rate whose from tick <= ring tick"
+  },
+  {
+   "key": "glint.style.grow",
+   "label": "Growth",
+   "doc": "width, height += this every tick while growing"
+  },
+  {
+   "key": "glint.style.shrink",
+   "label": "Shrinking",
+   "doc": "width, height -= this every tick while shrinking"
+  },
+  {
+   "key": "glint.style.centre_step",
+   "label": "Centre colour step",
+   "doc": "centre colour += this every tick while growing, -= while shrinking (bytes wrap past 255)"
+  },
+  {
+   "key": "glint.style.tip_step",
+   "label": "Tip colour step",
+   "doc": "tip colour += this every tick while growing, -= while shrinking (bytes wrap past 255)"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "0x16417C4",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound_tick",
+   "part": "emitter",
+   "label": "Sound tick",
+   "doc": "The sound plays when the cast's tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound_pan",
+   "part": "emitter",
+   "label": "Sound pan",
+   "doc": "Where it plays between the speakers: 128 the middle (BdPlaySE's pan)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.heal_tick",
+   "part": "emitter",
+   "label": "Heal tick",
+   "doc": "The HP are given once, at the first cast tick >= this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.seq",
+   "part": "ring",
+   "label": "Sequence",
+   "doc": "Sprite sequence of the climbing light (its frame 0, drawn at the ring's last step of each tick)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "0x1641F78",
+   "unit": "plain"
+  },
+  {
+   "key": "ring.start.delay",
+   "part": "ring",
+   "label": "Delay (ticks)",
+   "doc": "The emitter's tick it starts the ring at",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.start.above",
+   "part": "ring",
+   "label": "Above feet",
+   "doc": "Its starting height over the target's feet (game units)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.colour.r",
+   "part": "ring",
+   "label": "Red",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.colour.g",
+   "part": "ring",
+   "label": "Green",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.colour.b",
+   "part": "ring",
+   "label": "Blue",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.size",
+   "part": "ring",
+   "label": "Size",
+   "doc": "Its sprite's scale (x 1: its own size)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "ring.steps.per_tick",
+   "part": "ring",
+   "label": "Per tick",
+   "doc": "Steps the ring takes each ring tick",
+   "type": "i16",
+   "min": 1,
+   "max": 16,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.steps.angle",
+   "part": "ring",
+   "label": "Angle",
+   "doc": "angle of step n = n x this (4096 = a full turn)",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 128,
+   "unit": "angle"
+  },
+  {
+   "key": "ring.radius.num",
+   "part": "ring",
+   "label": "Times",
+   "doc": "radius = target's radius x this...",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.radius.den",
+   "part": "ring",
+   "label": "Divided by",
+   "doc": "... / this (whole numbers)...",
+   "type": "i16",
+   "min": 1,
+   "max": 32,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.radius.max",
+   "part": "ring",
+   "label": "At most",
+   "doc": "...then never more than this (game units)",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.climb.above",
+   "part": "ring",
+   "label": "Target height +",
+   "doc": "The ring rises (target's height + this) every 'Every' ticks",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.climb.ticks",
+   "part": "ring",
+   "label": "Every (ticks)",
+   "doc": "A speed, not a duration: the ring keeps rising until it ends",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.ending.seq",
+   "part": "ring",
+   "label": "Sequence",
+   "doc": "Sprite sequence of the ending flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "0x1641FCC",
+   "unit": "plain"
+  },
+  {
+   "key": "ring.ending.tick",
+   "part": "ring",
+   "label": "From tick",
+   "doc": "The ring switches to it at this ring tick",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.ending.frames",
+   "part": "ring",
+   "label": "Last frame",
+   "doc": "One frame per tick up to this one, then the ring ends",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.seq",
+   "part": "glow",
+   "label": "Sequence",
+   "doc": "Its frame 0, lying flat on the ground (y = 0) under the ring",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "0x1642504",
+   "unit": "plain"
+  },
+  {
+   "key": "glow.placement.tilt",
+   "part": "glow",
+   "label": "Tilt",
+   "doc": "Turn about the x axis (90 degrees: lying flat)",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 1024,
+   "unit": "angle"
+  },
+  {
+   "key": "glow.placement.height",
+   "part": "glow",
+   "label": "Height",
+   "doc": "Over the ground (game units)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.placement.frame",
+   "part": "glow",
+   "label": "Frame",
+   "doc": "The frame of its sequence drawn",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.brightness.ticks",
+   "part": "glow",
+   "label": "Duration",
+   "doc": "Drawn while ring tick < this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.brightness.start",
+   "part": "glow",
+   "label": "Start",
+   "doc": "grey at ring tick 0",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.brightness.fade",
+   "part": "glow",
+   "label": "Lost per tick",
+   "doc": "grey taken away every ring tick",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.image.tex_x",
+   "part": "overlay",
+   "label": "VRAM x",
+   "doc": "The image's corner in video memory",
+   "type": "i16",
+   "min": 0,
+   "max": 1023,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.image.tex_y",
+   "part": "overlay",
+   "label": "VRAM y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 511,
+   "default": 384,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.image.clut_x",
+   "part": "overlay",
+   "label": "Palette x",
+   "doc": "Its palette in video memory",
+   "type": "i16",
+   "min": 0,
+   "max": 1023,
+   "default": 320,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.image.clut_y",
+   "part": "overlay",
+   "label": "Palette y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 511,
+   "default": 241,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.image.width",
+   "part": "overlay",
+   "label": "Width",
+   "doc": "The projected window's size, centred on the ring's view of the target",
+   "type": "i16",
+   "min": 1,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.image.height",
+   "part": "overlay",
+   "label": "Height",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.rgb[0]",
+   "part": "overlay",
+   "label": "Red",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.rgb[1]",
+   "part": "overlay",
+   "label": "Green",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.rgb[2]",
+   "part": "overlay",
+   "label": "Blue",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.skip_back_faces",
+   "part": "overlay",
+   "label": "Skip back faces",
+   "doc": "1: the target's faces turned away from the ring are not redrawn lit (the renderer's projector cull switch, which vanilla leaves at 0: both sides lit)",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.light_dist",
+   "part": "overlay",
+   "label": "Projector distance",
+   "doc": "The target is seen from the ring at this depth (farther: it covers less of the image)",
+   "type": "i32",
+   "min": 0,
+   "max": 65536,
+   "default": 8192,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.seq",
+   "part": "sparkles",
+   "label": "Sequence",
+   "doc": "Sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "0x1642238",
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.window.first",
+   "part": "sparkles",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.window.last",
+   "part": "sparkles",
+   "label": "To tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.colour.r",
+   "part": "sparkles",
+   "label": "Red",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.colour.g",
+   "part": "sparkles",
+   "label": "Green",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.colour.b",
+   "part": "sparkles",
+   "label": "Blue",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.size",
+   "part": "sparkles",
+   "label": "Size",
+   "doc": "Their sprite's scale (x 1: its own size)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "sparkle.speed.x.min",
+   "part": "sparkles",
+   "label": "x min",
+   "doc": "",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": -16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.speed.x.max",
+   "part": "sparkles",
+   "label": "x max",
+   "doc": "",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.speed.y.min",
+   "part": "sparkles",
+   "label": "y min",
+   "doc": "y goes down",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.speed.y.max",
+   "part": "sparkles",
+   "label": "y max",
+   "doc": "",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 31,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.speed.z.min",
+   "part": "sparkles",
+   "label": "z min",
+   "doc": "",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": -16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.speed.z.max",
+   "part": "sparkles",
+   "label": "z max",
+   "doc": "",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkle.frames",
+   "part": "sparkles",
+   "label": "Lifetime (frames)",
+   "doc": "One frame per tick from frame 0; after this frame it disappears: it lives this + 1 ticks (at most its sequence's last frame)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.seq",
+   "part": "motes",
+   "label": "Sequence",
+   "doc": "Sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "0x164205C",
+   "unit": "plain"
+  },
+  {
+   "key": "mote.window.first",
+   "part": "motes",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.window.last",
+   "part": "motes",
+   "label": "To tick",
+   "doc": "32766: as long as the ring lives",
+   "type": "i16",
+   "min": 0,
+   "max": 32766,
+   "default": 32766,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.count.from[0]",
+   "part": "motes",
+   "label": "1: from tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.count.count[0]",
+   "part": "motes",
+   "label": "1: per tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.count.from[1]",
+   "part": "motes",
+   "label": "2: from tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.count.count[1]",
+   "part": "motes",
+   "label": "2: per tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.count.from[2]",
+   "part": "motes",
+   "label": "3: from tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.count.count[2]",
+   "part": "motes",
+   "label": "3: per tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.count.from[3]",
+   "part": "motes",
+   "label": "4: from tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.count.count[3]",
+   "part": "motes",
+   "label": "4: per tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.colour.r",
+   "part": "motes",
+   "label": "Red",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.colour.g",
+   "part": "motes",
+   "label": "Green",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.colour.b",
+   "part": "motes",
+   "label": "Blue",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.size",
+   "part": "motes",
+   "label": "Size",
+   "doc": "Their sprite's scale (x 1: its own size)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "mote.radius.num",
+   "part": "motes",
+   "label": "Times",
+   "doc": "The target's radius times this...",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.radius.den",
+   "part": "motes",
+   "label": "Divided by",
+   "doc": "...divided by this...",
+   "type": "i16",
+   "min": 1,
+   "max": 32,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.radius.max",
+   "part": "motes",
+   "label": "At most",
+   "doc": "...never more than this (game units)",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.angle.min",
+   "part": "motes",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "mote.angle.max",
+   "part": "motes",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 4095,
+   "unit": "angle"
+  },
+  {
+   "key": "mote.drop.min",
+   "part": "motes",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.drop.max",
+   "part": "motes",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 31,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.drop.den",
+   "part": "motes",
+   "label": "Divided by",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 1000,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.rise.min",
+   "part": "motes",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.rise.max",
+   "part": "motes",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 23,
+   "unit": "plain"
+  },
+  {
+   "key": "mote.frames",
+   "part": "motes",
+   "label": "Lifetime (frames)",
+   "doc": "One frame per tick from frame 0; after this frame it disappears: it lives this + 1 ticks (at most its sequence's last frame)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.window.first",
+   "part": "glints",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.window.last",
+   "part": "glints",
+   "label": "To tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.count.from[0]",
+   "part": "glints",
+   "label": "1: from tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.count.count[0]",
+   "part": "glints",
+   "label": "1: per tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.count.from[1]",
+   "part": "glints",
+   "label": "2: from tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.count.count[1]",
+   "part": "glints",
+   "label": "2: per tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.count.from[2]",
+   "part": "glints",
+   "label": "3: from tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.count.count[2]",
+   "part": "glints",
+   "label": "3: per tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.count.from[3]",
+   "part": "glints",
+   "label": "4: from tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.count.count[3]",
+   "part": "glints",
+   "label": "4: per tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.ticks",
+   "part": "glints",
+   "label": "Ticks per phase",
+   "doc": "Grows for this many ticks, then shrinks for as many: it lives 2 x this ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.grow.w",
+   "part": "glints",
+   "label": "Width",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.grow.h",
+   "part": "glints",
+   "label": "Height",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.shrink.w",
+   "part": "glints",
+   "label": "Width",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.shrink.h",
+   "part": "glints",
+   "label": "Height",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.centre_step[0]",
+   "part": "glints",
+   "label": "Red",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.centre_step[1]",
+   "part": "glints",
+   "label": "Green",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.centre_step[2]",
+   "part": "glints",
+   "label": "Blue",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.tip_step[0]",
+   "part": "glints",
+   "label": "Red",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.tip_step[1]",
+   "part": "glints",
+   "label": "Green",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.tip_step[2]",
+   "part": "glints",
+   "label": "Blue",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glint.style.spin",
+   "part": "glints",
+   "label": "Spin per tick",
+   "doc": "Turn about the vertical axis every tick, + or - this, one random roll per glint (4096 = a full turn)",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 64,
+   "unit": "angle"
+  },
+  {
+   "key": "files.texture",
+   "part": "files",
+   "label": "Texture",
+   "doc": "The TIM file of the magic folder its loader reads: the sprites' and the projected image's pixels and palettes (empty: the game's, mag000-049.tim)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": "",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x8D6CC0",
+   "doc": "One per action, on its target: follows the target, starts the ring, gives the HP, plays the sound.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "wait": [
+      "tick_at_least",
+      "$ring.start.delay"
+     ],
+     "do": [
+      [
+       "spawn",
+       "ring"
+      ]
+     ]
+    },
+    {},
+    {
+     "wait": [
+      "tick_at_least",
+      "$emitter.heal_tick"
+     ],
+     "do": [
+      [
+       "heal"
+      ],
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "events": [
+    [
+     "sound_at",
+     "$emitter.sound_tick",
+     "$emitter.sound",
+     "$emitter.sound_pan"
+    ]
+   ]
+  },
+  {
+   "key": "ring",
+   "pool": "particles",
+   "size": 108,
+   "function": "0x8D6D80",
+   "doc": "The light climbing in a helix around the target; it spawns the sparkles, motes and glints and draws the overlay and the glow.",
+   "phases": [
+    {
+     "do": [
+      [
+       "spawning",
+       1
+      ],
+      [
+       "sequence",
+       "$ring.seq"
+      ],
+      [
+       "helix_start",
+       "$ring.start.above",
+       "$ring.radius.num",
+       "$ring.radius.den",
+       "$ring.radius.max",
+       "$ring.climb.above",
+       "$ring.climb.ticks",
+       "$ring.steps.per_tick"
+      ],
+      [
+       "overlay_start",
+       "$overlay.rgb[0]",
+       "$overlay.rgb[1]",
+       "$overlay.rgb[2]",
+       "$overlay.light_dist"
+      ],
+      [
+       "hide_target"
+      ]
+     ]
+    },
+    {
+     "wait": [
+      "tick_at_least",
+      "$ring.ending.tick"
+     ],
+     "do": [
+      [
+       "flipbook",
+       "$ring.ending.seq",
+       "$ring.ending.frames"
+      ]
+     ]
+    },
+    {
+     "wait": [
+      "flipbook_end"
+     ],
+     "do": [
+      [
+       "unblock_director"
+      ],
+      [
+       "show_target"
+      ],
+      [
+       "spawning",
+       0
+      ],
+      [
+       "overlay",
+       0
+      ],
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "motion": [
+    "helix",
+    "$ring.steps.per_tick",
+    "$ring.steps.angle"
+   ],
+   "step_spawns": [
+    {
+     "task": "sparkle",
+     "if": "spawning",
+     "window": [
+      "$sparkle.window.first",
+      "$sparkle.window.last"
+     ],
+     "place": [
+      "at_parent"
+     ]
+    }
+   ],
+   "spawns": [
+    {
+     "task": "mote",
+     "if": "spawning",
+     "window": [
+      "$mote.window.first",
+      "$mote.window.last"
+     ],
+     "count": [
+      "$mote.count.from[0]",
+      "$mote.count.count[0]",
+      "$mote.count.from[1]",
+      "$mote.count.count[1]",
+      "$mote.count.from[2]",
+      "$mote.count.count[2]",
+      "$mote.count.from[3]",
+      "$mote.count.count[3]"
+     ],
+     "place": [
+      "circle_drop",
+      "$mote.angle.min",
+      "$mote.angle.max",
+      "$mote.drop.min",
+      "$mote.drop.max",
+      "$mote.drop.den",
+      "$mote.radius.num",
+      "$mote.radius.den",
+      "$mote.radius.max"
+     ]
+    },
+    {
+     "pool": "glints",
+     "if": "spawning",
+     "window": [
+      "$glint.window.first",
+      "$glint.window.last"
+     ],
+     "count": [
+      "$glint.count.from[0]",
+      "$glint.count.count[0]",
+      "$glint.count.from[1]",
+      "$glint.count.count[1]",
+      "$glint.count.from[2]",
+      "$glint.count.count[2]",
+      "$glint.count.from[3]",
+      "$glint.count.count[3]"
+     ],
+     "place": [
+      "glint",
+      "glints",
+      "$glint.style.ticks",
+      "$glint.style.grow.w",
+      "$glint.style.grow.h",
+      "$glint.style.shrink.w",
+      "$glint.style.shrink.h",
+      "$glint.style.centre_step[0]",
+      "$glint.style.centre_step[1]",
+      "$glint.style.centre_step[2]",
+      "$glint.style.tip_step[0]",
+      "$glint.style.tip_step[1]",
+      "$glint.style.tip_step[2]",
+      "$glint.style.spin"
+     ]
+    }
+   ],
+   "draws": [
+    {
+     "part": "overlay",
+     "if": "overlay",
+     "draw": [
+      "projector_overlay",
+      "$overlay.image.tex_x",
+      "$overlay.image.tex_y",
+      "$overlay.image.clut_x",
+      "$overlay.image.clut_y",
+      "$overlay.image.width",
+      "$overlay.image.height",
+      "$overlay.skip_back_faces"
+     ]
+    },
+    {
+     "part": "ring",
+     "draw": [
+      "sprite",
+      "$ring.colour.r",
+      "$ring.colour.g",
+      "$ring.colour.b",
+      "$ring.size"
+     ]
+    },
+    {
+     "part": "glow",
+     "while_tick_below": "$glow.brightness.ticks",
+     "draw": [
+      "ground_flipbook",
+      "$glow.seq",
+      "$glow.placement.tilt",
+      "$glow.placement.height",
+      "$glow.placement.frame",
+      "$glow.brightness.start",
+      "$glow.brightness.fade"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "mote",
+   "pool": "particles",
+   "size": 108,
+   "function": "0x8D7F60",
+   "doc": "A flipbook rising at a random speed until its last frame.",
+   "phases": [
+    {
+     "do": [
+      [
+       "flipbook",
+       "$mote.seq",
+       "$mote.frames"
+      ],
+      [
+       "velocity_rise",
+       "$mote.rise.min",
+       "$mote.rise.max"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "drift"
+      ]
+     ],
+     "wait": [
+      "flipbook_end"
+     ],
+     "do": [
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "draws": [
+    {
+     "part": "motes",
+     "draw": [
+      "sprite",
+      "$mote.colour.r",
+      "$mote.colour.g",
+      "$mote.colour.b",
+      "$mote.size"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "sparkle",
+   "pool": "particles",
+   "size": 108,
+   "function": "0x8D80B0",
+   "doc": "A flipbook flying at a random velocity until its last frame.",
+   "phases": [
+    {
+     "do": [
+      [
+       "flipbook",
+       "$sparkle.seq",
+       "$sparkle.frames"
+      ],
+      [
+       "velocity_roll",
+       "$sparkle.speed.x.min",
+       "$sparkle.speed.x.max",
+       "$sparkle.speed.y.min",
+       "$sparkle.speed.y.max",
+       "$sparkle.speed.z.min",
+       "$sparkle.speed.z.max"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "drift"
+      ]
+     ],
+     "wait": [
+      "flipbook_end"
+     ],
+     "do": [
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "draws": [
+    {
+     "part": "sparkles",
+     "draw": [
+      "sprite",
+      "$sparkle.colour.r",
+      "$sparkle.colour.g",
+      "$sparkle.colour.b",
+      "$sparkle.size"
+     ]
+    }
+   ]
+  }
+ ]
+}
