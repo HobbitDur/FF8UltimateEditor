@@ -10,6 +10,13 @@ one directive per line, names resolved to indices ($n: parameter n), values as n
 In a description, a value is a number (or "0x..." text) or "$key", a parameter; a task, a pool or
 a part is named by its key; a spawn's or a draw's "if" names a flag of the node ("spawning",
 "overlay").
+
+A task's node is the effect library's (the heal ring's: phases, motion, flags) unless the task
+lists its "node" fields: a plain node (Hypnotize's), the fields laid out in that order after the
+engine's node header, its "end" a condition checked after its counter. Its spawns can come
+"every" n ticks of their window, its draws can be prim layouts. The director is "per_action" (the
+heal ring's) or "master" (Hypnotize's: it starts one task at its start tick, with the targets of
+action 0, and alternates the "magic_buffer" arenas).
 """
 import json
 from pathlib import Path
@@ -21,11 +28,16 @@ FLAGS = {"spawning": 2, "overlay": 8}
 # the operations of each kind the runner knows (fxprogram.h OPS) and how many arguments they take
 ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, "overlay": 1, "sequence": 1, "flipbook": 2,
            "helix_start": 7, "overlay_start": 4, "hide_target": 0, "show_target": 0, "unblock_director": 0,
-           "velocity_roll": 6, "velocity_rise": 2, "drift": 0, "sound_at": 3}
-CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0}
+           "velocity_roll": 6, "velocity_rise": 2, "drift": 0, "sound_at": 3, "heal_all_at": 1}
+CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0}
 MOTIONS = {"helix": 2}
-PLACES = {"at_parent": 0, "circle_drop": 8, "glint": 13}
-DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7}
+PLACES = {"at_parent": 0, "circle_drop": 8, "glint": 13, "table_point": 3, "random_target_bone": 6,
+          "random_target_point": 7, "action_targets": 1}
+DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_screen": 5, "layout_at_caster_bone": 1,
+         "layout_scaled": 1, "sequence_sprite": 3}
+# a plain node's fields and their sizes (a layout's is given: ["layout", size])
+FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14}
+NODE_HEADER = 0xC
 
 
 class DescriptionError(ValueError):
@@ -91,6 +103,21 @@ def compile_program(description):
             raise DescriptionError(f"{where}: no flag {name}")
         return FLAGS[name]
 
+    def node(task, where):
+        """A plain node's fields, laid out in their order after the node header."""
+        if task.get("phases") or task.get("every_tick") or task.get("motion") or task.get("step_spawns"):
+            raise DescriptionError(f"{where}: a plain node has no phases, every-tick actions or motion")
+        out, offset = ["node plain"], NODE_HEADER
+        for item in task["node"]:
+            name, size = (item[0], _number(item[1])) if isinstance(item, list) else (item, FIELDS.get(item))
+            if name not in FIELDS and name != "layout" or size is None:
+                raise DescriptionError(f"{where}: no node field {name}")
+            out.append(f"field {name} {offset} {size}")
+            offset += size
+        if offset > task["size"]:
+            raise DescriptionError(f"{where}: its fields take {offset:#x} bytes, the node {task['size']:#x}")
+        return out
+
     copy = description.get("copy") or {}
     lines = [f"# effect program, compiled by Fujin/effectprogram.py from effect_{description['effect']:03d}.json",
              f"program {description['effect']} {description['name'].replace(' ', '_')}"]
@@ -103,11 +130,19 @@ def compile_program(description):
     lines.append(f"camera 0x{_number(description['resources']['camera']):X}")
     for pool in description["pools"]:
         lines.append(f"pool 0x{_number(pool['queue']):X} 0x{_number(pool['storage']):X} {pool['size']} {pool['count']} "
-                     f"{parts[pool['part']] if pool.get('part') else -1}")
+                     f"{parts[pool['part']] if pool.get('part') else -1} {1 if pool.get('in_magic_buffer') else 0}")
+    if "magic_buffer" in description:
+        buffer = description["magic_buffer"]
+        arena_a, arena_b = buffer["arenas"]
+        lines.append(f"magic_buffer 0x{_number(arena_a):X} 0x{_number(arena_b):X} 0x{_number(buffer['morph']):X}")
     director = description["director"]
-    if director.get("kind") != "per_action" or director.get("spawns") not in tasks:
-        raise DescriptionError("director: a per_action director spawning one of the tasks")
-    lines.append(f"director per_action {tasks[director['spawns']]}")
+    if director.get("kind") not in ("per_action", "master") or director.get("spawns") not in tasks:
+        raise DescriptionError("director: a per_action or master director spawning one of the tasks")
+    if director["kind"] == "master":
+        lines.append(f"director master {tasks[director['spawns']]} {_number(director.get('start_tick', 1))} "
+                     f"{step(director['place'], PLACES, 'director')}")
+    else:
+        lines.append(f"director per_action {tasks[director['spawns']]}")
     for param in description["params"]:
         if param["type"] == "file":
             lines.append(f"param {param['key']} file {param['default'] or '-'} -")
@@ -118,6 +153,12 @@ def compile_program(description):
         if task["pool"] not in pools:
             raise DescriptionError(f"{where}: no pool {task['pool']}")
         lines.append(f"task {task['key']} {pools[task['pool']]} 0x{_number(task.get('function', 0)):X} {task['size']}")
+        if "node" in task:
+            lines += node(task, where)
+        if task.get("draws_first"):
+            lines.append("order draws_first")
+        if task.get("end"):
+            lines.append(f"end {step(task['end'], CONDITIONS, where)}")
         lines += [f"tick {action(entry, where)}" for entry in task.get("every_tick", [])]
         for number, phase in enumerate(task.get("phases", [])):
             here = f"{where} phase {number}"
@@ -135,6 +176,12 @@ def compile_program(description):
         for spawn in task.get("spawns", []):
             target = tasks.get(spawn.get("task"), -1)
             first, last = (value(item, where) for item in spawn["window"])
+            if "every" in spawn:
+                if target < 0:
+                    raise DescriptionError(f"{where}: a spawn every n ticks of no task")
+                lines.append(f"spawn_every {target} {first} {last} {value(spawn['every'], where)} "
+                             f"{step(spawn['place'], PLACES, where)}")
+                continue
             count = [value(item, where) for item in spawn["count"]]
             if len(count) != 8:
                 raise DescriptionError(f"{where}: a spawn count is 4 (from tick, how many) pairs")
@@ -142,8 +189,12 @@ def compile_program(description):
             lines.append(f"spawn {target} {flag(spawn.get('if'), where)} {first} {last} {' '.join(count)} {place}")
         lines += [f"event {action(entry, where)}" for entry in task.get("events", [])]
         for draw in task.get("draws", []):
-            below = value(draw["while_tick_below"], where) if "while_tick_below" in draw else "-"
-            lines.append(f"draw {parts.get(draw.get('part'), 0)} {flag(draw.get('if'), where)} {below} "
+            limit = "-", "-"
+            if "while_tick_below" in draw:
+                limit = "below", value(draw["while_tick_below"], where)
+            elif "while_tick_at_most" in draw:
+                limit = "at_most", value(draw["while_tick_at_most"], where)
+            lines.append(f"draw {parts.get(draw.get('part'), 0)} {flag(draw.get('if'), where)} {limit[0]} {limit[1]} "
                          f"{step(draw['draw'], DRAWS, where)}")
     return "\n".join(lines) + "\n"
 

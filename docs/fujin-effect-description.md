@@ -222,6 +222,33 @@ Potion's description is the same with its own sequences and sound.
      sound, camera). Own memory and data from files come with the host DLL (step 6).
 5. **Hypnotize** through the same path, adding what its parts need to the libraries. This measures
    how general the libraries really are.
+   *Done:* almost nothing of the heal ring fit Hypnotize, so the libraries grew instead of bending:
+   - **FFNx `fx_layouts.h`** (parts library, prim-model layouts): the prim-player callback,
+     `Play`, the frames (`ViewFrame` on the caster's screen point, `BonePoint` + `CameraAnchor` at
+     a point of the caster's bones, `ScaledCamera`), the inputs (`RandomEntity`,
+     `RandomBonePoint`) and `DrawSequenceSprite`. `mag133_hypnotize.cpp` is rebuilt from them
+     (its port test still records the original).
+   - **Runtime and compiler**, what the description can now say:
+     - *Plain nodes:* a task lists its `node` fields (`counter`, `pos`, `scale`, `point`,
+       `targets`, `["layout", size]`), laid out in that order after the engine's node header. It
+       has an `end` condition (`tick_at_least`, `layout_end`) and `draws_first`. The heal ring's
+       nodes stay the effect library's.
+     - *Master director* (`kind: master`): alternates the two `magic_buffer` arenas, sets up the
+       pools at `start_tick` (storage `in_magic_buffer`), and starts one task with the targets of
+       action 0 (`action_targets` and its layout). Its setup is Hypnotize's `Init`.
+     - *Spawns:* a spawn can come `every` n ticks of its window. New placements:
+       `table_point`, `random_target_bone`, `random_target_point`.
+     - *Draws:* `layout_on_screen`, `layout_at_caster_bone`, `layout_scaled`, `sequence_sprite`;
+       a draw limit `while_tick_at_most`.
+     - *Events:* `heal_all_at`.
+   - **Description:** `effect_133.json`.
+   - **Checked** (`tests/Fujin/test_effect_program.py`):
+     - Hypnotize from its description records exactly what the exe's code records.
+     - With parameters, it records exactly FFNx's port with the same values.
+     - As effect 225, a free slot with no exe function, it records Hypnotize.
+   - **What it shows:** two effects that share no part now run from one runtime. Each new family
+     of parts still costs library code once (a renderer, a placement, a director kind). After
+     that, an effect built from existing parts costs only a description.
 6. **Fujin:** edit the description (parts, links, bindings) beside the parameters, and write the
    host DLL's files for a free slot (224, 225, 346-400; the game's dispatcher `Magic_GetIDLoad`
    0x50AF20 reads `MagicList_Logic` / `MagicList_TextureLoad` and falls back to slot 0 when empty).

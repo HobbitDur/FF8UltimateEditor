@@ -1,7 +1,8 @@
 """Effects run from their descriptions (docs/fujin-effect-description.md): Fujin compiles a description
 (FF8GameData/Resources/json/effects/effect_NNN.json) into a program (Fujin/effectprogram.py) the
-recorder runs (program=<file>, Tools/fxhost/fxprogram.h) - Cure and Potion exactly as the exe's code,
-with their parameters, in a free slot of their own, and changed by changing their description."""
+recorder runs (program=<file>, Tools/fxhost/fxprogram.h) - Cure, Potion and Hypnotize exactly as the
+exe's code, with their parameters, in a free slot of their own, and changed by changing their
+description."""
 import copy
 import re
 import subprocess
@@ -108,3 +109,59 @@ def test_changing_the_description_changes_the_effect(tmp_path):
     program = write_program(description, tmp_path / "scattered.fxprog")
     scattered, _log = record(tmp_path, 1, "scattered", f"program={program}")
     assert scattered != without
+
+
+HYPNOTIZE_FILES = ("extracted_files/FF8_EN.exe", "extracted_files/magic/mag132.tim", "extracted_files/battle/d0c000.dat",
+                   "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m033.dat")
+
+
+def record_hypnotize(tmp_path, effect, tag, *extra):
+    """Hypnotize as Gayla (c0m033, slot 3) casts it on Squall."""
+    recorder = lab_recorder()
+    out = tmp_path / f"{tag}.txt"
+    run = subprocess.run([str(recorder), str(effect), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                          f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                          f"slot3={BATTLE / 'c0m033.dat'}", "caster=3", "target=0", *extra],
+                         cwd=str(recorder.parent), capture_output=True, text=True, timeout=120)
+    assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+    return out.read_text().splitlines(), run.stdout
+
+
+def test_hypnotize_description_compiles():
+    """Hypnotize's parts are not the heal ring's: plain nodes with their fields, a master director,
+    spawns every n ticks, prim layouts."""
+    program = compile_program(load_description(133))
+    assert "director master 0 1 action_targets" in program and program.count("\ntask ") == 4
+    assert program.count("node plain") == 4 and "field layout 28 168" in program and "spawn_every 1 " in program
+    broken = copy.deepcopy(load_description(133))
+    broken["tasks"][0]["node"].append(["layout", 8])
+    with pytest.raises(DescriptionError, match="its fields take 0xcc bytes, the node 0xc4"):
+        compile_program(broken)
+    broken = copy.deepcopy(load_description(133))
+    broken["tasks"][1]["phases"] = [{}]
+    with pytest.raises(DescriptionError, match="a plain node has no phases"):
+        compile_program(broken)
+
+
+@pytest.mark.ff8data(*HYPNOTIZE_FILES)
+def test_hypnotize_runs_from_its_description(tmp_path):
+    """Hypnotize from its description: what the exe's code records; with parameters, what FFNx's
+    port records with them; as effect 225 (a free slot, no exe function), Hypnotize again."""
+    program = write_program(load_description(133), tmp_path / "hypnotize.fxprog")
+    original, _log = record_hypnotize(tmp_path, 133, "original")
+    described, log = record_hypnotize(tmp_path, 133, "described", f"program={program}")
+    assert "4 tasks, 32 params" in log and untag(described) == original and len(original) > 10000
+    params = tmp_path / "params.txt"
+    params.write_text("main.pixels 1\nrings.every 3\ntargets.scale.min 1000\nsprites.frames 12\n"
+                      "sprites.spread.y.min -900\ntiming.damage_tick 20\n")
+    native, _log = record_hypnotize(tmp_path, 133, "native", "native=1", f"params={params}")
+    described, log = record_hypnotize(tmp_path, 133, "described_params", f"program={program}", f"params={params}")
+    assert "6 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(133))
+    description["effect"], description["name"] = 225, "New hypnosis"
+    del description["copy"]["functions"]
+    for task in description["tasks"]:
+        task.pop("function")
+    program = write_program(description, tmp_path / "new.fxprog")
+    new, log = record_hypnotize(tmp_path, 225, "new", f"program={program}")
+    assert "program: New_hypnosis" in log and untag(new) == original

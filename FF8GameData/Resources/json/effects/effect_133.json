@@ -1,0 +1,679 @@
+{
+ "format": 1,
+ "effect": 133,
+ "name": "Hypnotize",
+ "doc": "Hypnotize (enemy attack, Gayla): a layout in front of the caster, eight layouts at its bones, layouts at random bones of the targets and a sprite sequence around them.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6B0FC0",
+   "setup": "0x6B0FB0",
+   "root": "0x6B1060"
+  },
+  "memory": {
+   "caster": "0x2520EE8",
+   "texture_file": "0x2520EEC",
+   "magic_buffer": "0x2520EF0",
+   "ctx": "0x2520EF4",
+   "root_pool": "0x2520EF8",
+   "packet_cursor": "0x2520F0C",
+   "root_queue": "0x2520F50"
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "0x1212B60"
+  },
+  "camera": "0x1212A30"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the master alternates, the layouts' blended vertex frames.",
+  "arenas": [
+   "0xE0C",
+   "0x10E0C"
+  ],
+  "morph": "0xE04"
+ },
+ "director": {
+  "kind": "master",
+  "spawns": "main",
+  "start_tick": 1,
+  "place": [
+   "action_targets",
+   "0x1207958"
+  ]
+ },
+ "pools": [
+  {
+   "key": "main",
+   "queue": "0x2520F40",
+   "storage": "0xD40",
+   "in_magic_buffer": true,
+   "size": 196,
+   "count": 1
+  },
+  {
+   "key": "rings",
+   "queue": "0x2520F30",
+   "storage": "0x7C0",
+   "in_magic_buffer": true,
+   "size": 176,
+   "count": 8
+  },
+  {
+   "key": "targets",
+   "queue": "0x2520F20",
+   "storage": "0x280",
+   "in_magic_buffer": true,
+   "size": 84,
+   "count": 16
+  },
+  {
+   "key": "sprites",
+   "queue": "0x2520F10",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 20,
+   "count": 32
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The main task's clock: when the sound plays, when the targets take the result, when it ends (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "main",
+   "title": "Main layout",
+   "doc": "The layout in front of the caster, framed in view space on its screen position"
+  },
+  {
+   "id": 2,
+   "key": "rings",
+   "title": "Rings",
+   "doc": "Eight layouts at points of the caster's bones, one every other tick"
+  },
+  {
+   "id": 3,
+   "key": "targets",
+   "title": "Target layouts",
+   "doc": "Layouts at random bones of random targets, at random sizes"
+  },
+  {
+   "id": 4,
+   "key": "sprites",
+   "title": "Sprites",
+   "doc": "A flipbook at random points around a target's bone"
+  }
+ ],
+ "groups": [
+  {
+   "key": "rings",
+   "label": "Spawning",
+   "doc": "Spawned at main ticks From tick, From tick + Every, ... up to To tick; layout = ((tick - From tick) / Every) mod 8 of 8, at the caster's bone points"
+  },
+  {
+   "key": "targets.spawn",
+   "label": "Spawning",
+   "doc": "Spawned at main ticks From tick, From tick + Every, ... up to To tick; layout = ((tick - From tick) / Every) mod 8 of 8, at a random bone of a random target"
+  },
+  {
+   "key": "targets.spread_x",
+   "label": "Spread x",
+   "doc": "x += min + random % (max - min + 1)"
+  },
+  {
+   "key": "targets.scale",
+   "label": "Size",
+   "doc": "size = min + (random / 16) % (max - min + 1) (4096 = its own size)"
+  },
+  {
+   "key": "sprites.spawn",
+   "label": "Spawning",
+   "doc": "One flipbook spawned at main ticks From tick, From tick + Every, ... up to To tick"
+  },
+  {
+   "key": "sprites.spread",
+   "label": "Spread",
+   "doc": "Added to the bone point: x, then y, then z, each min + random % (max - min + 1) (y goes down)"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "0x1212ADC",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays when the main tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_pan",
+   "part": "timing",
+   "label": "Sound pan",
+   "doc": "Where it plays between the speakers: 128 the middle (BdPlaySE's pan)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The targets take the result when the main tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 34,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The main task ends when the main tick reaches this",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 42,
+   "unit": "plain"
+  },
+  {
+   "key": "main.last_tick",
+   "part": "main",
+   "label": "Last tick",
+   "doc": "Drawn while main tick <= this",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 29,
+   "unit": "plain"
+  },
+  {
+   "key": "main.basis_h",
+   "part": "main",
+   "label": "Basis depth (x H)",
+   "doc": "It faces along (screen offset, H x this), H = the projection distance",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "main.depth_h",
+   "part": "main",
+   "label": "Depth (x H)",
+   "doc": "It sits H x this in front of the camera",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "main.offset_shift",
+   "part": "main",
+   "label": "Offset scale (2^n)",
+   "doc": "screen offset = (160 - x, 120 - y) of the caster's projected point x 2^this",
+   "type": "i16",
+   "min": 0,
+   "max": 8,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "main.pixels",
+   "part": "main",
+   "label": "PSX screen units",
+   "doc": "1: the caster's screen position in pixels as on PSX (x, y / 8; on PC it is in eighths: the layout lands far off it)",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.window.first",
+   "part": "rings",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.window.last",
+   "part": "rings",
+   "label": "To tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.every",
+   "part": "rings",
+   "label": "Every",
+   "doc": "8 layouts, then they repeat",
+   "type": "i16",
+   "min": 1,
+   "max": 50,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "targets.spawn.window.first",
+   "part": "targets",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "targets.spawn.window.last",
+   "part": "targets",
+   "label": "To tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "targets.spawn.every",
+   "part": "targets",
+   "label": "Every",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 50,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "targets.spread_x.min",
+   "part": "targets",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -1024,
+   "unit": "plain"
+  },
+  {
+   "key": "targets.spread_x.max",
+   "part": "targets",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 1023,
+   "unit": "plain"
+  },
+  {
+   "key": "targets.scale.min",
+   "part": "targets",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "scale"
+  },
+  {
+   "key": "targets.scale.max",
+   "part": "targets",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4095,
+   "unit": "scale"
+  },
+  {
+   "key": "targets.depth",
+   "part": "targets",
+   "label": "Depth",
+   "doc": "Added to its drawing depth (sort key)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spawn.window.first",
+   "part": "sprites",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spawn.window.last",
+   "part": "sprites",
+   "label": "To tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 41,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spawn.every",
+   "part": "sprites",
+   "label": "Every",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 50,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.bone",
+   "part": "sprites",
+   "label": "Bone",
+   "doc": "The bone point of a random target they start from",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spread.x.min",
+   "part": "sprites",
+   "label": "x min",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -256,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spread.x.max",
+   "part": "sprites",
+   "label": "x max",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spread.y.min",
+   "part": "sprites",
+   "label": "y min",
+   "doc": "y goes down",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -384,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spread.y.max",
+   "part": "sprites",
+   "label": "y max",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 127,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spread.z.min",
+   "part": "sprites",
+   "label": "z min",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -256,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spread.z.max",
+   "part": "sprites",
+   "label": "z max",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.frames",
+   "part": "sprites",
+   "label": "Frames",
+   "doc": "Flipbook frames, one per tick: it lives this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 14,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "main",
+   "pool": "main",
+   "size": 196,
+   "function": "0x6B1230",
+   "doc": "The task the master starts with the targets of action 0: its layout in front of the caster; the sound; the rings, target layouts and sprites; the result.",
+   "node": [
+    "counter",
+    "targets",
+    [
+     "layout",
+     168
+    ]
+   ],
+   "draws_first": true,
+   "draws": [
+    {
+     "part": "main",
+     "while_tick_at_most": "$main.last_tick",
+     "draw": [
+      "layout_on_screen",
+      "$main.basis_h",
+      "$main.depth_h",
+      "$main.offset_shift",
+      "$main.pixels",
+      0
+     ]
+    }
+   ],
+   "spawns": [
+    {
+     "task": "ring",
+     "window": [
+      "$rings.window.first",
+      "$rings.window.last"
+     ],
+     "every": "$rings.every",
+     "place": [
+      "table_point",
+      "0x1212AE0",
+      "0x1212B20",
+      8
+     ]
+    },
+    {
+     "task": "target",
+     "window": [
+      "$targets.spawn.window.first",
+      "$targets.spawn.window.last"
+     ],
+     "every": "$targets.spawn.every",
+     "place": [
+      "random_target_bone",
+      "$targets.spread_x.min",
+      "$targets.spread_x.max",
+      "$targets.scale.min",
+      "$targets.scale.max",
+      "0x1212B40",
+      8
+     ]
+    },
+    {
+     "task": "sprite",
+     "window": [
+      "$sprites.spawn.window.first",
+      "$sprites.spawn.window.last"
+     ],
+     "every": "$sprites.spawn.every",
+     "place": [
+      "random_target_point",
+      "$sprites.bone",
+      "$sprites.spread.x.min",
+      "$sprites.spread.x.max",
+      "$sprites.spread.y.min",
+      "$sprites.spread.y.max",
+      "$sprites.spread.z.min",
+      "$sprites.spread.z.max"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "sound_at",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_pan"
+    ],
+    [
+     "heal_all_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "tick_at_least",
+    "$timing.end_tick"
+   ]
+  },
+  {
+   "key": "ring",
+   "pool": "rings",
+   "size": 176,
+   "function": "0x6B17C0",
+   "doc": "A layout at a point of the caster's bones (a table entry), the camera's rotation; until its layout ends.",
+   "node": [
+    "point",
+    [
+     "layout",
+     156
+    ]
+   ],
+   "draws_first": true,
+   "draws": [
+    {
+     "part": "rings",
+     "draw": [
+      "layout_at_caster_bone",
+      -128
+     ]
+    }
+   ],
+   "end": [
+    "layout_end"
+   ]
+  },
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 84,
+   "function": "0x6B1900",
+   "doc": "A layout at a random bone of a random target, the camera's rotation scaled by its size; until its layout ends.",
+   "node": [
+    "pos",
+    "scale",
+    [
+     "layout",
+     64
+    ]
+   ],
+   "draws_first": true,
+   "draws": [
+    {
+     "part": "targets",
+     "draw": [
+      "layout_scaled",
+      "$targets.depth"
+     ]
+    }
+   ],
+   "end": [
+    "layout_end"
+   ]
+  },
+  {
+   "key": "sprite",
+   "pool": "sprites",
+   "size": 20,
+   "function": "0x6B1740",
+   "doc": "A sprite sequence at a random point around a target's bone, one frame a tick.",
+   "node": [
+    "pos",
+    "counter"
+   ],
+   "draws_first": true,
+   "draws": [
+    {
+     "part": "sprites",
+     "draw": [
+      "sequence_sprite",
+      "0x12077B8",
+      1024,
+      -256
+     ]
+    }
+   ],
+   "end": [
+    "tick_at_least",
+    "$sprites.frames"
+   ]
+  }
+ ]
+}
