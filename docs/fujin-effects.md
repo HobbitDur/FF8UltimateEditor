@@ -225,6 +225,11 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   the DLL at a Junction VIII mod's root (`<LoadLibrary>FujinEffects.dll</LoadLibrary>` in
   `mod.xml`) and the `direct/exe` files in its folder. A new effect plays when a kernel.bin entry
   names its effect id.
+  **Data** (Choreography): a new effect made with the exe open has its own data, copied from the
+  exe. This tab edits it by kind: a sprite sequence's frames and pieces, a sound's world id (with
+  Play), a table of values, a file name, a table of layouts. Layouts and the camera are shown
+  read-only (the Camera tab edits the camera). Apply records the effect again; Save writes the
+  data in its program.
   Cure's Overlay hides the target while the ring climbs and redraws it itself, twice per
   polygon: flat with its own texture (what the preview shows - the target as it is), and, where
   it faces the ring and falls in the projected window, gouraud with Cure's light texture

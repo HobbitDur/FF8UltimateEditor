@@ -321,7 +321,23 @@ Potion's description is the same with its own sequences and sound.
      - Checked: Cure's and Hypnotize's copies with their own data draw exactly what the originals
        draw and play the same sounds. Only the recorded addresses of sequences and sound blocks
        differ. No exe address is left in their programs.
+   - **Data editors:** Choreography's **Data** tab (`Fujin/effectdataview.py`) edits a new
+     effect's own data by kind. Apply writes an entry back; the previews record again.
+     - `seq`: palette-row parameters, frames (add / remove), and each frame's pieces in a table:
+       width, height, u, v, CLUT, x, y, angle, flags, scale, intensity, GPU code. Pieces can be
+       added and removed. Frames are drawn from the last recording's VRAM. It re-encodes with
+       `encode_sequence`: 301 of the exe's 326 sequences come out byte for byte; the rest have
+       gaps or shared frames in the exe but parse back the same.
+     - `sound`: the world sound id, its audio.dat entry and Play.
+     - `table`: int16 values, 4 a row (Hypnotize's ring points).
+     - `name`: the file name.
+     - `pointers`: each entry picked among the data keys (Hypnotize's ring and target layouts).
+     - `layout`, `camera`: read-only summaries (object count, frames; a camera is edited in the
+       Camera tab, whose `effect_NNN.bcam` replaces it in the game).
+     - Checked (`tests/Fujin/test_effect_data.py`): each editor's Apply reaches the program. A
+       sequence and a sound edited change what the recorder draws and plays.
    - **Not done yet:**
      - Tried in the real game.
-     - Editors for that data (sequences, layouts...): today it is the exe's bytes, copied.
+     - Editing prim layouts (objects, keys, models) and new data from scratch (today: the exe's,
+       copied, then edited).
      - A structured editor: the description is edited as JSON text.

@@ -169,3 +169,21 @@ def piece_rect(piece):
     """(u0, v0, u1, v1) of the texels a piece takes (u1 / v1 excluded, at most 256)."""
     return piece.u, piece.v, min(256, piece.u + piece.width), min(256, piece.v + piece.height)
 
+
+
+def encode_sequence(sequence):
+    """The bytes of a SpriteSequence (parse_sequence's inverse): the header, its frame offsets and
+    their 0xFFFF end, padded to 4 bytes, then each frame in turn. The exe's own sequences come out
+    as they are in the exe, but for a few laid out with gaps or shared frames."""
+    count = len(sequence.frames)
+    head = (10 + 2 * count + 2 + 3) // 4 * 4
+    body, offsets = bytearray(), []
+    for frame in sequence.frames:
+        offsets.append(head + len(body))
+        body += struct.pack("<I", len(frame.pieces) | (0x80000000 if frame.draw_mode else 0))
+        for p in frame.pieces:
+            body += struct.pack("<BBBBBBHhhhHhh", p.width, p.intensity, p.height, p.gpu_code, p.u, p.v, p.clut, p.x,
+                                p.y, p.angle, p.flags, p.scale_x, p.scale_y)
+    out = bytearray(SIGNATURE + bytes(sequence.parameters) + struct.pack(f"<H{count}H", count, *offsets) + b"\xff\xff")
+    out += bytes(head - len(out))
+    return bytes(out + body)

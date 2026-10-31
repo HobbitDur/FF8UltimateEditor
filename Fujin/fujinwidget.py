@@ -29,6 +29,7 @@ from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults 
                                recorder_has_ports)
 from Fujin.nativepreview import NativePreviewView, gl_renderer
 from Fujin.effectdescriptionview import EffectDescriptionView
+from Fujin.effectdataview import EffectDataView
 from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, compile_program, description_schema, load_description,
                                  new_effect, program_file_name)
 from Fujin.recorderbuild import HOST_DLL
@@ -166,6 +167,10 @@ class FujinWidget(QWidget):
         self.description_view.new_requested.connect(self.new_effect_dialog)
         self.description_view.reset_requested.connect(self._description_reset)
         self.choreography.addTab(self.description_view, "Description")
+        # a new effect's own data (sequences, sounds, tables...), edited by kind
+        self.data_view = EffectDataView(vram=self._data_vram, play_sound=self._play_archive)
+        self.data_view.changed.connect(self._data_changed)
+        self.choreography.addTab(self.data_view, "Data")
         self.choreography.currentChanged.connect(self._activate_tab)
         self.choreography.currentChanged.connect(lambda _index: self._record_parts())
         # Why there is no MAG script, when there is none (the greyed tab says it too)
@@ -849,6 +854,21 @@ class FujinWidget(QWidget):
         effect = self.current_effect
         kind = "new" if "base" in self.descriptions.get(effect, {}) else "edited" if effect in self.descriptions else "shipped"
         self.description_view.show_description(effect, self.description(effect) if effect is not None else None, kind)
+        self.data_view.show_data(self.descriptions.get(effect))
+
+    def _data_changed(self, key, entry):
+        """An entry of the Data tab applied: the effect's description takes it."""
+        self.descriptions[self.current_effect]["data"][key] = entry
+        self._description_changed()
+
+    def _data_vram(self):
+        """The video memory the Data tab draws sequence frames from: the last recording's, or None."""
+        recording = self.lab.recording or self.native_preview.recording
+        return recording.vram_at(len(recording.ticks) - 1) if recording is not None and recording.ticks else None
+
+    def _play_archive(self, archive):
+        if self.sound_panel._can_play(archive):
+            self.sound_panel.play(archive)
 
     def _description_applied(self, description):
         effect = self.current_effect
