@@ -42,6 +42,7 @@ class EffectTick:
     places: list = field(default_factory=list)      # per sprite: its screen middle (x, y), or None
     results: list = field(default_factory=list)     # [(target slot, amount, result flags, hit type)] given (N lines)
     sounds: list = field(default_factory=list)      # [sound block address] played (S lines)
+    sound_words: list = field(default_factory=list)  # [the world sound id each block holds] (None: an older recording)
     notes: list = field(default_factory=list)       # [(name, value)] the port measured (M lines)
 
     def part_packets(self, parts=None):
@@ -262,7 +263,9 @@ def parse_recording(lines, effect_id=None) -> EffectRecording:
             name = line.split(None, 3)[3].strip()
             by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).notes.append((name, int(parts[2])))
         elif kind == "S" and len(parts) >= 3:
-            by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).sounds.append(int(parts[2], 16))
+            tick = by_index.setdefault(int(parts[1]), EffectTick(int(parts[1])))
+            tick.sounds.append(int(parts[2], 16))
+            tick.sound_words.append(int(parts[3], 16) if len(parts) >= 4 else None)
         elif kind == "V" and len(parts) >= 7:
             index, x, y, w, h = (int(value) for value in parts[1:6])
             upload = ("V", x, y, w, h, _hex_words(parts[6]))

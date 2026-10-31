@@ -897,7 +897,13 @@ class FujinWidget(QWidget):
                 return None
         if effect_id not in free:
             raise ValueError(f"effect {effect_id} is not a free slot")
-        self.descriptions[effect_id] = new_effect(source, effect_id, name.strip())
+        # with the exe open, its data (sequences, sounds, layouts, camera...) is copied into the effect
+        exe_path = self.camera_editor.exe_binding.current_path
+        try:
+            exe = Path(exe_path).read_bytes() if exe_path else None
+        except OSError:
+            exe = None
+        self.descriptions[effect_id] = new_effect(source, effect_id, name.strip(), exe)
         if self.effect_params.get(self.current_effect):
             self.effect_params[effect_id] = dict(self.effect_params[self.current_effect])
         self._update_effect_rows(refresh=False)

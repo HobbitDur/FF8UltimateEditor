@@ -24,7 +24,10 @@
 // A program can stand in for an effect of the exe (its `function` addresses: the recorder jumps
 // from each original to the program's thunk) or be a new one (no address: the thunks are the
 // task functions). It works in its exe copy's memory (`memory` addresses) or in its own (`own`
-// sizes, and pools whose queue and storage are `own`): one zeroed block the program holds.
+// sizes, and pools whose queue and storage are `own`): one zeroed block the program holds. The
+// data it reads (sequences, sounds, layouts, tables, its texture name, its camera) is the exe's
+// (addresses) or its own (`data` lines, hex bytes; `data_pointers`, tables of their addresses),
+// named @key wherever a number goes.
 
 #pragma once
 
@@ -95,6 +98,8 @@ namespace fxprog
 		uint32_t arena_a = 0, arena_b = 0, morph = 0;   // in the magic buffer
 		std::vector<std::pair<std::string, uint32_t>> own;   // memory of its own: name, size
 		std::vector<uint8_t> block;                     // that memory (never resized once allocated)
+		std::map<std::string, uint32_t> data;           // its own data: key -> address
+		std::vector<std::vector<uint8_t>> blobs;        // that data (each buffer stays where it is)
 		std::vector<Pool> pools;
 		std::vector<Param> params;
 		std::vector<Task> tasks;
@@ -734,12 +739,31 @@ namespace fxprog
 	// ------------------------------------------------------------------
 	// Loading
 	// ------------------------------------------------------------------
+	inline Program *g_parsing = nullptr;          // the program being parsed (its data for @key)
+	inline std::string g_parse_error;
+
 	inline Val ParseVal(const std::string &token)
 	{
 		Val v;
 		if (!token.empty() && token[0] == '$') { v.param = true; v.v = atoi(token.c_str() + 1); }
+		else if (!token.empty() && token[0] == '@')
+		{
+			auto it = g_parsing ? g_parsing->data.find(token.substr(1)) : std::map<std::string, uint32_t>::iterator();
+			if (g_parsing && it != g_parsing->data.end()) v.v = (int32_t)it->second;
+			else if (g_parse_error.empty()) g_parse_error = "no data " + token.substr(1);
+		}
 		else v.v = (int32_t)strtoll(token.c_str(), nullptr, 0);
 		return v;
+	}
+	inline uint32_t ParseNumber(const std::string &token) { return (uint32_t)ParseVal(token).v; }
+
+	// the bytes `hex` as a blob of the program's own data, 16-byte aligned: its address
+	inline uint32_t AddBlob(Program &g, const std::string &name, size_t size)
+	{
+		g.blobs.emplace_back(size + 16, 0);
+		const uint32_t at = ((uint32_t)g.blobs.back().data() + 15u) & ~15u;
+		g.data[name] = at;
+		return at;
 	}
 	inline Step ParseStep(const std::vector<std::string> &w, size_t from, std::string *error)
 	{
@@ -782,6 +806,8 @@ namespace fxprog
 		int number = 0;
 		Task *task = nullptr;
 		size_t at = 0;
+		g_parsing = &g;
+		g_parse_error.clear();
 		while (error.empty() && at < text.size())
 		{
 			size_t end = text.find('\n', at);
@@ -802,6 +828,21 @@ namespace fxprog
 			const std::string &d = w[0];
 			auto need = [&](size_t n) { if (w.size() < n) error = "line " + std::to_string(number) + ": " + d + " needs more"; return error.empty(); };
 			if (d == "program" && need(3)) { g.effect = atoi(w[1].c_str()); g.name = w[2]; }
+			else if (d == "data" && need(3))
+			{
+				const std::string &hex = w[2];
+				if (hex.size() % 2) error = "line " + std::to_string(number) + ": data " + w[1] + " is not hex";
+				else
+				{
+					uint8_t *out = (uint8_t *)AddBlob(g, w[1], hex.size() / 2);
+					for (size_t i = 0; i < hex.size(); i += 2) out[i / 2] = (uint8_t)strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+				}
+			}
+			else if (d == "data_pointers" && need(3))
+			{
+				uint32_t *out = (uint32_t *)AddBlob(g, w[1], 4 * (w.size() - 2));
+				for (size_t k = 2; k < w.size(); k++) out[k - 2] = ParseNumber("@" + w[k]);
+			}
 			else if (d == "function" && need(3))
 			{
 				const uint32_t at = (uint32_t)strtoul(w[2].c_str(), nullptr, 0);
@@ -810,8 +851,8 @@ namespace fxprog
 				else if (w[1] == "root") g.root = at;
 			}
 			else if (d == "memory" && need(3)) g.memory[w[1]] = (uint32_t)strtoul(w[2].c_str(), nullptr, 0);
-			else if (d == "texture" && need(3)) { g.texture_name = (uint32_t)strtoul(w[1].c_str(), nullptr, 0); g.texture_param = atoi(w[2].c_str()); }
-			else if (d == "camera" && need(2)) g.camera = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
+			else if (d == "texture" && need(3)) { g.texture_name = ParseNumber(w[1]); g.texture_param = atoi(w[2].c_str()); }
+			else if (d == "camera" && need(2)) g.camera = ParseNumber(w[1]);
 			else if (d == "own" && need(3)) g.own.push_back({ w[1], (uint32_t)strtoul(w[2].c_str(), nullptr, 0) });
 			else if (d == "pool" && need(6))
 			{
@@ -851,8 +892,8 @@ namespace fxprog
 				if (p.type == "file") p.text = w[3] == "-" ? "" : w[3];
 				else
 				{
-					p.value = as_type(p.type, (int32_t)strtoll(w[3].c_str(), nullptr, 0));
-					p.game = as_type(p.type, (int32_t)strtoll(w[4].c_str(), nullptr, 0));
+					p.value = as_type(p.type, ParseVal(w[3]).v);
+					p.game = as_type(p.type, ParseVal(w[4]).v);
 				}
 				g.params.push_back(p);
 			}
@@ -934,6 +975,8 @@ namespace fxprog
 		}
 		if (error.empty() && (int)g.tasks.size() > (int)(sizeof(THUNKS) / sizeof(THUNKS[0]))) error = "too many tasks";
 		if (error.empty() && (g.director_spawns < 0 || g.director_spawns >= (int)g.tasks.size())) error = "the director spawns no task";
+		if (error.empty() && !g_parse_error.empty()) error = g_parse_error;
+		g_parsing = nullptr;
 		if (error.empty()) Allocate(g);
 		for (size_t k = 0; error.empty() && k < g.tasks.size(); k++)
 		{

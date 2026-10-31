@@ -2,7 +2,8 @@
 effect's description (Choreography's Description tab), copies one into a free slot of the effect
 table as a new effect, and Save writes their programs (direct/exe/effect_NNN.fxprog, with the edited
 parameters) beside FujinEffects.dll, which runs them in the game - checked here inside the recorder,
-which loads the DLL as the game does (host=)."""
+which loads the DLL as the game does (host=). A new effect works in memory of its own and, made with
+the exe at hand, reads its own data (copied into its program): no exe address is left in it."""
 import json
 import re
 import subprocess
@@ -23,6 +24,46 @@ FILES = ("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim", "
 
 def untag(lines):
     return [re.sub(r"^(P|Q \d+) \d+ ", r"\1 0 ", line) for line in lines if not line.startswith("M ")]
+
+
+def drawing(lines):
+    """What a recording draws and plays, wherever its data lies: a sprite's sequence address and a
+    sound's block address left out (a sound keeps the world sound id it plays)."""
+    lines = [re.sub(r"^(Q \d+ \d+) [0-9A-F]+ ", r"\1 - ", line) for line in untag(lines)]
+    return [re.sub(r"^(S \d+) [0-9A-F]+ ", r"\1 - ", line) for line in lines]
+
+
+EXE_ADDRESS = re.compile(r"(?<![0-9A-Za-z$@])(0x[0-9A-F]{6,7}|1[0-9]{7}|[2-4][0-9]{7})(?![0-9])")
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_a_new_effect_made_with_the_exe_has_its_own_data():
+    exe = EXE.read_bytes()
+    for effect, keys in ((1, 8), (133, 24)):
+        source = load_description(effect)
+        new = new_effect(source, 300 + effect % 100, "New", exe)
+        assert "exe_data" not in new and "exe_data" in source
+        data = {key: entry for key, entry in new["data"].items() if isinstance(entry, dict)}
+        assert len(data) == keys
+        for key, entry in source["exe_data"].items():
+            if not isinstance(entry, dict):
+                continue
+            assert data[key]["from"] == entry["address"]
+            if entry["kind"] == "pointers":
+                assert data[key]["pointers"] == entry["items"]
+            else:
+                start = int(entry["address"], 16) - 0x400000
+                assert bytes.fromhex(data[key]["hex"]) == exe[start:start + entry["size"]]
+        program = compile_program(new)
+        code = "\n".join(line for line in program.splitlines() if not line.startswith(("data ", "#")))
+        assert not EXE_ADDRESS.findall(code), EXE_ADDRESS.findall(code)[:5]
+        # its part tabs show the exe's copy of its sequences and sounds
+        defaults = {field["key"]: field["default"] for field in description_schema(new)["fields"]}
+        assert defaults == {field["key"]: field["default"] for field in description_schema(source)["fields"]}
+    cure = new_effect(load_description(1), 224, "New heal", exe)
+    assert "data emitter.sound " in compile_program(cure) and "param emitter.sound sound @emitter.sound @emitter.sound" in compile_program(cure)
+    # a sound picked in the part tab (an exe address) plays that one; the game value stays its own
+    assert "param emitter.sound sound 23336900 @emitter.sound" in compile_program(cure, {"emitter.sound": 0x16417C4})
 
 
 def test_a_new_effect_is_a_copy_in_a_free_slot():
@@ -52,9 +93,9 @@ def test_a_new_effect_is_a_copy_in_a_free_slot():
 @pytest.mark.ff8data(*FILES)
 def test_the_host_dll_plays_the_saved_programs(tmp_path):
     """FujinEffects.dll, in the recorder as in the game, reads the programs of a game folder: new
-    effects in memory of their own (Cure's copy as 224, Hypnotize's as 225) record Cure and
-    Hypnotize; Cure with its parameters edited records FFNx's port with them; Hypnotize records
-    itself."""
+    effects in memory of their own, with their own data (Cure's copy as 224, Hypnotize's as 225),
+    draw and play what Cure and Hypnotize do; Cure with its parameters edited records FFNx's port
+    with them; Hypnotize records itself."""
     from Fujin.effectparts import effect_schema
     from Fujin.recorderbuild import HOST_DLL, RECORDER
     if effect_schema(1) is None or not HOST_DLL.is_file():
@@ -62,10 +103,11 @@ def test_the_host_dll_plays_the_saved_programs(tmp_path):
     folder = tmp_path / "game/direct/exe"
     folder.mkdir(parents=True)
     values = {"ring.radius.num": 4, "ring.radius.max": 2048, "sparkle.colour.r": 255}
-    write_program(new_effect(load_description(1), 224, "New heal"), folder / program_file_name(224))
+    exe = EXE.read_bytes()
+    write_program(new_effect(load_description(1), 224, "New heal", exe), folder / program_file_name(224))
     write_program(load_description(1), folder / program_file_name(1), values)
     write_program(load_description(133), folder / program_file_name(133))
-    write_program(new_effect(load_description(133), 225, "New hypnosis"), folder / program_file_name(225))
+    write_program(new_effect(load_description(133), 225, "New hypnosis", exe), folder / program_file_name(225))
 
     def record(effect, tag, monster, caster, target, *extra):
         out = tmp_path / f"{tag}.txt"
@@ -74,22 +116,23 @@ def test_the_host_dll_plays_the_saved_programs(tmp_path):
                               f"slot3={BATTLE / monster}", f"caster={caster}", f"target={target}", *extra],
                              cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=120)
         assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
-        return untag(out.read_text().splitlines()), run.stdout
+        return out.read_text().splitlines(), run.stdout
 
     host = (f"host={HOST_DLL}", f"hostdir={tmp_path / 'game'}")
     cure, _log = record(1, "cure", "c0m009.dat", 0, 3)
     new, log = record(224, "new", "c0m009.dat", 0, 3, *host)
-    assert "host: 4 programs installed" in log and new == cure and len(cure) > 10000
+    assert "host: 4 programs installed" in log and drawing(new) == drawing(cure) and len(cure) > 10000
+    assert any(line.startswith("S ") for line in new)
     params = tmp_path / "params.txt"
     params.write_text("".join(f"{key} {value}\n" for key, value in values.items()))
     native, _log = record(1, "native", "c0m009.dat", 0, 3, "native=1", f"params={params}")
     hosted, _log = record(1, "hosted", "c0m009.dat", 0, 3, *host)
-    assert hosted == native and hosted != cure
+    assert untag(hosted) == untag(native) and untag(hosted) != untag(cure)
     hypnotize, _log = record(133, "hypnotize", "c0m033.dat", 3, 0)
     hosted, _log = record(133, "hosted133", "c0m033.dat", 3, 0, *host)
-    assert hosted == hypnotize
+    assert untag(hosted) == untag(hypnotize)
     new, _log = record(225, "new225", "c0m033.dat", 3, 0, *host)
-    assert new == hypnotize
+    assert drawing(new) == drawing(hypnotize)
 
 
 @pytest.fixture(scope="module")

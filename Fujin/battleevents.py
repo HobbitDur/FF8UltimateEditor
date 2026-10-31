@@ -44,6 +44,17 @@ def sound_archive_id(exe_path, address):
     return _SOUNDS[key]
 
 
+def recorded_sound_archive_id(exe_path, address, word=None):
+    """The audio.dat entry a recorded sound plays: from the world sound id the recorder read in its
+    block (`word`: an effect's own data lies outside the exe), else from the exe at `address`."""
+    if word is not None:
+        try:
+            return world_sound_to_archive_id(word)
+        except (ValueError, KeyError, IndexError):
+            return None
+    return sound_archive_id(exe_path, address) if exe_path else None
+
+
 def number_state(age, heal):
     """(y offset in pixels, opacity 0-1, darkening 0-1) of a result's number `age` ticks after it
     shows, or None once it is gone."""

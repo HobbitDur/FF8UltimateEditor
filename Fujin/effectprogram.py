@@ -21,6 +21,12 @@ action 0, and alternates the "magic_buffer" arenas).
 The memory an effect works in is its exe copy's ("copy": "memory", addresses) or its own
 ("own_memory": name: size in bytes, allocated by the runtime), its pools' queues and storage then
 allocated too ("own": true). A new effect has its own.
+
+The data an effect reads (sprite sequences, sound blocks, prim layouts and their tables, its
+texture file name, its camera track) is named by "@key": in the exe ("exe_data": key: address,
+size, kind) or in the program itself ("data": key: its bytes as "hex", or "pointers": a table of
+other keys' addresses). A new effect made with the exe at hand copies its exe data into "data":
+its program no longer reads the exe's.
 """
 import json
 from pathlib import Path
@@ -68,6 +74,21 @@ def _number(value):
     return int(value, 0) if isinstance(value, str) else int(value)
 
 
+IMAGE_BASE = 0x400000
+
+
+def _entries(table):
+    """The entries of an exe_data / data table (its "doc" left out)."""
+    return {key: entry for key, entry in (table or {}).items() if isinstance(entry, dict)}
+
+
+def data_origin(description, key):
+    """The exe address `@key` stands for (its exe data, or where its own data was copied from), or None."""
+    entry = _entries(description.get("exe_data")).get(key) or _entries(description.get("data")).get(key) or {}
+    address = entry.get("address", entry.get("from"))
+    return _number(address) if address is not None else None
+
+
 def compile_program(description, values=None):
     """The program text of `description` (a dict), its parameters at `values` (key: value, the
     others at the game's); DescriptionError says what is wrong."""
@@ -77,11 +98,20 @@ def compile_program(description, values=None):
     pools = {pool["key"]: index for index, pool in enumerate(description["pools"])}
     parts = {part["key"]: part["id"] for part in description["parts"]}
 
+    exe_data, own_data = _entries(description.get("exe_data")), _entries(description.get("data"))
+
     def value(item, where):
         if isinstance(item, str) and item.startswith("$"):
             if item[1:] not in params:
                 raise DescriptionError(f"{where}: no parameter {item[1:]}")
             return f"${params[item[1:]]}"
+        if isinstance(item, str) and item.startswith("@"):
+            key = item[1:]
+            if key in own_data:
+                return f"@{key}"
+            if key in exe_data:
+                return str(_number(exe_data[key]["address"]))
+            raise DescriptionError(f"{where}: no data {key}")
         try:
             return str(_number(item))
         except (TypeError, ValueError):
@@ -133,6 +163,22 @@ def compile_program(description, values=None):
     copy = description.get("copy") or {}
     lines = [f"# effect program, compiled by Fujin/effectprogram.py from effect_{description['effect']:03d}.json",
              f"program {description['effect']} {description['name'].replace(' ', '_')}"]
+    # its own data first: the lines below name it (@key); tables of pointers after what they point at
+    for key, entry in own_data.items():
+        if " " in key:
+            raise DescriptionError(f"data {key}: a key without spaces")
+        if "pointers" not in entry:
+            try:
+                data = bytes.fromhex(entry["hex"])
+            except (KeyError, ValueError):
+                raise DescriptionError(f"data {key}: its bytes as \"hex\"") from None
+            lines.append(f"data {key} {data.hex()}")
+    for key, entry in own_data.items():
+        if "pointers" in entry:
+            missing = [item for item in entry["pointers"] if item not in own_data or "pointers" in own_data[item]]
+            if missing:
+                raise DescriptionError(f"data {key}: points at no data {', '.join(missing)}")
+            lines.append(f"data_pointers {key} {' '.join(entry['pointers'])}")
     for name, address in (copy.get("functions") or {}).items():
         lines.append(f"function {name} 0x{_number(address):X}")
     for name, address in (copy.get("memory") or {}).items():
@@ -142,8 +188,8 @@ def compile_program(description, values=None):
             raise DescriptionError(f"own memory {name}: a size in bytes")
         lines.append(f"own {name} {_number(size)}")
     texture = description["resources"]["texture"]
-    lines.append(f"texture 0x{_number(texture['game_name']):X} {params.get(texture.get('param'), -1)}")
-    lines.append(f"camera 0x{_number(description['resources']['camera']):X}")
+    lines.append(f"texture {value(texture['game_name'], 'texture')} {params.get(texture.get('param'), -1)}")
+    lines.append(f"camera {value(description['resources']['camera'], 'camera')}")
     for pool in description["pools"]:
         own, in_buffer = pool.get("own"), pool.get("in_magic_buffer")
         queue = "own" if own else f"0x{_number(pool['queue']):X}"
@@ -164,12 +210,13 @@ def compile_program(description, values=None):
         lines.append(f"director per_action {tasks[director['spawns']]}")
     for param in description["params"]:
         current = values.get(param["key"], param["default"])
+        where = f"parameter {param['key']}"
         if param["type"] == "file":
             if " " in str(current or ""):
-                raise DescriptionError(f"parameter {param['key']}: a file name without spaces")
+                raise DescriptionError(f"{where}: a file name without spaces")
             lines.append(f"param {param['key']} file {current or '-'} -")
         else:
-            lines.append(f"param {param['key']} {param['type']} {_number(current)} {_number(param['default'])}")
+            lines.append(f"param {param['key']} {param['type']} {value(current, where)} {value(param['default'], where)}")
     for task in description["tasks"]:
         where = f"task {task['key']}"
         if task["pool"] not in pools:
@@ -248,11 +295,31 @@ def own_memory(description):
     return {name: ROOT_POOL[kind] if name == "root_pool" else MEMORY_SIZES.get(name, 4) for name in names}
 
 
-def new_effect(description, effect_id, name):
+def own_data(description, exe):
+    """{key: entry} of `description`'s exe data copied out of `exe` (FF8_EN.exe's bytes)."""
+    data = {}
+    for key, entry in _entries(description.get("exe_data")).items():
+        address = _number(entry["address"])
+        if entry.get("kind") == "pointers":
+            data[key] = {"kind": "pointers", "from": entry["address"], "pointers": list(entry["items"])}
+            continue
+        start = address - IMAGE_BASE
+        if not 0 <= start <= len(exe) - entry["size"]:
+            raise DescriptionError(f"exe data {key}: 0x{address:X} is not in this exe")
+        data[key] = {"kind": entry["kind"], "from": entry["address"], "hex": exe[start:start + entry["size"]].hex()}
+    return data
+
+
+def new_effect(description, effect_id, name, exe=None):
     """A new effect (a copy of `description` as effect `effect_id`): it runs by itself, standing in
-    for no exe function, in memory of its own (its pools too); it keeps the exe data (flipbooks,
-    sounds, layouts, camera) and the files of the effect it is made from ("base")."""
+    for no exe function, in memory of its own (its pools too). With `exe` (FF8_EN.exe's bytes) its
+    exe data (flipbooks, sounds, layouts, camera...) is copied into its program; without, it reads
+    the exe's. It keeps the files of the effect it is made from ("base")."""
     new = json.loads(json.dumps(description))
+    if exe is not None and "exe_data" in new:
+        new["data"] = {"doc": "The effect's own data (@key in its values), copied from the exe's (\"from\").",
+                       **own_data(description, exe)}
+        del new["exe_data"]
     new["base"] = description.get("base", description["effect"])
     new["effect"], new["name"] = effect_id, name
     new["own_memory"] = own_memory(description)
@@ -271,7 +338,11 @@ def description_schema(description):
     """A description's parameter table in the shape of the recorder's schema (Choreography's part
     tabs): its parts, fields (numbers as numbers: a description keeps sequences and sounds as "0x..."
     text) and groups."""
-    fields = [param if param["type"] == "file" else dict(param, default=_number(param["default"]))
+    def default(param):
+        if isinstance(param["default"], str) and param["default"].startswith("@"):
+            return data_origin(description, param["default"][1:]) or 0       # the exe's copy of its data
+        return _number(param["default"])
+    fields = [param if param["type"] == "file" else dict(param, default=default(param))
               for param in description["params"]]
     return {"effect": description["effect"], "name": description["name"], "parts": description["parts"],
             "fields": fields, "groups": description.get("groups", [])}

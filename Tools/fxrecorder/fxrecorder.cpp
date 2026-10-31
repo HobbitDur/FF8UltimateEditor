@@ -20,7 +20,7 @@
 //   V t x y w h hexwords          a VRAM upload (queued by the tick, or done before it)
 //   B t x y w h u v               a VRAM-to-VRAM copy
 //   N t slot amount flags hit    an action result the effect gave a target (its number then shows)
-//   S t address                   a sound it played (its sound block in memory)
+//   S t address word              a sound it played (its sound block in memory, the world sound id in it)
 //   M t value name                a value the port measured then (FX_NOTE, effect lab builds)
 //   Q t part sequence frame [x y] a sprite the tick drew: its sprite sequence (address, hex) and
 //                                 frame, the effect part drawing it (FF8GameData/psxgpu/spritesequence.py),
@@ -307,7 +307,8 @@ static int __cdecl s_results(uint32_t targets, uint32_t count)
 	for (uint32_t k = 0; k < count && k < 8; k++) note_result(targets + 24 * k);
 	return 0;
 }
-static int __cdecl s_sound(uint32_t sound, uint32_t, uint32_t) { if (g_rec) g_events.push_back({ 'S', sound, 0, 0, 0 }); return 0; }
+// the sound block and the world sound id it holds (what BdPlaySE reads: an effect's own data has no exe address)
+static int __cdecl s_sound(uint32_t sound, uint32_t, uint32_t) { if (g_rec) g_events.push_back({ 'S', sound, *(const uint32_t *)sound, 0, 0 }); return 0; }
 #define INS_WRAP(ADDR, ...) unpatch(ADDR); ((void (__cdecl *)(__VA_ARGS__))ADDR)
 static void __cdecl s_45C740(uint32_t a, uint32_t b, uint32_t c) { INS_WRAP(0x45C740, uint32_t, uint32_t, uint32_t)(a, b, c); repatch(0x45C740); note_ins(0x45C740, a, b); }
 static void __cdecl s_45C7A0(uint32_t a, uint32_t b) { INS_WRAP(0x45C7A0, uint32_t, uint32_t)(a, b); repatch(0x45C7A0); note_ins(0x45C7A0, a, b); }
@@ -448,7 +449,7 @@ static void write_tick(int t)
 		else fprintf(g_out, "Q %d %d %X %d\n", t, part_at(s.node), s.seq, s.frame);
 	for (const BattleEvent &e : g_events)
 		if (e.kind == 'N') fprintf(g_out, "N %d %u %u %u %u\n", t, e.a, e.b, e.c, e.d);
-		else fprintf(g_out, "S %d %X\n", t, e.a);
+		else fprintf(g_out, "S %d %X %X\n", t, e.a, e.b);
 	for (const auto &n : g_notes) fprintf(g_out, "M %d %d %s\n", t, n.second, n.first.c_str());
 }
 

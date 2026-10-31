@@ -20,11 +20,153 @@
    "root_queue": "0x2520F50"
   }
  },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x1212ADC",
+   "size": 4
+  },
+  "sprite_seq": {
+   "kind": "seq",
+   "address": "0x12077B8",
+   "size": 416
+  },
+  "main_layout": {
+   "kind": "layout",
+   "address": "0x1207958",
+   "size": 4824
+  },
+  "ring_layout.0": {
+   "kind": "layout",
+   "address": "0x1208C30",
+   "size": 3252
+  },
+  "ring_layout.1": {
+   "kind": "layout",
+   "address": "0x12098E4",
+   "size": 3252
+  },
+  "ring_layout.2": {
+   "kind": "layout",
+   "address": "0x120A598",
+   "size": 3252
+  },
+  "ring_layout.3": {
+   "kind": "layout",
+   "address": "0x120B24C",
+   "size": 3252
+  },
+  "ring_layout.4": {
+   "kind": "layout",
+   "address": "0x120BF00",
+   "size": 3252
+  },
+  "ring_layout.5": {
+   "kind": "layout",
+   "address": "0x120CBB4",
+   "size": 3252
+  },
+  "ring_layout.6": {
+   "kind": "layout",
+   "address": "0x120D868",
+   "size": 3252
+  },
+  "ring_layout.7": {
+   "kind": "layout",
+   "address": "0x120E51C",
+   "size": 3252
+  },
+  "target_layout.0": {
+   "kind": "layout",
+   "address": "0x120F1D0",
+   "size": 1804
+  },
+  "target_layout.1": {
+   "kind": "layout",
+   "address": "0x120F8DC",
+   "size": 1804
+  },
+  "target_layout.2": {
+   "kind": "layout",
+   "address": "0x120FFE8",
+   "size": 1804
+  },
+  "target_layout.3": {
+   "kind": "layout",
+   "address": "0x12106F4",
+   "size": 1804
+  },
+  "target_layout.4": {
+   "kind": "layout",
+   "address": "0x1210E00",
+   "size": 1804
+  },
+  "target_layout.5": {
+   "kind": "layout",
+   "address": "0x121150C",
+   "size": 1804
+  },
+  "target_layout.6": {
+   "kind": "layout",
+   "address": "0x1211C18",
+   "size": 1804
+  },
+  "target_layout.7": {
+   "kind": "layout",
+   "address": "0x1212324",
+   "size": 1804
+  },
+  "ring_points": {
+   "kind": "table",
+   "address": "0x1212AE0",
+   "size": 64,
+   "doc": "8 points (x, y, z, caster bone), int16 each"
+  },
+  "ring_layouts": {
+   "kind": "pointers",
+   "address": "0x1212B20",
+   "items": [
+    "ring_layout.0",
+    "ring_layout.1",
+    "ring_layout.2",
+    "ring_layout.3",
+    "ring_layout.4",
+    "ring_layout.5",
+    "ring_layout.6",
+    "ring_layout.7"
+   ]
+  },
+  "target_layouts": {
+   "kind": "pointers",
+   "address": "0x1212B40",
+   "items": [
+    "target_layout.0",
+    "target_layout.1",
+    "target_layout.2",
+    "target_layout.3",
+    "target_layout.4",
+    "target_layout.5",
+    "target_layout.6",
+    "target_layout.7"
+   ]
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1212B60",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1212A30",
+   "size": 172
+  }
+ },
  "resources": {
   "texture": {
-   "game_name": "0x1212B60"
+   "game_name": "@texture_name"
   },
-  "camera": "0x1212A30"
+  "camera": "@camera"
  },
  "magic_buffer": {
   "doc": "Offsets in the magic buffer: the two packet arenas the master alternates, the layouts' blended vertex frames.",
@@ -40,7 +182,7 @@
   "start_tick": 1,
   "place": [
    "action_targets",
-   "0x1207958"
+   "@main_layout"
   ]
  },
  "pools": [
@@ -150,7 +292,7 @@
    "type": "sound",
    "min": 0,
    "max": 2147483647,
-   "default": "0x1212ADC",
+   "default": "@timing.sound",
    "unit": "plain"
   },
   {
@@ -535,8 +677,8 @@
      "every": "$rings.every",
      "place": [
       "table_point",
-      "0x1212AE0",
-      "0x1212B20",
+      "@ring_points",
+      "@ring_layouts",
       8
      ]
     },
@@ -553,7 +695,7 @@
       "$targets.spread_x.max",
       "$targets.scale.min",
       "$targets.scale.max",
-      "0x1212B40",
+      "@target_layouts",
       8
      ]
     },
@@ -664,7 +806,7 @@
      "part": "sprites",
      "draw": [
       "sequence_sprite",
-      "0x12077B8",
+      "@sprite_seq",
       1024,
       -256
      ]

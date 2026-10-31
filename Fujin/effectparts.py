@@ -25,7 +25,8 @@ from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayou
 from Fujin.partimages import SHEET_HEIGHT, PartImages
 from Fujin.partlife import PartLife
 from Fujin.partgeometry import GeometryView, geometry
-from Fujin.battleevents import HEAL_COLOUR, HIT_COLOUR, NUMBER_TICKS, SoundField, number_state, sound_archive_id
+from Fujin.battleevents import (HEAL_COLOUR, HIT_COLOUR, NUMBER_TICKS, SoundField, number_state,
+                                recorded_sound_archive_id)
 from FF8GameData.psxgpu.gpu import SUBPIXEL
 from FF8GameData.psxgpu.fxdiff import differences, tick_runs
 from Fujin.partsequences import PartSequences, SequenceField
@@ -495,8 +496,9 @@ class PartPreview(QWidget):
         if (self.sounds is None or not self.timer.isActive() or recording is None
                 or not 0 <= tick < len(recording.ticks) or not self.runner.exe_path()):
             return
-        for address in recording.ticks[tick].sounds:
-            archive = sound_archive_id(self.runner.exe_path(), address)
+        drawn = recording.ticks[tick]
+        for address, word in zip(drawn.sounds, drawn.sound_words or [None] * len(drawn.sounds)):
+            archive = recorded_sound_archive_id(self.runner.exe_path(), address, word)
             if archive is not None and self.sounds._can_play(archive):
                 self.sounds.play(archive)
 

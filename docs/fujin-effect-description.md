@@ -301,7 +301,27 @@ Potion's description is the same with its own sequences and sound.
      - The runtime allocates one zeroed block per program after parsing it.
      - Checked: Cure's and Hypnotize's copies (224, 225) record exactly the originals, through
        `program=` and through the DLL.
+   - **Own data:** a new effect made with the exe open reads no exe data.
+     - Each shipped description lists `exe_data`: every exe item it reads, with address, size and
+       kind. Its values name them `@key`.
+       - Cure and Potion: 5 sprite sequences, the sound block, the texture file name, the camera
+         track.
+       - Hypnotize: its sequence, main layout, 8 ring and 8 target layouts, the ring points, the
+         two layout tables (`pointers`), the sound, the name, the camera.
+       - Sizes come from the formats: a sequence's last frame, a camera track's header. Layouts
+         come from the module's contiguous data; each checked against the next item's address.
+     - `new_effect(..., exe)` copies them into `data`: bytes as `hex`, tables as `pointers` to
+       other keys, `from` = where each came from. The program carries `data` / `data_pointers`
+       lines, and the runtime allocates them and resolves `@key`. A program file is then
+       self-contained.
+     - Part tabs show the exe copy (`from`) of a sequence or sound parameter. Picking another exe
+       sequence still works: the game value stays the effect's own.
+     - The recorder logs a sound's world id with its block (`S t address id`), so the preview
+       plays a new effect's sounds.
+     - Checked: Cure's and Hypnotize's copies with their own data draw exactly what the originals
+       draw and play the same sounds. Only the recorded addresses of sequences and sound blocks
+       differ. No exe address is left in their programs.
    - **Not done yet:**
      - Tried in the real game.
-     - Its own data from files: flipbooks, sounds, layouts and the camera are still the exe's.
+     - Editors for that data (sequences, layouts...): today it is the exe's bytes, copied.
      - A structured editor: the description is edited as JSON text.

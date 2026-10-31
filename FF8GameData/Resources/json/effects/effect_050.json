@@ -31,12 +31,55 @@
    "overlay_verts": "0x263DA20"
   }
  },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15ACD78",
+   "size": 4
+  },
+  "ring.seq": {
+   "kind": "seq",
+   "address": "0x15AD52C",
+   "size": 84
+  },
+  "ring.ending.seq": {
+   "kind": "seq",
+   "address": "0x15AD580",
+   "size": 144
+  },
+  "glow.seq": {
+   "kind": "seq",
+   "address": "0x15ADAB8",
+   "size": 40
+  },
+  "sparkle.seq": {
+   "kind": "seq",
+   "address": "0x15AD7EC",
+   "size": 716
+  },
+  "mote.seq": {
+   "kind": "seq",
+   "address": "0x15AD610",
+   "size": 476
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15ADAE0",
+   "size": 16
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15ACD7C",
+   "size": 1968
+  }
+ },
  "resources": {
   "texture": {
    "param": "files.texture",
-   "game_name": "0x15ADAE0"
+   "game_name": "@texture_name"
   },
-  "camera": "0x15ACD7C"
+  "camera": "@camera"
  },
  "director": {
   "kind": "per_action",
@@ -257,7 +300,7 @@
    "type": "sound",
    "min": 0,
    "max": 2147483647,
-   "default": "0x15ACD78",
+   "default": "@emitter.sound",
    "unit": "plain"
   },
   {
@@ -301,7 +344,7 @@
    "type": "seq",
    "min": 0,
    "max": 2147483647,
-   "default": "0x15AD52C",
+   "default": "@ring.seq",
    "unit": "plain"
   },
   {
@@ -455,7 +498,7 @@
    "type": "seq",
    "min": 0,
    "max": 2147483647,
-   "default": "0x15AD580",
+   "default": "@ring.ending.seq",
    "unit": "plain"
   },
   {
@@ -488,7 +531,7 @@
    "type": "seq",
    "min": 0,
    "max": 2147483647,
-   "default": "0x15ADAB8",
+   "default": "@glow.seq",
    "unit": "plain"
   },
   {
@@ -686,7 +729,7 @@
    "type": "seq",
    "min": 0,
    "max": 2147483647,
-   "default": "0x15AD7EC",
+   "default": "@sparkle.seq",
    "unit": "plain"
   },
   {
@@ -840,7 +883,7 @@
    "type": "seq",
    "min": 0,
    "max": 2147483647,
-   "default": "0x15AD610",
+   "default": "@mote.seq",
    "unit": "plain"
   },
   {
