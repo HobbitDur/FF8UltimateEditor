@@ -30,10 +30,18 @@ def test_a_new_effect_is_a_copy_in_a_free_slot():
     cure = load_description(1)
     new = new_effect(cure, 224, "New heal")
     assert (new["effect"], new["name"], new["base"]) == (224, "New heal", 1)
-    assert "functions" not in new["copy"] and not any("function" in task for task in new["tasks"])
-    assert new["copy"]["memory"] == cure["copy"]["memory"] and "functions" in cure["copy"]     # the source untouched
+    assert "copy" not in new and not any("function" in task for task in new["tasks"])
+    assert "functions" in cure["copy"] and "own_memory" not in cure                            # the source untouched
+    # memory of its own: each name its exe copy had, sized; its pools allocated too
+    assert new["own_memory"].keys() == cure["copy"]["memory"].keys()
+    assert (new["own_memory"]["overlay_ctx"], new["own_memory"]["root_pool"], new["own_memory"]["packet_cursor"]) == (0xF8, 0xC8, 4)
+    assert all(pool["own"] and "queue" not in pool and "storage" not in pool for pool in new["pools"])
     program = compile_program(new, {"ring.radius.num": 4})
-    assert "program 224 New_heal" in program and "function " not in program
+    assert "program 224 New_heal" in program and "function " not in program and "\nmemory " not in program
+    assert "own overlay_verts 25600" in program and "pool own own 108 300 -1 0" in program
+    hypnosis = new_effect(load_description(133), 225, "New hypnosis")
+    assert hypnosis["own_memory"]["root_pool"] == 0x14
+    assert "pool own 0xD40 196 1 -1 1" in compile_program(hypnosis)                              # storage: the magic buffer
     assert "param ring.radius.num i16 4 2" in program
     assert new_effect(new, 225, "Again")["base"] == 1
     schema = description_schema(new)
@@ -43,9 +51,10 @@ def test_a_new_effect_is_a_copy_in_a_free_slot():
 
 @pytest.mark.ff8data(*FILES)
 def test_the_host_dll_plays_the_saved_programs(tmp_path):
-    """FujinEffects.dll, in the recorder as in the game, reads the programs of a game folder: a new
-    effect (Cure's copy as 224) records Cure; Cure with its parameters edited records FFNx's port
-    with them; Hypnotize records itself."""
+    """FujinEffects.dll, in the recorder as in the game, reads the programs of a game folder: new
+    effects in memory of their own (Cure's copy as 224, Hypnotize's as 225) record Cure and
+    Hypnotize; Cure with its parameters edited records FFNx's port with them; Hypnotize records
+    itself."""
     from Fujin.effectparts import effect_schema
     from Fujin.recorderbuild import HOST_DLL, RECORDER
     if effect_schema(1) is None or not HOST_DLL.is_file():
@@ -56,6 +65,7 @@ def test_the_host_dll_plays_the_saved_programs(tmp_path):
     write_program(new_effect(load_description(1), 224, "New heal"), folder / program_file_name(224))
     write_program(load_description(1), folder / program_file_name(1), values)
     write_program(load_description(133), folder / program_file_name(133))
+    write_program(new_effect(load_description(133), 225, "New hypnosis"), folder / program_file_name(225))
 
     def record(effect, tag, monster, caster, target, *extra):
         out = tmp_path / f"{tag}.txt"
@@ -69,7 +79,7 @@ def test_the_host_dll_plays_the_saved_programs(tmp_path):
     host = (f"host={HOST_DLL}", f"hostdir={tmp_path / 'game'}")
     cure, _log = record(1, "cure", "c0m009.dat", 0, 3)
     new, log = record(224, "new", "c0m009.dat", 0, 3, *host)
-    assert "host: 3 programs installed" in log and new == cure and len(cure) > 10000
+    assert "host: 4 programs installed" in log and new == cure and len(cure) > 10000
     params = tmp_path / "params.txt"
     params.write_text("".join(f"{key} {value}\n" for key, value in values.items()))
     native, _log = record(1, "native", "c0m009.dat", 0, 3, "native=1", f"params={params}")
@@ -78,6 +88,8 @@ def test_the_host_dll_plays_the_saved_programs(tmp_path):
     hypnotize, _log = record(133, "hypnotize", "c0m033.dat", 3, 0)
     hosted, _log = record(133, "hosted133", "c0m033.dat", 3, 0, *host)
     assert hosted == hypnotize
+    new, _log = record(225, "new225", "c0m033.dat", 3, 0, *host)
+    assert new == hypnotize
 
 
 @pytest.fixture(scope="module")

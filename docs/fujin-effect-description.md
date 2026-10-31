@@ -279,7 +279,7 @@ Potion's description is the same with its own sequences and sound.
      - Choreography has a **Description** tab: the effect's description as JSON. Apply checks that
        it compiles; an edited description of Fujin's goes back with *Fujin's description*.
      - **New effect from this…** copies the shown description into a free slot. It has its own
-       name, keeps its parameters, and records `base` (whose files, exe data and memory it uses).
+       name, keeps its parameters, and records `base` (whose files and exe data it uses; its memory is its own).
      - Its part tabs and both previews run from its program (`program=` in the recorder).
      - **Save** writes:
        - `direct/exe/effect_NNN.fxprog` for every described effect with a change (edited
@@ -292,9 +292,16 @@ Potion's description is the same with its own sequences and sound.
        - Cure with edited parameters records FFNx's port with them;
        - Hypnotize records itself.
      - The Description tab: apply errors, edit, New effect, Save, Import, reset and delete.
+   - **Own memory:** a new effect works in memory of its own, not its base's exe memory.
+     - `own_memory` lists, in the description, each name its base's copy had and its size in bytes:
+       words 4, the root queue 0x10, the root pool 2 x 0x64 (per-action) or 0x14 (master), the
+       overlay context 0xF8, its draw descriptor 0x40, its vertex buffer 0x6400 (Cure's room).
+     - Its pools are `own` (queue and storage allocated); Hypnotize's storage stays in the magic
+       buffer, at its offsets.
+     - The runtime allocates one zeroed block per program after parsing it.
+     - Checked: Cure's and Hypnotize's copies (224, 225) record exactly the originals, through
+       `program=` and through the DLL.
    - **Not done yet:**
      - Tried in the real game.
-     - A new effect's own memory: it shares its base's exe memory, which is safe because only one
-       magic effect runs at a time.
-     - Its own data from files: flipbooks, sounds and layouts are still the exe's.
+     - Its own data from files: flipbooks, sounds, layouts and the camera are still the exe's.
      - A structured editor: the description is edited as JSON text.

@@ -23,7 +23,8 @@
 //
 // A program can stand in for an effect of the exe (its `function` addresses: the recorder jumps
 // from each original to the program's thunk) or be a new one (no address: the thunks are the
-// task functions).
+// task functions). It works in its exe copy's memory (`memory` addresses) or in its own (`own`
+// sizes, and pools whose queue and storage are `own`): one zeroed block the program holds.
 
 #pragma once
 
@@ -74,7 +75,12 @@ namespace fxprog
 		std::vector<Step> events;
 		std::vector<Draw> draws;
 	};
-	struct Pool { uint32_t queue = 0, storage = 0; int size = 0, count = 0, tag = -1, base = 0; };   // base 1: storage in the magic buffer
+	struct Pool
+	{
+		uint32_t queue = 0, storage = 0;
+		int size = 0, count = 0, tag = -1, base = 0;   // base 1: storage in the magic buffer
+		bool own_queue = false, own_storage = false;  // allocated in the program's own memory
+	};
 	enum Director { PER_ACTION, MASTER };
 	struct Program
 	{
@@ -87,6 +93,8 @@ namespace fxprog
 		int director = PER_ACTION, director_start = 1;
 		Step director_place;
 		uint32_t arena_a = 0, arena_b = 0, morph = 0;   // in the magic buffer
+		std::vector<std::pair<std::string, uint32_t>> own;   // memory of its own: name, size
+		std::vector<uint8_t> block;                     // that memory (never resized once allocated)
 		std::vector<Pool> pools;
 		std::vector<Param> params;
 		std::vector<Task> tasks;
@@ -744,6 +752,29 @@ namespace fxprog
 		return s;
 	}
 
+	// the program's own memory: one zeroed block, each piece 16-byte aligned
+	inline void Allocate(Program &g)
+	{
+		auto align = [](uint32_t n) { return (n + 15u) & ~15u; };
+		uint32_t total = 0;
+		for (const auto &m : g.own) total += align(m.second);
+		for (const Pool &pool : g.pools)
+			total += (pool.own_queue ? align(sizeof(TaskQueue)) : 0) + (pool.own_storage ? align(pool.size * pool.count) : 0);
+		if (!total) return;
+		g.block.assign(total + 16, 0);
+		uint32_t at = align((uint32_t)g.block.data());
+		for (const auto &m : g.own)
+		{
+			g.memory[m.first] = at;
+			at += align(m.second);
+		}
+		for (Pool &pool : g.pools)
+		{
+			if (pool.own_queue) { pool.queue = at; at += align(sizeof(TaskQueue)); }
+			if (pool.own_storage) { pool.storage = at; at += align(pool.size * pool.count); }
+		}
+	}
+
 	// the program `text` (Fujin/effectprogram.py writes it); "" when it parsed, else what is wrong
 	inline std::string Parse(const std::string &text, Program &g)
 	{
@@ -781,9 +812,20 @@ namespace fxprog
 			else if (d == "memory" && need(3)) g.memory[w[1]] = (uint32_t)strtoul(w[2].c_str(), nullptr, 0);
 			else if (d == "texture" && need(3)) { g.texture_name = (uint32_t)strtoul(w[1].c_str(), nullptr, 0); g.texture_param = atoi(w[2].c_str()); }
 			else if (d == "camera" && need(2)) g.camera = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
+			else if (d == "own" && need(3)) g.own.push_back({ w[1], (uint32_t)strtoul(w[2].c_str(), nullptr, 0) });
 			else if (d == "pool" && need(6))
-				g.pools.push_back({ (uint32_t)strtoul(w[1].c_str(), nullptr, 0), (uint32_t)strtoul(w[2].c_str(), nullptr, 0),
-				                    atoi(w[3].c_str()), atoi(w[4].c_str()), atoi(w[5].c_str()), w.size() > 6 ? atoi(w[6].c_str()) : 0 });
+			{
+				Pool pool;
+				pool.own_queue = w[1] == "own";
+				pool.own_storage = w[2] == "own";
+				pool.queue = pool.own_queue ? 0 : (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
+				pool.storage = pool.own_storage ? 0 : (uint32_t)strtoul(w[2].c_str(), nullptr, 0);
+				pool.size = atoi(w[3].c_str());
+				pool.count = atoi(w[4].c_str());
+				pool.tag = atoi(w[5].c_str());
+				pool.base = w.size() > 6 ? atoi(w[6].c_str()) : 0;
+				g.pools.push_back(pool);
+			}
 			else if (d == "magic_buffer" && need(4))
 			{
 				g.arena_a = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
@@ -892,6 +934,7 @@ namespace fxprog
 		}
 		if (error.empty() && (int)g.tasks.size() > (int)(sizeof(THUNKS) / sizeof(THUNKS[0]))) error = "too many tasks";
 		if (error.empty() && (g.director_spawns < 0 || g.director_spawns >= (int)g.tasks.size())) error = "the director spawns no task";
+		if (error.empty()) Allocate(g);
 		for (size_t k = 0; error.empty() && k < g.tasks.size(); k++)
 		{
 			const Task &t = g.tasks[k];

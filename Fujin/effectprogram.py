@@ -17,6 +17,10 @@ engine's node header, its "end" a condition checked after its counter. Its spawn
 "every" n ticks of their window, its draws can be prim layouts. The director is "per_action" (the
 heal ring's) or "master" (Hypnotize's: it starts one task at its start tick, with the targets of
 action 0, and alternates the "magic_buffer" arenas).
+
+The memory an effect works in is its exe copy's ("copy": "memory", addresses) or its own
+("own_memory": name: size in bytes, allocated by the runtime), its pools' queues and storage then
+allocated too ("own": true). A new effect has its own.
 """
 import json
 from pathlib import Path
@@ -38,6 +42,12 @@ DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_s
 # a plain node's fields and their sizes (a layout's is given: ["layout", size])
 FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14}
 NODE_HEADER = 0xC
+TASK_QUEUE = 0x10
+# what each named memory holds (fxprogram.h), in bytes: a word, an engine task queue, the root pool
+# (the director's kind), the projector overlay's context (fx_overlay.h OverlayCtx), its model draw
+# descriptor and its vertex buffer (Cure's room for them)
+MEMORY_SIZES = {"root_queue": TASK_QUEUE, "overlay_ctx": 0xF8, "overlay_sprite": 0x40, "overlay_verts": 0x6400}
+ROOT_POOL = {"per_action": 2 * 0x64, "master": 0x14}
 
 
 class DescriptionError(ValueError):
@@ -127,12 +137,19 @@ def compile_program(description, values=None):
         lines.append(f"function {name} 0x{_number(address):X}")
     for name, address in (copy.get("memory") or {}).items():
         lines.append(f"memory {name} 0x{_number(address):X}")
+    for name, size in (description.get("own_memory") or {}).items():
+        if _number(size) <= 0:
+            raise DescriptionError(f"own memory {name}: a size in bytes")
+        lines.append(f"own {name} {_number(size)}")
     texture = description["resources"]["texture"]
     lines.append(f"texture 0x{_number(texture['game_name']):X} {params.get(texture.get('param'), -1)}")
     lines.append(f"camera 0x{_number(description['resources']['camera']):X}")
     for pool in description["pools"]:
-        lines.append(f"pool 0x{_number(pool['queue']):X} 0x{_number(pool['storage']):X} {pool['size']} {pool['count']} "
-                     f"{parts[pool['part']] if pool.get('part') else -1} {1 if pool.get('in_magic_buffer') else 0}")
+        own, in_buffer = pool.get("own"), pool.get("in_magic_buffer")
+        queue = "own" if own else f"0x{_number(pool['queue']):X}"
+        storage = "own" if own and not in_buffer else f"0x{_number(pool['storage']):X}"
+        lines.append(f"pool {queue} {storage} {pool['size']} {pool['count']} "
+                     f"{parts[pool['part']] if pool.get('part') else -1} {1 if in_buffer else 0}")
     if "magic_buffer" in description:
         buffer = description["magic_buffer"]
         arena_a, arena_b = buffer["arenas"]
@@ -224,14 +241,27 @@ def described_effects():
     return sorted(int(path.stem.split("_")[1]) for path in DESCRIPTIONS.glob("effect_*.json"))
 
 
+def own_memory(description):
+    """{name: size} of memory of its own for each memory `description` names in its exe copy."""
+    kind = description["director"].get("kind", "per_action")
+    names = (description.get("copy") or {}).get("memory") or description.get("own_memory") or {}
+    return {name: ROOT_POOL[kind] if name == "root_pool" else MEMORY_SIZES.get(name, 4) for name in names}
+
+
 def new_effect(description, effect_id, name):
     """A new effect (a copy of `description` as effect `effect_id`): it runs by itself, standing in
-    for no exe function; it keeps the exe data and memory of the effect it is made from ("base"),
-    which never runs at the same time."""
+    for no exe function, in memory of its own (its pools too); it keeps the exe data (flipbooks,
+    sounds, layouts, camera) and the files of the effect it is made from ("base")."""
     new = json.loads(json.dumps(description))
     new["base"] = description.get("base", description["effect"])
     new["effect"], new["name"] = effect_id, name
-    (new.get("copy") or {}).pop("functions", None)
+    new["own_memory"] = own_memory(description)
+    new.pop("copy", None)
+    for pool in new["pools"]:
+        pool["own"] = True
+        pool.pop("queue", None)
+        if not pool.get("in_magic_buffer"):
+            pool.pop("storage", None)
     for task in new["tasks"]:
         task.pop("function", None)
     return new
