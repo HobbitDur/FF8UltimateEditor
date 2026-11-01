@@ -103,7 +103,8 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
     assert [m.title() for m in kinds] == ["Around one target at a time (Cure's kind)",
                                           "Over the whole cast at once (Hypnotize's kind)"]
     names = [a.text().split("\t")[0] for a in kinds[0].actions() if not a.isSeparator()]
-    assert names[:3] == ["Emitter", "Ring (with Emitter)", "Sparkles (with Emitter, Ring)"]
+    assert names[:4] == ["How the effect starts", "Emitter", "Moving parts", "Ring (with Emitter)"]   # group headers
+    assert "Sparkles (with Emitter, Ring)" in names
     assert "Timing" in [a.text().split("\t")[0] for a in kinds[1].actions()]
     assert fujin.effect_program(224) is None                                   # nothing to run yet
     for key in CURE_ORDER:
