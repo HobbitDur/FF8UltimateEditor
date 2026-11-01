@@ -219,11 +219,11 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   [fujin-effect-description.md](fujin-effect-description.md)). Apply checks that it compiles; **New
   effect from this…** copies it into a free slot of the game's effect table (224, 225, 346-400)
   under a name of its own. An effect described here records from its program in both previews.
-  Save also writes `direct/exe/effect_NNN.fxprog` (the program with its parameters) for every
+  Save also writes `FujinEffects/effect_NNN.fxprog` (the program with its parameters) for every
   described effect with a change, `effect_NNN.fxdesc` for the descriptions held here (Import
   complementary reads them back) and `FujinEffects.dll`, the game's host of these programs. Put
   the DLL at a Junction VIII mod's root (`<LoadLibrary>FujinEffects.dll</LoadLibrary>` in
-  `mod.xml`) and the `direct/exe` files in its folder. A new effect plays when a kernel.bin entry
+  `mod.xml`) and the `FujinEffects` folder in its folder. A new effect plays when a kernel.bin entry
   names its effect id.
   **Data** (Choreography): a new effect made with the exe open has its own data, copied from the
   exe. This tab edits it by kind: a sprite sequence's frames and pieces, a sound's world id (with

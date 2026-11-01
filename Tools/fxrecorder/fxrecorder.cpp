@@ -50,7 +50,7 @@
 // its description (Fujin/effectprogram.py compiles it, Tools/fxhost/fxprogram.h runs it), params=
 // setting its parameters; it stands in for the exe's functions it names, or takes the effect's slot]
 // [host=<FujinEffects.dll> hostdir=<folder>: the game's host of Fujin's effects (Tools/fxhost)
-// installs the programs of <folder>/direct/exe, as in the game]. Each primitive a port draws carries
+// installs the programs of <folder>/FujinEffects, as in the game]. Each primitive a port draws carries
 // the part it belongs to (FX_PART): the P lines' first number. [keepparts=1: with actors=0, what a
 // part draws stays even in an actor's texture (Cure's overlay redraws its target): only the actors'
 // own drawing goes] [actors=2: only the effect's targets are drawn (the effect against one monster, no

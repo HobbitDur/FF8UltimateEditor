@@ -30,8 +30,8 @@ from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults 
 from Fujin.nativepreview import NativePreviewView, gl_renderer
 from Fujin.effectdescriptionview import EffectDescriptionView
 from Fujin.effectdataview import EffectDataView
-from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, compile_program, description_schema, load_description,
-                                 new_effect, program_file_name)
+from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, PROGRAM_FOLDER, compile_program, description_schema,
+                                 load_description, new_effect, program_file_name)
 from Fujin.recorderbuild import HOST_DLL
 from Fujin.recorderbuild import recorder_build
 from Fujin.soundpanel import SoundPanel
@@ -795,7 +795,7 @@ class FujinWidget(QWidget):
                 continue
             if any(exported.get(key) != digest for key, digest in self._native_signature()
                    if key in (f"desc:{effect}", f"params:{effect}")):
-                pending.append(f"<li>Effect {effect} ({esc(self.effect_name(effect))}): {CAM_FFNX_FOLDER}/"
+                pending.append(f"<li>Effect {effect} ({esc(self.effect_name(effect))}): {PROGRAM_FOLDER}/"
                                f"{program_file_name(effect)}, run in the game by {HOST_DLL.name}</li>")
         unsaved = self.can_save_folder()
         self.changes.setHtml(f"<h2>{'Unsaved changes' if unsaved else 'All changes saved'}</h2>"
@@ -1173,7 +1173,7 @@ class FujinWidget(QWidget):
                         program = compile_program(description, self.effect_params.get(effect))
                     except DescriptionError as error:
                         raise ValueError(f"Effect {effect}'s description: {error}") from None
-                    outputs[folder / CAM_FFNX_FOLDER / program_file_name(effect)] = program.encode("ascii")
+                    outputs[folder / PROGRAM_FOLDER / program_file_name(effect)] = program.encode("ascii")
                     programs += 1
                 for effect, description in sorted(self.descriptions.items()):
                     outputs[folder / f"effect_{effect:03d}.fxdesc"] = (json.dumps(description, indent=1) + "\n").encode("utf-8")

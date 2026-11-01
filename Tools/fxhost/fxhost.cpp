@@ -1,8 +1,8 @@
 // FujinEffects.dll: the effects Fujin writes, in the game (docs/fujin-effect-description.md, step 6).
 //
 // Fujin compiles an effect's description, with the parameters edited in its part tabs, into a
-// program (Fujin/effectprogram.py) and saves it as direct/exe/effect_NNN.fxprog in the game folder
-// (next to FFNx's effect_NNN.bcam camera files). This DLL runs them: for every effect id with a
+// program (Fujin/effectprogram.py) and saves it as FujinEffects/effect_NNN.fxprog in the game folder
+// (a folder of this DLL's own: FFNx reads none of it). This DLL runs them: for every effect id with a
 // program, it points the game's dispatch slot (MagicList_TextureLoad 0xC81DB8 / MagicList_Logic
 // 0xC81774, read by Magic_GetIDLoad 0x50AF20) at the program's file loader and setup, and the
 // effect runs from the program alone (Tools/fxhost/fxprogram.h, on FFNx's parts library). An
@@ -101,14 +101,14 @@ namespace
 		return true;
 	}
 
-	// every program in `folder`\direct\exe: its slot points at it; the number installed
+	// every program in `folder`\FujinEffects: its slot points at it; the number installed
 	int Install(const std::wstring &folder)
 	{
 		int installed = 0;
 		for (int slot = 0; slot < SLOTS; slot++)
 		{
 			wchar_t name[64];
-			swprintf_s(name, L"\\direct\\exe\\effect_%03d.fxprog", slot + 1);
+			swprintf_s(name, L"\\FujinEffects\\effect_%03d.fxprog", slot + 1);
 			std::string text;
 			if (!ReadFileW(folder + name, text)) continue;
 			fxprog::Program *program = new fxprog::Program();
@@ -143,7 +143,7 @@ namespace
 	}
 }
 
-// the programs of `folder`\direct\exe installed now (Fujin's recorder); the number installed
+// the programs of `folder`\FujinEffects installed now (Fujin's recorder); the number installed
 extern "C" __declspec(dllexport) int __cdecl FujinEffects_Install(const wchar_t *folder)
 {
 	return Install(folder);

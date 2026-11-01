@@ -1,6 +1,6 @@
 """New effects and the game's host (docs/fujin-effect-description.md, step 6): Fujin edits an
 effect's description (Choreography's Description tab), copies one into a free slot of the effect
-table as a new effect, and Save writes their programs (direct/exe/effect_NNN.fxprog, with the edited
+table as a new effect, and Save writes their programs (FujinEffects/effect_NNN.fxprog, with the edited
 parameters) beside FujinEffects.dll, which runs them in the game - checked here inside the recorder,
 which loads the DLL as the game does (host=). A new effect works in memory of its own and, made with
 the exe at hand, reads its own data (copied into its program): no exe address is left in it."""
@@ -100,7 +100,7 @@ def test_the_host_dll_plays_the_saved_programs(tmp_path):
     from Fujin.recorderbuild import HOST_DLL, RECORDER
     if effect_schema(1) is None or not HOST_DLL.is_file():
         pytest.skip("the recorder and FujinEffects.dll are not built with FFNx's effect sources")
-    folder = tmp_path / "game/direct/exe"
+    folder = tmp_path / "game/FujinEffects"
     folder.mkdir(parents=True)
     values = {"ring.radius.num": 4, "ring.radius.max": 2048, "sparkle.colour.r": 255}
     exe = EXE.read_bytes()
@@ -171,7 +171,8 @@ def test_description_tab_new_effect_save_and_import(qapp, tmp_path):
     with pytest.raises(ValueError):
         fujin.new_effect_dialog(224, "Twice")
     assert fujin.save_files(str(tmp_path))
-    programs = tmp_path / "direct/exe"
+    programs = tmp_path / "FujinEffects"
+    assert not (tmp_path / "direct/exe").exists()                # FFNx's folder: none of it is FFNx's
     assert sorted(path.name for path in programs.iterdir()) == ["effect_001.fxprog", "effect_224.fxprog"]
     assert (programs / "effect_224.fxprog").read_text(encoding="ascii") == fujin.effect_program(224)
     assert json.loads((tmp_path / "effect_224.fxdesc").read_text(encoding="utf-8")) == fujin.descriptions[224]

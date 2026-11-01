@@ -2,7 +2,7 @@
 Fujin holds it - its parts, its tasks (phases, spawns, draws...), its director and pools - edited
 as JSON beside the part tabs' parameters. Apply checks it compiles (Fujin/effectprogram.py) before
 taking it; New effect makes a copy of it in a free slot of the game's effect table; the previews
-and Save (direct/exe/effect_NNN.fxprog, run in the game by FujinEffects.dll) use what it holds.
+and Save (FujinEffects/effect_NNN.fxprog, run in the game by FujinEffects.dll) use what it holds.
 """
 import json
 

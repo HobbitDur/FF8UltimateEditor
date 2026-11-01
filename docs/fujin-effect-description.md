@@ -257,8 +257,9 @@ Potion's description is the same with its own sequences and sound.
      - The recorder's `build.bat` builds it from the same sources (FFNx's effect sources and
        `fxprogram.h`); CI ships it in the release (`Tools/fxhost`).
      - On load it starts a thread (no file reading inside `DllMain`). The thread reads
-       `<game>/direct/exe/effect_NNN.fxprog`, next to FFNx's `.bcam` cameras, with `CreateFileW`,
-       which Junction VIII redirects to a mod folder's file.
+       `<game>/FujinEffects/effect_NNN.fxprog` with `CreateFileW`, which Junction VIII redirects to
+       a mod folder's file. The folder is the DLL's own: FFNx reads nothing in it (FFNx's
+       `direct/exe` holds only what FFNx reads, such as the `.bcam` cameras).
      - For each program found, it points the effect's two dispatch slots at that slot's own file
        loader and setup. The program then runs by itself: the `function` addresses are dropped, and
        its own director, setup and tasks run.
@@ -273,7 +274,7 @@ Potion's description is the same with its own sequences and sound.
      - The recorder loads it as the game does: `host=<dll> hostdir=<game folder>`.
    - **Install for the game:** Fujin's Save folder is the mod's content. Put `FujinEffects.dll` at
      the mod's root, with `<LoadLibrary>FujinEffects.dll</LoadLibrary>` in its `mod.xml`. The
-     `direct/exe/*.fxprog` files go in the mod's folder. A new effect plays when a kernel.bin entry
+     `FujinEffects/*.fxprog` files go in the mod's folder. A new effect plays when a kernel.bin entry
      names its effect id (SolomonRing: the spell's or attack's effect).
    - **Fujin:**
      - Choreography has a **Description** tab: the effect's description as JSON. Apply checks that
@@ -282,7 +283,7 @@ Potion's description is the same with its own sequences and sound.
        name, keeps its parameters, and records `base` (whose files and exe data it uses; its memory is its own).
      - Its part tabs and both previews run from its program (`program=` in the recorder).
      - **Save** writes:
-       - `direct/exe/effect_NNN.fxprog` for every described effect with a change (edited
+       - `FujinEffects/effect_NNN.fxprog` for every described effect with a change (edited
          parameters, edited description, new effect);
        - `effect_NNN.fxdesc` for the descriptions held here (Import complementary reads them back);
        - `FujinEffects.dll`.

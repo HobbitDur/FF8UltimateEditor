@@ -273,8 +273,12 @@ def write_program(description, path, values=None):
     return path
 
 
+# the game folder's folder FujinEffects.dll reads the programs from (its own: FFNx reads none of it)
+PROGRAM_FOLDER = "FujinEffects"
+
+
 def program_file_name(effect_id):
-    """The file name FujinEffects.dll reads an effect's program from (game folder: direct/exe)."""
+    """The file name FujinEffects.dll reads an effect's program from (in PROGRAM_FOLDER)."""
     return f"effect_{effect_id:03d}.fxprog"
 
 
