@@ -328,6 +328,34 @@ Potion's description is the same with its own sequences and sound.
      - Checked: Cure's and Hypnotize's copies with their own data draw exactly what the originals
        draw and play the same sounds. Only the recorded addresses of sequences and sound blocks
        differ. No exe address is left in their programs.
+   - **Part by part** (`Fujin/effecttemplates.py`): a free slot shows **Create a new effect
+     here**, which makes an empty effect. Choreography's **+** tab adds or removes parts.
+     - Each part is a piece of an effect Fujin describes. Each owns:
+       - its parameters (by part key);
+       - its tasks;
+       - the actions it adds to its host's phases (the overlay: `overlay_start`, `hide_target`,
+         `show_target`, `overlay`);
+       - its draws (by part);
+       - its spawns (by task / pool);
+       - its data (what remains named).
+     - An effect is built from its source effect's whole description, keeping what its parts
+       bring, in the source's order. So all of a family's parts are that effect exactly, in any
+       order, and a subset is a smaller effect of the same kind.
+     - Two families do not mix: their nodes and directors differ.
+       - Cure's: Emitter, Helix ring, Projector overlay, Ground glow, Sparkles, Motes, Glints,
+         Texture file.
+       - Hypnotize's: Main, Layout in front of the caster, layouts at the caster's or targets'
+         bones, Sprites around a target.
+     - The description records its `template_parts`. Adding or removing a part rebuilds it from
+       them; data edited in the Data tab is kept, hand edits to the JSON are not.
+     - An effect with no start yet is saved with no program (`# incomplete`); the DLL leaves its
+       slot alone.
+     - Checked (`tests/Fujin/test_effect_templates.py`):
+       - every valid combination compiles (66 of Cure's, 16 of Hypnotize's);
+       - all of a family, added in reverse, compiles to exactly its effect;
+       - Cure built by hand from an empty slot records exactly Cure;
+       - Emitter, Helix ring and Sparkles alone draw only the ring and its sparkles;
+       - Fujin's create button, + menu, add / remove, Save and Import.
    - **Data editors:** Choreography's **Data** tab (`Fujin/effectdataview.py`) edits a new
      effect's own data by kind. Apply writes an entry back; the previews record again.
      - `seq`: palette-row parameters, frames (add / remove), and each frame's pieces in a table:

@@ -11,7 +11,7 @@ from PyQt6.QtCore import Qt, QSignalBlocker, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon, QFont
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QListWidgetItem, QTabWidget, QPlainTextEdit, QComboBox, QSplitter, QTextBrowser,
-    QFileDialog, QMessageBox)
+    QFileDialog, QMessageBox, QPushButton)
 from Common.autoimport import AutoImportSource
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -30,6 +30,7 @@ from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults 
 from Fujin.nativepreview import NativePreviewView, gl_renderer
 from Fujin.effectdescriptionview import EffectDescriptionView
 from Fujin.effectdataview import EffectDataView
+from Fujin import effecttemplates
 from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, PROGRAM_FOLDER, SOURCE, compile_program,
                                  description_schema, effect_file_text, load_description, new_effect, program_file_name,
                                  read_effect_file)
@@ -172,6 +173,13 @@ class FujinWidget(QWidget):
         self.data_view = EffectDataView(vram=self._data_vram, play_sound=self._play_archive)
         self.data_view.changed.connect(self._data_changed)
         self.choreography.addTab(self.data_view, "Data")
+        # an effect built part by part: + adds (or removes) a part (Fujin.effecttemplates)
+        self.plus_tab = QWidget()
+        self.choreography.addTab(self.plus_tab, "+")
+        self.choreography.setTabToolTip(self.choreography.indexOf(self.plus_tab), "Add a part to this effect, or remove one")
+        self._choreography_tab = 0
+        self.choreography.currentChanged.connect(self._choreography_tab_changed)
+        self.choreography.tabBarClicked.connect(self._choreography_tab_clicked)
         self.choreography.currentChanged.connect(self._activate_tab)
         self.choreography.currentChanged.connect(lambda _index: self._record_parts())
         # Why there is no MAG script, when there is none (the greyed tab says it too)
@@ -212,6 +220,14 @@ class FujinWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.title)
         layout.addWidget(self.context)
+        # a free slot of the game's effect table: a new effect can be made there
+        self.create_button = QPushButton("Create a new effect here")
+        self.create_button.setToolTip("An empty effect in this free slot: Choreography's + tab adds its parts")
+        self.create_button.clicked.connect(lambda: self.create_effect_here())
+        create_row = QHBoxLayout()
+        create_row.addWidget(self.create_button)
+        create_row.addStretch(1)
+        layout.addLayout(create_row)
         layout.addWidget(self.tabs, 1)
         splitter = QSplitter()
         splitter.addWidget(self.effect_search.column)
@@ -434,11 +450,16 @@ class FujinWidget(QWidget):
     def effect_name(self, effect):
         """The effect's name: a new effect's own, else the catalog's."""
         description = self.descriptions.get(effect)
-        return description["name"] if description is not None and "base" in description else self.catalog.name(effect)
+        return description["name"] if self.is_new_effect(effect) else self.catalog.name(effect)
+
+    def is_new_effect(self, effect):
+        """A new effect made here (a copy in a free slot, or built part by part)."""
+        description = self.descriptions.get(effect) or {}
+        return "base" in description or "template_parts" in description
 
     def _effect_text(self, effect, modified=False):
         created = self.camera_editor.manager.camera_kind(effect) == "created"
-        new = " (new effect)" if "base" in self.descriptions.get(effect, {}) else ""
+        new = " (new effect)" if self.is_new_effect(effect) else ""
         return f"{'* ' if modified else ''}{effect:03d} — {self.effect_name(effect)}{new}" + (" (.bcam camera)" if created else "")
 
     def modified_effects(self):
@@ -609,7 +630,7 @@ class FujinWidget(QWidget):
         reasons = {
             1: None if camera else self.camera_note.text().replace("<b>", "").replace("</b>", ""),
             2: None if (self.choreography.isTabEnabled(0) or self.function_selector.count()
-                        or self.workspace.sources.count() or self.part_tabs)
+                        or self.workspace.sources.count() or self.part_tabs or self.current_effect in self.descriptions)
             else "No MAG script and no native code snapshot for this effect.",
             3: None if self.models.sources.count() else self.models.empty_text,
             4: None if self.textures.sources.count() else self.textures.empty_text,
@@ -856,9 +877,133 @@ class FujinWidget(QWidget):
 
     def _show_description(self):
         effect = self.current_effect
-        kind = "new" if "base" in self.descriptions.get(effect, {}) else "edited" if effect in self.descriptions else "shipped"
+        kind = "new" if self.is_new_effect(effect) else "edited" if effect in self.descriptions else "shipped"
         self.description_view.show_description(effect, self.description(effect) if effect is not None else None, kind)
         self.data_view.show_data(self.descriptions.get(effect))
+        built = "template_parts" in self.descriptions.get(effect, {})
+        self.choreography.setTabVisible(self.choreography.indexOf(self.plus_tab), built)
+        info = self.catalog.info(effect) if effect is not None else {}
+        self.create_button.setVisible(bool(info.get("free")) and effect not in self.descriptions)
+
+    # ------------------------------------------------------------------ an effect built part by part (+ tab)
+    def create_effect_here(self, name=None):
+        """An empty effect in the shown free slot; Choreography opens on its + tab. Its id, or None."""
+        effect = self.current_effect
+        if effect is None or not self.catalog.info(effect).get("free") or effect in self.descriptions:
+            return None
+        if name is None:
+            from PyQt6.QtWidgets import QInputDialog
+            name, ok = QInputDialog.getText(self, "New effect", f"Name of effect {effect}:", text="New effect")
+            if not ok or not name.strip():
+                return None
+        self.descriptions[effect] = effecttemplates.empty_effect(effect, name.strip())
+        self._update_effect_rows(refresh=False)
+        self._description_changed()
+        self.tabs.setCurrentIndex(2)
+        return effect
+
+    def _exe_bytes(self):
+        path = self.camera_editor.exe_binding.current_path
+        try:
+            return Path(path).read_bytes() if path else None
+        except OSError:
+            return None
+
+    def effect_parts(self, effect=None):
+        """The parts of an effect built part by part ([] for none yet), or None for another effect."""
+        description = self.descriptions.get(self.current_effect if effect is None else effect, {})
+        return list(description["template_parts"]) if "template_parts" in description else None
+
+    def _rebuild(self, parts):
+        effect = self.current_effect
+        old = self.descriptions[effect]
+        self.descriptions[effect] = effecttemplates.build_effect(effect, old["name"], parts, self._exe_bytes(), keep=old)
+        # parameters the effect no longer has: their edited values go
+        keys = {param["key"] for param in self.descriptions[effect]["params"]}
+        if effect in self.effect_params:
+            self.effect_params[effect] = {k: v for k, v in self.effect_params[effect].items() if k in keys}
+        self._description_changed()
+
+    def add_part(self, key):
+        """The part `key` (Fujin.effecttemplates) added to the shown effect; its tab shown."""
+        parts = self.effect_parts()
+        if parts is None or key not in effecttemplates.addable(parts):
+            return False
+        self._rebuild(parts + [key])
+        part = effecttemplates.TEMPLATES[key][4]
+        tab = next((tab for tab in self.part_tabs if tab.part["key"] == part), None)
+        self.choreography.setCurrentWidget(tab or self.description_view)
+        return True
+
+    def remove_part(self, key, confirm=True):
+        """The part `key` and the parts that need it removed from the shown effect."""
+        parts = self.effect_parts()
+        if parts is None or key not in parts:
+            return False
+        gone = effecttemplates.dependents(parts, key)
+        if confirm and len(gone) > 1:
+            names = ", ".join(effecttemplates.title(k) for k in gone)
+            if QMessageBox.question(self, "Fujin", f"Remove {names}? The others need {effecttemplates.title(key)}.") \
+                    != QMessageBox.StandardButton.Yes:
+                return False
+        self._rebuild([k for k in parts if k not in gone])
+        return True
+
+    def _choreography_tab_changed(self, index):
+        """The + tab is never the tab shown (Qt moves onto it when tabs go): back to the one before."""
+        if self.choreography.widget(index) is not self.plus_tab:
+            self._choreography_tab = index
+            return
+        back = self._choreography_tab if self._choreography_tab != index else 0
+        with QSignalBlocker(self.choreography):
+            self.choreography.setCurrentIndex(back if back < self.choreography.count() else 0)
+
+    def _choreography_tab_clicked(self, index):
+        """The + tab clicked: its menu."""
+        if self.choreography.widget(index) is not self.plus_tab:
+            return
+        menu = self.parts_menu()
+        if menu is not None:
+            bar = self.choreography.tabBar()
+            menu.exec(bar.mapToGlobal(bar.tabRect(index).bottomLeft()))
+
+    def parts_menu(self):
+        """The + tab's menu: the parts that can be added, by group (the others greyed, with why), and
+        the parts to remove."""
+        from PyQt6.QtWidgets import QMenu
+        parts = self.effect_parts()
+        if parts is None:
+            return None
+        menu = QMenu(self)
+        addable = effecttemplates.addable(parts)
+        kind = effecttemplates.family(parts)
+        for group in effecttemplates.GROUPS:
+            keys = [k for k, t in effecttemplates.TEMPLATES.items() if t[1] == group
+                    and (t[2] == kind if kind else k in addable)]
+            if not keys:
+                continue
+            menu.addSection(group)
+            for key in keys:
+                template = effecttemplates.TEMPLATES[key]
+                action = menu.addAction(template[0])
+                action.setToolTip(template[8])
+                action.setStatusTip(template[8])
+                if key in parts:
+                    action.setText(f"{template[0]} (added)")
+                    action.setEnabled(False)
+                elif key not in addable:
+                    action.setText(f"{template[0]} (needs " + ", ".join(effecttemplates.title(n) for n in template[7]
+                                                                       if n not in parts) + ")")
+                    action.setEnabled(False)
+                else:
+                    action.triggered.connect(lambda _checked=False, k=key: self.add_part(k))
+        menu.setToolTipsVisible(True)
+        if parts:
+            remove = menu.addMenu("Remove a part")
+            for key in parts:
+                remove.addAction(effecttemplates.title(key)).triggered.connect(
+                    lambda _checked=False, k=key: self.remove_part(k))
+        return menu
 
     def _data_changed(self, key, entry):
         """An entry of the Data tab applied: the effect's description takes it."""
@@ -884,7 +1029,7 @@ class FujinWidget(QWidget):
 
     def _description_reset(self):
         effect = self.current_effect
-        new = "base" in self.descriptions.get(effect, {})
+        new = self.is_new_effect(effect)
         self.descriptions.pop(effect, None)
         if new:
             self.effect_params.pop(effect, None)

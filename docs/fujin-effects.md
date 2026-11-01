@@ -228,6 +228,19 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   the DLL at a Junction VIII mod's root (`<LoadLibrary>FujinEffects.dll</LoadLibrary>` in
   `mod.xml`) and the `FujinEffects` folder in its folder. A new effect plays when a kernel.bin entry
   names its effect id.
+  **Building an effect part by part:** a free slot (224, 225, 346-400) shows **Create a new effect
+  here**. It makes an empty effect there, and Choreography opens with a **+** tab. Clicking +
+  lists the parts Fujin knows, by group:
+  - how the effect starts: Emitter (Cure's way), Main (Hypnotize's way);
+  - moving parts: Helix ring, Sparkles, Motes, Glints, Sprites around a target, layouts at the
+    caster's or targets' bones;
+  - parts drawn by another: Projector overlay, Ground glow, Layout in front of the caster;
+  - files: Texture file.
+
+  Only the parts the effect can take now are enabled: a start first, then its family's parts once
+  what they need is there. Each part adds its tab at the game's values. + also removes a part,
+  with the parts that need it. Cure's parts all together are Cure exactly, whatever order they
+  were added in.
   **Data** (Choreography): a new effect made with the exe open has its own data, copied from the
   exe. This tab edits it by kind: a sprite sequence's frames and pieces, a sound's world id (with
   Play), a table of values, a file name, a table of layouts, and a layout's animation (its length,

@@ -79,6 +79,8 @@ class EffectDescriptionView(QWidget):
                                "new": f"A new effect{base}: Save writes its program and description."
                                       + (" Its data is its own (\"data\", copied from the exe)." if "data" in description
                                          else " It reads the exe's data (made without the exe open).")}[kind]
+                              + (" Built part by part: adding or removing a part (+ tab) rebuilds it from its parts, "
+                                 "edits made here by hand are lost then." if "template_parts" in description else "")
                               + " Values are numbers or $parameter keys; tasks, pools and parts are named by key.")
         self.new_button.setEnabled(description is not None)
         self.reset_button.setText("Delete this new effect" if kind == "new" else "Fujin's description")

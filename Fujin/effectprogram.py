@@ -368,7 +368,13 @@ def effect_file_text(description, values=None, edited=False):
         for entry in _entries(kept.get("data")).values():
             entry.pop("hex", None)
         source["description"] = kept
-    return compile_program(description, values) + SOURCE + json.dumps(source, separators=(",", ":")) + "\n"
+    try:
+        program = compile_program(description, values)
+    except (DescriptionError, KeyError, TypeError, ValueError) as error:
+        # not complete yet (an effect built part by part with no start): kept for Fujin, the DLL
+        # finds no program in it and leaves the slot alone
+        program = f"# incomplete: {str(error).splitlines()[0] if str(error) else type(error).__name__}\n"
+    return program + SOURCE + json.dumps(source, separators=(",", ":")) + "\n"
 
 
 def read_effect_file(text):
@@ -390,6 +396,5 @@ def read_effect_file(text):
                 if key not in data:
                     raise ValueError(f"its data {key} is missing")
                 entry["hex"] = data[key]
-        compile_program(description)
     values = {str(key): value if isinstance(value, str) else int(value) for key, value in source.get("values", {}).items()}
     return int(source["effect"]), description, values
