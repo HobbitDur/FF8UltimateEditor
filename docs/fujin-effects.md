@@ -227,8 +227,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   names its effect id.
   **Data** (Choreography): a new effect made with the exe open has its own data, copied from the
   exe. This tab edits it by kind: a sprite sequence's frames and pieces, a sound's world id (with
-  Play), a table of values, a file name, a table of layouts. Layouts and the camera are shown
-  read-only (the Camera tab edits the camera). Apply records the effect again; Save writes the
+  Play), a table of values, a file name, a table of layouts, and a layout's animation (its length,
+  its objects, their tracks and keys; its models stay as they are). The camera is shown read-only
+  (the Camera tab edits it). Apply records the effect again; Save writes the
   data in its program.
   Cure's Overlay hides the target while the ring climbs and redraws it itself, twice per
   polygon: flat with its own texture (what the preview shows - the target as it is), and, where

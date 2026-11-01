@@ -332,12 +332,27 @@ Potion's description is the same with its own sequences and sound.
      - `table`: int16 values, 4 a row (Hypnotize's ring points).
      - `name`: the file name.
      - `pointers`: each entry picked among the data keys (Hypnotize's ring and target layouts).
-     - `layout`, `camera`: read-only summaries (object count, frames; a camera is edited in the
-       Camera tab, whose `effect_NNN.bcam` replaces it in the game).
+     - `layout`: a prim-model layout's animation (`FF8GameData/psxgpu/primlayout.py`).
+       - Editable: its length in frames; each object's flags (low byte = its model, 0x200 = its
+         offset not rotated); its tracks (add / remove); each track's keys (add / remove, frame
+         and values).
+       - Tracks: position, rotation, scale and colour, each as value / velocity / acceleration;
+         channel A (fade); channel B (vertex-frame blend).
+       - 16.16 values show as decimals; 5 places give the int32 back exactly.
+       - Its models (vertex frames, polygons) are kept as they are.
+       - Format, from FFNx's player twin:
+         - model table at +8, header offset at +4;
+         - header: object count, frames, object offsets;
+         - object: flags, track flags, one key-table offset per track flag set;
+         - key tables: keys in frame order, then a 4-byte −1.
+       - All 17 of Hypnotize's layouts encode back byte for byte.
+     - `camera`: a read-only summary (the Camera tab edits it; its `effect_NNN.bcam` replaces it in
+       the game).
      - Checked (`tests/Fujin/test_effect_data.py`): each editor's Apply reaches the program. A
-       sequence and a sound edited change what the recorder draws and plays.
+       sequence, a sound and a layout edited change what the recorder draws and plays.
    - **Not done yet:**
      - Tried in the real game.
-     - Editing prim layouts (objects, keys, models) and new data from scratch (today: the exe's,
-       copied, then edited).
+     - Editing a layout's models (vertex frames and polygons: their format, drawn by 0x7043B0, is
+       not decoded yet).
+     - New data from scratch: today it is the exe's, copied, then edited.
      - A structured editor: the description is edited as JSON text.

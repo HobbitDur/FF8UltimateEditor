@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from FF8GameData.psxgpu.primlayout import encode_layout, parse_layout
 from FF8GameData.psxgpu.spritesequence import encode_sequence, find_sequences, parse_sequence
 from Fujin.effectprogram import load_description, new_effect, write_program
 
@@ -29,6 +30,20 @@ def test_sequences_encode_back():
         assert again.frames == sequence.frames and again.parameters == sequence.parameters
         exact += data == exe[address - 0x400000:address - 0x400000 + sequence.size]
     assert len(sequences) > 300 and exact > 290              # but for a few laid out with gaps or shared frames
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_layouts_encode_back():
+    """Hypnotize's 17 prim-model layouts: parsed and encoded again, byte for byte."""
+    exe = EXE.read_bytes()
+    entries = {key: entry for key, entry in load_description(133)["exe_data"].items()
+               if isinstance(entry, dict) and entry.get("kind") == "layout"}
+    assert len(entries) == 17
+    for entry in entries.values():
+        start = int(entry["address"], 16) - 0x400000
+        data = exe[start:start + entry["size"]]
+        layout = parse_layout(data)
+        assert encode_layout(layout) == data and layout.objects and layout.frames > 0
 
 
 @pytest.fixture(scope="module")
@@ -90,8 +105,26 @@ def test_the_data_tab_edits_a_new_effects_data(qapp):
     combo.setCurrentText("ring_layout.7")
     assert view.apply() and fujin.descriptions[225]["data"]["ring_layouts"]["pointers"][0] == "ring_layout.7"
     assert "data_pointers ring_layouts ring_layout.7 ring_layout.1" in fujin.effect_program(225)
+    # a layout: its animation's keys and tracks
     view.select("main_layout")
-    assert "2 object(s), 30 frames" in view.summary.text()
+    editor = view.layout_editor
+    assert view.pages.currentWidget() is editor and editor.objects.count() == 2 and editor.frames_spin.value() == 30
+    assert [editor.tracks.item(row).text() for row in range(editor.tracks.count())][:2] == [
+        "Position value (1 key)", "Position velocity (1 key)"]
+    before = parse_layout(bytes.fromhex(fujin.descriptions[225]["data"]["main_layout"]["hex"]))
+    scale = next(i for i, track in enumerate(before.objects[0].tracks) if track.channel == "scale")
+    frame, values = before.objects[0].tracks[scale].keys[0]
+    editor.set_key(0, scale, 0, values=[v // 2 for v in values])
+    editor.add_track_box.setCurrentIndex(editor.add_track_box.findText("Rotation value"))
+    editor.add_track()
+    editor.add_key()
+    editor.frames_spin.setValue(40)
+    assert view.apply()
+    after = parse_layout(bytes.fromhex(fujin.descriptions[225]["data"]["main_layout"]["hex"]))
+    assert after.frames == 40 and after.models == before.models
+    assert after.objects[0].tracks[scale + 1].keys[0] == (frame, tuple(v // 2 for v in values))   # rotation value now first
+    rotation = next(track for track in after.objects[0].tracks if (track.channel, track.slot) == ("rotation", "value"))
+    assert [key[0] for key in rotation.keys] == [0, 1]
 
 
 @pytest.mark.ff8data(*FILES)
@@ -125,3 +158,34 @@ def test_edited_data_changes_what_the_effect_draws_and_plays(tmp_path):
     data["emitter.sound"]["hex"] = struct.pack("<I", 860001).hex()
     redrawn, resounded = record(new, "edited")
     assert redrawn != drawn and len(redrawn) == len(drawn) and resounded == [f"{860001:X}"]
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag132.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m033.dat")
+def test_an_edited_layout_changes_what_the_effect_draws(tmp_path):
+    """Hypnotize's copy with its target layouts spinning twice as fast: drawn otherwise, as long."""
+    from Fujin.effectparts import effect_schema
+    from Fujin.recorderbuild import RECORDER
+    if effect_schema(1) is None:
+        pytest.skip("the recorder is not built with FFNx's effect sources")
+    new = new_effect(load_description(133), 225, "New hypnosis", EXE.read_bytes())
+
+    def record(tag):
+        program = write_program(new, tmp_path / f"{tag}.fxprog")
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(RECORDER), "225", f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m033.dat'}", "caster=3", "target=0", f"program={program}"],
+                             cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return [line for line in out.read_text().splitlines() if line.startswith(("P ", "R "))]
+
+    drawn = record("new")
+    for k in range(8):
+        entry = new["data"][f"target_layout.{k}"]
+        layout = parse_layout(bytes.fromhex(entry["hex"]))
+        track = next(track for track in layout.objects[0].tracks if (track.channel, track.slot) == ("rotation", "velocity"))
+        track.keys[:] = [(frame, tuple(2 * v for v in values)) for frame, values in track.keys]
+        entry["hex"] = encode_layout(layout).hex()
+    redrawn = record("faster")
+    assert redrawn != drawn and sum(line.startswith("R ") for line in redrawn) == sum(line.startswith("R ") for line in drawn)

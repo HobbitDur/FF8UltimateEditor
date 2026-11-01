@@ -8,8 +8,11 @@ when it was made: docs/fujin-effect-description.md), each entry edited by kind:
 - table: int16 values (Hypnotize's ring points: x, y, z, bone);
 - name: a file name (the effect's texture file);
 - pointers: a table of other entries (Hypnotize's ring and target layouts), each picked by key;
-- layout, camera: what they hold, read-only (a camera is edited in the Camera tab: its
-  effect_NNN.bcam replaces it in the game).
+- layout: a prim-model layout's animation (FF8GameData.psxgpu.primlayout): its length, its objects
+  (model, flags) and each object's tracks (position, rotation, scale, colour, fade, vertex-frame
+  blend: value / velocity / acceleration) and their keys; its models kept as they are;
+- camera: what it holds, read-only (the Camera tab edits it: its effect_NNN.bcam replaces it in the
+  game).
 
 Apply writes the entry back (changed(key, entry)): the previews record again, Save writes it in
 the program.
@@ -22,6 +25,7 @@ from PyQt6.QtWidgets import (QComboBox, QFormLayout, QHBoxLayout, QHeaderView, Q
                              QListWidgetItem, QPushButton, QScrollArea, QSpinBox, QSplitter, QStackedWidget,
                              QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
+from FF8GameData.psxgpu.primlayout import TRACKS, Track, encode_layout, parse_layout
 from FF8GameData.psxgpu.spritesequence import SpriteFrame, encode_sequence, parse_sequence
 
 NO_DATA = ("No data of its own: only a new effect made with the exe open has some (Description, New effect). "
@@ -251,6 +255,269 @@ class TableEditor(QTableWidget):
             self.blockSignals(False)
 
 
+# a key's columns by channel: (title, kind) - fixed: a 16.16 number shown as a decimal (5 places
+# give the int32 back exactly), int: as is, hidden: kept, not shown
+KEY_COLUMNS = {
+    "position": (("x", "fixed"), ("y (down)", "fixed"), ("z", "fixed")),
+    "rotation": (("x (4096 = a turn)", "fixed"), ("y", "fixed"), ("z", "fixed")),
+    "scale": (("x (4096 = 1)", "fixed"), ("y", "fixed"), ("z", "fixed")),
+    "colour": (("red (x 256)", "int"), ("green", "int"), ("blue", "int"), ("pad", "hidden")),
+    "a": (("value (fade)", "fixed"), ("velocity", "fixed"), ("acceleration", "fixed")),
+    "b": (("vertex frame a", "int"), ("vertex frame b", "int"), ("blend", "fixed"), ("velocity", "fixed"),
+          ("acceleration", "fixed")),
+}
+CHANNEL_NAMES = {"position": "Position", "rotation": "Rotation", "scale": "Scale", "colour": "Colour",
+                 "a": "Channel A (fade)", "b": "Channel B (vertex frames)"}
+
+
+def track_title(track):
+    slot = "" if track.slot == "keys" else f" {track.slot}"
+    return f"{CHANNEL_NAMES[track.channel]}{slot} ({len(track.keys)} key{'s' if len(track.keys) != 1 else ''})"
+
+
+class LayoutEditor(QWidget):
+    """A prim-model layout's animation: its length, its objects (their model, flags) and each
+    object's tracks and keys. Its models are kept as they are."""
+    edited = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        self.layout_data = None
+        self.frames_spin = QSpinBox()
+        self.frames_spin.setRange(1, 10000)
+        self.frames_spin.valueChanged.connect(self._frames_changed)
+        self.info = QLabel()
+        self.objects = QListWidget()
+        self.objects.currentRowChanged.connect(self._show_object)
+        self.flags = QLineEdit()
+        self.flags.setToolTip("The object's flags: low byte = its model; 0x200 = its offset taken as is (not rotated)")
+        self.flags.editingFinished.connect(self._flags_changed)
+        self.tracks = QListWidget()
+        self.tracks.currentRowChanged.connect(self._show_track)
+        self.add_track_box = QComboBox()
+        add_track = QPushButton("Add track")
+        add_track.clicked.connect(self.add_track)
+        remove_track = QPushButton("Remove track")
+        remove_track.clicked.connect(self.remove_track)
+        self.keys = QTableWidget(0, 1)
+        self.keys.itemChanged.connect(self._key_changed)
+        add_key = QPushButton("Add key")
+        add_key.clicked.connect(self.add_key)
+        remove_key = QPushButton("Remove key")
+        remove_key.clicked.connect(self.remove_key)
+        self.error = QLabel()
+        self.error.setStyleSheet("color: #c0392b")
+        top = QHBoxLayout()
+        top.addWidget(QLabel("Frames"))
+        top.addWidget(self.frames_spin)
+        top.addWidget(self.info, 1)
+        left = QWidget()
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.addWidget(QLabel("Objects"))
+        left_layout.addWidget(self.objects, 1)
+        flags_row = QHBoxLayout()
+        flags_row.addWidget(QLabel("Flags"))
+        flags_row.addWidget(self.flags)
+        left_layout.addLayout(flags_row)
+        left_layout.addWidget(QLabel("Tracks"))
+        left_layout.addWidget(self.tracks, 2)
+        track_row = QHBoxLayout()
+        track_row.addWidget(self.add_track_box, 1)
+        track_row.addWidget(add_track)
+        left_layout.addLayout(track_row)
+        left_layout.addWidget(remove_track)
+        right = QWidget()
+        right_layout = QVBoxLayout(right)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.addWidget(self.keys, 1)
+        key_row = QHBoxLayout()
+        key_row.addWidget(add_key)
+        key_row.addWidget(remove_key)
+        key_row.addStretch(1)
+        right_layout.addLayout(key_row)
+        body = QSplitter()
+        body.addWidget(left)
+        body.addWidget(right)
+        body.setStretchFactor(1, 1)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(top)
+        layout.addWidget(body, 1)
+        layout.addWidget(self.error)
+
+    def load(self, data):
+        try:
+            self.layout_data = parse_layout(data)
+            self.error.clear()
+        except ValueError as error:
+            self.layout_data = None
+            self.error.setText(f"{error}: its bytes are kept as they are.")
+        self.frames_spin.blockSignals(True)
+        self.frames_spin.setValue(self.layout_data.frames if self.layout_data else 1)
+        self.frames_spin.blockSignals(False)
+        self.info.setText(f"{self.layout_data.model_count} model(s), kept as they are ({len(self.layout_data.models)} bytes)"
+                          if self.layout_data else "")
+        self._fill_objects(0)
+
+    def data(self):
+        return encode_layout(self.layout_data) if self.layout_data is not None else None
+
+    def _object(self):
+        row = self.objects.currentRow()
+        return self.layout_data.objects[row] if self.layout_data and 0 <= row < len(self.layout_data.objects) else None
+
+    def _track(self):
+        obj, row = self._object(), self.tracks.currentRow()
+        return obj.tracks[row] if obj and 0 <= row < len(obj.tracks) else None
+
+    def _fill_objects(self, row):
+        self.objects.blockSignals(True)
+        self.objects.clear()
+        for index, obj in enumerate(self.layout_data.objects if self.layout_data else []):
+            self.objects.addItem(f"Object {index}: model {obj.model}")
+        self.objects.blockSignals(False)
+        self.objects.setCurrentRow(min(row, self.objects.count() - 1))
+        self._show_object(self.objects.currentRow())
+
+    def _show_object(self, _row, track_row=0):
+        obj = self._object()
+        self.flags.setText(f"0x{obj.flags:X}" if obj else "")
+        self.tracks.blockSignals(True)
+        self.tracks.clear()
+        for track in obj.tracks if obj else []:
+            self.tracks.addItem(track_title(track))
+        self.tracks.blockSignals(False)
+        self.add_track_box.clear()
+        present = {(t.channel, t.slot) for t in obj.tracks} if obj else set()
+        for channel, slot, *_rest in TRACKS:
+            if obj and (channel, slot) not in present:
+                self.add_track_box.addItem(CHANNEL_NAMES[channel] + ("" if slot == "keys" else f" {slot}"), (channel, slot))
+        self.tracks.setCurrentRow(min(track_row, self.tracks.count() - 1))
+        self._show_track(self.tracks.currentRow())
+
+    def _show_track(self, _row):
+        track = self._track()
+        columns = KEY_COLUMNS[track.channel] if track else ()
+        shown = [title for title, kind in columns if kind != "hidden"]
+        self.keys.blockSignals(True)
+        self.keys.setColumnCount(1 + len(shown))
+        self.keys.setHorizontalHeaderLabels(["Frame"] + shown)
+        self.keys.setRowCount(len(track.keys) if track else 0)
+        for r, (frame, values) in enumerate(track.keys if track else []):
+            self.keys.setItem(r, 0, QTableWidgetItem(str(frame)))
+            c = 1
+            for (title, kind), value in zip(columns, values):
+                if kind == "hidden":
+                    continue
+                self.keys.setItem(r, c, QTableWidgetItem(f"{value / 65536:.5f}" if kind == "fixed" else str(value)))
+                c += 1
+        self.keys.blockSignals(False)
+
+    def _frames_changed(self, value):
+        if self.layout_data is not None:
+            self.layout_data.frames = value
+            self.edited.emit()
+
+    def _flags_changed(self):
+        obj = self._object()
+        if obj is None:
+            return
+        try:
+            flags = int(self.flags.text(), 0)
+            if not 0 <= flags <= 0xFFFFFFFF:
+                raise ValueError
+        except ValueError:
+            self.flags.setText(f"0x{obj.flags:X}")
+            return
+        if flags != obj.flags:
+            obj.flags = flags
+            self._fill_objects(self.objects.currentRow())
+            self.edited.emit()
+
+    def _key_changed(self, item):
+        track = self._track()
+        columns = [(title, kind) for title, kind in KEY_COLUMNS[track.channel]]
+        frame, values = track.keys[item.row()]
+        values = list(values)
+        try:
+            if item.column() == 0:
+                frame = int(item.text(), 0)
+                if not 0 <= frame <= 0x7FFFFFFF:
+                    raise ValueError
+            else:
+                index = [i for i, (_t, kind) in enumerate(columns) if kind != "hidden"][item.column() - 1]
+                kind = columns[index][1]
+                value = round(float(item.text()) * 65536) if kind == "fixed" else int(item.text(), 0)
+                low, high = ((-0x80000000, 0x7FFFFFFF) if kind == "fixed" else (0, 0xFFFF))
+                if not low <= value <= high:
+                    raise ValueError
+                values[index] = value
+        except ValueError:
+            self.error.setText("Not a value for this column")
+            self._show_track(self.tracks.currentRow())
+            return
+        self.error.clear()
+        track.keys[item.row()] = (frame, tuple(values))
+        if item.column() == 0:
+            track.keys.sort()
+            self._show_track(self.tracks.currentRow())
+        self.edited.emit()
+
+    def set_key(self, obj, track, key, frame=None, values=None):
+        """A key changed (as edits in the table would): its frame and / or its values."""
+        keys = self.layout_data.objects[obj].tracks[track].keys
+        old_frame, old_values = keys[key]
+        keys[key] = (old_frame if frame is None else frame, old_values if values is None else tuple(values))
+        keys.sort()
+        self.objects.setCurrentRow(obj)
+        self._show_object(obj, track)
+        self.edited.emit()
+
+    def add_key(self):
+        track = self._track()
+        if track is None:
+            return
+        row = self.keys.currentRow()
+        frame, values = track.keys[row] if 0 <= row < len(track.keys) else (track.keys[-1] if track.keys else (-1, None))
+        if values is None:
+            values = (0,) * len(KEY_COLUMNS[track.channel])
+        used = {f for f, _v in track.keys}
+        frame += 1
+        while frame in used:
+            frame += 1
+        track.keys.append((frame, values))
+        track.keys.sort()
+        self._show_object(self.objects.currentRow(), self.tracks.currentRow())
+        self.edited.emit()
+
+    def remove_key(self):
+        track, row = self._track(), self.keys.currentRow()
+        if track is None or not 0 <= row < len(track.keys):
+            return
+        del track.keys[row]
+        self._show_object(self.objects.currentRow(), self.tracks.currentRow())
+        self.edited.emit()
+
+    def add_track(self):
+        obj, choice = self._object(), self.add_track_box.currentData()
+        if obj is None or choice is None:
+            return
+        obj.tracks.append(Track(*choice, [(0, (0,) * len(KEY_COLUMNS[choice[0]]))]))
+        obj.tracks.sort(key=lambda track: track.spec[2])
+        row = next(i for i, t in enumerate(obj.tracks) if (t.channel, t.slot) == choice)
+        self._show_object(self.objects.currentRow(), row)
+        self.edited.emit()
+
+    def remove_track(self):
+        obj, row = self._object(), self.tracks.currentRow()
+        if obj is None or not 0 <= row < len(obj.tracks):
+            return
+        del obj.tracks[row]
+        self._show_object(self.objects.currentRow(), row)
+        self.edited.emit()
+
+
 class EffectDataView(QWidget):
     """changed(key, entry): an entry edited and applied."""
     changed = pyqtSignal(str, dict)
@@ -267,6 +534,8 @@ class EffectDataView(QWidget):
         self.title = QLabel()
         self.title.setWordWrap(True)
         self.sequence = SequenceEditor(vram)
+        self.layout_editor = LayoutEditor()
+        self.layout_editor.edited.connect(self._edited)
         self.sound = QSpinBox()
         self.sound.setRange(0, 0x7FFFFFFF)
         self.sound_archive = QLabel()
@@ -294,8 +563,9 @@ class EffectDataView(QWidget):
         self.summary.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.pages = QStackedWidget()
         self.pages_by_kind = {}
-        for kind, page in (("seq", self.sequence), ("sound", sound_page), ("table", self.table), ("name", name_page),
-                           ("pointers", self.pointers_page), ("summary", self.summary)):
+        for kind, page in (("seq", self.sequence), ("layout", self.layout_editor), ("sound", sound_page),
+                           ("table", self.table), ("name", name_page), ("pointers", self.pointers_page),
+                           ("summary", self.summary)):
             self.pages_by_kind[kind] = self.pages.addWidget(page)
         self.sequence.edited.connect(self._edited)
         self.table.edited.connect(self._edited)
@@ -364,6 +634,8 @@ class EffectDataView(QWidget):
         data = entry_bytes(entry)
         if kind == "seq":
             self.sequence.load(data)
+        elif kind == "layout":
+            self.layout_editor.load(data)
         elif kind == "sound":
             self.sound.blockSignals(True)
             self.sound.setValue(struct.unpack_from("<I", data)[0] if len(data) >= 4 else 0)
@@ -393,12 +665,6 @@ class EffectDataView(QWidget):
 
     @staticmethod
     def _summary(kind, data):
-        if kind == "layout" and len(data) >= 8:
-            header = struct.unpack_from("<i", data, 4)[0]
-            if 0 <= header <= len(data) - 8:
-                objects, frames = struct.unpack_from("<ii", data, header)
-                return (f"A prim-model layout: {objects} object(s), {frames} frames, {len(data)} bytes. Read-only for "
-                        "now: a layout is played by the effect library's prim player (animated objects, their models).")
         if kind == "camera" and len(data) >= 8:
             return (f"A camera track: {len(data)} bytes. The Camera tab edits the effect's camera: its effect_NNN.bcam "
                     "file replaces this track in the game (FFNx).")
@@ -429,8 +695,8 @@ class EffectDataView(QWidget):
         """The shown entry as edited (not applied yet)."""
         entry = dict(self.entry())
         kind = entry.get("kind")
-        if kind == "seq":
-            data = self.sequence.data()
+        if kind in ("seq", "layout"):
+            data = (self.sequence if kind == "seq" else self.layout_editor).data()
             if data is not None:
                 entry["hex"] = data.hex()
         elif kind == "sound":
