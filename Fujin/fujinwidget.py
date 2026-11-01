@@ -928,11 +928,13 @@ class FujinWidget(QWidget):
         self._description_changed()
 
     def add_part(self, key):
-        """The part `key` (Fujin.effecttemplates) added to the shown effect; its tab shown."""
+        """The part `key` (Fujin.effecttemplates) added to the shown effect, with the parts it needs
+        that it has not yet; its tab shown."""
         parts = self.effect_parts()
-        if parts is None or key not in effecttemplates.addable(parts):
+        added = effecttemplates.with_needs(parts, key) if parts is not None else []
+        if not added:
             return False
-        self._rebuild(parts + [key])
+        self._rebuild(parts + added)
         part = effecttemplates.TEMPLATES[key][4]
         tab = next((tab for tab in self.part_tabs if tab.part["key"] == part), None)
         self.choreography.setCurrentWidget(tab or self.description_view)
@@ -971,37 +973,54 @@ class FujinWidget(QWidget):
             menu.exec(bar.mapToGlobal(bar.tabRect(index).bottomLeft()))
 
     def parts_menu(self):
-        """The + tab's menu: the parts that can be added, by group (the others greyed, with why), and
-        the parts to remove."""
+        """The + tab's menu: the parts of the effect's kind, named as their tabs, by group - the ones
+        it has ticked, the others added with the parts they need. An effect with no part yet: one
+        submenu per kind (Cure's, Hypnotize's), its first part choosing it."""
         from PyQt6.QtWidgets import QMenu
         parts = self.effect_parts()
         if parts is None:
             return None
         menu = QMenu(self)
-        addable = effecttemplates.addable(parts)
         kind = effecttemplates.family(parts)
+        if kind is None:
+            for kind, label in effecttemplates.FAMILIES.items():
+                self._fill_parts_menu(menu.addMenu(label), parts, kind)
+        else:
+            self._menu_header(menu, effecttemplates.FAMILIES[kind])
+            self._fill_parts_menu(menu, parts, kind)
+        return menu
+
+    @staticmethod
+    def _menu_header(menu, text):
+        """A section's title, shown in every style (Windows' menus draw addSection as a line only)."""
+        if menu.actions():
+            menu.addSeparator()
+        header = menu.addAction(text)
+        font = header.font()
+        font.setBold(True)
+        header.setFont(font)
+        header.setEnabled(False)
+
+    def _fill_parts_menu(self, menu, parts, kind):
         for group in effecttemplates.GROUPS:
-            keys = [k for k, t in effecttemplates.TEMPLATES.items() if t[1] == group
-                    and (t[2] == kind if kind else k in addable)]
+            keys = [k for k, t in effecttemplates.TEMPLATES.items() if t[1] == group and t[2] == kind]
             if not keys:
                 continue
-            menu.addSection(group)
+            self._menu_header(menu, group)
             for key in keys:
-                template = effecttemplates.TEMPLATES[key]
-                action = menu.addAction(template[0])
-                action.setToolTip(template[8])
-                action.setStatusTip(template[8])
+                added = effecttemplates.with_needs(parts, key)
+                others = [effecttemplates.title(k) for k in added if k != key]
+                text = effecttemplates.title(key) + (f" (with {', '.join(others)})" if others else "")
+                action = menu.addAction(f"{text}\t{effecttemplates.hint(key)}")
+                action.setToolTip(effecttemplates.TEMPLATES[key][8])
+                action.setStatusTip(effecttemplates.TEMPLATES[key][8])
                 if key in parts:
-                    action.setText(f"{template[0]} (added)")
-                    action.setEnabled(False)
-                elif key not in addable:
-                    action.setText(f"{template[0]} (needs " + ", ".join(effecttemplates.title(n) for n in template[7]
-                                                                       if n not in parts) + ")")
+                    action.setCheckable(True)
+                    action.setChecked(True)
                     action.setEnabled(False)
                 else:
                     action.triggered.connect(lambda _checked=False, k=key: self.add_part(k))
         menu.setToolTipsVisible(True)
-        return menu
 
     def part_template(self, tab):
         """The part (Fujin.effecttemplates key) a part tab of an effect built part by part shows, or None."""

@@ -98,9 +98,13 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
     assert fujin.create_button.isHidden() and fujin.tabs.isTabEnabled(2)      # Choreography un-greyed
     assert fujin.choreography.isTabVisible(fujin.choreography.indexOf(fujin.plus_tab))
     assert fujin.effect_list.currentItem().text().endswith("224 — By hand (new effect)")
-    menu = fujin.parts_menu()
-    enabled = [a.text() for a in menu.actions() if a.isEnabled() and not a.isSeparator()]
-    assert enabled == ["Emitter", "Main"]                                      # a start first
+    # + names the parts as their tabs: one submenu per kind first, a part bringing what it needs
+    kinds = [a.menu() for a in fujin.parts_menu().actions() if a.menu()]
+    assert [m.title() for m in kinds] == ["Around one target at a time (Cure's kind)",
+                                          "Over the whole cast at once (Hypnotize's kind)"]
+    names = [a.text().split("\t")[0] for a in kinds[0].actions() if not a.isSeparator()]
+    assert names[:3] == ["Emitter", "Ring (with Emitter)", "Sparkles (with Emitter, Ring)"]
+    assert "Timing" in [a.text().split("\t")[0] for a in kinds[1].actions()]
     assert fujin.effect_program(224) is None                                   # nothing to run yet
     for key in CURE_ORDER:
         assert fujin.add_part(key)
@@ -112,16 +116,20 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
     # a part's tab removes it (right click), with the parts that need it
     ring = fujin.choreography.indexOf(next(tab for tab in fujin.part_tabs if tab.part["key"] == "ring"))
     labels = [action.text() for action in fujin.part_tab_menu(ring).actions()]
-    assert labels == ["Remove Helix ring (and Projector overlay, Ground glow, Sparkles, Motes, Glints)"]
+    assert labels == ["Remove Ring (and Overlay, Ground glow, Sparkles, Motes, Glints)"]
+    assert [tab.part["title"] for tab in fujin.part_tabs][:2] == ["Emitter", "Ring"]   # the tabs' names
     assert fujin.part_tab_menu(fujin.choreography.indexOf(fujin.description_view)) is None
-    labels = [a.text() for a in fujin.parts_menu().actions()]
-    assert "Sparkles (added)" in labels and "Main" not in labels               # one family
-    assert not any("Remove" in label for label in labels)                     # + only adds
+    actions = [a for a in fujin.parts_menu().actions() if not a.isSeparator()]
+    sparkles = next(a for a in actions if a.text().startswith("Sparkles\t"))
+    assert sparkles.isChecked() and not sparkles.isEnabled()                  # added: ticked
+    assert not any(a.menu() for a in actions) and not any(a.text().startswith("Timing") for a in actions)  # one kind
+    assert not any("Remove" in a.text() for a in actions)                     # + only adds
     # a part's edited value stays while the part does, goes with it
     fujin.effect_params[224] = {"sparkle.size": 9, "ring.size": 5}
     assert fujin.remove_part("ring", confirm=False)
     assert fujin.effect_parts() == ["emitter", "files"] and fujin.effect_params[224] == {}
-    assert fujin.add_part("ring") and fujin.add_part("sparkles") and fujin.effect_program(224)
+    assert fujin.add_part("sparkles") and fujin.effect_parts() == ["emitter", "ring", "sparkles", "files"]   # with the ring
+    assert fujin.effect_program(224)
     assert fujin.choreography.indexOf(fujin.plus_tab) == fujin.choreography.count() - 1
     # an effect with no part yet is saved too (the game finds no program in it)
     fujin.select_effect(225)

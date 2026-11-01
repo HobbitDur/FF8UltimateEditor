@@ -343,10 +343,11 @@ Potion's description is the same with its own sequences and sound.
        bring, in the source's order. So all of a family's parts are that effect exactly, in any
        order, and a subset is a smaller effect of the same kind.
      - Two families do not mix: their nodes and directors differ.
-       - Cure's: Emitter, Helix ring, Projector overlay, Ground glow, Sparkles, Motes, Glints,
-         Texture file.
-       - Hypnotize's: Main, Layout in front of the caster, layouts at the caster's or targets'
-         bones, Sprites around a target.
+       - Cure's: Emitter, Ring, Overlay, Ground glow, Sparkles, Motes, Glints, Files.
+       - Hypnotize's: Timing, Main layout, Rings, Target layouts, Sprites.
+     - A part is named as its tab: its part's title in its source effect's description.
+     - Adding a part adds the parts it needs that the effect does not have yet (Sparkles on an
+       empty effect: Emitter, Ring and Sparkles).
      - The description records its `template_parts`. Adding or removing a part rebuilds it from
        them; data edited in the Data tab is kept, hand edits to the JSON are not.
      - An effect with no start yet is saved with no program (`# incomplete`); the DLL leaves its
@@ -355,7 +356,7 @@ Potion's description is the same with its own sequences and sound.
        - every valid combination compiles (66 of Cure's, 16 of Hypnotize's);
        - all of a family, added in reverse, compiles to exactly its effect;
        - Cure built by hand from an empty slot records exactly Cure;
-       - Emitter, Helix ring and Sparkles alone draw only the ring and its sparkles;
+       - Emitter, Ring and Sparkles alone draw only the ring and its sparkles;
        - Fujin's create button, + menu, add / remove, Save and Import.
    - **Data editors:** Choreography's **Data** tab (`Fujin/effectdataview.py`) edits a new
      effect's own data by kind. Apply writes an entry back; the previews record again.

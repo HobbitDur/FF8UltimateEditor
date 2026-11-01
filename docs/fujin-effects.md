@@ -230,16 +230,17 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   names its effect id.
   **Building an effect part by part:** a free slot (224, 225, 346-400) shows **Create a new effect
   here**. It makes an empty effect there, and Choreography opens with a **+** tab. Clicking +
-  lists the parts Fujin knows, by group:
-  - how the effect starts: Emitter (Cure's way), Main (Hypnotize's way);
-  - moving parts: Helix ring, Sparkles, Motes, Glints, Sprites around a target, layouts at the
-    caster's or targets' bones;
-  - parts drawn by another: Projector overlay, Ground glow, Layout in front of the caster;
-  - files: Texture file.
+  lists the parts Fujin knows, named as their tabs, with a few words on each:
+  - an empty effect first offers the two kinds as submenus:
+    - around one target at a time (Cure's kind): Emitter, Ring, Overlay, Ground glow, Sparkles,
+      Motes, Glints, Files;
+    - over the whole cast at once (Hypnotize's kind): Timing, Main layout, Rings, Target
+      layouts, Sprites;
+  - once it has parts, + lists only its kind's parts, by group (how the effect starts, moving
+    parts, drawn by another part, files). The parts it has are ticked.
 
-  Only the parts the effect can take now are enabled: a start first, then its family's parts once
-  what they need is there. Each part adds its tab (before +, which stays the last tab) at the
-  game's values. Right-clicking a part's tab removes it, with the parts that need it. Cure's parts all together are Cure exactly, whatever order they
+  A part comes with the parts it needs: "Sparkles (with Emitter, Ring)" adds all three. Each part
+  adds its tab (before +, which stays the last tab) at the game's values. Right-clicking a part's tab removes it, with the parts that need it. Cure's parts all together are Cure exactly, whatever order they
   were added in.
   **Data** (Choreography): a new effect made with the exe open has its own data, copied from the
   exe. This tab edits it by kind: a sprite sequence's frames and pieces, a sound's world id (with

@@ -10,53 +10,80 @@ ring's effect-library nodes and per-action director, Hypnotize's plain nodes and
 
 No Qt here.
 """
+import functools
 import json
 import re
 
 from Fujin.effectprogram import load_description, new_effect
 
-# key: title, group, family, source effect, part key (its parameters' "part"), the tasks it owns,
-# the actions it adds to its host's phases, the parts it needs, doc
+# key: hint (a few words beside its name in the + menu: its name is its tab's title, title()), group,
+# family, source effect, part key (its parameters' "part"), the tasks it owns, the actions it adds to
+# its host's phases, the parts it needs, doc
 TEMPLATES = {
     # Cure's family (the heal ring: effect-library nodes, one emitter per target in turn)
-    "emitter": ("Emitter", "How the effect starts", "heal_ring", 1, "emitter", ("emitter",), (), (),
+    "emitter": ("one per target, in turn", "How the effect starts", "heal_ring", 1, "emitter", ("emitter",), (), (),
                 "One per target, in turn: it follows its target, plays the sound, gives the result (HP) and ends "
                 "the action. The parts it spawns start from it (Cure's way)."),
-    "ring": ("Helix ring", "Moving parts", "heal_ring", 1, "ring", ("ring",), (), ("emitter",),
+    "ring": ("a light climbing in a helix", "Moving parts", "heal_ring", 1, "ring", ("ring",), (), ("emitter",),
              "A light climbing around the target in a helix, spawned by the emitter after a delay; the parts "
              "drawn or spawned along it come from it (Cure's ring)."),
-    "overlay": ("Projector overlay", "Drawn by another part", "heal_ring", 1, "overlay", (),
+    "overlay": ("the target lit by the ring", "Drawn by another part", "heal_ring", 1, "overlay", (),
                 ("overlay_start", "hide_target", "show_target", "overlay"), ("ring",),
                 "The target hidden and redrawn lit by an image projected from the ring (Cure's overlay)."),
-    "glow": ("Ground glow", "Drawn by another part", "heal_ring", 1, "glow", (), (), ("ring",),
+    "glow": ("a flipbook on the ground", "Drawn by another part", "heal_ring", 1, "glow", (), (), ("ring",),
              "A flipbook on the ground under the ring, fading out (Cure's glow)."),
-    "sparkles": ("Sparkles", "Moving parts", "heal_ring", 1, "sparkles", ("sparkle",), (), ("ring",),
+    "sparkles": ("flying off the ring", "Moving parts", "heal_ring", 1, "sparkles", ("sparkle",), (), ("ring",),
                  "One per helix step of the ring, flying off at a random speed (burst, then drift)."),
-    "motes": ("Motes", "Moving parts", "heal_ring", 1, "motes", ("mote",), (), ("ring",),
+    "motes": ("rising around the target", "Moving parts", "heal_ring", 1, "motes", ("mote",), (), ("ring",),
               "Spawned on a circle around the target below the ring, rising at a random speed."),
-    "glints": ("Glints", "Moving parts", "heal_ring", 1, "glints", (), (), ("ring",),
+    "glints": ("streaks around the ring", "Moving parts", "heal_ring", 1, "glints", (), (), ("ring",),
                "Streaks of the effect library growing, spinning and shrinking around the ring."),
-    "files": ("Texture file", "Files", "heal_ring", 1, "files", (), (), ("emitter",),
+    "files": ("the texture's file", "Files", "heal_ring", 1, "files", (), (), ("emitter",),
               "The magic-folder file the effect's texture is loaded from (empty: the game's)."),
     # Hypnotize's family (plain nodes, the master starting one task for the whole cast)
-    "main": ("Main", "How the effect starts", "layouts", 133, "timing", ("main",), (), (),
+    "main": ("one for the whole cast", "How the effect starts", "layouts", 133, "timing", ("main",), (), (),
              "One for the whole cast at once: it plays the sound, gives every target its result, and spawns the "
              "parts below on its own clock (Hypnotize's way)."),
-    "main_layout": ("Layout in front of the caster", "Drawn by another part", "layouts", 133, "main", (), (),
+    "main_layout": ("in front of the caster", "Drawn by another part", "layouts", 133, "main", (), (),
                     ("main",), "The main task's prim layout, framed on the caster's screen position."),
-    "rings": ("Layouts at the caster's bones", "Moving parts", "layouts", 133, "rings", ("ring",), (), ("main",),
+    "rings": ("at the caster's bones", "Moving parts", "layouts", 133, "rings", ("ring",), (), ("main",),
               "Eight prim layouts at points of the caster's bones, one every few ticks (Hypnotize's rings)."),
-    "targets": ("Layouts at the targets' bones", "Moving parts", "layouts", 133, "targets", ("target",), (),
+    "targets": ("at the targets' bones", "Moving parts", "layouts", 133, "targets", ("target",), (),
                 ("main",), "Prim layouts at random bones of random targets, at random sizes."),
-    "sprites": ("Sprites around a target", "Moving parts", "layouts", 133, "sprites", ("sprite",), (), ("main",),
+    "sprites": ("around a target", "Moving parts", "layouts", 133, "sprites", ("sprite",), (), ("main",),
                 "A flipbook at random points around a target's bone."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main"}
+FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
+            "layouts": "Over the whole cast at once (Hypnotize's kind)"}
 
 
+@functools.cache
 def title(key):
+    """A part's name: its tab's title (its part's in its source effect's description)."""
+    template = TEMPLATES[key]
+    return next(part["title"] for part in load_description(template[3])["parts"] if part["key"] == template[4])
+
+
+def hint(key):
     return TEMPLATES[key][0]
+
+
+def with_needs(parts, key):
+    """What adding `key` to an effect made of `parts` adds: the parts it needs (directly or not) not
+    in it yet and `key`, in TEMPLATES' order; [] when it cannot be (another family, or added)."""
+    if key in parts or (parts and TEMPLATES[key][2] != family(parts)):
+        return []
+    wanted, todo = set(), [key]
+    while todo:
+        part = todo.pop()
+        if part not in wanted and part not in parts:
+            wanted.add(part)
+            todo.extend(TEMPLATES[part][7])
+    if not parts:
+        wanted.add(STARTS[TEMPLATES[key][2]])
+    return [k for k in TEMPLATES if k in wanted]
 
 
 def family(parts):
