@@ -86,6 +86,9 @@ def test_effect_camera_plays_around_caster_and_target(fujin):
     # The character joins the party with its weapon and casts; the monster is the target
     preview.add_models(paths(SOLDIER, SQUALL, GUNBLADE))
     panel = preview.panel
+    assert not panel._timer.isActive()          # shown at its first tick, waiting for ▶ Play
+    preview.play_button.click()
+    assert panel._timer.isActive()
     panel._timer.stop()
     setup = panel._battle_setup
     assert preview.party_members() == {0: (str(ROOT / SQUALL), str(ROOT / GUNBLADE))}
@@ -119,12 +122,14 @@ def test_effect_camera_plays_around_caster_and_target(fujin):
     panel._timer.stop()
     assert panel._animation is slot and "Slot preview: set 1, slot 7" in preview.result_label.text()
 
-    # Editing a keyframe of the shown animation replays it at once
+    # Editing a keyframe never interrupts: the preview takes the new values on ▶ Play
     before = [pose.eye for pose in panel._poses]
     frame = slot.blocks[0].frames[0]
     widget._on_field_changed(frame.pos_x, frame.pos_x.get() + 2000)
+    assert panel._animation is slot and not panel._timer.isActive()
+    assert np.allclose(np.array(before[0]), np.array(panel._poses[0].eye))
+    panel._play_button.click()
     panel._timer.stop()
-    assert panel._animation is slot
     assert not np.allclose(np.array(before[0]), np.array(panel._poses[0].eye))
     assert editor.has_changes()
 

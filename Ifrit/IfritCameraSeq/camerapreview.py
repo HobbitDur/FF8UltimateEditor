@@ -89,6 +89,7 @@ class CameraPreviewPanel(QWidget):
         self._gl = None
         self._needs_reload = True  # (re)load the model on the next preview
         self._animation = None
+        self._stale = False        # keyframes edited since the poses were built (refresh())
         self._values = []
         self._total = 0
         self._tick = 0
@@ -190,7 +191,8 @@ class CameraPreviewPanel(QWidget):
         self._placeholder.setText("Click a slot's ▶ Preview to play its camera here.")
         self._placeholder.show()
 
-    def preview(self, animation):
+    def preview(self, animation, autoplay=True):
+        """Load `animation` at its first tick; autoplay=False waits for ▶ Play."""
         self._timer.stop()
         self._play_button.setText('▶ Play')
         try:
@@ -206,6 +208,7 @@ class CameraPreviewPanel(QWidget):
             self._animation = None
             self._battle_setup.encounters.refresh_model()
         self._animation = animation
+        self._stale = False
         self._values = _frame_values(animation)
         self._total = _total_ticks(self._values)
         self._build_battle_poses()
@@ -218,21 +221,30 @@ class CameraPreviewPanel(QWidget):
         self._set_controls_enabled(True)
         self._slider.setEnabled(self._total > 0)
         self._apply(0)
-        if self._total > 0:  # auto-play multi-keyframe animations
+        if autoplay and self._total > 0:
             self._start_playback()
 
     def refresh(self):
-        """The previewed animation's keyframes were edited in place: replay them from the same tick."""
-        if self._animation is None or self._gl is None:
+        """The previewed animation's keyframes were edited in place. Typing is never interrupted:
+        the preview only takes the new values on ▶ Play or a move of the slider."""
+        if self._animation is not None:
+            self._stale = True
+
+    def _catch_up(self):
+        """Take the keyframe edits refresh() noted, keeping the tick."""
+        if not self._stale or self._animation is None or self._gl is None:
             return
+        self._stale = False
         if self._battle_setup is not None:
-            self._rebuild_battle()
-            return
-        self._values = _frame_values(self._animation)
-        self._total = _total_ticks(self._values)
+            self._build_battle_poses()
+        else:
+            self._values = _frame_values(self._animation)
+            self._total = _total_ticks(self._values)
+        self._slider.blockSignals(True)
         self._slider.setRange(0, max(self._total, 0))
+        self._slider.blockSignals(False)
         self._slider.setEnabled(self._total > 0)
-        self._apply(min(self._tick, self._total))
+        self._tick = min(self._tick, self._total)
 
     def _build_battle_poses(self):
         self._poses = []
@@ -251,6 +263,7 @@ class CameraPreviewPanel(QWidget):
             return
         playing = self._timer.isActive()
         self._timer.stop()  # loading an encounter/texture is outside playback time
+        self._stale = False
         self._build_battle_poses()
         self._slider.setRange(0, self._total)
         self._slider.setEnabled(self._total > 0)
@@ -359,8 +372,12 @@ class CameraPreviewPanel(QWidget):
             self._timer.stop()
             self._play_button.setText("▶ Play")
         else:
+            self._catch_up()
             if self._slider.value() >= self._total:
+                self._slider.blockSignals(True)
                 self._slider.setValue(0)
+                self._slider.blockSignals(False)
+            self._apply(self._slider.value())
             self._start_playback()
 
     def _start_playback(self):
@@ -385,8 +402,11 @@ class CameraPreviewPanel(QWidget):
             self._play_button.setText("▶ Play")
 
     def _on_slider(self, value):
-        if not self._advancing and self._timer.isActive():
-            self._clock_tick, self._play_origin = value, perf_counter()
+        if not self._advancing:
+            self._catch_up()
+            value = min(value, self._total)
+            if self._timer.isActive():
+                self._clock_tick, self._play_origin = value, perf_counter()
         self._apply(value)
 
     def _set_controls_enabled(self, enabled: bool):

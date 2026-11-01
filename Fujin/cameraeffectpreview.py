@@ -149,7 +149,7 @@ class CameraEffectPreview(QWidget):
         self.play_button = QPushButton("▶ Play effect camera")
         self.play_button.setToolTip("Run the camera script with these inputs and play the animation "
                                     "it chooses")
-        self.play_button.clicked.connect(self.play_effect)
+        self.play_button.clicked.connect(lambda: self.play_effect(autoplay=True))
 
         self.placeholder = QLabel("Import a caster and a target with the header's Import complementary "
                                   "(Camera preview models), and scene.out to place them in a real "
@@ -527,12 +527,14 @@ class CameraEffectPreview(QWidget):
 
     # ------------------------------------------------------------------ playing
     def set_track(self, track):
-        """The selected effect's camera track (None: no track): run its script and play it."""
+        """The selected effect's camera track (None: no track): run its script and show the
+        animation it chooses, waiting for ▶ Play."""
         self.track = track
         self.play_effect()
 
-    def play_effect(self):
-        """Run the script with the inputs and play the animation it chooses."""
+    def play_effect(self, autoplay=False):
+        """Run the script with the inputs and show the animation it chooses. Only the play
+        buttons play it (autoplay): opening the tab or editing a value never starts the camera."""
         run, animation = self.resolve()
         self.play_button.setEnabled(self.track is not None)
         if self.panel is None:
@@ -541,7 +543,7 @@ class CameraEffectPreview(QWidget):
             self.previewed = None
             self.panel.invalidate()
             return
-        self._play(animation if animation is not None else EMPTY_ANIMATION)
+        self._play(animation if animation is not None else EMPTY_ANIMATION, autoplay)
 
     def preview_animation(self, animation):
         """A slot's ▶ Preview: play that animation as is, whatever the script would choose."""
@@ -557,11 +559,11 @@ class CameraEffectPreview(QWidget):
         where = f"set {set_index}, slot {slot} = animation {set_index * 16 + slot}" if set_index is not None else ""
         self._show_run(None, slot_text=f"Slot preview: {where} as is (not the script's choice). "
                                        "▶ Play effect camera runs the script again.")
-        self._play(animation)
+        self._play(animation, autoplay=True)
 
-    def _play(self, animation):
+    def _play(self, animation, autoplay):
         self.previewed = animation
-        self.panel.preview(animation)
+        self.panel.preview(animation, autoplay=autoplay)
 
     def refresh(self):
         """The track's keyframes were edited in place: replay the shown animation with them."""
