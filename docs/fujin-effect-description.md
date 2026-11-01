@@ -329,7 +329,8 @@ Potion's description is the same with its own sequences and sound.
        draw and play the same sounds. Only the recorded addresses of sequences and sound blocks
        differ. No exe address is left in their programs.
    - **Part by part** (`Fujin/effecttemplates.py`): a free slot shows **Create a new effect
-     here**, which makes an empty effect. Choreography's **+** tab adds or removes parts.
+     here**, which makes an empty effect. Choreography's **+** tab (always the last tab) adds
+     parts; right-clicking a part's tab removes it, with the parts that need it.
      - Each part is a piece of an effect Fujin describes. Each owns:
        - its parameters (by part key);
        - its tasks;

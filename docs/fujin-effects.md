@@ -238,8 +238,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   - files: Texture file.
 
   Only the parts the effect can take now are enabled: a start first, then its family's parts once
-  what they need is there. Each part adds its tab at the game's values. + also removes a part,
-  with the parts that need it. Cure's parts all together are Cure exactly, whatever order they
+  what they need is there. Each part adds its tab (before +, which stays the last tab) at the
+  game's values. Right-clicking a part's tab removes it, with the parts that need it. Cure's parts all together are Cure exactly, whatever order they
   were added in.
   **Data** (Choreography): a new effect made with the exe open has its own data, copied from the
   exe. This tab edits it by kind: a sprite sequence's frames and pieces, a sound's world id (with

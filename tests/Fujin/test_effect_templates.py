@@ -107,13 +107,22 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
     assert fujin.effect_parts() == CURE_ORDER
     assert compile_program(fujin.descriptions[224]) == compile_program(new_effect(load_description(1), 224, "By hand"))
     assert [tab.part["key"] for tab in fujin.part_tabs] == [part["key"] for part in load_description(1)["parts"]]
+    plus = fujin.choreography.indexOf(fujin.plus_tab)
+    assert plus == fujin.choreography.count() - 1                              # + stays the last tab
+    # a part's tab removes it (right click), with the parts that need it
+    ring = fujin.choreography.indexOf(next(tab for tab in fujin.part_tabs if tab.part["key"] == "ring"))
+    labels = [action.text() for action in fujin.part_tab_menu(ring).actions()]
+    assert labels == ["Remove Helix ring (and Projector overlay, Ground glow, Sparkles, Motes, Glints)"]
+    assert fujin.part_tab_menu(fujin.choreography.indexOf(fujin.description_view)) is None
     labels = [a.text() for a in fujin.parts_menu().actions()]
     assert "Sparkles (added)" in labels and "Main" not in labels               # one family
+    assert not any("Remove" in label for label in labels)                     # + only adds
     # a part's edited value stays while the part does, goes with it
     fujin.effect_params[224] = {"sparkle.size": 9, "ring.size": 5}
     assert fujin.remove_part("ring", confirm=False)
     assert fujin.effect_parts() == ["emitter", "files"] and fujin.effect_params[224] == {}
     assert fujin.add_part("ring") and fujin.add_part("sparkles") and fujin.effect_program(224)
+    assert fujin.choreography.indexOf(fujin.plus_tab) == fujin.choreography.count() - 1
     # an effect with no part yet is saved too (the game finds no program in it)
     fujin.select_effect(225)
     assert fujin.create_effect_here("Later") == 225

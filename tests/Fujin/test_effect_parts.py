@@ -126,7 +126,7 @@ def test_cure_part_tabs_edit_preview_and_save(qapp, tmp_path):
     fujin.camera_editor.preview.add_models([str(BATTLE / name) for name in ("d0c000.dat", "d0w000.dat", "c0m009.dat")])
     fujin.select_effect(1)
     titles = [fujin.choreography.tabText(i) for i in range(fujin.choreography.count())]
-    assert titles[-8:] == ["Emitter", "Ring", "Ground glow", "Overlay", "Sparkles", "Motes", "Glints", "Files"]
+    assert titles[-1] == "+" and titles[-9:-1] == ["Emitter", "Ring", "Ground glow", "Overlay", "Sparkles", "Motes", "Glints", "Files"]
     ring = next(tab for tab in fujin.part_tabs if tab.part["key"] == "ring")
     fujin.tabs.setCurrentIndex(2)
     fujin.choreography.setCurrentWidget(ring)                    # shown: the lab records

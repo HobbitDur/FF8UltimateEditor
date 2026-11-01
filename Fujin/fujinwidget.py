@@ -176,10 +176,13 @@ class FujinWidget(QWidget):
         # an effect built part by part: + adds (or removes) a part (Fujin.effecttemplates)
         self.plus_tab = QWidget()
         self.choreography.addTab(self.plus_tab, "+")
-        self.choreography.setTabToolTip(self.choreography.indexOf(self.plus_tab), "Add a part to this effect, or remove one")
+        self.choreography.setTabToolTip(self.choreography.indexOf(self.plus_tab),
+                                        "Add a part to this effect (right-click a part's tab to remove it)")
         self._choreography_tab = 0
         self.choreography.currentChanged.connect(self._choreography_tab_changed)
         self.choreography.tabBarClicked.connect(self._choreography_tab_clicked)
+        self.choreography.tabBar().setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.choreography.tabBar().customContextMenuRequested.connect(self._choreography_tab_menu)
         self.choreography.currentChanged.connect(self._activate_tab)
         self.choreography.currentChanged.connect(lambda _index: self._record_parts())
         # Why there is no MAG script, when there is none (the greyed tab says it too)
@@ -998,12 +1001,33 @@ class FujinWidget(QWidget):
                 else:
                     action.triggered.connect(lambda _checked=False, k=key: self.add_part(k))
         menu.setToolTipsVisible(True)
-        if parts:
-            remove = menu.addMenu("Remove a part")
-            for key in parts:
-                remove.addAction(effecttemplates.title(key)).triggered.connect(
-                    lambda _checked=False, k=key: self.remove_part(k))
         return menu
+
+    def part_template(self, tab):
+        """The part (Fujin.effecttemplates key) a part tab of an effect built part by part shows, or None."""
+        parts = self.effect_parts()
+        if parts is None or tab not in self.part_tabs:
+            return None
+        return next((key for key in parts if effecttemplates.TEMPLATES[key][4] == tab.part["key"]), None)
+
+    def part_tab_menu(self, index):
+        """A part tab's right-click menu: Remove (with the parts that need it), or None."""
+        from PyQt6.QtWidgets import QMenu
+        key = self.part_template(self.choreography.widget(index))
+        if key is None:
+            return None
+        menu = QMenu(self)
+        parts = self.effect_parts()
+        others = [effecttemplates.title(k) for k in effecttemplates.dependents(parts, key) if k != key]
+        text = f"Remove {effecttemplates.title(key)}" + (f" (and {', '.join(others)})" if others else "")
+        menu.addAction(text).triggered.connect(lambda _checked=False: self.remove_part(key))
+        return menu
+
+    def _choreography_tab_menu(self, pos):
+        bar = self.choreography.tabBar()
+        menu = self.part_tab_menu(bar.tabAt(pos))
+        if menu is not None:
+            menu.exec(bar.mapToGlobal(pos))
 
     def _data_changed(self, key, entry):
         """An entry of the Data tab applied: the effect's description takes it."""
@@ -1146,8 +1170,8 @@ class FujinWidget(QWidget):
             tab.value_changed.connect(self._param_changed)
             tab.preview.reference_toggled.connect(self._part_reference)
             self.part_tabs.append(tab)
-            self.choreography.addTab(tab, part["title"])
-            self.choreography.setTabToolTip(self.choreography.count() - 1, part["doc"])
+            index = self.choreography.insertTab(self.choreography.indexOf(self.plus_tab), tab, part["title"])
+            self.choreography.setTabToolTip(index, part["doc"])
             if part["key"] == shown_key:
                 self.choreography.setCurrentWidget(tab)
 
