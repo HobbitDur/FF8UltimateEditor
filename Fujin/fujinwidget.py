@@ -30,8 +30,9 @@ from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults 
 from Fujin.nativepreview import NativePreviewView, gl_renderer
 from Fujin.effectdescriptionview import EffectDescriptionView
 from Fujin.effectdataview import EffectDataView
-from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, PROGRAM_FOLDER, compile_program, description_schema,
-                                 load_description, new_effect, program_file_name)
+from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, PROGRAM_FOLDER, SOURCE, compile_program,
+                                 description_schema, effect_file_text, load_description, new_effect, program_file_name,
+                                 read_effect_file)
 from Fujin.recorderbuild import HOST_DLL
 from Fujin.recorderbuild import recorder_build
 from Fujin.soundpanel import SoundPanel
@@ -259,9 +260,8 @@ class FujinWidget(QWidget):
                 ("Sound preview: audio.fmt + audio.dat (battle sound archive)", self.sound_panel.import_archive),
                 ("Effect preview: a8def.tim (the battle's shared effect textures)",
                  self.native_preview.import_shared_textures),
-                ("Effect parameters: effect_NNN.fxparams (Choreography's part tabs)", self.import_parameters),
-                ("Effect descriptions: effect_NNN.fxdesc (new and edited effects, Choreography's Description)",
-                 self.import_descriptions)]
+                ("Fujin effects: FujinEffects/effect_NNN.fxprog (parameters, edited descriptions, new effects)",
+                 self.import_effects)]
 
     def auto_import_sources(self):
         preview = self.camera_editor.preview
@@ -790,9 +790,7 @@ class FujinWidget(QWidget):
             if manager.modified:
                 pending.append(f"<li>{esc(key)}: effects_EN.hext (native data)</li>")
         exported = dict(self._exported_signature)
-        for effect in sorted(set(self.descriptions) | set(self.effect_params)):
-            if self.description(effect) is None or not (effect in self.descriptions or self.effect_params.get(effect)):
-                continue
+        for effect in self._changed_effects():
             if any(exported.get(key) != digest for key, digest in self._native_signature()
                    if key in (f"desc:{effect}", f"params:{effect}")):
                 pending.append(f"<li>Effect {effect} ({esc(self.effect_name(effect))}): {PROGRAM_FOLDER}/"
@@ -826,6 +824,12 @@ class FujinWidget(QWidget):
     def description(self, effect):
         """The effect's description as Fujin holds it (edited, new or Fujin's), or None."""
         return self.descriptions.get(effect) or self.shipped_description(effect)
+
+    def _changed_effects(self):
+        """The effects Save writes a file of: described, with edited parameters, an edited description
+        or new."""
+        return [effect for effect in sorted(set(self.descriptions) | set(self.effect_params))
+                if self.description(effect) is not None and (effect in self.descriptions or self.effect_params.get(effect))]
 
     def _files_effect(self, effect):
         """The effect whose files an effect reads: a new effect's base."""
@@ -933,25 +937,30 @@ class FujinWidget(QWidget):
         self.choreography.setCurrentWidget(self.description_view)
         return effect_id
 
-    def import_descriptions(self, paths=None):
-        """Header Import complementary: effect descriptions (effect_NNN.fxdesc, what Save writes)."""
+    def import_effects(self, paths=None):
+        """Header Import complementary: Fujin's effect files (FujinEffects/effect_NNN.fxprog, what Save
+        writes): each effect's parameters and, for an edited one or a new one, its description."""
         if paths is None:
-            paths = QFileDialog.getOpenFileNames(self, "Import effect descriptions (effect_NNN.fxdesc)",
-                                                 self.file_registry.last_folder("Fujin effect export") or os.getcwd(),
-                                                 "Effect descriptions (*.fxdesc)")[0]
+            folder = self.file_registry.last_folder("Fujin effect export") or os.getcwd()
+            paths = QFileDialog.getOpenFileNames(self, "Import Fujin effects (FujinEffects/effect_NNN.fxprog)",
+                                                 os.path.join(folder, PROGRAM_FOLDER), "Fujin effects (*.fxprog)")[0]
         clean = self._native_signature() == self._exported_signature
         loaded = []
         for path in paths:
             try:
-                with open(path, encoding="utf-8") as file:
-                    description = json.load(file)
-                compile_program(description)
-                self.descriptions[int(description["effect"])] = description
-                loaded.append(int(description["effect"]))
-            except (OSError, ValueError, KeyError, TypeError) as error:
+                with open(path, encoding="ascii") as file:
+                    effect, description, values = read_effect_file(file.read())
+            except (OSError, ValueError, KeyError, TypeError, UnicodeDecodeError) as error:
                 QMessageBox.warning(self, "Fujin", f"Cannot read {os.path.basename(path)}: {error}")
+                continue
+            if description is not None:
+                self.descriptions[effect] = description
+            else:
+                self.descriptions.pop(effect, None)
+            self.effect_params[effect] = values
+            loaded.append(effect)
         if loaded and clean:
-            self._exported_signature = self._native_signature()
+            self._exported_signature = self._native_signature()     # what the files hold: nothing to save
         if loaded:
             self._update_effect_rows(refresh=False)
             self._mark_modified_effects()
@@ -1092,30 +1101,6 @@ class FujinWidget(QWidget):
             self.lab.record()
             self.choreography.currentWidget().preview.refresh()
 
-    def import_parameters(self, paths=None):
-        """Header Import complementary: effect parameter files (effect_NNN.fxparams, what Save writes)."""
-        if paths is None:
-            paths = QFileDialog.getOpenFileNames(self, "Import effect parameters (effect_NNN.fxparams)",
-                                                 self.file_registry.last_folder("Fujin effect export") or os.getcwd(),
-                                                 "Effect parameters (*.fxparams)")[0]
-        clean = self._native_signature() == self._exported_signature
-        loaded = []
-        for path in paths:
-            try:
-                with open(path, encoding="utf-8") as file:
-                    data = json.load(file)
-                self.effect_params[int(data["effect"])] = {str(k): v if isinstance(v, str) else int(v)
-                                                       for k, v in data.get("params", {}).items()}
-                loaded.append(int(data["effect"]))
-            except (OSError, ValueError, KeyError, TypeError) as error:
-                QMessageBox.warning(self, "Fujin", f"Cannot read {os.path.basename(path)}: {error}")
-        if loaded and clean:
-            self._exported_signature = self._native_signature()     # what the files hold: nothing to save
-        if self.current_effect in loaded:
-            self._build_part_tabs()
-            self._params_edited()
-        return loaded
-
     def can_save_folder(self):
         return self.mag_editor.can_save_folder() or self._native_signature() != self._exported_signature
 
@@ -1158,25 +1143,21 @@ class FujinWidget(QWidget):
                 outputs[folder / f"effects_{self.camera_editor.manager.language_name}.hext"] = text.encode("utf-8")
                 for track in self.camera_editor.manager.resized_tracks():
                     outputs[folder / CAM_FFNX_FOLDER / cam_file_name(track.effect_id)] = self.camera_editor.manager.cam_bytes(track)
-                # the effects' edited parameters (Choreography's part tabs), one file per effect
-                for effect, values in sorted(self.effect_params.items()):
-                    outputs[folder / f"effect_{effect:03d}.fxparams"] = json.dumps(
-                        {"effect": effect, "name": self.catalog.name(effect), "params": dict(sorted(values.items()))},
-                        indent=1).encode("utf-8")
-                # FujinEffects.dll's programs: the effects described here, with their parameters
+                # one file per changed effect (edited parameters, edited description, new effect): its
+                # program, run in the game by FujinEffects.dll, and what Fujin reopens it from
                 programs = 0
-                for effect in sorted(set(self.descriptions) | set(self.effect_params)):
-                    description = self.description(effect)
-                    if description is None or (effect not in self.descriptions and not self.effect_params.get(effect)):
-                        continue
+                for effect in self._changed_effects():
                     try:
-                        program = compile_program(description, self.effect_params.get(effect))
+                        text = effect_file_text(self.description(effect), self.effect_params.get(effect),
+                                                edited=effect in self.descriptions)
                     except DescriptionError as error:
                         raise ValueError(f"Effect {effect}'s description: {error}") from None
-                    outputs[folder / PROGRAM_FOLDER / program_file_name(effect)] = program.encode("ascii")
+                    outputs[folder / PROGRAM_FOLDER / program_file_name(effect)] = text.encode("ascii")
                     programs += 1
-                for effect, description in sorted(self.descriptions.items()):
-                    outputs[folder / f"effect_{effect:03d}.fxdesc"] = (json.dumps(description, indent=1) + "\n").encode("utf-8")
+                # an effect file of an earlier Save whose effect is back to the game's: gone
+                for path in sorted((folder / PROGRAM_FOLDER).glob("effect_*.fxprog")):
+                    if path not in outputs and SOURCE.encode("ascii") in path.read_bytes():
+                        stale.append(path)
                 if programs and HOST_DLL.is_file():
                     outputs[folder / HOST_DLL.name] = HOST_DLL.read_bytes()
                 for path, digest in self._owned_cam_exports.items():

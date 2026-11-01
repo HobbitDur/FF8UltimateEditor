@@ -174,7 +174,7 @@ Potion's description is the same with its own sequences and sound.
    `<direct>/exe/effect_NNN.bcam` for any effect id (FFNx PR #1047, `effect_camera.cpp`), and it
    wraps whatever setup the dispatch slot holds, so the ported one and a new slot's alike.
    Found on the way: FFNx never loads parameters in game. They only reach the ports in the
-   recorder (`params=`); Fujin's exported `effect_NNN.fxparams` has no reader yet. The host (step
+   recorder (`params=`); Fujin's exported parameters had no reader yet. The host (step
    4) has to load them, the same way as the camera files.
 3. **Split the heal ring into the libraries above** (behaviours, renderers, inputs), each with a
    stable interface, Cure rebuilt from them in C++. Check: port tests.
@@ -283,9 +283,15 @@ Potion's description is the same with its own sequences and sound.
        name, keeps its parameters, and records `base` (whose files and exe data it uses; its memory is its own).
      - Its part tabs and both previews run from its program (`program=` in the recorder).
      - **Save** writes:
-       - `FujinEffects/effect_NNN.fxprog` for every described effect with a change (edited
-         parameters, edited description, new effect);
-       - `effect_NNN.fxdesc` for the descriptions held here (Import complementary reads them back);
+       - **one file per effect**, `FujinEffects/effect_NNN.fxprog`, for every described effect
+         with a change (edited parameters, edited description, new effect):
+         - first, the program with its parameter values: what the DLL runs;
+         - then one `#source` line (JSON) the DLL skips, holding what Fujin reopens the effect from
+           (Import complementary, Fujin effects): the edited values, and the description when it
+           was edited or is new. Its own data's bytes are not repeated there: Fujin takes them back
+           from the program's `data` lines.
+         - The earlier `.fxparams` and `.fxdesc` files are gone. A file of an earlier Save whose
+           effect is back to the game's is removed.
        - `FujinEffects.dll`.
    - **Checked** (`tests/Fujin/test_effect_host.py`):
      - The DLL in the recorder, from a saved-style game folder:

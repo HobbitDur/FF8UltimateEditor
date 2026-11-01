@@ -1,7 +1,7 @@
 """Choreography's part tabs: an effect FFNx has a C++ port with parameters for (Cure), part by part.
 The effect recorder runs the port (built in from FFNx's effect sources, ExternalTools/FFNx/fx) with
 the edited parameters and tags each primitive with its part; Fujin edits the parameters, shows each
-part alone, saves them as effect_NNN.fxparams."""
+part alone, saves them in the effect's file (FujinEffects/effect_NNN.fxprog)."""
 import json
 import os
 import re
@@ -182,11 +182,12 @@ def test_cure_part_tabs_edit_preview_and_save(qapp, tmp_path):
     assert fujin.effect_params == {1: {}}
     ring.spins["ring.steps.per_tick"].setValue(6)
     assert fujin.save_files(str(tmp_path))
-    saved = json.loads((tmp_path / "effect_001.fxparams").read_text(encoding="utf-8"))
-    assert saved == {"effect": 1, "name": fujin.catalog.name(1), "params": {"ring.steps.per_tick": 6}}
+    from Fujin.effectprogram import read_effect_file
+    saved = (tmp_path / "FujinEffects/effect_001.fxprog").read_text(encoding="ascii")
+    assert read_effect_file(saved) == (1, None, {"ring.steps.per_tick": 6})
     assert not fujin.can_save_folder()
     fujin.effect_params.clear()
-    assert fujin.import_parameters([str(tmp_path / "effect_001.fxparams")]) == [1]
+    assert fujin.import_effects([str(tmp_path / "FujinEffects/effect_001.fxprog")]) == [1]
     ring = next(tab for tab in fujin.part_tabs if tab.part["key"] == "ring")
     assert fujin.effect_params == {1: {"ring.steps.per_tick": 6}} and ring.spins["ring.steps.per_tick"].value() == 6
     # the tabs rebuilt for another effect: the old ones no longer hear the lab's recordings

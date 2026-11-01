@@ -350,3 +350,46 @@ def description_schema(description):
               for param in description["params"]]
     return {"effect": description["effect"], "name": description["name"], "parts": description["parts"],
             "fields": fields, "groups": description.get("groups", [])}
+
+
+# ---- the effect file: one per effect (PROGRAM_FOLDER/effect_NNN.fxprog), the game's and Fujin's
+SOURCE = "#source "
+
+
+def effect_file_text(description, values=None, edited=False):
+    """The text of an effect's file: its program (what FujinEffects.dll runs, the parameters at
+    `values`), then one comment line the DLL skips, SOURCE + JSON, what Fujin reopens it from: the
+    edited values and, when `edited` (an edited description or a new effect), the description -
+    its own data's bytes left out (they are the program's data lines)."""
+    values = dict(sorted((values or {}).items()))
+    source = {"format": 1, "effect": description["effect"], "values": values}
+    if edited:
+        kept = json.loads(json.dumps(description))
+        for entry in _entries(kept.get("data")).values():
+            entry.pop("hex", None)
+        source["description"] = kept
+    return compile_program(description, values) + SOURCE + json.dumps(source, separators=(",", ":")) + "\n"
+
+
+def read_effect_file(text):
+    """(effect id, its description when the file holds one else None, its values) of an effect
+    file's text; ValueError when it is not one."""
+    line = next((line for line in text.splitlines() if line.startswith(SOURCE)), None)
+    if line is None:
+        raise ValueError("not an effect file of Fujin's (no #source line)")
+    source = json.loads(line[len(SOURCE):])
+    description = source.get("description")
+    if description is not None:
+        data = {}
+        for program_line in text.splitlines():
+            if program_line.startswith("data "):
+                _directive, key, hex_text = program_line.split(" ", 2)
+                data[key] = hex_text.strip()
+        for key, entry in _entries(description.get("data")).items():
+            if "pointers" not in entry:
+                if key not in data:
+                    raise ValueError(f"its data {key} is missing")
+                entry["hex"] = data[key]
+        compile_program(description)
+    values = {str(key): value if isinstance(value, str) else int(value) for key, value in source.get("values", {}).items()}
+    return int(source["effect"]), description, values

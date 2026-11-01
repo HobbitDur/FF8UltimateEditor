@@ -204,9 +204,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   `EffectRecording.sprite_paths` joins a tick's sprites to the last tick's nearest ones of the
   same part, sequence and next frame (the recording does not say which particle drew one). A part that draws nothing (Cure's Emitter: when the sound plays, when the HP are given)
   shows the whole effect with its ticks marked under the picture. An edit records again; the
-  Overview's preview runs the port with the edited parameters too. Save writes them as
-  `effect_NNN.fxparams` (JSON, only the values not at the game's) into the export folder, with
-  the patch; Import complementary reads them back. The ports come from FFNx's effect sources:
+  Overview's preview runs the port with the edited parameters too. Save writes them in the
+  effect's file, `FujinEffects/effect_NNN.fxprog` (below); Import complementary reads it back. The
+  ports come from FFNx's effect sources:
   the header's **FFNx** button in the External program bar (tick it, then Update; clicking it says
   what is installed - Choreography says so too when the recorder has no ports), the updater's
   **FFNxEffects** (Update downloads the folder `src/ff8/battle/fx` of FFNx's
@@ -219,9 +219,12 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   [fujin-effect-description.md](fujin-effect-description.md)). Apply checks that it compiles; **New
   effect from this…** copies it into a free slot of the game's effect table (224, 225, 346-400)
   under a name of its own. An effect described here records from its program in both previews.
-  Save also writes `FujinEffects/effect_NNN.fxprog` (the program with its parameters) for every
-  described effect with a change, `effect_NNN.fxdesc` for the descriptions held here (Import
-  complementary reads them back) and `FujinEffects.dll`, the game's host of these programs. Put
+  Save writes one file per described effect with a change (edited parameters, edited description,
+  new effect): `FujinEffects/effect_NNN.fxprog`. It holds the effect's program with its
+  parameters, which the game runs, then a `#source` line the game skips. That line holds what
+  Fujin reopens the effect from: the edited values, and the description when it was edited or is
+  new. Import complementary (Fujin effects) reads it back. Save also writes `FujinEffects.dll`,
+  the game's host of these programs. Put
   the DLL at a Junction VIII mod's root (`<LoadLibrary>FujinEffects.dll</LoadLibrary>` in
   `mod.xml`) and the `FujinEffects` folder in its folder. A new effect plays when a kernel.bin entry
   names its effect id.

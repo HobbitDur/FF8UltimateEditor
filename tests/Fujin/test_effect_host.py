@@ -174,14 +174,18 @@ def test_description_tab_new_effect_save_and_import(qapp, tmp_path):
     programs = tmp_path / "FujinEffects"
     assert not (tmp_path / "direct/exe").exists()                # FFNx's folder: none of it is FFNx's
     assert sorted(path.name for path in programs.iterdir()) == ["effect_001.fxprog", "effect_224.fxprog"]
-    assert (programs / "effect_224.fxprog").read_text(encoding="ascii") == fujin.effect_program(224)
-    assert json.loads((tmp_path / "effect_224.fxdesc").read_text(encoding="utf-8")) == fujin.descriptions[224]
-    assert (tmp_path / HOST_DLL.name).is_file() == HOST_DLL.is_file()
+    # one file per effect: the program the DLL runs, then the line Fujin reopens it from
+    text = (programs / "effect_224.fxprog").read_text(encoding="ascii")
+    assert text.startswith(fujin.effect_program(224)) and text.count("\n#source ") == 1
+    assert sorted(path.name for path in tmp_path.iterdir()) == sorted(["FujinEffects", "effects_EN.hext"]
+                                                                      + [HOST_DLL.name] * HOST_DLL.is_file())
     assert not fujin.can_save_folder()
     # imported again in a fresh Fujin
     other = FujinWidget()
-    assert sorted(other.import_descriptions([str(tmp_path / "effect_001.fxdesc"), str(tmp_path / "effect_224.fxdesc")])) == [1, 224]
+    assert sorted(other.import_effects([str(programs / "effect_001.fxprog"), str(programs / "effect_224.fxprog")])) == [1, 224]
     assert other.descriptions == fujin.descriptions and other.effect_name(224) == "New heal"
+    assert other.effect_params == {1: {"ring.radius.num": 4}, 224: {"ring.radius.num": 4}}
+    assert not other.can_save_folder()                            # what the files hold: nothing to save
     # back to Fujin's description; the new effect deleted
     other.select_effect(1)
     other._description_reset()
@@ -190,6 +194,12 @@ def test_description_tab_new_effect_save_and_import(qapp, tmp_path):
     assert other.description_view.reset_button.text() == "Delete this new effect"
     other._description_reset()
     assert 224 not in other.descriptions and other.effect_name(224) == other.catalog.name(224)
+    # saved again: Cure's file keeps its parameters only, the deleted new effect's file goes
+    other.effect_params.pop(224, None)
+    assert other.save_files(str(tmp_path))
+    assert sorted(path.name for path in programs.iterdir()) == ["effect_001.fxprog"]
+    from Fujin.effectprogram import read_effect_file
+    assert read_effect_file((programs / "effect_001.fxprog").read_text(encoding="ascii")) == (1, None, {"ring.radius.num": 4})
 
 
 def test_the_preview_records_a_program(qapp, tmp_path):
