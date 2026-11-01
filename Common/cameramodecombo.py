@@ -6,7 +6,15 @@ from PyQt6.QtWidgets import QComboBox
 from FF8GameData.dat.cameramodes import mode_choices, mode_help, mode_name
 
 
-class CameraModeCombo(QComboBox):
+class WidestEntryCombo(QComboBox):
+    """A combo box as wide as its longest entry, so the same list lines up from row to row."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+
+
+class CameraModeCombo(WidestEntryCombo):
     """Lists the useful modes; a value outside the list (a file's odd byte) is added so it shows
     as it is. valueChanged(int) like a spin box."""
 
@@ -15,7 +23,6 @@ class CameraModeCombo(QComboBox):
     def __init__(self, value: int, base_tooltip: str = "", parent=None):
         super().__init__(parent)
         self._base_tooltip = base_tooltip
-        self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         values = []
         for choice, label in mode_choices():
             self.addItem(label, choice)

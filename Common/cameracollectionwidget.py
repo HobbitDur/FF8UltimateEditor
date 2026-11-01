@@ -19,9 +19,10 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLa
                              QPushButton, QSpinBox, QGroupBox, QSizePolicy,
                              QGraphicsOpacityEffect, QMessageBox, QScrollArea)
 
-from Common.cameramodecombo import CameraModeCombo
+from Common.cameramodecombo import CameraModeCombo, WidestEntryCombo
 from FF8GameData.dat.cameracollection import (build_default_animation, clear_slot, insert_keyframe,
-                                              remove_keyframe, set_slot_animation)
+                                              remove_keyframe, set_block_control, set_slot_animation)
+from FF8GameData.dat.cameramodes import FOV_MODES, LAYOUTS, ROLL_MODES, easing_choices, easing_help
 
 
 class _NoWheelSpinBox(QSpinBox):
@@ -92,17 +93,24 @@ class CameraCollectionWidget(QWidget):
 
     # (label, attribute on CameraFrame) in display order
     _FRAME_COLUMNS = [
-        ("Dur", "duration"),
+        ("Frames", "duration"),
         ("PosMode", "pos_interp_mode"),
         ("PosX", "pos_x"), ("PosY", "pos_y"), ("PosZ", "pos_z"),
         ("LookMode", "look_interp_mode"),
         ("LookX", "look_x"), ("LookY", "look_y"), ("LookZ", "look_z"),
     ]
+    _BLOCK_VALUE_TOOLTIPS = {
+        "FOV start": "FOV at the start of the block (the only one when Fixed): projection distance, "
+                     "bigger = zoomed in. 512 is the default.",
+        "FOV end": "FOV at the end of the block.",
+        "Roll start": "Roll (tilt) at the start of the block (the only one when Fixed); 4096 = a full turn.",
+        "Roll end": "Roll (tilt) at the end of the block; 4096 = a full turn.",
+    }
     _MODE_COLUMNS = ("pos_interp_mode", "look_interp_mode")    # a named list, not a number
     # Hover help per keyframe column (shown on both the header and each field).
     _COLUMN_TOOLTIPS = {
-        "duration": "How long this keyframe holds, in engine ticks (the camera advances "
-                    "16 units of animation time per frame).",
+        "duration": "Frames (1/15 s each) from this keyframe to the next one. On the block's last "
+                    "keyframe: how long the block holds it before the next block starts.",
         "pos_interp_mode": "Coordinate mode of the camera position: the reference frame its X/Y/Z "
                            "are in (an entity's bone scaled by its size, the current view, the "
                            "world...).",
@@ -227,7 +235,9 @@ class CameraCollectionWidget(QWidget):
                     slot_layout.addWidget(self._build_block(block_index, block,
                                                             (camera_set.index, animation.slot)))
                 slot_group.setLayout(slot_layout)
-                target_layout.addWidget(slot_group)
+                # As wide as its keyframes, not the whole panel
+                slot_group.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+                target_layout.addWidget(slot_group, 0, Qt.AlignmentFlag.AlignLeft)
         return build
 
     def _empty_slot_row(self, set_index, slot):
@@ -256,25 +266,7 @@ class CameraCollectionWidget(QWidget):
         container_layout = QVBoxLayout()
         container_layout.setContentsMargins(0, 0, 0, 0)
 
-        header = (f"Block {block_index}: FOV mode {block.fov_mode}, roll mode "
-                  f"{block.roll_mode}, layout {block.layout}")
-        header_label = QLabel(header)
-        header_label.setToolTip("One chained camera move: FOV mode, roll (camera tilt) "
-                                "mode and keyframe layout, followed by its keyframes below.")
-        container_layout.addWidget(header_label)
-
-        optional = block.optional_fields()
-        if optional:
-            optional_row = QHBoxLayout()
-            for label, field in optional:
-                field_label = QLabel(label + ":")
-                field_label.setToolTip(f"Optional block parameter: {label}")
-                optional_row.addWidget(field_label)
-                spin = self._spin_for(field)
-                spin.setToolTip(f"Optional block parameter: {label}")
-                optional_row.addWidget(spin)
-            optional_row.addStretch(1)
-            container_layout.addLayout(optional_row)
+        container_layout.addLayout(self._block_row(block_index, block, slot_key))
 
         grid = QGridLayout()
         grid.setHorizontalSpacing(4)
@@ -305,6 +297,54 @@ class CameraCollectionWidget(QWidget):
         container.setLayout(container_layout)
         return container
 
+    def _block_row(self, block_index, block, slot_key):
+        """'Block n', its easing, layout, FOV and roll settings (lists when the structure can be
+        edited, a change rebuilds the collection) and the FOV/roll values they store."""
+        row = QHBoxLayout()
+        title = QLabel(f"Block {block_index}")
+        title.setFixedWidth(title.fontMetrics().horizontalAdvance("Block 88") + 4)   # rows line up
+        title.setToolTip("One camera move: its keyframes below, played in order. The next block "
+                         "starts when this one ends.")
+        row.addWidget(title)
+        editable = self._structure_edits and slot_key is not None
+        values = dict(block.optional_fields())
+
+        def setting(label, choices, current, help_of, edit_key):
+            if editable:
+                combo = WidestEntryCombo()
+                for value, name in choices:
+                    combo.addItem(name, value)
+                    combo.setItemData(combo.count() - 1, help_of(value), Qt.ItemDataRole.ToolTipRole)
+                combo.setCurrentIndex(combo.findData(current))
+                combo.setToolTip(help_of(current))
+                combo.currentIndexChanged.connect(lambda _index, c=combo: self._rebuild(
+                    lambda data: set_block_control(data, *slot_key, block_index, **{edit_key: c.currentData()})))
+                widget = combo
+            else:
+                widget = QLabel(dict(choices)[current])
+                widget.setToolTip(help_of(current))
+            row.addWidget(QLabel(label))
+            row.addWidget(widget)
+
+        def mode_list(names):
+            return [(index, name) for index, (name, _help) in enumerate(names)]
+
+        def value_spins(*labels):
+            for label in labels:
+                if label in values:
+                    spin = self._spin_for(values[label])
+                    spin.setToolTip(self._BLOCK_VALUE_TOOLTIPS[label])
+                    row.addWidget(spin)
+
+        setting("Easing", easing_choices(), block.easing, easing_help, "easing")
+        setting("Layout", mode_list(LAYOUTS), block.layout, lambda v: LAYOUTS[v][1], "layout")
+        setting("FOV", mode_list(FOV_MODES), block.fov_mode, lambda v: FOV_MODES[v][1], "fov_mode")
+        value_spins("FOV start", "FOV end")
+        setting("Roll", mode_list(ROLL_MODES), block.roll_mode, lambda v: ROLL_MODES[v][1], "roll_mode")
+        value_spins("Roll start", "Roll end")
+        row.addStretch(1)
+        return row
+
     def _frame_label(self, row, block, key=None) -> QWidget:
         """'#row', with the duplicate (+) / remove (-) buttons in front when structure edits are on
         (left of the fields, so a narrow panel never hides them)."""
@@ -332,10 +372,8 @@ class CameraCollectionWidget(QWidget):
         spin = _NoWheelSpinBox()
         spin.setRange(field.minimum, field.maximum)
         spin.setValue(field.get())
-        # Wide enough for the longest value of its range next to the arrows (a fixed 70 px left
-        # two digits visible with the Windows 11 style)
-        widest = max(len(str(field.minimum)), len(str(field.maximum)))
-        spin.setFixedWidth(spin.fontMetrics().horizontalAdvance("8" * widest) + 64)
+        # The style's own size for the longest value of its range next to the arrows (a fixed
+        # 70 px left two digits visible with the Windows 11 style)
         spin.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         spin.valueChanged.connect(lambda value, f=field: self._on_field_changed(f, value))
         return spin

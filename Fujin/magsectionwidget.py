@@ -26,6 +26,7 @@ class MagSectionTabs(QTabWidget):
         self.manager = None
         self.camera_preview = None
         self.setUsesScrollButtons(True)
+        self.setTabBarAutoHide(True)        # one section (a MAG camera): no tab level of its own
         self.currentChanged.connect(self._open_page)
 
     def set_manager(self, manager, sections=None):
@@ -97,8 +98,9 @@ class MagSectionEditor(QWidget):
         buttons.addStretch()
         layout.addLayout(buttons)
         self.views = QTabWidget()
+        self.camera_page = None
         if section.kind == "camera":
-            self._camera_view()
+            self._camera_view()     # its Fields / Bytes go beside Keyframes / Script
         if self.fields:
             self._fields_view()
         if manager.document.format == "PlayStation TIM":
@@ -109,7 +111,7 @@ class MagSectionEditor(QWidget):
                         if self.views.tabText(index).startswith("Texture preview")), None)
         if picture is not None:
             self.views.setCurrentIndex(picture)
-        layout.addWidget(self.views, 1)
+        layout.addWidget(self.views if self.camera_page is None else self.camera_page, 1)
         layout.addWidget(self.error)
 
     def _announce(self):
@@ -279,7 +281,7 @@ class MagSectionEditor(QWidget):
         self.camera_editor.keyframes_changed.connect(self._apply_camera)
         self.camera_editor.track_changed.connect(self._apply_camera)
         layout.addWidget(self.camera_editor, 1)
-        self.views.addTab(page, "Camera")
+        self.camera_page, self.views = page, self.camera_editor.tabs
         self.camera_editor.set_track(self.camera_track, fixed_size=self.section.size)
         self._update_camera_info()
 

@@ -54,6 +54,24 @@ NB_SLOT_PER_SET = 8               # the engine masks the requested anim index wi
 # How many u16 words the FOV / ROLL field occupies for each 2-bit mode.
 _FOV_WORDS = (0, 0, 1, 2)
 _ROLL_WORDS = (0, 0, 1, 2)
+DEFAULT_FOV = 512                 # FOV mode 1 (BS_Camera_ReadAnimation 0x503C70)
+DEFAULT_ROLL = 0                  # roll mode 1
+
+
+def control_easing(control_word: int) -> int:
+    """Bits 1-5 of a block's control word, signed: BS_Camera_EaseTime (0x503FE0) applies a sine n
+    times (n > 0, ease out) or 1 - cosine -n times (n < 0, ease in) to the block's time."""
+    value = (control_word >> 1) & 0x1F
+    return value - 32 if value & 0x10 else value
+
+
+def make_control_word(fov_mode: int, roll_mode: int, layout: int, easing: int, high_bits: int = 0) -> int:
+    """A block control word: bit 0 layout, bits 1-5 easing (-16..15), 6-7 FOV mode, 8-9 roll mode.
+    `high_bits` keeps bits 10-14 (not read by the PC engine)."""
+    if not -16 <= easing <= 15:
+        raise ValueError("the easing goes from -16 to 15")
+    return ((high_bits & 0x7C00) | (roll_mode & 3) << 8 | (fov_mode & 3) << 6
+            | (easing & 0x1F) << 1 | (layout & 1))
 
 
 class CameraParseError(ValueError):
@@ -138,6 +156,7 @@ class CameraBlock:
         self.fov_mode = (self.control_word >> 6) & 3
         self.roll_mode = (self.control_word >> 8) & 3
         self.layout = self.control_word & 1
+        self.easing = control_easing(self.control_word)
         self.fov_start = None
         self.fov_end = None
         self.roll_start = None
@@ -436,3 +455,31 @@ def set_slot_animation(data, set_index: int, slot: int, animation: bytes = None)
 
 def clear_slot(data, set_index: int, slot: int) -> bytearray:
     return set_slot_animation(data, set_index, slot, None)
+
+
+def set_block_control(data, set_index: int, slot: int, block_index: int, fov_mode: int = None,
+                      roll_mode: int = None, layout: int = None, easing: int = None) -> bytearray:
+    """Change a block's control word. A FOV or roll mode stores 0, 1 or 2 words, so changing one
+    can change the block's length: the values are kept where they can be (a fixed value becomes
+    start and end; a start/end pair keeps its start), else the engine defaults are written."""
+    def edit(collection, animation):
+        if animation.empty or not 0 <= block_index < len(animation.blocks):
+            raise ValueError(f"block {block_index} does not exist")
+        block = animation.blocks[block_index]
+        new_fov = block.fov_mode if fov_mode is None else fov_mode
+        new_roll = block.roll_mode if roll_mode is None else roll_mode
+        control_word = make_control_word(new_fov, new_roll, block.layout if layout is None else layout,
+                                         block.easing if easing is None else easing, block.control_word)
+
+        def words(count, start, end, default):
+            start = default if start is None else start.get()
+            end = start if end is None else end.get()
+            return (start, end)[:count]
+        values = (words(_FOV_WORDS[new_fov], block.fov_start, block.fov_end, DEFAULT_FOV)
+                  + words(_ROLL_WORDS[new_roll], block.roll_start, block.roll_end, DEFAULT_ROLL))
+        raw = _animation_bytes(collection, animation)
+        start = block.offset - animation.offset
+        frames = (block.frames[0].offset if block.frames else block.end - 2) - animation.offset
+        head = struct.pack("<H", control_word) + b"".join(struct.pack("<H", v & 0xFFFF) for v in values)
+        return raw[:start] + head + raw[frames:]
+    return _edit_slot(data, set_index, slot, edit)

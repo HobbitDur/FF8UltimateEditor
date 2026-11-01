@@ -124,3 +124,55 @@ def mode_choices():
             value = entity << 4 | point
             choices.append((value, mode_name(value)))
     return choices
+
+
+# ------------------------------------------------------------------ block control word
+# BS_Camera_ReadAnimation (0x503C70) and BS_Camera_EaseTime (0x503FE0); bit 0 layout, bits 1-5
+# easing, 6-7 FOV mode, 8-9 roll mode. FOV = projection distance (bigger = zoomed in), roll in
+# 4096ths of a turn; both glide from start to end over the block.
+FOV_MODES = (
+    ("Keep", "Keeps the FOV start/end the camera had (previous block or previous camera)."),
+    ("Default 512", "FOV 512 for the whole block (no value stored)."),
+    ("Fixed", "One FOV value for the whole block."),
+    ("Start → end", "The FOV glides from a start value to an end value across the block."),
+)
+ROLL_MODES = (
+    ("Keep", "Keeps the camera's current roll (tilt) for the whole block."),
+    ("None (0)", "No roll for the whole block (no value stored)."),
+    ("Fixed", "One roll value for the whole block (4096 = a full turn)."),
+    ("Start → end", "The roll glides from a start value to an end value across the block "
+                    "(4096 = a full turn)."),
+)
+LAYOUTS = (
+    ("Follow", "Keyframes are placed every frame: a camera tied to an entity follows it as it moves."),
+    ("Place once", "Every keyframe is placed once, when the block starts: the camera path does not "
+                   "follow entities that move afterwards."),
+)
+CAPTURE_RETURN_VIEW_EASING = 15     # (control word & 0x3E) == 0x1E also calls BS_Camera_CaptureReturnView
+
+
+def easing_name(easing: int) -> str:
+    if easing == 0:
+        return "Linear"
+    name = f"Ease out x{easing}" if easing > 0 else f"Ease in x{-easing}"
+    return name + " + save return view" if easing == CAPTURE_RETURN_VIEW_EASING else name
+
+
+def easing_help(easing: int) -> str:
+    if easing == 0:
+        return "Constant speed from one keyframe to the next."
+    if easing > 0:
+        text = (f"Starts fast and slows down at the end: a sine applied {easing} time(s) to the block's "
+                "time, so a higher number brakes harder.")
+    else:
+        text = (f"Starts slowly and speeds up at the end: 1 - cosine applied {-easing} time(s) to the "
+                "block's time, so a higher number accelerates harder.")
+    if easing == CAPTURE_RETURN_VIEW_EASING:
+        text += (" Value 15 also saves the view the camera goes back to when the effect ends "
+                 "(BS_Camera_CaptureReturnView).")
+    return text
+
+
+def easing_choices():
+    """(value, label) from the strongest ease in to the strongest ease out."""
+    return [(value, easing_name(value)) for value in range(-16, 16)]

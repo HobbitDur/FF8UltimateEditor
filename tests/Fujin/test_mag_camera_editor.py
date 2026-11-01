@@ -31,7 +31,10 @@ def _camera_editor(qapp, path, preview=None):
 def test_mag_camera_has_the_exe_editor_tabs_and_counter(qapp, monkeypatch):
     manager, section, editor = _camera_editor(qapp, ROOT / MAG230)
     camera = editor.camera_editor
-    assert [camera.tabs.tabText(i) for i in range(camera.tabs.count())] == ["Keyframes", "Script"]
+    # One tab level for the camera: the section's Fields / Bytes sit beside Keyframes / Script
+    tabs = [camera.tabs.tabText(i) for i in range(camera.tabs.count())]
+    assert tabs[:2] == ["Keyframes", "Script"] and tabs[-1] == "Bytes (hex)" and "Camera" not in tabs
+    assert editor.views is camera.tabs and editor.camera_page is not None
     assert camera._collection_widget._structure_edits
     assert camera.script_description.toPlainText()                  # the Meaning pane
     assert "192 bytes" in editor.camera_info.text() and "no .bcam" in editor.camera_info.text()

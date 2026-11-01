@@ -7,8 +7,9 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PyQt6.QtWidgets import QApplication
 
-from FF8GameData.dat.cameracollection import parse_camera_collection
-from FF8GameData.dat.cameramodes import mode_choices, mode_help, mode_name
+from FF8GameData.dat.cameracollection import (control_easing, make_control_word, parse_camera_collection,
+                                              set_block_control)
+from FF8GameData.dat.cameramodes import easing_name, mode_choices, mode_help, mode_name
 
 
 @pytest.fixture(scope="module")
@@ -82,3 +83,46 @@ def test_keyframe_grids_use_the_combo(app):
     assert sorted(combo.value() for combo in combos) == [0x6B, 0xA1]
     combos[0].setCurrentIndex(combos[0].findData(0xF3))
     assert 0xF3 in (block.frames[0].pos_interp_mode.get(), block.frames[0].look_interp_mode.get())
+
+
+def test_block_control_word_fields():
+    # BS_Camera_EaseTime 0x503FE0: bits 1-5 signed; Disease Breath's 0x03FF block eases in once
+    assert control_easing(0x03FF) == -1 and control_easing(0x03C1) == 0 and control_easing(0x001E) == 15
+    assert make_control_word(3, 3, 1, -1) == 0x03FF and make_control_word(1, 1, 0, 0) == 0x0140
+    assert easing_name(0) == "Linear" and easing_name(-2) == "Ease in x2"
+    assert easing_name(15) == "Ease out x15 + save return view"
+
+
+def test_set_block_control_keeps_the_values_it_can():
+    data = _collection()      # block: FOV/roll mode 0 (no words), layout 1
+    fixed = set_block_control(data, 0, 0, 0, fov_mode=2, roll_mode=3, easing=-3)
+    block = parse_camera_collection(fixed).sets[0].animations[0].blocks[0]
+    assert (block.fov_mode, block.roll_mode, block.layout, block.easing) == (2, 3, 1, -3)
+    assert block.fov_start.get() == 512 and (block.roll_start.get(), block.roll_end.get()) == (0, 0)
+    assert block.frames[0].pos_x.get() == 1739 and block.frames[0].pos_interp_mode.get() == 0xA1
+    pair = set_block_control(_with_fov(fixed, 352), 0, 0, 0, fov_mode=3)
+    block = parse_camera_collection(pair).sets[0].animations[0].blocks[0]
+    assert (block.fov_start.get(), block.fov_end.get()) == (352, 352)       # a fixed FOV becomes start = end
+    back = parse_camera_collection(set_block_control(pair, 0, 0, 0, fov_mode=1, roll_mode=1))
+    block = back.sets[0].animations[0].blocks[0]
+    assert block.fov_start is None and block.roll_start is None and block.frames[0].pos_x.get() == 1739
+
+
+def _with_fov(data, value):
+    collection = parse_camera_collection(data)
+    collection.sets[0].animations[0].blocks[0].fov_start.set(value)
+    return collection.get_bytes()
+
+
+def test_block_settings_are_lists_in_the_editor(app):
+    from Common.cameracollectionwidget import CameraCollectionWidget
+    from Common.cameramodecombo import WidestEntryCombo
+    collection = parse_camera_collection(_collection())
+    widget = CameraCollectionWidget(collection, structure_edits=True)
+    rebuilt = []
+    widget.collection_rebuilt.connect(rebuilt.append)
+    container = widget._build_block(0, collection.sets[0].animations[0].blocks[0], (0, 0))
+    lists = [combo for combo in container.findChildren(WidestEntryCombo) if combo.count() == 32]
+    assert len(lists) == 1 and lists[0].currentText() == "Linear"           # the easing list
+    lists[0].setCurrentIndex(lists[0].findData(4))
+    assert parse_camera_collection(rebuilt[-1]).sets[0].animations[0].blocks[0].easing == 4
