@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLa
                              QPushButton, QSpinBox, QGroupBox, QSizePolicy,
                              QGraphicsOpacityEffect, QMessageBox, QScrollArea)
 
+from Common.cameramodecombo import CameraModeCombo
 from FF8GameData.dat.cameracollection import (build_default_animation, clear_slot, insert_keyframe,
                                               remove_keyframe, set_slot_animation)
 
@@ -92,21 +93,24 @@ class CameraCollectionWidget(QWidget):
     # (label, attribute on CameraFrame) in display order
     _FRAME_COLUMNS = [
         ("Dur", "duration"),
-        ("PosInt", "pos_interp_mode"),
+        ("PosMode", "pos_interp_mode"),
         ("PosX", "pos_x"), ("PosY", "pos_y"), ("PosZ", "pos_z"),
-        ("LookInt", "look_interp_mode"),
+        ("LookMode", "look_interp_mode"),
         ("LookX", "look_x"), ("LookY", "look_y"), ("LookZ", "look_z"),
     ]
+    _MODE_COLUMNS = ("pos_interp_mode", "look_interp_mode")    # a named list, not a number
     # Hover help per keyframe column (shown on both the header and each field).
     _COLUMN_TOOLTIPS = {
         "duration": "How long this keyframe holds, in engine ticks (the camera advances "
                     "16 units of animation time per frame).",
-        "pos_interp_mode": "Interpolation/easing mode for the camera position between this "
-                           "keyframe and the next.",
+        "pos_interp_mode": "Coordinate mode of the camera position: the reference frame its X/Y/Z "
+                           "are in (an entity's bone scaled by its size, the current view, the "
+                           "world...).",
         "pos_x": "Camera position X (where the camera is).",
         "pos_y": "Camera position Y (where the camera is).",
         "pos_z": "Camera position Z (where the camera is).",
-        "look_interp_mode": "Interpolation/easing mode for the look-at target.",
+        "look_interp_mode": "Coordinate mode of the look-at target: the reference frame its X/Y/Z "
+                            "are in.",
         "look_x": "Look-at target X (what the camera aims at).",
         "look_y": "Look-at target Y (what the camera aims at).",
         "look_z": "Look-at target Z (what the camera aims at).",
@@ -285,9 +289,13 @@ class CameraCollectionWidget(QWidget):
                            row + 1, 0)
             for column, (label, _attribute) in enumerate(self._FRAME_COLUMNS):
                 field = getattr(frame, _attribute)
-                spin = self._spin_for(field)
-                spin.setToolTip(self._COLUMN_TOOLTIPS.get(_attribute, ""))
-                grid.addWidget(spin, row + 1, column + 1)
+                if _attribute in self._MODE_COLUMNS:
+                    editor = CameraModeCombo(field.get(), self._COLUMN_TOOLTIPS[_attribute])
+                    editor.valueChanged.connect(lambda value, f=field: self._on_field_changed(f, value))
+                else:
+                    editor = self._spin_for(field)
+                    editor.setToolTip(self._COLUMN_TOOLTIPS.get(_attribute, ""))
+                grid.addWidget(editor, row + 1, column + 1)
         # Absorb all slack in a trailing empty column so the fields stay packed left
         grid.setColumnStretch(len(self._FRAME_COLUMNS) + 1, 1)
         grid_row = QHBoxLayout()

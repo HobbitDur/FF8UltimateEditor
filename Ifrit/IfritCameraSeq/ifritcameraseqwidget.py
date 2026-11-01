@@ -32,6 +32,7 @@ from Ifrit.ifritmanager import IfritManager
 from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
 from Common.deferredcall import defer
 from Common.collapsiblesection import CollapsibleSection
+from Common.cameramodecombo import CameraModeCombo
 
 # Which raw section index holds the camera animation collection, per entity type. Both are the
 # same bare-collection format; monsters carry it in section 6 (usually 1 set), characters in
@@ -50,12 +51,12 @@ _FRAME_TOOLTIP = {
     "pos_x": "Camera position X (side to side), world units, signed (−32768…32767).",
     "pos_y": "Camera position Y (up/down), world units, signed.",
     "pos_z": "Camera position Z (depth / forward-back), world units, signed.",
-    "pos_interp": "Position reference mode (0x90 caster, 0xA0 target, 0xF3 previous eye): "
-                  "the coordinate frame in which this position is expressed.",
+    "pos_interp": "Position coordinate mode: the reference frame this position's X/Y/Z are in "
+                  "(an entity's bone scaled by its size, the current view, the world...).",
     "look_x": "Look-at target X — the point the camera faces, world units, signed.",
     "look_y": "Look-at target Y — the point the camera faces, world units, signed.",
     "look_z": "Look-at target Z — the point the camera faces, world units, signed.",
-    "look_interp": "Look-at reference mode: 0x90 caster, 0xA0 target, 0xF4 previous look-at, 0xF5 midpoint.",
+    "look_interp": "Look-at coordinate mode: the reference frame this look-at's X/Y/Z are in.",
 }
 _BLOCK_FIELD_TOOLTIP = {
     "FOV start": "Field of view at the start of this block. Higher = zoomed in (telephoto), "
@@ -85,9 +86,9 @@ _BLOCK_TOOLTIP = (
 # The frame-grid columns, paired with their tooltip key (None = the '#' index column).
 _FRAME_COLUMNS = [("#", None), ("Duration", "duration"),
                   ("Pos X", "pos_x"), ("Pos Y", "pos_y"), ("Pos Z", "pos_z"),
-                  ("Pos interp", "pos_interp"),
+                  ("Pos mode", "pos_interp"),
                   ("Look X", "look_x"), ("Look Y", "look_y"), ("Look Z", "look_z"),
-                  ("Look interp", "look_interp")]
+                  ("Look mode", "look_interp")]
 
 
 class NoWheelSpinBox(QSpinBox):
@@ -428,7 +429,11 @@ class IfritCameraSeqWidget(QWidget):
                       frame.pos_interp_mode, frame.look_x, frame.look_y, frame.look_z,
                       frame.look_interp_mode]
             for col, ((_title, key), field) in enumerate(zip(_FRAME_COLUMNS[1:], fields), start=1):
-                spin = _bind_spin(field, tooltip=_FRAME_TOOLTIP[key])
+                if key in ("pos_interp", "look_interp"):     # a named list, not a number
+                    spin = CameraModeCombo(field.get(), _FRAME_TOOLTIP[key])
+                    spin.valueChanged.connect(lambda value, f=field: f.set(value))
+                else:
+                    spin = _bind_spin(field, tooltip=_FRAME_TOOLTIP[key])
                 self._spin_list.append(spin)
                 spin.valueChanged.connect(self.__on_value_changed)
                 grid.addWidget(spin, row, col)
