@@ -32,7 +32,7 @@ from Fujin.effectdescriptionview import EffectDescriptionView
 from Fujin.effectdataview import EffectDataView
 from Fujin import effecttemplates
 from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, PROGRAM_FOLDER, SOURCE, compile_program,
-                                 description_schema, effect_file_text, load_description, new_effect, program_file_name,
+                                 described_effects, description_schema, effect_file_text, load_description, new_effect, program_file_name,
                                  read_effect_file)
 from Fujin.recorderbuild import HOST_DLL
 from Fujin.recorderbuild import recorder_build
@@ -166,7 +166,6 @@ class FujinWidget(QWidget):
         # the effect's description (its parts, tasks, director): what Save compiles for FujinEffects.dll
         self.description_view = EffectDescriptionView()
         self.description_view.applied.connect(self._description_applied)
-        self.description_view.new_requested.connect(self.new_effect_dialog)
         self.description_view.reset_requested.connect(self._description_reset)
         self.choreography.addTab(self.description_view, "Description")
         # a new effect's own data (sequences, sounds, tables...), edited by kind
@@ -223,12 +222,21 @@ class FujinWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.title)
         layout.addWidget(self.context)
-        # a free slot of the game's effect table: a new effect can be made there
+        # a new effect: from a described one (a copy in a free slot), or in a free slot (empty or a copy)
+        self.copy_button = QPushButton("New effect from this…")
+        self.copy_button.setToolTip("A copy of this effect in a free slot of the game's effect table "
+                                    "(224, 225, 346-400): a kernel.bin entry naming that effect id casts it")
+        self.copy_button.clicked.connect(lambda: self.new_effect_dialog())
         self.create_button = QPushButton("Create a new effect here")
         self.create_button.setToolTip("An empty effect in this free slot: Choreography's + tab adds its parts")
         self.create_button.clicked.connect(lambda: self.create_effect_here())
+        self.copy_here_button = QPushButton("Copy an effect here…")
+        self.copy_here_button.setToolTip("A copy of an effect Fujin describes (Cure, Potion, Hypnotize, "
+                                         "or a new effect) in this free slot")
+        self.copy_here_button.clicked.connect(lambda: self.copy_effect_here())
         create_row = QHBoxLayout()
-        create_row.addWidget(self.create_button)
+        for button in (self.copy_button, self.create_button, self.copy_here_button):
+            create_row.addWidget(button)
         create_row.addStretch(1)
         layout.addLayout(create_row)
         layout.addWidget(self.tabs, 1)
@@ -886,7 +894,10 @@ class FujinWidget(QWidget):
         built = "template_parts" in self.descriptions.get(effect, {})
         self.choreography.setTabVisible(self.choreography.indexOf(self.plus_tab), built)
         info = self.catalog.info(effect) if effect is not None else {}
-        self.create_button.setVisible(bool(info.get("free")) and effect not in self.descriptions)
+        free_slot = bool(info.get("free")) and effect not in self.descriptions
+        self.create_button.setVisible(free_slot)
+        self.copy_here_button.setVisible(free_slot)
+        self.copy_button.setVisible(effect is not None and self.description(effect) is not None)
 
     # ------------------------------------------------------------------ an effect built part by part (+ tab)
     def create_effect_here(self, name=None):
@@ -1086,11 +1097,28 @@ class FujinWidget(QWidget):
         self._show_description()
         self._params_edited()
 
-    def new_effect_dialog(self, effect_id=None, name=None):
-        """A copy of the shown effect's description as a new effect in a free slot (asked for when
-        not given); the new effect is selected. Its id, or None."""
+    def copy_effect_here(self, source_effect=None, name=None):
+        """A copy of a described effect (asked for when not given) in the shown free slot. Its id, or None."""
         from PyQt6.QtWidgets import QInputDialog
-        source = self.description(self.current_effect)
+        effect = self.current_effect
+        if effect is None or not self.catalog.info(effect).get("free") or effect in self.descriptions:
+            return None
+        if source_effect is None:
+            sources = sorted(set(described_effects()) | {e for e in self.descriptions if e != effect})
+            labels = [f"{e} — {self.effect_name(e)}" for e in sources]
+            choice, ok = QInputDialog.getItem(self, "Copy an effect here", f"Effect copied into {effect}:", labels, 0, False)
+            if not ok:
+                return None
+            source_effect = sources[labels.index(choice)]
+        return self.new_effect_dialog(effect, name, source_effect)
+
+    def new_effect_dialog(self, effect_id=None, name=None, source_effect=None):
+        """A copy of the description of `source_effect` (default: the shown effect) as a new effect in
+        a free slot (asked for when not given); the new effect is selected. Its id, or None."""
+        from PyQt6.QtWidgets import QInputDialog
+        if source_effect is None:
+            source_effect = self.current_effect
+        source = self.description(source_effect)
         if source is None:
             return None
         free = [e for e in FREE_EFFECTS if e not in self.descriptions]
@@ -1116,11 +1144,14 @@ class FujinWidget(QWidget):
         except OSError:
             exe = None
         self.descriptions[effect_id] = new_effect(source, effect_id, name.strip(), exe)
-        if self.effect_params.get(self.current_effect):
-            self.effect_params[effect_id] = dict(self.effect_params[self.current_effect])
-        self._update_effect_rows(refresh=False)
-        self._mark_modified_effects()
-        self.select_effect(effect_id)
+        if self.effect_params.get(source_effect):
+            self.effect_params[effect_id] = dict(self.effect_params[source_effect])
+        if effect_id == self.current_effect:          # a copy into the free slot shown
+            self._description_changed()
+        else:
+            self._update_effect_rows(refresh=False)
+            self._mark_modified_effects()
+            self.select_effect(effect_id)
         self.tabs.setCurrentIndex(2)
         self.choreography.setCurrentWidget(self.description_view)
         return effect_id

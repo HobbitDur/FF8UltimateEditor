@@ -279,7 +279,8 @@ Potion's description is the same with its own sequences and sound.
    - **Fujin:**
      - Choreography has a **Description** tab: the effect's description as JSON. Apply checks that
        it compiles; an edited description of Fujin's goes back with *Fujin's description*.
-     - **New effect from this…** copies the shown description into a free slot. It has its own
+     - **New effect from this…** (above Fujin's tabs) copies the shown description into a free
+       slot; a free slot's **Copy an effect here…** asks which effect to copy. The copy has its own
        name, keeps its parameters, and records `base` (whose files and exe data it uses; its memory is its own).
      - Its part tabs and both previews run from its program (`program=` in the recorder).
      - **Save** writes:

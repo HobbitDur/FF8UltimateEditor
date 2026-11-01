@@ -92,8 +92,9 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
     fujin = FujinWidget()
     fujin.select_effect(1)
     assert fujin.create_button.isHidden() and not fujin.choreography.isTabVisible(fujin.choreography.indexOf(fujin.plus_tab))
+    assert not fujin.copy_button.isHidden() and fujin.copy_here_button.isHidden()   # New effect from this…
     fujin.select_effect(224)                                                   # a free slot
-    assert not fujin.create_button.isHidden()
+    assert not fujin.create_button.isHidden() and not fujin.copy_here_button.isHidden() and fujin.copy_button.isHidden()
     assert fujin.create_effect_here("By hand") == 224
     assert fujin.create_button.isHidden() and fujin.tabs.isTabEnabled(2)      # Choreography un-greyed
     assert fujin.choreography.isTabVisible(fujin.choreography.indexOf(fujin.plus_tab))
@@ -132,6 +133,11 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
     assert fujin.add_part("sparkles") and fujin.effect_parts() == ["emitter", "ring", "sparkles", "files"]   # with the ring
     assert fujin.effect_program(224)
     assert fujin.choreography.indexOf(fujin.plus_tab) == fujin.choreography.count() - 1
+    # a free slot can also take a copy of a described effect
+    fujin.select_effect(346)
+    assert fujin.copy_effect_here(1, "Cure copy") == 346 and fujin.copy_here_button.isHidden()
+    assert compile_program(fujin.descriptions[346]) == compile_program(new_effect(load_description(1), 346, "Cure copy"))
+    assert not fujin.copy_button.isHidden()                                   # a new effect copies too
     # an effect with no part yet is saved too (the game finds no program in it)
     fujin.select_effect(225)
     assert fujin.create_effect_here("Later") == 225

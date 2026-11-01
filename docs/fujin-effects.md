@@ -216,9 +216,10 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   built again with them); the release's CI does the same before building the recorder.
   **Description** (Choreography, for the effects Fujin describes: Cure, Potion, Hypnotize): the
   effect's description as JSON (its parts, tasks, director, pools: see
-  [fujin-effect-description.md](fujin-effect-description.md)). Apply checks that it compiles; **New
-  effect from this…** copies it into a free slot of the game's effect table (224, 225, 346-400)
-  under a name of its own. An effect described here records from its program in both previews.
+  [fujin-effect-description.md](fujin-effect-description.md)). Apply checks that it compiles.
+  **New effect from this…** (above the tabs, for every described effect, new ones included)
+  copies it into a free slot of the game's effect table (224, 225, 346-400) under a name of its
+  own; a free slot's **Copy an effect here…** does the same from the slot's side. An effect described here records from its program in both previews.
   Save writes one file per described effect with a change (edited parameters, edited description,
   new effect): `FujinEffects/effect_NNN.fxprog`. It holds the effect's program with its
   parameters, which the game runs, then a `#source` line the game skips. That line holds what
@@ -229,7 +230,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   `mod.xml`) and the `FujinEffects` folder in its folder. A new effect plays when a kernel.bin entry
   names its effect id.
   **Building an effect part by part:** a free slot (224, 225, 346-400) shows **Create a new effect
-  here**. It makes an empty effect there, and Choreography opens with a **+** tab. Clicking +
+  here** (beside **Copy an effect here…**). It makes an empty effect there, and Choreography opens with a **+** tab. Clicking +
   lists the parts Fujin knows, named as their tabs, with a few words on each:
   - an empty effect first offers the two kinds as submenus:
     - around one target at a time (Cure's kind): Emitter, Ring, Overlay, Ground glow, Sparkles,

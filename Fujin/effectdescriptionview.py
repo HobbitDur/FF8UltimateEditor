@@ -1,7 +1,7 @@
 """Choreography's Description tab: an effect's description (docs/fujin-effect-description.md) as
 Fujin holds it - its parts, its tasks (phases, spawns, draws...), its director and pools - edited
 as JSON beside the part tabs' parameters. Apply checks it compiles (Fujin/effectprogram.py) before
-taking it; New effect makes a copy of it in a free slot of the game's effect table; the previews
+taking it (Fujin's "New effect from this…", above the tabs, copies it to a free slot); the previews
 and Save (FujinEffects/effect_NNN.fxprog, run in the game by FujinEffects.dll) use what it holds.
 """
 import json
@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QV
 from Fujin.effectprogram import DescriptionError, compile_program
 
 NO_DESCRIPTION = ("No description for this effect: it runs from the exe's code (or FFNx's port). Fujin describes "
-                  "Cure (1), Potion (50) and Hypnotize (133); New effect starts from one of them.")
+                  "Cure (1), Potion (50) and Hypnotize (133); \"New effect from this…\" (above the tabs) copies one of them.")
 
 
 def description_text(description):
@@ -21,11 +21,9 @@ def description_text(description):
 
 
 class EffectDescriptionView(QWidget):
-    """applied(description): a checked description to take for the effect shown; new_requested():
-    New effect; reset_requested(): back to Fujin's description (an edited one) or the new effect
-    deleted."""
+    """applied(description): a checked description to take for the effect shown; reset_requested():
+    back to Fujin's description (an edited one) or the new effect deleted."""
     applied = pyqtSignal(dict)
-    new_requested = pyqtSignal()
     reset_requested = pyqtSignal()
 
     def __init__(self):
@@ -43,14 +41,10 @@ class EffectDescriptionView(QWidget):
         self.apply_button = QPushButton("Apply")
         self.apply_button.setToolTip("Check the description compiles, then use it: previews, part tabs and Save")
         self.apply_button.clicked.connect(self.apply)
-        self.new_button = QPushButton("New effect from this…")
-        self.new_button.setToolTip("A copy of this effect in a free slot of the game's effect table "
-                                   "(224, 225, 346-400): a kernel.bin entry naming that effect id casts it")
-        self.new_button.clicked.connect(self.new_requested)
         self.reset_button = QPushButton()
         self.reset_button.clicked.connect(self.reset_requested)
         buttons = QHBoxLayout()
-        for button in (self.apply_button, self.new_button, self.reset_button):
+        for button in (self.apply_button, self.reset_button):
             buttons.addWidget(button)
         buttons.addStretch(1)
         layout = QVBoxLayout(self)
@@ -82,7 +76,6 @@ class EffectDescriptionView(QWidget):
                               + (" Built part by part: adding a part (+ tab) or removing one (a part tab's right click) rebuilds it, "
                                  "edits made here by hand are lost then." if "template_parts" in description else "")
                               + " Values are numbers or $parameter keys; tasks, pools and parts are named by key.")
-        self.new_button.setEnabled(description is not None)
         self.reset_button.setText("Delete this new effect" if kind == "new" else "Fujin's description")
         self.reset_button.setVisible(kind in ("new", "edited"))
         self.apply_button.setEnabled(False)
