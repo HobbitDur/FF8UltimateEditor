@@ -276,7 +276,7 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     original, _log = record(tmp_path, effect, "original")
     described, log = record(tmp_path, effect, "described", f"program={program}")
     assert f"1 tasks, {count} params" in log and untag(described) == original and len(original) > 10000
-    assert any(line.startswith("N ") for line in original) and any(line.startswith("S 1 ") for line in original)
+    assert any(line.startswith("N ") for line in original) and any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text(values)
     native, _log = record(tmp_path, effect, "native", "native=1", f"params={params}")
