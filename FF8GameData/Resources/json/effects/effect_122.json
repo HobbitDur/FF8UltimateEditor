@@ -63,7 +63,8 @@
   "place": [
    "action_target",
    "0x2000",
-   "@layout"
+   "@layout",
+   0
   ]
  },
  "pools": [

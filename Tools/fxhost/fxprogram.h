@@ -60,19 +60,20 @@ namespace fxprog
 	struct Step { int op = 0; std::vector<Val> a; };
 	struct Phase { std::vector<Step> each_tick; Step wait; std::vector<Step> act; };
 	struct Spawn { int task = -1; int gate = 0; Val first, last; Val schedule[8]; bool every_kind = false; Val every; Step place; };
-	enum Limit { NO_LIMIT, BELOW, AT_MOST };
+	enum Limit { NO_LIMIT, BELOW, AT_MOST, AT_LEAST };
 	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value; Step draw; };
 	// a plain node's fields (offsets in the node; -1: none)
-	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, FIELD_COUNT };
-	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity" };
+	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, FIELD_COUNT };
+	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity",
+	                                                      "layout_b" };
 	struct Task
 	{
 		std::string key;
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		bool plain = false, draws_first = false;
-		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-		int layout_size = 0;
+		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+		int layout_size = 0, layout_b_size = 0;
 		Step end;                                 // a plain node's end (after its counter)
 		std::vector<Step> at_end;                 // actions when it ends
 		std::vector<Step> every_tick;
@@ -119,7 +120,7 @@ namespace fxprog
 		// actions
 		FOLLOW_TARGET, SPAWN, HEAL, DONE, SPAWNING, OVERLAY, SEQUENCE, FLIPBOOK, HELIX_START, OVERLAY_START,
 		HIDE_TARGET, SHOW_TARGET, UNBLOCK_DIRECTOR, VELOCITY_ROLL, VELOCITY_RISE, DRIFT, SOUND_AT, HEAL_ALL_AT,
-		HEAL_FIRST_TARGET, ANCHOR_AT_BONE, SOUND_3D_AT, HEAL_ACTION_AT, UNMARK_TARGET,
+		HEAL_FIRST_TARGET, ANCHOR_AT_BONE, SOUND_3D_AT, HEAL_ACTION_AT, UNMARK_TARGET, ANCHOR_AT_POSITION,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE,
 		// motions
@@ -129,7 +130,7 @@ namespace fxprog
 		TARGET_ANCHOR, ACTION_TARGET,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
-		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET,
+		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -147,7 +148,8 @@ namespace fxprog
 		{ "sequence_sprite", SEQUENCE_SPRITE }, { "heal_first_target", HEAL_FIRST_TARGET }, { "target_anchor", TARGET_ANCHOR },
 		{ "layout_at_anchor", LAYOUT_AT_ANCHOR }, { "anchor_at_bone", ANCHOR_AT_BONE }, { "sound_3d_at", SOUND_3D_AT },
 		{ "heal_action_at", HEAL_ACTION_AT }, { "unmark_target", UNMARK_TARGET }, { "tick_above", TICK_ABOVE },
-		{ "action_target", ACTION_TARGET }, { "layout_on_target", LAYOUT_ON_TARGET },
+		{ "action_target", ACTION_TARGET }, { "layout_on_target", LAYOUT_ON_TARGET }, { "anchor_at_position", ANCHOR_AT_POSITION },
+		{ "layout_turned", LAYOUT_TURNED },
 	};
 
 	inline Program *g_program = nullptr;
@@ -201,6 +203,7 @@ namespace fxprog
 		return (FxNode *)n;
 	}
 	inline void DecodeLayout(const Task &t, void *n, uint32_t data) { layouts::DecodeModelPrimLayout(data, Fld<uint8_t>(t, n, F_LAYOUT), t.layout_size); }
+	inline void DecodeLayoutB(const Task &t, void *n, uint32_t data) { layouts::DecodeModelPrimLayout(data, Fld<uint8_t>(t, n, F_LAYOUT_B), t.layout_b_size); }
 	// a random entity of a plain node's targets field (count, then the entities)
 	inline uint8_t *RandomTargetOf(const Task &t, void *n)
 	{
@@ -298,6 +301,7 @@ namespace fxprog
 		case HEAL_ACTION_AT: // tick: target 0 of the node's action takes the result
 			if (Tick(t, n) == V(a[0])) ApplyActionResultToTarget(Ctx()->actions[*Fld<int16_t>(t, n, F_ACTION)].targets);
 			break;
+		case ANCHOR_AT_POSITION: GetDefaultEffectPosition(*Fld<uint8_t *>(t, n, F_ENTITY), g_anchor); break;   // the entity's default effect position
 		case UNMARK_TARGET: (*Fld<uint16_t *>(t, n, F_ENTITY))[0] &= (uint16_t)~V(a[0]); break;   // bits of the entity's flags word
 		default: break;
 		}
@@ -481,6 +485,27 @@ namespace fxprog
 			left = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, F_LAYOUT), &anchor_arg);
 			break;
 		}
+		case LAYOUT_TURNED: // layout (0, 1: layout_b), bone, on its feet, depth, depth point, scale base, shift, record flags
+		{
+			// in a frame of the node's entity: turned with it, at its effect point `bone` (on its feet:
+			// y = its +0x24), scaled by its size; depth: the point's depth in that frame, or as given
+			uint8_t *e = *Fld<uint8_t *>(t, n, F_ENTITY);
+			layouts::FrameArg frame;
+			const int32_t s = layouts::SizeScale(e, V(a[5]), V(a[6]));
+			frame.scaled = 1;
+			frame.scale[0] = frame.scale[1] = frame.scale[2] = s;
+			frame.honoured = (uint32_t)V(a[7]);
+			frame.cursor = arg.cursor;
+			frame.morph = arg.morph;
+			int16_t sp[4];
+			layouts::GetEffectSpawnPosition(e, V(a[1]), 0, sp);
+			const int32_t point[3] = { sp[0], V(a[2]) ? *(const int16_t *)(e + 0x24) : sp[1], sp[2] };
+			layouts::TargetFrame(e, point, &frame.m);
+			frame.depth = V(a[4]) ? layouts::PointDepth(&frame.m, e, (const int16_t *)V(a[4])) : V(a[3]);
+			if (V(a[4])) GteSetTransVector(&frame.m);
+			left = layouts::PlayInFrame(Fld<uint8_t>(t, n, V(a[0]) ? F_LAYOUT_B : F_LAYOUT), &frame);
+			break;
+		}
 		case LAYOUT_ON_TARGET: // depth base, shift, record flags honoured, nearer object, by: at this tick's anchor
 		{
 			layouts::AnchorArg anchor_arg;
@@ -514,6 +539,7 @@ namespace fxprog
 				if (!t.plain && d.gate && !(h->flags & d.gate)) continue;
 				if (d.limit == BELOW && !(Tick(t, n) < V(d.value))) continue;
 				if (d.limit == AT_MOST && !((uint16_t)Tick(t, n) <= (uint16_t)V(d.value))) continue;
+				if (d.limit == AT_LEAST && !(Tick(t, n) >= V(d.value))) continue;
 				FX_PART(d.tag);
 				if (t.plain) DrawPlain(d, t, n, left);
 				else DrawOne(d, p);
@@ -770,7 +796,7 @@ namespace fxprog
 			}
 			uint8_t &action = m->pad0E;
 			const std::vector<Val> &a = g.director_place.a;
-			if (action <= Ctx()->actions[0].last_action && g.director_place.op == ACTION_TARGET) // mark, layout
+			if (action <= Ctx()->actions[0].last_action && g.director_place.op == ACTION_TARGET) // mark, layout, layout b (0: none)
 			{
 				const Task &t = g.tasks[g.director_spawns];
 				if (TaskNode *s = (TaskNode *)SpawnTask(g.director_spawns, nullptr))
@@ -781,6 +807,7 @@ namespace fxprog
 					e[0] |= (uint8_t)V(a[0]);
 					e[1] |= (uint8_t)(V(a[0]) >> 8);
 					DecodeLayout(t, s, (uint32_t)V(a[1]));
+					if (V(a[2])) DecodeLayoutB(t, s, (uint32_t)V(a[2]));
 				}
 				action++;
 			}
@@ -1078,6 +1105,7 @@ namespace fxprog
 				{
 					task->field[f] = atoi(w[2].c_str());
 					if (f == F_LAYOUT) task->layout_size = atoi(w[3].c_str());
+					if (f == F_LAYOUT_B) task->layout_b_size = atoi(w[3].c_str());
 				}
 			}
 			else if (d == "order" && need(2)) task->draws_first = w[1] == "draws_first";
@@ -1128,7 +1156,7 @@ namespace fxprog
 				Draw dr;
 				dr.tag = atoi(w[1].c_str());
 				dr.gate = atoi(w[2].c_str());
-				dr.limit = w[3] == "below" ? BELOW : w[3] == "at_most" ? AT_MOST : NO_LIMIT;
+				dr.limit = w[3] == "below" ? BELOW : w[3] == "at_most" ? AT_MOST : w[3] == "at_least" ? AT_LEAST : NO_LIMIT;
 				if (dr.limit != NO_LIMIT) dr.value = ParseVal(w[4]);
 				dr.draw = ParseStep(w, 5, &error);
 				task->draws.push_back(dr);

@@ -1,0 +1,316 @@
+{
+ "format": 1,
+ "effect": 115,
+ "name": "Float",
+ "doc": "Float (spell): one target task per action, in turn (one every 10 ticks), each two prim-model layouts in a frame of the action's target (turned with it, scaled by its size): the lift glyph at its feet, from tick 12 a second layout at its effect point 0xF0; the target takes the result at tick 64.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6C9390",
+   "setup": "0x6C9380",
+   "root": "0x6C9420"
+  },
+  "memory": {
+   "texture_file": "0x25217D0",
+   "magic_buffer": "0x25217D4",
+   "ctx": "0x25217D8",
+   "root_pool": "0x25217E0",
+   "packet_cursor": "0x25217F4",
+   "root_queue": "0x2521808"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "glyph": {
+   "kind": "layout",
+   "address": "0x12B5780",
+   "size": 8168
+  },
+  "upper": {
+   "kind": "layout",
+   "address": "0x12B7768",
+   "size": 8640
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x12B9928",
+   "size": 2508
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x12BA2F4",
+   "size": 4
+  },
+  "depth_point": {
+   "kind": "table",
+   "address": "0x12BA2F8",
+   "size": 8,
+   "doc": "the point (x, y, z, pad) of the upper layout's frame whose depth it takes"
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12BA300",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the layouts' blended vertex frames (after the three target nodes).",
+  "arenas": [
+   "0x1158",
+   "0x19158"
+  ],
+  "morph": "0x1038"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "target",
+  "every": "$timing.every",
+  "place": [
+   "action_target",
+   0,
+   "@glyph",
+   "@upper"
+  ]
+ },
+ "pools": [
+  {
+   "key": "targets",
+   "queue": "0x25217F8",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 1384,
+   "count": 3
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one target task per action, in turn; each target task's clock: its sound, its result, its end; both layouts' size (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "glyph",
+   "title": "Glyph",
+   "doc": "The lift glyph at the target's feet, turned with it"
+  },
+  {
+   "id": 2,
+   "key": "upper",
+   "title": "Upper layout",
+   "doc": "The second layout at one of the target's effect points, turned with it, its depth from a point of it"
+  }
+ ],
+ "groups": [
+  {
+   "key": "scale",
+   "label": "Size",
+   "doc": "Both layouts scaled by ((the target's size >> 1) + Base) >> Shift (4096 = their own size)"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's target task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the target's effect position when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The target task ends when its tick reaches this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 70,
+   "unit": "plain"
+  },
+  {
+   "key": "scale.base",
+   "part": "timing",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "scale.shift",
+   "part": "timing",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "glyph.bone",
+   "part": "glyph",
+   "label": "Bone",
+   "doc": "The target's effect point giving its x and z (0xF0 and up: the engine's named points)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 241,
+   "unit": "plain"
+  },
+  {
+   "key": "upper.bone",
+   "part": "upper",
+   "label": "Bone",
+   "doc": "The target's effect point it is at",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "upper.from_tick",
+   "part": "upper",
+   "label": "From tick",
+   "doc": "Drawn from this target tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 1384,
+   "function": "0x6C9580",
+   "doc": "One per action: two layouts in frames of the action's target, turned with it (record flag 0x8000: an object not turned with the frame), scaled by its size; the sound at its first tick at the target's effect position; the result; the end.",
+   "node": [
+    "counter",
+    "action",
+    "entity",
+    [
+     "layout",
+     744
+    ],
+    [
+     "layout_b",
+     620
+    ]
+   ],
+   "draws_first": true,
+   "every_tick": [
+    [
+     "anchor_at_position"
+    ],
+    [
+     "sound_3d_at",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "glyph",
+     "draw": [
+      "layout_turned",
+      0,
+      "$glyph.bone",
+      1,
+      0,
+      0,
+      "$scale.base",
+      "$scale.shift",
+      "0x8000"
+     ]
+    },
+    {
+     "part": "upper",
+     "from_tick": "$upper.from_tick",
+     "draw": [
+      "layout_turned",
+      1,
+      "$upper.bone",
+      0,
+      0,
+      "@depth_point",
+      "$scale.base",
+      "$scale.shift",
+      "0x8000"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "tick_above",
+    "$timing.end_tick"
+   ]
+  }
+ ]
+}

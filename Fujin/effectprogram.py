@@ -43,15 +43,16 @@ FLAGS = {"spawning": 2, "overlay": 8}
 ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, "overlay": 1, "sequence": 1, "flipbook": 2,
            "helix_start": 7, "overlay_start": 4, "hide_target": 0, "show_target": 0, "unblock_director": 0,
            "velocity_roll": 6, "velocity_rise": 2, "drift": 0, "sound_at": 3, "heal_all_at": 1, "heal_first_target": 0,
-           "anchor_at_bone": 1, "sound_3d_at": 3, "heal_action_at": 1, "unmark_target": 1}
+           "anchor_at_bone": 1, "sound_3d_at": 3, "heal_action_at": 1, "unmark_target": 1, "anchor_at_position": 0}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1}
 # the master director's own events (on its counter, after its queues: "events"; before: "events_first")
 DIRECTOR_EVENTS = {"sound_at": 3}
 MOTIONS = {"helix": 2}
 PLACES = {"at_parent": 0, "circle_drop": 8, "glint": 13, "table_point": 3, "random_target_bone": 6,
-          "random_target_point": 7, "action_targets": 1, "target_anchor": 7, "action_target": 2}
+          "random_target_point": 7, "action_targets": 1, "target_anchor": 7, "action_target": 3}
 DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_screen": 5, "layout_at_caster_bone": 1,
-         "layout_scaled": 1, "sequence_sprite": 3, "layout_at_anchor": 2, "layout_on_target": 5}
+         "layout_scaled": 1, "sequence_sprite": 3, "layout_at_anchor": 2, "layout_on_target": 5,
+         "layout_turned": 8}
 # a plain node's fields and their sizes (a layout's is given: ["layout", size])
 FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14, "anchor": 8, "action": 2, "entity": 4}
 NODE_HEADER = 0xC
@@ -160,7 +161,7 @@ def compile_program(description, values=None):
         out, offset = ["node plain"], NODE_HEADER
         for item in task["node"]:
             name, size = (item[0], _number(item[1])) if isinstance(item, list) else (item, FIELDS.get(item))
-            if name not in FIELDS and name != "layout" or size is None:
+            if name not in FIELDS and name not in ("layout", "layout_b") or size is None:
                 raise DescriptionError(f"{where}: no node field {name}")
             out.append(f"field {name} {offset} {size}")
             offset += size
@@ -281,6 +282,8 @@ def compile_program(description, values=None):
                 limit = "below", value(draw["while_tick_below"], where)
             elif "while_tick_at_most" in draw:
                 limit = "at_most", value(draw["while_tick_at_most"], where)
+            elif "from_tick" in draw:
+                limit = "at_least", value(draw["from_tick"], where)
             lines.append(f"draw {parts.get(draw.get('part'), 0)} {flag(draw.get('if'), where)} {limit[0]} {limit[1]} "
                          f"{step(draw['draw'], DRAWS, where)}")
     return "\n".join(lines) + "\n"

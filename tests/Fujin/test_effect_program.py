@@ -230,7 +230,7 @@ def test_silence_description_compiles():
     task's anchor at a bone every tick, its 3D sound, its layout at a depth from the target's size,
     the action's result, its end past a tick, the mark cleared."""
     program = compile_program(load_description(122))
-    assert "director cycle 0 $0 action_target 8192 " in program
+    assert "director cycle 0 $0 action_target 8192 " in program and program.split("action_target 8192 ")[1].split("\n")[0].endswith(" 0")
     assert "field action 14 2" in program and "field entity 16 4" in program and "end tick_above $5" in program
     assert "tick anchor_at_bone $6" in program and "tick sound_3d_at $2 $1 $3" in program
     assert "draw 1 0 - - layout_on_target $7 $8 768 $9 $10" in program and "at_end unmark_target 8192" in program
@@ -240,26 +240,49 @@ def test_silence_description_compiles():
         compile_program(broken)
 
 
-@pytest.mark.ff8data(*SILENCE_FILES)
-def test_silence_runs_from_its_description(tmp_path):
-    """Silence from its description: what the exe's code records; with parameters, what FFNx's port
-    records with them; as effect 225 (a free slot, no exe function), Silence again."""
-    program = write_program(load_description(122), tmp_path / "silence.fxprog")
-    original, _log = record(tmp_path, 122, "original")
-    described, log = record(tmp_path, 122, "described", f"program={program}")
-    assert "1 tasks, 11 params" in log and untag(described) == original and len(original) > 10000
+# the effects whose director starts one task per action every n ticks: texture, parameters set, values
+CYCLES = {
+    122: ("mag121.tim", 11, "timing.every 7\ntiming.sound_tick 3\ntiming.damage_tick 30\ntiming.end_tick 45\n"
+                            "layout.depth.base -1000\nlayout.nearer.object 2\nlayout.bone 241\n"),
+    115: ("mag114.tim", 11, "timing.every 6\ntiming.sound_tick 4\ntiming.damage_tick 40\ntiming.end_tick 50\n"
+                            "scale.base 1500\nscale.shift 1\nglyph.bone 240\nupper.from_tick 3\n"),
+}
+
+
+def cycle_files(effect):
+    return ("extracted_files/FF8_EN.exe", f"extracted_files/magic/{CYCLES[effect][0]}", "extracted_files/battle/d0c000.dat",
+            "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+
+
+def test_float_description_compiles():
+    """Float: the cycle director places two layouts; both drawn in frames turned with the target,
+    scaled by its size, the second from a tick on, its depth from a point of its frame (exe data)."""
+    program = compile_program(load_description(115))
+    assert "director cycle 0 $0 action_target 0 " in program and "field layout_b 764 620" in program
+    assert "tick anchor_at_position" in program and "draw 2 0 at_least $10 layout_turned 1 $9 0 0 " in program
+
+
+@pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
+                                    for effect in CYCLES])
+def test_cycle_effect_runs_from_its_description(tmp_path, effect):
+    """Silence and Float from their descriptions: what the exe's code records; with parameters, what
+    FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
+    _texture, count, values = CYCLES[effect]
+    program = write_program(load_description(effect), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, effect, "original")
+    described, log = record(tmp_path, effect, "described", f"program={program}")
+    assert f"1 tasks, {count} params" in log and untag(described) == original and len(original) > 10000
     assert any(line.startswith("N ") for line in original) and any(line.startswith("S 1 ") for line in original)
     params = tmp_path / "params.txt"
-    params.write_text("timing.every 7\ntiming.sound_tick 3\ntiming.damage_tick 30\ntiming.end_tick 45\n"
-                      "layout.depth.base -1000\nlayout.nearer.object 2\nlayout.bone 241\n")
-    native, _log = record(tmp_path, 122, "native", "native=1", f"params={params}")
-    described, log = record(tmp_path, 122, "described_params", f"program={program}", f"params={params}")
-    assert "7 set" in log and described == native and native != original
-    description = copy.deepcopy(load_description(122))
-    description["effect"], description["name"] = 225, "New silence"
+    params.write_text(values)
+    native, _log = record(tmp_path, effect, "native", "native=1", f"params={params}")
+    described, log = record(tmp_path, effect, "described_params", f"program={program}", f"params={params}")
+    assert f"{values.count(chr(10))} set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(effect))
+    description["effect"], description["name"] = 225, "New cycle"
     del description["copy"]["functions"]
     for task in description["tasks"]:
         task.pop("function")
     program = write_program(description, tmp_path / "new.fxprog")
     new, log = record(tmp_path, 225, "new", f"program={program}")
-    assert "program: New_silence" in log and untag(new) == original
+    assert "program: New_cycle" in log and untag(new) == original

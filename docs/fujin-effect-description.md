@@ -473,3 +473,26 @@ Potion's description is the same with its own sequences and sound.
        its layout (0x37A8 bytes), camera track (2600 bytes), sound, texture name ("mag121.tim").
      - *Fujin:* its tabs (Timing, Layout); a fourth family in the + menu, "One per action, on its
        target (Silence's kind)": Layout.
+   - **Float (115)** (FFNx 0f34aacc): Silence's director; its task plays two layouts in frames of
+     the action's target, turned with it and scaled by its size: the lift glyph at its feet, from
+     tick 12 a second layout at its effect point 0xF0.
+     - *Shared:* the cycle director and its setup, the action and entity fields, the 3D sound,
+       the action's result, `tick_above`.
+     - *Added:*
+       - FFNx's frame callback `FramePrimCallback` (Float 0x6C9760; Haste's and Slow's ClockPart
+         are the same code with more record flags tested): each object's offset scaled, through a
+         frame of the target, composed with it. The flags a build tests are an argument (0x100,
+         0x200, 0x1000, 0x2000, 0x4000, 0x8000), and so is its renderer (0x7043B0 with the
+         header's depth, or 0x572200 without). Inputs: `TargetFrame` (turned with the target, at a
+         point of it, composed with the camera), `SizeScale` (((size >> 1) + base) >> shift),
+         `PointDepth` (a point's depth in the frame, by the target's size);
+       - the draw `layout_turned` (layout, bone, on its feet, depth, depth point, scale base,
+         shift, flags), a second layout node field `layout_b` (placed by `action_target`'s third
+         value), the every-tick action `anchor_at_position` (the 3D sound at the target's
+         effect position) and the draw limit `from_tick`.
+     - *Inputs* (`FloatParams`): the cycle, the sound's tick and volume, the damage and end
+       ticks, the size rule, the glyph's and the upper layout's bones, the upper layout's first
+       tick. Data: its two layouts (0x1FE8, 0x21C0 bytes), the depth point, the camera track
+       (2508 bytes), the sound, the texture name ("mag114.tim").
+     - *Fujin:* its tabs (Timing, Glyph, Upper layout); a fifth family in the + menu, "One per
+       action, turned with its target (Float's kind)": Glyph (the start), Upper layout.
