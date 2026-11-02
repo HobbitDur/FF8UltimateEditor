@@ -1,0 +1,261 @@
+{
+ "format": 1,
+ "effect": 296,
+ "name": "Holy Water",
+ "doc": "Holy Water (battle item): one prim-model layout played on the target, between 2 / 3 and 1 / 2 of its height, its sound before the layout plays; the target takes the result when the layout ends. One of the five status-cure item modules (292 Soft, 293 Eye Drops, 294 Antidote, 295 Echo Screen, 296 Holy Water: one source built with different options).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x673980",
+   "setup": "0x673970",
+   "root": "0x673A10"
+  },
+  "memory": {
+   "texture_file": "0x2507988",
+   "ctx": "0x250798C",
+   "caster": "0x2507990",
+   "root_queue": "0x25079A8",
+   "root_pool": "0x25079B8",
+   "packet_cursor": "0x25079CC",
+   "magic_buffer": "0x25079D0"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "layout": {
+   "kind": "layout",
+   "address": "0x105BAA4",
+   "size": 8204
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x105DAB0",
+   "size": 4
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x105DAB4",
+   "size": 12
+  }
+ },
+ "resources": {
+  "doc": "No camera track: Holy Water starts none.",
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the master alternates, the layout's blended vertex frames (right after the play node).",
+  "arenas": [
+   "0x65C",
+   "0x1065C"
+  ],
+  "morph": "0x29C"
+ },
+ "director": {
+  "kind": "master",
+  "spawns": "play",
+  "start_tick": 1,
+  "place": [
+   "target_anchor",
+   "$layout.anchor",
+   "$layout.bone",
+   "$layout.height_a.times",
+   "$layout.height_a.share",
+   "$layout.height_b.times",
+   "$layout.height_b.share",
+   "@layout"
+  ],
+  "events_first": [
+   [
+    "sound_at",
+    "$timing.sound_tick",
+    "$timing.sound",
+    "$timing.sound_pan"
+   ]
+  ]
+ },
+ "pools": [
+  {
+   "key": "play",
+   "queue": "0x2507998",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 668,
+   "count": 1
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root task's clock: when the sound plays (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "layout",
+   "title": "Layout",
+   "doc": "The layout played on the target; target 0 takes the result when it ends"
+  }
+ ],
+ "groups": [
+  {
+   "key": "layout.height_a",
+   "label": "Anchor height A",
+   "doc": "Anchor 1: y = the target's +0x24 word + (its height x A + its height x B) / 2, each Times / Share (y goes down)"
+  },
+  {
+   "key": "layout.height_b",
+   "label": "Anchor height B",
+   "doc": ""
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays when the root tick == this (the layout starts at root tick 1)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_pan",
+   "part": "timing",
+   "label": "Sound pan",
+   "doc": "Where it plays between the speakers: 128 the middle (BdPlaySE's pan)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.depth",
+   "part": "layout",
+   "label": "Depth",
+   "doc": "Added to its drawing depth (sort key)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.anchor",
+   "part": "layout",
+   "label": "Anchor",
+   "doc": "Where on target 0: 0 its effect position, 1 that point between two shares of its height (A, B), 2 the effect point of Bone",
+   "type": "i16",
+   "min": 0,
+   "max": 2,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.bone",
+   "part": "layout",
+   "label": "Bone",
+   "doc": "Anchor 2: the target's effect point (0xF0 and up: the engine's named points)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.height_a.times",
+   "part": "layout",
+   "label": "Times",
+   "doc": "",
+   "type": "i16",
+   "min": -16,
+   "max": 16,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.height_a.share",
+   "part": "layout",
+   "label": "Share",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 16,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.height_b.times",
+   "part": "layout",
+   "label": "Times",
+   "doc": "",
+   "type": "i16",
+   "min": -16,
+   "max": 16,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.height_b.share",
+   "part": "layout",
+   "label": "Share",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 16,
+   "default": 2,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "play",
+   "pool": "play",
+   "size": 668,
+   "function": "0x673B60",
+   "doc": "The layout at the anchor on target 0 of action 0, between two shares of its height, each object's offset added to it through the camera (record flags 0x40000: YXZ angles; 0x200: the anchor through the camera + the offset as is, not turned); when it ends, target 0 takes the result.",
+   "node": [
+    "anchor",
+    [
+     "layout",
+     648
+    ]
+   ],
+   "draws_first": true,
+   "draws": [
+    {
+     "part": "layout",
+     "draw": [
+      "layout_at_anchor",
+      "$layout.depth",
+      "0x40200"
+     ]
+    }
+   ],
+   "end": [
+    "layout_end"
+   ],
+   "at_end": [
+    [
+     "heal_first_target"
+    ]
+   ]
+  }
+ ]
+}

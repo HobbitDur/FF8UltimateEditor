@@ -20,8 +20,8 @@
 // library's per-action director (one emitter per action, in turn, until every queue is empty) or
 // a master (Hypnotize's, Antidote's): it alternates two packet arenas of the magic buffer, sets up
 // the pools at its start tick, starts one task (with the targets of action 0, or at target 0's
-// anchor), runs its own events on its counter after its queues and ends when every queue is
-// empty.
+// anchor), runs its own events on its counter before or after its queues (and, for Echo Screen,
+// its own camera matrix every tick) and ends when every queue is empty.
 //
 // A program can stand in for an effect of the exe (its `function` addresses: the recorder jumps
 // from each original to the program's thunk) or be a new one (no address: the thunks are the
@@ -98,7 +98,9 @@ namespace fxprog
 		int texture_param = -1, director_spawns = -1;
 		int director = PER_ACTION, director_start = 1;
 		Step director_place;
-		std::vector<Step> director_events;              // the master's, on its counter, after its queues
+		std::vector<Step> director_events;              // the master's, on its counter, after its queues...
+		std::vector<Step> director_events_first;        // ...or before them
+		bool camera_matrix = false;                     // the master's own camera matrix (memory camera_matrix), every tick
 		uint32_t arena_a = 0, arena_b = 0, morph = 0;   // in the magic buffer
 		std::vector<std::pair<std::string, uint32_t>> own;   // memory of its own: name, size
 		std::vector<uint8_t> block;                     // that memory (never resized once allocated)
@@ -122,7 +124,7 @@ namespace fxprog
 		HELIX,
 		// placements
 		CIRCLE_DROP, GLINT, AT_PARENT, TABLE_POINT, RANDOM_TARGET_BONE, RANDOM_TARGET_POINT, ACTION_TARGETS,
-		TARGET_HEIGHT,
+		TARGET_ANCHOR,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
 		LAYOUT_AT_ANCHOR,
@@ -140,7 +142,7 @@ namespace fxprog
 		{ "random_target_bone", RANDOM_TARGET_BONE }, { "random_target_point", RANDOM_TARGET_POINT },
 		{ "action_targets", ACTION_TARGETS }, { "layout_on_screen", LAYOUT_ON_SCREEN },
 		{ "layout_at_caster_bone", LAYOUT_AT_CASTER_BONE }, { "layout_scaled", LAYOUT_SCALED },
-		{ "sequence_sprite", SEQUENCE_SPRITE }, { "heal_first_target", HEAL_FIRST_TARGET }, { "target_height", TARGET_HEIGHT },
+		{ "sequence_sprite", SEQUENCE_SPRITE }, { "heal_first_target", HEAL_FIRST_TARGET }, { "target_anchor", TARGET_ANCHOR },
 		{ "layout_at_anchor", LAYOUT_AT_ANCHOR },
 	};
 
@@ -459,6 +461,7 @@ namespace fxprog
 			anchor_arg.morph = arg.morph;
 			anchor_arg.honoured = (uint32_t)V(a[1]);
 			anchor_arg.cursor = arg.cursor;
+			anchor_arg.matrix = g_program->camera_matrix ? &var<Mat4x3>(Mem("camera_matrix")) : &Camera();
 			left = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, F_LAYOUT), &anchor_arg);
 			break;
 		}
@@ -649,6 +652,12 @@ namespace fxprog
 	};
 #pragma pack(pop)
 	inline uint32_t PoolStorage(const Pool &pool) { return pool.base ? MagicBuffer() + pool.storage : pool.storage; }
+	inline void MasterEvents(const std::vector<Step> &events, const MasterNode *m)
+	{
+		for (const Step &e : events)
+			if (e.op == SOUND_AT && m->counter == V(e.a[0]))   // tick, sound, pan
+				BdPlaySE((const void *)fxp::sound((uint32_t)V(e.a[1]), (uint32_t)G(e.a[1])), 0, V(e.a[2]));
+	}
 
 	inline uint32_t MasterDirector(TaskNode *n)
 	{
@@ -679,15 +688,18 @@ namespace fxprog
 			}
 			const std::vector<Val> &a = g.director_place.a;
 			if (g.director_place.op == ACTION_TARGETS && t.field[F_LAYOUT] >= 0) DecodeLayout(t, s, (uint32_t)V(a[0]));
-			if (g.director_place.op == TARGET_HEIGHT) // times, share, layout: at target 0 of action 0, at a share of its height
+			if (g.director_place.op == TARGET_ANCHOR) // kind, bone, times a, share a, times b, share b, layout: on target 0 of action 0
 			{
-				layouts::HeightPoint(Entity(Ctx()->actions[0].targets[0]), V(a[0]), V(a[1]), Fld<int16_t>(t, s, F_ANCHOR));
-				DecodeLayout(t, s, (uint32_t)V(a[2]));
+				layouts::AnchorPoint(Entity(Ctx()->actions[0].targets[0]), V(a[0]), V(a[1]), V(a[2]), V(a[3]), V(a[4]), V(a[5]),
+				                     Fld<int16_t>(t, s, F_ANCHOR));
+				DecodeLayout(t, s, (uint32_t)V(a[6]));
 			}
 		}
 		if (m->started)
 		{
 			bool alive = false;
+			if (g.camera_matrix) EffectCameraMatrix(&Camera(), &var<Mat4x3>(Mem("camera_matrix")));
+			MasterEvents(g.director_events_first, m);
 			for (const Pool &pool : g.pools)
 			{
 				if (pool.tag >= 0) FX_PART(pool.tag);
@@ -695,9 +707,7 @@ namespace fxprog
 				if (pool.tag >= 0) FX_PART(0);
 			}
 			FX_PART(0);
-			for (const Step &e : g.director_events)
-				if (e.op == SOUND_AT && m->counter == V(e.a[0]))   // tick, sound, pan
-					BdPlaySE((const void *)fxp::sound((uint32_t)V(e.a[1]), (uint32_t)G(e.a[1])), 0, V(e.a[2]));
+			MasterEvents(g.director_events, m);
 			if (!alive) return TASK_END;
 		}
 		m->counter++;
@@ -918,6 +928,8 @@ namespace fxprog
 				else if (w[1] != "per_action") error = "line " + std::to_string(number) + ": unknown director " + w[1];
 			}
 			else if (d == "director_event") g.director_events.push_back(ParseStep(w, 1, &error));
+			else if (d == "director_event_first") g.director_events_first.push_back(ParseStep(w, 1, &error));
+			else if (d == "camera_matrix") g.camera_matrix = true;
 			else if (d == "param" && need(5))
 			{
 				Param p;

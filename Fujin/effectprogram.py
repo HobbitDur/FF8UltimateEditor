@@ -17,8 +17,9 @@ after the engine's node header, its "end" a condition checked after its counter,
 actions. Its spawns can come "every" n ticks of their window, its draws can be prim layouts. The
 director is "per_action" (the heal ring's) or "master" (Hypnotize's, Antidote's: it starts one task
 at its start tick - with the targets of action 0, or at an anchor on target 0 - alternates the
-"magic_buffer" arenas and runs its own "events" on its counter). An effect with no "camera"
-resource starts no camera track.
+"magic_buffer" arenas, runs its own "events" on its counter after its queues ("events_first":
+before) and, with "camera_matrix", keeps a camera matrix of its own (memory camera_matrix, every
+tick: Echo Screen's)). An effect with no "camera" resource starts no camera track.
 
 The memory an effect works in is its exe copy's ("copy": "memory", addresses) or its own
 ("own_memory": name: size in bytes, allocated by the runtime), its pools' queues and storage then
@@ -42,11 +43,11 @@ ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, 
            "helix_start": 7, "overlay_start": 4, "hide_target": 0, "show_target": 0, "unblock_director": 0,
            "velocity_roll": 6, "velocity_rise": 2, "drift": 0, "sound_at": 3, "heal_all_at": 1, "heal_first_target": 0}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0}
-# the master director's own events (on its counter, after its queues)
+# the master director's own events (on its counter, after its queues: "events"; before: "events_first")
 DIRECTOR_EVENTS = {"sound_at": 3}
 MOTIONS = {"helix": 2}
 PLACES = {"at_parent": 0, "circle_drop": 8, "glint": 13, "table_point": 3, "random_target_bone": 6,
-          "random_target_point": 7, "action_targets": 1, "target_height": 3}
+          "random_target_point": 7, "action_targets": 1, "target_anchor": 7}
 DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_screen": 5, "layout_at_caster_bone": 1,
          "layout_scaled": 1, "sequence_sprite": 3, "layout_at_anchor": 2}
 # a plain node's fields and their sizes (a layout's is given: ["layout", size])
@@ -56,7 +57,8 @@ TASK_QUEUE = 0x10
 # what each named memory holds (fxprogram.h), in bytes: a word, an engine task queue, the root pool
 # (the director's kind), the projector overlay's context (fx_overlay.h OverlayCtx), its model draw
 # descriptor and its vertex buffer (Cure's room for them)
-MEMORY_SIZES = {"root_queue": TASK_QUEUE, "overlay_ctx": 0xF8, "overlay_sprite": 0x40, "overlay_verts": 0x6400}
+MEMORY_SIZES = {"root_queue": TASK_QUEUE, "overlay_ctx": 0xF8, "overlay_sprite": 0x40, "overlay_verts": 0x6400,
+                "camera_matrix": 0x20}
 ROOT_POOL = {"per_action": 2 * 0x64, "master": 0x14}
 
 
@@ -211,7 +213,11 @@ def compile_program(description, values=None):
     if director["kind"] == "master":
         lines.append(f"director master {tasks[director['spawns']]} {_number(director.get('start_tick', 1))} "
                      f"{step(director['place'], PLACES, 'director')}")
+        lines += [f"director_event_first {step(entry, DIRECTOR_EVENTS, 'director')}"
+                  for entry in director.get("events_first", [])]
         lines += [f"director_event {step(entry, DIRECTOR_EVENTS, 'director')}" for entry in director.get("events", [])]
+        if director.get("camera_matrix"):
+            lines.append("camera_matrix")
     else:
         lines.append(f"director per_action {tasks[director['spawns']]}")
     for param in description["params"]:

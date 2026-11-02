@@ -185,10 +185,11 @@ def build_effect(effect_id, name, parts, exe=None, keep=None):
         tasks.append(task)
     d["tasks"] = tasks
     director = d.get("director") or {}
-    if "events" in director:
-        director["events"] = [event for event in director["events"] if not gone(event)]
-        if not director["events"]:
-            del director["events"]
+    for key in ("events", "events_first"):
+        if key in director:
+            director[key] = [event for event in director[key] if not gone(event)]
+            if not director[key]:
+                del director[key]
     used_pools = {t["pool"] for t in tasks} | {s["place"][1] for t in tasks for s in t.get("spawns", [])
                                               if s.get("place", [None])[0] == "glint"}
     d["pools"] = [p for p in d["pools"] if p["key"] in used_pools]

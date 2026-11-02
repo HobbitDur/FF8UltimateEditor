@@ -57,9 +57,13 @@
   "spawns": "play",
   "start_tick": 1,
   "place": [
-   "target_height",
-   "$layout.height_times",
-   "$layout.height_share",
+   "target_anchor",
+   "$layout.anchor",
+   "$layout.bone",
+   "$layout.height_a.times",
+   "$layout.height_a.share",
+   "$layout.height_b.times",
+   "$layout.height_b.share",
    "@layout"
   ],
   "events": [
@@ -97,9 +101,14 @@
  ],
  "groups": [
   {
-   "key": "layout.height",
-   "label": "Anchor height",
-   "doc": "The anchor: the target's effect position, y = its +0x24 word + its height x Times / Share (y goes down)"
+   "key": "layout.height_a",
+   "label": "Anchor height A",
+   "doc": "Anchor 1: y = the target's +0x24 word + (its height x A + its height x B) / 2, each Times / Share (y goes down)"
+  },
+  {
+   "key": "layout.height_b",
+   "label": "Anchor height B",
+   "doc": ""
   }
  ],
  "params": [
@@ -148,7 +157,29 @@
    "unit": "plain"
   },
   {
-   "key": "layout.height_times",
+   "key": "layout.anchor",
+   "part": "layout",
+   "label": "Anchor",
+   "doc": "Where on target 0: 0 its effect position, 1 that point between two shares of its height (A, B), 2 the effect point of Bone",
+   "type": "i16",
+   "min": 0,
+   "max": 2,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.bone",
+   "part": "layout",
+   "label": "Bone",
+   "doc": "Anchor 2: the target's effect point (0xF0 and up: the engine's named points)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.height_a.times",
    "part": "layout",
    "label": "Times",
    "doc": "",
@@ -159,7 +190,29 @@
    "unit": "plain"
   },
   {
-   "key": "layout.height_share",
+   "key": "layout.height_a.share",
+   "part": "layout",
+   "label": "Share",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 16,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.height_b.times",
+   "part": "layout",
+   "label": "Times",
+   "doc": "",
+   "type": "i16",
+   "min": -16,
+   "max": 16,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.height_b.share",
    "part": "layout",
    "label": "Share",
    "doc": "",
@@ -176,7 +229,7 @@
    "pool": "play",
    "size": 948,
    "function": "0x674F60",
-   "doc": "The layout at the anchor on target 0 of action 0 through the camera (record flags 0x40000: YXZ angles; 0x200: the anchor through the camera + the offset as is, not turned; 0x8000: not turned with the camera); when it ends, target 0 takes the result.",
+   "doc": "The layout at the anchor on target 0 of action 0, between two shares of its height, each object's offset added to it through the camera (record flags 0x40000: YXZ angles; 0x200: the anchor through the camera + the offset as is, not turned; 0x8000: not turned with the camera); when it ends, target 0 takes the result.",
    "node": [
     "anchor",
     [

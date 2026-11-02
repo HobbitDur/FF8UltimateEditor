@@ -168,7 +168,8 @@ def test_hypnotize_runs_from_its_description(tmp_path):
 
 
 # the status-cure items (one source built with different options): effect, its texture, its record flags
-STATUS_ITEMS = {292: ("mag291.tim", 0x48200), 294: ("mag293.tim", 0x48000)}
+STATUS_ITEMS = {292: ("mag291.tim", 0x48200), 293: ("mag292.tim", 0x40300), 294: ("mag293.tim", 0x48000),
+                295: ("mag294.tim", 0x9500), 296: ("mag295.tim", 0x40200)}
 
 
 def item_files(effect):
@@ -179,10 +180,13 @@ def item_files(effect):
 @pytest.mark.parametrize("effect", list(STATUS_ITEMS))
 def test_status_item_description_compiles(effect):
     """Antidote and the other status-cure items: the master starts one plain node at an anchor on
-    target 0 (a share of its height), plays the sound on its own clock; the layout drawn at the
-    anchor, target 0's result when it ends; no camera track."""
+    target 0 (its effect position, between two shares of its height, or a bone's point), plays the
+    sound on its own clock (Holy Water: before its queue); Echo Screen keeps a camera matrix of its
+    own; the layout drawn at the anchor, target 0's result when it ends; no camera track."""
     program = compile_program(load_description(effect))
-    assert "director master 0 1 target_height $4 $5 " in program and "director_event sound_at $1 $0 $2" in program
+    sound = "director_event_first" if effect == 296 else "director_event"
+    assert "director master 0 1 target_anchor $4 $5 $6 $7 $8 $9 " in program and f"{sound} sound_at $1 $0 $2" in program
+    assert ("camera_matrix" in program) == (effect == 295)
     assert "field anchor 12 8" in program and "at_end heal_first_target" in program and "camera 0" in program
     assert f"layout_at_anchor $3 {STATUS_ITEMS[effect][1]}" in program
     broken = copy.deepcopy(load_description(effect))
@@ -199,14 +203,14 @@ def test_status_item_runs_from_its_description(tmp_path, effect):
     program = write_program(load_description(effect), tmp_path / "item.fxprog")
     original, _log = record(tmp_path, effect, "original")
     described, log = record(tmp_path, effect, "described", f"program={program}")
-    assert "1 tasks, 6 params" in log and untag(described) == original and len(original) > 5000
+    assert "1 tasks, 10 params" in log and untag(described) == original and len(original) > 5000
     assert any(line.startswith("N ") for line in original) and any(line.startswith("S 1 ") for line in original)
     params = tmp_path / "params.txt"
-    params.write_text("layout.depth -300\nlayout.height_times 2\nlayout.height_share 3\ntiming.sound_tick 5\n"
-                      "timing.sound_pan 40\n")
+    params.write_text("layout.depth -300\nlayout.anchor 1\nlayout.height_a.times 2\nlayout.height_a.share 3\n"
+                      "timing.sound_tick 5\ntiming.sound_pan 40\n")
     native, _log = record(tmp_path, effect, "native", "native=1", f"params={params}")
     described, log = record(tmp_path, effect, "described_params", f"program={program}", f"params={params}")
-    assert "5 set" in log and described == native and native != original
+    assert "6 set" in log and described == native and native != original
     description = copy.deepcopy(load_description(effect))
     description["effect"], description["name"] = 225, "New item"
     del description["copy"]["functions"]

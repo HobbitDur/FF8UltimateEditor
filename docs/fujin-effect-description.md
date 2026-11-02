@@ -398,7 +398,7 @@ Potion's description is the same with its own sequences and sound.
    what nothing covers. Each is checked as Hypnotize is (`tests/Fujin/test_effect_program.py`): from
    its description it records exactly what the exe's code records; with parameters, exactly what
    FFNx's port records with them; as a free slot with no exe function, itself again.
-   - **Antidote (294)** (FFNx 736a2d6c, 522e7ac4), the first of the five status-cure item modules (292 Soft,
+   - **Antidote (294)** (FFNx 736a2d6c, 522e7ac4, 9b2e6c15), the first of the five status-cure item modules (292 Soft,
      293 Eye Drops, 294 Antidote, 295 Echo Screen, 296 Holy Water: one source built five times with
      different options). One prim layout played on the target; the target takes the result when
      it ends.
@@ -411,19 +411,22 @@ Potion's description is the same with its own sequences and sound.
          through the camera. The record flags a build tests are an argument (0x100 diagonal
          scale, 0x200 offset as is, 0x400 ZYX angles, 0x8000 not turned with the camera, 0x40000
          YXZ angles), so all five modules can share it. Draw `layout_at_anchor` (depth, flags);
-       - the input `HeightPoint`: an entity's effect position at a share of its height. Director
-         placement `target_height` (times, share, layout): the started task's `anchor` (a new node
-         field, 8 bytes) on target 0 of action 0;
-       - the director's own `events` on its counter, after its queues (`sound_at`: Antidote's
-         sound plays on the root's clock, not a task's);
+       - the input `AnchorPoint`: an entity's effect position, that point between two shares of
+         its height (`HeightPoint`: y + (h x a + h x b) / 2), or the effect point of a bone.
+         Director placement `target_anchor` (kind, bone, times a, share a, times b, share b,
+         layout): the started task's `anchor` (a new node field, 8 bytes) on target 0 of action 0;
+       - the director's own `events` on its counter, after its queues, or `events_first`, before
+         them (`sound_at`: Antidote's sound plays on the root's clock, not a task's);
        - a task's `at_end` actions, run when its end condition holds (`heal_first_target`: target
          0 of action 0 takes the result when the layout ends).
      - *Inputs* (`StatusItemParams` in FFNx, the description's parameters): the sound, its tick
-       and pan; the layout's depth; the anchor's height share (times / share, 1 / 2 in the game).
+       and pan; the layout's depth; the anchor: its kind (0 the effect position, 1 between two
+       shares of the height, 2 a bone's point), its bone, its two shares (1 / 2 and 1 / 2 in the
+       game).
        The layout itself is data (`@layout`, 0x2B4C bytes in the exe, edited in the Data tab).
      - *Fujin:* its tabs (Timing, Layout); a third family in the + menu, "One layout on the
        target (Antidote's kind)": Layout (the start) and Timing (its sound).
-   - **Soft (292)** (FFNx 522e7ac4): Antidote with its own data and one more record flag tested
+   - **Soft (292)** (FFNx 522e7ac4, 9b2e6c15): Antidote with its own data and one more record flag tested
      (0x200: the anchor through the camera, then the object's offset as is, not turned).
      - *Shared:* everything. FFNx's `mag_status_item.h` writes the module once
        (`StatusItem<Layout>`, as `HealRing<Layout>` does for Cure and Potion): Antidote and Soft
@@ -431,7 +434,17 @@ Potion's description is the same with its own sequences and sound.
        Their descriptions differ in addresses, sizes and the draw's flags (0x48000, 0x48200).
      - *Inputs:* Antidote's (`StatusItemParams`); its layout (0x22B0 bytes), sound and texture
        name ("mag291.tim") as data.
-     - Left of the family: Eye Drops (293: always turned with the camera, 0x100 diagonal
-       scale, the anchor at bone 0xF0), Echo Screen (295: 0x400 ZYX angles, 0x1000 offsets
-       through a per-tick camera matrix of its own, the anchor at the effect position) and Holy
-       Water (296: its anchor height (2h / 3 + h / 2) / 2, its sound before the play).
+   - **Eye Drops (293), Echo Screen (295), Holy Water (296)** (FFNx 9b2e6c15): the rest of the
+     family, each a layout of `StatusItem<Layout>` too. What each adds is a build option of the
+     shared module, a parameter's game value or a director switch, not code of its own:
+     - Eye Drops: always turned with the camera, 0x100 (scaled by a diagonal matrix), anchor 2
+       at bone 0xF0 (flags 0x40300);
+     - Echo Screen: 0x400 (ZYX angles) and 0x1000 (each offset through a camera matrix of the
+       effect's own, 0x67AAE0 of the camera every tick: the description's `camera_matrix`, memory
+       `camera_matrix`, 0x20 bytes in a new effect), anchor 0 (flags 0x9500);
+     - Holy Water: anchor 1 between 2 / 3 and 1 / 2 of the height ((2h / 3 + h / 2) / 2), its
+       sound before the play queue (`events_first`; flags 0x40200).
+     - The five descriptions differ only in addresses, sizes and those options. The program
+       tests run all five: from its description each records exactly the exe's code;
+       with parameters, FFNx's port; as a free slot, itself; with its own data and memory, the
+       same draws and sounds.
