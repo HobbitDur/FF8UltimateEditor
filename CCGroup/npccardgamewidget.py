@@ -1042,9 +1042,9 @@ class NpcCardGameWidget(QWidget):
         self.cronos_options_checkbox.toggled.connect(self.__cronos_options_toggled)
 
         self.__layout_top = QHBoxLayout()
+        self.__layout_top.addWidget(self.cronos_options_checkbox)
         self.__layout_top.addWidget(self.__info_label)
         self.__layout_top.addStretch(1)
-        self.__layout_top.addWidget(self.cronos_options_checkbox)
         self.__main_layout.addLayout(self.__layout_top)
 
         # Second layer: a modified field folder on top of vanilla (opened after it, saved into)
