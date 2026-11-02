@@ -167,44 +167,51 @@ def test_hypnotize_runs_from_its_description(tmp_path):
     assert "program: New_hypnosis" in log and untag(new) == original
 
 
-ANTIDOTE_FILES = ("extracted_files/FF8_EN.exe", "extracted_files/magic/mag293.tim", "extracted_files/battle/d0c000.dat",
-                  "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+# the status-cure items (one source built with different options): effect, its texture, its record flags
+STATUS_ITEMS = {292: ("mag291.tim", 0x48200), 294: ("mag293.tim", 0x48000)}
 
 
-def test_antidote_description_compiles():
-    """Antidote: the master starts one plain node at an anchor on target 0 (a share of its height),
-    plays the sound on its own clock; the layout drawn at the anchor, target 0's result when it ends;
-    no camera track."""
-    program = compile_program(load_description(294))
+def item_files(effect):
+    return ("extracted_files/FF8_EN.exe", f"extracted_files/magic/{STATUS_ITEMS[effect][0]}",
+            "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+
+
+@pytest.mark.parametrize("effect", list(STATUS_ITEMS))
+def test_status_item_description_compiles(effect):
+    """Antidote and the other status-cure items: the master starts one plain node at an anchor on
+    target 0 (a share of its height), plays the sound on its own clock; the layout drawn at the
+    anchor, target 0's result when it ends; no camera track."""
+    program = compile_program(load_description(effect))
     assert "director master 0 1 target_height $4 $5 " in program and "director_event sound_at $1 $0 $2" in program
     assert "field anchor 12 8" in program and "at_end heal_first_target" in program and "camera 0" in program
-    assert "layout_at_anchor $3 294912" in program
-    broken = copy.deepcopy(load_description(294))
+    assert f"layout_at_anchor $3 {STATUS_ITEMS[effect][1]}" in program
+    broken = copy.deepcopy(load_description(effect))
     broken["director"]["events"] = [["heal_all_at", 3]]
     with pytest.raises(DescriptionError, match="unknown operation heal_all_at"):
         compile_program(broken)
 
 
-@pytest.mark.ff8data(*ANTIDOTE_FILES)
-def test_antidote_runs_from_its_description(tmp_path):
-    """Antidote from its description: what the exe's code records; with parameters, what FFNx's
-    port records with them; as effect 225 (a free slot, no exe function), Antidote again."""
-    program = write_program(load_description(294), tmp_path / "antidote.fxprog")
-    original, _log = record(tmp_path, 294, "original")
-    described, log = record(tmp_path, 294, "described", f"program={program}")
-    assert "1 tasks, 6 params" in log and untag(described) == original and len(original) > 10000
+@pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*item_files(effect)))
+                                    for effect in STATUS_ITEMS])
+def test_status_item_runs_from_its_description(tmp_path, effect):
+    """A status-cure item from its description: what the exe's code records; with parameters, what
+    FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
+    program = write_program(load_description(effect), tmp_path / "item.fxprog")
+    original, _log = record(tmp_path, effect, "original")
+    described, log = record(tmp_path, effect, "described", f"program={program}")
+    assert "1 tasks, 6 params" in log and untag(described) == original and len(original) > 5000
     assert any(line.startswith("N ") for line in original) and any(line.startswith("S 1 ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text("layout.depth -300\nlayout.height_times 2\nlayout.height_share 3\ntiming.sound_tick 5\n"
                       "timing.sound_pan 40\n")
-    native, _log = record(tmp_path, 294, "native", "native=1", f"params={params}")
-    described, log = record(tmp_path, 294, "described_params", f"program={program}", f"params={params}")
+    native, _log = record(tmp_path, effect, "native", "native=1", f"params={params}")
+    described, log = record(tmp_path, effect, "described_params", f"program={program}", f"params={params}")
     assert "5 set" in log and described == native and native != original
-    description = copy.deepcopy(load_description(294))
-    description["effect"], description["name"] = 225, "New antidote"
+    description = copy.deepcopy(load_description(effect))
+    description["effect"], description["name"] = 225, "New item"
     del description["copy"]["functions"]
     for task in description["tasks"]:
         task.pop("function")
     program = write_program(description, tmp_path / "new.fxprog")
     new, log = record(tmp_path, 225, "new", f"program={program}")
-    assert "program: New_antidote" in log and untag(new) == original
+    assert "program: New_item" in log and untag(new) == original

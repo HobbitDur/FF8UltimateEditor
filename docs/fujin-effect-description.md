@@ -398,7 +398,7 @@ Potion's description is the same with its own sequences and sound.
    what nothing covers. Each is checked as Hypnotize is (`tests/Fujin/test_effect_program.py`): from
    its description it records exactly what the exe's code records; with parameters, exactly what
    FFNx's port records with them; as a free slot with no exe function, itself again.
-   - **Antidote (294)** (FFNx 736a2d6c), the first of the five status-cure item modules (292 Soft,
+   - **Antidote (294)** (FFNx 736a2d6c, 522e7ac4), the first of the five status-cure item modules (292 Soft,
      293 Eye Drops, 294 Antidote, 295 Echo Screen, 296 Holy Water: one source built five times with
      different options). One prim layout played on the target; the target takes the result when
      it ends.
@@ -418,8 +418,20 @@ Potion's description is the same with its own sequences and sound.
          sound plays on the root's clock, not a task's);
        - a task's `at_end` actions, run when its end condition holds (`heal_first_target`: target
          0 of action 0 takes the result when the layout ends).
-     - *Inputs* (`AntidoteParams` in FFNx, the description's parameters): the sound, its tick and
-       pan; the layout's depth; the anchor's height share (times / share, 1 / 2 in the game). The
-       layout itself is data (`@layout`, 0x2B4C bytes in the exe, edited in the Data tab).
+     - *Inputs* (`StatusItemParams` in FFNx, the description's parameters): the sound, its tick
+       and pan; the layout's depth; the anchor's height share (times / share, 1 / 2 in the game).
+       The layout itself is data (`@layout`, 0x2B4C bytes in the exe, edited in the Data tab).
      - *Fujin:* its tabs (Timing, Layout); a third family in the + menu, "One layout on the
        target (Antidote's kind)": Layout (the start) and Timing (its sound).
+   - **Soft (292)** (FFNx 522e7ac4): Antidote with its own data and one more record flag tested
+     (0x200: the anchor through the camera, then the object's offset as is, not turned).
+     - *Shared:* everything. FFNx's `mag_status_item.h` writes the module once
+       (`StatusItem<Layout>`, as `HealRing<Layout>` does for Cure and Potion): Antidote and Soft
+       are only their layouts (functions, data, memory, the record flags their callback tests).
+       Their descriptions differ in addresses, sizes and the draw's flags (0x48000, 0x48200).
+     - *Inputs:* Antidote's (`StatusItemParams`); its layout (0x22B0 bytes), sound and texture
+       name ("mag291.tim") as data.
+     - Left of the family: Eye Drops (293: always turned with the camera, 0x100 diagonal
+       scale, the anchor at bone 0xF0), Echo Screen (295: 0x400 ZYX angles, 0x1000 offsets
+       through a per-tick camera matrix of its own, the anchor at the effect position) and Holy
+       Water (296: its anchor height (2h / 3 + h / 2) / 2, its sound before the play).
