@@ -219,3 +219,47 @@ def test_status_item_runs_from_its_description(tmp_path, effect):
     program = write_program(description, tmp_path / "new.fxprog")
     new, log = record(tmp_path, 225, "new", f"program={program}")
     assert "program: New_item" in log and untag(new) == original
+
+
+SILENCE_FILES = ("extracted_files/FF8_EN.exe", "extracted_files/magic/mag121.tim", "extracted_files/battle/d0c000.dat",
+                 "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+
+
+def test_silence_description_compiles():
+    """Silence: a cycle director (one target task per action, every n ticks, the target marked); the
+    task's anchor at a bone every tick, its 3D sound, its layout at a depth from the target's size,
+    the action's result, its end past a tick, the mark cleared."""
+    program = compile_program(load_description(122))
+    assert "director cycle 0 $0 action_target 8192 " in program
+    assert "field action 14 2" in program and "field entity 16 4" in program and "end tick_above $5" in program
+    assert "tick anchor_at_bone $6" in program and "tick sound_3d_at $2 $1 $3" in program
+    assert "draw 1 0 - - layout_on_target $7 $8 768 $9 $10" in program and "at_end unmark_target 8192" in program
+    broken = copy.deepcopy(load_description(122))
+    broken["director"]["kind"] = "loop"
+    with pytest.raises(DescriptionError, match="per_action, master or cycle"):
+        compile_program(broken)
+
+
+@pytest.mark.ff8data(*SILENCE_FILES)
+def test_silence_runs_from_its_description(tmp_path):
+    """Silence from its description: what the exe's code records; with parameters, what FFNx's port
+    records with them; as effect 225 (a free slot, no exe function), Silence again."""
+    program = write_program(load_description(122), tmp_path / "silence.fxprog")
+    original, _log = record(tmp_path, 122, "original")
+    described, log = record(tmp_path, 122, "described", f"program={program}")
+    assert "1 tasks, 11 params" in log and untag(described) == original and len(original) > 10000
+    assert any(line.startswith("N ") for line in original) and any(line.startswith("S 1 ") for line in original)
+    params = tmp_path / "params.txt"
+    params.write_text("timing.every 7\ntiming.sound_tick 3\ntiming.damage_tick 30\ntiming.end_tick 45\n"
+                      "layout.depth.base -1000\nlayout.nearer.object 2\nlayout.bone 241\n")
+    native, _log = record(tmp_path, 122, "native", "native=1", f"params={params}")
+    described, log = record(tmp_path, 122, "described_params", f"program={program}", f"params={params}")
+    assert "7 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(122))
+    description["effect"], description["name"] = 225, "New silence"
+    del description["copy"]["functions"]
+    for task in description["tasks"]:
+        task.pop("function")
+    program = write_program(description, tmp_path / "new.fxprog")
+    new, log = record(tmp_path, 225, "new", f"program={program}")
+    assert "program: New_silence" in log and untag(new) == original

@@ -448,3 +448,28 @@ Potion's description is the same with its own sequences and sound.
        tests run all five: from its description each records exactly the exe's code;
        with parameters, FFNx's port; as a free slot, itself; with its own data and memory, the
        same draws and sounds.
+   - **Silence (122)** (FFNx b972cad3), the first of the status spells whose root starts one target
+     task per action, one every 10 ticks (Float, Silence, Haste, Slow, Petrify Stare, Dispel, Aura,
+     Aero, Blind, Zombie, Flare, Reflect, Berserk...). Its task plays a layout at an effect point of
+     the action's target, taken again every tick; the target is marked (flags word bit 0x2000) while
+     it plays.
+     - *Shared:* the anchor callback (flags 0x200 and 0x100: Soft's and Eye Drops' branches), plain
+       nodes, the prim player and its data editor, the arenas, the file loader.
+     - *Added:*
+       - a third director kind, `cycle` (`every`: a parameter): at counter 1 of every n ticks the
+         next action's task, placed by `action_target` (mark bits, layout): its `action` and
+         `entity` (new node fields), the entity marked. Its setup (Silence's 0x6BD910): the camera
+         and the texture upload only when the cast does not repeat (flags & 1);
+       - plain nodes take every-tick actions: `anchor_at_bone` (this tick's anchor: an effect point
+         of the node's entity, when the node keeps no anchor) and `sound_3d_at` (BdPlaySE3D at that
+         anchor);
+       - the draw `layout_on_target` (depth base, shift, flags, nearer object, by): the anchor
+         callback at this tick's anchor, its depth from the target's size word
+         (`DepthFromSize`: (base - size) >> shift), one object drawn nearer (object 4, 0x20);
+       - `heal_action_at` (the node's action's target takes the result), the end condition
+         `tick_above` (the counter, before its step, reached the value), `unmark_target`.
+     - *Inputs* (`SilenceParams`): the cycle, the sound's tick and volume, the damage and end
+       ticks, the bone, the depth's base and shift, the nearer object and how much nearer. Data:
+       its layout (0x37A8 bytes), camera track (2600 bytes), sound, texture name ("mag121.tim").
+     - *Fujin:* its tabs (Timing, Layout); a fourth family in the + menu, "One per action, on its
+       target (Silence's kind)": Layout.

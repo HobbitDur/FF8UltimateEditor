@@ -18,7 +18,7 @@ CURE_ORDER = ["emitter", "ring", "overlay", "glow", "sparkles", "motes", "glints
 
 
 def test_the_parts_and_what_they_need():
-    assert addable([]) == ["emitter", "main", "anchor_layout"]                # a start first
+    assert addable([]) == ["emitter", "main", "anchor_layout", "cycle_layout"]   # a start first
     assert addable(["emitter"]) == ["ring", "files"]
     assert set(addable(["emitter", "ring"])) == {"overlay", "glow", "sparkles", "motes", "glints", "files"}
     assert addable(["main"]) == ["main_layout", "rings", "targets", "sprites"]
@@ -34,7 +34,7 @@ def test_the_parts_and_what_they_need():
 
 
 def test_every_combination_compiles_and_all_of_a_family_is_its_effect():
-    combinations = {"heal_ring": 66, "layouts": 16, "on_target": 2}
+    combinations = {"heal_ring": 66, "layouts": 16, "on_target": 2, "per_action_target": 1}
     for kind, start in STARTS.items():
         others = [key for key, template in TEMPLATES.items() if template[2] == kind and key != start]
         built = 0
@@ -107,7 +107,8 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
     kinds = [a.menu() for a in fujin.parts_menu().actions() if a.menu()]
     assert [m.title() for m in kinds] == ["Around one target at a time (Cure's kind)",
                                           "Over the whole cast at once (Hypnotize's kind)",
-                                          "One layout on the target (Antidote's kind)"]
+                                          "One layout on the target (Antidote's kind)",
+                                          "One per action, on its target (Silence's kind)"]
     names = [a.text().split("\t")[0] for a in kinds[0].actions() if not a.isSeparator()]
     assert names[:4] == ["How the effect starts", "Emitter", "Moving parts", "Ring (with Emitter)"]   # group headers
     assert "Sparkles (with Emitter, Ring)" in names

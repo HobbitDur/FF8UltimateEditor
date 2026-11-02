@@ -16,9 +16,10 @@
 // be prim layouts (fx_layouts.h). A task ends when it is done (effect nodes) or by its end
 // condition, then runs its at-end actions.
 //
-// The director (the root task), the setup and the file loader are of one of two kinds: the effect
-// library's per-action director (one emitter per action, in turn, until every queue is empty) or
-// a master (Hypnotize's, Antidote's): it alternates two packet arenas of the magic buffer, sets up
+// The director (the root task), the setup and the file loader are of one of three kinds: the effect
+// library's per-action director (one emitter per action, in turn, until every queue is empty), a
+// cycle (Silence's: one task per action, every n ticks, on the action's target) or a master
+// (Hypnotize's, Antidote's): it alternates two packet arenas of the magic buffer, sets up
 // the pools at its start tick, starts one task (with the targets of action 0, or at target 0's
 // anchor), runs its own events on its counter before or after its queues (and, for Echo Screen,
 // its own camera matrix every tick) and ends when every queue is empty.
@@ -62,15 +63,15 @@ namespace fxprog
 	enum Limit { NO_LIMIT, BELOW, AT_MOST };
 	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value; Step draw; };
 	// a plain node's fields (offsets in the node; -1: none)
-	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, FIELD_COUNT };
-	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor" };
+	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, FIELD_COUNT };
+	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity" };
 	struct Task
 	{
 		std::string key;
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		bool plain = false, draws_first = false;
-		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1 };
+		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 		int layout_size = 0;
 		Step end;                                 // a plain node's end (after its counter)
 		std::vector<Step> at_end;                 // actions when it ends
@@ -87,7 +88,7 @@ namespace fxprog
 		int size = 0, count = 0, tag = -1, base = 0;   // base 1: storage in the magic buffer
 		bool own_queue = false, own_storage = false;  // allocated in the program's own memory
 	};
-	enum Director { PER_ACTION, MASTER };
+	enum Director { PER_ACTION, MASTER, CYCLE };
 	struct Program
 	{
 		int effect = 0;
@@ -97,6 +98,7 @@ namespace fxprog
 		uint32_t director_fn = 0;                       // the director task the setup starts (0: DirectorTask)
 		int texture_param = -1, director_spawns = -1;
 		int director = PER_ACTION, director_start = 1;
+		Val director_every;                             // CYCLE: one task per action every this many ticks
 		Step director_place;
 		std::vector<Step> director_events;              // the master's, on its counter, after its queues...
 		std::vector<Step> director_events_first;        // ...or before them
@@ -117,17 +119,17 @@ namespace fxprog
 		// actions
 		FOLLOW_TARGET, SPAWN, HEAL, DONE, SPAWNING, OVERLAY, SEQUENCE, FLIPBOOK, HELIX_START, OVERLAY_START,
 		HIDE_TARGET, SHOW_TARGET, UNBLOCK_DIRECTOR, VELOCITY_ROLL, VELOCITY_RISE, DRIFT, SOUND_AT, HEAL_ALL_AT,
-		HEAL_FIRST_TARGET,
+		HEAL_FIRST_TARGET, ANCHOR_AT_BONE, SOUND_3D_AT, HEAL_ACTION_AT, UNMARK_TARGET,
 		// conditions
-		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END,
+		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE,
 		// motions
 		HELIX,
 		// placements
 		CIRCLE_DROP, GLINT, AT_PARENT, TABLE_POINT, RANDOM_TARGET_BONE, RANDOM_TARGET_POINT, ACTION_TARGETS,
-		TARGET_ANCHOR,
+		TARGET_ANCHOR, ACTION_TARGET,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
-		LAYOUT_AT_ANCHOR,
+		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -143,10 +145,13 @@ namespace fxprog
 		{ "action_targets", ACTION_TARGETS }, { "layout_on_screen", LAYOUT_ON_SCREEN },
 		{ "layout_at_caster_bone", LAYOUT_AT_CASTER_BONE }, { "layout_scaled", LAYOUT_SCALED },
 		{ "sequence_sprite", SEQUENCE_SPRITE }, { "heal_first_target", HEAL_FIRST_TARGET }, { "target_anchor", TARGET_ANCHOR },
-		{ "layout_at_anchor", LAYOUT_AT_ANCHOR },
+		{ "layout_at_anchor", LAYOUT_AT_ANCHOR }, { "anchor_at_bone", ANCHOR_AT_BONE }, { "sound_3d_at", SOUND_3D_AT },
+		{ "heal_action_at", HEAL_ACTION_AT }, { "unmark_target", UNMARK_TARGET }, { "tick_above", TICK_ABOVE },
+		{ "action_target", ACTION_TARGET }, { "layout_on_target", LAYOUT_ON_TARGET },
 	};
 
 	inline Program *g_program = nullptr;
+	inline int16_t g_anchor[4] = {};              // a task's anchor this tick (anchor_at_bone), when its node keeps none
 
 	// ------------------------------------------------------------------
 	// Values
@@ -283,6 +288,17 @@ namespace fxprog
 			if (Tick(t, n) == V(a[0])) ApplyActionResultToTargets(Ctx()->actions[0].targets, Ctx()->actions[0].target_count);
 			break;
 		case HEAL_FIRST_TARGET: ApplyActionResultToTarget(Ctx()->actions[0].targets); break;   // target 0 of action 0
+		case ANCHOR_AT_BONE: // bone: the node's entity's effect point, this tick's anchor
+			layouts::GetEffectSpawnPosition(*Fld<uint8_t *>(t, n, F_ENTITY), V(a[0]), 0, g_anchor);
+			g_anchor[3] = 0;   // never written by the originals (a stack word), only loaded into the GTE V0 pad
+			break;
+		case SOUND_3D_AT: // tick, sound, volume: at this tick's anchor
+			if (Tick(t, n) == V(a[0])) BdPlaySE3D((const void *)fxp::sound((uint32_t)V(a[1]), (uint32_t)G(a[1])), V(a[2]), g_anchor);
+			break;
+		case HEAL_ACTION_AT: // tick: target 0 of the node's action takes the result
+			if (Tick(t, n) == V(a[0])) ApplyActionResultToTarget(Ctx()->actions[*Fld<int16_t>(t, n, F_ACTION)].targets);
+			break;
+		case UNMARK_TARGET: (*Fld<uint16_t *>(t, n, F_ENTITY))[0] &= (uint16_t)~V(a[0]); break;   // bits of the entity's flags word
 		default: break;
 		}
 	}
@@ -465,6 +481,19 @@ namespace fxprog
 			left = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, F_LAYOUT), &anchor_arg);
 			break;
 		}
+		case LAYOUT_ON_TARGET: // depth base, shift, record flags honoured, nearer object, by: at this tick's anchor
+		{
+			layouts::AnchorArg anchor_arg;
+			memcpy(anchor_arg.anchor, g_anchor, sizeof(anchor_arg.anchor));
+			anchor_arg.depth = layouts::DepthFromSize(*Fld<uint8_t *>(t, n, F_ENTITY), V(a[0]), V(a[1]));
+			anchor_arg.morph = arg.morph;
+			anchor_arg.honoured = (uint32_t)V(a[2]);
+			anchor_arg.cursor = arg.cursor;
+			anchor_arg.nearer_object = V(a[3]);
+			anchor_arg.nearer_by = V(a[4]);
+			left = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, F_LAYOUT), &anchor_arg);
+			break;
+		}
 		default: break;
 		}
 	}
@@ -551,6 +580,7 @@ namespace fxprog
 		{
 		case TICK_AT_LEAST: ends = Tick(t, n) >= V(t.end.a[0]); break;
 		case LAYOUT_END: ends = left == 0; break;
+		case TICK_ABOVE: ends = Tick(t, n) > V(t.end.a[0]); break;   // the counter (before this tick's step) reached it
 		default: break;
 		}
 		if (!ends) return 0;
@@ -714,8 +744,67 @@ namespace fxprog
 		return 0;
 	}
 
+	// one task per action, in turn (Silence 0x6BD980): at counter 1 of every n ticks the next
+	// action's task (its action, target 0's entity marked, its layout); the node: counter, next
+	// action (+0x0E), started, arena parity
+	inline uint32_t CycleDirector(TaskNode *n)
+	{
+		Program &g = *g_program;
+		MasterNode *m = (MasterNode *)n;
+		if (m->arena)
+		{
+			PacketCursor() = MagicBuffer() + g.arena_a;
+			m->arena = 0;
+		}
+		else
+		{
+			PacketCursor() = MagicBuffer() + g.arena_b;
+			m->arena = 1;
+		}
+		if (m->counter == 1)
+		{
+			if (!m->started)
+			{
+				m->started = 1;
+				for (const Pool &pool : g.pools) InitTaskQueuePool((TaskQueue *)pool.queue, (void *)PoolStorage(pool), pool.size, pool.count);
+			}
+			uint8_t &action = m->pad0E;
+			const std::vector<Val> &a = g.director_place.a;
+			if (action <= Ctx()->actions[0].last_action && g.director_place.op == ACTION_TARGET) // mark, layout
+			{
+				const Task &t = g.tasks[g.director_spawns];
+				if (TaskNode *s = (TaskNode *)SpawnTask(g.director_spawns, nullptr))
+				{
+					*Fld<int16_t>(t, s, F_ACTION) = (int16_t)(uint16_t)action;
+					uint8_t *e = Entity(Ctx()->actions[action].targets[0]);
+					*Fld<uint8_t *>(t, s, F_ENTITY) = e;
+					e[0] |= (uint8_t)V(a[0]);
+					e[1] |= (uint8_t)(V(a[0]) >> 8);
+					DecodeLayout(t, s, (uint32_t)V(a[1]));
+				}
+				action++;
+			}
+		}
+		if (m->started)
+		{
+			bool alive = false;
+			for (const Pool &pool : g.pools)
+			{
+				if (pool.tag >= 0) FX_PART(pool.tag);
+				if (ExecuteTaskQueue((TaskQueue *)pool.queue)) alive = true;
+				if (pool.tag >= 0) FX_PART(0);
+			}
+			FX_PART(0);
+			if (!alive) return TASK_END;
+		}
+		m->counter++;
+		if (m->counter >= V(g.director_every)) m->counter = 0;
+		return 0;
+	}
+
 	inline uint32_t __cdecl DirectorTask(TaskNode *n)
 	{
+		if (g_program->director == CYCLE) return CycleDirector(n);
 		return g_program->director == MASTER ? MasterDirector(n) : PerActionDirector(n);
 	}
 
@@ -746,10 +835,30 @@ namespace fxprog
 		return root_queue;
 	}
 
+	// the cycle director's setup (Silence 0x6BD910): the magic buffer, the cast, the director's node;
+	// unless the cast repeats (flags & 1), the camera and the texture upload
+	inline TaskQueue *CycleSetup(CastContext *ctx)
+	{
+		Program &g = *g_program;
+		MagicBuffer() = layouts::MagicBuffer();
+		Ctx() = ctx;
+		TaskQueue *root_queue = (TaskQueue *)Mem("root_queue");
+		InitTaskQueuePool(root_queue, (void *)Mem("root_pool"), sizeof(MasterNode), 1);
+		TaskNode *m = AddTaskToQueue(root_queue, g.root ? g.root : g.director_fn ? g.director_fn : (uint32_t)DirectorTask);
+		Memset32(m + 1, 0, 2);
+		if (!(ctx->flags & 1))
+		{
+			if (g.camera) PlayCameraAnimation((const void *)g.camera);
+			QueueTimUpload(var<uint32_t>(Mem("texture_file")));
+		}
+		return root_queue;
+	}
+
 	inline TaskQueue *__cdecl Setup(CastContext *ctx)
 	{
 		Program &g = *g_program;
 		if (g.director == MASTER) return MasterSetup(ctx);
+		if (g.director == CYCLE) return CycleSetup(ctx);
 		var<uint32_t>(Mem("init_flag_a")) = 0;
 		var<uint32_t>(Mem("init_flag_b")) = 0;
 		TaskQueue *root_queue = (TaskQueue *)Mem("root_queue");
@@ -923,6 +1032,12 @@ namespace fxprog
 				{
 					g.director = MASTER;
 					g.director_start = atoi(w[3].c_str());
+					g.director_place = ParseStep(w, 4, &error);
+				}
+				else if (w[1] == "cycle" && need(5))
+				{
+					g.director = CYCLE;
+					g.director_every = ParseVal(w[3]);
 					g.director_place = ParseStep(w, 4, &error);
 				}
 				else if (w[1] != "per_action") error = "line " + std::to_string(number) + ": unknown director " + w[1];

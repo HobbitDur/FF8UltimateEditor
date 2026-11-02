@@ -1,0 +1,288 @@
+{
+ "format": 1,
+ "effect": 122,
+ "name": "Silence",
+ "doc": "Silence (spell): one target task per action, in turn (one every 10 ticks), each a prim-model layout at an effect point of the action's target, followed every tick; the target is marked (flags word bit 0x2000) while it plays and takes the result at tick 50.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6BD8F0",
+   "setup": "0x6BD8E0",
+   "root": "0x6BD980"
+  },
+  "memory": {
+   "texture_file": "0x25214B0",
+   "magic_buffer": "0x25214B4",
+   "ctx": "0x25214B8",
+   "root_pool": "0x25214C0",
+   "packet_cursor": "0x25214D4",
+   "root_queue": "0x25214E8"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "layout": {
+   "kind": "layout",
+   "address": "0x126E4C0",
+   "size": 14248
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1271C68",
+   "size": 2600
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x1272690",
+   "size": 4
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1272694",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the layout's blended vertex frames (after the three target nodes).",
+  "arenas": [
+   "0x1124",
+   "0x11124"
+  ],
+  "morph": "0xE04"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "target",
+  "every": "$timing.every",
+  "place": [
+   "action_target",
+   "0x2000",
+   "@layout"
+  ]
+ },
+ "pools": [
+  {
+   "key": "targets",
+   "queue": "0x25214D8",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 1196,
+   "count": 3
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one target task per action, in turn; each target task's clock: its sound, its result, its end (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "layout",
+   "title": "Layout",
+   "doc": "The layout played on the action's target, at one of its effect points every tick"
+  }
+ ],
+ "groups": [
+  {
+   "key": "layout.depth",
+   "label": "Depth",
+   "doc": "Its drawing depth: (Base - the target's size word) >> Shift"
+  },
+  {
+   "key": "layout.nearer",
+   "label": "Nearer object",
+   "doc": "This object of the layout is drawn By nearer (-1: none)"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's target task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the anchor when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The target task ends when its tick reaches this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.bone",
+   "part": "layout",
+   "label": "Bone",
+   "doc": "The target's effect point the layout is at (0xF0 and up: the engine's named points)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.depth.base",
+   "part": "layout",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -2048,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.depth.shift",
+   "part": "layout",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.nearer.object",
+   "part": "layout",
+   "label": "Object",
+   "doc": "",
+   "type": "i16",
+   "min": -1,
+   "max": 63,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.nearer.by",
+   "part": "layout",
+   "label": "By",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 32,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 1196,
+   "function": "0x6BDAC0",
+   "doc": "One per action: the layout at the action's target's effect point, taken every tick, each object's offset added to it through the camera (record flags 0x200: the anchor through the camera + the offset as is, not turned; 0x100: scaled by a diagonal matrix); object 4 drawn nearer; the sound at its first tick; the result; then the target's mark cleared.",
+   "node": [
+    "counter",
+    "action",
+    "entity",
+    [
+     "layout",
+     1176
+    ]
+   ],
+   "draws_first": true,
+   "every_tick": [
+    [
+     "anchor_at_bone",
+     "$layout.bone"
+    ],
+    [
+     "sound_3d_at",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "layout",
+     "draw": [
+      "layout_on_target",
+      "$layout.depth.base",
+      "$layout.depth.shift",
+      "0x300",
+      "$layout.nearer.object",
+      "$layout.nearer.by"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "tick_above",
+    "$timing.end_tick"
+   ],
+   "at_end": [
+    [
+     "unmark_target",
+     "0x2000"
+    ]
+   ]
+  }
+ ]
+}

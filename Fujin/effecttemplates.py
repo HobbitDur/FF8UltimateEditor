@@ -1,6 +1,6 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's), and the description an effect made of some of
-them gets.
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's), and the description an effect made
+of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
 task (an action in its phases, a spawn, a draw), the pools and the data it uses. An effect is built
@@ -8,7 +8,7 @@ from its source effect's whole description, keeping what its parts bring: all of
 together are that effect exactly (whatever order they were added in), some of them a smaller effect
 of the same kind. Parts of two families never mix: their nodes and directors differ (the heal
 ring's effect-library nodes and per-action director, Hypnotize's plain nodes and master, Antidote's
-one layout on the target).
+one layout on the target, Silence's cycle of one task per action).
 
 No Qt here.
 """
@@ -60,12 +60,17 @@ TEMPLATES = {
                       "takes the result when it ends (Antidote's way)."),
     "anchor_timing": ("the sound on the effect's clock", "Sound", "on_target", 294, "timing", (), (),
                       ("anchor_layout",), "The sound, played on a tick of the effect's own clock."),
+    # Silence's family (the status spells: one task per action, every few ticks, on its target)
+    "cycle_layout": ("one per action, in turn", "How the effect starts", "per_action_target", 122, "layout",
+                     ("target",), (), (), "One task per action, every few ticks: a prim layout at one of its target's "
+                     "effect points, followed every tick, its sound, the action's result, its end (Silence's way)."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
-STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout"}
+STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
-            "on_target": "One layout on the target (Antidote's kind)"}
+            "on_target": "One layout on the target (Antidote's kind)",
+            "per_action_target": "One per action, on its target (Silence's kind)"}
 
 
 @functools.cache
