@@ -50,6 +50,27 @@ def test_every_tool_fits_1080p_without_vertical_scroll(window):
         assert window._tool_scroll.widget().height() == window._tool_scroll.viewport().height(), name
 
 
+def test_fujin_fits_1080p_in_every_tab(window):
+    # the tallest tool: its tabs and Choreography's (a described effect's, a free slot's) as well as as opened
+    fujin = next(window.tool_stack.widget(i) for i in range(window.tool_stack.count())
+                 if type(window.tool_stack.widget(i)).__name__ == "FujinWidget")
+    window.tool_stack.setCurrentWidget(fujin)
+    for effect in (1, 224):
+        fujin.select_effect(effect)
+        for index in range(fujin.tabs.count()):
+            fujin.tabs.setCurrentIndex(index)
+            choreography = fujin.tabs.widget(index) is fujin.choreography.parentWidget()
+            pages = range(fujin.choreography.count()) if choreography else [None]
+            for page in pages:
+                if page is not None:
+                    if not fujin.choreography.isTabVisible(page) or fujin.choreography.widget(page) is fujin.plus_tab:
+                        continue
+                    fujin.choreography.setCurrentIndex(page)
+                window.resize(1920, 1001)
+                settle()
+                assert window.minimumSizeHint().height() <= 1001, (effect, fujin.tabs.tabText(index), page)
+
+
 def test_hidden_tools_stop_contributing(window):
     window.resize(1920, 1001)
     window.tool_stack.setCurrentWidget(window._cid_widget)

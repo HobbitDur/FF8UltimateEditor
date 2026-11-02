@@ -220,9 +220,8 @@ class FujinWidget(QWidget):
         right = QWidget()
         layout = QVBoxLayout(right)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.title)
-        layout.addWidget(self.context)
-        # a new effect: from a described one (a copy in a free slot), or in a free slot (empty or a copy)
+        # a new effect: from a described one (a copy in a free slot), or in a free slot (empty or a copy);
+        # its buttons share the title's line (Fujin is the tallest tool: no row of its own, 1080p budget)
         self.copy_button = QPushButton("New effect from this…")
         self.copy_button.setToolTip("A copy of this effect in a free slot of the game's effect table "
                                     "(224, 225, 346-400): a kernel.bin entry naming that effect id casts it")
@@ -234,11 +233,14 @@ class FujinWidget(QWidget):
         self.copy_here_button.setToolTip("A copy of an effect Fujin describes (Cure, Potion, Hypnotize, "
                                          "or a new effect) in this free slot")
         self.copy_here_button.clicked.connect(lambda: self.copy_effect_here())
-        create_row = QHBoxLayout()
+        title_row = QHBoxLayout()
+        title_row.addWidget(self.title)
+        title_row.addSpacing(12)
         for button in (self.copy_button, self.create_button, self.copy_here_button):
-            create_row.addWidget(button)
-        create_row.addStretch(1)
-        layout.addLayout(create_row)
+            title_row.addWidget(button)
+        title_row.addStretch(1)
+        layout.addLayout(title_row)
+        layout.addWidget(self.context)
         layout.addWidget(self.tabs, 1)
         splitter = QSplitter()
         splitter.addWidget(self.effect_search.column)
