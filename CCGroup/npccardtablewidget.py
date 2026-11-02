@@ -14,7 +14,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QT
 from CCGroup import cardgamebulk as bulk
 from CCGroup.jsmcardgame import (GAME_RULE_BITS, TRADE_RULE_NAMES, AI_STRATEGY_NAMES,
                                  PARAM_DECK_ID, PARAM_GAME_RULES, PARAM_TRADE_RULES, PARAM_RARE_CHANCE,
-                                 PARAM_AI_SEARCH, PARAM_AI_STRATEGY, PARAM_LEVEL_MASK)
+                                 PARAM_AI_SEARCH, PARAM_AI_STRATEGY, PARAM_LEVEL_MASK,
+                                 CLOCK_MAX_SECONDS, CLOCK_MAX_INCREMENT)
 from CCGroup import cardlocation
 
 TEST_MAP_PREFIX = "test"
@@ -36,8 +37,10 @@ COLUMNS = [
     ("Guesses hand", [PARAM_AI_SEARCH], "Whether the AI invents a hidden hand for you"),
     ("AI strategy", [PARAM_AI_STRATEGY], "AI strategy profile"),
     ("Levels", [PARAM_LEVEL_MASK], "Card levels the normal cards are drawn from"),
+    ("Clock", [], "Cronos turn clock: starting time M:SS and increment per card placed (Cronos options)"),
     ("Modified", [], "Changed since the file was loaded (saved with the header's Save)"),
 ]
+CLOCK_COLUMN = [header for header, _, _ in COLUMNS].index("Clock")
 
 
 class NumericItem(QTableWidgetItem):
@@ -151,6 +154,14 @@ BULK_OPERATIONS = {
         ("Restore the original values", bulk.restore_original, "none", None),
     ],
 }
+CLOCK_PARAMETER = "Turn clock (Cronos)"
+CRONOS_BULK_OPERATIONS = {
+    CLOCK_PARAMETER: [
+        ("Set starting time to", bulk.set_clock_seconds, "number", (0, CLOCK_MAX_SECONDS, 60, " s")),
+        ("Set increment to", bulk.set_clock_increment, "number", (0, CLOCK_MAX_INCREMENT, 2, " s per card")),
+        ("Remove the clock", bulk.remove_clock, "none", None),
+    ],
+}
 
 
 class NpcCardTableWidget(QWidget):
@@ -163,6 +174,7 @@ class NpcCardTableWidget(QWidget):
         QWidget.__init__(self)
         self.card_names = card_names
         self.manager = None
+        self.cronos_options = False  # Cronos-only settings shown (clock column and bulk edits)
         self.__rows = []  # (jsm_file, player) per table row, in load order
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -201,13 +213,14 @@ class NpcCardTableWidget(QWidget):
         self.table.setSortingEnabled(True)
         self.table.itemSelectionChanged.connect(self.__update_target_label)
         self.table.cellDoubleClicked.connect(self.__row_double_clicked)
+        self.table.setColumnHidden(CLOCK_COLUMN, True)
         main_layout.addWidget(self.table, 1)
 
         bulk_group = QGroupBox("Bulk edit")
         bulk_layout = QHBoxLayout()
         bulk_group.setLayout(bulk_layout)
         self.parameter_combobox = QComboBox()
-        self.parameter_combobox.addItems(list(BULK_OPERATIONS))
+        self.parameter_combobox.addItems(list(self.__operations()))
         self.parameter_combobox.currentIndexChanged.connect(self.__parameter_changed)
         self.operation_combobox = QComboBox()
         self.operation_combobox.currentIndexChanged.connect(self.__operation_changed)
@@ -231,6 +244,24 @@ class NpcCardTableWidget(QWidget):
         self.__parameter_changed(0)
 
     # ------------------------------------------------------------------ content
+
+    def set_cronos_options(self, enabled: bool):
+        """Show or hide the Cronos-only clock column and bulk edits."""
+        self.cronos_options = enabled
+        self.table.setColumnHidden(CLOCK_COLUMN, not enabled)
+        current = self.parameter_combobox.currentText()
+        self.parameter_combobox.blockSignals(True)
+        self.parameter_combobox.clear()
+        self.parameter_combobox.addItems(list(self.__operations()))
+        index = self.parameter_combobox.findText(current)
+        self.parameter_combobox.setCurrentIndex(max(index, 0))
+        self.parameter_combobox.blockSignals(False)
+        self.__parameter_changed(0)
+
+    def __operations(self):
+        if self.cronos_options:
+            return {**BULK_OPERATIONS, **CRONOS_BULK_OPERATIONS}
+        return BULK_OPERATIONS
 
     def set_manager(self, manager):
         self.manager = manager
@@ -289,6 +320,7 @@ class NpcCardTableWidget(QWidget):
             NumericItem(bulk.param_text(params[PARAM_AI_STRATEGY],
                                         lambda value: AI_STRATEGY_NAMES[value & 0x07].split(" (")[0])),
             NumericItem(bulk.levels_text(player)),
+            NumericItem(bulk.clock_column_text(player), player.clock_seconds or None),
             NumericItem("*" if player.is_modified() else ""),
         ]
         values[0].setData(Qt.ItemDataRole.UserRole, player)
@@ -298,7 +330,8 @@ class NpcCardTableWidget(QWidget):
         for column, item in enumerate(values):
             if player.is_modified():
                 item.setFont(bold)
-            if any(params[index].is_modified() for index in COLUMNS[column][1]):
+            if any(params[index].is_modified() for index in COLUMNS[column][1]) or (
+                    column == CLOCK_COLUMN and player.is_clock_modified()):
                 item.setForeground(QBrush(MODIFIED_COLOR))
             self.table.setItem(row, column, item)
 
@@ -343,7 +376,7 @@ class NpcCardTableWidget(QWidget):
     # ------------------------------------------------------------------ bulk edit
 
     def __current_operation(self):
-        operations = BULK_OPERATIONS[self.parameter_combobox.currentText()]
+        operations = self.__operations()[self.parameter_combobox.currentText()]
         index = self.operation_combobox.currentIndex()
         return operations[index] if 0 <= index < len(operations) else operations[0]
 
@@ -351,7 +384,7 @@ class NpcCardTableWidget(QWidget):
         self.operation_combobox.blockSignals(True)
         self.operation_combobox.clear()
         self.operation_combobox.addItems([label for label, _, _, _ in
-                                          BULK_OPERATIONS[self.parameter_combobox.currentText()]])
+                                          self.__operations()[self.parameter_combobox.currentText()]])
         self.operation_combobox.blockSignals(False)
         self.__operation_changed(0)
 

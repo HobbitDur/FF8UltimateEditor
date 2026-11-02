@@ -260,6 +260,20 @@ def test_ccgroup_roundtrip_and_set(tmp_path):
     reloaded = JsmCardGameFile(str(folder / "bghall_1.jsm"), str(folder / "bghall_1.sym"))
     assert reloaded.players[0].params[PARAM_RARE_CHANCE].value == 42
 
+    # Cronos turn clock: set, exported, re-imported unchanged, removed
+    assert _run(CCGroupCliTool, ["set-clock", "--jsm", str(folder / "bghall_1.jsm"),
+                                 "--player", "1", "--seconds", "75", "--increment", "4"]) == 0
+    clocked = (folder / "bghall_1.jsm").read_bytes()
+    assert len(clocked) == len(original) + 16
+    assert _run(CCGroupCliTool, ["export-csv", "--folder", str(tmp_path), "--output", str(csv_path)]) == 0
+    assert _run(CCGroupCliTool, ["import-csv", "--folder", str(tmp_path), "--csv", str(csv_path)]) == 0
+    assert (folder / "bghall_1.jsm").read_bytes() == clocked
+    reloaded = JsmCardGameFile(str(folder / "bghall_1.jsm"), str(folder / "bghall_1.sym"))
+    assert [player.clock() for player in reloaded.players] == [(0, 0), (75, 4), (0, 0), (0, 0)]
+    assert _run(CCGroupCliTool, ["set-clock", "--jsm", str(folder / "bghall_1.jsm"),
+                                 "--player", "1", "--seconds", "0"]) == 0
+    assert len((folder / "bghall_1.jsm").read_bytes()) == len(original)
+
 
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/world/dat/wmset.obj")
 def test_cid_roundtrip(tmp_path):

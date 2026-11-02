@@ -12,7 +12,7 @@ from CCGroup.jsmcardgame import (CardGamePlayer, GAME_RULE_BITS, TRADE_RULE_NAME
                                  AI_SEARCH_NO_GUESS_BIT, VAR_CURRENT_REGION_GAME_RULES,
                                  VAR_CURRENT_REGION_TRADE_RULE, OPCODE_PSHM_B,
                                  PARAM_DECK_ID, PARAM_GAME_RULES, PARAM_TRADE_RULES, PARAM_RARE_CHANCE,
-                                 PARAM_AI_SEARCH, PARAM_AI_STRATEGY, PARAM_LEVEL_MASK)
+                                 PARAM_AI_SEARCH, PARAM_AI_STRATEGY, PARAM_LEVEL_MASK, clock_text)
 
 LEVEL_MASK_ALL = (1 << cardlocation.NB_LEVELS) - 1
 AI_DEPTH_MASK = 0x07
@@ -152,10 +152,27 @@ def use_region_trade_rule(player, _value=None, override_game_state=False):
     return _set_variable(player.params[PARAM_TRADE_RULES], VAR_CURRENT_REGION_TRADE_RULE)
 
 
+def set_clock_seconds(player, seconds: int, override_game_state=False):
+    """Cronos turn clock: starting time (0 = no clock). The increment is kept."""
+    before = player.clock()
+    player.set_clock(seconds, player.clock_increment)
+    return player.clock() != before
+
+
+def set_clock_increment(player, increment: int, override_game_state=False):
+    """Cronos turn clock: increment of the players that have a clock (the others have none to add to)."""
+    before = player.clock()
+    player.set_clock(player.clock_seconds, increment)
+    return player.clock() != before
+
+
+def remove_clock(player, _value=None, override_game_state=False):
+    return set_clock_seconds(player, 0)
+
+
 def restore_original(player, _value=None, override_game_state=False):
     changed = player.is_modified()
-    for param in player.params:
-        param.restore_original()
+    player.restore_original()
     return changed
 
 
@@ -212,6 +229,10 @@ def trade_rule_text(player):
         return "region"
     return param_text(param, lambda value: TRADE_RULE_NAMES[value & 0x07]
                       if value & 0x07 < len(TRADE_RULE_NAMES) else str(value))
+
+
+def clock_column_text(player):
+    return clock_text(*player.clock())
 
 
 def levels_text(player):

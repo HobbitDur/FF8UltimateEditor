@@ -87,3 +87,46 @@ def test_deck_id_picker_has_no_duplicate_entry(npc_tab):
     texts = [deck_row.picker.itemText(index) for index in range(deck_row.picker.count())]
     assert deck_row.picker.currentText() == "0 - No rare cards"
     assert sum(text.lower().startswith("0 - no rare") for text in texts) == 1
+
+
+def test_cronos_options_show_the_turn_clock_and_save_it(npc_tab, tmp_path):
+    from CCGroup.jsmcardgame import JsmCardGameFile
+    from CCGroup.npccardtablewidget import CLOCK_COLUMN, CLOCK_PARAMETER
+    seito6 = players_by_name(npc_tab)["seito6"]
+    npc_tab.select_player(seito6)
+    assert current_editor(npc_tab).clock_group is None  # Cronos options off: nothing Cronos-only
+    assert npc_tab.table_widget.table.isColumnHidden(CLOCK_COLUMN)
+    assert npc_tab.table_widget.parameter_combobox.findText(CLOCK_PARAMETER) < 0
+
+    npc_tab.cronos_options_checkbox.setChecked(True)
+    assert npc_tab.settings.value("ccgroup/cronos_options", type=bool)
+    assert not npc_tab.table_widget.table.isColumnHidden(CLOCK_COLUMN)
+    assert npc_tab.table_widget.parameter_combobox.findText(CLOCK_PARAMETER) >= 0
+    clock_group = current_editor(npc_tab).clock_group
+    assert not clock_group.increment_spinbox.isEnabled()  # no clock: no increment
+    clock_group.seconds_spinbox.setValue(90)
+    clock_group.increment_spinbox.setValue(5)
+    assert seito6.clock() == (90, 5) and seito6.is_modified()
+    assert npc_tab.player_label(seito6).endswith("clock 1:30 +5s")
+
+    assert npc_tab.manager.save_all() == 1
+    reloaded = JsmCardGameFile(str(tmp_path / "bghall_1.jsm"))
+    assert [player.clock() for player in reloaded.players] == [(90, 5), (0, 0), (0, 0), (0, 0)]
+
+
+def test_table_bulk_sets_the_clock(npc_tab):
+    from CCGroup.npccardtablewidget import CLOCK_PARAMETER
+    npc_tab.cronos_options_checkbox.setChecked(True)
+    table = npc_tab.table_widget
+    table.set_manager(npc_tab.manager)
+    table.parameter_combobox.setCurrentText(CLOCK_PARAMETER)
+    table.operation_combobox.setCurrentIndex(0)  # Set starting time to
+    table.value_editor.spinbox.setValue(45)
+    table.apply_bulk()
+    table.operation_combobox.setCurrentIndex(1)  # Set increment to
+    table.value_editor.spinbox.setValue(3)
+    table.apply_bulk()
+    assert [player.clock() for player in npc_tab.manager.jsm_files[0].players] == [(45, 3)] * 4
+    table.operation_combobox.setCurrentIndex(2)  # Remove the clock
+    table.apply_bulk()
+    assert all(not player.is_modified() for player in npc_tab.manager.jsm_files[0].players)

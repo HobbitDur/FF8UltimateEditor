@@ -12,6 +12,7 @@ Reference: FF8ModdingWiki, Field Opcodes 13A_CARDGAME.
 import os
 import struct
 
+from CCGroup import jsmedit
 from CCGroup.jsmvariant import analyze_variants, decode_instructions
 
 # Push opcodes (instruction = opcode << 24 | param24)
@@ -26,6 +27,7 @@ OPCODE_PSHSM_L = 0x12
 OPCODE_PSHAC = 0x13
 OPCODE_CAL = 0x01
 OPCODE_POPM_B = 0x0B
+OPCODE_POPM_W = 0x0D
 OPCODE_RND = 0xE8  # I[0] = random 0-255
 OPCODE_SETMODEL = 0x2B  # param = entry index in the field's chara.one
 OPCODE_SET = 0x1D  # pops x, y; param = walkmesh triangle
@@ -54,6 +56,31 @@ VAR_CURRENT_REGION_TRADE_RULE = 293
 # at random right before the match (e.g. the bghall_1 students: var 1041 = one of 7, 11, 13,
 # 14, 15; Joker: var 1024 = (random & 31) | 22). Those variables (1024+) are per-map scratch
 # variables: another map does not set them. See JsmCardGameFile.level_mask_options.
+
+# Cronos turn clock (Cronos DllCreator TripleTriadClock.dll): right before the 7 pushes, the script
+# stores the clock in free savemap variables, which the DLL reads and clears when the match starts:
+#     PSHN_L seconds / POPM_W 1020 / PSHN_L increment / POPM_B 1022
+# No block (or 0 seconds) = no clock. Vars 753-1023 are used by no vanilla script nor the exe; 1020-1022
+# sit at the far end of them, away from what other mods put after 753.
+VAR_CRONOS_CLOCK_SECONDS = 1020  # word: starting time of each human player, in seconds
+VAR_CRONOS_CLOCK_INCREMENT = 1022  # byte: seconds added each time the player places a card
+CLOCK_MAX_SECONDS = 0xFFFF
+CLOCK_MAX_INCREMENT = 0xFF
+CLOCK_BLOCK_SIZE = 4  # instructions
+
+
+def clock_block_words(seconds: int, increment: int):
+    return [jsmedit.encode(OPCODE_PSHN_L, seconds), jsmedit.encode(OPCODE_POPM_W, VAR_CRONOS_CLOCK_SECONDS),
+            jsmedit.encode(OPCODE_PSHN_L, increment), jsmedit.encode(OPCODE_POPM_B, VAR_CRONOS_CLOCK_INCREMENT)]
+
+
+def clock_text(seconds: int, increment: int):
+    """'M:SS +Ns' as the game's rules box shows it, '' without clock."""
+    if not seconds:
+        return ""
+    text = f"{seconds // 60}:{seconds % 60:02d}"
+    return text + (f" +{increment}s" if increment else "")
+
 
 # The 7 parameters in push order (first pushed -> last pushed)
 PARAM_DECK_ID = 0
@@ -136,9 +163,32 @@ class CardGamePlayer:
         self.cardgame_file_offset = cardgame_file_offset
         self.params = params  # list of 7 CardGameParam in push order
         self.variant = None  # jsmvariant.VariantInfo: what picks this call among its script's ones
+        # Cronos turn clock: the block in the file (offset of its first instruction, None = none) and the
+        # wanted values; the file only changes structurally when saved (JsmCardGameFile.output_data)
+        self.clock_block_offset = None
+        self.clock_seconds = 0
+        self.clock_increment = 0
+        self.original_clock = (0, 0)
+
+    def clock(self):
+        return self.clock_seconds, self.clock_increment
+
+    def set_clock(self, seconds: int, increment: int):
+        """0 seconds = no clock (the increment is then dropped too)."""
+        seconds = max(0, min(CLOCK_MAX_SECONDS, seconds))
+        self.clock_seconds = seconds
+        self.clock_increment = max(0, min(CLOCK_MAX_INCREMENT, increment)) if seconds else 0
+
+    def is_clock_modified(self):
+        return self.clock() != self.original_clock
+
+    def restore_original(self):
+        for param in self.params:
+            param.restore_original()
+        self.clock_seconds, self.clock_increment = self.original_clock
 
     def is_modified(self):
-        return any(param.is_modified() for param in self.params)
+        return any(param.is_modified() for param in self.params) or self.is_clock_modified()
 
     def __str__(self):
         return f"{self.entity_name}::{self.script_name} @0x{self.cardgame_file_offset:X}"
@@ -215,7 +265,10 @@ class JsmCardGameFile:
         self.reanalyze()
 
     def reanalyze(self):
-        """(Re)build the card players, names and variants from self.data (after code was added)."""
+        """(Re)build the card players, names and variants from self.data (after code was added). Clock
+        edits not saved yet stay on the calls at the same place (code is only ever appended)."""
+        pending_clocks = {player.cardgame_file_offset: (player.clock(), player.original_clock)
+                          for player in getattr(self, "players", [])}
         self.__instructions_cache = None
         self.players = []
         self.card_moves = []  # SETCARD calls with literal arguments
@@ -225,6 +278,10 @@ class JsmCardGameFile:
         self.script_names = []  # (entity, script) per script entry, from the .sym
         self.__analyze()
         analyze_variants(self)
+        for player in self.players:
+            if player.cardgame_file_offset in pending_clocks:
+                (player.clock_seconds, player.clock_increment), player.original_clock = \
+                    pending_clocks[player.cardgame_file_offset]
 
     def __analyze(self):
         if len(self.data) < 8:
@@ -268,8 +325,24 @@ class JsmCardGameFile:
                                             push_dword >> 24, push_dword & 0xFFFFFF))
             entity_name, script_name = self.__find_script_name(instruction_offset, script_positions,
                                                                script_names, script_data_size)
-            self.players.append(CardGamePlayer(entity_name, script_name,
-                                               offset_script + instruction_offset, params))
+            player = CardGamePlayer(entity_name, script_name, offset_script + instruction_offset, params)
+            self.__read_clock(player, instruction_index - NB_CARDGAME_PARAMS)
+            self.players.append(player)
+
+    def __read_clock(self, player: CardGamePlayer, first_push_index: int):
+        """The Cronos clock block right before the 7 pushes, if there is one."""
+        block_index = first_push_index - CLOCK_BLOCK_SIZE
+        if block_index < 0:
+            return
+        block_offset = self.offset_script + block_index * 4
+        words = struct.unpack_from("<4I", self.data, block_offset)
+        seconds, increment = words[0] & 0xFFFFFF, words[2] & 0xFFFFFF
+        if list(words) != clock_block_words(seconds, increment) or seconds > CLOCK_MAX_SECONDS \
+                or increment > CLOCK_MAX_INCREMENT:
+            return
+        player.clock_block_offset = block_offset
+        player.set_clock(seconds, increment)
+        player.original_clock = player.clock()
 
     def __instructions(self):
         """(opcode, param) of every instruction of the script section."""
@@ -535,20 +608,39 @@ class JsmCardGameFile:
                 or any(literal.is_modified() for literal in self.script_literals.values()))
 
     def apply_params(self):
-        """Write the current param values (and variant condition literals) back into the data."""
+        """Write the current param values (and variant condition literals) back into the data, and the
+        clock values of the calls that already have a clock block (adding or removing one moves code:
+        output_data does it)."""
         for player in self.players:
             for param in player.params:
                 struct.pack_into("<I", self.data, param.file_offset, param.to_dword())
+            if player.clock_block_offset is not None and player.clock_seconds:
+                struct.pack_into("<4I", self.data, player.clock_block_offset,
+                                 *clock_block_words(player.clock_seconds, player.clock_increment))
         for literal in self.script_literals.values():
             struct.pack_into("<I", self.data, literal.file_offset, literal.to_dword())
 
+    def output_data(self):
+        """The file to write: the data with the params applied, plus the clock blocks added or removed
+        (the last call first, so the earlier offsets still hold). self.data keeps its loaded layout."""
+        self.apply_params()
+        data = bytes(self.data)
+        for player in sorted(self.players, key=lambda player: player.cardgame_file_offset, reverse=True):
+            if player.clock_block_offset is not None and not player.clock_seconds:
+                index = (player.clock_block_offset - self.offset_script) // 4
+                data = jsmedit.remove_instructions(data, index, CLOCK_BLOCK_SIZE)
+            elif player.clock_block_offset is None and player.clock_seconds:
+                index = (player.params[PARAM_DECK_ID].file_offset - self.offset_script) // 4
+                data = jsmedit.insert_instructions(data, index, clock_block_words(*player.clock()))
+        return data
+
     def save(self, output_path: str = ""):
         """Patch the params and write the .jsm back to disk (in place by default)."""
-        self.apply_params()
+        data = self.output_data()
         if not output_path:
             output_path = self.jsm_path
         with open(output_path, "wb") as jsm_file:
-            jsm_file.write(self.data)
+            jsm_file.write(data)
         self.mark_saved()
 
     def asset_path(self, file_name: str):
@@ -568,6 +660,7 @@ class JsmCardGameFile:
             for param in player.params:
                 param.original_opcode = param.opcode
                 param.original_value = param.value
+            player.original_clock = player.clock()
         for literal in self.script_literals.values():
             literal.original_value = literal.value
 
@@ -796,12 +889,11 @@ class CardGameFolderManager:
                 jsm_file.save()
                 report.written.append(jsm_file)
                 continue
-            jsm_file.apply_params()
             vanilla_data = None
             if jsm_file.vanilla_path:
                 with open(jsm_file.vanilla_path, "rb") as vanilla_file:
                     vanilla_data = vanilla_file.read()
-            if vanilla_data == bytes(jsm_file.data):
+            if vanilla_data == jsm_file.output_data():
                 jsm_file.mark_saved()
                 if jsm_file.modified_path:
                     report.identical_to_vanilla.append(jsm_file)

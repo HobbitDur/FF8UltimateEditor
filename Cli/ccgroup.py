@@ -7,6 +7,7 @@ the CCGroup GUI "NPC card players" tab):
   • export-csv  (folder scan → CSV: one row per card player)
   • import-csv  (apply a CSV back onto the .jsm files, in place)
   • set-param   (edit one param of one player in one .jsm)
+  • set-clock   (Cronos turn clock of one player: starting seconds + increment, 0 = none)
 
 Param values are written as a plain integer for a literal push, or "var:N" for
 a savemap-variable push (e.g. "var:292" = current region game rules).
@@ -21,7 +22,8 @@ from .common import read_csv, write_csv
 
 PARAM_KEYS = ["deck", "game-rules", "trade-rules", "rare-chance", "ai-search", "ai-strategy", "level-mask"]
 CSV_HEADER = ["Jsm file", "Map", "Player", "Entity", "Script",
-              "Deck ID", "Game rules", "Trade rules", "Rare chance", "AI search", "AI strategy", "Level mask"]
+              "Deck ID", "Game rules", "Trade rules", "Rare chance", "AI search", "AI strategy", "Level mask",
+              "Clock seconds", "Clock increment"]
 
 
 def _format_param(param) -> str:
@@ -50,7 +52,7 @@ def _player_rows(manager, folder: str) -> list:
         for player_index, player in enumerate(jsm_file.players):
             rows.append([rel_path, jsm_file.map_name, player_index,
                          player.entity_name, player.script_name]
-                        + [_format_param(p) for p in player.params])
+                        + [_format_param(p) for p in player.params] + list(player.clock()))
     return rows
 
 
@@ -59,8 +61,9 @@ def _cmd_list(args) -> int:
     rows = _player_rows(manager, args.folder)
     print(f"{len(manager.jsm_files)} .jsm files with card players, {manager.nb_players()} players:")
     for row in rows:
-        params = ", ".join(f"{name}={value}" for name, value in zip(PARAM_KEYS, row[5:]))
-        print(f"  {row[0]} [{row[2]}] {row[3]}.{row[4]}: {params}")
+        params = ", ".join(f"{name}={value}" for name, value in zip(PARAM_KEYS, row[5:12]))
+        clock = f", clock={row[12]}s +{row[13]}s" if row[12] else ""
+        print(f"  {row[0]} [{row[2]}] {row[3]}.{row[4]}: {params}{clock}")
     return 0
 
 
@@ -87,6 +90,9 @@ def _cmd_import_csv(args) -> int:
         for param_index, cell in enumerate(row[5:12]):
             if str(cell).strip():
                 _apply_param(player.params[param_index], cell)
+        clock_cells = [str(cell).strip() for cell in row[12:14]]
+        if clock_cells and clock_cells[0]:
+            player.set_clock(int(clock_cells[0]), int(clock_cells[1]) if len(clock_cells) > 1 and clock_cells[1] else 0)
         applied += 1
     nb_written = manager.save_all()
     print(f"[ok] {applied} players applied, {nb_written} .jsm file(s) written in place")
@@ -108,6 +114,21 @@ def _cmd_set_param(args) -> int:
         param.set_literal(args.value)
     jsm_file.save(args.output or "")
     print(f"[ok] {player.entity_name}.{player.script_name} {args.param} = {_format_param(param)}, "
+          f"written to {args.output or args.jsm}")
+    return 0
+
+
+def _cmd_set_clock(args) -> int:
+    from CCGroup.jsmcardgame import JsmCardGameFile, clock_text
+    sym_path = args.sym or str(pathlib.Path(args.jsm).with_suffix(".sym"))
+    jsm_file = JsmCardGameFile(args.jsm, sym_path)
+    if not jsm_file.players:
+        print(f"[error] No card players found in {args.jsm}", file=sys.stderr)
+        return 1
+    player = jsm_file.players[args.player]
+    player.set_clock(args.seconds, args.increment)
+    jsm_file.save(args.output or "")
+    print(f"[ok] {player.entity_name}.{player.script_name} clock = {clock_text(*player.clock()) or 'none'}, "
           f"written to {args.output or args.jsm}")
     return 0
 
@@ -155,6 +176,15 @@ class CCGroupCliTool(BaseCliTool):
         group.add_argument("--variable", type=int, help="Savemap variable number (e.g. 292)")
         p_set.add_argument("--output", "-o", help="Output .jsm (overwrites input if omitted)")
         p_set.set_defaults(func=_cmd_set_param)
+
+        p_clock = sub.add_parser("set-clock", help="Cronos turn clock of one card player (TripleTriadClock.dll)")
+        p_clock.add_argument("--jsm", required=True, help="Path to the .jsm file")
+        p_clock.add_argument("--sym", help=".sym path (default: next to the .jsm)")
+        p_clock.add_argument("--player", type=int, required=True, help="Player index (see 'list')")
+        p_clock.add_argument("--seconds", type=int, required=True, help="Starting time in seconds (0 = no clock)")
+        p_clock.add_argument("--increment", type=int, default=0, help="Seconds added per card placed")
+        p_clock.add_argument("--output", "-o", help="Output .jsm (overwrites input if omitted)")
+        p_clock.set_defaults(func=_cmd_set_clock)
 
         return parser
 

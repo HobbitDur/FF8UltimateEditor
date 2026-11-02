@@ -38,7 +38,8 @@ from CCGroup.jsmcardgame import (CardGameFolderManager, OPCODE_PSHN_L, CardGameP
                                  VAR_CURRENT_REGION_GAME_RULES, VAR_CURRENT_REGION_TRADE_RULE,
                                  PARAM_DECK_ID, PARAM_GAME_RULES, PARAM_TRADE_RULES,
                                  PARAM_RARE_CHANCE, PARAM_AI_SEARCH, PARAM_AI_STRATEGY,
-                                 PARAM_LEVEL_MASK)
+                                 PARAM_LEVEL_MASK, CLOCK_MAX_SECONDS, CLOCK_MAX_INCREMENT,
+                                 VAR_CRONOS_CLOCK_SECONDS, VAR_CRONOS_CLOCK_INCREMENT, clock_text)
 
 TOOLTIP_DECK_ID = (
     "<b>Deck ID (rare card location)</b><br/>"
@@ -120,6 +121,23 @@ TOOLTIP_SCRIPT_LEVELS = (
     "Unchecked: this NPC always draws from the fixed levels you check here.<br/><br/>"
     "<i>These variables (1024 and up) are scratch variables of the map: another map does not set<br/>"
     "them, which is why only NPCs that already use one offer this option.</i>")
+
+
+TOOLTIP_CRONOS_OPTIONS = (
+    "<b>Cronos options</b><br/>"
+    "Shows the settings that only work with the Cronos mod's DLLs (e.g. the Triple Triad turn clock,<br/>"
+    "TripleTriadClock.dll). A value set here is saved into the field script like any other, but the<br/>"
+    "vanilla game ignores it.")
+
+TOOLTIP_CLOCK = (
+    "<b>Turn clock</b> (Cronos, TripleTriadClock.dll) - a chess clock for the human player.<br/>"
+    "<b>Starting time</b>: the player's time bank at the start of the match. It runs down only during<br/>"
+    "the player's own turns (not during card flips, not while the Select rules box is open) and shows<br/>"
+    "on screen as M:SS (red from 0:10). Each number stays a full second: the player <b>loses</b> once<br/>"
+    "0:00 has shown for one second. A Sudden Death rematch refills it. <b>0 = no clock</b>.<br/>"
+    "<b>Increment</b>: seconds added to the bank each time the player places a card.<br/><br/>"
+    f"Saved as 4 instructions right before the CARDGAME pushes: savemap var {VAR_CRONOS_CLOCK_SECONDS} (word)<br/>"
+    f"= starting time, var {VAR_CRONOS_CLOCK_INCREMENT} (byte) = increment; the DLL reads and clears them.")
 
 
 TOOLTIP_GAME_STATE_GENERIC = (
@@ -848,11 +866,54 @@ class DeckPreviewGroup(QGroupBox):
         self.__hand_layout.addStretch(1)
 
 
+class ClockGroup(QGroupBox):
+    """Cronos turn clock of one card player: starting time and increment."""
+
+    def __init__(self, player: CardGamePlayer, changed_callback):
+        QGroupBox.__init__(self, "Cronos: turn clock")
+        self.setToolTip(TOOLTIP_CLOCK)
+        self.player = player
+        self.changed_callback = changed_callback
+        self.seconds_spinbox = QSpinBox()
+        self.seconds_spinbox.setRange(0, CLOCK_MAX_SECONDS)
+        self.seconds_spinbox.setSuffix(" s")
+        self.seconds_spinbox.setSpecialValueText("No clock")
+        self.seconds_spinbox.setValue(player.clock_seconds)
+        self.increment_spinbox = QSpinBox()
+        self.increment_spinbox.setRange(0, CLOCK_MAX_INCREMENT)
+        self.increment_spinbox.setSuffix(" s per card placed")
+        self.increment_spinbox.setValue(player.clock_increment)
+        self.summary_label = QLabel()
+        for spinbox in (self.seconds_spinbox, self.increment_spinbox):
+            spinbox.setToolTip(TOOLTIP_CLOCK)
+            spinbox.wheelEvent = lambda event: None
+            spinbox.valueChanged.connect(lambda _: self.__changed())
+        layout = QHBoxLayout()
+        layout.addWidget(QLabel("Starting time:"))
+        layout.addWidget(self.seconds_spinbox)
+        layout.addWidget(QLabel("Increment:"))
+        layout.addWidget(self.increment_spinbox)
+        layout.addWidget(self.summary_label)
+        layout.addStretch(1)
+        self.setLayout(layout)
+        self.__refresh()
+
+    def __changed(self):
+        self.player.set_clock(self.seconds_spinbox.value(), self.increment_spinbox.value())
+        self.__refresh()
+        self.changed_callback()
+
+    def __refresh(self):
+        has_clock = self.player.clock_seconds > 0
+        self.increment_spinbox.setEnabled(has_clock)
+        self.summary_label.setText(f"= {clock_text(*self.player.clock())}" if has_clock else "")
+
+
 class CardPlayerWidget(QWidget):
     """Editor of the 7 CARDGAME parameters of one NPC, with the rare cards and deck preview."""
 
     def __init__(self, player: CardGamePlayer, card_images: CardImages, manager: CardGameFolderManager,
-                 changed_callback=None, select_player_callback=None):
+                 changed_callback=None, select_player_callback=None, cronos_options=False):
         QWidget.__init__(self)
         self.player = player
         self.changed_callback = changed_callback
@@ -892,6 +953,10 @@ class CardPlayerWidget(QWidget):
         for row_index, row in enumerate(self.rows):
             row.add_to_grid(grid, row_index, row.layout())
             row.on_change = self.__param_changed
+        self.clock_group = None
+        if cronos_options:
+            self.clock_group = ClockGroup(player, self.__param_changed)
+            main_layout.addWidget(self.clock_group)
 
         select_player_callback = select_player_callback or (lambda _: None)
         jsm_file = manager.file_of(player)
@@ -970,10 +1035,16 @@ class NpcCardGameWidget(QWidget):
         # Opening the folder and saving the patched .jsm files both run from the shared header
         # toolbar (Open-folder -> load_folder, Save -> save_folder); this tab keeps only its list.
         self.__info_label = QLabel(self.NO_FOLDER_TEXT)
+        self.cronos_options_checkbox = QCheckBox("Cronos options")
+        self.cronos_options_checkbox.setToolTip(TOOLTIP_CRONOS_OPTIONS)
+        if settings is not None:
+            self.cronos_options_checkbox.setChecked(settings.value("ccgroup/cronos_options", False, type=bool))
+        self.cronos_options_checkbox.toggled.connect(self.__cronos_options_toggled)
 
         self.__layout_top = QHBoxLayout()
         self.__layout_top.addWidget(self.__info_label)
         self.__layout_top.addStretch(1)
+        self.__layout_top.addWidget(self.cronos_options_checkbox)
         self.__main_layout.addLayout(self.__layout_top)
 
         # Second layer: a modified field folder on top of vanilla (opened after it, saved into)
@@ -1048,6 +1119,7 @@ class NpcCardGameWidget(QWidget):
 
         # Two views of the same players: one at a time (Editor) or all in a table (bulk edits)
         self.table_widget = NpcCardTableWidget(self.card_images.names)
+        self.table_widget.set_cronos_options(self.cronos_options_checkbox.isChecked())
         self.table_widget.players_changed.connect(self.__players_bulk_changed)
         self.table_widget.open_player.connect(self.__open_from_table)
         self.view_tabs = QTabWidget()
@@ -1081,6 +1153,17 @@ class NpcCardGameWidget(QWidget):
         if self.settings is not None:
             self.settings.setValue("ccgroup/npc_modified_folder", folder_path)
         self.__reload()
+
+    def __cronos_options_toggled(self, checked: bool):
+        if self.settings is not None:
+            self.settings.setValue("ccgroup/cronos_options", checked)
+        self.table_widget.set_cronos_options(checked)
+        for player, item in ((item.data(0, Qt.ItemDataRole.UserRole), item) for item in self.__player_items.values()):
+            item.setText(0, self.player_label(player))
+        current = self.__tree.currentItem()
+        player = current.data(0, Qt.ItemDataRole.UserRole) if current is not None else None
+        if player is not None:
+            self.__show_editor(player)
 
     def close_modified_folder(self):
         if not self.modified_folder or not self.__confirm_discard():
@@ -1154,6 +1237,8 @@ class NpcCardGameWidget(QWidget):
             text += f"  [variant {variant.index + 1}/{len(variant.siblings)}"
             chance = variant.random_chance()
             text += f", {chance:.0f}%]" if chance is not None else "]"
+        if self.cronos_options_checkbox.isChecked() and player.clock_seconds:
+            text += f"  - clock {clock_text(*player.clock())}"
         return text
 
     def select_player(self, player: CardGamePlayer):
@@ -1314,7 +1399,8 @@ class NpcCardGameWidget(QWidget):
             editor_layout = QVBoxLayout()
             editor_layout.addWidget(CardPlayerWidget(player, self.card_images, self.manager,
                                                      changed_callback=self.__player_changed,
-                                                     select_player_callback=self.select_player))
+                                                     select_player_callback=self.select_player,
+                                                     cronos_options=self.cronos_options_checkbox.isChecked()))
             editor_layout.addStretch(1)
             editor_widget.setLayout(editor_layout)
             self.__editor_scroll.setWidget(editor_widget)
