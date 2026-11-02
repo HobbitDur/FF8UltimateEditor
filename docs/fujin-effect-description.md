@@ -569,3 +569,25 @@ Potion's description is the same with its own sequences and sound.
        (2172 bytes), the sound, "mag110.tim".
      - *Fujin:* its tabs (Timing, Aura, Flames, Glow); an eighth family in the + menu, "One per
        action, at its target's feet (Aura's kind)": Aura (the start), Flames, Glow.
+   - **Aero (118)** (FFNx 0f520235): the cycle director with the effect camera matrix; a whirlwind
+     at the target's feet and a gust at its effect position, scaled by its size; leaves.
+     - *Shared:* the cycle director, its camera matrix (Haste's), the anchor callback with its
+       0x1000 branch (Echo Screen's), the depth from the target's size (Silence's), the size
+       scale (Float's), the 3D sound, `layout_end` over both layouts (Haste's), `heal_action`.
+     - *Added:*
+       - the anchor callback takes a scale (each record's offset and the object scaled by the
+         target's size; Dispel's ring has the same branch, dead there) and a 16-bit row scale
+         option (Aero's inlined copy of the record scale: it is not scale3DMatrix's result).
+         Draw `layout_scaled_on_target` (layout, where: the anchor's x / z on the feet or the
+         effect position now, depth base / shift, scale base / shift, flags, 16-bit scale);
+       - whirl leaves: the node field `leaf` (0x30 bytes: the library's `WhirlLeaf`), the
+         placement `whirl_leaf` (size, turn, climb speed, reach base / shift: CRT rand in the
+         original's order), the every-tick action `whirl_leaf_move` (climb until, faster from:
+         circling and climbing while its spawner is young, then falling, bouncing, shrinking),
+         the draw `tumbling_model` and the end `leaf_gone`.
+     - *Inputs* (`AeroParams`): the cycle, the sound, the wind's first tick, depth and size rules,
+       the leaves' window, first size, turn and climb, when they fall and when they speed up.
+       Data: the two layouts (0x4354, 0x149C bytes), the leaf model, the camera track (3348
+       bytes), the sound, "mag117.tim".
+     - *Fujin:* its tabs (Timing, Wind, Leaves); a ninth family in the + menu, "One per action, a
+       wind on its target (Aero's kind)": Wind (the start), Leaves.

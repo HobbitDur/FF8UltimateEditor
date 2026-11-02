@@ -1,0 +1,441 @@
+{
+ "format": 1,
+ "effect": 118,
+ "name": "Aero",
+ "doc": "Aero (spell): one target task per action, in turn (one every 10 ticks), each a whirlwind layout at the target's feet and a gust at its effect position, scaled by its size, and a leaf a tick circling it, climbing, then falling and bouncing away; the target takes the result when both layouts have finished.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6C0C90",
+   "setup": "0x6C0C80",
+   "root": "0x6C0D20"
+  },
+  "memory": {
+   "texture_file": "0x25215D8",
+   "magic_buffer": "0x25215DC",
+   "ctx": "0x25215E0",
+   "root_pool": "0x25215E8",
+   "packet_cursor": "0x25215FC",
+   "camera_matrix": "0x2521600",
+   "root_queue": "0x2521640"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "leaf": {
+   "kind": "model",
+   "address": "0x1287C44",
+   "size": 376,
+   "doc": "a prim model (its vertex frames and polygons; drawn by 0x572200)"
+  },
+  "whirl": {
+   "kind": "layout",
+   "address": "0x1287DBC",
+   "size": 17236
+  },
+  "gust": {
+   "kind": "layout",
+   "address": "0x128C110",
+   "size": 5276
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x128D5AC",
+   "size": 4
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x128D5B0",
+   "size": 3348
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x128E2C4",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the layouts' blended vertex frames (after the target and leaf pools).",
+  "arenas": [
+   "0x2584",
+   "0x1A584"
+  ],
+  "morph": "0x22A4"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "target",
+  "every": "$timing.every",
+  "camera_matrix": true,
+  "place": [
+   "action_target",
+   0,
+   "@whirl",
+   "@gust",
+   0,
+   -1,
+   0,
+   0
+  ]
+ },
+ "pools": [
+  {
+   "key": "targets",
+   "queue": "0x2521630",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 1676,
+   "count": 3
+  },
+  {
+   "key": "leaves",
+   "queue": "0x2521620",
+   "storage": "0x13A4",
+   "in_magic_buffer": true,
+   "size": 60,
+   "count": 64
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one target task per action, in turn; each target task's clock: its sound; the result when both layouts have finished (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "wind",
+   "title": "Wind",
+   "doc": "The whirlwind at the target's feet and the gust at its effect position, scaled by its size"
+  },
+  {
+   "id": 2,
+   "key": "leaves",
+   "title": "Leaves",
+   "doc": "A leaf a tick circling the target and climbing, then falling and bouncing away"
+  }
+ ],
+ "groups": [
+  {
+   "key": "wind.depth",
+   "label": "Depth",
+   "doc": "(Base - the target's size) >> Shift"
+  },
+  {
+   "key": "wind.scale",
+   "label": "Size",
+   "doc": "Both layouts scaled by ((the target's size >> 1) + Base) >> Shift (4096 = their own size); the leaves' reach too"
+  },
+  {
+   "key": "leaves.window",
+   "label": "Spawning",
+   "doc": "One leaf spawned at every target tick From tick .. To tick"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's target task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the target's effect position when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "wind.from_tick",
+   "part": "wind",
+   "label": "From tick",
+   "doc": "Both layouts drawn from this target tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "wind.depth.base",
+   "part": "wind",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -2048,
+   "unit": "plain"
+  },
+  {
+   "key": "wind.depth.shift",
+   "part": "wind",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "wind.scale.base",
+   "part": "wind",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "wind.scale.shift",
+   "part": "wind",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "leaves.window.first",
+   "part": "leaves",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "leaves.window.last",
+   "part": "leaves",
+   "label": "To tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 19,
+   "unit": "plain"
+  },
+  {
+   "key": "leaves.scale",
+   "part": "leaves",
+   "label": "Size",
+   "doc": "A leaf's first size (4096 = its own); it grows to 4096",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "leaves.speed",
+   "part": "leaves",
+   "label": "Turn",
+   "doc": "Its first turn a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "leaves.vy",
+   "part": "leaves",
+   "label": "Climb",
+   "doc": "Its first vertical speed (y goes down)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": -4,
+   "unit": "plain"
+  },
+  {
+   "key": "leaves.climb",
+   "part": "leaves",
+   "label": "Climb until",
+   "doc": "It climbs while its target task's tick is below this, then falls",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "leaves.speed_up",
+   "part": "leaves",
+   "label": "Faster from",
+   "doc": "It climbs and turns faster from this target tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 1676,
+   "function": "0x6C0EC0",
+   "doc": "One per action: its sound at the target's effect position; from tick 11 the whirlwind at the target's feet and the gust at its effect position (the anchor callback scaled by its size, record flags 0x1000: through the effect camera matrix, 0x8000, 0x100; its record scale applied row by row as 16-bit factors); a leaf a tick; the result when both layouts have finished.",
+   "node": [
+    "counter",
+    "action",
+    "entity",
+    "anchor",
+    [
+     "layout",
+     1260
+    ],
+    [
+     "layout_b",
+     388
+    ]
+   ],
+   "draws_first": true,
+   "every_tick": [
+    [
+     "sound_3d_at",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "wind",
+     "from_tick": "$wind.from_tick",
+     "draw": [
+      "layout_scaled_on_target",
+      0,
+      0,
+      "$wind.depth.base",
+      "$wind.depth.shift",
+      "$wind.scale.base",
+      "$wind.scale.shift",
+      "0x9100",
+      1
+     ]
+    },
+    {
+     "part": "wind",
+     "from_tick": "$wind.from_tick",
+     "draw": [
+      "layout_scaled_on_target",
+      1,
+      1,
+      "$wind.depth.base",
+      "$wind.depth.shift",
+      "$wind.scale.base",
+      "$wind.scale.shift",
+      "0x9100",
+      1
+     ]
+    }
+   ],
+   "spawns": [
+    {
+     "task": "leaf",
+     "window": [
+      "$leaves.window.first",
+      "$leaves.window.last"
+     ],
+     "every": 1,
+     "place": [
+      "whirl_leaf",
+      "$leaves.scale",
+      "$leaves.speed",
+      "$leaves.vy",
+      "$wind.scale.base",
+      "$wind.scale.shift"
+     ]
+    }
+   ],
+   "end": [
+    "layout_end"
+   ],
+   "at_end": [
+    [
+     "heal_action"
+    ]
+   ]
+  },
+  {
+   "key": "leaf",
+   "pool": "leaves",
+   "size": 60,
+   "function": "0x6C14B0",
+   "doc": "A leaf model tumbling on three axes, circling its target task's anchor and climbing while that task is young, then falling, bouncing and drifting away, shrinking out.",
+   "node": [
+    "leaf"
+   ],
+   "draws_first": true,
+   "every_tick": [
+    [
+     "whirl_leaf_move",
+     "$leaves.climb",
+     "$leaves.speed_up"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "leaves",
+     "draw": [
+      "tumbling_model",
+      "@leaf",
+      0
+     ]
+    }
+   ],
+   "end": [
+    "leaf_gone"
+   ]
+  }
+ ]
+}

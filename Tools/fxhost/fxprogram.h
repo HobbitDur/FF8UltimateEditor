@@ -64,16 +64,17 @@ namespace fxprog
 	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value; Step draw; };
 	// a plain node's fields (offsets in the node; -1: none)
 	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, F_END, F_SEQ, F_RADIUS, F_ANGLE, F_SPEED, F_FADE,
-	             FIELD_COUNT };
+	             F_LEAF, FIELD_COUNT };
 	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity",
-	                                                      "layout_b", "spawn", "end", "seq", "radius", "angle", "speed", "fade" };
+	                                                      "layout_b", "spawn", "end", "seq", "radius", "angle", "speed", "fade",
+	                                                      "leaf" };
 	struct Task
 	{
 		std::string key;
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		bool plain = false, draws_first = false;
-		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 		int layout_size = 0, layout_b_size = 0;
 		Step end;                                 // a plain node's end (after its counter)
 		std::vector<Step> at_end;                 // actions when it ends
@@ -122,17 +123,18 @@ namespace fxprog
 		FOLLOW_TARGET, SPAWN, HEAL, DONE, SPAWNING, OVERLAY, SEQUENCE, FLIPBOOK, HELIX_START, OVERLAY_START,
 		HIDE_TARGET, SHOW_TARGET, UNBLOCK_DIRECTOR, VELOCITY_ROLL, VELOCITY_RISE, DRIFT, SOUND_AT, HEAL_ALL_AT,
 		HEAL_FIRST_TARGET, ANCHOR_AT_BONE, SOUND_3D_AT, HEAL_ACTION_AT, UNMARK_TARGET, ANCHOR_AT_POSITION,
-		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET, SCREEN_FLASH_CURVE, SCREEN_FLASH_OFF, SPIN,
+		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET, SCREEN_FLASH_CURVE, SCREEN_FLASH_OFF, SPIN, WHIRL_LEAF_MOVE,
 		// conditions
-		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END,
+		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE,
 		// motions
 		HELIX,
 		// placements
 		CIRCLE_DROP, GLINT, AT_PARENT, TABLE_POINT, RANDOM_TARGET_BONE, RANDOM_TARGET_POINT, ACTION_TARGETS,
-		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING,
+		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING, WHIRL_LEAF,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
-		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET,
+		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET, LAYOUT_SCALED_ON_TARGET,
+		TUMBLING_MODEL,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -156,6 +158,8 @@ namespace fxprog
 		{ "tick_at_node_end", TICK_AT_NODE_END }, { "random_around", RANDOM_AROUND }, { "rising_circle", RISING_CIRCLE },
 		{ "node_sequence_sprite", NODE_SEQUENCE_SPRITE }, { "spin", SPIN }, { "spinning_ring", SPINNING_RING },
 		{ "layout_table", LAYOUT_TABLE }, { "spinning_model", SPINNING_MODEL }, { "sequence_at_feet", SEQUENCE_AT_FEET },
+		{ "whirl_leaf_move", WHIRL_LEAF_MOVE }, { "leaf_gone", LEAF_GONE }, { "whirl_leaf", WHIRL_LEAF },
+		{ "layout_scaled_on_target", LAYOUT_SCALED_ON_TARGET }, { "tumbling_model", TUMBLING_MODEL },
 	};
 
 	inline Program *g_program = nullptr;
@@ -309,6 +313,9 @@ namespace fxprog
 		case HEAL_ACTION: ApplyActionResultToTarget(Ctx()->actions[*Fld<int16_t>(t, n, F_ACTION)].targets); break;
 		case SCREEN_FADE_AT: if (Tick(t, n) == V(a[0])) ScreenFadeTask(V(a[1]), V(a[2]), V(a[3]), V(a[4])); break;   // tick, the engine's fade's four values
 		case SPIN: *Fld<int16_t>(t, n, F_ANGLE) = (int16_t)(*Fld<int16_t>(t, n, F_ANGLE) + *Fld<int16_t>(t, n, F_SPEED)); break;
+		case WHIRL_LEAF_MOVE: // climb until, faster from: one tick of the node's leaf (gone: its size at 0 or below)
+			layouts::WhirlLeafMove(Fld<layouts::WhirlLeaf>(t, n, F_LEAF), V(a[0]), V(a[1]));
+			break;
 		case SCREEN_FLASH_CURVE: // rise, level, fall, end: up, held, down (Dispel)
 			SetScreenFlash((uint32_t)layouts::ScreenFlashCurve(Tick(t, n), V(a[0]), V(a[1]), V(a[2]), V(a[3])), 0);
 			break;
@@ -397,6 +404,13 @@ namespace fxprog
 			pos[0] = (int16_t)(pos[0] + spread.roll(CrtRand()));
 			*Fld<int16_t>(t, m, F_SCALE) = (int16_t)scale.roll(CrtRand() >> 4);
 			DecodeLayout(t, m, ((const uint32_t *)V(a[4]))[e % (uint32_t)V(a[5])]);
+			break;
+		}
+		case WHIRL_LEAF: // size, turn, climb speed, reach base, shift: around the spawner's anchor, its reach from its entity's size
+		{
+			uint8_t *ent = *Fld<uint8_t *>(from, n, F_ENTITY);
+			layouts::WhirlLeafStart(Fld<layouts::WhirlLeaf>(t, m, F_LEAF), *Fld<int16_t>(from, n, F_ACTION), Fld<int16_t>(from, n, F_ANCHOR),
+			                        layouts::SizeScale(ent, V(a[3]), V(a[4])), Fld<int16_t>(from, n, F_COUNTER), V(a[0]), V(a[1]), V(a[2]));
 			break;
 		}
 		case RANDOM_AROUND: // lift, scale, sequence, frames: around the spawner's anchor, spread by its 4th word
@@ -539,6 +553,40 @@ namespace fxprog
 			table.cursor = arg.cursor;
 			const int frames = layouts::PlayWithTable(Fld<uint8_t>(t, n, F_LAYOUT), &table);
 			left = left < 0 ? frames : left | frames;
+			break;
+		}
+		case LAYOUT_SCALED_ON_TARGET: // layout (0, 1: b), at (0: the anchor's x / z on the feet, 1: the effect position now), depth base, shift, scale base, shift, flags, 16-bit record scale
+		{
+			// Aero's wind: the anchor callback scaled by the entity's size, its depth from it, its
+			// matrix the program's camera matrix
+			uint8_t *e = *Fld<uint8_t *>(t, n, F_ENTITY);
+			layouts::AnchorArg anchor_arg;
+			const int16_t *anchor = Fld<int16_t>(t, n, F_ANCHOR);
+			if (V(a[1]) == 0)
+			{
+				anchor_arg.anchor[0] = anchor[0];
+				anchor_arg.anchor[2] = anchor[2];
+				anchor_arg.anchor[1] = *(const int16_t *)(e + 0x24);
+				anchor_arg.anchor[3] = 0;
+			}
+			else GetDefaultEffectPosition(e, anchor_arg.anchor);
+			const int32_t s = layouts::SizeScale(e, V(a[4]), V(a[5]));
+			anchor_arg.scale[0] = anchor_arg.scale[1] = anchor_arg.scale[2] = s;
+			anchor_arg.scaled = 1;
+			anchor_arg.depth = layouts::DepthFromSize(e, V(a[2]), V(a[3]));
+			anchor_arg.morph = arg.morph;
+			anchor_arg.honoured = (uint32_t)V(a[6]);
+			anchor_arg.cursor = arg.cursor;
+			anchor_arg.matrix = g_program->camera_matrix ? &var<Mat4x3>(Mem("camera_matrix")) : &Camera();
+			anchor_arg.short_scale = V(a[7]) != 0;
+			const int frames = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, V(a[0]) ? F_LAYOUT_B : F_LAYOUT), &anchor_arg);
+			left = left < 0 ? frames : left | frames;
+			break;
+		}
+		case TUMBLING_MODEL: // model, draw mode: the node's leaf (not when it is gone)
+		{
+			const layouts::WhirlLeaf *f = Fld<layouts::WhirlLeaf>(t, n, F_LEAF);
+			if (f->scale > 0) layouts::DrawTumblingModel((uint32_t)V(a[0]), f->ang, f->scale, f->pos, (uint32_t)V(a[1]), PacketCursor());
 			break;
 		}
 		case SPINNING_MODEL: // model, fade in, from, out, draw mode, nearer: the node's, turned by its angle, scaled by its radius
@@ -709,6 +757,7 @@ namespace fxprog
 		case LAYOUT_END: ends = left == 0; break;   // every layout drawn this tick has finished
 		case TICK_ABOVE: ends = Tick(t, n) > V(t.end.a[0]); break;   // the counter (before this tick's step) reached it
 		case TICK_AT_NODE_END: ends = Tick(t, n) >= *Fld<int16_t>(t, n, F_END); break;   // its own frame count
+		case LEAF_GONE: ends = Fld<layouts::WhirlLeaf>(t, n, F_LEAF)->scale <= 0; break;
 		default: break;
 		}
 		if (!ends) return 0;

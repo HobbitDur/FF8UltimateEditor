@@ -19,7 +19,7 @@ CURE_ORDER = ["emitter", "ring", "overlay", "glow", "sparkles", "motes", "glints
 
 def test_the_parts_and_what_they_need():
     assert addable([]) == ["emitter", "main", "anchor_layout", "cycle_layout", "turned_glyph",
-                           "clock", "flash_ring", "aura"]   # a start first
+                           "clock", "flash_ring", "aura", "wind"]   # a start first
     assert addable(["emitter"]) == ["ring", "files"]
     assert set(addable(["emitter", "ring"])) == {"overlay", "glow", "sparkles", "motes", "glints", "files"}
     assert addable(["main"]) == ["main_layout", "rings", "targets", "sprites"]
@@ -36,7 +36,7 @@ def test_the_parts_and_what_they_need():
 
 def test_every_combination_compiles_and_all_of_a_family_is_its_effect():
     combinations = {"heal_ring": 66, "layouts": 16, "on_target": 2, "per_action_target": 1,
-                    "per_action_turned": 2, "per_action_clock": 2, "per_action_ring": 4, "per_action_aura": 4}
+                    "per_action_turned": 2, "per_action_clock": 2, "per_action_ring": 4, "per_action_aura": 4, "per_action_wind": 2}
     for kind, start in STARTS.items():
         others = [key for key, template in TEMPLATES.items() if template[2] == kind and key != start]
         built = 0
@@ -114,7 +114,8 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
                                           "One per action, turned with its target (Float's kind)",
                                           "One per action, a clock on its target (Haste's kind)",
                                           "One per action, a flash and a ring (Dispel's kind)",
-                                          "One per action, at its target's feet (Aura's kind)"]
+                                          "One per action, at its target's feet (Aura's kind)",
+                                          "One per action, a wind on its target (Aero's kind)"]
     names = [a.text().split("\t")[0] for a in kinds[0].actions() if not a.isSeparator()]
     assert names[:4] == ["How the effect starts", "Emitter", "Moving parts", "Ring (with Emitter)"]   # group headers
     assert "Sparkles (with Emitter, Ring)" in names
