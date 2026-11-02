@@ -1,0 +1,599 @@
+{
+ "format": 1,
+ "effect": 109,
+ "name": "Dispel",
+ "doc": "Dispel (spell): one target task per action, in turn (one every 10 ticks, not while a young one runs on that target), each a screen flash, sparkles around the target and on a rising circle, a screen fade, the ring layout at the target's effect position; the target takes the result at tick 67.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6CF4B0",
+   "setup": "0x6CF4A0",
+   "root": "0x6CF540"
+  },
+  "memory": {
+   "texture_file": "0x2521A68",
+   "magic_buffer": "0x2521A6C",
+   "ctx": "0x2521A70",
+   "root_pool": "0x2521A78",
+   "packet_cursor": "0x2521A8C",
+   "root_queue": "0x2521AB0"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "circle.seq": {
+   "kind": "seq",
+   "address": "0x12E337C",
+   "size": 196
+  },
+  "sparkles.seq": {
+   "kind": "seq",
+   "address": "0x12E3440",
+   "size": 448
+  },
+  "ring": {
+   "kind": "layout",
+   "address": "0x12E3600",
+   "size": 11792
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x12E6410",
+   "size": 2088
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x12E6C38",
+   "size": 4
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12E6C3C",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the ring's blended vertex frames (after the particle and target pools).",
+  "arenas": [
+   "0x10E0",
+   "0x110E0"
+  ],
+  "morph": "0x10D8"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "target",
+  "every": "$timing.every",
+  "place": [
+   "action_target",
+   0,
+   "@ring",
+   0,
+   0,
+   "$timing.busy_tick",
+   "$ring.size_base",
+   "$ring.size_times"
+  ]
+ },
+ "pools": [
+  {
+   "key": "targets",
+   "queue": "0x2521AA0",
+   "storage": "0x700",
+   "in_magic_buffer": true,
+   "size": 840,
+   "count": 3
+  },
+  {
+   "key": "particles",
+   "queue": "0x2521A90",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 28,
+   "count": 64
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one target task per action, in turn (not while one is young on that target); each target task's clock: the screen flash, its sound, the fade, its result, its end (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "ring",
+   "title": "Ring",
+   "doc": "The ring layout at the target's effect position"
+  },
+  {
+   "id": 2,
+   "key": "sparkles",
+   "title": "Sparkles",
+   "doc": "A flipbook at random points around the target, spread by the anchor's size word"
+  },
+  {
+   "id": 3,
+   "key": "circle",
+   "title": "Circle",
+   "doc": "A flipbook on a rising circle around the target"
+  }
+ ],
+ "groups": [
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "Up over Rise ticks to Level, Level, then down from Fall to the end tick"
+  },
+  {
+   "key": "ring.size",
+   "label": "Size word",
+   "doc": "The anchor's size word: (the target's size + Base) x Times (the sparkles' spread)"
+  },
+  {
+   "key": "sparkles.window",
+   "label": "Spawning",
+   "doc": "One spawned at target ticks From tick, From tick + Every, ... up to To tick"
+  },
+  {
+   "key": "circle.window",
+   "label": "Spawning",
+   "doc": "One spawned at target ticks From tick, From tick + Every, ... up to To tick"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's target task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.busy_tick",
+   "part": "timing",
+   "label": "Busy tick",
+   "doc": "Not while a target task on that target is at this tick or before (the cycle restarts)",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 67,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the target's effect position when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 257,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade_tick",
+   "part": "timing",
+   "label": "Fade tick",
+   "doc": "The engine's screen fade starts when the target tick == this",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 67,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The target task ends when its tick reaches this (the flash off)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 72,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.rise",
+   "part": "timing",
+   "label": "Rise",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "timing",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2300,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fall",
+   "part": "timing",
+   "label": "Fall",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 199,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.depth",
+   "part": "ring",
+   "label": "Depth",
+   "doc": "Added to its drawing depth (sort key)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -256,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.size_base",
+   "part": "ring",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.size_times",
+   "part": "ring",
+   "label": "Times",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.window.first",
+   "part": "sparkles",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.window.last",
+   "part": "sparkles",
+   "label": "To tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 41,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.every",
+   "part": "sparkles",
+   "label": "Every",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 50,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.lift",
+   "part": "sparkles",
+   "label": "Lift",
+   "doc": "Added to y (y goes down)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.scale",
+   "part": "sparkles",
+   "label": "Size",
+   "doc": "The sprite's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.frames",
+   "part": "sparkles",
+   "label": "Frames",
+   "doc": "Flipbook frames, one per tick: it lives this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "circle.window.first",
+   "part": "circle",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 23,
+   "unit": "plain"
+  },
+  {
+   "key": "circle.window.last",
+   "part": "circle",
+   "label": "To tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "circle.every",
+   "part": "circle",
+   "label": "Every",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 50,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "circle.lift",
+   "part": "circle",
+   "label": "Lift",
+   "doc": "Added to y (y goes down)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "circle.scale",
+   "part": "circle",
+   "label": "Size",
+   "doc": "The sprite's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "circle.frames",
+   "part": "circle",
+   "label": "Frames",
+   "doc": "Flipbook frames, one per tick: it lives this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "circle.turns",
+   "part": "circle",
+   "label": "Points a turn",
+   "doc": "angle = (tick - From tick) x 4096 / this",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.seq",
+   "part": "sparkles",
+   "label": "Sequence",
+   "doc": "The sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sparkles.seq",
+   "unit": "plain"
+  },
+  {
+   "key": "circle.seq",
+   "part": "circle",
+   "label": "Sequence",
+   "doc": "The sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@circle.seq",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 840,
+   "function": "0x6CF700",
+   "doc": "One per action: the screen flash; the sparkles and the circle spawned; the fade; the ring at the target's effect position (the anchor callback, record flags 0x40000 and 0x8000: its never-written \"scaled\" word is 0); its sound after the ring; the result; at the end the flash off.",
+   "node": [
+    "counter",
+    "action",
+    [
+     "pad",
+     4
+    ],
+    "entity",
+    "anchor",
+    [
+     "layout",
+     808
+    ]
+   ],
+   "every_tick": [
+    [
+     "screen_flash_curve",
+     "$flash.rise",
+     "$flash.level",
+     "$flash.fall",
+     "$timing.end_tick"
+    ]
+   ],
+   "spawns": [
+    {
+     "task": "particle",
+     "window": [
+      "$sparkles.window.first",
+      "$sparkles.window.last"
+     ],
+     "every": "$sparkles.every",
+     "place": [
+      "random_around",
+      "$sparkles.lift",
+      "$sparkles.scale",
+      "$sparkles.seq",
+      "$sparkles.frames"
+     ]
+    },
+    {
+     "task": "particle",
+     "window": [
+      "$circle.window.first",
+      "$circle.window.last"
+     ],
+     "every": "$circle.every",
+     "place": [
+      "rising_circle",
+      "$circle.lift",
+      "$circle.scale",
+      "$circle.seq",
+      "$circle.frames",
+      "$circle.turns"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "screen_fade_at",
+     "$timing.fade_tick"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "ring",
+     "draw": [
+      "layout_at_anchor",
+      "$ring.depth",
+      "0x48000"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "sound_3d_at",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume"
+    ],
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "tick_above",
+    "$timing.end_tick"
+   ],
+   "at_end": [
+    [
+     "screen_flash_off"
+    ]
+   ]
+  },
+  {
+   "key": "particle",
+   "pool": "particles",
+   "size": 28,
+   "function": "0x6CFC50",
+   "doc": "A sprite sequence drawn in place, one frame a tick, until its frames are done.",
+   "node": [
+    "counter",
+    "end",
+    "pos",
+    "scale",
+    "seq"
+   ],
+   "draws_first": true,
+   "draws": [
+    {
+     "draw": [
+      "node_sequence_sprite",
+      "-0x800"
+     ]
+    }
+   ],
+   "end": [
+    "tick_at_node_end"
+   ]
+  }
+ ]
+}

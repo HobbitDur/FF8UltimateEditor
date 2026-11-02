@@ -19,7 +19,7 @@ CURE_ORDER = ["emitter", "ring", "overlay", "glow", "sparkles", "motes", "glints
 
 def test_the_parts_and_what_they_need():
     assert addable([]) == ["emitter", "main", "anchor_layout", "cycle_layout", "turned_glyph",
-                           "clock"]   # a start first
+                           "clock", "flash_ring"]   # a start first
     assert addable(["emitter"]) == ["ring", "files"]
     assert set(addable(["emitter", "ring"])) == {"overlay", "glow", "sparkles", "motes", "glints", "files"}
     assert addable(["main"]) == ["main_layout", "rings", "targets", "sprites"]
@@ -36,7 +36,7 @@ def test_the_parts_and_what_they_need():
 
 def test_every_combination_compiles_and_all_of_a_family_is_its_effect():
     combinations = {"heal_ring": 66, "layouts": 16, "on_target": 2, "per_action_target": 1,
-                    "per_action_turned": 2, "per_action_clock": 2}
+                    "per_action_turned": 2, "per_action_clock": 2, "per_action_ring": 4}
     for kind, start in STARTS.items():
         others = [key for key, template in TEMPLATES.items() if template[2] == kind and key != start]
         built = 0
@@ -112,7 +112,8 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
                                           "One layout on the target (Antidote's kind)",
                                           "One per action, on its target (Silence's kind)",
                                           "One per action, turned with its target (Float's kind)",
-                                          "One per action, a clock on its target (Haste's kind)"]
+                                          "One per action, a clock on its target (Haste's kind)",
+                                          "One per action, a flash and a ring (Dispel's kind)"]
     names = [a.text().split("\t")[0] for a in kinds[0].actions() if not a.isSeparator()]
     assert names[:4] == ["How the effect starts", "Emitter", "Moving parts", "Ring (with Emitter)"]   # group headers
     assert "Sparkles (with Emitter, Ring)" in names
@@ -159,3 +160,14 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
     assert sorted(other.import_effects([str(folder / "effect_224.fxprog"), str(folder / "effect_225.fxprog")])) == [224, 225]
     assert other.effect_parts(224) == ["emitter", "ring", "sparkles", "files"] and other.effect_name(225) == "Later"
     assert effect_file_text(other.descriptions[224], edited=True) == effect_file_text(fujin.descriptions[224], edited=True)
+
+
+def test_dispel_parts_share_their_particle_task():
+    """Dispel's sparkles and circle are one particle task: it stays while either does."""
+    ring = build_effect(224, "x", ["flash_ring"])
+    assert [task["key"] for task in ring["tasks"]] == ["target"] and not ring["tasks"][0].get("spawns")
+    sparkles = build_effect(224, "x", ["flash_ring", "ring_sparkles"])
+    assert [task["key"] for task in sparkles["tasks"]] == ["target", "particle"]
+    assert [spawn["place"][0] for spawn in sparkles["tasks"][0]["spawns"]] == ["random_around"]
+    compile_program(ring)
+    compile_program(sparkles)

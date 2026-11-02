@@ -517,3 +517,29 @@ Potion's description is the same with its own sequences and sound.
        track, the sound, the texture name ("mag122.tim", "mag124.tim").
      - *Fujin:* their tabs (Timing, Clock, Lower layout); a sixth family in the + menu, "One per
        action, a clock on its target (Haste's kind)": Clock, Lower layout.
+   - **Dispel (109)** (FFNx b572dbe9): the cycle director again, a second task kind (particles),
+     the screen flash.
+     - *Shared:* the cycle director, the action / entity / anchor fields, the anchor callback for
+       its ring (flags 0x40000 and 0x8000: its callback's "scaled" word is never written, so 0,
+       and the scaling branch is dead), the 3D sound, the fade, the action's result, the sequence
+       sprite renderer (Hypnotize's) for its particles.
+     - *Added:*
+       - `action_target` waits while a task of that kind at a given tick or before runs on that
+         target (the cycle restarts) and can give the anchor a size word ((size + base) x
+         times); its values are now mark, layout, layout b, spawn bone, busy tick, size base,
+         size times;
+       - `["pad", n]` node fields (bytes the effect leaves alone), `end` and `seq` fields;
+       - `screen_flash_curve` (rise, level, fall, end) and `screen_flash_off`;
+       - the placements `random_around` (Dispel's sparkles: CRT rand in the original's order,
+         spread by the anchor's size word) and `rising_circle`;
+       - the draw `node_sequence_sprite` (the node's own sequence and size), the end
+         `tick_at_node_end` (its own frame count), a task's `after_draws` actions (the sound and
+         the result after the ring);
+       - a plain task's draws leave no part tag behind (what it does after them is no part's).
+     - *Inputs* (`DispelParams`): the cycle and the busy tick, the sound, the fade / damage / end
+       ticks, the flash curve, the ring's depth and size word, each particle kind's window,
+       every, lift, size, frames and sequence, the circle's points a turn. Data: the ring layout
+       (0x2E10 bytes), two sequences, the camera track (2088 bytes), the sound, "mag108.tim".
+     - *Fujin:* its tabs (Timing, Ring, Sparkles, Circle); a seventh family in the + menu, "One per
+       action, a flash and a ring (Dispel's kind)": Ring (the start), Sparkles, Circle (they share
+       the particle task: it stays while either does).

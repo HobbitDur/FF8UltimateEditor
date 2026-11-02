@@ -1,5 +1,5 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's), and the description an effect made
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's), and the description an effect made
 of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
@@ -8,7 +8,7 @@ from its source effect's whole description, keeping what its parts bring: all of
 together are that effect exactly (whatever order they were added in), some of them a smaller effect
 of the same kind. Parts of two families never mix: their nodes and directors differ (the heal
 ring's effect-library nodes and per-action director, Hypnotize's plain nodes and master, Antidote's
-one layout on the target, Silence's, Float's and Haste's cycles of one task per action).
+one layout on the target, Silence's, Float's, Haste's and Dispel's cycles of one task per action).
 
 No Qt here.
 """
@@ -79,16 +79,27 @@ TEMPLATES = {
     "clock_lower": ("under the target's effect point", "Moving parts", "per_action_clock", 125, "lower", (), (),
                     ("clock",), "A second layout under the target's effect point, lowered by its size, turned with "
                     "it."),
+    # Dispel's family (one task per action: a screen flash, a ring layout, particles)
+    "flash_ring": ("one per action, a flash and a ring", "How the effect starts", "per_action_ring", 109, "ring",
+                   ("target",), (), (), "One task per action, every few ticks (not while a young one runs on that "
+                   "target): a screen flash, a ring layout at the target's effect position, its sound, a fade, the "
+                   "result (Dispel's way)."),
+    "ring_sparkles": ("around the target", "Moving parts", "per_action_ring", 109, "sparkles", ("particle",), (),
+                      ("flash_ring",), "A flipbook at random points around the target, every few ticks."),
+    "ring_circle": ("on a rising circle", "Moving parts", "per_action_ring", 109, "circle", ("particle",), (),
+                    ("flash_ring",), "A flipbook on a rising circle around the target, every few ticks."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout",
-          "per_action_turned": "turned_glyph", "per_action_clock": "clock"}
+          "per_action_turned": "turned_glyph", "per_action_clock": "clock",
+          "per_action_ring": "flash_ring"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
             "on_target": "One layout on the target (Antidote's kind)",
             "per_action_target": "One per action, on its target (Silence's kind)",
             "per_action_turned": "One per action, turned with its target (Float's kind)",
-            "per_action_clock": "One per action, a clock on its target (Haste's kind)"}
+            "per_action_clock": "One per action, a clock on its target (Haste's kind)",
+            "per_action_ring": "One per action, a flash and a ring (Dispel's kind)"}
 
 
 @functools.cache
@@ -172,7 +183,8 @@ def build_effect(effect_id, name, parts, exe=None, keep=None):
     d = new_effect(load_description(source), effect_id, name, exe)
     removed = [key for key, t in TEMPLATES.items() if t[3] == source and key not in parts]
     gone_parts = {TEMPLATES[key][4] for key in removed}
-    gone_tasks = {task for key in removed for task in TEMPLATES[key][5]}
+    kept_tasks = {task for key in parts for task in TEMPLATES[key][5]}
+    gone_tasks = {task for key in removed for task in TEMPLATES[key][5]} - kept_tasks
     gone_actions = {action for key in removed for action in TEMPLATES[key][6]}
     gone_params = {p["key"] for p in d["params"] if p["part"] in gone_parts}
     d["params"] = [p for p in d["params"] if p["part"] not in gone_parts]

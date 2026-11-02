@@ -250,6 +250,8 @@ CYCLES = {
                            "blink.from 5\nblink.ticks 30\n"),
     125: ("mag124.tim", 9, "timing.every 6\ntiming.sound_tick 3\ntiming.fade_tick 20\nscale.base 1500\nscale.shift 1\n"
                            "blink.from 5\nblink.ticks 30\n"),
+    109: ("mag108.tim", 29, "timing.every 6\ntiming.busy_tick 10\ntiming.fade_tick 10\nflash.level 1000\n"
+                            "ring.size_times 2\nsparkles.lift -100\ncircle.turns 4\ncircle.window.last 33\nsparkles.every 3\n"),
 }
 
 
@@ -269,13 +271,14 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow and Haste from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste and Dispel from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
     original, _log = record(tmp_path, effect, "original")
     described, log = record(tmp_path, effect, "described", f"program={program}")
-    assert f"1 tasks, {count} params" in log and untag(described) == original and len(original) > 10000
+    tasks = len(load_description(effect)["tasks"])
+    assert f"{tasks} tasks, {count} params" in log and untag(described) == original and len(original) > 10000
     assert any(line.startswith("N ") for line in original) and any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text(values)
@@ -303,3 +306,14 @@ def test_clock_spell_descriptions_compile():
         assert "camera_matrix" in program.splitlines() and "field spawn 28 8" in program
         assert f"layout_turned 0 -1 1 0 0 $5 $6 62208 {scaled} 1" in program and "layout_turned 1 -1 2 " in program
         assert "end layout_end" in program and ("at_end unmark_target 8" in program) == (effect == 123)
+
+
+def test_dispel_description_compiles():
+    """Dispel: the cycle director waits while a young target task runs on that target and gives the
+    anchor a size word; the target task's screen flash, its particles (a second task), its ring, its
+    sound and result after the ring, the flash off at its end."""
+    program = compile_program(load_description(109))
+    assert "director cycle 0 $0 action_target 0 " in program and program.count("\ntask ") == 2
+    assert "field entity 20 4" in program and "tick screen_flash_curve " in program and "at_end screen_flash_off" in program
+    assert "random_around " in program and "rising_circle " in program and "after sound_3d_at " in program
+    assert "end tick_at_node_end" in program and "node_sequence_sprite -2048" in program

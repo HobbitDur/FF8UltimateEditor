@@ -63,16 +63,16 @@ namespace fxprog
 	enum Limit { NO_LIMIT, BELOW, AT_MOST, AT_LEAST };
 	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value; Step draw; };
 	// a plain node's fields (offsets in the node; -1: none)
-	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, FIELD_COUNT };
+	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, F_END, F_SEQ, FIELD_COUNT };
 	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity",
-	                                                      "layout_b", "spawn" };
+	                                                      "layout_b", "spawn", "end", "seq" };
 	struct Task
 	{
 		std::string key;
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		bool plain = false, draws_first = false;
-		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 		int layout_size = 0, layout_b_size = 0;
 		Step end;                                 // a plain node's end (after its counter)
 		std::vector<Step> at_end;                 // actions when it ends
@@ -80,7 +80,7 @@ namespace fxprog
 		std::vector<Phase> phases;
 		Step motion;
 		std::vector<Spawn> step_spawns, spawns;
-		std::vector<Step> events;
+		std::vector<Step> events, after;          // after: once its draws are done
 		std::vector<Draw> draws;
 	};
 	struct Pool
@@ -121,17 +121,17 @@ namespace fxprog
 		FOLLOW_TARGET, SPAWN, HEAL, DONE, SPAWNING, OVERLAY, SEQUENCE, FLIPBOOK, HELIX_START, OVERLAY_START,
 		HIDE_TARGET, SHOW_TARGET, UNBLOCK_DIRECTOR, VELOCITY_ROLL, VELOCITY_RISE, DRIFT, SOUND_AT, HEAL_ALL_AT,
 		HEAL_FIRST_TARGET, ANCHOR_AT_BONE, SOUND_3D_AT, HEAL_ACTION_AT, UNMARK_TARGET, ANCHOR_AT_POSITION,
-		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET,
+		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET, SCREEN_FLASH_CURVE, SCREEN_FLASH_OFF,
 		// conditions
-		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE,
+		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END,
 		// motions
 		HELIX,
 		// placements
 		CIRCLE_DROP, GLINT, AT_PARENT, TABLE_POINT, RANDOM_TARGET_BONE, RANDOM_TARGET_POINT, ACTION_TARGETS,
-		TARGET_ANCHOR, ACTION_TARGET,
+		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
-		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED,
+		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -151,7 +151,9 @@ namespace fxprog
 		{ "heal_action_at", HEAL_ACTION_AT }, { "unmark_target", UNMARK_TARGET }, { "tick_above", TICK_ABOVE },
 		{ "action_target", ACTION_TARGET }, { "layout_on_target", LAYOUT_ON_TARGET }, { "anchor_at_position", ANCHOR_AT_POSITION },
 		{ "layout_turned", LAYOUT_TURNED }, { "heal_action", HEAL_ACTION }, { "screen_fade_at", SCREEN_FADE_AT },
-		{ "blink_target", BLINK_TARGET },
+		{ "blink_target", BLINK_TARGET }, { "screen_flash_curve", SCREEN_FLASH_CURVE }, { "screen_flash_off", SCREEN_FLASH_OFF },
+		{ "tick_at_node_end", TICK_AT_NODE_END }, { "random_around", RANDOM_AROUND }, { "rising_circle", RISING_CIRCLE },
+		{ "node_sequence_sprite", NODE_SEQUENCE_SPRITE },
 	};
 
 	inline Program *g_program = nullptr;
@@ -304,6 +306,10 @@ namespace fxprog
 			break;
 		case HEAL_ACTION: ApplyActionResultToTarget(Ctx()->actions[*Fld<int16_t>(t, n, F_ACTION)].targets); break;
 		case SCREEN_FADE_AT: if (Tick(t, n) == V(a[0])) ScreenFadeTask(0, 1, 1, 0x60); break;   // tick: the engine's fade (Haste, Slow)
+		case SCREEN_FLASH_CURVE: // rise, level, fall, end: up, held, down (Dispel)
+			SetScreenFlash((uint32_t)layouts::ScreenFlashCurve(Tick(t, n), V(a[0]), V(a[1]), V(a[2]), V(a[3])), 0);
+			break;
+		case SCREEN_FLASH_OFF: SetScreenFlash(0, 0); break;
 		case BLINK_TARGET: // from, ticks: the entity's flag bit 3 on the ticks e % (ticks - e) == 0 (e = tick - from)
 		{
 			uint8_t *e8 = *Fld<uint8_t *>(t, n, F_ENTITY);
@@ -337,8 +343,8 @@ namespace fxprog
 	}
 
 	// a plain node's placement (`from`: the spawning task, `n` its node; e: the spawn's number in
-	// its window)
-	inline void PlacePlain(const Spawn &sp, const Task &from, TaskNode *n, uint32_t e)
+	// its window, offset: its tick from the window's first)
+	inline void PlacePlain(const Spawn &sp, const Task &from, TaskNode *n, uint32_t e, int32_t offset = 0)
 	{
 		const std::vector<Val> &a = sp.place.a;
 		const Task &t = g_program->tasks[sp.task];
@@ -364,6 +370,17 @@ namespace fxprog
 			pos[0] = (int16_t)(pos[0] + spread.roll(CrtRand()));
 			*Fld<int16_t>(t, m, F_SCALE) = (int16_t)scale.roll(CrtRand() >> 4);
 			DecodeLayout(t, m, ((const uint32_t *)V(a[4]))[e % (uint32_t)V(a[5])]);
+			break;
+		}
+		case RANDOM_AROUND: // lift, scale, sequence, frames: around the spawner's anchor, spread by its 4th word
+		case RISING_CIRCLE: // lift, scale, sequence, frames, points a turn: on a rising circle around the spawner's anchor
+		{
+			const int16_t *centre = Fld<int16_t>(from, n, F_ANCHOR);
+			if (sp.place.op == RANDOM_AROUND) layouts::RandomAround(centre, centre[3], V(a[0]), Fld<int16_t>(t, m, F_POS));
+			else layouts::RisingCirclePoint(centre, offset, V(a[4]), V(a[0]), Fld<int16_t>(t, m, F_POS));
+			*Fld<int16_t>(t, m, F_SCALE) = (int16_t)V(a[1]);
+			*Fld<uint32_t>(t, m, F_SEQ) = fxp::sequence((uint32_t)V(a[2]), (uint32_t)G(a[2]));
+			*Fld<int16_t>(t, m, F_END) = (int16_t)V(a[3]);
 			break;
 		}
 		case RANDOM_TARGET_POINT: // bone, x min / max, y min / max, z min / max
@@ -486,6 +503,10 @@ namespace fxprog
 			arg.depth = V(a[0]);
 			left = layouts::Play(Fld<uint8_t>(t, n, F_LAYOUT), &arg);
 			break;
+		case NODE_SEQUENCE_SPRITE: // rotation b: the node's sequence, frame = the counter, at its position, rotation a = its scale
+			layouts::DrawSequenceSprite(Fld<int16_t>(t, n, F_POS), *Fld<uint32_t>(t, n, F_SEQ), (int16_t)Tick(t, n),
+			                            *Fld<int16_t>(t, n, F_SCALE), V(a[0]), PacketCursor());
+			break;
 		case SEQUENCE_SPRITE: // sequence, rotation a, b: frame = the counter, at the node's position
 			layouts::DrawSequenceSprite(Fld<int16_t>(t, n, F_POS), fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])),
 			                            (int16_t)Tick(t, n), V(a[1]), V(a[2]), PacketCursor());
@@ -570,6 +591,7 @@ namespace fxprog
 				if (t.plain) DrawPlain(d, t, n, left);
 				else DrawOne(d, p);
 			}
+			if (t.plain && !t.draws.empty()) FX_PART(0);   // what a plain task does after its draws is no part's
 		};
 		for (const Step &s : t.every_tick) Act(t, s, n);
 		if (!t.plain && h->phase >= 0 && h->phase < (int)t.phases.size())
@@ -609,7 +631,7 @@ namespace fxprog
 				const int32_t every = V(sp.every);
 				if (every <= 0 || (c - w.first) % every != 0) continue;
 				const uint32_t e = (uint32_t)((c - w.first) / every);
-				if (plain) PlacePlain(sp, t, n, e);
+				if (plain) PlacePlain(sp, t, n, e, c - w.first);
 				else Place(sp, p);
 				continue;
 			}
@@ -625,6 +647,7 @@ namespace fxprog
 		}
 		for (const Step &s : t.events) Act(t, s, n);
 		if (!t.draws_first) draws();
+		for (const Step &s : t.after) Act(t, s, n);
 		if (int16_t *c = CounterOf(t, n)) (*c)++;
 		if (!t.plain) return EndWhenDone(h);
 		bool ends = false;
@@ -633,6 +656,7 @@ namespace fxprog
 		case TICK_AT_LEAST: ends = Tick(t, n) >= V(t.end.a[0]); break;
 		case LAYOUT_END: ends = left == 0; break;   // every layout drawn this tick has finished
 		case TICK_ABOVE: ends = Tick(t, n) > V(t.end.a[0]); break;   // the counter (before this tick's step) reached it
+		case TICK_AT_NODE_END: ends = Tick(t, n) >= *Fld<int16_t>(t, n, F_END); break;   // its own frame count
 		default: break;
 		}
 		if (!ends) return 0;
@@ -822,17 +846,35 @@ namespace fxprog
 			}
 			uint8_t &action = m->pad0E;
 			const std::vector<Val> &a = g.director_place.a;
-			if (action <= Ctx()->actions[0].last_action && g.director_place.op == ACTION_TARGET) // mark, layout, layout b (0: none), spawn bone
+			// mark, layout, layout b (0: none), spawn bone, busy tick (-1: none), size word base, times (0: none)
+			if (action <= Ctx()->actions[0].last_action && g.director_place.op == ACTION_TARGET)
 			{
 				const Task &t = g.tasks[g.director_spawns];
-				if (TaskNode *s = (TaskNode *)SpawnTask(g.director_spawns, nullptr))
+				// not while a task of that kind at the busy tick or before runs on that target (Dispel: the cycle restarts)
+				uint8_t *target = Entity(Ctx()->actions[action].targets[0]);
+				bool busy = false;
+				if (V(a[4]) >= 0)
+				{
+					const Pool &pool = g.pools[t.pool];
+					for (int k = 0; k < pool.count && !busy; k++)
+					{
+						uint8_t *node = (uint8_t *)PoolStorage(pool) + k * pool.size;
+						busy = (*(const uint8_t *)&((TaskNode *)node)->flags & 1) && *Fld<uint8_t *>(t, node, F_ENTITY) == target && *Fld<int16_t>(t, node, F_COUNTER) <= V(a[4]);
+					}
+				}
+				if (busy) m->counter = 0;
+				else if (TaskNode *s = (TaskNode *)SpawnTask(g.director_spawns, nullptr))
 				{
 					*Fld<int16_t>(t, s, F_ACTION) = (int16_t)(uint16_t)action;
 					uint8_t *e = Entity(Ctx()->actions[action].targets[0]);
 					*Fld<uint8_t *>(t, s, F_ENTITY) = e;
 					e[0] |= (uint8_t)V(a[0]);
 					e[1] |= (uint8_t)(V(a[0]) >> 8);
-					if (int16_t *anchor = Fld<int16_t>(t, s, F_ANCHOR)) GetDefaultEffectPosition(e, anchor);
+					if (int16_t *anchor = Fld<int16_t>(t, s, F_ANCHOR))
+					{
+						GetDefaultEffectPosition(e, anchor);
+						if (V(a[6])) anchor[3] = (int16_t)((*(const int16_t *)(e + 0x26) + V(a[5])) * V(a[6]));   // its size word
+					}
 					if (int16_t *spawn = Fld<int16_t>(t, s, F_SPAWN)) layouts::GetEffectSpawnPosition(e, V(a[3]), 0, spawn);
 					DecodeLayout(t, s, (uint32_t)V(a[1]));
 					if (V(a[2])) DecodeLayoutB(t, s, (uint32_t)V(a[2]));
@@ -1180,6 +1222,7 @@ namespace fxprog
 				task->spawns.push_back(sp);
 			}
 			else if (d == "event") task->events.push_back(ParseStep(w, 1, &error));
+			else if (d == "after") task->after.push_back(ParseStep(w, 1, &error));
 			else if (d == "draw" && need(6))
 			{
 				Draw dr;

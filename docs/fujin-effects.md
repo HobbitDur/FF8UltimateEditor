@@ -119,7 +119,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   module is a relocated copy of Cure's; Hypnotize: Timing, Main layout,
   Rings, Target layouts, Sprites; the five status-cure items, Soft, Eye Drops, Antidote, Echo
   Screen and Holy Water, copies of one module: Timing, Layout; Silence: Timing, Layout; Float:
-  Timing, Glyph, Upper layout; Slow and Haste, copies of one module: Timing, Clock, Lower layout): the
+  Timing, Glyph, Upper layout; Slow and Haste, copies of one module: Timing, Clock, Lower layout;
+  Dispel: Timing, Ring, Sparkles, Circle): the
   part's parameters as a form
   (bold = not the game's value, **Game values** resets them; a value in its unit when the port gives
   one - fx_params.h `Unit`: an angle in degrees, a size as x 1 = its own - the raw value greyed
@@ -195,7 +196,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   table, each module with its own live values, so Potion and Cure are edited apart -
   `HypnotizeParams` in `mag133_hypnotize.cpp`, `StatusItemParams` in `mag_status_item.h`, shared
   by the five status-cure items, `SilenceParams` in `mag122_silence.cpp`, `FloatParams` in `mag115_float.cpp`,
-  `ClockSpellParams` in `mag_clock_spell.h`, shared by Slow and Haste, defaults = the game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
+  `ClockSpellParams` in `mag_clock_spell.h`, shared by Slow and Haste, `DispelParams` in
+  `mag109_dispel.cpp`, defaults = the game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
   so the forms are always those of the port it runs. A module with parameters registers itself
   for the recorder (`FX_LAB_MODULE`): `build.bat` compiles in every source file naming it. The previews are one more recording: the recorder runs the port instead of
   the exe's code (`native=1`; with the game's values it draws exactly what the original does,
@@ -221,7 +223,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   top, such as Cure and Potion sharing `mag_heal_ring.h` - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
   built again with them); the release's CI does the same before building the recorder.
   **Description** (Choreography, for the effects Fujin describes: Cure, Potion, Hypnotize,
-  Soft, Eye Drops, Antidote, Echo Screen, Holy Water, Silence, Float, Slow, Haste): the
+  Soft, Eye Drops, Antidote, Echo Screen, Holy Water, Silence, Float, Slow, Haste, Dispel): the
   effect's description as JSON (its parts, tasks, director, pools: see
   [fujin-effect-description.md](fujin-effect-description.md)). Apply checks that it compiles.
   **New effect from this…** (above the tabs, for every described effect, new ones included)
@@ -239,7 +241,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   **Building an effect part by part:** a free slot (224, 225, 346-400) shows **Create a new effect
   here** (beside **Copy an effect here…**). It makes an empty effect there, and Choreography opens with a **+** tab. Clicking +
   lists the parts Fujin knows, named as their tabs, with a few words on each:
-  - an empty effect first offers the six kinds as submenus:
+  - an empty effect first offers the seven kinds as submenus:
     - around one target at a time (Cure's kind): Emitter, Ring, Overlay, Ground glow, Sparkles,
       Motes, Glints, Files;
     - over the whole cast at once (Hypnotize's kind): Timing, Main layout, Rings, Target
@@ -248,6 +250,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
     - one per action, on its target (Silence's kind): Layout;
     - one per action, turned with its target (Float's kind): Glyph, Upper layout;
     - one per action, a clock on its target (Haste's kind): Clock, Lower layout;
+    - one per action, a flash and a ring (Dispel's kind): Ring, Sparkles, Circle;
   - once it has parts, + lists only its kind's parts, by group (how the effect starts, moving
     parts, drawn by another part, sound, files). The parts it has are ticked.
 

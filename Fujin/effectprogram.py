@@ -44,18 +44,19 @@ ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, 
            "helix_start": 7, "overlay_start": 4, "hide_target": 0, "show_target": 0, "unblock_director": 0,
            "velocity_roll": 6, "velocity_rise": 2, "drift": 0, "sound_at": 3, "heal_all_at": 1, "heal_first_target": 0,
            "anchor_at_bone": 1, "sound_3d_at": 3, "heal_action_at": 1, "unmark_target": 1, "anchor_at_position": 0,
-           "heal_action": 0, "screen_fade_at": 1, "blink_target": 2}
-CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1}
+           "heal_action": 0, "screen_fade_at": 1, "blink_target": 2, "screen_flash_curve": 4, "screen_flash_off": 0}
+CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1, "tick_at_node_end": 0}
 # the master director's own events (on its counter, after its queues: "events"; before: "events_first")
 DIRECTOR_EVENTS = {"sound_at": 3}
 MOTIONS = {"helix": 2}
 PLACES = {"at_parent": 0, "circle_drop": 8, "glint": 13, "table_point": 3, "random_target_bone": 6,
-          "random_target_point": 7, "action_targets": 1, "target_anchor": 7, "action_target": 4}
+          "random_target_point": 7, "action_targets": 1, "target_anchor": 7, "action_target": 7, "random_around": 4,
+          "rising_circle": 5}
 DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_screen": 5, "layout_at_caster_bone": 1,
          "layout_scaled": 1, "sequence_sprite": 3, "layout_at_anchor": 2, "layout_on_target": 5,
-         "layout_turned": 10}
+         "layout_turned": 10, "node_sequence_sprite": 1}
 # a plain node's fields and their sizes (a layout's is given: ["layout", size])
-FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14, "anchor": 8, "action": 2, "entity": 4, "spawn": 8}
+FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14, "anchor": 8, "action": 2, "entity": 4, "spawn": 8, "end": 2, "seq": 4}
 NODE_HEADER = 0xC
 TASK_QUEUE = 0x10
 # what each named memory holds (fxprogram.h), in bytes: a word, an engine task queue, the root pool
@@ -162,9 +163,10 @@ def compile_program(description, values=None):
         out, offset = ["node plain"], NODE_HEADER
         for item in task["node"]:
             name, size = (item[0], _number(item[1])) if isinstance(item, list) else (item, FIELDS.get(item))
-            if name not in FIELDS and name not in ("layout", "layout_b") or size is None:
+            if name not in FIELDS and name not in ("layout", "layout_b", "pad") or size is None:
                 raise DescriptionError(f"{where}: no node field {name}")
-            out.append(f"field {name} {offset} {size}")
+            if name != "pad":                    # ["pad", n]: n bytes the effect does not use
+                out.append(f"field {name} {offset} {size}")
             offset += size
         if offset > task["size"]:
             raise DescriptionError(f"{where}: its fields take {offset:#x} bytes, the node {task['size']:#x}")
@@ -277,6 +279,7 @@ def compile_program(description, values=None):
             place = step(spawn["place"], PLACES, where, names={0: pools} if spawn["place"][0] == "glint" else ())
             lines.append(f"spawn {target} {flag(spawn.get('if'), where)} {first} {last} {' '.join(count)} {place}")
         lines += [f"event {action(entry, where)}" for entry in task.get("events", [])]
+        lines += [f"after {action(entry, where)}" for entry in task.get("after_draws", [])]
         for draw in task.get("draws", []):
             limit = "-", "-"
             if "while_tick_below" in draw:
