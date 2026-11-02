@@ -115,7 +115,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   **Part tabs** (one per part of an effect FFNx has a C++ port with parameters for; Cure:
   Emitter, Ring, Ground glow, Overlay, Sparkles, Motes, Glints, and the same for Potion, whose
   module is a relocated copy of Cure's; Hypnotize: Timing, Main layout,
-  Rings, Target layouts, Sprites): the part's parameters as a form
+  Rings, Target layouts, Sprites; Antidote: Timing, Layout): the part's parameters as a form
   (bold = not the game's value, **Game values** resets them; a value in its unit when the port gives
   one - fx_params.h `Unit`: an angle in degrees, a size as x 1 = its own - the raw value greyed
   beside it; a fraction's value greyed beside its divisor; a frames field stops at its sequence's
@@ -188,8 +188,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   capped, a random share, the effect library's glint style -
   `HealRingParams` in `mag_heal_ring.h`, shared by Cure and Potion - one struct, parts and field
   table, each module with its own live values, so Potion and Cure are edited apart -
-  `HypnotizeParams` in `mag133_hypnotize.cpp`, defaults = the
-  game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
+  `HypnotizeParams` in `mag133_hypnotize.cpp`, `AntidoteParams` in `mag294_antidote.cpp`,
+  defaults = the game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
   so the forms are always those of the port it runs. A module with parameters registers itself
   for the recorder (`FX_LAB_MODULE`): `build.bat` compiles in every source file naming it. The previews are one more recording: the recorder runs the port instead of
   the exe's code (`native=1`; with the game's values it draws exactly what the original does,
@@ -214,7 +214,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   channels: `VanillaDecompiledForFutur30FPS` (the ports) plus the editor's parameter rework on
   top, such as Cure and Potion sharing `mag_heal_ring.h` - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
   built again with them); the release's CI does the same before building the recorder.
-  **Description** (Choreography, for the effects Fujin describes: Cure, Potion, Hypnotize): the
+  **Description** (Choreography, for the effects Fujin describes: Cure, Potion, Hypnotize,
+  Antidote): the
   effect's description as JSON (its parts, tasks, director, pools: see
   [fujin-effect-description.md](fujin-effect-description.md)). Apply checks that it compiles.
   **New effect from this…** (above the tabs, for every described effect, new ones included)
@@ -232,13 +233,14 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   **Building an effect part by part:** a free slot (224, 225, 346-400) shows **Create a new effect
   here** (beside **Copy an effect here…**). It makes an empty effect there, and Choreography opens with a **+** tab. Clicking +
   lists the parts Fujin knows, named as their tabs, with a few words on each:
-  - an empty effect first offers the two kinds as submenus:
+  - an empty effect first offers the three kinds as submenus:
     - around one target at a time (Cure's kind): Emitter, Ring, Overlay, Ground glow, Sparkles,
       Motes, Glints, Files;
     - over the whole cast at once (Hypnotize's kind): Timing, Main layout, Rings, Target
       layouts, Sprites;
+    - one layout on the target (Antidote's kind): Layout, Timing (its sound);
   - once it has parts, + lists only its kind's parts, by group (how the effect starts, moving
-    parts, drawn by another part, files). The parts it has are ticked.
+    parts, drawn by another part, sound, files). The parts it has are ticked.
 
   A part comes with the parts it needs: "Sparkles (with Emitter, Ring)" adds all three. Each part
   adds its tab (before +, which stays the last tab) at the game's values. Right-clicking a part's tab removes it, with the parts that need it. Cure's parts all together are Cure exactly, whatever order they

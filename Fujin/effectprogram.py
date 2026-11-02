@@ -12,11 +12,13 @@ a part is named by its key; a spawn's or a draw's "if" names a flag of the node 
 "overlay").
 
 A task's node is the effect library's (the heal ring's: phases, motion, flags) unless the task
-lists its "node" fields: a plain node (Hypnotize's), the fields laid out in that order after the
-engine's node header, its "end" a condition checked after its counter. Its spawns can come
-"every" n ticks of their window, its draws can be prim layouts. The director is "per_action" (the
-heal ring's) or "master" (Hypnotize's: it starts one task at its start tick, with the targets of
-action 0, and alternates the "magic_buffer" arenas).
+lists its "node" fields: a plain node (Hypnotize's, Antidote's), the fields laid out in that order
+after the engine's node header, its "end" a condition checked after its counter, then its "at_end"
+actions. Its spawns can come "every" n ticks of their window, its draws can be prim layouts. The
+director is "per_action" (the heal ring's) or "master" (Hypnotize's, Antidote's: it starts one task
+at its start tick - with the targets of action 0, or at an anchor on target 0 - alternates the
+"magic_buffer" arenas and runs its own "events" on its counter). An effect with no "camera"
+resource starts no camera track.
 
 The memory an effect works in is its exe copy's ("copy": "memory", addresses) or its own
 ("own_memory": name: size in bytes, allocated by the runtime), its pools' queues and storage then
@@ -38,15 +40,17 @@ FLAGS = {"spawning": 2, "overlay": 8}
 # the operations of each kind the runner knows (fxprogram.h OPS) and how many arguments they take
 ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, "overlay": 1, "sequence": 1, "flipbook": 2,
            "helix_start": 7, "overlay_start": 4, "hide_target": 0, "show_target": 0, "unblock_director": 0,
-           "velocity_roll": 6, "velocity_rise": 2, "drift": 0, "sound_at": 3, "heal_all_at": 1}
+           "velocity_roll": 6, "velocity_rise": 2, "drift": 0, "sound_at": 3, "heal_all_at": 1, "heal_first_target": 0}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0}
+# the master director's own events (on its counter, after its queues)
+DIRECTOR_EVENTS = {"sound_at": 3}
 MOTIONS = {"helix": 2}
 PLACES = {"at_parent": 0, "circle_drop": 8, "glint": 13, "table_point": 3, "random_target_bone": 6,
-          "random_target_point": 7, "action_targets": 1}
+          "random_target_point": 7, "action_targets": 1, "target_height": 3}
 DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_screen": 5, "layout_at_caster_bone": 1,
-         "layout_scaled": 1, "sequence_sprite": 3}
+         "layout_scaled": 1, "sequence_sprite": 3, "layout_at_anchor": 2}
 # a plain node's fields and their sizes (a layout's is given: ["layout", size])
-FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14}
+FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14, "anchor": 8}
 NODE_HEADER = 0xC
 TASK_QUEUE = 0x10
 # what each named memory holds (fxprogram.h), in bytes: a word, an engine task queue, the root pool
@@ -189,7 +193,8 @@ def compile_program(description, values=None):
         lines.append(f"own {name} {_number(size)}")
     texture = description["resources"]["texture"]
     lines.append(f"texture {value(texture['game_name'], 'texture')} {params.get(texture.get('param'), -1)}")
-    lines.append(f"camera {value(description['resources']['camera'], 'camera')}")
+    camera = description["resources"].get("camera")         # none: the effect starts no camera track
+    lines.append(f"camera {value(camera, 'camera') if camera is not None else 0}")
     for pool in description["pools"]:
         own, in_buffer = pool.get("own"), pool.get("in_magic_buffer")
         queue = "own" if own else f"0x{_number(pool['queue']):X}"
@@ -206,6 +211,7 @@ def compile_program(description, values=None):
     if director["kind"] == "master":
         lines.append(f"director master {tasks[director['spawns']]} {_number(director.get('start_tick', 1))} "
                      f"{step(director['place'], PLACES, 'director')}")
+        lines += [f"director_event {step(entry, DIRECTOR_EVENTS, 'director')}" for entry in director.get("events", [])]
     else:
         lines.append(f"director per_action {tasks[director['spawns']]}")
     for param in description["params"]:
@@ -228,6 +234,7 @@ def compile_program(description, values=None):
             lines.append("order draws_first")
         if task.get("end"):
             lines.append(f"end {step(task['end'], CONDITIONS, where)}")
+        lines += [f"at_end {action(entry, where)}" for entry in task.get("at_end", [])]
         lines += [f"tick {action(entry, where)}" for entry in task.get("every_tick", [])]
         for number, phase in enumerate(task.get("phases", [])):
             here = f"{where} phase {number}"

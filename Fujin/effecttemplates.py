@@ -1,12 +1,14 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's), and the description an effect made of some of them gets.
+effect it describes (Cure's, Hypnotize's, Antidote's), and the description an effect made of some of
+them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
 task (an action in its phases, a spawn, a draw), the pools and the data it uses. An effect is built
 from its source effect's whole description, keeping what its parts bring: all of a family's parts
 together are that effect exactly (whatever order they were added in), some of them a smaller effect
 of the same kind. Parts of two families never mix: their nodes and directors differ (the heal
-ring's effect-library nodes and per-action director, Hypnotize's plain nodes and master).
+ring's effect-library nodes and per-action director, Hypnotize's plain nodes and master, Antidote's
+one layout on the target).
 
 No Qt here.
 """
@@ -52,11 +54,18 @@ TEMPLATES = {
                 ("main",), "Prim layouts at random bones of random targets, at random sizes."),
     "sprites": ("around a target", "Moving parts", "layouts", 133, "sprites", ("sprite",), (), ("main",),
                 "A flipbook at random points around a target's bone."),
+    # Antidote's family (the status-cure items: the master starting one prim layout on the target)
+    "anchor_layout": ("played on the target", "How the effect starts", "on_target", 294, "layout", ("play",), (), (),
+                      "One prim layout played at an anchor on the target (a share of its height); the target "
+                      "takes the result when it ends (Antidote's way)."),
+    "anchor_timing": ("the sound on the effect's clock", "Sound", "on_target", 294, "timing", (), (),
+                      ("anchor_layout",), "The sound, played on a tick of the effect's own clock."),
 }
-GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Files")
-STARTS = {"heal_ring": "emitter", "layouts": "main"}
+GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
+STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
-            "layouts": "Over the whole cast at once (Hypnotize's kind)"}
+            "layouts": "Over the whole cast at once (Hypnotize's kind)",
+            "on_target": "One layout on the target (Antidote's kind)"}
 
 
 @functools.cache
@@ -175,6 +184,11 @@ def build_effect(effect_id, name, parts, exe=None, keep=None):
                              and not gone(x)]
         tasks.append(task)
     d["tasks"] = tasks
+    director = d.get("director") or {}
+    if "events" in director:
+        director["events"] = [event for event in director["events"] if not gone(event)]
+        if not director["events"]:
+            del director["events"]
     used_pools = {t["pool"] for t in tasks} | {s["place"][1] for t in tasks for s in t.get("spawns", [])
                                               if s.get("place", [None])[0] == "glint"}
     d["pools"] = [p for p in d["pools"] if p["key"] in used_pools]

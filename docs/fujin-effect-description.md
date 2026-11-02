@@ -394,3 +394,32 @@ Potion's description is the same with its own sequences and sound.
        not decoded yet).
      - New data from scratch: today it is the exe's, copied, then edited.
      - A structured editor: the description is edited as JSON text.
+7. **More effects, one at a time**, each one reusing the libraries where it can and adding only
+   what nothing covers. Each is checked as Hypnotize is (`tests/Fujin/test_effect_program.py`): from
+   its description it records exactly what the exe's code records; with parameters, exactly what
+   FFNx's port records with them; as a free slot with no exe function, itself again.
+   - **Antidote (294)** (FFNx 736a2d6c), the first of the five status-cure item modules (292 Soft,
+     293 Eye Drops, 294 Antidote, 295 Echo Screen, 296 Holy Water: one source built five times with
+     different options). One prim layout played on the target; the target takes the result when
+     it ends.
+     - *Shared with Hypnotize:* the master director (arenas, pools at tick 1, one started task,
+       the end when every queue is empty), plain nodes, the prim player, its layouts and their
+       data editor, the `layout_end` condition, the effect's file and setup (no camera: an
+       effect may have no `camera` resource, then it starts no camera track).
+     - *Added to the libraries* (FFNx `fx_layouts.h`, the runtime, the compiler):
+       - the anchor callback `AnchorPrimCallback`: each object's offset added to an anchor,
+         through the camera. The record flags a build tests are an argument (0x100 diagonal
+         scale, 0x200 offset as is, 0x400 ZYX angles, 0x8000 not turned with the camera, 0x40000
+         YXZ angles), so all five modules can share it. Draw `layout_at_anchor` (depth, flags);
+       - the input `HeightPoint`: an entity's effect position at a share of its height. Director
+         placement `target_height` (times, share, layout): the started task's `anchor` (a new node
+         field, 8 bytes) on target 0 of action 0;
+       - the director's own `events` on its counter, after its queues (`sound_at`: Antidote's
+         sound plays on the root's clock, not a task's);
+       - a task's `at_end` actions, run when its end condition holds (`heal_first_target`: target
+         0 of action 0 takes the result when the layout ends).
+     - *Inputs* (`AntidoteParams` in FFNx, the description's parameters): the sound, its tick and
+       pan; the layout's depth; the anchor's height share (times / share, 1 / 2 in the game). The
+       layout itself is data (`@layout`, 0x2B4C bytes in the exe, edited in the Data tab).
+     - *Fujin:* its tabs (Timing, Layout); a third family in the + menu, "One layout on the
+       target (Antidote's kind)": Layout (the start) and Timing (its sound).

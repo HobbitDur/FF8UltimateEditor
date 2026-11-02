@@ -18,10 +18,11 @@ CURE_ORDER = ["emitter", "ring", "overlay", "glow", "sparkles", "motes", "glints
 
 
 def test_the_parts_and_what_they_need():
-    assert addable([]) == ["emitter", "main"]                                 # a start first
+    assert addable([]) == ["emitter", "main", "anchor_layout"]                # a start first
     assert addable(["emitter"]) == ["ring", "files"]
     assert set(addable(["emitter", "ring"])) == {"overlay", "glow", "sparkles", "motes", "glints", "files"}
     assert addable(["main"]) == ["main_layout", "rings", "targets", "sprites"]
+    assert addable(["anchor_layout"]) == ["anchor_timing"]
     assert dependents(["emitter", "ring", "sparkles", "files"], "ring") == ["ring", "sparkles"]
     assert dependents(["emitter", "ring", "files"], "emitter") == ["emitter", "ring", "files"]
     empty = empty_effect(224, "By hand")
@@ -33,6 +34,7 @@ def test_the_parts_and_what_they_need():
 
 
 def test_every_combination_compiles_and_all_of_a_family_is_its_effect():
+    combinations = {"heal_ring": 66, "layouts": 16, "on_target": 2}
     for kind, start in STARTS.items():
         others = [key for key, template in TEMPLATES.items() if template[2] == kind and key != start]
         built = 0
@@ -42,7 +44,7 @@ def test_every_combination_compiles_and_all_of_a_family_is_its_effect():
                 if all(set(TEMPLATES[part][7]) <= set(parts) for part in parts):
                     compile_program(build_effect(224, "x", parts))
                     built += 1
-        assert built > 10
+        assert built == combinations[kind]
         source = TEMPLATES[start][3]
         full = compile_program(build_effect(224, "x", list(reversed([start, *others]))))   # any order
         assert full == compile_program(new_effect(load_description(source), 224, "x"))
@@ -51,6 +53,8 @@ def test_every_combination_compiles_and_all_of_a_family_is_its_effect():
     assert [pool["key"] for pool in small["pools"]] == ["emitters", "particles"]
     assert {param["part"] for param in small["params"]} == {"emitter", "ring", "sparkles"}
     assert "overlay_start" not in compile_program(small) and "param files.texture" not in compile_program(small)
+    silent = build_effect(224, "x", ["anchor_layout"])                         # Antidote's layout, no sound
+    assert "events" not in silent["director"] and "director_event" not in compile_program(silent)
 
 
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim", "extracted_files/battle/d0c000.dat",
@@ -102,7 +106,8 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
     # + names the parts as their tabs: one submenu per kind first, a part bringing what it needs
     kinds = [a.menu() for a in fujin.parts_menu().actions() if a.menu()]
     assert [m.title() for m in kinds] == ["Around one target at a time (Cure's kind)",
-                                          "Over the whole cast at once (Hypnotize's kind)"]
+                                          "Over the whole cast at once (Hypnotize's kind)",
+                                          "One layout on the target (Antidote's kind)"]
     names = [a.text().split("\t")[0] for a in kinds[0].actions() if not a.isSeparator()]
     assert names[:4] == ["How the effect starts", "Emitter", "Moving parts", "Ring (with Emitter)"]   # group headers
     assert "Sparkles (with Emitter, Ring)" in names
