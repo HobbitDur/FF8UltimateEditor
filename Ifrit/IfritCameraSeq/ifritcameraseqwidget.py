@@ -2,37 +2,32 @@
 section 6, and character (dXc) section 5.
 
 The camera section is NOT a byte-code program like the animation section IfritSeq edits; it is
-a set of key-framed camera motions (see FF8GameData/dat/cameracollection.py). This tab shows
-that structure - sets -> 8 animation slots -> blocks (FOV/roll) -> keyframes - and lets each
-value be edited. The model is a view over the raw section bytes: every edit patches a
-fixed-size field in place, so saving a file changes only the bytes the user actually touched
-(byte-for-byte identical otherwise), exactly like IfritSeq's hex box is its source of truth.
+a set of key-framed camera motions (see FF8GameData/dat/cameracollection.py): sets -> 8
+animation slots -> blocks (easing, layout, FOV, roll) -> keyframes. The keyframes are edited
+with the shared Common/cameracollectionwidget grid, the same one Fujin's and Alexander's camera
+editors use, so every camera editor offers the same lists and layout. A value edit patches its
+field in place (saving changes only the bytes touched); adding or removing a keyframe, a slot's
+animation or changing a block's FOV/roll mode rebuilds the collection.
 
-The tab mirrors IfritSeq's shape (a scroll area of collapsible frames, a toolbar with an info
-button and a raw-hex toggle) and its two public entry points, load_file() and save_file(),
-called by IfritMonsterWidget. Both monster section 6 and character section 5 are the *same*
-bare camera-animation collection format (verified against FF8_EN.exe: the game plays the
-acting entity's own collection via cameraWhenDoingAction / command_queue->unk09). The only
-difference is the set count: monsters usually have 1 set (8 slots), characters have 2 sets
-(16 slots). The byte-code camera VM only exists in stage/R0WIN/spell blobs, not in these
-per-entity sections, so there is nothing extra to edit for characters.
+Both monster section 6 and character section 5 are the *same* bare camera-animation collection
+format (verified against FF8_EN.exe: the game plays the acting entity's own collection via
+cameraWhenDoingAction / command_queue->unk09). The only difference is the set count: monsters
+usually have 1 set (8 slots), characters have 2 sets (16 slots). The byte-code camera VM only
+exists in stage/R0WIN/spell blobs, not in these per-entity sections.
 """
 import os
 
-from PyQt6.QtCore import Qt, QSettings, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-                             QScrollArea, QGroupBox, QSpinBox, QGridLayout, QCheckBox,
-                             QMessageBox, QPlainTextEdit, QSizePolicy, QFileDialog,
-                             QSplitter)
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+                             QCheckBox, QMessageBox, QPlainTextEdit, QSplitter)
 
+from Common.cameracollectionwidget import CameraCollectionWidget
+from Common.deferredcall import defer
 from FF8GameData.monsterdata import EntityType
 from FF8GameData.dat.cameracollection import parse_camera_collection, CameraParseError
 from Ifrit.ifritmanager import IfritManager
 from Ifrit.IfritCameraSeq.camerapreview import CameraPreviewPanel
-from Common.deferredcall import defer
-from Common.collapsiblesection import CollapsibleSection
-from Common.cameramodecombo import CameraModeCombo
 
 # Which raw section index holds the camera animation collection, per entity type. Both are the
 # same bare-collection format; monsters carry it in section 6 (usually 1 set), characters in
@@ -44,89 +39,11 @@ _CAMERA_SECTION_BY_ENTITY = {
 }
 
 
-# One-line explanation of every editable field, shown as hover text.
-_FRAME_TOOLTIP = {
-    "duration": "Frames this keyframe lasts: the camera glides from this keyframe to the "
-                "next over this many frames (playback ≈15 fps). 0 = instant.",
-    "pos_x": "Camera position X (side to side), world units, signed (−32768…32767).",
-    "pos_y": "Camera position Y (up/down), world units, signed.",
-    "pos_z": "Camera position Z (depth / forward-back), world units, signed.",
-    "pos_interp": "Position coordinate mode: the reference frame this position's X/Y/Z are in "
-                  "(an entity's bone scaled by its size, the current view, the world...).",
-    "look_x": "Look-at target X — the point the camera faces, world units, signed.",
-    "look_y": "Look-at target Y — the point the camera faces, world units, signed.",
-    "look_z": "Look-at target Z — the point the camera faces, world units, signed.",
-    "look_interp": "Look-at coordinate mode: the reference frame this look-at's X/Y/Z are in.",
-}
-_BLOCK_FIELD_TOOLTIP = {
-    "FOV start": "Field of view at the start of this block. Higher = zoomed in (telephoto), "
-                 "lower = wider. Default is 0x200 (512).",
-    "FOV end": "Field of view at the end of this block (the FOV animates from start to end).",
-    "Roll start": "Camera roll — tilt around the view direction — at the start of this block. "
-                  "0 = level.",
-    "Roll end": "Camera roll at the end of this block (roll animates from start to end).",
-}
-# Hover text for the collapsible group titles, explaining the camera hierarchy.
-_SET_TOOLTIP = (
-    "Set — a bank of 8 animation slots. The game chooses a set with the top nibble of a "
-    "camera index ((index >> 4) & 0xF); vanilla monsters use 1 or 2 sets. Within a set, the "
-    "low 3 bits (index & 7) pick the slot.")
-_ANIMATION_TOOLTIP = (
-    "Animation — one complete camera shot for a moment (e.g. the swoop for a particular "
-    "attack). It is the unit the game plays: \"play camera animation N\". Made of one or more "
-    "blocks played back to back. Empty slots (FFFF) do nothing.\n\n"
-    "What triggers a shot lives in the attacking spell/ability effect, not here; section 6 is "
-    "just this monster's library of shots.")
-_BLOCK_TOOLTIP = (
-    "Block — a run of keyframes sharing one FOV and one roll setting (each glides from its "
-    "start value to its end value across the block). A new block begins when the lens "
-    "behaviour changes. A block can hold 1 keyframe (a static pose), 2 (a move from A to B, "
-    "the common case) or more (a multi-point path).")
-
-# The frame-grid columns, paired with their tooltip key (None = the '#' index column).
-_FRAME_COLUMNS = [("#", None), ("Duration", "duration"),
-                  ("Pos X", "pos_x"), ("Pos Y", "pos_y"), ("Pos Z", "pos_z"),
-                  ("Pos mode", "pos_interp"),
-                  ("Look X", "look_x"), ("Look Y", "look_y"), ("Look Z", "look_z"),
-                  ("Look mode", "look_interp")]
-
-
-class NoWheelSpinBox(QSpinBox):
-    """A spin box that ignores the mouse wheel, so scrolling the tab never changes a value by
-    accident. Overriding the method (not reassigning wheelEvent on the instance) is what makes
-    this reliable - Qt dispatches the wheel event to the C++ virtual, i.e. this override."""
-
-    def wheelEvent(self, event):
-        event.ignore()
-
-
-def _bind_spin(field, tooltip: str = "") -> NoWheelSpinBox:
-    """A decimal spin box bound to a CameraField: editing it patches the section bytes.
-
-    Camera coordinates are signed 16-bit spatial values, so decimal (not IfritSeq's hex
-    QSpinHex) is the readable form; the field's own kind gives the range and signedness.
-    """
-    spin = NoWheelSpinBox()
-    spin.setRange(field.minimum, field.maximum)
-    spin.setValue(field.get())
-    spin.setKeyboardTracking(False)
-    # Keep every spin at its minimum useful width so a row of them stays compact and left
-    # aligned instead of each cell stretching to fill the tab.
-    spin.setMaximumWidth(72)
-    spin.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-    if tooltip:
-        spin.setToolTip(tooltip)
-    # Write edits straight back into the section bytes (the field patches the raw buffer).
-    # A lambda, not field.set directly: CameraField uses __slots__ and cannot be weak-referenced.
-    spin.valueChanged.connect(lambda value: field.set(value))
-    return spin
-
-
 class IfritCameraSeqWidget(QWidget):
-    """Camera animation collection editor for a monster's section 6."""
+    """Camera animation collection editor for a monster's section 6 (a character's section 5)."""
 
-    # Emitted after any edit is written into enemy.section_raw_data (value change or added
-    # animation). The host pane dirties the file and records an undo step from it (camera writes
+    # Emitted after any edit is written into enemy.section_raw_data (value change or structural
+    # edit). The host pane dirties the file and records an undo step from it (camera writes
     # the model live, like Stat/3D/Seq - nothing deferred to Save).
     data_edited = pyqtSignal()
 
@@ -134,22 +51,16 @@ class IfritCameraSeqWidget(QWidget):
         QWidget.__init__(self)
         self.ifrit_manager = ifrit_manager
         self.icon_path = icon_path
-        self.settings = QSettings("FF8UltimateEditor", "FF8UltimateEditor")
-        self._populating = False      # True while (re)building spins: their setValue must not count
         self._collection = None       # the parsed CameraCollection (a copy we edit)
         self._editable = False        # False for a file with no editable camera section
-        self._spin_list = []          # every bound spin box, to refresh the hex view
-        self._animation_sections = []  # the animation-slot CollapsibleSections, to fold by default
-        self._grid_holders = []       # each block's keyframe grid, to size the editor pane
+        self._collection_widget = None
         self.__camera_icon = QIcon(os.path.join(icon_path, 'ifrit.ico'))
-        self.file_dialog = QFileDialog()
 
         root = QVBoxLayout()
         self.setLayout(root)
 
         # ── Toolbar ──────────────────────────────────────────────────
         toolbar = QHBoxLayout()
-
         self.info_button = QPushButton()
         self.info_button.setIcon(QIcon(os.path.join(icon_path, 'info.png')))
         self.info_button.setFixedSize(40, 40)
@@ -173,18 +84,10 @@ class IfritCameraSeqWidget(QWidget):
         self.hex_view.hide()
         root.addWidget(self.hex_view)
 
-        # ── Editor (left) + shared 3D preview (right), split ─────────
+        # ── Keyframes (left) + shared 3D preview (right), split ──────
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-        self.content_widget = QWidget()
-        self.content_layout = QVBoxLayout()
-        self.content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.content_widget.setLayout(self.content_layout)
-        self.scroll_area.setWidget(self.content_widget)
-
-        # One shared preview panel for every animation (not a popup per slot).
         self._preview_panel = CameraPreviewPanel(self.ifrit_manager, file_registry=file_registry)
-
         self._splitter = QSplitter(Qt.Orientation.Horizontal)
         self._splitter.addWidget(self.scroll_area)
         self._splitter.addWidget(self._preview_panel)
@@ -209,77 +112,81 @@ class IfritCameraSeqWidget(QWidget):
             if index is not None:
                 self.ifrit_manager.enemy.section_raw_data[index] = self._collection.get_bytes()
 
-    # ── XML import / export (like IfritSeq) ───────────────────────────
-
     # ── Loading ───────────────────────────────────────────────────────
     def __load(self):
-        self.__clear()
+        self.__set_collection(None)
         # The monster changed: stop any preview and reload its model on the next Preview.
         self._preview_panel.invalidate()
+        self._editable = False
         enemy = getattr(self.ifrit_manager, "enemy", None)
         if enemy is None:
             self.summary_label.setText("No file loaded")
             return
         index = _CAMERA_SECTION_BY_ENTITY.get(enemy.entity_type)
         if index is None or index >= len(enemy.section_raw_data):
-            self._editable = False
             self.summary_label.setText("This file type has no camera section.")
             return
         raw = bytes(enemy.section_raw_data[index])
         if len(raw) < 6:
-            self._editable = False
             self.summary_label.setText(f"This file has no camera data (empty section {index}).")
             return
         try:
-            self._collection = parse_camera_collection(raw)
+            collection = parse_camera_collection(raw)
         except CameraParseError as error:
-            self._editable = False
-            self.summary_label.setText(f"Section 6 is not a camera collection: {error}")
+            self.summary_label.setText(f"Section {index} is not a camera collection: {error}")
             return
         self._editable = True
-        self._populating = True                   # build-time setValue must not count as edits
-        try:
-            self.__build()
-            self.__finish_build(collapse_slots=True)  # default: only the animation slots are open
-            self.__refresh_hex()
-        finally:
-            self._populating = False
-
-    def __clear(self):
-        self._collection = None
-        self.__clear_content()
-
-    def __clear_content(self):
-        self._spin_list = []
-        self._animation_sections = []
-        self._grid_holders = []
-        while self.content_layout.count():
-            item = self.content_layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.setParent(None)
-                widget.deleteLater()
-
-    def __finish_build(self, collapse_slots: bool):
-        """After the tree is built: fold the animation slots so the default view is just the
-        list of slots, then give the editor pane a width that shows every keyframe column."""
-        if collapse_slots:
-            for section in self._animation_sections:
-                section.set_expanded(False)
+        self.__set_collection(collection)
         self.__size_left_pane()
+
+    def __set_collection(self, collection, expanded_sets=None):
+        """Show `collection` in a new shared keyframe grid (None: nothing). Every set starts
+        unfolded unless `expanded_sets` says which."""
+        self._collection = collection
+        if self._collection_widget is not None:
+            self.scroll_area.takeWidget()
+            self._collection_widget.deleteLater()
+            self._collection_widget = None
+        if collection is None:
+            self.hex_view.clear()
+            return
+        if expanded_sets is None:
+            expanded_sets = [camera_set.index for camera_set in collection.sets]
+        self._collection_widget = CameraCollectionWidget(collection, structure_edits=True,
+                                                         expanded_sets=expanded_sets)
+        self._collection_widget.data_changed.connect(self.__on_value_changed)
+        self._collection_widget.preview_requested.connect(self._preview_panel.preview)
+        self._collection_widget.collection_rebuilt.connect(self.__on_collection_rebuilt)
+        self.scroll_area.setWidget(self._collection_widget)
+        self.__update_summary()
+        self.__refresh_hex()
+
+    def __update_summary(self):
+        animations = [animation for camera_set in self._collection.sets
+                      for animation in camera_set.animations if not animation.empty]
+        frames = sum(len(block.frames) for animation in animations for block in animation.blocks)
+        self.summary_label.setText(
+            f"{self._collection.nb_set} set(s), {len(animations)} animation(s), {frames} keyframe(s)")
+
+    def __on_collection_rebuilt(self, data):
+        """A keyframe, a slot's animation or a block's FOV/roll mode was added or removed: show
+        the new collection where the user was, and write it to the monster."""
+        expanded = self._collection_widget.expanded_set_indices()
+        scroll = self.scroll_area.verticalScrollBar().value()
+        self.__set_collection(parse_camera_collection(data), expanded)
+        self.scroll_area.verticalScrollBar().setValue(scroll)
+        self._preview_panel.invalidate()  # its animation objects are gone
+        self.__sync_and_notify()
 
     def __size_left_pane(self):
         def apply():
             total = self._splitter.width()
-            if total <= 0:
+            if total <= 0 or self._collection_widget is None:
                 return
-            # The keyframe grid is the widest thing; its size hint is intrinsic even while the
-            # slot is collapsed. Add indentation (set + slot + block) and the scrollbar.
-            grid_width = max((holder.sizeHint().width() for holder in self._grid_holders),
-                             default=360)
-            needed = grid_width + 90
+            # The keyframe grid is the widest thing; add the scrollbar.
+            needed = self._collection_widget.sizeHint().width() + 30
             preview_min = max(self._preview_panel.minimumWidth(), 300)
-            left = min(needed, max(total - preview_min, 300), max(300, int(total * .50)))
+            left = min(needed, max(total - preview_min, 300), max(300, int(total * .65)))
             self._splitter.setSizes([left, max(total - left, 1)])
 
         # Defer one tick so the widgets have real size hints and the splitter a real width.
@@ -287,170 +194,11 @@ class IfritCameraSeqWidget(QWidget):
         # which aborts the process rather than reporting (see Common/deferredcall).
         defer(self, apply)
 
-    def __build(self):
-        nb_anim = sum(1 for camera_set in self._collection.sets
-                      for animation in camera_set.animations if not animation.empty)
-        nb_frame = sum(len(block.frames) for camera_set in self._collection.sets
-                       for animation in camera_set.animations if not animation.empty
-                       for block in animation.blocks)
-        self.summary_label.setText(
-            f"{self._collection.nb_set} set(s), {nb_anim} animation(s), {nb_frame} keyframe(s)")
-        for camera_set in self._collection.sets:
-            self.content_layout.addWidget(self.__build_set(camera_set), 0, Qt.AlignmentFlag.AlignLeft)
-
-    def __build_set(self, camera_set) -> CollapsibleSection:
-        nb_anim = sum(1 for animation in camera_set.animations if not animation.empty)
-        section = CollapsibleSection(f"Set {camera_set.index}  —  {nb_anim} animation(s)",
-                                     tooltip=_SET_TOOLTIP)
-        for animation in camera_set.animations:
-            if animation.empty:
-                section.content_layout().addWidget(
-                    self.__build_empty_slot(camera_set.index, animation.slot), 0,
-                    Qt.AlignmentFlag.AlignLeft)
-            else:
-                section.content_layout().addWidget(self.__build_animation(animation), 0,
-                                                   Qt.AlignmentFlag.AlignLeft)
-        return section
-
-    def __build_empty_slot(self, set_index: int, slot: int) -> QWidget:
-        """An empty slot: a note plus a button that fills it with a new default animation."""
-        label = QLabel(f"Slot {slot}: empty")
-        label.setStyleSheet("color: gray")
-        add_button = QPushButton("+ Add animation")
-        add_button.setMaximumWidth(140)
-        add_button.setToolTip("Create a new camera animation in this slot (one block, two "
-                              "keyframes) to edit and preview")
-        add_button.clicked.connect(
-            lambda _checked, s=set_index, k=slot: self.__add_animation(s, k))
-        row = QHBoxLayout()
-        row.setContentsMargins(0, 0, 0, 0)
-        row.addWidget(label)
-        row.addWidget(add_button)
-        row.addStretch(1)
-        holder = QWidget()
-        holder.setLayout(row)
-        return holder
-
-    def __add_animation(self, set_index: int, slot: int):
-        if not self._editable or self._collection is None:
-            return
-        from FF8GameData.dat.cameracollection import add_animation_to_slot
-        try:
-            new_data = add_animation_to_slot(self._collection.get_bytes(), set_index, slot)
-        except ValueError as error:
-            QMessageBox.warning(self, "Add animation", str(error))
-            return
-        self._collection = parse_camera_collection(new_data)
-        self._populating = True
-        try:
-            self.__clear_content()
-            self.__build()
-            self.__finish_build(collapse_slots=False)  # keep slots open so the new one is visible
-            self.__refresh_hex()
-        finally:
-            self._populating = False
-        self._preview_panel.invalidate()  # the section bytes changed
-        self.__sync_and_notify()          # structural change -> write to enemy live + dirty + undo
-
-    def __build_animation(self, animation) -> CollapsibleSection:
-        section = CollapsibleSection(f"Animation slot {animation.slot}  "
-                                     f"({len(animation.blocks)} block(s))",
-                                     tooltip=_ANIMATION_TOOLTIP)
-        self._animation_sections.append(section)
-        # Preview: play this animation's camera in the 3D viewer, sitting next to the arrow.
-        preview_button = QPushButton("▶ Preview")
-        preview_button.setToolTip("Preview this camera animation on the monster model")
-        preview_button.setMaximumWidth(110)
-        preview_button.clicked.connect(lambda _checked, anim=animation: self.__open_preview(anim))
-        section.add_header_widget(preview_button)
-        for block_index, block in enumerate(animation.blocks):
-            block_section = CollapsibleSection(f"Block {block_index}", tooltip=_BLOCK_TOOLTIP)
-            block_section.content_layout().addWidget(self.__build_block(block), 0,
-                                                     Qt.AlignmentFlag.AlignLeft)
-            section.content_layout().addWidget(block_section, 0, Qt.AlignmentFlag.AlignLeft)
-        return section
-
-    def __open_preview(self, animation):
-        # One shared panel on the right plays whichever animation's Preview was clicked.
-        # Keep modes and lens values: the shared panel resolves them in its battle context.
-        self._preview_panel.preview(animation)
-
-    def __build_block(self, block) -> QWidget:
-        holder = QWidget()
-        holder.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
-        outer = QVBoxLayout()
-        outer.setContentsMargins(0, 0, 0, 0)
-        holder.setLayout(outer)
-
-        # FOV / roll header. Only the values actually stored in this block are editable; a
-        # mode that keeps/defaults them (0/1) shows the fixed meaning instead.
-        header = QHBoxLayout()
-        control_label = QLabel(f"ctrl 0x{block.control_word:04X}")
-        control_label.setToolTip("Block control word: bits select the FOV mode (bits 6-7), "
-                                 "roll mode (bits 8-9) and layout (bit 0).")
-        layout_label = QLabel(f"layout {block.layout}")
-        layout_label.setToolTip("Layout flag from the control word (frame-encoding variant); "
-                                "both variants store the same 18-byte keyframes.")
-        header.addWidget(control_label)
-        header.addWidget(layout_label)
-        for label, field in block.optional_fields():
-            field_label = QLabel(label + ":")
-            field_label.setToolTip(_BLOCK_FIELD_TOOLTIP.get(label, label))
-            header.addWidget(field_label)
-            spin = _bind_spin(field, tooltip=_BLOCK_FIELD_TOOLTIP.get(label, label))
-            self._spin_list.append(spin)
-            spin.valueChanged.connect(self.__on_value_changed)
-            header.addWidget(spin)
-        if not block.optional_fields():
-            default_label = QLabel("FOV/roll: default")
-            default_label.setToolTip("This block keeps the default FOV (0x200) and roll (0); "
-                                     "neither is stored, so neither is editable here.")
-            header.addWidget(default_label)
-        header.addStretch(1)
-        outer.addLayout(header)
-
-        # Frame grid: one row per keyframe. Header row of column titles, then a bound spin
-        # box per editable field. A keyframe is a control point; the camera interpolates from
-        # one keyframe to the next over the first keyframe's Duration.
-        grid = QGridLayout()
-        grid.setHorizontalSpacing(6)
-        grid.setVerticalSpacing(2)
-        for col, (title, key) in enumerate(_FRAME_COLUMNS):
-            header_label = QLabel(title)
-            header_label.setStyleSheet("color: gray; font-size: 11px")
-            if key:
-                header_label.setToolTip(_FRAME_TOOLTIP[key])
-            grid.addWidget(header_label, 0, col)
-        for row, frame in enumerate(block.frames, start=1):
-            index_label = QLabel(str(row - 1))
-            index_label.setToolTip("Keyframe index within this block.")
-            grid.addWidget(index_label, row, 0)
-            fields = [frame.duration, frame.pos_x, frame.pos_y, frame.pos_z,
-                      frame.pos_interp_mode, frame.look_x, frame.look_y, frame.look_z,
-                      frame.look_interp_mode]
-            for col, ((_title, key), field) in enumerate(zip(_FRAME_COLUMNS[1:], fields), start=1):
-                if key in ("pos_interp", "look_interp"):     # a named list, not a number
-                    spin = CameraModeCombo(field.get(), _FRAME_TOOLTIP[key])
-                    spin.valueChanged.connect(lambda value, f=field: f.set(value))
-                else:
-                    spin = _bind_spin(field, tooltip=_FRAME_TOOLTIP[key])
-                self._spin_list.append(spin)
-                spin.valueChanged.connect(self.__on_value_changed)
-                grid.addWidget(spin, row, col)
-        grid.setColumnStretch(len(_FRAME_COLUMNS), 1)  # soak up slack past the last column
-        grid_holder = QWidget()
-        grid_holder.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
-        grid_holder.setLayout(grid)
-        self._grid_holders.append(grid_holder)  # used to size the editor pane on load
-        outer.addWidget(grid_holder, 0, Qt.AlignmentFlag.AlignLeft)
-        return holder
-
     # ── Hex view / change tracking ────────────────────────────────────
-    def __on_value_changed(self, _value=None):
-        if self.hex_view.isVisible():
-            self.__refresh_hex()
-        if not self._populating:           # a real user edit (not a build-time setValue)
-            self.__sync_and_notify()
+    def __on_value_changed(self):
+        self.__refresh_hex()
+        self._preview_panel.refresh()      # taken on the next ▶ Play
+        self.__sync_and_notify()
 
     def __sync_and_notify(self):
         """Push the edited collection into the in-memory monster now and tell the host pane."""
@@ -458,13 +206,11 @@ class IfritCameraSeqWidget(QWidget):
         self.data_edited.emit()
 
     def __toggle_hex(self):
-        show = self.hex_checkbox.isChecked()
-        self.hex_view.setVisible(show)
-        if show:
-            self.__refresh_hex()
+        self.hex_view.setVisible(self.hex_checkbox.isChecked())
+        self.__refresh_hex()
 
     def __refresh_hex(self):
-        if self._collection is not None:
+        if self._collection is not None and not self.hex_view.isHidden():
             self.hex_view.setPlainText(bytes(self._collection.get_bytes()).hex(" "))
 
     def __show_info(self):
@@ -476,9 +222,10 @@ class IfritCameraSeqWidget(QWidget):
             "<b>Camera animation collection</b> — monster section 6, character section 5 "
             "(same format; monsters have 1 set, characters 2).<br/><br/>"
             "Each <b>set</b> holds 8 animation slots; each <b>animation</b> is a chain of "
-            "<b>blocks</b> (FOV + roll) made of <b>keyframes</b>. A keyframe places the "
-            "camera (Pos X/Y/Z) and its look-at target (Look X/Y/Z) for <i>Duration</i> "
-            "ticks; the engine interpolates between keyframes.<br/><br/>"
+            "<b>blocks</b> (easing, layout, FOV, roll) made of <b>keyframes</b>. A keyframe "
+            "places the camera (Pos X/Y/Z) and its look-at target (Look X/Y/Z) in the frame its "
+            "mode names; <i>Frames</i> is the time to the next keyframe (1/15 s each) and the "
+            "engine interpolates between keyframes.<br/><br/>"
             "Values are edited in place — saving changes only the bytes you touch.<br/>"
             "See the <a href=\"https://hobbitdur.github.io/FF8ModdingWiki/technical-reference/"
             "battle/model-sections/camera-sequence/\">wiki</a> for the format.")

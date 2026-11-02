@@ -126,3 +126,23 @@ def test_block_settings_are_lists_in_the_editor(app):
     assert len(lists) == 1 and lists[0].currentText() == "Linear"           # the easing list
     lists[0].setCurrentIndex(lists[0].findData(4))
     assert parse_camera_collection(rebuilt[-1]).sets[0].animations[0].blocks[0].easing == 4
+
+
+def test_block_settings_are_grouped_with_their_values(app):
+    from PyQt6.QtWidgets import QGroupBox, QLabel
+    from Common.cameracollectionwidget import CameraCollectionWidget
+    data = set_block_control(_collection(), 0, 0, 0, fov_mode=2, roll_mode=1)    # Fixed FOV, no roll
+    collection = parse_camera_collection(data)
+    widget = CameraCollectionWidget(collection, structure_edits=True)
+    container = widget._build_block(0, collection.sets[0].animations[0].blocks[0], (0, 0))
+    groups = {box.title(): box for box in container.findChildren(QGroupBox)}
+    assert set(groups) == {"Motion", "FOV", "Roll"}
+    fov_texts = [label.text() for label in groups["FOV"].findChildren(QLabel)]
+    roll_texts = [label.text() for label in groups["Roll"].findChildren(QLabel)]
+    assert "Value" in fov_texts and "Start" not in fov_texts      # Fixed stores one value
+    assert "0" in roll_texts                                        # None stores nothing: says it is 0
+    # The groups keep their width whatever the mode, so the blocks line up
+    other = parse_camera_collection(set_block_control(_collection(), 0, 0, 0, fov_mode=3, roll_mode=3))
+    second = widget._build_block(0, other.sets[0].animations[0].blocks[0], (0, 0))
+    widths = lambda box: {b.title(): b.sizeHint().width() for b in box.findChildren(QGroupBox)}
+    assert widths(container) == widths(second)

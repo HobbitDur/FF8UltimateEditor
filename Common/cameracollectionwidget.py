@@ -210,27 +210,25 @@ class CameraCollectionWidget(QWidget):
                 slot_group.setProperty("plain_title", slot_group.title())
                 self._slot_groups[(camera_set.index, animation.slot)] = slot_group
                 slot_layout = QVBoxLayout()
+                button_row = QHBoxLayout()      # the slot's buttons share one row
+                if self._show_preview_buttons:
+                    preview_button = QPushButton("▶ Preview")
+                    preview_button.setToolTip("Play this camera animation as is in the 3D preview "
+                                              "(right panel)")
+                    preview_button.setMaximumWidth(110)
+                    preview_button.clicked.connect(
+                        lambda _checked, anim=animation: self.preview_requested.emit(anim))
+                    button_row.addWidget(preview_button)
                 if self._structure_edits:
                     clear_button = QPushButton("Clear slot")
                     clear_button.setToolTip("Remove this camera animation (the slot plays nothing)")
                     clear_button.setMaximumWidth(110)
                     clear_button.clicked.connect(lambda _checked, s=camera_set.index, a=animation.slot:
                                                  self._rebuild(clear_slot, s, a))
-                    clear_row = QHBoxLayout()
-                    clear_row.addWidget(clear_button)
-                    clear_row.addStretch(1)
-                    slot_layout.addLayout(clear_row)
-                if self._show_preview_buttons:
-                    preview_button = QPushButton("▶ Preview")
-                    preview_button.setToolTip("Play this camera animation on the imported "
-                                              "character model (right panel)")
-                    preview_button.setMaximumWidth(110)
-                    preview_button.clicked.connect(
-                        lambda _checked, anim=animation: self.preview_requested.emit(anim))
-                    preview_row = QHBoxLayout()
-                    preview_row.addWidget(preview_button)
-                    preview_row.addStretch(1)
-                    slot_layout.addLayout(preview_row)
+                    button_row.addWidget(clear_button)
+                if button_row.count():
+                    button_row.addStretch(1)
+                    slot_layout.addLayout(button_row)
                 for block_index, block in enumerate(animation.blocks):
                     slot_layout.addWidget(self._build_block(block_index, block,
                                                             (camera_set.index, animation.slot)))
@@ -262,9 +260,13 @@ class CameraCollectionWidget(QWidget):
         self.collection_rebuilt.emit(data)
 
     def _build_block(self, block_index: int, block, slot_key=None) -> QWidget:
-        container = QWidget()
+        """One frame per block: its settings (Motion, FOV, Roll) over the keyframes they apply to."""
+        container = QGroupBox(f"Block {block_index}")
+        container.setToolTip("One camera move: the settings on top apply to the keyframes below, "
+                             "played in order. The block lasts as long as their Frames added up; "
+                             "the next block starts when it ends.")
         container_layout = QVBoxLayout()
-        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setContentsMargins(6, 4, 6, 6)
 
         container_layout.addLayout(self._block_row(block_index, block, slot_key))
 
@@ -295,21 +297,18 @@ class CameraCollectionWidget(QWidget):
         grid_row.addStretch(1)
         container_layout.addLayout(grid_row)
         container.setLayout(container_layout)
+        container.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
         return container
 
     def _block_row(self, block_index, block, slot_key):
-        """'Block n', its easing, layout, FOV and roll settings (lists when the structure can be
-        edited, a change rebuilds the collection) and the FOV/roll values they store."""
+        """A block's settings, grouped: Motion (easing, layout), FOV and Roll, each mode with the
+        values it stores next to it (lists when the structure can be edited: a change rebuilds the
+        collection). Every group keeps its width whatever the mode, so blocks line up."""
         row = QHBoxLayout()
-        title = QLabel(f"Block {block_index}")
-        title.setFixedWidth(title.fontMetrics().horizontalAdvance("Block 88") + 4)   # rows line up
-        title.setToolTip("One camera move: its keyframes below, played in order. The next block "
-                         "starts when this one ends.")
-        row.addWidget(title)
         editable = self._structure_edits and slot_key is not None
         values = dict(block.optional_fields())
 
-        def setting(label, choices, current, help_of, edit_key):
+        def setting(choices, current, help_of, edit_key):
             if editable:
                 combo = WidestEntryCombo()
                 for value, name in choices:
@@ -319,31 +318,76 @@ class CameraCollectionWidget(QWidget):
                 combo.setToolTip(help_of(current))
                 combo.currentIndexChanged.connect(lambda _index, c=combo: self._rebuild(
                     lambda data: set_block_control(data, *slot_key, block_index, **{edit_key: c.currentData()})))
-                widget = combo
-            else:
-                widget = QLabel(dict(choices)[current])
-                widget.setToolTip(help_of(current))
-            row.addWidget(QLabel(label))
-            row.addWidget(widget)
+                return combo
+            widget = QLabel(dict(choices)[current])
+            widget.setToolTip(help_of(current))
+            return widget
+
+        def group(title_text, tooltip, *widgets):
+            box = QGroupBox(title_text)
+            box.setToolTip(tooltip)
+            box_layout = QHBoxLayout(box)
+            box_layout.setContentsMargins(6, 2, 6, 4)
+            for widget in widgets:
+                box_layout.addWidget(widget)
+            box.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+            row.addWidget(box)
 
         def mode_list(names):
             return [(index, name) for index, (name, _help) in enumerate(names)]
 
-        def value_spins(*labels):
-            for label in labels:
+        def value_cells(name, mode, unstored):
+            """Two cells of a fixed width: 'Start'/'End' spins, one 'Value' spin when Fixed, or a
+            grey note saying what the mode uses when it stores nothing."""
+            cells = []
+            for index in range(2):
+                cell = QWidget()
+                cell_layout = QHBoxLayout(cell)
+                cell_layout.setContentsMargins(0, 0, 0, 0)
+                label = f"{name} {('start', 'end')[index]}"
                 if label in values:
+                    caption = QLabel(("Value" if mode == 2 else "Start") if index == 0 else "End")
                     spin = self._spin_for(values[label])
                     spin.setToolTip(self._BLOCK_VALUE_TOOLTIPS[label])
-                    row.addWidget(spin)
+                    caption.setToolTip(spin.toolTip())
+                    cell_layout.addWidget(caption)
+                    cell_layout.addWidget(spin)
+                elif index == 0 and unstored:
+                    note = QLabel(unstored)
+                    note.setStyleSheet("color: gray")
+                    cell_layout.addWidget(note)
+                cell_layout.addStretch(1)
+                cell.setFixedWidth(self._value_cell_width())
+                cells.append(cell)
+            return cells
 
-        setting("Easing", easing_choices(), block.easing, easing_help, "easing")
-        setting("Layout", mode_list(LAYOUTS), block.layout, lambda v: LAYOUTS[v][1], "layout")
-        setting("FOV", mode_list(FOV_MODES), block.fov_mode, lambda v: FOV_MODES[v][1], "fov_mode")
-        value_spins("FOV start", "FOV end")
-        setting("Roll", mode_list(ROLL_MODES), block.roll_mode, lambda v: ROLL_MODES[v][1], "roll_mode")
-        value_spins("Roll start", "Roll end")
+        group("Motion", "How the camera moves from one keyframe to the next.",
+              QLabel("Easing"), setting(easing_choices(), block.easing, easing_help, "easing"),
+              QLabel("Layout"), setting(mode_list(LAYOUTS), block.layout, lambda v: LAYOUTS[v][1], "layout"))
+        group("FOV", "Field of view (projection distance, bigger = zoomed in) over the block. The mode "
+              "says which values the block stores: Start → end two, Fixed one, Keep and Default none.",
+              setting(mode_list(FOV_MODES), block.fov_mode, lambda v: FOV_MODES[v][1], "fov_mode"),
+              *value_cells("FOV", block.fov_mode, ("previous FOV", "512")[block.fov_mode]
+                           if block.fov_mode < 2 else ""))
+        group("Roll", "Camera tilt over the block (4096 = a full turn). The mode says which values the "
+              "block stores: Start → end two, Fixed one, Keep and None none.",
+              setting(mode_list(ROLL_MODES), block.roll_mode, lambda v: ROLL_MODES[v][1], "roll_mode"),
+              *value_cells("Roll", block.roll_mode, ("current roll", "0")[block.roll_mode]
+                           if block.roll_mode < 2 else ""))
         row.addStretch(1)
         return row
+
+    def _value_cell_width(self):
+        """Width of a FOV/roll value cell: its widest caption and a 16-bit spin box."""
+        if getattr(self, "_cell_width", None) is None:
+            probe = QSpinBox()
+            probe.setRange(0, 0xFFFF)
+            caption = QLabel()
+            metrics = caption.fontMetrics()
+            captioned = max(metrics.horizontalAdvance(text) for text in ("Start", "Value", "End"))
+            notes = max(metrics.horizontalAdvance(text) for text in ("previous FOV", "current roll"))
+            self._cell_width = max(captioned + probe.sizeHint().width(), notes) + 8
+        return self._cell_width
 
     def _frame_label(self, row, block, key=None) -> QWidget:
         """'#row', with the duplicate (+) / remove (-) buttons in front when structure edits are on
