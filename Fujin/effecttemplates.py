@@ -1,5 +1,5 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's), and the description an effect made
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's), and the description an effect made
 of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
@@ -8,7 +8,7 @@ from its source effect's whole description, keeping what its parts bring: all of
 together are that effect exactly (whatever order they were added in), some of them a smaller effect
 of the same kind. Parts of two families never mix: their nodes and directors differ (the heal
 ring's effect-library nodes and per-action director, Hypnotize's plain nodes and master, Antidote's
-one layout on the target, Silence's, Float's, Haste's and Dispel's cycles of one task per action).
+one layout on the target, Silence's, Float's, Haste's, Dispel's and Aura's cycles of one task per action).
 
 No Qt here.
 """
@@ -88,18 +88,28 @@ TEMPLATES = {
                       ("flash_ring",), "A flipbook at random points around the target, every few ticks."),
     "ring_circle": ("on a rising circle", "Moving parts", "per_action_ring", 109, "circle", ("particle",), (),
                     ("flash_ring",), "A flipbook on a rising circle around the target, every few ticks."),
+    # Aura's family (one task per action: a layout at the feet with a table of draw modes, flames, a glow)
+    "aura": ("one per action, at its target's feet", "How the effect starts", "per_action_aura", 111, "aura",
+             ("target",), (), (), "One task per action, every few ticks (not while a young one runs on that target): "
+             "a prim layout at the target's feet scaled by the square root of its size, its sound, the result "
+             "(Aura's way)."),
+    "aura_flames": ("spinning around the target", "Moving parts", "per_action_aura", 111, "flames", ("flame",), (),
+                    ("aura",), "Flame models spinning around the target, a few a tick, fading in and out."),
+    "aura_glow": ("a flipbook at its feet", "Drawn by another part", "per_action_aura", 111, "glow", (), (), ("aura",),
+                  "A flipbook at the target's feet, with a screen fade."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout",
           "per_action_turned": "turned_glyph", "per_action_clock": "clock",
-          "per_action_ring": "flash_ring"}
+          "per_action_ring": "flash_ring", "per_action_aura": "aura"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
             "on_target": "One layout on the target (Antidote's kind)",
             "per_action_target": "One per action, on its target (Silence's kind)",
             "per_action_turned": "One per action, turned with its target (Float's kind)",
             "per_action_clock": "One per action, a clock on its target (Haste's kind)",
-            "per_action_ring": "One per action, a flash and a ring (Dispel's kind)"}
+            "per_action_ring": "One per action, a flash and a ring (Dispel's kind)",
+            "per_action_aura": "One per action, at its target's feet (Aura's kind)"}
 
 
 @functools.cache

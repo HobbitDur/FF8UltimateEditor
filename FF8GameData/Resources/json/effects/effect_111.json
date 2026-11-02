@@ -1,0 +1,647 @@
+{
+ "format": 1,
+ "effect": 111,
+ "name": "Aura",
+ "doc": "Aura (spell): one target task per action, in turn (one every 10 ticks, not while a young one runs on that target), each the aura layout at the target's feet scaled by the square root of its size, flame models spinning around it, a glow with a screen fade; the target takes the result at tick 29.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6CD930",
+   "setup": "0x6CD920",
+   "root": "0x6CD9C0"
+  },
+  "memory": {
+   "texture_file": "0x2521970",
+   "magic_buffer": "0x2521974",
+   "ctx": "0x2521978",
+   "root_pool": "0x2521980",
+   "packet_cursor": "0x2521994",
+   "root_queue": "0x25219B8"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "glow.seq": {
+   "kind": "seq",
+   "address": "0x12DB75C",
+   "size": 188
+  },
+  "flame": {
+   "kind": "model",
+   "address": "0x12DB818",
+   "size": 456,
+   "doc": "a prim model (its vertex frames and polygons; drawn by 0x572200)"
+  },
+  "aura": {
+   "kind": "layout",
+   "address": "0x12DB9E0",
+   "size": 17340
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x12DFD9C",
+   "size": 2172
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x12E0618",
+   "size": 4
+  },
+  "aura_words": {
+   "kind": "table",
+   "address": "0x12E061C",
+   "size": 40,
+   "doc": "one word per object of the aura layout: its draw mode (bit 0x10000000: its offset through the frame, its rotation kept)"
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12E0644",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the aura's blended vertex frames (after the target and flame pools).",
+  "arenas": [
+   "0xE28",
+   "0x18E28"
+  ],
+  "morph": "0xE20"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "target",
+  "every": "$timing.every",
+  "place": [
+   "action_target",
+   0,
+   "@aura",
+   0,
+   0,
+   "$timing.busy_tick",
+   0,
+   0
+  ]
+ },
+ "pools": [
+  {
+   "key": "targets",
+   "queue": "0x25219A8",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 864,
+   "count": 3
+  },
+  {
+   "key": "flames",
+   "queue": "0x2521998",
+   "storage": "0xA20",
+   "in_magic_buffer": true,
+   "size": 32,
+   "count": 32
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one target task per action, in turn (not while one is young on that target); each target task's clock: its sound, its result, its end (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "aura",
+   "title": "Aura",
+   "doc": "The aura layout at the target's feet, scaled by the square root of its size, each object's draw mode from a table"
+  },
+  {
+   "id": 2,
+   "key": "flames",
+   "title": "Flames",
+   "doc": "Flame models spinning around the target, a few a tick, fading in and out"
+  },
+  {
+   "id": 3,
+   "key": "glow",
+   "title": "Glow",
+   "doc": "A flipbook at the target's feet, with a screen fade"
+  }
+ ],
+ "groups": [
+  {
+   "key": "flames.window",
+   "label": "Spawning",
+   "doc": "Count flames spawned at every target tick From tick .. To tick, Angle step apart"
+  },
+  {
+   "key": "flames.radius",
+   "label": "Radius",
+   "doc": "Base + (random & Mask)"
+  },
+  {
+   "key": "flames.speed",
+   "label": "Turn a tick",
+   "doc": "Base + (random & Mask), either way at random"
+  },
+  {
+   "key": "flames.fade",
+   "label": "Strength",
+   "doc": "Base + (random & Mask) (4096: full), in over In ticks, out over Out ticks after From"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's target task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.busy_tick",
+   "part": "timing",
+   "label": "Busy tick",
+   "doc": "Not while a target task on that target is at this tick or before (the cycle restarts)",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the target's effect position when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 257,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 29,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The target task ends when its tick reaches this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 34,
+   "unit": "plain"
+  },
+  {
+   "key": "aura.bone",
+   "part": "aura",
+   "label": "Bone",
+   "doc": "The target's effect point giving its x and z (0xF0 and up: the engine's named points)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 241,
+   "unit": "plain"
+  },
+  {
+   "key": "aura.size_shift",
+   "part": "aura",
+   "label": "Size shift",
+   "doc": "Scaled by sqrt(the target's size << this)",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.window.first",
+   "part": "flames",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.window.last",
+   "part": "flames",
+   "label": "To tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.count",
+   "part": "flames",
+   "label": "Count",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.angle_step",
+   "part": "flames",
+   "label": "Angle step",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.bone",
+   "part": "flames",
+   "label": "Bone",
+   "doc": "The target's effect point they turn around (at its feet)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 241,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.lift",
+   "part": "flames",
+   "label": "Lift",
+   "doc": "Added to the target's feet (y goes down)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -600,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.radius.base",
+   "part": "flames",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 800,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.radius.mask",
+   "part": "flames",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1023,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.speed.base",
+   "part": "flames",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.speed.mask",
+   "part": "flames",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.fade.base",
+   "part": "flames",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.fade.mask",
+   "part": "flames",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 2047,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.fade.in",
+   "part": "flames",
+   "label": "In",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.fade.from",
+   "part": "flames",
+   "label": "From",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.fade.out",
+   "part": "flames",
+   "label": "Out",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.nearer",
+   "part": "flames",
+   "label": "Nearer",
+   "doc": "Subtracted from their depth",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.mode",
+   "part": "flames",
+   "label": "Draw mode",
+   "doc": "The prim model's draw mode word",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 243,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.frames",
+   "part": "flames",
+   "label": "Frames",
+   "doc": "A flame ends once its tick reaches this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.from",
+   "part": "glow",
+   "label": "From tick",
+   "doc": "Drawn from this target tick (the screen fade then)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.frames",
+   "part": "glow",
+   "label": "Frames",
+   "doc": "Drawn this many ticks, frame = tick - From tick",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.lift",
+   "part": "glow",
+   "label": "Lift",
+   "doc": "Added to the target's feet (y goes down)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -600,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.rot_a",
+   "part": "glow",
+   "label": "Size",
+   "doc": "The sprite's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.rot_b",
+   "part": "glow",
+   "label": "Angle",
+   "doc": "The sprite's angle",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 864,
+   "function": "0x6CDB60",
+   "doc": "One per action: the aura at the target's feet (the table callback: each object's draw mode its word), the glow, the flames spawned, the fade, the sound at the target's effect position, the result.",
+   "node": [
+    "counter",
+    "action",
+    "entity",
+    [
+     "layout",
+     844
+    ]
+   ],
+   "draws_first": true,
+   "draws": [
+    {
+     "part": "aura",
+     "draw": [
+      "layout_table",
+      "@aura_words",
+      "$aura.bone",
+      "$aura.size_shift"
+     ]
+    },
+    {
+     "part": "glow",
+     "draw": [
+      "sequence_at_feet",
+      "@glow.seq",
+      "$glow.from",
+      "$glow.frames",
+      "$flames.bone",
+      "$glow.lift",
+      "$glow.rot_a",
+      "$glow.rot_b"
+     ]
+    }
+   ],
+   "spawns": [
+    {
+     "task": "flame",
+     "window": [
+      "$flames.window.first",
+      "$flames.window.last"
+     ],
+     "every": 1,
+     "place": [
+      "spinning_ring",
+      "$flames.count",
+      "$flames.bone",
+      "$flames.lift",
+      "$flames.angle_step",
+      "$flames.radius.base",
+      "$flames.radius.mask",
+      "$flames.speed.base",
+      "$flames.speed.mask",
+      "$flames.fade.base",
+      "$flames.fade.mask"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "screen_fade_at",
+     "$glow.from",
+     0,
+     1,
+     0,
+     "0x80"
+    ],
+    [
+     "anchor_at_position"
+    ],
+    [
+     "sound_3d_at",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume"
+    ],
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "tick_above",
+    "$timing.end_tick"
+   ]
+  },
+  {
+   "key": "flame",
+   "pool": "flames",
+   "size": 32,
+   "function": "0x6CE020",
+   "doc": "A flame model spinning around the target's point, scaled by its radius, fading in and out.",
+   "node": [
+    "counter",
+    [
+     "pad",
+     2
+    ],
+    "pos",
+    "radius",
+    "angle",
+    "speed",
+    "fade"
+   ],
+   "draws_first": true,
+   "draws": [
+    {
+     "part": "flames",
+     "draw": [
+      "spinning_model",
+      "@flame",
+      "$flames.fade.in",
+      "$flames.fade.from",
+      "$flames.fade.out",
+      "$flames.mode",
+      "$flames.nearer"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "spin"
+    ]
+   ],
+   "end": [
+    "tick_above",
+    "$flames.frames"
+   ]
+  }
+ ]
+}

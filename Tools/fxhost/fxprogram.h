@@ -63,16 +63,17 @@ namespace fxprog
 	enum Limit { NO_LIMIT, BELOW, AT_MOST, AT_LEAST };
 	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value; Step draw; };
 	// a plain node's fields (offsets in the node; -1: none)
-	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, F_END, F_SEQ, FIELD_COUNT };
+	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, F_END, F_SEQ, F_RADIUS, F_ANGLE, F_SPEED, F_FADE,
+	             FIELD_COUNT };
 	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity",
-	                                                      "layout_b", "spawn", "end", "seq" };
+	                                                      "layout_b", "spawn", "end", "seq", "radius", "angle", "speed", "fade" };
 	struct Task
 	{
 		std::string key;
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		bool plain = false, draws_first = false;
-		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 		int layout_size = 0, layout_b_size = 0;
 		Step end;                                 // a plain node's end (after its counter)
 		std::vector<Step> at_end;                 // actions when it ends
@@ -121,17 +122,17 @@ namespace fxprog
 		FOLLOW_TARGET, SPAWN, HEAL, DONE, SPAWNING, OVERLAY, SEQUENCE, FLIPBOOK, HELIX_START, OVERLAY_START,
 		HIDE_TARGET, SHOW_TARGET, UNBLOCK_DIRECTOR, VELOCITY_ROLL, VELOCITY_RISE, DRIFT, SOUND_AT, HEAL_ALL_AT,
 		HEAL_FIRST_TARGET, ANCHOR_AT_BONE, SOUND_3D_AT, HEAL_ACTION_AT, UNMARK_TARGET, ANCHOR_AT_POSITION,
-		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET, SCREEN_FLASH_CURVE, SCREEN_FLASH_OFF,
+		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET, SCREEN_FLASH_CURVE, SCREEN_FLASH_OFF, SPIN,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END,
 		// motions
 		HELIX,
 		// placements
 		CIRCLE_DROP, GLINT, AT_PARENT, TABLE_POINT, RANDOM_TARGET_BONE, RANDOM_TARGET_POINT, ACTION_TARGETS,
-		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE,
+		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
-		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE,
+		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -153,7 +154,8 @@ namespace fxprog
 		{ "layout_turned", LAYOUT_TURNED }, { "heal_action", HEAL_ACTION }, { "screen_fade_at", SCREEN_FADE_AT },
 		{ "blink_target", BLINK_TARGET }, { "screen_flash_curve", SCREEN_FLASH_CURVE }, { "screen_flash_off", SCREEN_FLASH_OFF },
 		{ "tick_at_node_end", TICK_AT_NODE_END }, { "random_around", RANDOM_AROUND }, { "rising_circle", RISING_CIRCLE },
-		{ "node_sequence_sprite", NODE_SEQUENCE_SPRITE },
+		{ "node_sequence_sprite", NODE_SEQUENCE_SPRITE }, { "spin", SPIN }, { "spinning_ring", SPINNING_RING },
+		{ "layout_table", LAYOUT_TABLE }, { "spinning_model", SPINNING_MODEL }, { "sequence_at_feet", SEQUENCE_AT_FEET },
 	};
 
 	inline Program *g_program = nullptr;
@@ -305,7 +307,8 @@ namespace fxprog
 				           t.field[F_ANCHOR] >= 0 ? Fld<int16_t>(t, n, F_ANCHOR) : g_anchor);
 			break;
 		case HEAL_ACTION: ApplyActionResultToTarget(Ctx()->actions[*Fld<int16_t>(t, n, F_ACTION)].targets); break;
-		case SCREEN_FADE_AT: if (Tick(t, n) == V(a[0])) ScreenFadeTask(0, 1, 1, 0x60); break;   // tick: the engine's fade (Haste, Slow)
+		case SCREEN_FADE_AT: if (Tick(t, n) == V(a[0])) ScreenFadeTask(V(a[1]), V(a[2]), V(a[3]), V(a[4])); break;   // tick, the engine's fade's four values
+		case SPIN: *Fld<int16_t>(t, n, F_ANGLE) = (int16_t)(*Fld<int16_t>(t, n, F_ANGLE) + *Fld<int16_t>(t, n, F_SPEED)); break;
 		case SCREEN_FLASH_CURVE: // rise, level, fall, end: up, held, down (Dispel)
 			SetScreenFlash((uint32_t)layouts::ScreenFlashCurve(Tick(t, n), V(a[0]), V(a[1]), V(a[2]), V(a[3])), 0);
 			break;
@@ -348,6 +351,30 @@ namespace fxprog
 	{
 		const std::vector<Val> &a = sp.place.a;
 		const Task &t = g_program->tasks[sp.task];
+		if (sp.place.op == SPINNING_RING)
+		{
+			// count, bone, lift, angle step, radius base / mask, speed base / mask, fade base / mask (Aura's
+			// flames): one turn and speed for the tick's nodes (CRT rand: the angle, the speed, its side),
+			// then each node at the spawner's entity's feet point (rand: its radius, its fade strength)
+			uint8_t *ent = *Fld<uint8_t *>(from, n, F_ENTITY);
+			int32_t angle = CrtRand();
+			int32_t speed = (CrtRand() & V(a[7])) + V(a[6]);
+			if (CrtRand() & 1) speed = -speed;
+			for (int32_t k = 0; k < V(a[0]); k++)
+			{
+				if (TaskNode *f = (TaskNode *)SpawnTask(sp.task, n))
+				{
+					layouts::FeetPoint(ent, V(a[1]), V(a[2]), Fld<int16_t>(t, f, F_POS));
+					const int32_t r = CrtRand() & V(a[5]);
+					*Fld<int16_t>(t, f, F_ANGLE) = (int16_t)angle;
+					*Fld<int16_t>(t, f, F_SPEED) = (int16_t)speed;
+					*Fld<int16_t>(t, f, F_RADIUS) = (int16_t)(r + V(a[4]));
+					*Fld<int16_t>(t, f, F_FADE) = (int16_t)((CrtRand() & V(a[9])) + V(a[8]));
+				}
+				angle += V(a[3]);
+			}
+			return;
+		}
 		TaskNode *m = (TaskNode *)SpawnTask(sp.task, n);
 		if (!m) return;
 		switch (sp.place.op)
@@ -503,6 +530,31 @@ namespace fxprog
 			arg.depth = V(a[0]);
 			left = layouts::Play(Fld<uint8_t>(t, n, F_LAYOUT), &arg);
 			break;
+		case LAYOUT_TABLE: // per-object words, bone, size shift: at the entity's feet scaled by the square root of its size
+		{
+			layouts::TableArg table;
+			layouts::SqrtSizeFrame(*Fld<uint8_t *>(t, n, F_ENTITY), V(a[2]), V(a[1]), &table.m);
+			table.flags = (uint32_t)V(a[0]);
+			table.morph = arg.morph;
+			table.cursor = arg.cursor;
+			const int frames = layouts::PlayWithTable(Fld<uint8_t>(t, n, F_LAYOUT), &table);
+			left = left < 0 ? frames : left | frames;
+			break;
+		}
+		case SPINNING_MODEL: // model, fade in, from, out, draw mode, nearer: the node's, turned by its angle, scaled by its radius
+			layouts::DrawSpinningModel((uint32_t)V(a[0]), Fld<int16_t>(t, n, F_POS), *Fld<int16_t>(t, n, F_ANGLE), *Fld<int16_t>(t, n, F_RADIUS),
+			                           layouts::FadeInOut(Tick(t, n), *Fld<int16_t>(t, n, F_FADE), V(a[1]), V(a[2]), V(a[3])),
+			                           (uint32_t)(uint16_t)V(a[4]), V(a[5]), PacketCursor());
+			break;
+		case SEQUENCE_AT_FEET: // sequence, from, frames, bone, lift, rotation a, b: frame = tick - from
+		{
+			const int32_t e = Tick(t, n) - V(a[1]);
+			if ((uint32_t)e >= (uint32_t)V(a[2])) break;
+			int16_t pos[4];
+			layouts::FeetPoint(*Fld<uint8_t *>(t, n, F_ENTITY), V(a[3]), V(a[4]), pos);
+			layouts::DrawSequenceSprite(pos, fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])), (int16_t)e, V(a[5]), V(a[6]), PacketCursor());
+			break;
+		}
 		case NODE_SEQUENCE_SPRITE: // rotation b: the node's sequence, frame = the counter, at its position, rotation a = its scale
 			layouts::DrawSequenceSprite(Fld<int16_t>(t, n, F_POS), *Fld<uint32_t>(t, n, F_SEQ), (int16_t)Tick(t, n),
 			                            *Fld<int16_t>(t, n, F_SCALE), V(a[0]), PacketCursor());
@@ -625,7 +677,7 @@ namespace fxprog
 			const int16_t c = (int16_t)Tick(t, n);
 			const fxp::Window w = { (int16_t)V(sp.first), (int16_t)V(sp.last) };
 			if (!w.has(c)) continue;
-			const bool plain = sp.task >= 0 && g_program->tasks[sp.task].plain;
+			const bool plain = sp.task >= 0 && g_program->tasks[sp.task].plain;   // (a spinning ring: one or more)
 			if (sp.every_kind) // one every n ticks from the window's first
 			{
 				const int32_t every = V(sp.every);

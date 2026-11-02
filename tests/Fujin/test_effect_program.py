@@ -252,6 +252,8 @@ CYCLES = {
                            "blink.from 5\nblink.ticks 30\n"),
     109: ("mag108.tim", 29, "timing.every 6\ntiming.busy_tick 10\ntiming.fade_tick 10\nflash.level 1000\n"
                             "ring.size_times 2\nsparkles.lift -100\ncircle.turns 4\ncircle.window.last 33\nsparkles.every 3\n"),
+    111: ("mag110.tim", 32, "timing.every 6\nflames.count 2\nflames.window.last 25\nflames.radius.base 500\n"
+                            "flames.fade.from 4\nglow.from 10\nglow.rot_b 300\naura.size_shift 10\n"),
 }
 
 
@@ -271,7 +273,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste and Dispel from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel and Aura from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -317,3 +319,13 @@ def test_dispel_description_compiles():
     assert "field entity 20 4" in program and "tick screen_flash_curve " in program and "at_end screen_flash_off" in program
     assert "random_around " in program and "rising_circle " in program and "after sound_3d_at " in program
     assert "end tick_at_node_end" in program and "node_sequence_sprite -2048" in program
+
+
+def test_aura_description_compiles():
+    """Aura: its layout through the table callback (a word per object), its flames spawned a few at a
+    time with one turn and speed (a second task: spinning models fading in and out), its glow at the
+    target's feet, the screen fade's own values."""
+    program = compile_program(load_description(111))
+    assert "draw 1 0 - - layout_table " in program and "draw 3 0 - - sequence_at_feet " in program
+    assert " spinning_ring " in program and "spinning_model " in program and "event spin" in program
+    assert "event screen_fade_at $27 0 1 0 128" in program and program.count("\ntask ") == 2

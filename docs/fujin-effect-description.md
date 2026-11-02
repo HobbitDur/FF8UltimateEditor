@@ -543,3 +543,29 @@ Potion's description is the same with its own sequences and sound.
      - *Fujin:* its tabs (Timing, Ring, Sparkles, Circle); a seventh family in the + menu, "One per
        action, a flash and a ring (Dispel's kind)": Ring (the start), Sparkles, Circle (they share
        the particle task: it stays while either does).
+   - **Aura (111)** (FFNx 58dce00e): the cycle
+     director with Dispel's busy-target wait; a layout at the target's feet, flames, a glow.
+     - *Shared:* the cycle director, the action / entity fields, the 3D sound at the target's
+       effect position, the result, `tick_above`, the sequence sprite renderer (the glow), the
+       busy wait.
+     - *Added:*
+       - FFNx's table callback `TablePrimCallback`: each object's draw mode is a word of a table
+         (exe data, one per object; bit 0x10000000: its offset through the frame, its rotation
+         kept), the engine's renderer. Draw `layout_table` (words, bone, size shift) in the frame
+         `SqrtSizeFrame` (a diagonal of sqrt(size << shift) at the target's feet);
+       - spinning models (Aura's flames): the placement `spinning_ring` (count, bone, lift, angle
+         step, radius / speed / strength as base + (rand & mask): one angle and speed for the
+         tick's flames, CRT rand in the original's order), node fields `radius`, `angle`,
+         `speed`, `fade`, the draw `spinning_model` (`DrawSpinningModel`: a prim model turned about
+         the view's axis, scaled by the radius, faded in and out by `FadeInOut`, its own draw
+         mode and depth offset) and the event `spin`;
+       - the draw `sequence_at_feet` (sequence, from, frames, bone, lift, size, angle);
+       - `screen_fade_at` takes the engine fade's four values (Haste, Slow and Dispel: 0, 1, 1,
+         0x60; Aura: 0, 1, 0, 0x80).
+     - *Inputs* (`AuraParams`): 32 values: the cycle, the busy tick, the sound, the damage and end
+       ticks, the aura's bone and size shift, the flames' spawning, radius, turn, strength, fade,
+       depth, draw mode and life, the glow's ticks, lift, size and angle. Data: the aura layout
+       (0x43BC bytes), its 10 object words, the flame model, the glow sequence, the camera track
+       (2172 bytes), the sound, "mag110.tim".
+     - *Fujin:* its tabs (Timing, Aura, Flames, Glow); an eighth family in the + menu, "One per
+       action, at its target's feet (Aura's kind)": Aura (the start), Flames, Glow.
