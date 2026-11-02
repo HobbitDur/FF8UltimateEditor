@@ -75,7 +75,8 @@
    "action_target",
    0,
    "@glyph",
-   "@upper"
+   "@upper",
+   0
   ]
  },
  "pools": [
@@ -282,7 +283,9 @@
       0,
       "$scale.base",
       "$scale.shift",
-      "0x8000"
+      "0x8000",
+      1,
+      0
      ]
     },
     {
@@ -297,7 +300,9 @@
       "@depth_point",
       "$scale.base",
       "$scale.shift",
-      "0x8000"
+      "0x8000",
+      1,
+      0
      ]
     }
    ],

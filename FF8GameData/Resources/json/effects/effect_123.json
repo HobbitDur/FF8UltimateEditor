@@ -1,0 +1,311 @@
+{
+ "format": 1,
+ "effect": 123,
+ "name": "Slow",
+ "doc": "Slow (spell): one target task per action, in turn (one every 10 ticks), each a clock at the action's target's feet and a second layout under its effect point 0xF0, both turned with it and scaled by its size; a screen fade; the target blinks; when both layouts have finished the target takes the result. One of the two clock spell modules (123 Slow, 125 Haste: one source built twice).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6BD1D0",
+   "setup": "0x6BD1C0",
+   "root": "0x6BD260"
+  },
+  "memory": {
+   "texture_file": "0x2521448",
+   "magic_buffer": "0x252144C",
+   "ctx": "0x2521450",
+   "root_pool": "0x2521458",
+   "packet_cursor": "0x252146C",
+   "camera_matrix": "0x2521470",
+   "root_queue": "0x25214A0"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "clock": {
+   "kind": "layout",
+   "address": "0x12652B0",
+   "size": 14988
+  },
+  "lower": {
+   "kind": "layout",
+   "address": "0x1268D3C",
+   "size": 18932
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x126D730",
+   "size": 3456
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x126E4B0",
+   "size": 4
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x126E4B4",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the layouts' blended vertex frames (after the three target nodes).",
+  "arenas": [
+   "0x1AAC",
+   "0x19AAC"
+  ],
+  "morph": "0x162C"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "target",
+  "every": "$timing.every",
+  "camera_matrix": true,
+  "place": [
+   "action_target",
+   0,
+   "@clock",
+   "@lower",
+   "0xF0"
+  ]
+ },
+ "pools": [
+  {
+   "key": "targets",
+   "queue": "0x2521490",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 1892,
+   "count": 3
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one target task per action, in turn; each target task's clock: its sound, the screen fade, the target's blink; both layouts' size (draws nothing); it ends when both layouts have finished"
+  },
+  {
+   "id": 1,
+   "key": "clock",
+   "title": "Clock",
+   "doc": "The clock at the target's effect position, on its feet, turned with it"
+  },
+  {
+   "id": 2,
+   "key": "lower",
+   "title": "Lower layout",
+   "doc": "The second layout under the target's effect point, turned with it"
+  }
+ ],
+ "groups": [
+  {
+   "key": "scale",
+   "label": "Size",
+   "doc": "Both layouts scaled by ((the target's size >> 1) + Base) >> Shift (4096 = their own size)"
+  },
+  {
+   "key": "blink",
+   "label": "Blink",
+   "doc": "The target blinks over From .. From + Ticks - 1, on the ticks e % (Ticks - e) == 0 (e = tick - From; Ticks 0: never)"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's target task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the target's effect position when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade_tick",
+   "part": "timing",
+   "label": "Fade tick",
+   "doc": "The engine's screen fade starts when the target tick == this",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "scale.base",
+   "part": "timing",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "scale.shift",
+   "part": "timing",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "blink.from",
+   "part": "timing",
+   "label": "From",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "blink.ticks",
+   "part": "timing",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 1892,
+   "function": "0x6BD3E0",
+   "doc": "One per action: two layouts in frames of the action's target, turned with it, scaled by its size (only when the effect camera matrix's m[1][0] is not 0: the word Slow reads is never written), through the frame callback with every record flag it knows (0x100, 0x200, 0x1000: the effect camera matrix, 0x2000, 0x4000, 0x8000) and the engine's renderer; its sound; it slows the target when both layouts have finished.",
+   "node": [
+    "counter",
+    "action",
+    "entity",
+    "anchor",
+    "spawn",
+    [
+     "layout",
+     472
+    ],
+    [
+     "layout_b",
+     1384
+    ]
+   ],
+   "draws_first": true,
+   "every_tick": [
+    [
+     "sound_3d_at",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "clock",
+     "draw": [
+      "layout_turned",
+      0,
+      -1,
+      1,
+      0,
+      0,
+      "$scale.base",
+      "$scale.shift",
+      "0xF300",
+      -1,
+      1
+     ]
+    },
+    {
+     "part": "lower",
+     "draw": [
+      "layout_turned",
+      1,
+      -1,
+      2,
+      0,
+      0,
+      "$scale.base",
+      "$scale.shift",
+      "0xF300",
+      -1,
+      1
+     ]
+    }
+   ],
+   "events": [
+    [
+     "blink_target",
+     "$blink.from",
+     "$blink.ticks"
+    ],
+    [
+     "screen_fade_at",
+     "$timing.fade_tick"
+    ]
+   ],
+   "end": [
+    "layout_end"
+   ],
+   "at_end": [
+    [
+     "unmark_target",
+     8
+    ],
+    [
+     "heal_action"
+    ]
+   ]
+  }
+ ]
+}

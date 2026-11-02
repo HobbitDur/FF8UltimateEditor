@@ -246,6 +246,10 @@ CYCLES = {
                             "layout.depth.base -1000\nlayout.nearer.object 2\nlayout.bone 241\n"),
     115: ("mag114.tim", 11, "timing.every 6\ntiming.sound_tick 4\ntiming.damage_tick 40\ntiming.end_tick 50\n"
                             "scale.base 1500\nscale.shift 1\nglyph.bone 240\nupper.from_tick 3\n"),
+    123: ("mag122.tim", 9, "timing.every 6\ntiming.sound_tick 3\ntiming.fade_tick 20\nscale.base 1500\nscale.shift 1\n"
+                           "blink.from 5\nblink.ticks 30\n"),
+    125: ("mag124.tim", 9, "timing.every 6\ntiming.sound_tick 3\ntiming.fade_tick 20\nscale.base 1500\nscale.shift 1\n"
+                           "blink.from 5\nblink.ticks 30\n"),
 }
 
 
@@ -265,7 +269,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence and Float from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow and Haste from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -286,3 +290,16 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     program = write_program(description, tmp_path / "new.fxprog")
     new, log = record(tmp_path, 225, "new", f"program={program}")
     assert "program: New_cycle" in log and untag(new) == original
+
+
+def test_clock_spell_descriptions_compile():
+    """Haste and Slow: the cycle director keeps the effect camera matrix every tick and places both
+    layouts with the target's effect position and its effect point 0xF0; both layouts in frames of
+    the target from those (the lower one lowered by its size), through every record flag and the
+    engine's renderer; Slow's "scaled" word is the camera matrix's m[1][0]; the end when both
+    layouts have finished."""
+    for effect, scaled in ((123, -1), (125, 1)):
+        program = compile_program(load_description(effect))
+        assert "camera_matrix" in program.splitlines() and "field spawn 28 8" in program
+        assert f"layout_turned 0 -1 1 0 0 $5 $6 62208 {scaled} 1" in program and "layout_turned 1 -1 2 " in program
+        assert "end layout_end" in program and ("at_end unmark_target 8" in program) == (effect == 123)

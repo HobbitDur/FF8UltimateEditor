@@ -496,3 +496,24 @@ Potion's description is the same with its own sequences and sound.
        (2508 bytes), the sound, the texture name ("mag114.tim").
      - *Fujin:* its tabs (Timing, Glyph, Upper layout); a fifth family in the + menu, "One per
        action, turned with its target (Float's kind)": Glyph (the start), Upper layout.
+   - **Slow (123), Haste (125)** (FFNx 73b62769): the two clock spells, one source built twice,
+     now one FFNx module (`mag_clock_spell.h`, `ClockSpell<Layout>`). Silence's director, Float's
+     frame callback with every record flag it knows (0x100, 0x200, 0x1000, 0x2000, 0x4000, 0x8000)
+     and the engine's renderer 0x572200 (the header's depth not written): a clock at the target's
+     feet and a second layout under its effect point 0xF0, lowered by its size (s / 16 + s / 4).
+     - *Added:* the cycle director's `camera_matrix` (the effect camera matrix, 0x67AAE0 of the
+       camera, every tick, before the queue); node fields `anchor` and `spawn` filled by
+       `action_target` (the target's effect position, its effect point given by a fourth value);
+       `layout_turned` grows its y rule (the point's, the feet, the spawn point lowered by the
+       size), the node's anchor as its point (bone -1), its "scaled" source and the engine
+       renderer; a task's layouts all finished end it (`layout_end` over every layout drawn that
+       tick); `screen_fade_at`, `blink_target` (Slow: the target's flag bit 3 on the ticks
+       e % (40 - e) == 0), `heal_action`.
+     - *A vanilla read kept:* Slow's callback tests a "scaled" word its task never writes; it
+       holds what 0x67AAE0 left on the stack, the effect camera matrix's m[1][0] (0 unless the
+       camera rolls). Slow's description says so (`layout_turned`'s scaled value -1).
+     - *Inputs* (`ClockSpellParams`): the cycle, the sound's tick and volume, the fade tick, the
+       size rule, the blink's first tick and length (Haste: 0). Data: the two layouts, the camera
+       track, the sound, the texture name ("mag122.tim", "mag124.tim").
+     - *Fujin:* their tabs (Timing, Clock, Lower layout); a sixth family in the + menu, "One per
+       action, a clock on its target (Haste's kind)": Clock, Lower layout.

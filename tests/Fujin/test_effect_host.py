@@ -39,7 +39,7 @@ EXE_ADDRESS = re.compile(r"(?<![0-9A-Za-z$@])(0x[0-9A-F]{6,7}|1[0-9]{7}|[2-4][0-
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe")
 def test_a_new_effect_made_with_the_exe_has_its_own_data():
     exe = EXE.read_bytes()
-    for effect, keys in ((1, 8), (133, 24), (122, 4), (115, 6), (292, 3), (293, 3), (294, 3), (295, 3), (296, 3)):
+    for effect, keys in ((1, 8), (133, 24), (122, 4), (115, 6), (123, 5), (125, 5), (292, 3), (293, 3), (294, 3), (295, 3), (296, 3)):
         source = load_description(effect)
         new = new_effect(source, 300 + effect % 100, "New", exe)
         assert "exe_data" not in new and "exe_data" in source

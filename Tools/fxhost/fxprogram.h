@@ -63,16 +63,16 @@ namespace fxprog
 	enum Limit { NO_LIMIT, BELOW, AT_MOST, AT_LEAST };
 	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value; Step draw; };
 	// a plain node's fields (offsets in the node; -1: none)
-	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, FIELD_COUNT };
+	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, FIELD_COUNT };
 	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity",
-	                                                      "layout_b" };
+	                                                      "layout_b", "spawn" };
 	struct Task
 	{
 		std::string key;
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		bool plain = false, draws_first = false;
-		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 		int layout_size = 0, layout_b_size = 0;
 		Step end;                                 // a plain node's end (after its counter)
 		std::vector<Step> at_end;                 // actions when it ends
@@ -121,6 +121,7 @@ namespace fxprog
 		FOLLOW_TARGET, SPAWN, HEAL, DONE, SPAWNING, OVERLAY, SEQUENCE, FLIPBOOK, HELIX_START, OVERLAY_START,
 		HIDE_TARGET, SHOW_TARGET, UNBLOCK_DIRECTOR, VELOCITY_ROLL, VELOCITY_RISE, DRIFT, SOUND_AT, HEAL_ALL_AT,
 		HEAL_FIRST_TARGET, ANCHOR_AT_BONE, SOUND_3D_AT, HEAL_ACTION_AT, UNMARK_TARGET, ANCHOR_AT_POSITION,
+		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE,
 		// motions
@@ -149,7 +150,8 @@ namespace fxprog
 		{ "layout_at_anchor", LAYOUT_AT_ANCHOR }, { "anchor_at_bone", ANCHOR_AT_BONE }, { "sound_3d_at", SOUND_3D_AT },
 		{ "heal_action_at", HEAL_ACTION_AT }, { "unmark_target", UNMARK_TARGET }, { "tick_above", TICK_ABOVE },
 		{ "action_target", ACTION_TARGET }, { "layout_on_target", LAYOUT_ON_TARGET }, { "anchor_at_position", ANCHOR_AT_POSITION },
-		{ "layout_turned", LAYOUT_TURNED },
+		{ "layout_turned", LAYOUT_TURNED }, { "heal_action", HEAL_ACTION }, { "screen_fade_at", SCREEN_FADE_AT },
+		{ "blink_target", BLINK_TARGET },
 	};
 
 	inline Program *g_program = nullptr;
@@ -295,9 +297,24 @@ namespace fxprog
 			layouts::GetEffectSpawnPosition(*Fld<uint8_t *>(t, n, F_ENTITY), V(a[0]), 0, g_anchor);
 			g_anchor[3] = 0;   // never written by the originals (a stack word), only loaded into the GTE V0 pad
 			break;
-		case SOUND_3D_AT: // tick, sound, volume: at this tick's anchor
-			if (Tick(t, n) == V(a[0])) BdPlaySE3D((const void *)fxp::sound((uint32_t)V(a[1]), (uint32_t)G(a[1])), V(a[2]), g_anchor);
+		case SOUND_3D_AT: // tick, sound, volume: at the node's anchor (or this tick's)
+			if (Tick(t, n) == V(a[0]))
+				BdPlaySE3D((const void *)fxp::sound((uint32_t)V(a[1]), (uint32_t)G(a[1])), V(a[2]),
+				           t.field[F_ANCHOR] >= 0 ? Fld<int16_t>(t, n, F_ANCHOR) : g_anchor);
 			break;
+		case HEAL_ACTION: ApplyActionResultToTarget(Ctx()->actions[*Fld<int16_t>(t, n, F_ACTION)].targets); break;
+		case SCREEN_FADE_AT: if (Tick(t, n) == V(a[0])) ScreenFadeTask(0, 1, 1, 0x60); break;   // tick: the engine's fade (Haste, Slow)
+		case BLINK_TARGET: // from, ticks: the entity's flag bit 3 on the ticks e % (ticks - e) == 0 (e = tick - from)
+		{
+			uint8_t *e8 = *Fld<uint8_t *>(t, n, F_ENTITY);
+			const int32_t e = Tick(t, n) - V(a[0]);
+			if ((uint32_t)e < (uint32_t)V(a[1]))
+			{
+				if (e != 0 && (uint32_t)e % (uint32_t)(V(a[1]) - e) == 0) *e8 |= 8;
+				else *(uint16_t *)e8 &= 0xFFF7;
+			}
+			break;
+		}
 		case HEAL_ACTION_AT: // tick: target 0 of the node's action takes the result
 			if (Tick(t, n) == V(a[0])) ApplyActionResultToTarget(Ctx()->actions[*Fld<int16_t>(t, n, F_ACTION)].targets);
 			break;
@@ -485,25 +502,34 @@ namespace fxprog
 			left = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, F_LAYOUT), &anchor_arg);
 			break;
 		}
-		case LAYOUT_TURNED: // layout (0, 1: layout_b), bone, on its feet, depth, depth point, scale base, shift, record flags
+		case LAYOUT_TURNED: // layout (0, 1: layout_b), bone, y, depth, depth point, scale base, shift, record flags, scaled, engine draw
 		{
-			// in a frame of the node's entity: turned with it, at its effect point `bone` (on its feet:
-			// y = its +0x24), scaled by its size; depth: the point's depth in that frame, or as given
+			// in a frame of the node's entity: turned with it, at its effect point `bone` (-1: the node's
+			// anchor) - y: that point's (0), its feet (1: +0x24) or the node's spawn point lowered by the
+			// size (2: s / 16 + s / 4) - scaled by its size (scaled 1; 0: not; -1: when the camera
+			// matrix's m[1][0] is not 0, Slow's vanilla read); depth: the point's depth in the frame, or
+			// as given; engine draw: 0x572200, the depth not written (Haste, Slow)
 			uint8_t *e = *Fld<uint8_t *>(t, n, F_ENTITY);
 			layouts::FrameArg frame;
 			const int32_t s = layouts::SizeScale(e, V(a[5]), V(a[6]));
-			frame.scaled = 1;
 			frame.scale[0] = frame.scale[1] = frame.scale[2] = s;
+			frame.scaled = V(a[8]) >= 0 ? V(a[8]) : var<Mat4x3>(Mem("camera_matrix")).m[1][0];
 			frame.honoured = (uint32_t)V(a[7]);
 			frame.cursor = arg.cursor;
 			frame.morph = arg.morph;
+			frame.matrix = g_program->camera_matrix ? &var<Mat4x3>(Mem("camera_matrix")) : &Camera();
+			frame.engine_draw = V(a[9]) != 0;
 			int16_t sp[4];
-			layouts::GetEffectSpawnPosition(e, V(a[1]), 0, sp);
-			const int32_t point[3] = { sp[0], V(a[2]) ? *(const int16_t *)(e + 0x24) : sp[1], sp[2] };
+			if (V(a[1]) >= 0) layouts::GetEffectSpawnPosition(e, V(a[1]), 0, sp);
+			else memcpy(sp, Fld<int16_t>(t, n, F_ANCHOR), sizeof(sp));
+			int32_t point[3] = { sp[0], sp[1], sp[2] };
+			if (V(a[2]) == 1) point[1] = *(const int16_t *)(e + 0x24);
+			if (V(a[2]) == 2) point[1] = (int32_t)Fld<int16_t>(t, n, F_SPAWN)[1] - (s >> 4) - (s >> 2);
 			layouts::TargetFrame(e, point, &frame.m);
 			frame.depth = V(a[4]) ? layouts::PointDepth(&frame.m, e, (const int16_t *)V(a[4])) : V(a[3]);
 			if (V(a[4])) GteSetTransVector(&frame.m);
-			left = layouts::PlayInFrame(Fld<uint8_t>(t, n, V(a[0]) ? F_LAYOUT_B : F_LAYOUT), &frame);
+			const int frames = layouts::PlayInFrame(Fld<uint8_t>(t, n, V(a[0]) ? F_LAYOUT_B : F_LAYOUT), &frame);
+			left = left < 0 ? frames : left | frames;   // a task's layouts all finished: its layout_end
 			break;
 		}
 		case LAYOUT_ON_TARGET: // depth base, shift, record flags honoured, nearer object, by: at this tick's anchor
@@ -531,7 +557,7 @@ namespace fxprog
 		const Task &t = g_program->tasks[k];
 		FxNode *h = (FxNode *)n;
 		Particle *p = (Particle *)n;
-		int left = 1;                             // the frames left of a layout drawn this tick
+		int left = -1;                            // the frames left of the layouts drawn this tick (-1: none drawn)
 		auto draws = [&]()
 		{
 			for (const Draw &d : t.draws)
@@ -605,7 +631,7 @@ namespace fxprog
 		switch (t.end.op)
 		{
 		case TICK_AT_LEAST: ends = Tick(t, n) >= V(t.end.a[0]); break;
-		case LAYOUT_END: ends = left == 0; break;
+		case LAYOUT_END: ends = left == 0; break;   // every layout drawn this tick has finished
 		case TICK_ABOVE: ends = Tick(t, n) > V(t.end.a[0]); break;   // the counter (before this tick's step) reached it
 		default: break;
 		}
@@ -796,7 +822,7 @@ namespace fxprog
 			}
 			uint8_t &action = m->pad0E;
 			const std::vector<Val> &a = g.director_place.a;
-			if (action <= Ctx()->actions[0].last_action && g.director_place.op == ACTION_TARGET) // mark, layout, layout b (0: none)
+			if (action <= Ctx()->actions[0].last_action && g.director_place.op == ACTION_TARGET) // mark, layout, layout b (0: none), spawn bone
 			{
 				const Task &t = g.tasks[g.director_spawns];
 				if (TaskNode *s = (TaskNode *)SpawnTask(g.director_spawns, nullptr))
@@ -806,12 +832,15 @@ namespace fxprog
 					*Fld<uint8_t *>(t, s, F_ENTITY) = e;
 					e[0] |= (uint8_t)V(a[0]);
 					e[1] |= (uint8_t)(V(a[0]) >> 8);
+					if (int16_t *anchor = Fld<int16_t>(t, s, F_ANCHOR)) GetDefaultEffectPosition(e, anchor);
+					if (int16_t *spawn = Fld<int16_t>(t, s, F_SPAWN)) layouts::GetEffectSpawnPosition(e, V(a[3]), 0, spawn);
 					DecodeLayout(t, s, (uint32_t)V(a[1]));
 					if (V(a[2])) DecodeLayoutB(t, s, (uint32_t)V(a[2]));
 				}
 				action++;
 			}
 		}
+		if (g.camera_matrix) EffectCameraMatrix(&Camera(), &var<Mat4x3>(Mem("camera_matrix")));   // Haste, Slow: every tick
 		if (m->started)
 		{
 			bool alive = false;
