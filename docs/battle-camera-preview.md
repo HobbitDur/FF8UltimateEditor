@@ -137,6 +137,9 @@ less than the effect ID). Verified against the English 2013 Steam exe and extrac
 `effect_camera.json` already classifies 231 in `file_camera_effects`. The former
 **(no track)** list suffix hid that distinction. The exe extraction did not miss a static
 track: editing this camera requires reading and writing the embedded track in the `.00` file.
+That track can grow or shrink: the game reaches it and everything after it only through the
+file's own offsets, which `PackedMag` rewrites
+([Resizing a part](fujin-mag-sections.md#resizing-a-part-packedmag)).
 
 ## Scope
 

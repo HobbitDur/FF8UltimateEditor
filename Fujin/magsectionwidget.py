@@ -277,22 +277,36 @@ class MagSectionEditor(QWidget):
         info_row.addWidget(self.camera_info, 1)
         info_row.addWidget(self.camera_30fps_button, 0, Qt.AlignmentFlag.AlignTop)
         layout.addLayout(info_row)
-        self.camera_editor = CameraTrackEditor(self.camera_manager, self.camera_preview, room_name="MAG file")
+        self.camera_editor = CameraTrackEditor(self.camera_manager, self.camera_preview, room_name="MAG file",
+                                               growth_note=self.MAG_GROWTH_NOTE)
         self.camera_editor.keyframes_changed.connect(self._apply_camera)
         self.camera_editor.track_changed.connect(self._apply_camera)
         layout.addWidget(self.camera_editor, 1)
         self.camera_page, self.views = page, self.camera_editor.tabs
-        self.camera_editor.set_track(self.camera_track, fixed_size=self.section.size)
+        # PackedMag says whether the parts after the camera can move (every offset kept right)
+        resize_problem = getattr(self.manager, "resize_problem", None)
+        self.camera_fixed_reason = resize_problem(self.section.start) if resize_problem else "unknown file"
+        self.camera_editor.set_track(self.camera_track, fixed_size=self._camera_room())
         self._update_camera_info()
+
+    MAG_GROWTH_NOTE = "what follows it in the MAG file moves, every offset to it updated"
+
+    def _camera_room(self):
+        """None when the camera may change size, else the bytes it must keep."""
+        return self.section.size if self.camera_fixed_reason else None
 
     def _update_camera_info(self):
         track = self.camera_track
-        self.camera_info.setText(
-            f"<b>MAG camera</b> at 0x{self.section.start:X}, {self.section.size} bytes: script "
-            f"{len(track.script)} bytes, {track.keyframe_count()} keyframes.<br>The camera keeps its "
-            f"{self.section.size} bytes (the MAG file's following offsets are not moved), so the script "
-            "and the keyframes share them: keyframes and slots can be added once removed keyframes or "
-            "a shorter script have left room. Changes go into this MAG file (no .bcam).")
+        text = (f"<b>MAG camera</b> at 0x{self.section.start:X}, {self.section.size} bytes: script "
+                f"{len(track.script)} bytes, {track.keyframe_count()} keyframes.<br>")
+        if self.camera_fixed_reason:
+            text += (f"The camera keeps its {self.section.size} bytes ({self.camera_fixed_reason}), so the "
+                     "script and the keyframes share them: keyframes and slots can be added once removed "
+                     "keyframes or a shorter script have left room.")
+        else:
+            text += ("Keyframes and script can grow or shrink: the parts after the camera move and every "
+                     "offset to them is updated.")
+        self.camera_info.setText(text + " Changes go into this MAG file (no .bcam).")
 
     def convert_camera_to_30fps(self):
         """This MAG camera converted for FFNx True30FPS (FF8GameData/dat/camera30.py), in its room."""
@@ -301,21 +315,31 @@ class MagSectionEditor(QWidget):
         before = track.to_bytes()
         try:
             camera30.convert_track(self.camera_manager.vm, track, camera30.FACTOR_30FPS)
-            if track.current_size != self.section.size:
+            if self._camera_room() is not None and track.current_size != self.section.size:
                 self.camera_manager.fit_track_to_size(
                     track, self.camera_manager.script_without_filler(track.script), self.section.size)
         except ValueError as error:
             self.camera_track._set_parts(before, self.camera_manager.vm)
             self.error.setText(f"Not converted: {error}")
             return False
-        self.camera_editor.set_track(track, fixed_size=self.section.size)
+        self.camera_editor.set_track(track, fixed_size=self._camera_room())
         self._apply_camera()
         return True
 
     def _apply_camera(self):
+        before = bytes(self.manager.data[self.section.start:self.section.end])
         try:
-            if self.manager.replace_section(self.section.start, self.camera_track.to_bytes()):
-                self._announce()
-                self._update_camera_info()
+            changed = self.manager.replace_section(self.section.start, self.camera_track.to_bytes())
         except ValueError as error:
+            # the file keeps its camera: show that one again rather than an edit it does not hold
+            self.camera_track._set_parts(before, self.camera_manager.vm)
+            self.camera_editor.set_track(self.camera_track, fixed_size=self._camera_room())
             self.error.setText(str(error))
+            return
+        if changed:
+            # a camera of another size moved what follows it: this section now ends elsewhere
+            self.section = next(s for s in self.manager.document.sections if s.start == self.section.start)
+            self.fields = self.manager.document.fields_for(self.section)
+            self.byte_page.setRange(0, max(0, math.ceil(self.section.size/self.PAGE_BYTES)-1))
+            self._announce()
+            self._update_camera_info()

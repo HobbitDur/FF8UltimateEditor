@@ -18,7 +18,9 @@ large field/byte tables are paged rather than allocating a widget for every byte
   editor. The script ends at the next mapped section, including an embedded camera when present.
 - **Camera:** editable camera VM source and structured sets/slots/blocks/keyframes, reusing
   Fujin's track parser and Watts' keyframe editor. Disease Breath (effect 231) opens
-  `MAG230_B.00`, with its camera at `0x870`.
+  `MAG230_B.00`, with its camera at `0x870`. Keyframes and script can grow or shrink: the file
+  makes room (see [Resizing a part](#resizing-a-part-packedmag)). Where it cannot, the camera
+  keeps its bytes, the info line says why, and the script and the keyframes share that room.
 - **Meshes:** named mesh-header fields and signed vertex/normal coordinates. Recognized sprite
   lists expose offsets, durations and controls. Recognized embedded battle models have separate
   header, skeleton, geometry and animation tabs.
@@ -34,11 +36,49 @@ texture/CLUT entries use their low 24 bits relative to their own table. Differen
 not be rewritten as though they shared one offset base. Physical spans end at the next known
 boundary and may include alignment/padding. Unreferenced bytes remain explicit sections.
 
-Every edit and replacement keeps the existing byte size. Growing a section would require
-relocating directories, script references and nested resource references, which this editor
-does not do. A failed size/range check changes no bytes. Undo/redo covers all sections. Save
-writes only modified loaded files; unedited files round-trip byte for byte. Modified companion
-and streamed bytes are also used by the supported GF scene preview.
+## Resizing a part (PackedMag)
+
+`FF8GameData/magcine/packedmag.py` (`PackedMag`) is the one class for a packed MAG file. It
+gathers the section map, objects, sounds, vibration, script and camera, and it alone knows
+every offset the game follows into the file:
+
+| Offset | Relative to |
+|---|---|
+| Header `+0x04`..`+0x24` | the file (0 = absent) |
+| Texture, CLUT and music table entries (low 24 bits) | their own table |
+| Object table entries | the object table |
+| Sprite frame lists (`s32`) | the object table |
+| Sound table entries | the sound table |
+| Vibration bank entries | the bank |
+| Script jumps, calls, spawns and particle starts | their instruction |
+
+A part replaced by one of another size moves what follows it. Every offset is then rewritten,
+the following parts stay 4-byte aligned (zero padding), and each part the game reaches is
+checked to still hold its bytes. Shrinking back gives the original bytes.
+
+FF8_EN.exe reads nothing else. The effect code uses header `+0x04`, `+0x18`, `+0x20` and
+`+0x24` of the `.00` and `+0x1C` of the `.01`, never a fixed offset past the header. Each
+effect's files are loaded one after the other at the start of the 1 MB magic buffer
+(`IO_GetFile_MAGIC` 0x571B80), so a bigger `.00` only pushes the `.01` further.
+
+A resize is refused, saying why, when:
+
+- the file has no script (the `.01` and streamed parts): the raw positions the `.00` script
+  holds into them are not known;
+- a script operand holds a raw position past the part: opcode 0x29 bit 14, VRAM upload from
+  slot + 4 KB page; opcode 0x06, a file streamed into slot + page or an exe descriptor offset;
+- an offset is stored inside the part, or a sprite frame offset (classified by shape) would
+  have to change;
+- the files would reach a fixed work buffer of the script (opcode 0x21, bit 15 clear, an
+  absolute offset in the magic buffer), or the 1 MB. The `.01` beside the `.00` is needed for
+  that check. MAG218 and MAG222 already reuse the memory of their texture-only `.01` and keep
+  their size.
+
+44 of the 46 vanilla stage cameras can grow or shrink this way.
+
+Other edits keep the byte size. A failed size/range check changes no bytes. Undo/redo covers
+all sections. Save writes only modified loaded files; unedited files round-trip byte for byte.
+Modified companion and streamed bytes are also used by the supported GF scene preview.
 
 ## Script dialects and playback
 

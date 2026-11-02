@@ -95,7 +95,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
 - **Camera:** executable tracks, embedded MAG tracks, and verified native parameters. MAG and
   executable tracks share the battle-context preview and caster/target imports. This previews
   the selected track, not additional procedural writes. Disease Breath (231) has a camera in
-  `MAG230_B.00` at `0x870`: 3 blocks, 5 keyframe entries. Bone-driven motion is edited in scripts.
+  `MAG230_B.00` at `0x870`: 3 blocks, 5 keyframe entries. A MAG track grows or shrinks in its
+  file, with what follows it moved and every offset updated (44 of the 46 vanilla ones; see
+  [MAG sections](fujin-mag-sections.md#resizing-a-part-packedmag)). Bone-driven motion is edited in scripts.
   The track's Script tab shows its camera script as **User-friendly** rows (commands, battle
   values, tests and jump targets picked from lists, described in `camera_script.json`) or as
   **Code**; its info button explains how the script picks the animation.

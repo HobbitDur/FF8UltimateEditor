@@ -1,7 +1,8 @@
 """Lossless MAG document and undo history, with cinematic instruction editing when present.
 
 Content detection maps packed cinematics, TIMs, indexed containers, audio and undecoded parts.
-All writes keep the byte size and preserve untouched data. Per-effect profiles describe native
+Writes keep the byte size and preserve untouched data, except a packed MAG section replaced by
+one of another size: PackedMag then moves the following parts and updates every offset. Per-effect profiles describe native
 opcode availability. Scene simulation is verified for the seven GF summons; other effects' scripts
 replay with the same engine model only when the caller asks for an unverified approximation.
 """
@@ -14,6 +15,7 @@ from FF8GameData.magcine.cinescript import (CineOpcodeTable, CineProgram, decode
                                             format_instruction)
 from FF8GameData.magcine.cinesim import CineSimulation
 from FF8GameData.magcine.magfile import MagFile
+from FF8GameData.magcine.packedmag import PackedMag, is_packed
 
 # GF name -> (magic effect id, mag file of the script)
 CINEMATIC_GFS = {
@@ -255,11 +257,48 @@ class MagDocument:
         self.analyse()
         return True
 
-    def replace_section(self, start, raw):
+    def packed(self):
+        """The file as a PackedMag (its pointer map, resizing), None when it is not a packed MAG."""
+        return PackedMag(self.data, getattr(self, "name", ""), self.table) if is_packed(self.data) else None
+
+    def loaded_after_size(self):
+        """Bytes of the .01 the game loads after this .00 into the magic buffer (the file beside
+        this one), None when it is not there."""
+        if not (self.file_path or getattr(self, "name", "")).lower().endswith(".00"):
+            return 0
+        companion = self.file_path[:-1] + "1"
+        return os.path.getsize(companion) if self.file_path and os.path.isfile(companion) else None
+
+    def resize_problem(self, start):
+        """Why the section at `start` cannot change size, "" when it can (every offset into the
+        file is then updated)."""
+        packed = self.packed()
         section = next((s for s in self.document.sections if s.start == start), None)
-        if section is None or len(raw) != section.size:
-            raise ValueError("A section replacement must keep its exact byte size; offsets are not relocated")
-        return self.patch_bytes(start, raw)
+        if packed is None or section is None:
+            return "this file is not a packed MAG file"
+        after = self.loaded_after_size()
+        problem = packed.resize_problem(start, section.end, loaded_after=after)
+        if problem and after is None and packed.work_buffer_floor() is not None:
+            return f"{ntpath.basename(self.file_path)[:-1]}1 is needed beside it to check the work buffer"
+        return problem
+
+    def replace_section(self, start, raw):
+        """Replace the section at `start`. Another size moves the parts after it and updates
+        every offset into the file (PackedMag), or raises ValueError saying why it cannot."""
+        section = next((s for s in self.document.sections if s.start == start), None)
+        if section is None:
+            raise ValueError(f"No section starts at 0x{start:X}")
+        raw = bytes(raw)
+        if len(raw) == section.size:
+            return self.patch_bytes(start, raw)
+        packed = self.packed()
+        if packed is None:
+            raise ValueError("A section of this file must keep its exact byte size: it is not a packed MAG file")
+        resized = packed.resized(start, raw, section.end, self.loaded_after_size())
+        self._push_undo()
+        self.data = bytearray(resized)
+        self.analyse()
+        return True
 
     def set_field(self, field, value):
         try:
