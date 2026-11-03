@@ -1103,3 +1103,11 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`ClashParams`): the emitter's sound and its tick, its start and end, the dust count, the
        bursts' ticks, sparks and radius, the knock-back's gravity. Data: the sound, "mag025.tim".
      - *Fujin:* its tabs (Emitter, Bursts); no + menu family.
+   - **Full-life (27)** (FFNx 6e5ffdfe; the spell; the act family with Drain's master, Esuna's
+     description): once its children are gone the actor pools and the stage fade in, one emitter per
+     action - its sound, the actor system around its target, the master's release, the revive; after
+     the last action a wait, the stage fade out.
+     - *Inputs* (`FullLifeParams`): the emitter's sound, release and result ticks, the master's wait,
+       the actor system (start, length, mode), the stage fade (level, step). Data: the sound, the
+       camera track, "mag026.tim".
+     - *Fujin:* its tabs (Emitter, Stage fade); no + menu family.
