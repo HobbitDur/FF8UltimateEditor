@@ -617,3 +617,31 @@ Potion's description is the same with its own sequences and sound.
        left on its target (Blind's kind)": Layout (the start), Flash.
      - The recorder logs a hooked insertion its render-list walk misses (Blind's last draw-mode
        packet of a tick) with its order-table bucket index, not the bucket's address.
+   - **Petrify Stare (120, 127)** (FFNx 12df3d5d; one module built twice: the Glacial Eye's and the
+     Cockatrice's, FFNx's `PetrifyStare<Layout>` in `mag_petrify_stare.h`): the cycle director
+     with ONE target node (only the first action plays); a "stare" layout at the caster, a
+     "stone" layout on the target from tick 14.
+     - *Shared:* the cycle director with Blind's screen flash events (the level stays 0), the
+       anchor callback (record flag 0x200; 120's rotation flag 0x400, 127's 0x40000: Echo
+       Screen's and Holy Water's), the depth from a size (Silence's), the screen fade, the 3D
+       sound and `follow_bone` (Blind's), `heal_action_at`, `tick_above`.
+     - *Added:*
+       - `"setup": "master"` for a cycle director: set up as the master is (the caster's entity
+         kept: memory `caster`; the texture upload first, the camera always);
+       - `follow_bone` and `sound_3d_at_position` take whose point (0: the node's entity, 1:
+         the caster);
+       - the every-tick action `point_at_position` (tick: the node's `point` = the entity's
+         default effect position on that tick);
+       - the draw `layout_on_point` (layout, the anchor or the point, whose: the node's entity
+         or the caster, ahead: the point moved ahead of that entity's facing by the unit circle
+         >> it, the library's `AheadOfFacing`, -1: none; depth base / shift from that entity's
+         size; record flags);
+       - a draw limit `"within": [from, count]` (from .. from + count - 1);
+       - the cycle director starts the next action only once its task spawned (its pool full:
+         it tries again on the next cycle), as the originals.
+     - *Inputs* (`PetrifyStareParams`): the cycle, the sound, the damage, end and fade ticks and
+       the fade's four values, the stare's bone, follow time, step ahead and depth, the stone's
+       window and depth. Data: the two layouts (120: 9768 / 15804 bytes, 127: 17608 / 22568), the
+       camera track, the sound, "mag119.tim" / "mag126.tim".
+     - *Fujin:* their tabs (Timing, Stare, Stone); an eleventh family in the + menu, "From the
+       caster, then on its target (Petrify Stare's kind)": Stare (the start), Stone.

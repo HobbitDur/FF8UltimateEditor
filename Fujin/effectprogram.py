@@ -20,7 +20,8 @@ at its start tick - with the targets of action 0, or at an anchor on target 0 - 
 "magic_buffer" arenas, runs its own "events" on its counter after its queues ("events_first":
 before) and, with "camera_matrix", keeps a camera matrix of its own (memory camera_matrix, every
 tick: Echo Screen's)) or "cycle" (Silence's: every "every" ticks it starts one task for the next
-action, on its target; its "events" too, every tick: Blind's screen flash). An effect with no "camera" resource starts no camera track.
+action, on its target; its "events" too, every tick: Blind's screen flash; "setup": "master", set
+up as the master is: Petrify Stare's). An effect with no "camera" resource starts no camera track.
 
 The memory an effect works in is its exe copy's ("copy": "memory", addresses) or its own
 ("own_memory": name: size in bytes, allocated by the runtime), its pools' queues and storage then
@@ -45,7 +46,8 @@ ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, 
            "velocity_roll": 6, "velocity_rise": 2, "drift": 0, "sound_at": 3, "heal_all_at": 1, "heal_first_target": 0,
            "anchor_at_bone": 1, "sound_3d_at": 3, "heal_action_at": 1, "unmark_target": 1, "anchor_at_position": 0,
            "heal_action": 0, "screen_fade_at": 5, "blink_target": 2, "screen_flash_curve": 4, "screen_flash_off": 0,
-           "spin": 0, "whirl_leaf_move": 2, "flash_level_raise": 5, "follow_bone": 2, "sound_3d_at_position": 3}
+           "spin": 0, "whirl_leaf_move": 2, "flash_level_raise": 5, "follow_bone": 3, "sound_3d_at_position": 4,
+           "point_at_position": 1}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1, "tick_at_node_end": 0, "leaf_gone": 0}
 # the master director's own events (on its counter, after its queues: "events"; before: "events_first")
 DIRECTOR_EVENTS = {"sound_at": 3, "flash_level_clear": 0, "screen_flash_level": 0}
@@ -57,7 +59,8 @@ DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_s
          "layout_scaled": 1, "sequence_sprite": 3, "layout_at_anchor": 2, "layout_on_target": 5,
          "layout_turned": 10, "node_sequence_sprite": 1,
          "layout_table": 3, "spinning_model": 6, "sequence_at_feet": 7,
-         "layout_scaled_on_target": 8, "tumbling_model": 2, "layout_engine_at_anchor": 4}
+         "layout_scaled_on_target": 8, "tumbling_model": 2, "layout_engine_at_anchor": 4,
+         "layout_on_point": 7}
 # a plain node's fields and their sizes (a layout's is given: ["layout", size])
 FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14, "anchor": 8, "action": 2, "entity": 4, "spawn": 8, "end": 2, "seq": 4, "radius": 2, "angle": 2, "speed": 2, "fade": 2, "leaf": 0x30}
 NODE_HEADER = 0xC
@@ -233,6 +236,8 @@ def compile_program(description, values=None):
         lines.append(f"director per_action {tasks[director['spawns']]}")
     if director.get("camera_matrix"):
         lines.append("camera_matrix")
+    if director.get("setup") == "master":
+        lines.append("master_setup")
     for param in description["params"]:
         current = values.get(param["key"], param["default"])
         where = f"parameter {param['key']}"
@@ -292,6 +297,8 @@ def compile_program(description, values=None):
                 limit = "at_most", value(draw["while_tick_at_most"], where)
             elif "from_tick" in draw:
                 limit = "at_least", value(draw["from_tick"], where)
+            elif "within" in draw:   # [from, count]: from .. from + count - 1
+                limit = "within", " ".join(value(item, where) for item in draw["within"])
             lines.append(f"draw {parts.get(draw.get('part'), 0)} {flag(draw.get('if'), where)} {limit[0]} {limit[1]} "
                          f"{step(draw['draw'], DRAWS, where)}")
     return "\n".join(lines) + "\n"

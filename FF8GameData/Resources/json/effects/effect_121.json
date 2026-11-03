@@ -402,7 +402,8 @@
     [
      "follow_bone",
      "$layout.bone",
-     "$layout.follow"
+     "$layout.follow",
+     0
     ]
    ],
    "draws": [
@@ -422,7 +423,8 @@
      "sound_3d_at_position",
      "$timing.sound_tick",
      "$timing.sound",
-     "$timing.sound_volume"
+     "$timing.sound_volume",
+     0
     ],
     [
      "screen_fade_at",

@@ -1,5 +1,5 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's), and the description an effect made
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's), and the description an effect made
 of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
@@ -8,7 +8,7 @@ from its source effect's whole description, keeping what its parts bring: all of
 together are that effect exactly (whatever order they were added in), some of them a smaller effect
 of the same kind. Parts of two families never mix: their nodes and directors differ (the heal
 ring's effect-library nodes and per-action director, Hypnotize's plain nodes and master, Antidote's
-one layout on the target, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's and Blind's cycles of one task per action).
+one layout on the target, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's and Petrify Stare's cycles of one task per action).
 
 No Qt here.
 """
@@ -111,12 +111,20 @@ TEMPLATES = {
     "blind_flash": ("a screen flash and fades", "Drawn by another part", "per_action_flash", 121, "flash", (),
                     ("flash_level_clear", "screen_flash_level"), ("blind",),
                     "A screen flash every target task raises (the highest wins), and screen fades on its ticks."),
+    # Petrify Stare's family (one task, the first action's: a layout at the caster, then one on its target)
+    "stare": ("from the caster, then on its target", "How the effect starts", "per_action_stare", 120, "stare",
+              ("target",), (), (), "The first action's task (its pool holds one): a prim layout at one of the "
+              "caster's effect points, ahead of its facing; a screen fade, the sound at the caster, the result, its "
+              "end (Petrify Stare's way)."),
+    "stare_stone": ("on the target, later", "Drawn by another part", "per_action_stare", 120, "stone", (), (),
+                    ("stare",), "A second layout at the target's effect position, from a later tick."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout",
           "per_action_turned": "turned_glyph", "per_action_clock": "clock",
           "per_action_ring": "flash_ring", "per_action_aura": "aura",
-          "per_action_wind": "wind", "per_action_flash": "blind"}
+          "per_action_wind": "wind", "per_action_flash": "blind",
+          "per_action_stare": "stare"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
             "on_target": "One layout on the target (Antidote's kind)",
@@ -126,7 +134,8 @@ FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "per_action_ring": "One per action, a flash and a ring (Dispel's kind)",
             "per_action_aura": "One per action, at its target's feet (Aura's kind)",
             "per_action_wind": "One per action, a wind on its target (Aero's kind)",
-            "per_action_flash": "One per action, left on its target (Blind's kind)"}
+            "per_action_flash": "One per action, left on its target (Blind's kind)",
+            "per_action_stare": "From the caster, then on its target (Petrify Stare's kind)"}
 
 
 @functools.cache

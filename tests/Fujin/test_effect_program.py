@@ -258,6 +258,9 @@ CYCLES = {
                             "leaves.speed 100\nleaves.climb 20\ntiming.sound_tick 2\n"),
     121: ("mag120.tim", 22, "flash.up 900\nlayout.additive.b -1\nflash.fade_at.second 15\nlayout.follow 10\n"
                             "timing.sound_tick 6\nlayout.ot_shift 2\n"),
+    120: ("mag119.tim", 20, "stare.ahead 3\nstone.from 10\nstare.follow 5\ntiming.fade_tick 6\n"
+                            "stone.depth.base -1000\ntiming.end_tick 45\n"),
+    127: ("mag126.tim", 20, "stare.ahead 3\nstone.from 10\nstone.ticks 20\n"),
 }
 
 
@@ -277,7 +280,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero and Blind from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind and both Petrify Stares from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -356,3 +359,17 @@ def test_blind_description_compiles():
     assert "layout_engine_at_anchor 2816 " in program   # record flags 0x800 | 0x200 | 0x100
     assert program.count("after screen_fade_at ") == 3 and "after sound_3d_at_position " in program
     assert "end layout_end" in program
+
+
+def test_petrify_stare_descriptions_compile():
+    """Both Petrify Stares: the cycle director set up as the master is (the caster kept), one
+    target node; the stare at the caster's effect point ahead of its facing, the stone at the
+    target's position from a later tick (a draw within a window); their own rotation flag."""
+    for effect, flags in ((120, "1536"), (127, "262656")):   # 0x200 | 0x400, 0x200 | 0x40000
+        program = compile_program(load_description(effect))
+        lines = program.splitlines()
+        assert "master_setup" in lines and "memory caster" in program
+        assert "tick follow_bone $11 $12 1" in lines and "tick point_at_position $16" in lines
+        assert any(line.startswith("draw 2 0 within $16 $17 layout_on_point 1 1 0 -1 ") and line.endswith(flags)
+                   for line in lines)
+        assert "after sound_3d_at_position $2 $1 $3 1" in lines and "end tick_above $5" in lines

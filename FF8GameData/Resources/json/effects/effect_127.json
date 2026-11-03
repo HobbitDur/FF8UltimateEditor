@@ -1,0 +1,454 @@
+{
+ "format": 1,
+ "effect": 127,
+ "name": "Petrify Stare (Cockatrice)",
+ "doc": "Petrify Stare (the Cockatrice's (enemy attack 29)): one target task, on the first action's target (its pool holds one): a \"stare\" layout at the caster's effect point (followed for 10 ticks), ahead of its facing; from tick 14 a \"stone\" layout on the target; a screen fade; the result at tick 42, the end at 49.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6B93B0",
+   "setup": "0x6B93A0",
+   "root": "0x6B9450"
+  },
+  "memory": {
+   "flash_level": "0x2521270",
+   "caster": "0x2521274",
+   "texture_file": "0x2521278",
+   "magic_buffer": "0x252127C",
+   "ctx": "0x2521280",
+   "root_pool": "0x2521288",
+   "packet_cursor": "0x252129C",
+   "root_queue": "0x25212B0"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "stare": {
+   "kind": "layout",
+   "address": "0x12377BC",
+   "size": 17608
+  },
+  "stone": {
+   "kind": "layout",
+   "address": "0x123BC84",
+   "size": 22568
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x12414AC",
+   "size": 236
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x1241598",
+   "size": 4
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x124159C",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the layouts' blended vertex frames (after the target node).",
+  "arenas": [
+   "0x8A4",
+   "0x188A4"
+  ],
+  "morph": "0x4BC"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "target",
+  "every": "$timing.every",
+  "setup": "master",
+  "place": [
+   "action_target",
+   0,
+   "@stare",
+   "@stone",
+   0,
+   -1,
+   0,
+   0
+  ],
+  "events_first": [
+   [
+    "flash_level_clear"
+   ]
+  ],
+  "events": [
+   [
+    "screen_flash_level"
+   ]
+  ]
+ },
+ "pools": [
+  {
+   "key": "targets",
+   "queue": "0x25212A0",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 1212,
+   "count": 1
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts the target task of the first action (its pool holds one); its clock: the sound, the screen fade, the result, the end (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "stare",
+   "title": "Stare",
+   "doc": "The layout at the caster's effect point, ahead of its facing"
+  },
+  {
+   "id": 2,
+   "key": "stone",
+   "title": "Stone",
+   "doc": "The layout at the target, from a later tick"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing.fade",
+   "label": "Fade",
+   "doc": "The engine's screen fade's four values"
+  },
+  {
+   "key": "stare.depth",
+   "label": "Depth",
+   "doc": "Its drawing depth: (Base - the caster's size word) >> Shift"
+  },
+  {
+   "key": "stone.depth",
+   "label": "Depth",
+   "doc": "Its drawing depth: (Base - the target's size word) >> Shift"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's target task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the caster's default position when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 42,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The target task ends when its tick reaches this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 49,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade_tick",
+   "part": "timing",
+   "label": "Fade tick",
+   "doc": "The engine's screen fade starts when the target tick == this",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade.a",
+   "part": "timing",
+   "label": "A",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade.b",
+   "part": "timing",
+   "label": "B",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade.c",
+   "part": "timing",
+   "label": "C",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade.d",
+   "part": "timing",
+   "label": "D",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "stare.bone",
+   "part": "stare",
+   "label": "Bone",
+   "doc": "The caster's effect point the stare is at (0xF0 and up: the engine's named points)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "stare.follow",
+   "part": "stare",
+   "label": "Follow until",
+   "doc": "The stare follows that point while the target tick is below this, then stays",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "stare.ahead",
+   "part": "stare",
+   "label": "Ahead",
+   "doc": "Moved ahead of the caster's facing by the unit circle (4096) >> this",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "stare.depth.base",
+   "part": "stare",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -2048,
+   "unit": "plain"
+  },
+  {
+   "key": "stare.depth.shift",
+   "part": "stare",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "stone.from",
+   "part": "stone",
+   "label": "From tick",
+   "doc": "The stone is drawn from this target tick, at the target's default effect position taken then...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "stone.ticks",
+   "part": "stone",
+   "label": "Ticks",
+   "doc": "...for this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "stone.depth.base",
+   "part": "stone",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -2048,
+   "unit": "plain"
+  },
+  {
+   "key": "stone.depth.shift",
+   "part": "stone",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 5,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 1212,
+   "function": "0x6B95C0",
+   "doc": "The first action's: the stare at the caster's effect point (taken while the tick is below 10), ahead of its facing, its depth from the caster's size; from tick 14 the stone at the target's default effect position (taken then), its depth from the target's size; both through the anchor callback (record flags 0x200: the anchor through the camera + the offset as is; 0x40000: angles in YXZ order (0x7015B0)); the screen fade, the sound at the caster, the result; the end.",
+   "node": [
+    "counter",
+    "action",
+    "anchor",
+    "point",
+    "entity",
+    [
+     "layout",
+     456
+    ],
+    [
+     "layout_b",
+     720
+    ]
+   ],
+   "every_tick": [
+    [
+     "follow_bone",
+     "$stare.bone",
+     "$stare.follow",
+     1
+    ],
+    [
+     "point_at_position",
+     "$stone.from"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "stare",
+     "draw": [
+      "layout_on_point",
+      0,
+      0,
+      1,
+      "$stare.ahead",
+      "$stare.depth.base",
+      "$stare.depth.shift",
+      "0x40200"
+     ]
+    },
+    {
+     "part": "stone",
+     "within": [
+      "$stone.from",
+      "$stone.ticks"
+     ],
+     "draw": [
+      "layout_on_point",
+      1,
+      1,
+      0,
+      -1,
+      "$stone.depth.base",
+      "$stone.depth.shift",
+      "0x40200"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "screen_fade_at",
+     "$timing.fade_tick",
+     "$timing.fade.a",
+     "$timing.fade.b",
+     "$timing.fade.c",
+     "$timing.fade.d"
+    ],
+    [
+     "sound_3d_at_position",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume",
+     1
+    ],
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "tick_above",
+    "$timing.end_tick"
+   ]
+  }
+ ]
+}
