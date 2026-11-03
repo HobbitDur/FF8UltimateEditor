@@ -651,8 +651,7 @@ def test_elvoret_death_runs_from_its_description(tmp_path):
         script[k] = (script[k] + 3) & 0xFF
     (files / "elv18.00").write_bytes(script)
     params = tmp_path / "params.txt"
-    params.write_text("files.file00 elv18.00
-")
+    params.write_text("files.file00 elv18.00\n")
     native, _log = record_elvoret(tmp_path, 18, "native", "native=1", f"params={params}", f"overrides={files}")
     described, log = record_elvoret(tmp_path, 18, "described_params", f"program={program}", f"params={params}",
                                     f"overrides={files}")
