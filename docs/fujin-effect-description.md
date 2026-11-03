@@ -1324,3 +1324,13 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`GrudgeParams`): the emitter's sound, release and damage ticks, the master's wait, the
        actor system, the stage wobble's level and steps. Data: the sound, the camera track, "mag053.tim".
      - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
+   - **Aqua Breath (55)** (FFNx e80fe206; Chimera's enemy attack; the act family, Resonance's kind with
+     Drink Magic's orb): one emitter per action - the director: the stage darkening, the sound; phase 1 the
+     water ball at the caster, the stream of drops thrown from it, a splash and a rain of drops per target;
+     the damage at its cue.
+     - *Port:* the drops' sprites are read by the module's own sequence reader (0x80BB50, a copy of the
+       engine's), as the game calls it: the port called the engine's and its recording lacked them.
+     - *Inputs* (`AquaParams`): the director's sound and damage cue, the stage darkening's level, steps
+       and hold, the water ball's fades and hold, the splash and rain windows. Data: the sound, the
+       camera track, "mag054-071.tim".
+     - *Fujin:* its tabs (Director, Water ball, Drops); no + menu family.
