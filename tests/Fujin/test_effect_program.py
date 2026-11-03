@@ -269,6 +269,7 @@ CYCLES = {
     106: ("mag105.tim", 32, "hexagons.count 5\nwall.grow 15\nrings.every 4\nbeams.count 6\ntiming.size_shift 3\n"),
     108: ("mag107.tim", 51, "rays.count 5\nembers.count 2\nswirls.per_tick 3\nglow.ticks 12\nsparks.every 3\n"
                             "rays.width 200\n"),
+    3: ("mag003.tim", 32, "strike.lift 400\nground.tilt 200\ntiming.sound_tick 2\nsmoke.window.frames 10\nflash.window.frames 3\n"),
     2: ("mag001.tim", 57, "flames.count 6\nsparks.count 3\nembers.rise.base -40\nflames.glow.base 96\ntiming.sound_tick 3\n"),
 }
 
@@ -289,7 +290,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk and Fire from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire and Thunder from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -452,3 +453,15 @@ def test_fire_description_compiles():
     assert [line.split()[5] for line in lines if line.startswith("spawn_every ")] == ["flames_on_targets", "flames_on_targets",
                                                                                       "flame_embers", "flame_sparks"]
     assert "field delay 14 2" in lines and "end life_out" in lines
+
+
+def test_thunder_description_compiles():
+    """Thunder: the cycle director at the target's effect point 0xF1; its texture a TIM of its data
+    uploaded as it is (no file); the bolt's camera offset from the target's size at its first tick,
+    its sound at its spawn point, the screen quad, eight layers over their windows (one on a plane
+    at the target's feet)."""
+    lines = compile_program(load_description(3)).splitlines()
+    assert "texture 0 -1" in lines and any(line.startswith("texture_data ") for line in lines)
+    assert "tick spawn_size_word 0 $3 $4" in lines and "tick sound_3d_at_spawn $6 $5 $7" in lines
+    draws = [line.split()[6] for line in lines if line.startswith("draw ")]
+    assert draws == ["screen_quad"] + ["point_layer"] * 6 + ["ground_layer", "point_layer"]

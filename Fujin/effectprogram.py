@@ -24,7 +24,8 @@ action, on its target; its "events" too, every tick: Blind's screen flash; "setu
 up as the master is: Petrify Stare's) or "chain" (Fire's: one director task per action, each
 starting the next one's - "spawns" when the action has several targets, "single" when one - the
 root alternating "packet_arena_a" / "packet_arena_b" by its counter). An effect with no "camera"
-resource starts no camera track. A task's "draw_only" says what it does while the battle only draws
+resource starts no camera track; a texture "tim" (data) is uploaded as it is, no file loaded
+(Thunder's). A task's "draw_only" says what it does while the battle only draws
 ("skip": nothing, "after_draws": its first draws only), its "hold" stops its tick early (Fire's
 lone target's director waits until its target is free).
 
@@ -56,7 +57,8 @@ ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, 
            "flash_level_set": 2, "mark_target": 1, "tint_target": 7, "spark_step": 2, "spark_move": 0,
            "barrier_frame": 1, "barrier_center": 3, "dead_beams": 3, "orbit_move": 0, "growth_step": 1,
            "spawn_to_feet": 1, "ray_spawn": 11, "mote_step": 2, "chain_next": 1, "release_target": 0,
-           "heal_action_all_at": 1, "sound_pan_at": 4, "ember_rise": 2, "fire_spark_move": 2}
+           "heal_action_all_at": 1, "sound_pan_at": 4, "ember_rise": 2, "fire_spark_move": 2,
+           "spawn_size_word": 3, "sound_3d_at_spawn": 3}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1, "tick_at_node_end": 0, "leaf_gone": 0, "spark_gone": 0, "rays_done": 1, "ribbon_done": 1,
               "mote_done": 1, "life_out": 0}
 # a task's hold (after its every-tick actions: when it holds, its tick stops there)
@@ -78,7 +80,8 @@ DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_s
          "layout_on_point": 7, "sway_overlay": 10, "ripple_silhouette": 3,
          "spark_sprite": 1, "barrier_wall": 5, "orbit_model": 5, "growth_model": 3,
          "sequence_at_anchor": 4, "pulse_model": 6, "layout_table_at_spawn": 1, "light_rays": 0, "ribbon": 6,
-         "mote_sprite": 0, "flame": 8, "ember": 2, "fire_spark": 5}
+         "mote_sprite": 0, "flame": 8, "ember": 2, "fire_spark": 5,
+         "screen_quad": 2, "point_layer": 4, "ground_layer": 4}
 # a plain node's fields and their sizes (a layout's is given: ["layout", size])
 FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14, "anchor": 8, "action": 2, "entity": 4, "spawn": 8, "end": 2, "seq": 4, "radius": 2, "angle": 2, "speed": 2, "fade": 2, "leaf": 0x30, "colour": 4, "ripple": 4, "spark": 0x20, "barrier": 0x48,
           "orbit": 0x0E, "growth": 0x0E, "rays": 0x600, "ribbon": 0x412, "mote": 0x10, "drawn": 4,
@@ -227,7 +230,10 @@ def compile_program(description, values=None):
             raise DescriptionError(f"own memory {name}: a size in bytes")
         lines.append(f"own {name} {_number(size)}")
     texture = description["resources"]["texture"]
-    lines.append(f"texture {value(texture['game_name'], 'texture')} {params.get(texture.get('param'), -1)}")
+    if "tim" in texture:   # a TIM of its data the setup uploads as it is (Thunder's): no file
+        lines.append(f"texture 0 -1\ntexture_data {value(texture['tim'], 'texture')}")
+    else:
+        lines.append(f"texture {value(texture['game_name'], 'texture')} {params.get(texture.get('param'), -1)}")
     camera = description["resources"].get("camera")         # none: the effect starts no camera track
     lines.append(f"camera {value(camera, 'camera') if camera is not None else 0}")
     for pool in description["pools"]:

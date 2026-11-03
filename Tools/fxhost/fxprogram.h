@@ -51,6 +51,7 @@
 #include "fx_rays.h"
 #include "fx_ribbon.h"
 #include "fx_flames.h"
+#include "fx_bolt.h"
 
 namespace fxprog
 {
@@ -115,6 +116,7 @@ namespace fxprog
 		std::string name;
 		std::map<std::string, uint32_t> memory;
 		uint32_t file_loader = 0, setup = 0, root = 0, camera = 0, texture_name = 0;
+		uint32_t texture_data = 0;                      // a TIM the setup uploads as it is (Thunder's exe data): the file loader loads nothing
 		uint32_t director_fn = 0;                       // the director task the setup starts (0: DirectorTask)
 		int texture_param = -1, director_spawns = -1;
 		int director = PER_ACTION, director_start = 1;
@@ -149,6 +151,7 @@ namespace fxprog
 		MARK_RING_FROM, UNMARK_RING, FLASH_LEVEL_HOLD, FLASH_LEVEL_SET, MARK_TARGET, TINT_TARGET, SPARK_STEP, SPARK_MOVE,
 		BARRIER_FRAME, BARRIER_CENTER, DEAD_BEAMS, ORBIT_MOVE, GROWTH_STEP, SPAWN_TO_FEET, RAY_SPAWN, MOTE_STEP,
 		CHAIN_NEXT, RELEASE_TARGET, HEAL_ACTION_ALL_AT, SOUND_PAN_AT, EMBER_RISE, FIRE_SPARK_MOVE, CLAIM_TARGET,
+		SPAWN_SIZE_WORD, SOUND_3D_AT_SPAWN,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE, RAYS_DONE, RIBBON_DONE, MOTE_DONE, LIFE_OUT,
 		// motions
@@ -162,7 +165,7 @@ namespace fxprog
 		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET, LAYOUT_SCALED_ON_TARGET,
 		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR, LAYOUT_ON_POINT, SWAY_OVERLAY, RIPPLE_SILHOUETTE, SPARK_SPRITE,
 		BARRIER_WALL, ORBIT_MODEL, GROWTH_MODEL, SEQUENCE_AT_ANCHOR, PULSE_MODEL, LAYOUT_TABLE_AT_SPAWN, LIGHT_RAYS, RIBBON, MOTE_SPRITE,
-		FLAME, EMBER, FIRE_SPARK,
+		FLAME, EMBER, FIRE_SPARK, SCREEN_QUAD, POINT_LAYER, GROUND_LAYER,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -206,10 +209,13 @@ namespace fxprog
 		{ "sound_pan_at", SOUND_PAN_AT }, { "ember_rise", EMBER_RISE }, { "fire_spark_move", FIRE_SPARK_MOVE }, { "claim_target", CLAIM_TARGET },
 		{ "life_out", LIFE_OUT }, { "flames_on_targets", FLAMES_ON_TARGETS }, { "flame_embers", FLAME_EMBERS }, { "flame_sparks", FLAME_SPARKS },
 		{ "flame", FLAME }, { "ember", EMBER }, { "fire_spark", FIRE_SPARK },
+		{ "spawn_size_word", SPAWN_SIZE_WORD }, { "sound_3d_at_spawn", SOUND_3D_AT_SPAWN }, { "screen_quad", SCREEN_QUAD },
+		{ "point_layer", POINT_LAYER }, { "ground_layer", GROUND_LAYER },
 	};
 
 	inline Program *g_program = nullptr;
 	inline int16_t g_anchor[4] = {};              // a task's anchor this tick (anchor_at_bone), when its node keeps none
+	inline int16_t g_layer_local[4] = {};         // a task's draws' stack slot (Thunder's lowered layer, then its ground layer's vector)
 
 	// ------------------------------------------------------------------
 	// Values
@@ -496,6 +502,12 @@ namespace fxprog
 			if (Tick(t, n) == V(a[0])) BdPlaySE((const void *)fxp::sound((uint32_t)V(a[1]), (uint32_t)G(a[1])), V(a[2]), V(a[3]));
 			break;
 		case EMBER_RISE: layouts::EmberRise(Fld<layouts::Ember>(t, n, F_EMBER), V(a[0]), V(a[1])); break;   // speed-up shift, shrink shift
+		case SPAWN_SIZE_WORD: // tick, base, shift: the spawn point's 4th word = (base - the entity's size) >> shift (Thunder's camera offset)
+			if (Tick(t, n) == V(a[0])) Fld<int16_t>(t, n, F_SPAWN)[3] = (int16_t)((V(a[1]) - (int32_t)*(const int16_t *)(EntityOf(t, n) + 0x26)) >> V(a[2]));
+			break;
+		case SOUND_3D_AT_SPAWN: // tick, sound, volume: at the node's spawn point
+			if (Tick(t, n) == V(a[0])) BdPlaySE3D((const void *)fxp::sound((uint32_t)V(a[1]), (uint32_t)G(a[1])), V(a[2]), Fld<int16_t>(t, n, F_SPAWN));
+			break;
 		case FIRE_SPARK_MOVE: layouts::FireSparkMove(Fld<layouts::FireSpark>(t, n, F_FIRE_SPARK), Fld<int16_t>(t, n, F_LIFE), V(a[0]), V(a[1])); break;   // drag shift, shrink
 		default: break;
 		}
@@ -983,6 +995,15 @@ namespace fxprog
 			break;
 		}
 		case MOTE_SPRITE: layouts::MoteDraw(Fld<layouts::Mote>(t, n, F_MOTE), PacketCursor()); break;   // the node's sprite sequence
+		case SCREEN_QUAD: PacketCursor() = layouts::ScreenQuad((const void *)V(a[0]), (uint32_t)V(a[1]), PacketCursor()); break;   // colour word, bucket: a flat quad over the whole screen
+		case POINT_LAYER: // sequence, from, lift, size: at the node's spawn point lowered by lift, frame = the tick - from, its 4th word the camera offset
+			layouts::PointLayer(Fld<int16_t>(t, n, F_SPAWN), V(a[2]), V(a[3]), fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])), (int16_t)(Tick(t, n) - V(a[1])),
+			                    g_layer_local, PacketCursor());
+			break;
+		case GROUND_LAYER: // sequence, from, tilt, push: on a plane at the entity's feet under the node's spawn point, frame = the tick - from
+			layouts::GroundLayer(Fld<int16_t>(t, n, F_SPAWN), EntityOf(t, n), V(a[2]), V(a[3]), fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])),
+			                     (int16_t)(Tick(t, n) - V(a[1])), g_layer_local, PacketCursor());
+			break;
 		case FLAME: // sequence, glow sequence, shade shift, glow tilt, mode, high, span, base: the node's flame, frame = the tick, over its ground glow
 		{
 			const layouts::FlameLook look = { fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])), fxp::sequence((uint32_t)V(a[1]), (uint32_t)G(a[1])),
@@ -1118,6 +1139,7 @@ namespace fxprog
 		int left = -1;                            // the frames left of the layouts drawn this tick (-1: none drawn)
 		auto draws = [&]()
 		{
+			memset(g_layer_local, 0, sizeof(g_layer_local));
 			for (const Draw &d : t.draws)
 			{
 				if (!t.plain && d.gate && !(h->flags & d.gate)) continue;
@@ -1514,6 +1536,7 @@ namespace fxprog
 	inline uint32_t __cdecl FileLoader()
 	{
 		Program &g = *g_program;
+		if (g.texture_data) return 0;   // (Thunder's loader loads nothing: its setup uploads exe data)
 		fxp::FileName name = {};
 		if (g.texture_param >= 0) strncpy(name.name, g.params[g.texture_param].text.c_str(), sizeof(name.name) - 1);
 		const uint32_t file = IO_GetFile_MAGIC(fxp::file(name, (const char *)g.texture_name));
@@ -1552,7 +1575,7 @@ namespace fxprog
 		if (!(ctx->flags & 1))
 		{
 			if (g.camera) PlayCameraAnimation((const void *)g.camera);
-			QueueTimUpload(var<uint32_t>(Mem("texture_file")));
+			QueueTimUpload(g.texture_data ? g.texture_data : var<uint32_t>(Mem("texture_file")));
 		}
 		if (g.seed_shared_rand) layouts::SeedSharedRand(CrtRand());
 		return root_queue;
@@ -1732,6 +1755,7 @@ namespace fxprog
 			else if (d == "memory" && need(3)) g.memory[w[1]] = (uint32_t)strtoul(w[2].c_str(), nullptr, 0);
 			else if (d == "texture" && need(3)) { g.texture_name = ParseNumber(w[1]); g.texture_param = atoi(w[2].c_str()); }
 			else if (d == "camera" && need(2)) g.camera = ParseNumber(w[1]);
+			else if (d == "texture_data" && need(2)) g.texture_data = ParseNumber(w[1]);
 			else if (d == "own" && need(3)) g.own.push_back({ w[1], (uint32_t)strtoul(w[2].c_str(), nullptr, 0) });
 			else if (d == "pool" && need(6))
 			{

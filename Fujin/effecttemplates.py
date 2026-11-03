@@ -1,5 +1,5 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's, Berserk's, Fire's), and the description an effect made
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's, Berserk's, Fire's, Thunder's), and the description an effect made
 of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
@@ -8,7 +8,7 @@ from its source effect's whole description, keeping what its parts bring: all of
 together are that effect exactly (whatever order they were added in), some of them a smaller effect
 of the same kind. Parts of two families never mix: their nodes and directors differ (the heal
 ring's effect-library nodes and per-action director, Hypnotize's plain nodes and master, Antidote's
-one layout on the target, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's and Berserk's cycles of one task per action,
+one layout on the target, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's, Berserk's and Thunder's cycles of one task per action,
 Fire's chain of one director per action).
 
 No Qt here.
@@ -172,6 +172,16 @@ TEMPLATES = {
                     "Flipbooks rising from each flame, faster and faster, shrinking."),
     "fire_sparks": ("drifting from each flame", "Moving parts", "per_action_chain", 2, "sparks", ("spark",), (), ("fire",),
                     "Shared effect sprites drifting from each flame, slowing, shrinking."),
+    # Thunder's family (one bolt per action: sprite layers at its target's point, a screen flash, a ground layer, smoke)
+    "thunder": ("one per action, a bolt on its target", "How the effect starts", "per_action_bolt", 3, "strike", ("bolt",), (), (),
+                "One bolt per action, every few ticks (not while a young one runs on that target): sprite sequence layers "
+                "at one of the target's effect points, each over its own ticks; its sound, the result (Thunder's way)."),
+    "thunder_flash": ("over the whole screen", "Drawn by another part", "per_action_bolt", 3, "flash", (), (), ("thunder",),
+                      "A flat semi-transparent quad over the whole screen."),
+    "thunder_ground": ("at the target's feet", "Drawn by another part", "per_action_bolt", 3, "ground", (), (), ("thunder",),
+                       "A sprite sequence on a plane at the target's feet."),
+    "thunder_smoke": ("after the strike", "Drawn by another part", "per_action_bolt", 3, "smoke", (), (), ("thunder",),
+                      "A sprite sequence at the target's effect point, after the strike."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout",
@@ -180,7 +190,7 @@ STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout
           "per_action_wind": "wind", "per_action_flash": "blind",
           "per_action_stare": "stare", "per_action_sway": "zombie",
           "per_action_burst": "flare", "per_action_barrier": "reflect", "per_action_rays": "berserk",
-          "per_action_chain": "fire"}
+          "per_action_chain": "fire", "per_action_bolt": "thunder"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
             "on_target": "One layout on the target (Antidote's kind)",
@@ -196,7 +206,8 @@ FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "per_action_burst": "One per action, a burst on its target (Flare's kind)",
             "per_action_barrier": "One per action, a wall around its target (Reflect's kind)",
             "per_action_rays": "One per action, rays around its target (Berserk's kind)",
-            "per_action_chain": "One director per action, flames around its targets (Fire's kind)"}
+            "per_action_chain": "One director per action, flames around its targets (Fire's kind)",
+            "per_action_bolt": "One per action, a bolt on its target (Thunder's kind)"}
 
 
 @functools.cache

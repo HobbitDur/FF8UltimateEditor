@@ -811,3 +811,26 @@ Potion's description is the same with its own sequences and sound.
      - *Fujin:* its tabs (Timing, Flames, Embers, Sparks); a sixteenth family in the + menu, "One
        director per action, flames around its targets (Fire's kind)": Flames (the start), Embers,
        Sparks.
+   - **Thunder (3)** (FFNx 4d26eb84): the cycle director (every 5 ticks, not while a bolt of 15 ticks
+     or less runs on that target), the bolt at the target's effect point 0xF1: a screen flash quad
+     at its first tick, the strike's sprite sequence layers each over its own ticks (one lowered
+     copy), a layer on a plane at the target's feet, smoke; the sound at 1, the result at 5, the
+     end at 25. Its texture is exe data uploaded as it is: no file.
+     - *Shared:* the cycle director and its busy wait, its spawn point (an effect point of the
+       target), `heal_action_at`, `tick_at_least`, the draw limit `within`.
+     - *Added:*
+       - a texture `"tim"` (data, kind `tim`): the setup uploads it as it is, the file loader
+         loads nothing (the program's `texture_data`); Fujin's Data tab shows its size;
+       - the library's lightning strike (`fx_bolt.h`, Thunder's 0x700DE0 / 0x7011A0): the draws
+         `screen_quad` (a colour word, a render-list bucket: a flat semi-transparent quad over the
+         whole screen), `point_layer` (sequence, from, lift, size: a frame at the node's spawn point,
+         its 4th word the camera offset) and `ground_layer` (sequence, from, tilt, push: on a plane
+         at the entity's feet); the actions `spawn_size_word` (tick, base, shift: the spawn point's
+         4th word from the entity's size) and `sound_3d_at_spawn`.
+     - *Inputs* (`ThunderParams`): the cycle, the busy tick, the effect point, the camera offset,
+       the sound, damage and end ticks; each layer's window (from, frames), the strike's size and
+       lowering, the ground plane's tilt and push. Data: the eight sequences, the screen quad's
+       colour, the sound, the TIM (165920 bytes), the camera track (1424 bytes).
+     - *Fujin:* its tabs (Timing, Screen flash, Strike, Ground, Smoke); a seventeenth family in the
+       + menu, "One per action, a bolt on its target (Thunder's kind)": Strike (the start), Screen
+       flash, Ground, Smoke.

@@ -1,0 +1,726 @@
+{
+ "format": 1,
+ "effect": 3,
+ "name": "Thunder",
+ "doc": "Thunder (spell): one bolt per action, in turn (one every 5 ticks, not while a bolt of 15 ticks or less runs on that target), at the target's effect point 0xF1: a screen flash quad at its first tick, then the strike's sprite sequence layers keyed on its tick (one on a plane at the target's feet), smoke; the sound at 1, the result at 5, the end at 25. Its texture is exe data, uploaded as it is (no file).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "setup": "0x700C10",
+   "root": "0x700CA0"
+  },
+  "memory": {
+   "magic_buffer": "0x2557054",
+   "ctx": "0x2557058",
+   "root_pool": "0x2557060",
+   "packet_cursor": "0x2557074",
+   "root_queue": "0x2557078"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "strike.seq": {
+   "kind": "seq",
+   "address": "0x1522FB0",
+   "size": 596
+  },
+  "upper.seq": {
+   "kind": "seq",
+   "address": "0x1523204",
+   "size": 596
+  },
+  "core.seq": {
+   "kind": "seq",
+   "address": "0x1523458",
+   "size": 288
+  },
+  "arc.seq": {
+   "kind": "seq",
+   "address": "0x1523578",
+   "size": 268
+  },
+  "glow.seq": {
+   "kind": "seq",
+   "address": "0x1523684",
+   "size": 288
+  },
+  "spark.seq": {
+   "kind": "seq",
+   "address": "0x15237A4",
+   "size": 388
+  },
+  "smoke.seq": {
+   "kind": "seq",
+   "address": "0x1523928",
+   "size": 1208
+  },
+  "ground.seq": {
+   "kind": "seq",
+   "address": "0x1523DE0",
+   "size": 352
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x15244D0",
+   "size": 4
+  },
+  "flash.colour": {
+   "kind": "table",
+   "address": "0x15244D4",
+   "size": 4,
+   "doc": "the screen quad's colour word (its 4th byte replaced by the quad's code)"
+  },
+  "tim": {
+   "kind": "tim",
+   "address": "0x14FA790",
+   "size": 165920
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1523F40",
+   "size": 1424
+  }
+ },
+ "resources": {
+  "texture": {
+   "tim": "@tim"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates (no layout).",
+  "arenas": [
+   "0x0",
+   "0x8000"
+  ],
+  "morph": "0x0"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "bolt",
+  "every": "$timing.every",
+  "place": [
+   "action_target",
+   0,
+   0,
+   0,
+   "$timing.bone",
+   "$timing.busy_tick",
+   0,
+   0,
+   0
+  ]
+ },
+ "pools": [
+  {
+   "key": "bolts",
+   "queue": "0x2557088",
+   "storage": "0x2557000",
+   "size": 28,
+   "count": 3
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one bolt per action, in turn (not while a young one runs on that target); each bolt's clock: its sound, its result, its end"
+  },
+  {
+   "id": 1,
+   "key": "flash",
+   "title": "Screen flash",
+   "doc": "A flat semi-transparent quad over the whole screen"
+  },
+  {
+   "id": 2,
+   "key": "strike",
+   "title": "Strike",
+   "doc": "Sprite sequence layers at the target's effect point: the strike, its lowered copy, the core, the arc, the glow, the spark"
+  },
+  {
+   "id": 3,
+   "key": "ground",
+   "title": "Ground",
+   "doc": "A sprite sequence on a plane at the target's feet"
+  },
+  {
+   "id": 4,
+   "key": "smoke",
+   "title": "Smoke",
+   "doc": "A sprite sequence at the target's effect point, after the strike"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing.offset",
+   "label": "Camera offset",
+   "doc": "The layers' camera offset: (Base - the target's size) >> Shift"
+  },
+  {
+   "key": "flash.window",
+   "label": "Drawn",
+   "doc": "Over bolt ticks From tick .. From tick + Frames - 1"
+  },
+  {
+   "key": "strike.strike",
+   "label": "Strike",
+   "doc": "Over bolt ticks From tick .. From tick + Frames - 1, its frame = the tick - From tick"
+  },
+  {
+   "key": "strike.upper",
+   "label": "Lowered strike",
+   "doc": "Over bolt ticks From tick .. From tick + Frames - 1, its frame = the tick - From tick"
+  },
+  {
+   "key": "strike.core",
+   "label": "Core",
+   "doc": "Over bolt ticks From tick .. From tick + Frames - 1, its frame = the tick - From tick"
+  },
+  {
+   "key": "strike.arc",
+   "label": "Arc",
+   "doc": "Over bolt ticks From tick .. From tick + Frames - 1, its frame = the tick - From tick"
+  },
+  {
+   "key": "strike.glow",
+   "label": "Glow",
+   "doc": "Over bolt ticks From tick .. From tick + Frames - 1, its frame = the tick - From tick"
+  },
+  {
+   "key": "strike.spark",
+   "label": "Spark",
+   "doc": "Over bolt ticks From tick .. From tick + Frames - 1, its frame = the tick - From tick"
+  },
+  {
+   "key": "ground.window",
+   "label": "Drawn",
+   "doc": "Over bolt ticks From tick .. From tick + Frames - 1, its frame = the tick - From tick"
+  },
+  {
+   "key": "smoke.window",
+   "label": "Drawn",
+   "doc": "Over bolt ticks From tick .. From tick + Frames - 1, its frame = the tick - From tick"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's bolt every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.busy_tick",
+   "part": "timing",
+   "label": "Busy tick",
+   "doc": "Not while a bolt at this tick or before runs on that target (the cycle restarts; -1: never)",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.bone",
+   "part": "timing",
+   "label": "Bone",
+   "doc": "The target's effect point the bolt is at (0xF0 and up: the engine's named points)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 241,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.offset.base",
+   "part": "timing",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -4096,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.offset.shift",
+   "part": "timing",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the bolt's point when the bolt tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 257,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the bolt tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The bolt ends when its tick reaches this",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.window.from",
+   "part": "flash",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.window.frames",
+   "part": "flash",
+   "label": "Frames",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.rot",
+   "part": "strike",
+   "label": "Size",
+   "doc": "The layers' camera scale (4096: the sequences' own size)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.strike.from",
+   "part": "strike",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.strike.frames",
+   "part": "strike",
+   "label": "Frames",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.upper.from",
+   "part": "strike",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.upper.frames",
+   "part": "strike",
+   "label": "Frames",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.lift",
+   "part": "strike",
+   "label": "Lowered by",
+   "doc": "The lowered strike is this much lower (y + this)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.core.from",
+   "part": "strike",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.core.frames",
+   "part": "strike",
+   "label": "Frames",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.arc.from",
+   "part": "strike",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.arc.frames",
+   "part": "strike",
+   "label": "Frames",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.glow.from",
+   "part": "strike",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.glow.frames",
+   "part": "strike",
+   "label": "Frames",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.spark.from",
+   "part": "strike",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.spark.frames",
+   "part": "strike",
+   "label": "Frames",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "ground.window.from",
+   "part": "ground",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "ground.window.frames",
+   "part": "ground",
+   "label": "Frames",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "ground.tilt",
+   "part": "ground",
+   "label": "Tilt",
+   "doc": "The plane turned about x by this (1024: flat)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 90,
+   "unit": "plain"
+  },
+  {
+   "key": "ground.push",
+   "part": "ground",
+   "label": "Push",
+   "doc": "The plane pushed this far from the camera",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 500,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.window.from",
+   "part": "smoke",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.window.frames",
+   "part": "smoke",
+   "label": "Frames",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 19,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "bolt",
+   "pool": "bolts",
+   "size": 28,
+   "function": "0x700DE0",
+   "doc": "One per action, at the target's effect point (its 4th word the layers' camera offset, from the target's size): the sound, the screen flash quad, the strike's layers, the ground layer, the smoke, each over its window; the result; the end.",
+   "node": [
+    "counter",
+    "action",
+    "entity",
+    "spawn"
+   ],
+   "every_tick": [
+    [
+     "spawn_size_word",
+     0,
+     "$timing.offset.base",
+     "$timing.offset.shift"
+    ],
+    [
+     "sound_3d_at_spawn",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "flash",
+     "within": [
+      "$flash.window.from",
+      "$flash.window.frames"
+     ],
+     "draw": [
+      "screen_quad",
+      "@flash.colour",
+      32
+     ]
+    },
+    {
+     "part": "strike",
+     "within": [
+      "$strike.strike.from",
+      "$strike.strike.frames"
+     ],
+     "draw": [
+      "point_layer",
+      "@strike.seq",
+      "$strike.strike.from",
+      0,
+      "$strike.rot"
+     ]
+    },
+    {
+     "part": "strike",
+     "within": [
+      "$strike.upper.from",
+      "$strike.upper.frames"
+     ],
+     "draw": [
+      "point_layer",
+      "@upper.seq",
+      "$strike.upper.from",
+      "$strike.lift",
+      "$strike.rot"
+     ]
+    },
+    {
+     "part": "strike",
+     "within": [
+      "$strike.core.from",
+      "$strike.core.frames"
+     ],
+     "draw": [
+      "point_layer",
+      "@core.seq",
+      "$strike.core.from",
+      0,
+      "$strike.rot"
+     ]
+    },
+    {
+     "part": "strike",
+     "within": [
+      "$strike.arc.from",
+      "$strike.arc.frames"
+     ],
+     "draw": [
+      "point_layer",
+      "@arc.seq",
+      "$strike.arc.from",
+      0,
+      "$strike.rot"
+     ]
+    },
+    {
+     "part": "strike",
+     "within": [
+      "$strike.glow.from",
+      "$strike.glow.frames"
+     ],
+     "draw": [
+      "point_layer",
+      "@glow.seq",
+      "$strike.glow.from",
+      0,
+      "$strike.rot"
+     ]
+    },
+    {
+     "part": "strike",
+     "within": [
+      "$strike.spark.from",
+      "$strike.spark.frames"
+     ],
+     "draw": [
+      "point_layer",
+      "@spark.seq",
+      "$strike.spark.from",
+      0,
+      "$strike.rot"
+     ]
+    },
+    {
+     "part": "ground",
+     "within": [
+      "$ground.window.from",
+      "$ground.window.frames"
+     ],
+     "draw": [
+      "ground_layer",
+      "@ground.seq",
+      "$ground.window.from",
+      "$ground.tilt",
+      "$ground.push"
+     ]
+    },
+    {
+     "part": "smoke",
+     "within": [
+      "$smoke.window.from",
+      "$smoke.window.frames"
+     ],
+     "draw": [
+      "point_layer",
+      "@smoke.seq",
+      "$smoke.window.from",
+      0,
+      "$strike.rot"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "tick_at_least",
+    "$timing.end_tick"
+   ]
+  }
+ ]
+}

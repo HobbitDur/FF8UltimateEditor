@@ -668,6 +668,8 @@ class EffectDataView(QWidget):
         if kind == "camera" and len(data) >= 8:
             return (f"A camera track: {len(data)} bytes. The Camera tab edits the effect's camera: its effect_NNN.bcam "
                     "file replaces this track in the game (FFNx).")
+        if kind == "tim":
+            return f"A TIM image: {len(data)} bytes, uploaded to VRAM as it is when the effect starts (no file)."
         return f"{len(data)} bytes, read-only."
 
     def _sound_changed(self):

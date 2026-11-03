@@ -124,7 +124,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   Leaves; Blind: Timing, Layout, Flash; both Petrify Stares, copies of one module: Timing, Stare,
   Stone; Zombie: Timing, Mist, Overlay; Flare: Timing, Burst, Ring, Silhouette, Sparks; Reflect:
   Timing, Wall, Hexagons, Rings; Berserk: Timing, Swirls, Flash, Glow, Burst, Embers, Sparks,
-  Rays; Fire: Timing, Flames, Embers, Sparks): the
+  Rays; Fire: Timing, Flames, Embers, Sparks; Thunder: Timing, Screen flash, Strike, Ground,
+  Smoke): the
   part's parameters as a form
   (bold = not the game's value, **Game values** resets them; a value in its unit when the port gives
   one - fx_params.h `Unit`: an angle in degrees, a size as x 1 = its own - the raw value greyed
@@ -205,7 +206,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   `AeroParams` in `mag118_aero.cpp`, `BlindParams` in `mag121_blind.cpp`,
   `PetrifyStareParams` in `mag_petrify_stare.h`, shared by both Petrify Stares, `ZombieParams` in
   `mag114_zombie.cpp`, `FlareParams` in `mag124_flare.cpp`,
-  `ReflectParams` in `mag106_reflect.cpp`, `BerserkParams` in `mag108_berserk.cpp`, `FireParams` in `mag002_fire.cpp`, defaults = the game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
+  `ReflectParams` in `mag106_reflect.cpp`, `BerserkParams` in `mag108_berserk.cpp`, `FireParams` in `mag002_fire.cpp`, `ThunderParams` in `mag003_thunder.cpp`, defaults = the game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
   so the forms are always those of the port it runs. A module with parameters registers itself
   for the recorder (`FX_LAB_MODULE`): `build.bat` compiles in every source file naming it. The previews are one more recording: the recorder runs the port instead of
   the exe's code (`native=1`; with the game's values it draws exactly what the original does,
@@ -231,7 +232,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   top, such as Cure and Potion sharing `mag_heal_ring.h` - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
   built again with them); the release's CI does the same before building the recorder.
   **Description** (Choreography, for the effects Fujin describes: Cure, Potion, Hypnotize,
-  Soft, Eye Drops, Antidote, Echo Screen, Holy Water, Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire): the
+  Soft, Eye Drops, Antidote, Echo Screen, Holy Water, Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder): the
   effect's description as JSON (its parts, tasks, director, pools: see
   [fujin-effect-description.md](fujin-effect-description.md)). Apply checks that it compiles.
   **New effect from this…** (above the tabs, for every described effect, new ones included)
@@ -249,7 +250,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   **Building an effect part by part:** a free slot (224, 225, 346-400) shows **Create a new effect
   here** (beside **Copy an effect here…**). It makes an empty effect there, and Choreography opens with a **+** tab. Clicking +
   lists the parts Fujin knows, named as their tabs, with a few words on each:
-  - an empty effect first offers the sixteen kinds as submenus:
+  - an empty effect first offers the seventeen kinds as submenus:
     - around one target at a time (Cure's kind): Emitter, Ring, Overlay, Ground glow, Sparkles,
       Motes, Glints, Files;
     - over the whole cast at once (Hypnotize's kind): Timing, Main layout, Rings, Target
@@ -269,6 +270,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
     - one per action, rays around its target (Berserk's kind): Rays, Swirls, Flash, Glow, Burst,
       Embers, Sparks;
     - one director per action, flames around its targets (Fire's kind): Flames, Embers, Sparks;
+    - one per action, a bolt on its target (Thunder's kind): Strike, Screen flash, Ground, Smoke;
   - once it has parts, + lists only its kind's parts, by group (how the effect starts, moving
     parts, drawn by another part, sound, files). The parts it has are ticked.
 
