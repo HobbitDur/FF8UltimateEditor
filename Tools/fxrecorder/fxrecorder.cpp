@@ -465,6 +465,13 @@ static void write_tick(int t)
 // ---------------------------------------------------------------- battle memory
 static uint8_t *g_ot, *g_pkt, *g_scr, *g_fake, *g_modelmem;
 static const uint32_t OT_SIZE = 0x20000, PKT_SIZE = 0x400000, SCR_SIZE = 0x40000, FAKE_SIZE = 0x40000;
+// the recorder's buffers at fixed addresses (the system's choice if taken): the game's code may read stack words
+// earlier code left (Heartbreak's matrices: pointers into them among those), so a recording is the same every run
+static uint8_t *fixed_alloc(uint32_t at, uint32_t size)
+{
+	void *p = VirtualAlloc((void *)(uintptr_t)at, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	return (uint8_t *)(p ? p : VirtualAlloc(nullptr, size, MEM_COMMIT, PAGE_READWRITE));
+}
 static uint32_t ot_index(uint32_t bucket)
 {
 	return bucket >= (uint32_t)g_ot && bucket < (uint32_t)g_ot + OT_SIZE ? (bucket - (uint32_t)g_ot) / 4 : bucket;
@@ -786,7 +793,7 @@ static bool load_character(uint32_t e, int slot, int com, const std::string &bod
 }
 static bool load_models()
 {
-	g_modelmem = (uint8_t *)VirtualAlloc(nullptr, MODELMEM_SIZE + MODELWORK_SIZE, MEM_COMMIT, PAGE_READWRITE);
+	g_modelmem = fixed_alloc(0x32000000, MODELMEM_SIZE + MODELWORK_SIZE);
 	call0(0x508260);   // BS_SetLocation1: command queue table, texture slots 0-5 kept for the party
 	((void (__cdecl *)(uint32_t))0x507050)((uint32_t)g_modelmem);
 	*(uint32_t *)0x1D98B3C = (uint32_t)g_modelmem + MODELMEM_SIZE;
@@ -1249,10 +1256,10 @@ int main(int argc, char **argv)
 	}
 	*(uint32_t *)(g_ptd + 0x14) = O.seed;
 
-	g_ot = (uint8_t *)VirtualAlloc(nullptr, OT_SIZE, MEM_COMMIT, PAGE_READWRITE);
-	g_pkt = (uint8_t *)VirtualAlloc(nullptr, PKT_SIZE, MEM_COMMIT, PAGE_READWRITE);
-	g_scr = (uint8_t *)VirtualAlloc(nullptr, SCR_SIZE, MEM_COMMIT, PAGE_READWRITE);
-	g_fake = (uint8_t *)VirtualAlloc(nullptr, FAKE_SIZE, MEM_COMMIT, PAGE_READWRITE);
+	g_ot = fixed_alloc(0x33000000, OT_SIZE);
+	g_pkt = fixed_alloc(0x33100000, PKT_SIZE);
+	g_scr = fixed_alloc(0x33600000, SCR_SIZE);
+	g_fake = fixed_alloc(0x33700000, FAKE_SIZE);
 	*(uint32_t *)0x1D98420 = 0;
 	build_battle();
 	if (!O.camera.empty()) load_camera();

@@ -866,3 +866,47 @@ def test_counter_laser_eye_description_compiles():
     lines = compile_program(load_description(30)).splitlines()
     for line in ['module 30 0x26D40B8 0x2988', 'act_stage 1 2 $3', 'act_pool actor_pool 33600', 'native 0x873A70']:
         assert line in lines, line
+
+
+def test_heartbreak_description_compiles():
+    """Heartbreak: Doom's kind with Drain's master - its actor pools, the light ramps (native tasks) after its wait."""
+    lines = compile_program(load_description(31)).splitlines()
+    for line in ['module 31 0x26CDCC8 0x63F0', 'act_stage 1 2 $5', 'act_pool actor_pool 33600', 'native 0x86CE90']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag030.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m023.dat")
+def test_heartbreak_runs_from_its_description(tmp_path):
+    """Heartbreak as Creeps (c0m023, slot 3) casts it on Squall: what the exe's code records; with parameters, what
+    FFNx's port records with them; as effect 225, itself again. (Its matrices read stack words earlier code left,
+    among them its own memory's addresses: a copy with memory of its own draws some sparks differently.)"""
+    def record_creeps(effect, tag, *extra):
+        recorder = lab_recorder()
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(recorder), str(effect), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m023.dat'}", "caster=3", "target=0", *extra],
+                             cwd=str(recorder.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return out.read_text().splitlines(), run.stdout
+
+    program = write_program(load_description(31), tmp_path / "effect.fxprog")
+    original, _log = record_creeps(31, "original")
+    described, log = record_creeps(31, "described", f"program={program}")
+    assert "3 tasks, 11 params" in log and untag(described) == original and len(original) > 30000
+    assert any(line.startswith("N ") for line in original) and any(line.startswith("S ") for line in original)
+    again, _log = record_creeps(31, "again")
+    assert again == original   # (the recorder's buffers at fixed addresses: the stack words it reads are the same)
+    params = tmp_path / "params.txt"
+    params.write_text(chr(10).join(["emitter.flash_a 8", "master.wait 20", "light.step 64", "actors.length 30"]) + chr(10))
+    native, _log = record_creeps(31, "native", "native=1", f"params={params}")
+    described, log = record_creeps(31, "described_params", f"program={program}", f"params={params}")
+    assert "4 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(31))
+    description["effect"], description["name"] = 225, "New heartbreak"
+    del description["copy"]["functions"]
+    for task in description["tasks"]:
+        task.pop("function", None)
+    new, log = record_creeps(225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_heartbreak" in log and untag(new) == original

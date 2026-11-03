@@ -1,0 +1,320 @@
+{
+ "format": 1,
+ "effect": 31,
+ "name": "Heartbreak",
+ "doc": "Heartbreak (Creeps' enemy attack; the act family, Drain's master): once its children are gone the actor pools and the stage light ramp up, then one emitter per action - its sound, two screen flashes, a heart, a ring, an arrow flying to the target and a burst, sparks, the actor system, the master's release, the damage; after the last action a wait, the light ramp down. Its parts are the port's code (FFNx mag031_heartbreak.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x86C9C0",
+   "setup": "0x86C9E0",
+   "root": "0x86CB50"
+  },
+  "memory": {
+   "texture_file": "0x26CDD8C",
+   "packet_cursor": "0x26CDD90",
+   "packet_limit": "0x26CDDAC",
+   "arena_a": "0x26D2DA4",
+   "limit_a": "0x26D219C",
+   "arena_b": "0x26D2DA0",
+   "limit_b": "0x26D2198",
+   "arena_top": "0x26D33DC",
+   "init_flag_a": "0x26D33D8",
+   "init_flag_b": "0x26D10A4",
+   "cam_ptr_a": "0x26D33D0",
+   "cam_ptr_b": "0x26CDDB0",
+   "root_queue": "0x26CDE80",
+   "root_pool": "0x26CDDB8",
+   "particle_pool": "0x26D2DAC",
+   "actor_pool": "0x26D33D4",
+   "particle_next": "0x26D10A0",
+   "actor_next": "0x26D2DB8",
+   "cursor_c": "0x26D2DA8",
+   "cursor_d": "0x26CDD94",
+   "count_a": "0x26D33C8",
+   "count_b": "0x26D2DAA"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 31,
+  "from": "0x26CDCC8",
+  "size": "0x63F0",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x160D3DC",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x160D28C",
+   "size": 296
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15F8DF0",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xD000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared; the stage in task; after the last action its wait, the stage out task; the actor counters cleared every tick",
+   "stage_in": "stage_in",
+   "stage_out": "stage_out",
+   "wait": "$master.wait",
+   "pools": {
+    "particle_pool": "0x438",
+    "actor_pool": "0x8340"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x26D2C30",
+   "storage": "0x26D2C40",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "flash",
+   "queue": "0x26CDCC8",
+   "storage": "0x26CDCD8",
+   "size": 60,
+   "count": 3,
+   "keep": true,
+   "doc": "the screen flashes (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x26D2990",
+   "storage": "0x26D21A0",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x26D2188",
+   "storage": "0x26D10A8",
+   "size": 432,
+   "count": 10,
+   "keep": true,
+   "doc": "the heart, the ring, the arrow and the burst (the port's)"
+  },
+  {
+   "key": "sparks",
+   "queue": "0x26CDE90",
+   "storage": "0x26CDEA0",
+   "size": 128,
+   "count": 100,
+   "keep": true,
+   "doc": "the spark spawner, sparks and the shake task (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x26D2C20",
+   "storage": "0x26D29A0",
+   "size": 64,
+   "count": 10
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the screen flashes, the actor system, the master's release, the damage; the master's wait"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage light",
+   "doc": "The stage light ramps up (once the master's children are gone) and down (after the wait)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "At the emitter's start: Start, Length (ticks), Mode (0: the targets' positions)"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.flash_a",
+   "part": "emitter",
+   "label": "First flash",
+   "doc": "A screen flash at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.flash_b",
+   "part": "emitter",
+   "label": "Second flash",
+   "doc": "Another at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The damage of the action's target from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "master.wait",
+   "part": "emitter",
+   "label": "Wait",
+   "doc": "After the last action, the light ramp down after these ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "emitter",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "emitter",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "light.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "Its level (up to it, then down from it)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "light.step",
+   "part": "stage",
+   "label": "Step",
+   "doc": "Up / down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x86CE90",
+   "code": "0x86CE90",
+   "native": "0x86CE90",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the screen flashes, the prim-model tasks, the actor system, the master's release, the damage."
+  },
+  {
+   "key": "stage_in",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x86CD70",
+   "code": "0x86CD70",
+   "native": "0x86CD70",
+   "doc": "The stage light ramp up (the port's task: the four stage light words up a step a tick)."
+  },
+  {
+   "key": "stage_out",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x8734A0",
+   "code": "0x8734A0",
+   "native": "0x8734A0",
+   "doc": "The stage light ramp down (the port's task: from its level down a step a tick to 0)."
+  }
+ ]
+}

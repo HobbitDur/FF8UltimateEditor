@@ -1135,3 +1135,15 @@ Potion's description is the same with its own sequences and sound.
        actor system, the beam (appear tick, grow, hold until, shrink), the stage light (level, step).
        Data: the sound, the camera track, "mag029.tim".
      - *Fujin:* its tabs (Emitter, Laser); no + menu family.
+   - **Heartbreak (31)** (FFNx e498b9c6; Creeps' enemy attack; the act family with Drain's master, Esuna's
+     description): the actor pools and the light ramp up, one emitter per action - its sound, two screen
+     flashes, a heart, a ring, an arrow flying to the target and a burst, sparks, the actor system, the
+     damage; after the last action a wait, the light ramp down.
+     - *Lab:* its matrices read stack words earlier code left (the port models them, g_shadow), among
+       them its own memory's addresses: a copy with memory of its own draws some sparks differently (the
+       own-copy check is the one it does not pass). The recorder's buffers are at fixed addresses now, so
+       such a read is the same every run.
+     - *Inputs* (`HeartbreakParams`): the emitter's sound, two flash ticks, release and damage ticks, the
+       master's wait, the actor system, the stage light (level, step). Data: the sound, the camera track,
+       "mag030.tim".
+     - *Fujin:* its tabs (Emitter, Stage light); no + menu family.
