@@ -243,6 +243,8 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    61: ("mag060.tim", 9, "stage.level 1024\nactors.length 30\ndirector.result 30\n"),
+    60: ("mag059.tim", 15, "strike.push_by 800\ndarken.level 1024\ndebris.until 50\nactors.length 30\ndirector.damage 30\n"),
     59: ("mag057-058.tim", 11, "emitter.sound_tick 4\nmaster.wait 20\nfade.step_in 128\nactors.length 35\n"),
     58: ("mag057-058.tim", 10, "master.wait 30\nfade.step_in 128\nemitter.release 15\nactors.length 35\n"),
     57: ("mag056.tim", 9, "actors.length 30\nmaster.wait 30\nwobble.step 64\nemitter.release 25\n"),
@@ -341,7 +343,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir and Megalixir from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike and Revive from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -1164,4 +1166,18 @@ def test_megalixir_description_compiles():
     """Megalixir: Mega-Potion's kind (its code with other immediates), one emitter per target - its actor pools, the stage fade in and out (native tasks) after its wait, no camera track."""
     lines = compile_program(load_description(59)).splitlines()
     for line in ['module 59 0x2607060 0xFE4', 'per_target', 'act_stage 1 2 $4', 'native 0x7F2C40']:
+        assert line in lines, line
+
+
+def test_raijin_strike_description_compiles():
+    """Raijin's strike: Doom's kind - the per-action director, the director block's exe word, the emitter's and the director's state tables, its file released at the end."""
+    lines = compile_program(load_description(60)).splitlines()
+    for line in ['module 60 0x2604078 0x2FE4', 'module_pointer 2 0x1597358', 'release_file', 'code 0x7EB580']:
+        assert line in lines, line
+
+
+def test_revive_ability_description_compiles():
+    """Revive: Recover's kind (its code Recover's at its own addresses) - the director block's exe word, the emitter's and the director's state tables."""
+    lines = compile_program(load_description(61)).splitlines()
+    for line in ['module 61 0x2601920 0x2750', 'module_pointer 2 0x1596AD4', 'act_pool actor_pool 67200', 'code 0x7E5D80']:
         assert line in lines, line

@@ -1361,3 +1361,19 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`MegalixirParams`): Mega-Potion's and the emitter's sound tick. Data: the sound,
        "mag057-058.tim".
      - *Fujin:* its tabs (Emitter, Stage fade); no + menu family.
+   - **Raijin's strike (60)** (FFNx 8d06d1aa; Raijin's enemy attack; the act family, Psycho Blast's
+     kind): one emitter per action - the director's phase: its sound, two actor systems at the caster's
+     bone, the strike (the target turned and pushed back, the strike and its impact, the target sliding
+     back), debris off the target, the stage darkening; the damage at its cue.
+     - *Port:* the debris sprites are read by the module's own sequence reader (0x7F2050), as the game
+       calls it.
+     - *Inputs* (`RaijinParams`): the director's sound and damage cue, the actor systems' starts, ticks
+       and mode, the strike's push tick and distance and its hit tick, the debris window, the stage
+       darkening's start, level, step and hold. Data: the sound, the camera track, "mag059.tim".
+     - *Fujin:* its tabs (Director, Strike, Stage darkening); no + menu family.
+   - **Revive (61)** (FFNx fa94e654; the command ability; Recover's code at its own addresses with a larger
+     actor pool, Recover's description): one emitter per action - the director's cuts: an actor system
+     and the stage darkening, the sound, the action's result (the revive).
+     - *Inputs* (`RecoverParams`, Revive's own): the director's sound and result cue, the actor system,
+       the stage darkening. Data: the sound, the camera track, "mag060.tim".
+     - *Fujin:* its tabs (Director, Stage darkening); no + menu family.

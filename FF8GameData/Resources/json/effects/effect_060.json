@@ -1,0 +1,508 @@
+{
+ "format": 1,
+ "effect": 60,
+ "name": "Raijin's strike",
+ "doc": "Raijin's strike (Raijin's enemy attack; the act family, Psycho Blast's kind): one emitter per action - the director's phase: its sound, two actor systems at the caster's bone, the strike (the target turned to the caster and pushed back, the strike and its impact, the target sliding back), debris off the target, the stage darkening; the damage at its cue. Its parts are the port's code (FFNx mag060_raijin_attack.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7EB070",
+   "setup": "0x7EB090",
+   "root": "0x7EB200"
+  },
+  "memory": {
+   "texture_file": "0x2604078",
+   "packet_cursor": "0x260407C",
+   "packet_limit": "0x2604184",
+   "arena_a": "0x2606BF4",
+   "limit_a": "0x2606294",
+   "arena_b": "0x2606BF0",
+   "limit_b": "0x2606290",
+   "arena_top": "0x2607054",
+   "init_flag_a": "0x2607050",
+   "init_flag_b": "0x2605DD4",
+   "cam_ptr_a": "0x2607048",
+   "cam_ptr_b": "0x2604188",
+   "root_queue": "0x2604258",
+   "root_pool": "0x2604190",
+   "particle_pool": "0x2606C64",
+   "actor_pool": "0x260704C",
+   "particle_next": "0x2605DD0",
+   "actor_next": "0x2606C70",
+   "cursor_c": "0x2606BF8",
+   "cursor_d": "0x2604080",
+   "count_a": "0x2607040",
+   "count_b": "0x2606C60"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 60,
+  "from": "0x2604078",
+  "size": "0x2FE4",
+  "pointers": [
+   [
+    2,
+    "0x1597358"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1597830",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x159750C",
+   "size": 788
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x159735C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x438",
+    "actor_pool": "0xD200"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2606A80",
+   "storage": "0x2606A90",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x2604160",
+   "storage": "0x2604088",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "actors",
+   "queue": "0x26067E0",
+   "storage": "0x2606298",
+   "size": 676,
+   "count": 2,
+   "keep": true,
+   "doc": "the two actor systems (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x2604268",
+   "storage": "0x2604278",
+   "size": 140,
+   "count": 50,
+   "keep": true,
+   "doc": "the debris spawner and debris, the stage darkening (the port's)"
+  },
+  {
+   "key": "models",
+   "queue": "0x2606280",
+   "storage": "0x2605DD8",
+   "size": 396,
+   "count": 3,
+   "keep": true,
+   "doc": "the strike and its impact (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x2606A70",
+   "storage": "0x26067F0",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its phase: the sound, two actor systems at the caster, the strike, the debris, the stage darkening; the damage cue"
+  },
+  {
+   "id": 0,
+   "key": "strike",
+   "title": "Strike",
+   "doc": "The target pushed back, the strike and its impact, the target sliding back, its debris"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage darkening",
+   "doc": "The stage light words darkened, held, back"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor systems",
+   "doc": "Their start ticks (the first, the second), their ticks, their placement mode"
+  }
+ ],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "Played once cue 1 runs",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage cue",
+   "doc": "The damage of the target at this tick of the phase",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.first",
+   "part": "director",
+   "label": "First",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.second",
+   "part": "director",
+   "label": "Second",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "director",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "director",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.push",
+   "part": "strike",
+   "label": "Push tick",
+   "doc": "The target turned to the caster and pushed back at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.push_by",
+   "part": "strike",
+   "label": "Push",
+   "doc": "How far",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.hit",
+   "part": "strike",
+   "label": "Hit tick",
+   "doc": "The strike at the caster's bone and its impact at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.from",
+   "part": "strike",
+   "label": "Debris from",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.until",
+   "part": "strike",
+   "label": "Debris until",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 44,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.start",
+   "part": "stage",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step",
+   "part": "stage",
+   "label": "Step",
+   "doc": "Up by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.hold",
+   "part": "stage",
+   "label": "Hold until",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 54,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7EB440",
+   "code": "0x7EB440",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; clears the director block, keeps the caster's and target's positions and the facing, starts the director; the damage at the director's cue; then waits, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7EB4C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7F2690"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7F26D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7F26F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7F2710"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x7EB580",
+   "code": "0x7EB580",
+   "doc": "The director: every tick the phase bookkeeping (phase 1: the actor systems, the strike, the debris, the stage darkening), then its states: the cue to phase 1, the sound, phase tick 4, the damage cue, the cue to phase 2, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x7EB600"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7EB650"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7EB6A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7EB6F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7EB710"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7EB730"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7EB750"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7EB770"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}
