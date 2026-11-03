@@ -1,0 +1,142 @@
+{
+ "format": 1,
+ "effect": 64,
+ "name": "Model breaking apart",
+ "doc": "The caster's model breaking apart (Ultimecia's enemy attack, Griever's tail): the master - its sound, 18 bone scripts moving, turning and hiding the caster's bones and throwing layouts and sprites off them, three white screen flashes, the caster drawn with its pose offsets; at its end the caster shown whole and the party drawn again. Its tasks are the port's code (FFNx mag064_griever_tail.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6E5190",
+   "setup": "0x6E5180",
+   "root": "0x6E5260"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 64,
+  "from": "0x2545018",
+  "size": "0x84"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x134BF90",
+   "size": 12
+  },
+  "master.sound": {
+   "kind": "sound",
+   "address": "0x1342EF4",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6E5180",
+  "file_loader": "0x6E5190",
+  "root": "0x6E5260"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "Its sound, the 18 bone scripts breaking the caster's model apart (layouts, sprites), the white flashes, the caster drawn with its pose offsets; the end"
+  }
+ ],
+ "groups": [
+  {
+   "key": "flashes",
+   "label": "Flashes",
+   "doc": "The three white screen flashes' first ticks (each fades over 4 ticks)"
+  }
+ ],
+ "params": [
+  {
+   "key": "master.sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@master.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "master.sound_tick",
+   "part": "master",
+   "label": "Sound tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "master.voice",
+   "part": "master",
+   "label": "Voice release",
+   "doc": "The voice slot released at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 166,
+   "unit": "plain"
+  },
+  {
+   "key": "master.end",
+   "part": "master",
+   "label": "End tick",
+   "doc": "The caster shown whole again and the party drawn at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 170,
+   "unit": "plain"
+  },
+  {
+   "key": "flashes.a",
+   "part": "master",
+   "label": "First",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 19,
+   "unit": "plain"
+  },
+  {
+   "key": "flashes.b",
+   "part": "master",
+   "label": "Second",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "flashes.c",
+   "part": "master",
+   "label": "Third",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 43,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

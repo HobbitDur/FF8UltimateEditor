@@ -1,0 +1,114 @@
+{
+ "format": 1,
+ "effect": 63,
+ "name": "Helix's beam",
+ "doc": "Helix's beam (Helix's enemy attack): the master - its sound, layouts at two points of the caster and their midpoint, two curving beams to the target then two straight ones fading, the screen flash, a white tile, particles and the impact layout at the target; the damage. Its tasks are the port's code (FFNx mag063_helix_attack.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6E6BF0",
+   "setup": "0x6E6BE0",
+   "root": "0x6E6CB0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 63,
+  "from": "0x25450A0",
+  "size": "0x60"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1354A1C",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x13549F4",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6E6BE0",
+  "file_loader": "0x6E6BF0",
+  "root": "0x6E6CB0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "Its sound, the layouts at the caster's points, the two beams, the flash, the particles and the impact at the target, the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "master.damage",
+   "part": "master",
+   "label": "Damage tick",
+   "doc": "The damage of the first target at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 54,
+   "unit": "plain"
+  },
+  {
+   "key": "master.end",
+   "part": "master",
+   "label": "End tick",
+   "doc": "",
+   "type": "i16",
+   "min": 64,
+   "max": 200,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "impact.flash",
+   "part": "master",
+   "label": "Flash",
+   "doc": "The screen flash's level",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2300,
+   "unit": "plain"
+  },
+  {
+   "key": "impact.push",
+   "part": "master",
+   "label": "Impact offset",
+   "doc": "The impact this far from the target towards the caster",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 500,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

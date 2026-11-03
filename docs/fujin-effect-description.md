@@ -1388,3 +1388,17 @@ Potion's description is the same with its own sequences and sound.
        start, scroll, fade start and step, the darkening's start, hold and step, the music fade's start,
        step and return. Data: the camera track, "mag061.tim" and its four pictures' names.
      - *Fujin:* its tabs (Emitter, Picture, Darkening); no + menu family.
+   - **Helix's beam (63)** (FFNx 747947de; Helix's enemy attack; a port director, Ray-Bomb's kind): the
+     master - its sound, layouts at two points of the caster and their midpoint, two curving beams to
+     the target then two straight ones fading, the screen flash, a white tile, particles and the impact
+     at the target; the damage.
+     - *Inputs* (`HelixParams`): the sound, the damage and end ticks, the flash level, the impact's
+       offset towards the caster. Data: the sound, "mag062.tim".
+     - *Fujin:* its tab (Master); no + menu family.
+   - **Model breaking apart (64)** (FFNx 809e037c; Ultimecia's enemy attack, Griever's tail; a port director,
+     Ray-Bomb's kind): the master - its sound, 18 bone scripts moving, turning and hiding the caster's
+     bones and throwing layouts and sprites off them, three white flashes, the caster drawn with its pose
+     offsets; at its end the caster shown whole and the party drawn again.
+     - *Inputs* (`TailParams`): the sound and its tick, the voice release and end ticks, the three
+       flashes' ticks. Data: the sound, "mag063.tim".
+     - *Fujin:* its tab (Master); no + menu family.
