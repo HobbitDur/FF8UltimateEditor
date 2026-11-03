@@ -35,6 +35,8 @@ if "!MODULES!"=="" set MODULES="%FX%\mag001_cure.cpp"
 rem the modules built on the actor engine (act_engine.h) need it and its actor system compiled in
 findstr /m /c:"act_engine.h" !MODULES! >nul 2>nul && if exist "%FX%\act_engine.cpp" set MODULES=!MODULES! "%FX%\act_engine.cpp"
 findstr /m /c:"fx_actors.h" !MODULES! >nul 2>nul && if exist "%FX%\fx_actors.cpp" set MODULES=!MODULES! "%FX%\fx_actors.cpp"
+rem the modules built on the GF cinematic engine (gfc_engine.h) need it compiled in
+findstr /m /c:"gfc_engine.h" !MODULES! >nul 2>nul && if exist "%FX%\gfc_engine.cpp" set MODULES=!MODULES! "%FX%\gfc_engine.cpp"
 set LAB=/DFF8_FX_LAB /I"%FX%" !MODULES!
 :compile
 cl /nologo /std:c++20 /EHa /W3 /O1 /MT /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS fxrecorder.cpp %LAB% /Foobj\ /Fefxrecorder.exe /link /BASE:0x10000000 /DYNAMICBASE:NO /FIXED /LARGEADDRESSAWARE

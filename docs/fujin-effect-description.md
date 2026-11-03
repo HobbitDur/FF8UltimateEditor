@@ -1025,3 +1025,12 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`ElvoretParams`): the two sounds, the start height and descent, the ring burst, the end.
        Data: the sounds.
      - *Fujin:* its tab (Entrance); no + menu family.
+   - **Elvoret's death (18)** (FFNx 6d733541; Elvoret's AI's own animation; the first of the GF cinematic
+     engine's clones): Elvoret's model copy falling apart polygon by polygon - its pieces, dots and particles.
+     - *Added:* `"setup_exe": true` on a port director (`port <setup> <loader> <root> exe`): the program calls
+       the module's own setup - the cinematic engine's state block is shared, one clone at a time - and
+       re-points the root it queued at the program's director; `"shared": true` on the module (a copy keeps
+       the same memory). File parameters reach the port (`ProgramFiles` in `gfc_engine.h`: the clone's file
+       loader reads them).
+     - *Inputs* (`ProgramFiles<18>`): its two script files (MAG017_B.00 / .01; empty: the game's).
+     - *Fujin:* its tab (Files); no + menu family.

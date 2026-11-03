@@ -612,3 +612,53 @@ def test_elvoret_entrance_description_compiles():
     lines = compile_program(load_description(17)).splitlines()
     for line in ['director port -1', 'port 0x7003C0 0x0 0x700460', 'module 17 0x2556FA0 0x60', 'texture 0 -1']:
         assert line in lines, line
+
+
+def test_elvoret_death_description_compiles():
+    """Elvoret's death: a port director calling the cinematic clone's own setup (its memory the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(18)).splitlines()
+    for line in ['director port -1', 'port 0xB4A530 0xB4A500 0xB4ABA0 exe', 'module 18 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+def record_elvoret(tmp_path, effect, tag, *extra):
+    """Elvoret's death as Elvoret (c0m091, slot 3) casts it on itself."""
+    recorder = lab_recorder()
+    out = tmp_path / f"{tag}.txt"
+    run = subprocess.run([str(recorder), str(effect), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                          f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                          f"slot3={BATTLE / 'c0m091.dat'}", "caster=3", "target=3", *extra],
+                         cwd=str(recorder.parent), capture_output=True, text=True, timeout=120)
+    assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+    return out.read_text().splitlines(), run.stdout
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG017_B.00", "extracted_files/magic/MAG017_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m091.dat")
+def test_elvoret_death_runs_from_its_description(tmp_path):
+    """Elvoret's death from its description: what the exe's code records; a script file of its own (an edited
+    .00 copy) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(18), tmp_path / "effect.fxprog")
+    original, _log = record_elvoret(tmp_path, 18, "original")
+    described, log = record_elvoret(tmp_path, 18, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG017_B.00").read_bytes())
+    for k in range(0x1B700, 0x1B740, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "elv18.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 elv18.00
+")
+    native, _log = record_elvoret(tmp_path, 18, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record_elvoret(tmp_path, 18, "described_params", f"program={program}", f"params={params}",
+                                    f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(18))
+    description["effect"], description["name"] = 225, "New death"
+    del description["copy"]["functions"]
+    new, log = record_elvoret(tmp_path, 225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_death" in log and untag(new) == original

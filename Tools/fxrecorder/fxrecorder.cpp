@@ -984,13 +984,22 @@ namespace ff8fx
 }
 // every module with parameters (FX_LAB_MODULE: the ones build.bat compiles in); sources older than
 // FX_LAB_MODULE name Cure only
+#ifdef FX_LAB_MODULE
+// one module's register function; one reading the exe while it registers (schema=: no exe mapped) stops
+// there, its parameters registered first, the other modules still registered
+static void lab_register_one(ff8fx::fxp::RegisterFn f)
+{
+	__try { f(); }
+	__except (EXCEPTION_EXECUTE_HANDLER) {}
+}
+#endif
 static void lab_register()
 {
 	static bool done = false;
 	if (done) return;
 	done = true;
 #ifdef FX_LAB_MODULE
-	for (int i = 0; i < ff8fx::fxp::g_lab_module_count; i++) ff8fx::fxp::g_lab_modules[i]();
+	for (int i = 0; i < ff8fx::fxp::g_lab_module_count; i++) lab_register_one(ff8fx::fxp::g_lab_modules[i]);
 #else
 	ff8fx::register_mag001_cure();
 #endif

@@ -138,6 +138,7 @@ namespace fxprog
 		bool per_target = false;                        // PER_ACTION: its task for each target of the action, in turn (Mega Phoenix's), not each action
 		bool release_file = false;                      // PER_ACTION: at its end its file's release asked and waited for (Doom's)
 		uint32_t port_setup = 0, port_loader = 0, port_root = 0;   // PORT: the port's (originals: own::find)
+		bool port_setup_exe = false;                    // PORT: the module's own setup called (shared memory: the cinematic engine's), its root re-pointed
 		// PER_ACTION, the act family's master (Mega Phoenix 0x8CE4F0): once the children are gone (state 2) room
 		// carved from the arena top for memory words (act_pools: name, bytes), cleared, u16 words zeroed
 		// (act_zero), the stage fade in task; after the last action, act_wait ticks, then the stage fade
@@ -347,6 +348,8 @@ namespace fxprog
 	// the port module of the program (its descriptor with its globals moved, the data words pointing into it
 	// its own words), current: its code runs on the program's memory, spawning the program's tasks or thunks of
 	// its ports
+	inline void SetModuleParams();
+	inline Program *g_params_of = nullptr;   // the program whose parameters the port's live ones are (one set: the module's)
 	inline void UseModule()
 	{
 #ifdef FXPROG_ACTORS
@@ -364,6 +367,11 @@ namespace fxprog
 		ff8fx::own::active = true;
 		ff8fx::own::reloc = g.module_reloc;
 		ff8fx::own::task_of = ProgramTaskOf;
+		if (g_params_of != &g)
+		{
+			g_params_of = &g;
+			SetModuleParams();
+		}
 		if (!g.module_ready)
 		{
 			const Mod *m = find_mod(g.module);
@@ -2113,7 +2121,6 @@ namespace fxprog
 	{
 #ifdef FF8_FX_LAB
 		if (!g_program->module) return;
-		UseModule();
 		const ff8fx::fxp::Module *m = ff8fx::fxp::find_params(g_program->module);
 		if (!m) return;
 		memcpy(m->params, m->defaults, m->size);
@@ -2121,8 +2128,14 @@ namespace fxprog
 			for (int i = 0; i < m->field_count; i++)
 			{
 				const ff8fx::fxp::Field &f = m->fields[i];
-				if (p.key != f.key || f.type == ff8fx::fxp::File) continue;
+				if (p.key != f.key) continue;
 				uint8_t *at = (uint8_t *)m->params + f.offset;
+				if (f.type == ff8fx::fxp::File) // its name (empty, "-": the game's)
+				{
+					memset(at, 0, (size_t)f.max + 1);
+					if (p.text != "-") strncpy((char *)at, p.text.c_str(), (size_t)f.max);
+					continue;
+				}
 				if (f.type == ff8fx::fxp::I16) *(int16_t *)at = (int16_t)p.value;
 				else if (f.type == ff8fx::fxp::U8) *at = (uint8_t)p.value;
 				else *(int32_t *)at = p.value;
@@ -2134,13 +2147,21 @@ namespace fxprog
 	{
 		Program &g = *g_program;
 		ApplyPatches();
-		SetModuleParams();
+		g_params_of = nullptr;   // (at each cast: the program's values as they are now)
 		if (g.director == PORT)
 		{
 			UseModule();
+			if (g.port_setup_exe) // the module's own setup, then its root (the original's task) re-pointed at the program's director
+			{
+				TaskQueue *q = fn<TaskQueue *(__cdecl *)(CastContext *)>(g.port_setup)(ctx);
+				for (TaskNode *n = q ? q->head : nullptr; n; n = n->next)
+					if ((uint32_t)n->func == g.port_root) n->func = (uint32_t (__cdecl *)(TaskNode *))ProgramTaskOf(g.port_root);
+				return q;
+			}
 			void *setup = ff8fx::own::find(g.port_setup);
 			return setup ? ((TaskQueue *(__cdecl *)(CastContext *))setup)(ctx) : nullptr;
 		}
+		UseModule();   // (a port module's parameters)
 		if (g.director == CHAIN) return ChainSetup(ctx);
 		if (g.director == MASTER) return MasterSetup(ctx);
 		if (g.director == CYCLE) return g.master_setup ? MasterSetup(ctx) : CycleSetup(ctx);
@@ -2351,6 +2372,7 @@ namespace fxprog
 				g.port_setup = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
 				g.port_loader = (uint32_t)strtoul(w[2].c_str(), nullptr, 0);
 				g.port_root = (uint32_t)strtoul(w[3].c_str(), nullptr, 0);
+				g.port_setup_exe = w.size() > 4 && w[4] == "exe";
 			}
 			else if (d == "release_file") g.release_file = true;
 			else if (d == "module" && need(4))

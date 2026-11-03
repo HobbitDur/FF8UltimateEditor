@@ -378,7 +378,8 @@ def compile_program(description, values=None):
         if not module:
             raise DescriptionError("director: a port director runs a port module's code (\"module\")")
         lines.append("director port -1")
-        lines.append(f"port 0x{_number(director['setup']):X} 0x{_number(director['file_loader']):X} 0x{_number(director['root']):X}")
+        lines.append(f"port 0x{_number(director['setup']):X} 0x{_number(director['file_loader']):X} 0x{_number(director['root']):X}"
+                     + (" exe" if director.get("setup_exe") else ""))   # (the module's own setup: shared memory)
     elif director.get("kind") not in ("per_action", "master", "cycle", "chain") or director.get("spawns") not in tasks:
         raise DescriptionError("director: a per_action, master, cycle or chain director spawning one of the tasks")
     if director["kind"] == "chain":
@@ -584,8 +585,8 @@ def new_effect(description, effect_id, name, exe=None):
         del new["exe_data"]
     new["base"] = description.get("base", description["effect"])
     new["effect"], new["name"] = effect_id, name
-    if "module" in new:   # a port module's memory: one block of its own, the addresses moved into it
-        new["module"]["own"] = True
+    if "module" in new:   # a port module's memory: one block of its own, the addresses moved into it (unless shared)
+        new["module"]["own"] = not new["module"].get("shared")
         new["module"]["memory"] = dict((description.get("copy") or {}).get("memory") or {})
         new.pop("copy", None)
         for task in new["tasks"]:
