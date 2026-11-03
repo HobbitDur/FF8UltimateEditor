@@ -1111,3 +1111,11 @@ Potion's description is the same with its own sequences and sound.
        the actor system (start, length, mode), the stage fade (level, step). Data: the sound, the
        camera track, "mag026.tim".
      - *Fujin:* its tabs (Emitter, Stage fade); no + menu family.
+   - **Curaga (28)** (FFNx fb79703c; the spell; the act family with Drain's master, Esuna's description):
+     once its children are gone the actor pools and the stage wobble in, one emitter per action - its
+     sound, a screen flash, the actor system around its target, the master's release, the heal; after
+     the last action a wait, the stage wobble out.
+     - *Inputs* (`CuragaParams`): the emitter's sound, flash, release and result ticks, the master's wait,
+       the actor system (start, length, mode), the stage wobble (amplitude, step). Data: the sound, the
+       camera track, "mag027-051.tim".
+     - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
