@@ -1,7 +1,8 @@
 """A camera stored in a MAG file edits like an exe track (Keyframes + Script tabs, Meaning pane,
 size counter, keyframes added/removed, the script's chosen slot marked). It grows or shrinks in
-the MAG file (PackedMag moves what follows and updates every offset); where the file cannot move
-(MAG222's work buffer), the script and the keyframes share its fixed room."""
+the MAG file (PackedMag moves what follows and updates every offset), MAG218 up to its work
+buffer; where the file cannot move (MAG222's work buffer), the script and the keyframes share its
+fixed room."""
 import pathlib
 import struct
 import sys
@@ -14,6 +15,7 @@ from FF8GameData.dat.cameracollection import insert_keyframe, remove_keyframe
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MAG230 = "extracted_files/magic/MAG230_B.00"  # effect 231 Disease Breath: a 192-byte camera section
 MAG222 = "extracted_files/magic/MAG222_B.00"  # effect 223: its work buffer already reuses the .01
+MAG218 = "extracted_files/magic/MAG218_B.00"  # effect 219: the same, proven to grow up to its bone slots
 
 
 @pytest.fixture(scope="module")
@@ -123,6 +125,30 @@ def test_mag_camera_keeps_its_room_where_the_file_cannot_move(qapp, tmp_path, mo
     editor.camera_editor.script_editor.setPlainText(editor.camera_editor.script_editor.toPlainText() + "\nend()")
     assert "keeps its" in editor.camera_editor.script_size_label.text()
     assert not editor.camera_editor.apply_script_button.isEnabled()
+
+
+@pytest.mark.ff8data(MAG218, MAG218[:-1] + "1")
+def test_mag218_camera_grows_up_to_the_room_left(qapp, tmp_path, monkeypatch):
+    path = tmp_path / "MAG218_B.00"
+    original = (ROOT / MAG218).read_bytes()
+    path.write_bytes(original)
+    path.with_suffix(".01").write_bytes((ROOT / MAG218).with_suffix(".01").read_bytes())
+    manager, section, editor = _camera_editor(qapp, path)
+    assert not editor.camera_fixed_reason and editor._camera_room() is None
+    room = 0x32000 - (0xA8 + 96 * 0x100) - len(original)
+    assert f"can grow by {room} more bytes" in editor.camera_info.text()
+    assert "bone slots must end before the script's work buffer at 0x32000" in editor.camera_info.text()
+    assert f"{room} more bytes fit" in editor.camera_editor.growth_note
+    messages = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args: messages.append(args[2]))
+    frames = editor.camera_track.keyframe_count()
+
+    # A keyframe added: the file grows, the room left shrinks by as much
+    editor.camera_editor._collection_widget._rebuild(insert_keyframe, 0, 0, 0, 0)
+    assert not messages and editor.camera_track.keyframe_count() == frames + 1
+    delta = len(manager.data) - len(original)
+    assert delta > 0 and f"can grow by {room - delta} more bytes" in editor.camera_info.text()
+    assert manager.undo() and bytes(manager.data) == original
 
 
 @pytest.mark.ff8data(MAG230)

@@ -261,13 +261,24 @@ class MagDocument:
         """The file as a PackedMag (its pointer map, resizing), None when it is not a packed MAG."""
         return PackedMag(self.data, getattr(self, "name", ""), self.table) if is_packed(self.data) else None
 
-    def loaded_after_size(self):
-        """Bytes of the .01 the game loads after this .00 into the magic buffer (the file beside
-        this one), None when it is not there."""
+    def loaded_after(self):
+        """The .01 the game loads after this .00 into the magic buffer (the file beside this one),
+        as bytes: PackedMag places its bone slots and checks the work buffer with it. 0 for a file
+        that is not a .00, None when the .01 is not there."""
         if not (self.file_path or getattr(self, "name", "")).lower().endswith(".00"):
             return 0
         companion = self.file_path[:-1] + "1"
-        return os.path.getsize(companion) if self.file_path and os.path.isfile(companion) else None
+        if not (self.file_path and os.path.isfile(companion)):
+            return None
+        with open(companion, "rb") as handle:
+            return handle.read()
+
+    def growth_room(self):
+        """(bytes this file may still grow, what bounds it); (0, why) when it may not change size."""
+        packed = self.packed()
+        if packed is None:
+            return 0, "this file is not a packed MAG file"
+        return packed.growth_room(self.loaded_after())
 
     def resize_problem(self, start):
         """Why the section at `start` cannot change size, "" when it can (every offset into the
@@ -276,7 +287,7 @@ class MagDocument:
         section = next((s for s in self.document.sections if s.start == start), None)
         if packed is None or section is None:
             return "this file is not a packed MAG file"
-        after = self.loaded_after_size()
+        after = self.loaded_after()
         problem = packed.resize_problem(start, section.end, loaded_after=after)
         if problem and after is None and packed.work_buffer_floor() is not None:
             return f"{ntpath.basename(self.file_path)[:-1]}1 is needed beside it to check the work buffer"
@@ -294,7 +305,7 @@ class MagDocument:
         packed = self.packed()
         if packed is None:
             raise ValueError("A section of this file must keep its exact byte size: it is not a packed MAG file")
-        resized = packed.resized(start, raw, section.end, self.loaded_after_size())
+        resized = packed.resized(start, raw, section.end, self.loaded_after())
         self._push_undo()
         self.data = bytearray(resized)
         self.analyse()

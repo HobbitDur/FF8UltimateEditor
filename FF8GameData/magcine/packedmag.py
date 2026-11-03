@@ -10,7 +10,8 @@ Every offset the game follows into a packed file, decoded from FF8_EN.exe:
   - header u32 +0x04..+0x24 (script, CLUT table, object table, sound table, texture table, music
     table, end of tables, stage camera, controller vibration bank), file-relative, 0 = absent.
     The effect code reads +0x04, +0x18, +0x20, +0x24 of the .00 and +0x1C of the .01 (all 46 copies
-    of the cinematic engine) and never a fixed offset past the header;
+    of the cinematic engine), the shared resource helpers +0x08/+0x0C/+0x14 of the file holding a
+    resource, and never a fixed offset past the header;
   - texture / CLUT / music table entries: low 24 bits relative to their own table, high byte flags;
   - object table: u32 count, then u32 offsets relative to the table (GfCinematic_GetObjectPtr
     0xB657E0), 0 = not in this file;
@@ -27,9 +28,19 @@ Inside meshes, models, camera tracks and vibration patterns every offset is rela
 
 The files of an effect are loaded one after the other at the start of the 1 MB magic buffer
 (IO_GetFile_MAGIC 0x571B80, cursor reset by Magic_ClearMemoryForTex): a bigger .00 only pushes the
-.01 further. Script opcode 0x21 (bit15 clear) puts work buffers at fixed positions of that buffer,
-so the loaded files must end before the lowest one (`work_buffer_floor`).
+.01 further. Script opcode 0x21 (bit15 clear) puts work buffers at fixed positions of that buffer
+(sub-op 0: streamed-file destination, 1: bump arena, 2: ping-pong packet area), and effect 223's
+opcode 0xBB copies a texture to a fixed position too; the loaded files must end before the lowest
+one (`work_buffer_floor`).
+
+Where the work buffer already covers the .01 in vanilla (MAG200/205/218/222), the .01 is texture
+memory used up once uploaded, plus the engine's RAM: the bone slots start at .01 + .01[+0x1C]
+(GfCinematicBone, 0x100 bytes each, up to the SetBoneCount maximum) and are read and written every
+tick. Such a .00 may change size only for a script proven to upload every .01 texture before the
+first write to a work buffer (`PROVEN_WORK_BUFFER_REUSE`); the .01 header and bone slots must then
+stay before the work buffer (`work_buffer_room`).
 """
+import hashlib
 import struct
 from dataclasses import dataclass
 
@@ -44,6 +55,19 @@ MAGIC_BUFFER_SIZE = 0x100000
 HEADER_POINTERS = {1: "script", 2: "CLUT table", 3: "object table", 4: "sound table", 5: "texture table",
                    6: "music table", 7: "end of tables", 8: "stage camera", 9: "controller vibration bank"}
 UNUSED_HEADER_WORDS = (0, 10, 11)
+BONE_SIZE = 0x100          # GfCinematicBone
+INITIAL_BONE_COUNT = 8     # bone slots the init clears (scene header +56) before any SetBoneCount (op 0x7D)
+# Scripts whose work buffer already covers the .01, proven (FF8_EN.exe) to stay right when the .01
+# starts later, keyed by `script_fingerprint`. MAG218 (effect 219 Terra Break): the .01 is textures
+# and CLUTs only; the channel spawned on tick 1 queues every one of them on ticks 1-3 (the 12
+# uploads per tick cap is never reached), and Battle_FlushVramCommandQueue reads them at the end of
+# each battle frame. The first work-buffer write comes later: packets of DrawFlagBits-1 bones into
+# the ping-pong area (those bones spawn from tick 4), CreateParticlePool into the arena, LoadFile
+# into the stream destination (after flag 0x2, tick 36). The ctx flag 0x2000 branch, which uploads
+# CLUTs later, is never taken on PC (the flags are cleared at init and nothing sets them).
+PROVEN_WORK_BUFFER_REUSE = {
+    "7a730ede196a5c3f7698862d5d8bc4ad5afbd6b1": "MAG218 (Terra Break)",
+}
 
 
 class MagResizeError(ValueError):
@@ -227,14 +251,81 @@ class PackedMag:
         return result
 
     def work_buffer_floor(self):
-        """The lowest fixed work buffer the script puts in the 1 MB magic buffer (op 0x21, bit15
-        clear), None when every work buffer follows the .01."""
+        """The lowest fixed position the script writes in the 1 MB magic buffer: a work buffer
+        (op 0x21, bit15 clear) or a texture copy (CopyAlternativeTexture, 16 x its second operand).
+        None when every work buffer follows the .01."""
         if self.program is None:
             return None
         floors = [instruction.words[0] & 0xFFFF | (instruction.words[1] & 0xFFFF) << 16
                   for instruction in self.program.instructions.values()
                   if instruction.op & 0x1FF == 0x21 and not instruction.op & 0x8000 and len(instruction.words) >= 2]
+        floors += [16 * (instruction.words[1] & 0xFFFF) for instruction in self.texture_copies()]
         return min(floors) if floors else None
+
+    def texture_copies(self):
+        """The CopyAlternativeTexture instructions (effect 223 opcode 0xBB): a texture of a loaded
+        file copied to a fixed position of the magic buffer."""
+        if self.program is None:
+            return []
+        return [instruction for _offset, instruction in sorted(self.program.instructions.items())
+                if instruction.name == "CopyAlternativeTexture" and len(instruction.words) >= 2]
+
+    def script_fingerprint(self):
+        """SHA-1 of the script's instructions in order, the reference operands left out (they
+        change when parts move), None without a script."""
+        if self.program is None:
+            return None
+        parts = []
+        for instruction in self.program.sorted_instructions():
+            references = {word for _kind, _target, word in instruction.refs}
+            parts.append((instruction.op & 0xFFFF,) + tuple(None if index in references else value & 0xFFFF
+                                                            for index, value in enumerate(instruction.words)))
+        return hashlib.sha1(repr(parts).encode()).hexdigest()
+
+    def bone_count(self):
+        """The bone slots the script can use: SetBoneCount (op 0x7D) raises the initial 8."""
+        counts = [instruction.words[0] for instruction in (self.program.instructions.values() if self.program else ())
+                  if instruction.op & 0x1FF == 0x7D and instruction.words]
+        return max([INITIAL_BONE_COUNT] + counts)
+
+    def work_buffer_room(self, loaded_after=0):
+        """(room, limit, problem) for the script's fixed work buffer: `room` = bytes this file may
+        still grow (None without a work buffer), `limit` = what must stay before the buffer, and
+        `problem` = why the file may not change size at all ("" when it may). `loaded_after`: the
+        files loaded after this one (the .01 beside a .00) as bytes, or only their size, None when
+        unknown."""
+        has_bytes = isinstance(loaded_after, (bytes, bytearray, memoryview))
+        after = len(loaded_after) if has_bytes else loaded_after
+        floor = self.work_buffer_floor()
+        if floor is None:
+            return None, "", ""
+        if after is None:
+            return 0, "", (f"the script has a fixed work buffer at 0x{floor:X} and the size of the files loaded "
+                           f"after this one is unknown")
+        if len(self.data) + after <= floor:
+            return (floor - len(self.data) - after,
+                    f"the effect's files must end before the script's work buffer at 0x{floor:X}", "")
+        # the work buffer already covers the .01 (texture memory, used up once uploaded)
+        reuse = f"the script's work buffer at 0x{floor:X} already reuses the memory of the files loaded after it"
+        if copies := self.texture_copies():
+            target = 16 * (copies[0].words[1] & 0xFFFF)
+            return 0, "", (f"{reuse}, and the script copies textures of the .01 into the magic buffer "
+                           f"(0x{copies[0].offset:X} CopyAlternativeTexture to 0x{target:X}): a moved .01 "
+                           f"changes the copied texels")
+        if self.script_fingerprint() not in PROVEN_WORK_BUFFER_REUSE:
+            return 0, "", (f"{reuse}, which would move; only a script proven to upload the .01 before writing "
+                           f"the work buffer may change size ({', '.join(PROVEN_WORK_BUFFER_REUSE.values())})")
+        if not has_bytes:
+            return 0, "", f"{reuse}: the .01 itself is needed to place its bone slots"
+        companion = bytes(loaded_after)
+        header = struct.unpack_from("<12I", companion) if is_packed(companion) else None
+        if header is None or any(header[i] for i in (1, 3, 4, 8, 9)) or header[6] != header[7]:
+            return 0, "", f"{reuse}, and the .01 holds more than textures"
+        # the .01 header and its bone slots are used all along: they must end before the buffer
+        live = header[7] + self.bone_count() * BONE_SIZE
+        return (floor - live - len(self.data),
+                f"the .01 header and its {self.bone_count()} bone slots must end before the script's work "
+                f"buffer at 0x{floor:X}", "")
 
     # ------------------------------------------------------------------ resizing
     def room_end(self, start):
@@ -244,8 +335,8 @@ class PackedMag:
 
     def resize_problem(self, start, end=None, delta=4, loaded_after=0):
         """Why [start, end) cannot change size by `delta` bytes, "" when it can. `loaded_after`:
-        bytes of the files loaded after this one into the magic buffer (the .01 for a .00), None
-        when unknown."""
+        the files loaded after this one into the magic buffer (the .01 for a .00), as bytes or
+        only their size, None when unknown (`work_buffer_room`)."""
         end = self.part_end(start, end)
         if any(self.header[i] for i in UNUSED_HEADER_WORDS):
             return "its header uses words PackedMag does not know"
@@ -264,22 +355,32 @@ class PackedMag:
         for ref in self.fixed_references():
             if ref.slot == 0 and (ref.position is None or ref.position >= start):
                 return f"the script holds a raw position past it ({ref.text})"
-        floor = self.work_buffer_floor()
-        if delta and floor is not None:
-            if loaded_after is None:
-                return (f"the script has a fixed work buffer at 0x{floor:X} and the size of the files loaded "
-                        f"after this one is unknown")
-            if len(self.data) + loaded_after > floor:
-                # vanilla does it with a .01 of textures only, used up once uploaded: moving the
-                # .01 would change what the work buffer overwrites
-                return (f"the script's work buffer at 0x{floor:X} already reuses the memory of the files "
-                        f"loaded after it, which would move")
-            if len(self.data) + delta + loaded_after > floor:
-                return (f"the effect's files would reach the script's work buffer at 0x{floor:X} "
-                        f"(0x{floor - len(self.data) - loaded_after:X} bytes free)")
-        if len(self.data) + delta + (loaded_after or 0) > MAGIC_BUFFER_SIZE:
+        if delta:
+            room, limit, problem = self.work_buffer_room(loaded_after)
+            if problem:
+                return problem
+            if room is not None and delta > room:
+                return f"{limit} (0x{max(room, 0):X} bytes free)"
+        if len(self.data) + delta + self.loaded_size(loaded_after) > MAGIC_BUFFER_SIZE:
             return "the effect's files would not fit the 1 MB magic buffer"
         return ""
+
+    @staticmethod
+    def loaded_size(loaded_after):
+        """Byte size of `loaded_after` (bytes or a size, None = unknown, counted 0)."""
+        if isinstance(loaded_after, (bytes, bytearray, memoryview)):
+            return len(loaded_after)
+        return loaded_after or 0
+
+    def growth_room(self, loaded_after=0):
+        """(bytes this file may still grow, what bounds it), (0, why) when it may not change size."""
+        room, limit, problem = self.work_buffer_room(loaded_after)
+        if problem:
+            return 0, problem
+        free = MAGIC_BUFFER_SIZE - len(self.data) - self.loaded_size(loaded_after)
+        if room is None or free < room:
+            return free, "the effect's files must fit the 1 MB magic buffer"
+        return room, limit
 
     def part_end(self, start, end=None):
         """Where a replacement of the part [start, end) stops: `end` (default `room_end`) taken

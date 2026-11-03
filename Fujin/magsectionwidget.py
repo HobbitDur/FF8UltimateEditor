@@ -283,13 +283,24 @@ class MagSectionEditor(QWidget):
         self.camera_editor.track_changed.connect(self._apply_camera)
         layout.addWidget(self.camera_editor, 1)
         self.camera_page, self.views = page, self.camera_editor.tabs
-        # PackedMag says whether the parts after the camera can move (every offset kept right)
-        resize_problem = getattr(self.manager, "resize_problem", None)
-        self.camera_fixed_reason = resize_problem(self.section.start) if resize_problem else "unknown file"
+        self._check_camera_room()
         self.camera_editor.set_track(self.camera_track, fixed_size=self._camera_room())
         self._update_camera_info()
 
     MAG_GROWTH_NOTE = "what follows it in the MAG file moves, every offset to it updated"
+
+    def _check_camera_room(self):
+        """PackedMag says whether the parts after the camera can move (every offset kept right),
+        and how many bytes the file may still grow."""
+        resize_problem = getattr(self.manager, "resize_problem", None)
+        self.camera_fixed_reason = resize_problem(self.section.start) if resize_problem else "unknown file"
+        growth_room = getattr(self.manager, "growth_room", None)
+        self.camera_growth = growth_room() if growth_room and not self.camera_fixed_reason else None
+        note = self.MAG_GROWTH_NOTE
+        if self.camera_growth is not None:
+            room, limit = self.camera_growth
+            note += f"; {max(room, 0)} more bytes fit ({limit})"
+        self.camera_editor.growth_note = note
 
     def _camera_room(self):
         """None when the camera may change size, else the bytes it must keep."""
@@ -306,6 +317,9 @@ class MagSectionEditor(QWidget):
         else:
             text += ("Keyframes and script can grow or shrink: the parts after the camera move and every "
                      "offset to them is updated.")
+            if self.camera_growth is not None:
+                room, limit = self.camera_growth
+                text += f" The file can grow by {max(room, 0)} more bytes ({limit})."
         self.camera_info.setText(text + " Changes go into this MAG file (no .bcam).")
 
     def convert_camera_to_30fps(self):
@@ -342,4 +356,5 @@ class MagSectionEditor(QWidget):
             self.fields = self.manager.document.fields_for(self.section)
             self.byte_page.setRange(0, max(0, math.ceil(self.section.size/self.PAGE_BYTES)-1))
             self._announce()
+            self._check_camera_room()
             self._update_camera_info()

@@ -11,6 +11,8 @@ from FF8GameData.magcine.packedmag import MagResizeError, PackedMag, is_packed
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MAGIC = ROOT / "extracted_files/magic"
 MAG230 = "extracted_files/magic/MAG230_B.00"
+MAG218 = "extracted_files/magic/MAG218_B.00"   # effect 219: its work buffer already covers its .01
+MAG222 = "extracted_files/magic/MAG222_B.00"
 
 
 def _open(path):
@@ -40,8 +42,9 @@ def test_disease_breath_pointer_map():
 
 @pytest.mark.ff8data(MAG230)
 def test_every_camera_grows_and_shrinks_back_byte_exact():
-    """44 of the 46 vanilla MAG cameras can change size; MAG218 and MAG222 keep theirs (their
-    work buffer already reuses the memory of the .01, which a bigger .00 would move)."""
+    """45 of the 46 vanilla MAG cameras can change size. MAG222 keeps its size: its work buffer
+    already reuses the memory of the .01, and its script copies .01 textures into the magic buffer,
+    which a moved .01 would change."""
     grown = refused = 0
     for path in sorted(MAGIC.glob("MAG*_B.00")):
         data = path.read_bytes()
@@ -51,12 +54,12 @@ def test_every_camera_grows_and_shrinks_back_byte_exact():
         if mag.camera is None:
             continue
         companion = path.with_suffix(".01")
-        after = companion.stat().st_size if companion.exists() else 0
+        after = companion.read_bytes() if companion.exists() else 0
         at, size = mag.camera
         try:
             new = mag.with_camera(_grown(data, at, size, 25), after)
         except MagResizeError as error:
-            assert path.name in ("MAG218_B.00", "MAG222_B.00") and "work buffer" in str(error)
+            assert path.name == "MAG222_B.00" and "CopyAlternativeTexture" in str(error)
             refused += 1
             continue
         bigger = PackedMag(new, path.name, mag.table)
@@ -72,7 +75,7 @@ def test_every_camera_grows_and_shrinks_back_byte_exact():
         assert len(bigger.program.instructions) == len(mag.program.instructions)
         assert bigger.with_camera(data[at:at + size], after) == data, path.name
         grown += 1
-    assert (grown, refused) == (44, 2)
+    assert (grown, refused) == (45, 1)
 
 
 @pytest.mark.ff8data(MAG230)
@@ -88,5 +91,65 @@ def test_resize_refusals():
     assert "only a file with the script" in companion.resize_problem(0x30)
     # the files must fit the 1 MB magic buffer
     assert "1 MB" in mag.resize_problem(0x870, 0x930, delta=4, loaded_after=0x100000)
+    assert mag.growth_room(0x20000) == (0x100000 - len(mag.data) - 0x20000,
+                                       "the effect's files must fit the 1 MB magic buffer")
     with pytest.raises(MagResizeError):
         mag.resized(0x870, bytes(400), 0x930, loaded_after=0x100000)
+
+
+@pytest.mark.ff8data(MAG218, MAG218[:-1] + "1")
+def test_mag218_grows_up_to_its_bone_slots_and_back():
+    """MAG218's work buffer (0x32000) already covers its .01. Its script uploads every .01 texture
+    on ticks 1-3, before the first write to a work buffer, so only the .01 header and its 96 bone
+    slots (from .01 + 0xA8, 0x100 bytes each) must stay before 0x32000."""
+    data, companion = (ROOT / MAG218).read_bytes(), (ROOT / MAG218).with_suffix(".01").read_bytes()
+    mag = _open(ROOT / MAG218)
+    assert mag.work_buffer_floor() == 0x32000 and mag.bone_count() == 96
+    room = 0x32000 - (0xA8 + 96 * 0x100) - len(data)
+    assert room == 0x157B0 and mag.growth_room(companion)[0] == room
+    assert "bone slots" in mag.growth_room(companion)[1]
+    at, size = mag.camera
+    track = data[at:at + size]
+    # up to the limit, and back: the original bytes
+    bigger = mag.resized(at, track + bytes(room), at + size, companion)
+    assert len(bigger) == len(data) + room
+    grown = PackedMag(bigger, mag.name, mag.table)
+    assert grown.camera == (at, size) and grown.growth_room(companion)[0] == 0
+    assert grown.resized(at, track, at + size + room, companion) == data
+    # one byte past it is refused (the part keeps its 4-byte alignment: 4 bytes too many)
+    assert "0x157B0 bytes free" in mag.resize_problem(at, at + size, room + 4, companion)
+    with pytest.raises(MagResizeError, match="bone slots must end before the script's work buffer at 0x32000"):
+        mag.resized(at, track + bytes(room + 1), at + size, companion)
+    # a grown camera through the camera API too, and shrinking is always fine
+    bigger = mag.with_camera(_grown(data, at, size, 400), companion)
+    assert PackedMag(bigger, mag.name, mag.table).with_camera(track, companion) == data
+    assert not mag.resize_problem(at, at + size, -4, companion)
+
+
+@pytest.mark.ff8data(MAG218, MAG218[:-1] + "1", MAG222, MAG222[:-1] + "1")
+def test_work_buffer_reuse_refusals():
+    data, companion = (ROOT / MAG218).read_bytes(), (ROOT / MAG218).with_suffix(".01").read_bytes()
+    mag = _open(ROOT / MAG218)
+    at, size = mag.camera
+    # the .01 size alone cannot place the bone slots
+    assert "the .01 itself is needed" in mag.resize_problem(at, at + size, 4, len(companion))
+    # an edited script is not the proven one: a longer wait could upload a texture after the
+    # first packet write
+    edited = bytearray(data)
+    assert struct.unpack_from("<H", data, 0xD2)[0] == 0x0609            # Wait 3
+    struct.pack_into("<H", edited, 0xD2, 0x0809)                        # Wait 4
+    problem = PackedMag(bytes(edited), mag.name, mag.table).resize_problem(at, at + size, 4, companion)
+    assert "only a script proven" in problem and "MAG218" in problem
+    # a .01 with more than textures (an object table) is not covered by the proof
+    other = bytearray(companion)
+    struct.pack_into("<I", other, 0x0C, 0x30)
+    assert "more than textures" in mag.resize_problem(at, at + size, 4, bytes(other))
+    # MAG222 copies .01 textures into the magic buffer: a moved .01 changes what is copied
+    meteor = _open(ROOT / MAG222)
+    meteor_01 = (ROOT / MAG222).with_suffix(".01").read_bytes()
+    assert meteor.work_buffer_floor() == 0x28000
+    assert [(c.offset, 16 * c.words[1]) for c in meteor.texture_copies()] == [(0x76, 0x3E000), (0x7C, 0x4E000)]
+    problem = meteor.resize_problem(0x1398, 0x1398 + 2348, 4, meteor_01)
+    assert "work buffer at 0x28000" in problem and "CopyAlternativeTexture" in problem
+    assert meteor.growth_room(meteor_01) == (0, problem)
+    assert not meteor.resize_problem(0x1398, 0x1398 + 2348, 0, meteor_01)   # same size: fine
