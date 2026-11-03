@@ -1258,3 +1258,11 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`StareParams`): the director's sound and damage cue, the eyes' offset, the stage
        darkening's level, steps and hold. Data: the sound, the camera track, "mag044.tim".
      - *Fujin:* its tabs (Director, Stage darkening); no + menu family.
+   - **Sigh (46)** (FFNx 6fc85b79; Vysage's enemy attack; the act family with Drain's master): the actor
+     pools and the stage wobble in, one emitter per action - its sound, the actor system, the sigh (two
+     prim models with scrolling textures in front of the caster, the breath's rising puffs), the damage
+     of its targets; after the last action a wait, the stage wobble out.
+     - *Inputs* (`SighParams`): the emitter's sound, release and damage ticks, the master's wait, the
+       actor system, the sigh's show and fade ticks and the breath's first burst, the stage wobble's level
+       and steps. Data: the sound, the camera track, "mag045.tim".
+     - *Fujin:* its tabs (Emitter, Sigh, Stage wobble); no + menu family.

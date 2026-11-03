@@ -1,0 +1,339 @@
+{
+ "format": 1,
+ "effect": 46,
+ "name": "Sigh",
+ "doc": "Sigh (Vysage's enemy attack; the act family, Drain's master): once its children are gone the actor pools and the stage wobble in, then one emitter per action - its sound, the actor system, the sigh (two prim models with scrolling textures in front of the caster, the breath's rising puffs), the master's release, the damage of its targets; after the last action a wait, the stage wobble out. Its parts are the port's code (FFNx mag046_sigh.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x831B30",
+   "setup": "0x831B50",
+   "root": "0x831CB0"
+  },
+  "memory": {
+   "texture_file": "0x264EC60",
+   "packet_cursor": "0x264EC64",
+   "packet_limit": "0x264EC80",
+   "arena_a": "0x2652784",
+   "limit_a": "0x2651B7C",
+   "arena_b": "0x2652780",
+   "limit_b": "0x2651B78",
+   "arena_top": "0x26527AC",
+   "init_flag_a": "0x26527A8",
+   "init_flag_b": "0x264EFA4",
+   "cam_ptr_a": "0x26527A0",
+   "cam_ptr_b": "0x264EC84",
+   "root_queue": "0x264ED50",
+   "root_pool": "0x264EC88",
+   "particle_pool": "0x265278C",
+   "actor_pool": "0x26527A4",
+   "particle_next": "0x264EFA0",
+   "actor_next": "0x2652798",
+   "cursor_c": "0x2652788",
+   "cursor_d": "0x264EC68",
+   "count_a": "0x265279A",
+   "count_b": "0x265278A"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 46,
+  "from": "0x264EC60",
+  "size": "0x3B54",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15C3570",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15C349C",
+   "size": 160
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15B82A0",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x6000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared; the stage in task; after the last action its wait, the stage out task; the actor counters cleared every tick",
+   "stage_in": "stage_in",
+   "stage_out": "stage_out",
+   "wait": "$master.wait",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x10680"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2652610",
+   "storage": "0x2652620",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x2652370",
+   "storage": "0x2651B80",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "sigh",
+   "queue": "0x264ED60",
+   "storage": "0x264ED70",
+   "size": 140,
+   "count": 4,
+   "keep": true,
+   "doc": "the sigh (the port's)"
+  },
+  {
+   "key": "breath",
+   "queue": "0x264EFA8",
+   "storage": "0x264EFB8",
+   "size": 140,
+   "count": 80,
+   "keep": true,
+   "doc": "the breath spawner and its puffs (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x2652600",
+   "storage": "0x2652380",
+   "size": 64,
+   "count": 10
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the actor system, the sigh, the master's release, the damage; the master's wait"
+  },
+  {
+   "id": 0,
+   "key": "sigh",
+   "title": "Sigh",
+   "doc": "Two prim models with scrolling textures in front of the caster and the breath's rising puffs"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage wobble",
+   "doc": "The stage wobble in before the first action, out after the last one"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "At the emitter's start: Start, Length (ticks), Mode"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The damage of every target of its action from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "master.wait",
+   "part": "emitter",
+   "label": "Wait",
+   "doc": "After the last action, the wobble out after these ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "emitter",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "emitter",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "sigh.show",
+   "part": "sigh",
+   "label": "Show tick",
+   "doc": "Shown (with the breath spawner) from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sigh.fade",
+   "part": "sigh",
+   "label": "Fade after",
+   "doc": "Its fade after this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "sigh.breath",
+   "part": "sigh",
+   "label": "Breath tick",
+   "doc": "The breath's bursts from this tick of its spawner",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "Its amplitude",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.step_in",
+   "part": "stage",
+   "label": "Step in",
+   "doc": "Up by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.step_out",
+   "part": "stage",
+   "label": "Step out",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x831FE0",
+   "code": "0x831FE0",
+   "native": "0x831FE0",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the actor system, the sigh, the master's release, the damage of its targets."
+  },
+  {
+   "key": "stage_in",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x831EC0",
+   "code": "0x831EC0",
+   "native": "0x831EC0",
+   "doc": "The stage wobble in (the port's task: the four stage wobble words up to their level)."
+  },
+  {
+   "key": "stage_out",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x836420",
+   "code": "0x836420",
+   "native": "0x836420",
+   "doc": "The stage wobble out (the port's task: from its level down a step a tick to 0)."
+  }
+ ]
+}
