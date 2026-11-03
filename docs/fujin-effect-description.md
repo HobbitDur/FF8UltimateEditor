@@ -1087,3 +1087,12 @@ Potion's description is the same with its own sequences and sound.
        actor system (start, length, mode), the stage wobble out (level, step). Data: the sound, the
        camera track, "mag023-066.tim".
      - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
+   - **Cura (25)** (FFNx ed581f49; the spell; the act family's framework with Double's short root): one
+     emitter per action - its sound, a glow with swirl sparks and trail motes, four aura players fading
+     in turn, spinning rings, rising sparkles, the light, the target overlay, falling particles; the heal.
+     - *Added:* a port module under Double's short root (`"root": "short"` with `"module"` and its
+       `"magic_buffer"` arenas).
+     - *Inputs* (`CuraParams`): the emitter's sound, particle and heal ticks, the later aura players'
+       fade bases, the glow's lift and swirl sparks, the sparkles' and particles' spread. Data: the
+       sound, the camera track, "mag024-050.tim".
+     - *Fujin:* its tabs (Emitter, Glow); no + menu family.
