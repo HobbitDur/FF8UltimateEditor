@@ -243,7 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
-    37: ("mag036.tim", 8, "ribbons.twist 600\nemitter.release 20\nstreaks.accel 80\norb.scale 8000\norb.hold 10\n"),
+    37: ("mag036.tim", 18, "ribbons.twist 600\nemitter.release 20\nstreaks.accel 80\norb.scale 8000\norb.hold 10\n"),
     36: ("mag035.tim", 8, "emitter.shake 12\nactors.length 30\nemitter.release 25\nemitter.chain 10\n"),
     35: ("mag004-034.tim", 9, "grow.radius 200\nspread.until 25\nemitter.result 40\ngrow.until 6\n"),
     34: ("mag033.tim", 3, "emitter.release 30\nemitter.result 30\n"),
