@@ -1206,3 +1206,13 @@ Potion's description is the same with its own sequences and sound.
        the actor system, the stage wobble's level and steps in and out. Data: the sound, the camera
        track, "mag038-055.tim".
      - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
+   - **Scan (40)** (FFNx 95aa38f1; the spell; a port director, Ray-Bomb's kind): one emitter per action -
+     its sound, the reticle closing on the target with its brackets and ring, the screen dimmed, the scan
+     bars, the camera to the target, the viewer (name and scan text, turned and zoomed with the pad) until
+     confirmed, the camera back; the result.
+     - *Inputs* (`ScanParams`): the sound, the camera's blend steps and projection, the brackets' follow
+       ticks and growth, the scan bars' fade step and level. Data: the sound, "mag039-067.tim".
+     - *Port:* its camera state is reached through an exe data word (0x15CDDE8) holding a module address:
+       the port moves that word's value with `own::R()`; the scanner's spawn (two functions by the
+       target's record) goes through `own::Fn()` too.
+     - *Fujin:* its tab (Scanner); no + menu family.
