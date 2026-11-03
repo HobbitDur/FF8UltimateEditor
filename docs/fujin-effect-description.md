@@ -1309,3 +1309,18 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`XPotionParams`): the emitter's sound, flash, release and heal ticks, the actor system.
        Data: the sound, the camera track, "mag027-051.tim".
      - *Fujin:* its tabs (Emitter, Actor system); no + menu family.
+   - **Mega-Potion (53)** (FFNx 25dd0a50; the battle item; the act family with Drain's master,
+     Full-life's code with one emitter per target): the actor pools and the stage fade in, one emitter
+     per target - its sound, the actor system on that target, the heal; after the last target a wait,
+     the stage fade out. It plays no camera track.
+     - *Inputs* (`MegaPotionParams`): the emitter's sound, release and heal ticks, the master's wait, the
+       actor system, the stage fade's level and steps. Data: the sound, "mag052.tim".
+     - *Lab:* checked on one party member and on three (slots 0-2).
+     - *Fujin:* its tabs (Emitter, Stage fade); no + menu family.
+   - **Everyone's Grudge (54)** (FFNx ec2d51d6; Tonberry's enemy attack; the act family with Drain's
+     master, Esuna's description): the actor pools and the stage wobble in, one emitter per action - its
+     sound, the actor system round its target, the damage; after the last action a wait, the stage
+     wobble out.
+     - *Inputs* (`GrudgeParams`): the emitter's sound, release and damage ticks, the master's wait, the
+       actor system, the stage wobble's level and steps. Data: the sound, the camera track, "mag053.tim".
+     - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
