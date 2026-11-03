@@ -1,0 +1,277 @@
+{
+ "format": 1,
+ "effect": 58,
+ "name": "Elixir",
+ "doc": "Elixir (battle item; Mega-Potion's code with other sizes and timings, one emitter per target): once its children are gone the actor pools and the stage fade in, then one emitter per target - its sound, the actor system on that target, the master's release, the heal; after the last target a wait, the stage fade out. No camera track. Its parts are the port's code (FFNx mag058_elixir.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7F7C90",
+   "setup": "0x7F7CB0",
+   "root": "0x7F7DD0"
+  },
+  "memory": {
+   "texture_file": "0x260A328",
+   "packet_cursor": "0x260A32C",
+   "packet_limit": "0x260A348",
+   "arena_a": "0x260B2DC",
+   "limit_a": "0x260A434",
+   "arena_b": "0x260B2D8",
+   "limit_b": "0x260A430",
+   "arena_top": "0x260B304",
+   "init_flag_a": "0x260B300",
+   "init_flag_b": "0x260A42C",
+   "cam_ptr_a": "0x260B2F8",
+   "cam_ptr_b": "0x260A34C",
+   "root_queue": "0x260A418",
+   "root_pool": "0x260A350",
+   "particle_pool": "0x260B2E4",
+   "actor_pool": "0x260B2FC",
+   "particle_next": "0x260A428",
+   "actor_next": "0x260B2F0",
+   "cursor_c": "0x260B2E0",
+   "cursor_d": "0x260A330",
+   "count_a": "0x260B2F2",
+   "count_b": "0x260B2E2"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 58,
+  "from": "0x260A328",
+  "size": "0xFE4",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x159E3AC",
+   "size": 16
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x159AE00",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x9000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared; the stage in task; after the last action its wait, the stage out task; the actor counters cleared every tick",
+   "stage_in": "stage_in",
+   "stage_out": "stage_out",
+   "wait": "$master.wait",
+   "pools": {
+    "particle_pool": "0x12FC",
+    "actor_pool": "0xD200"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  },
+  "each": "target"
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x260B168",
+   "storage": "0x260B178",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x260AEC8",
+   "storage": "0x260A438",
+   "size": 676,
+   "count": 4,
+   "keep": true,
+   "doc": "the actor systems, one per target (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x260B158",
+   "storage": "0x260AED8",
+   "size": 64,
+   "count": 10
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per target: its sound, the actor system, the master's release, the heal; the master's wait"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage fade",
+   "doc": "The stage fade in before the first target, out after the last one"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "At the emitter's start: Start, Length (ticks), Mode"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may go on to the next target at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Heal tick",
+   "doc": "The heal of its target from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "master.wait",
+   "part": "emitter",
+   "label": "Wait",
+   "doc": "After the last target, the fade out after these ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "emitter",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "emitter",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.step_in",
+   "part": "stage",
+   "label": "Step in",
+   "doc": "Up by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.step_out",
+   "part": "stage",
+   "label": "Step out",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7F80E0",
+   "code": "0x7F80E0",
+   "native": "0x7F80E0",
+   "doc": "One per target: the module's own emitter (the port's task): its sound, the actor system, the master's release, the heal."
+  },
+  {
+   "key": "stage_in",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x7F7FC0",
+   "code": "0x7F7FC0",
+   "native": "0x7F7FC0",
+   "doc": "The stage fade in (the port's task: the fade layers cleared, their level up a step a tick)."
+  },
+  {
+   "key": "stage_out",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x7FD000",
+   "code": "0x7FD000",
+   "native": "0x7FD000",
+   "doc": "The stage fade out (the port's task: from its level down a step a tick to 0)."
+  }
+ ]
+}

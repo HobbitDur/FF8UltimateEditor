@@ -1349,3 +1349,15 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`TreatmentParams`): Esuna's - the emitter's sound, release and result ticks, the master's
        wait, the actor system, the stage wobble out. Data: the sound, the camera track, "mag056.tim".
      - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
+   - **Elixir (58)** (FFNx 0cece0a2; the battle item; Mega-Potion's code with other sizes and timings,
+     Mega-Potion's description): the actor pools and the stage fade in, one emitter per target - its
+     sound, the actor system on that target, the heal; after the last target a wait, the stage fade out.
+     - *Inputs* (`ElixirParams`): Mega-Potion's. Data: the sound,
+       "mag057-058.tim".
+     - *Fujin:* its tabs (Emitter, Stage fade); no + menu family.
+   - **Megalixir (59)** (FFNx 4cadd0ac; the battle item; Mega-Potion's code with other sizes and timings,
+     Mega-Potion's description): the actor pools and the stage fade in, one emitter per target - its
+     sound, the actor system on that target, the heal; after the last target a wait, the stage fade out.
+     - *Inputs* (`MegalixirParams`): Mega-Potion's and the emitter's sound tick. Data: the sound,
+       "mag057-058.tim".
+     - *Fujin:* its tabs (Emitter, Stage fade); no + menu family.
