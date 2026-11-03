@@ -128,7 +128,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   Smoke; Double: Emitter, Runes, Columns, Motes, Glows, Big rune, Sprites, Morphing rings, Flash;
   Phoenix Down: Emitter, Sparkles, Ring, Falling sparkles, Glints; Mega Phoenix: Emitter, Actors,
   Stage fades, Actor 0, 1, 2, 3, 5; Doom: Timing, Reaper, Aura, Dust, Smoke, Scythe, Stage wobble,
-  Screen tint; Ray-Bomb: Timing, Charge, Muzzle flash, Beam, Blast, Bounce; Storm Breath: Timing, Stream, Sparks, Mist and rings; Blade Shot: Blade, Impact; Dark Mist: Emitter, Mist; Death: Reaper, Actor systems; Draw: Emitter, Ribbons): the
+  Screen tint; Ray-Bomb: Timing, Charge, Muzzle flash, Beam, Blast, Bounce; Storm Breath: Timing, Stream, Sparks, Mist and rings; Blade Shot: Blade, Impact; Dark Mist: Emitter, Mist; Death: Reaper, Actor systems; Draw: Emitter, Ribbons; Recover: Director, Stage darkening): the
   part's parameters as a form
   (bold = not the game's value, **Game values** resets them; a value in its unit when the port gives
   one - fx_params.h `Unit`: an angle in degrees, a size as x 1 = its own - the raw value greyed
@@ -209,7 +209,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   `AeroParams` in `mag118_aero.cpp`, `BlindParams` in `mag121_blind.cpp`,
   `PetrifyStareParams` in `mag_petrify_stare.h`, shared by both Petrify Stares, `ZombieParams` in
   `mag114_zombie.cpp`, `FlareParams` in `mag124_flare.cpp`,
-  `ReflectParams` in `mag106_reflect.cpp`, `BerserkParams` in `mag108_berserk.cpp`, `FireParams` in `mag002_fire.cpp`, `ThunderParams` in `mag003_thunder.cpp`, `DoubleParams` in `mag004_double.cpp`, `ReviveParams` in `mag_revive.h` (Phoenix Down), `MegaPhoenixParams` in `mag007_mega_phoenix.cpp`, `DoomParams` in `mag008_doom.cpp`, `RayBombParams` in `mag010_ray_bomb.cpp`, `StormParams` in `mag011_storm_breath.cpp`, `BladeParams` in `mag012_blade_shot.cpp`, `MistParams` in `mag013_dark_mist.cpp`, `DeathParams` in `mag014_death.cpp`, `DrawParams` in `mag015_draw.cpp`, defaults = the game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
+  `ReflectParams` in `mag106_reflect.cpp`, `BerserkParams` in `mag108_berserk.cpp`, `FireParams` in `mag002_fire.cpp`, `ThunderParams` in `mag003_thunder.cpp`, `DoubleParams` in `mag004_double.cpp`, `ReviveParams` in `mag_revive.h` (Phoenix Down), `MegaPhoenixParams` in `mag007_mega_phoenix.cpp`, `DoomParams` in `mag008_doom.cpp`, `RayBombParams` in `mag010_ray_bomb.cpp`, `StormParams` in `mag011_storm_breath.cpp`, `BladeParams` in `mag012_blade_shot.cpp`, `MistParams` in `mag013_dark_mist.cpp`, `DeathParams` in `mag014_death.cpp`, `DrawParams` in `mag015_draw.cpp`, `RecoverParams` in `mag016_recover.cpp`, defaults = the game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
   so the forms are always those of the port it runs. A module with parameters registers itself
   for the recorder (`FX_LAB_MODULE`): `build.bat` compiles in every source file naming it. The previews are one more recording: the recorder runs the port instead of
   the exe's code (`native=1`; with the game's values it draws exactly what the original does,
@@ -235,7 +235,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   top, such as Cure and Potion sharing `mag_heal_ring.h` - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
   built again with them); the release's CI does the same before building the recorder.
   **Description** (Choreography, for the effects Fujin describes: Cure, Potion, Hypnotize,
-  Soft, Eye Drops, Antidote, Echo Screen, Holy Water, Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw): the
+  Soft, Eye Drops, Antidote, Echo Screen, Holy Water, Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover): the
   effect's description as JSON (its parts, tasks, director, pools: see
   [fujin-effect-description.md](fujin-effect-description.md)). Apply checks that it compiles.
   **New effect from this…** (above the tabs, for every described effect, new ones included)

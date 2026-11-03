@@ -1012,3 +1012,10 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`DrawParams`): the emitter's three sounds (sound ids), the master's release tick, the actor
        system's ticks and mode, the ribbons' twist and spread. Data: the camera track, "mag014.tim".
      - *Fujin:* its tabs (Emitter, Ribbons); no + menu family.
+   - **Recover (16)** (FFNx 3bb57355; command ability; the act family, Doom's description; Revive 61 is
+     the same source): one emitter per action - the director's cuts: an actor system and the stage
+     darkening, the sound, the action's result.
+     - *Inputs* (`RecoverParams`): the director's sound and result cue, the actor system (start, ticks,
+       mode), the stage darkening (step, level, hold, out step). Data: the sound, the camera track,
+       "mag015.tim".
+     - *Fujin:* its tabs (Director, Stage darkening); no + menu family.

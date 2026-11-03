@@ -1,0 +1,416 @@
+{
+ "format": 1,
+ "effect": 16,
+ "name": "Recover",
+ "doc": "Recover (command ability; the act family): one emitter per action - the director's cuts: an actor system (its actor data the exe's) and the stage darkening, the sound, the action's result. Its parts are the port's code (FFNx mag016_recover.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8AB120",
+   "setup": "0x8AB140",
+   "root": "0x8AB290"
+  },
+  "memory": {
+   "texture_file": "0x27304A0",
+   "packet_cursor": "0x27304A4",
+   "packet_limit": "0x27305AC",
+   "arena_a": "0x2732B64",
+   "limit_a": "0x2732204",
+   "arena_b": "0x2732B60",
+   "limit_b": "0x2732200",
+   "arena_top": "0x2732BE8",
+   "init_flag_a": "0x2732BE4",
+   "init_flag_b": "0x27321FC",
+   "cam_ptr_a": "0x2732BDC",
+   "cam_ptr_b": "0x27305B0",
+   "root_queue": "0x2730680",
+   "root_pool": "0x27305B8",
+   "particle_pool": "0x2732BC8",
+   "actor_pool": "0x2732BE0",
+   "particle_next": "0x27321F8",
+   "actor_next": "0x2732BD4",
+   "cursor_c": "0x2732B68",
+   "cursor_d": "0x27304A8",
+   "count_a": "0x2732BD6",
+   "count_b": "0x2732BC4"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 16,
+  "from": "0x27304A0",
+  "size": "0x2750",
+  "pointers": [
+   [
+    2,
+    "0x162A484"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x162AD2C",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x162A48C",
+   "size": 2208
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x162A488",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": false,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0xEC40"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x27329F0",
+   "storage": "0x2732A00",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x2730588",
+   "storage": "0x27304B0",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "actors",
+   "queue": "0x2732750",
+   "storage": "0x2732208",
+   "size": 676,
+   "count": 2,
+   "keep": true,
+   "doc": "the actor system (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x2730690",
+   "storage": "0x27306A0",
+   "size": 140,
+   "count": 50,
+   "keep": true,
+   "doc": "the stage darkening (the port's)"
+  },
+  {
+   "key": "unused",
+   "queue": "0x27329E0",
+   "storage": "0x2732760",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The director's cuts: its sound, the result, the actor system and the stage darkening at cut 1"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage darkening",
+   "doc": "The stage's light words: up, kept, down"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "Its start tick, its ticks, its mode (0: the bones)"
+  }
+ ],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "Played at cut 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.result",
+   "part": "director",
+   "label": "Result at",
+   "doc": "The action's result from this frame of the cut",
+   "type": "i16",
+   "min": 0,
+   "max": 500,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "director",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 1000,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "director",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "stage.step",
+   "part": "stage",
+   "label": "Step",
+   "doc": "The light up by this a tick...",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "stage.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "...to this",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "stage.hold",
+   "part": "stage",
+   "label": "Hold until",
+   "doc": "Kept until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 500,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "stage.out_step",
+   "part": "stage",
+   "label": "Out step",
+   "doc": "Then down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x8AB4C0",
+   "code": "0x8AB4C0",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; keeps the caster and target positions in the director block and starts the director; the result once the director says so; then waits, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AB540"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8B07B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8B07F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8B0810"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8B0830"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x8AB600",
+   "code": "0x8AB600",
+   "doc": "The director: every tick its cuts' bookkeeping (cut 1: the actor system and the stage darkening), then its states: cut 1, the sound, the result cue, cut 2, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x8AB680"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AB6D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AB720"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AB770"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AB790"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AB7B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AB7D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}
