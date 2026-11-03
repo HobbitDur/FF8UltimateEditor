@@ -72,7 +72,7 @@ ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, 
            "spin_var": 3, "circle_place": 4, "circle_place_var": 4, "anchor_xz": 2, "anchor_top": 1, "rand_mask": 3,
            "rand_hop": 3, "index_times": 2, "tick_times": 3, "turned_offset": 5, "fade_pulse": 9, "grey_pulse": 5,
            "morph": 4, "spawn_when": 3, "spawn_unless_target_bits": 2, "screen_fade_when": 6, "wrap": 2,
-           "revive_ring_step": 2, "actor_setup": 0, "actor_step": 0, "stage_clear": 0, "stage_fade": 3}
+           "revive_ring_step": 2, "actor_setup": 0, "actor_step": 0, "stage_clear": 0, "stage_fade": 3, "call": 1}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1, "tick_at_node_end": 0, "leaf_gone": 0, "spark_gone": 0, "rays_done": 1, "ribbon_done": 1,
               "mote_done": 1, "life_out": 0, "at_most": 2, "at_least": 2, "equals": 2, "never": 0, "at_least_var": 2,
               "at_least_when": 4, "equals_when": 4, "above": 2, "actor_done": 0}
@@ -335,10 +335,21 @@ def compile_program(description, values=None):
             if missing:
                 raise DescriptionError(f"data {key}: points at no data {', '.join(missing)}")
             lines.append(f"data_pointers {key} {' '.join(entry['pointers'])}")
+    module = description.get("module")
+    if module:   # a port module whose code runs on the program's memory (Doom's kind)
+        lines.append(f"module {_number(module['effect'])} 0x{_number(module['from']):X} 0x{_number(module['size']):X}"
+                     + (" own" if module.get("own") else ""))
+        lines += [f"module_pointer {_number(index)} 0x{_number(word):X}" for index, word in module.get("pointers", [])]
+        for name, address in (module.get("memory") or {}).items():   # (a copy's: moved into its block)
+            lines.append(f"memory {name} 0x{_number(address):X}")
     for name, address in (copy.get("functions") or {}).items():
         lines.append(f"function {name} 0x{_number(address):X}")
-    for name, address in (copy.get("memory") or {}).items():
-        lines.append(f"memory {name} 0x{_number(address):X}")
+    if not module:
+        for name, address in (copy.get("memory") or {}).items():
+            lines.append(f"memory {name} 0x{_number(address):X}")
+    elif copy.get("memory") and not module.get("memory"):
+        for name, address in copy["memory"].items():
+            lines.append(f"memory {name} 0x{_number(address):X}")
     for name, size in (description.get("own_memory") or {}).items():
         if _number(size) <= 0:
             raise DescriptionError(f"own memory {name}: a size in bytes")
@@ -386,6 +397,8 @@ def compile_program(description, values=None):
             lines.append(f"arena_size {_number(director['arena_size'])}")
         if director.get("each") == "target":   # its task for each target of the action, in turn (Mega Phoenix's)
             lines.append("per_target")
+        if director.get("release_file"):   # at its end its file's release asked and waited for (Doom's)
+            lines.append("release_file")
         act = director.get("act")
         if act:   # the act family's master (Mega Phoenix's): its actor pools, the stage fades, its wait
             for name in ("stage_in", "stage_out"):   # (either may be left out: no fade)
@@ -427,6 +440,8 @@ def compile_program(description, values=None):
         if task["pool"] not in pools:
             raise DescriptionError(f"{where}: no pool {task['pool']}")
         lines.append(f"task {task['key']} {pools[task['pool']]} 0x{_number(task.get('function', 0)):X} {task['size']}")
+        if task.get("code"):   # the original it mirrors (a port module's code spawning it finds it)
+            lines.append(f"code 0x{_number(task['code']):X}")
         if "node" in task:
             lines += node(task, where)
         if task.get("draws_first"):
@@ -560,6 +575,13 @@ def new_effect(description, effect_id, name, exe=None):
         del new["exe_data"]
     new["base"] = description.get("base", description["effect"])
     new["effect"], new["name"] = effect_id, name
+    if "module" in new:   # a port module's memory: one block of its own, the addresses moved into it
+        new["module"]["own"] = True
+        new["module"]["memory"] = dict((description.get("copy") or {}).get("memory") or {})
+        new.pop("copy", None)
+        for task in new["tasks"]:
+            task.pop("function", None)
+        return new
     new["own_memory"] = own_memory(description)
     new.pop("copy", None)
     for pool in new["pools"]:

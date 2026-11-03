@@ -936,3 +936,31 @@ Potion's description is the same with its own sequences and sound.
      - *Fujin:* its tabs (Emitter, Actors, Stage fades, Actor 0, 1, 2, 3, 5); a twentieth family in
        the + menu, "Around one target at a time, an actor system (Mega Phoenix's kind)": Emitter (the
        start: the emitter and its actor system), Stage fades.
+   - **Doom (8)** (FFNx d8a49954; the act family, Tonberry's kind with Death's reaper; its parts the
+     port's code): the director's phases call up the reaper rising from the ground in the dark, its
+     aura's actor system, dust and smoke, then the scythe and the doom clock round the target with
+     its strike, a screen tint, the stage wobbling.
+     - *Shared:* Cure's per-action director in the act family's form (Mega Phoenix's actor pools and
+       counters), `follow_target`.
+     - *Added:*
+       - `"module"`: a port module whose code runs on the program's memory - its effect, its memory
+         (`from`, `size`) and the exe data words pointing into it (the engine's global index, the
+         word); a copy (`new_effect`) keeps the module's memory addresses and gets one block of its
+         own (the program's `module ... own`: every address in it moved there, the descriptor's
+         globals too); the port's parameters are set from the program's of the same keys;
+       - the action `call` (a port function by its original address, on the node): the engine's
+         emitter and the phase director are their state tables, a phase per state, each calling
+         its state function (which steps the phase itself: `"wait": ["never"]`), the director's
+         bookkeeping an every-tick call; the parts the port spawns run as its ports (the program's
+         own task when one mirrors that original: a task's `code`);
+       - the director's `"release_file"` (states 7 and 8: its file's release asked and waited for);
+       - FFNx: `act_engine.h` `R()`, `Spawn`, `Callback` (a copy's own memory, its tasks), Doom's
+         module memory through them; the host and the recorder build the ports with parameters in
+         (the recorder's lab keeps its sprite hooks: a port of a sprite reader is left out).
+     - *Inputs* (`DoomParams`): the director (sound, texture wait, phase tick); the reaper (rise,
+       height, turn, hold, fade); the aura (start, length, mode); the dust (flipbook, frames, ticks,
+       distance, height, speed); the smoke (ticks, scale, tilt, fades); the scythe (tick, offset, the
+       clock's model step); the stage wobble (after, step, level, out); the tint (delay). Data: the
+       sound, the dust flipbook, the camera track, "mag007.tim".
+     - *Fujin:* its tabs (Timing, Reaper, Aura, Dust, Smoke, Scythe, Stage wobble, Screen tint); no
+       + menu family (its parts are the port's code, spawned by it).

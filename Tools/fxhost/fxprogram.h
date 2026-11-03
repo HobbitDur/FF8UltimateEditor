@@ -91,6 +91,7 @@ namespace fxprog
 		std::string key;
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
+		uint32_t code = 0;                        // the original it mirrors, kept in a copy (a port module's code spawning it finds it)
 		bool plain = false, draws_first = false;
 		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 		                           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
@@ -134,6 +135,7 @@ namespace fxprog
 		bool short_upload_always = false;               // its setup uploads the texture even when the cast repeats (Phoenix Down's)
 		uint32_t arena_size = 0x10000;                  // PER_ACTION: each of its two packet arenas in the texture file (Mega Phoenix: 0xA000)
 		bool per_target = false;                        // PER_ACTION: its task for each target of the action, in turn (Mega Phoenix's), not each action
+		bool release_file = false;                      // PER_ACTION: at its end its file's release asked and waited for (Doom's)
 		// PER_ACTION, the act family's master (Mega Phoenix 0x8CE4F0): once the children are gone (state 2) room
 		// carved from the arena top for memory words (act_pools: name, bytes), cleared, u16 words zeroed
 		// (act_zero), the stage fade in task; after the last action, act_wait ticks, then the stage fade
@@ -144,7 +146,18 @@ namespace fxprog
 		std::vector<std::string> act_zero, act_clear;
 		int act_part = 0, act_first_part = 0;            // the lab's parts: the actor system's, its definition 0's (k: + k)
 		std::vector<Patch> patches;                     // written by the setup, before anything runs
+		// a port module whose code runs (Doom's kind: its state functions called from the phases, its own tasks
+		// spawned by it): its effect, its memory [module_lo, + module_size) - in a copy, one block of the program's
+		// (module_own: every address in it moved by module_reloc) - and the data words pointing into it (G index, word)
+		int module = 0;
+		uint32_t module_lo = 0, module_size = 0, module_reloc = 0;
+		bool module_own = false;
+		std::vector<std::pair<int, uint32_t>> module_pointers;
+		std::vector<uint8_t> module_block;
 #ifdef FXPROG_ACTORS
+		ff8fx::act::Mod module_mod = {};
+		bool module_ready = false;
+		uint32_t module_words[8] = {};
 		ff8fx::act::actors::Mem actor_mem = {};         // the actor system's memory (its own or the copy's) and descriptor
 		ff8fx::act::Mod actor_mod = {};
 		bool actors_ready = false;
@@ -182,7 +195,7 @@ namespace fxprog
 		SPAWN_SIZE_WORD, SOUND_3D_AT_SPAWN,
 		ADD, SET, COPY, FLAGS, SET_WHEN, ADD_WHEN, ADD_BELOW, ADD_VAR, SPIN_VAR, CIRCLE_PLACE, CIRCLE_PLACE_VAR, ANCHOR_XZ, ANCHOR_TOP,
 		RAND_MASK, RAND_HOP, INDEX_TIMES, TICK_TIMES, TURNED_OFFSET, FADE_PULSE, GREY_PULSE, MORPH, SPAWN_WHEN, SPAWN_UNLESS_TARGET_BITS,
-		SCREEN_FADE_WHEN, WRAP, REVIVE_RING_STEP, ACTOR_SETUP, ACTOR_STEP, STAGE_CLEAR, STAGE_FADE,
+		SCREEN_FADE_WHEN, WRAP, REVIVE_RING_STEP, ACTOR_SETUP, ACTOR_STEP, STAGE_CLEAR, STAGE_FADE, CALL,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE, RAYS_DONE, RIBBON_DONE, MOTE_DONE, LIFE_OUT,
 		VAR_AT_MOST, VAR_AT_LEAST, VAR_EQUALS, NEVER, AT_LEAST_VAR, AT_LEAST_WHEN, EQUALS_WHEN, VAR_ABOVE, ACTOR_DONE,
@@ -259,7 +272,7 @@ namespace fxprog
 		{ "revive_scatter", REVIVE_SCATTER }, { "revive_ring", REVIVE_RING }, { "revive_fall", REVIVE_FALL },
 		{ "revive_sparkle", REVIVE_SPARKLE }, { "revive_sparkle_sized", REVIVE_SPARKLE_SIZED },
 		{ "actor_setup", ACTOR_SETUP }, { "actor_step", ACTOR_STEP }, { "actor_done", ACTOR_DONE }, { "stage_clear", STAGE_CLEAR },
-		{ "stage_fade", STAGE_FADE },
+		{ "stage_fade", STAGE_FADE }, { "call", CALL },
 	};
 
 	inline Program *g_program = nullptr;
@@ -318,6 +331,51 @@ namespace fxprog
 	// library's functions keep Mega Phoenix's addresses as their dispatch keys
 	// ------------------------------------------------------------------
 	inline uint32_t g_actor_done = 0;             // the last step's result (1: the system has finished)
+	inline uint32_t TaskFunction(int k);
+	// a port module's code spawning the original `orig`: the program's task mirroring it, if any (else its port)
+	inline uint32_t ProgramTaskOf(uint32_t orig)
+	{
+		for (size_t k = 0; k < g_program->tasks.size(); k++)
+			if (g_program->tasks[k].code == orig) return TaskFunction((int)k);
+		return 0;
+	}
+	// the port module of the program (its descriptor with its globals moved, the data words pointing into it
+	// its own words), current: its code runs on the program's memory, spawning the program's tasks or thunks of
+	// its ports
+	inline void UseModule()
+	{
+#ifdef FXPROG_ACTORS
+		using namespace ff8fx::act;
+		Program &g = *g_program;
+		if (!g.module) return;
+		if (!g.module_ready)
+		{
+			static bool registered = false;   // (the ports of every module built in: the dispatch of their originals)
+			if (!registered)
+			{
+				registered = true;
+#ifdef FF8_FX_LAB
+				for (int i = 0; i < ff8fx::fxp::g_lab_module_count; i++) ff8fx::fxp::g_lab_modules[i]();
+#endif
+			}
+			const Mod *m = find_mod(g.module);
+			if (!m) return;   // (its port not built in)
+			g.module_mod = *m;
+			for (uint32_t &w : g.module_mod.g)
+				if (w >= g.module_lo && w < g.module_lo + g.module_size) w += g.module_reloc;
+			for (size_t k = 0; k < g.module_pointers.size() && k < 8; k++)
+			{
+				g.module_words[k] = var<uint32_t>(g.module_pointers[k].second) + g.module_reloc;
+				g.module_mod.g[g.module_pointers[k].first] = (uint32_t)&g.module_words[k];
+			}
+			g.module_ready = true;
+		}
+		g_mod = &g.module_mod;
+		g_reloc = g.module_reloc;
+		g_own = true;
+		g_spawn_hook = ProgramTaskOf;
+#endif
+	}
 	inline void UseActors()
 	{
 #ifdef FXPROG_ACTORS
@@ -726,6 +784,9 @@ namespace fxprog
 		case ACTOR_STEP: UseActors(); g_actor_done = ff8fx::act::actors::mf_8CF3D0((uint32_t)n); break;   // a step: update, draws
 #endif
 		case STAGE_CLEAR: StageClear(); break;
+#ifdef FXPROG_ACTORS
+		case CALL: UseModule(); ff8fx::act::callp((uint32_t)V(a[0]), (uint32_t)n); break;   // a port module's function, on the node
+#endif
 		case STAGE_FADE: // level var, step, limit: the level by the step; at the limit, done (and the next phase); the layers at it
 		{
 			const int32_t step = V(a[1]), limit = V(a[2]);
@@ -1626,9 +1687,12 @@ namespace fxprog
 		case 6: // every queue empty
 			if (r->alive == 0) r->h.phase++;
 			break;
-		case 7:
-		case 8:
+		case 7: // (the file released when it asks: its request's completion byte +0x62)
+			if (g_program->release_file) fn<void (__cdecl *)(uint32_t, uint32_t)>(0x508630)(var<uint32_t>(Mem("texture_file")), (uint32_t)r + 0x62);
 			r->h.phase++;
+			break;
+		case 8:
+			if (!g_program->release_file || *((uint8_t *)r + 0x62) != 0) r->h.phase++;
 			break;
 		case 9: // done
 			*(uint8_t *)&r->h.flags |= 1;
@@ -1689,6 +1753,7 @@ namespace fxprog
 
 	inline uint32_t PerActionDirector(TaskNode *n)
 	{
+		UseModule();
 		if (g_program->director_short) return ShortDirector(n);
 		RootNode *r = (RootNode *)n;
 		memcpy((void *)CAM_SNAPSHOT, &Camera(), 0x20);
@@ -2013,10 +2078,33 @@ namespace fxprog
 			}
 	}
 
+	// a port module's own parameters (its live values) from the program's of the same keys
+	inline void SetModuleParams()
+	{
+#ifdef FF8_FX_LAB
+		if (!g_program->module) return;
+		UseModule();
+		const ff8fx::fxp::Module *m = ff8fx::fxp::find_params(g_program->module);
+		if (!m) return;
+		memcpy(m->params, m->defaults, m->size);
+		for (const Param &p : g_program->params)
+			for (int i = 0; i < m->field_count; i++)
+			{
+				const ff8fx::fxp::Field &f = m->fields[i];
+				if (p.key != f.key || f.type == ff8fx::fxp::File) continue;
+				uint8_t *at = (uint8_t *)m->params + f.offset;
+				if (f.type == ff8fx::fxp::I16) *(int16_t *)at = (int16_t)p.value;
+				else if (f.type == ff8fx::fxp::U8) *at = (uint8_t)p.value;
+				else *(int32_t *)at = p.value;
+			}
+#endif
+	}
+
 	inline TaskQueue *__cdecl Setup(CastContext *ctx)
 	{
 		Program &g = *g_program;
 		ApplyPatches();
+		SetModuleParams();
 		if (g.director == CHAIN) return ChainSetup(ctx);
 		if (g.director == MASTER) return MasterSetup(ctx);
 		if (g.director == CYCLE) return g.master_setup ? MasterSetup(ctx) : CycleSetup(ctx);
@@ -2118,6 +2206,14 @@ namespace fxprog
 	inline void Allocate(Program &g)
 	{
 		auto align = [](uint32_t n) { return (n + 15u) & ~15u; };
+		if (g.module && g.module_own && g.module_block.empty())
+		{
+			g.module_block.assign(g.module_size + 16, 0);
+			g.module_reloc = align((uint32_t)g.module_block.data()) - g.module_lo;
+			auto move = [&](uint32_t &a) { if (a >= g.module_lo && a < g.module_lo + g.module_size) a += g.module_reloc; };
+			for (auto &m : g.memory) move(m.second);
+			for (Pool &pool : g.pools) { move(pool.queue); move(pool.storage); }
+		}
 		uint32_t total = 0;
 		for (const auto &m : g.own) total += align(m.second);
 		for (const Pool &pool : g.pools)
@@ -2214,6 +2310,16 @@ namespace fxprog
 			}
 			else if (d == "arena_size" && need(2)) g.arena_size = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
 			else if (d == "per_target") g.per_target = true;
+			else if (d == "release_file") g.release_file = true;
+			else if (d == "module" && need(4))
+			{
+				g.module = atoi(w[1].c_str());
+				g.module_lo = (uint32_t)strtoul(w[2].c_str(), nullptr, 0);
+				g.module_size = (uint32_t)strtoul(w[3].c_str(), nullptr, 0);
+				g.module_own = w.size() > 4 && w[4] == "own";
+			}
+			else if (d == "module_pointer" && need(3)) g.module_pointers.push_back({ atoi(w[1].c_str()), (uint32_t)strtoul(w[2].c_str(), nullptr, 0) });
+			else if (d == "code" && task && need(2)) task->code = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
 			else if (d == "act_stage" && need(4))
 			{
 				g.act_stage_in = atoi(w[1].c_str());

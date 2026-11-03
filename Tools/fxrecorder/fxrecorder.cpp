@@ -1062,7 +1062,13 @@ static void lab_install()
 	lab_register();
 	int ported = 0;
 	for (const LabPort &p : g_lab_ports)
-		if (p.effect == O.eff) { patch_jmp(p.orig, p.port); ported++; }
+		if (p.effect == O.eff)
+		{
+			// (a port of one of the sprite readers: the reader keeps the recorder's hook, its Q lines)
+			if (std::find(std::begin(SPRITE_INITS), std::end(SPRITE_INITS), p.orig) != std::end(SPRITE_INITS)) continue;
+			patch_jmp(p.orig, p.port);
+			ported++;
+		}
 	printf("native: %d ported task functions for effect %d\n", ported, O.eff);
 	const ff8fx::fxp::Module *m = ff8fx::fxp::find_params(O.eff);
 	if (O.params.empty()) return;

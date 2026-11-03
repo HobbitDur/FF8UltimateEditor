@@ -1,0 +1,899 @@
+{
+ "format": 1,
+ "effect": 8,
+ "name": "Doom",
+ "doc": "Doom (Sphinxara's enemy attack; the actor/heal library's act family, Tonberry's kind with Death's reaper): the director's phases call up the reaper rising from the ground in the dark, its aura, dust and smoke, then the scythe and the doom clock round the target with its strike, a screen tint, the stage wobbling. Its parts are the port's code (FFNx mag008_doom.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8C4960",
+   "setup": "0x8C4980",
+   "root": "0x8C4B30"
+  },
+  "memory": {
+   "texture_file": "0x2758500",
+   "packet_cursor": "0x2758504",
+   "packet_limit": "0x2758884",
+   "arena_a": "0x275E82C",
+   "limit_a": "0x275DF4C",
+   "arena_b": "0x275E828",
+   "limit_b": "0x275DF48",
+   "arena_top": "0x275F9D8",
+   "init_flag_a": "0x275F9D4",
+   "init_flag_b": "0x275ABDC",
+   "cam_ptr_a": "0x275F92C",
+   "cam_ptr_b": "0x2758888",
+   "root_queue": "0x2758958",
+   "root_pool": "0x2758890",
+   "particle_pool": "0x275F3EC",
+   "actor_pool": "0x275F980",
+   "particle_next": "0x275ABD8",
+   "actor_next": "0x275F508",
+   "cursor_c": "0x275F238",
+   "cursor_d": "0x2758508",
+   "count_a": "0x275F910",
+   "count_b": "0x275F3E8"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word: the phase data's)",
+  "effect": 8,
+  "from": "0x2758500",
+  "size": "0x7680",
+  "pointers": [
+   [
+    2,
+    "0x1634F20"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x163ACC4",
+   "size": 12
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x1634F24",
+   "size": 4
+  },
+  "dust.flipbook": {
+   "kind": "seq",
+   "address": "0x1634F28",
+   "size": 456
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x16358D8",
+   "size": 4908
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x438",
+    "actor_pool": "0x6900"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x275E498",
+   "storage": "0x275E6C8",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x2758860",
+   "storage": "0x2758788",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "load_script",
+   "queue": "0x275F918",
+   "storage": "0x275F568",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "its load script (the port's: it loads the reaper's files)"
+  },
+  {
+   "key": "reaper",
+   "queue": "0x275F3D8",
+   "storage": "0x275F298",
+   "size": 320,
+   "count": 1,
+   "keep": true,
+   "doc": "the reaper (the port's creature, its dark materialising draw)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x275E1F8",
+   "storage": "0x275DF50",
+   "size": 676,
+   "count": 1,
+   "keep": true,
+   "doc": "the aura's actor system (the port's)"
+  },
+  {
+   "key": "dust",
+   "queue": "0x2758968",
+   "storage": "0x2758978",
+   "size": 176,
+   "count": 50,
+   "keep": true,
+   "doc": "the dust at the reaper's feet and the stage wobbles"
+  },
+  {
+   "key": "smoke",
+   "queue": "0x275ABE0",
+   "storage": "0x275CB30",
+   "size": 88,
+   "count": 8,
+   "keep": true,
+   "doc": "the smoke puffs"
+  },
+  {
+   "key": "prims",
+   "queue": "0x275DF38",
+   "storage": "0x275D230",
+   "size": 1112,
+   "count": 3,
+   "keep": true,
+   "doc": "the scythe, the doom clock and its strike (prim models)"
+  },
+  {
+   "key": "tints",
+   "queue": "0x275E488",
+   "storage": "0x275E208",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the screen tint (the engine's colour script task)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The phase director: its sound, the reaper's textures, its phases' ticks (draws nothing)"
+  },
+  {
+   "id": 0,
+   "key": "reaper",
+   "title": "Reaper",
+   "doc": "The reaper rising from the ground in the dark, turning, then fading out"
+  },
+  {
+   "id": 0,
+   "key": "aura",
+   "title": "Aura",
+   "doc": "The reaper's aura: an actor system of the engine (its actor data the exe's)"
+  },
+  {
+   "id": 0,
+   "key": "dust",
+   "title": "Dust",
+   "doc": "Dust sparkles round the reaper's feet while it rises"
+  },
+  {
+   "id": 0,
+   "key": "smoke",
+   "title": "Smoke",
+   "doc": "Smoke puffs round the reaper's feet"
+  },
+  {
+   "id": 0,
+   "key": "scythe",
+   "title": "Scythe",
+   "doc": "The scythe in front of the caster; the doom clock round the target from its model step"
+  },
+  {
+   "id": 0,
+   "key": "wobble",
+   "title": "Stage wobble",
+   "doc": "The stage's fade layers while the reaper stands"
+  },
+  {
+   "id": 0,
+   "key": "tint",
+   "title": "Screen tint",
+   "doc": "The screen tint with the scythe (the engine's colour script)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "dust.radius",
+   "label": "Distance",
+   "doc": "Each sparkle starts Base + (rand & Mask) from the reaper"
+  },
+  {
+   "key": "dust.lift",
+   "label": "Height",
+   "doc": "Up or down by Base + (rand & Mask)"
+  },
+  {
+   "key": "dust.speed",
+   "label": "Speed",
+   "doc": "Each axis Base + (rand & Mask) (it slows by 1/16 a tick)"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played once the first phase starts (its world sound id)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.texture_wait",
+   "part": "timing",
+   "label": "Texture wait",
+   "doc": "Ticks after the reaper's textures go up before the director goes on",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.phase_tick",
+   "part": "timing",
+   "label": "Phase tick",
+   "doc": "The director goes on once its phase has run more than this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 500,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.rise",
+   "part": "reaper",
+   "label": "Rise",
+   "doc": "The reaper rises by this a tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 1024,
+   "default": 72,
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.low",
+   "part": "reaper",
+   "label": "Rise to",
+   "doc": "...until its height is this or lower",
+   "type": "i16",
+   "min": -8192,
+   "max": 0,
+   "default": -1280,
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.turn",
+   "part": "reaper",
+   "label": "Turn ticks",
+   "doc": "Then it turns for this many ticks, its dark draw ending",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.hold",
+   "part": "reaper",
+   "label": "Hold ticks",
+   "doc": "After its last animation, it stays this many ticks...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.fade",
+   "part": "reaper",
+   "label": "Fade",
+   "doc": "...then fades out by this a tick (4096: gone)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "aura.start",
+   "part": "aura",
+   "label": "Start tick",
+   "doc": "The aura's actor system starts at its tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "aura.length",
+   "part": "aura",
+   "label": "Ticks",
+   "doc": "It spawns its actors for this many ticks, then ends once they are gone",
+   "type": "i16",
+   "min": 0,
+   "max": 1000,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "aura.mode",
+   "part": "aura",
+   "label": "Mode",
+   "doc": "Where it takes its reference points: 2 the phase data's fixed positions, 0 the bones",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.flipbook",
+   "part": "dust",
+   "label": "Flipbook",
+   "doc": "The sparkles' sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@dust.flipbook",
+   "unit": "plain"
+  },
+  {
+   "key": "dust.last",
+   "part": "dust",
+   "label": "Last frame",
+   "doc": "Their flipbook's last frame",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.ticks",
+   "part": "dust",
+   "label": "Ticks",
+   "doc": "The dust spawns 4 sparkles every other tick until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.radius",
+   "part": "dust",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.radius_mask",
+   "part": "dust",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.lift",
+   "part": "dust",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.lift_mask",
+   "part": "dust",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.speed",
+   "part": "dust",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.speed_mask",
+   "part": "dust",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1023,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.ticks",
+   "part": "smoke",
+   "label": "Ticks",
+   "doc": "A puff every other tick until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.scale",
+   "part": "smoke",
+   "label": "Scale",
+   "doc": "Each puff's scale: this + rand % Scale spread (4096: its own size)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 3072,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.scale_rand",
+   "part": "smoke",
+   "label": "Scale spread",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 1023,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.tilt",
+   "part": "smoke",
+   "label": "Tilt",
+   "doc": "Its tilts at random within this (4096: a turn)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 768,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.fade_in",
+   "part": "smoke",
+   "label": "Fade in",
+   "doc": "It appears by this a tick (4096: fully)...",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.fade_out",
+   "part": "smoke",
+   "label": "Fade out",
+   "doc": "...then disappears by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "scythe.tick",
+   "part": "scythe",
+   "label": "Tick",
+   "doc": "The scythe appears at its tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "scythe.x",
+   "part": "scythe",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -17,
+   "unit": "plain"
+  },
+  {
+   "key": "scythe.y",
+   "part": "scythe",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -1076,
+   "unit": "plain"
+  },
+  {
+   "key": "scythe.z",
+   "part": "scythe",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -409,
+   "unit": "plain"
+  },
+  {
+   "key": "scythe.clock_step",
+   "part": "scythe",
+   "label": "Clock step",
+   "doc": "The doom clock starts at this step of the scythe's model",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 19,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.after",
+   "part": "wobble",
+   "label": "After",
+   "doc": "The stage's layers go to Level after this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.step",
+   "part": "wobble",
+   "label": "Step",
+   "doc": "...up by this a tick (in)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 160,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.level",
+   "part": "wobble",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.out_step",
+   "part": "wobble",
+   "label": "Out step",
+   "doc": "Down by this a tick at the end",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.delay",
+   "part": "tint",
+   "label": "Delay",
+   "doc": "The tint's colour script starts after this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 26,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x8C4D90",
+   "code": "0x8C4D90",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; sets up the phase data and the asset table and starts the load script and the director; the results of every target once the director says so; then waits for its children or the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C4E10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8CE250"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8CE290"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8CE2B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8CE2D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x8C5350",
+   "code": "0x8C5350",
+   "doc": "The phase director (Tonberry's kind): every tick its phase bookkeeping (a new phase spawns its parts: 2 the reaper, its aura, the dust, the smoke and the stage wobble in; 4 the scythe, the screen tint and the wobble out), then its 15 states: the reaper's textures, the script marks, the sound, the countdowns.",
+   "every_tick": [
+    [
+     "call",
+     "0x8C5410"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C5460"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C5490"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C54E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C5530"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C5590"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C55B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C55D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C55F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C5610"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C5630"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C5650"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C5680"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C56A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C56D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C56F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

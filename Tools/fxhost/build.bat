@@ -30,7 +30,14 @@ if not exist obj mkdir obj
 rem the act family's actor system (described effects built on it: Mega Phoenix's kind), when the sources have it
 set ACTORS=
 if exist "%FX%\fx_actors.cpp" set ACTORS="%FX%\act_engine.cpp" "%FX%\fx_actors.cpp"
-cl /nologo /std:c++20 /EHa /W3 /O1 /MT /LD /bigobj /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS /I"%FX%" fxhost.cpp %ACTORS% /Foobj\ /FeFujinEffects.dll /link /LARGEADDRESSAWARE
+rem the effect ports with parameters (FX_LAB_MODULE): a program runs their code as its pieces (Doom's kind), with
+rem its parameters - only with sources that have the act engine's registered modules (register_mod)
+set PORTS=
+findstr /m /c:"register_mod(" "%FX%\act_engine.h" >nul 2>nul || goto host
+for /f "delims=" %%f in ('findstr /m /c:"FX_LAB_MODULE(register" "%FX%\mag*.cpp" 2^>nul') do set PORTS=!PORTS! "%%f"
+if not "!PORTS!"=="" set PORTS=/DFF8_FX_LAB !PORTS!
+:host
+cl /nologo /std:c++20 /EHa /W3 /O1 /MT /LD /bigobj /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS /I"%FX%" fxhost.cpp %ACTORS% !PORTS! /Foobj\ /FeFujinEffects.dll /link /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%
 echo build FujinEffects.dll exit %E%
 exit /b %E%

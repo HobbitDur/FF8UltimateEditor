@@ -269,6 +269,8 @@ CYCLES = {
     106: ("mag105.tim", 32, "hexagons.count 5\nwall.grow 15\nrings.every 4\nbeams.count 6\ntiming.size_shift 3\n"),
     108: ("mag107.tim", 51, "rays.count 5\nembers.count 2\nswirls.per_tick 3\nglow.ticks 12\nsparks.every 3\n"
                             "rays.width 200\n"),
+    8: ("mag007.tim", 36, "dust.radius 400\nsmoke.ticks 25\nreaper.rise 100\nscythe.y -1200\nwobble.level 1024\n"
+                          "aura.length 30\n"),
     7: ("mag006.tim", 392, "actor5.speed.max 140\nactor2.frames 18\nactor0.depth -300\nactor1.offset.y -400\n"
                            "emitter.release 4\nfade_in.step 128\nwait 20\n"),
     5: ("mag004-034.tim", 65, "rising.count 2\nring.spin 200\nfall.speed.base 30\nglints.rate[2].count 1\n"
@@ -296,7 +298,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down and Mega Phoenix from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix and Doom from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -521,3 +523,21 @@ def test_mega_phoenix_description_compiles():
     actors = next(line for line in own if line.startswith("data_actors actors "))
     assert actors.split()[2:4] == [str(0x163E198 - 0x163ACD4), str(0x163ACD4)] and len(actors.split()[4]) == 2 * (0x163E29C - 0x163ACD4)
     assert sum(line.startswith("patch @actors ") for line in own) == 5 * 76
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_doom_description_compiles():
+    """Doom: a port module's pieces - the per-action director in the act family's form (arenas of
+    0x8000, its actor pools, its file released at its end), the module whose code runs and the data
+    word pointing into its memory, the engine's emitter and the phase director as their state tables
+    (each phase calls the port's state function); an own copy moves the module's memory into a block of
+    its own."""
+    description = load_description(7 + 1)
+    lines = compile_program(description).splitlines()
+    for line in ("module 8 0x2758500 0x7680", "module_pointer 2 0x1634F20", "release_file", "arena_size 32768",
+                 "act_pool actor_pool 26880", "code 0x8C5350", "tick call 9196560"):
+        assert line in lines, line
+    assert sum(line.startswith("phase_tick call ") for line in lines) == 5 + 15
+    own = compile_program(new_effect(description, 224, "Own", EXE.read_bytes())).splitlines()
+    assert "module 8 0x2758500 0x7680 own" in own and "memory root_queue 0x2758958" in own
+    assert not any(line.startswith("function ") for line in own)
