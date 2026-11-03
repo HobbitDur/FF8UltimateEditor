@@ -1,0 +1,189 @@
+{
+ "format": 1,
+ "effect": 65,
+ "name": "Great Attractor",
+ "doc": "Great Attractor (Ultimecia's enemy attack): the master's 0x228-tick timeline - the star backdrop and dots, the caster sinking then swinging, the layouts at its bones, four beams and four twisted rays, the targets and the caster pulled to their centre, four vortex rings with ribbons, sprites and particle models, the overlay layout and the white flashes, the battle camera moved all along; the damage, then everything put back. Its tasks are the port's code (FFNx mag065_great_attractor.cpp) run on the program's memory (its pools and particle tables in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6E0360",
+   "setup": "0x6E0350",
+   "root": "0x6E03F0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 65,
+  "from": "0x2544F60",
+  "size": "0xB4"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1342D20",
+   "size": 12
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x133AB6C",
+   "size": 4
+  },
+  "sounds.layouts": {
+   "kind": "sound",
+   "address": "0x133AB70",
+   "size": 4
+  },
+  "sounds.beams": {
+   "kind": "sound",
+   "address": "0x133AB74",
+   "size": 4
+  },
+  "sounds.swirl": {
+   "kind": "sound",
+   "address": "0x133AB78",
+   "size": 4
+  },
+  "sounds.pull": {
+   "kind": "sound",
+   "address": "0x133AB7C",
+   "size": 4
+  },
+  "sounds.vortex": {
+   "kind": "sound",
+   "address": "0x133AB80",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6E0350",
+  "file_loader": "0x6E0360",
+  "root": "0x6E03F0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "Its 0x228-tick timeline: the star backdrop, the caster sinking and swinging, the layouts, beams and rays, the targets pulled to the centre, the vortex, the flashes; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At ticks 0, 0x61, 0xA7, 0xEE, 0x156, 0x1C9"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "master",
+   "label": "Start",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.layouts",
+   "part": "master",
+   "label": "Layouts",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.layouts",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.beams",
+   "part": "master",
+   "label": "Beams",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.beams",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.swirl",
+   "part": "master",
+   "label": "Swirl",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.swirl",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.pull",
+   "part": "master",
+   "label": "Pull",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.pull",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.vortex",
+   "part": "master",
+   "label": "Vortex",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.vortex",
+   "unit": "plain"
+  },
+  {
+   "key": "master.sink",
+   "part": "master",
+   "label": "Sink",
+   "doc": "The caster's sinking a tick over ticks 1..0x1F",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 322,
+   "unit": "plain"
+  },
+  {
+   "key": "master.away",
+   "part": "master",
+   "label": "Targets away",
+   "doc": "The targets moved this far away at tick 0x20 (back at 0x21E)",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 10000,
+   "unit": "plain"
+  },
+  {
+   "key": "master.damage",
+   "part": "master",
+   "label": "Damage tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 551,
+   "default": 548,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    65: ("mag064.tim", 9, "master.sink 200\nmaster.damage 500\nmaster.away 5000\n"),
     64: ("mag063.tim", 7, "flashes.b 30\nmaster.sound_tick 20\nmaster.end 180\n"),
     63: ("mag062.tim", 5, "impact.push 800\nimpact.flash 1024\nmaster.damage 60\nmaster.end 80\n"),
     62: ("mag061.tim", 13, "picture.scroll 8\ndarken.step 256\nmusic.step 16\nemitter.sound 30\n"),
@@ -346,7 +347,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam and Model breaking apart from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart and Great Attractor from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -1205,4 +1206,11 @@ def test_model_breaking_apart_description_compiles():
     """Model breaking apart: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the magic buffer)."""
     lines = compile_program(load_description(64)).splitlines()
     for line in ['director port -1', 'port 0x6E5180 0x6E5190 0x6E5260', 'module 64 0x2545018 0x84']:
+        assert line in lines, line
+
+
+def test_great_attractor_description_compiles():
+    """Great Attractor: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and particle tables in the magic buffer)."""
+    lines = compile_program(load_description(65)).splitlines()
+    for line in ['director port -1', 'port 0x6E0350 0x6E0360 0x6E03F0', 'module 65 0x2544F60 0xB4']:
         assert line in lines, line

@@ -1402,3 +1402,12 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`TailParams`): the sound and its tick, the voice release and end ticks, the three
        flashes' ticks. Data: the sound, "mag063.tim".
      - *Fujin:* its tab (Master); no + menu family.
+   - **Great Attractor (65)** (FFNx ecc2193c; Ultimecia's enemy attack; a port director, Ray-Bomb's kind): the
+     master's 0x228-tick timeline - the star backdrop, the caster sinking then swinging, layouts, beams and
+     rays, the targets and the caster pulled to their centre, the vortex rings with ribbons, sprites and
+     particle models, the flashes, the battle camera moved all along; the damage, then everything put back.
+     - *Port:* the loop restoring the entities' flags ends at the module's end address (0x2545014): it is
+       moved with the module's memory too (a copy otherwise skipped it).
+     - *Inputs* (`AttractorParams`): the six sounds, the caster's sinking a tick, the targets moved away,
+       the damage tick. Data: the sounds, "mag064.tim".
+     - *Fujin:* its tab (Master); no + menu family.
