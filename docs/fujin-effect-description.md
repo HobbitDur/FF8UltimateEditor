@@ -1079,3 +1079,11 @@ Potion's description is the same with its own sequences and sound.
        system (start, length, mode), the orb (appear tick, speed, how short of the target), the debris
        (counts, colour). Data: the sound, the camera track, "mag022.tim".
      - *Fujin:* its tabs (Director, Orb); no + menu family.
+   - **Esuna (24)** (FFNx a52b9400; the spell; the act family with Drain's master, NORG Pod opening's
+     description with actor pools): once its children are gone the actor pools and the stage wobble
+     in, one emitter per action - its sound, the actor system around its target, the master's
+     release, the result; after the last action a wait, the stage wobble out.
+     - *Inputs* (`EsunaParams`): the emitter's sound, release and result ticks, the master's wait, the
+       actor system (start, length, mode), the stage wobble out (level, step). Data: the sound, the
+       camera track, "mag023-066.tim".
+     - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.

@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    24: ("mag023-066.tim", 9, "actors.length 30\nmaster.wait 30\nwobble.step 64\nemitter.release 25\n"),
     22: ("mag021.tim", 9, "emitter.blob 40\nblob.cycles 3\nemitter.pools_every 3\nblob.spin -100\n"),
     21: ("mag020.tim", 11, "runes.every 5\nrunes.spin 300\nmotes.until 3\nemitter.release 40\n"),
     17: ("mag010.tim", 7, "caster.descent 80\nburst.ticks 10\nend 110\n"),
@@ -308,7 +309,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple and Bio from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio and Esuna from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -810,3 +811,10 @@ def test_psycho_blast_runs_from_its_description(tmp_path):
         task.pop("function", None)
     new, log = record_norg(225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
     assert "program: New_blast" in log and untag(new) == original
+
+
+def test_esuna_description_compiles():
+    """Esuna: Doom's kind with Drain's master - its actor pools, the stage wobble in and out (native tasks) after its wait."""
+    lines = compile_program(load_description(24)).splitlines()
+    for line in ['module 24 0x2700470 0xD48', 'act_stage 1 2 $3', 'act_pool actor_pool 67200', 'native 0x88D3B0']:
+        assert line in lines, line

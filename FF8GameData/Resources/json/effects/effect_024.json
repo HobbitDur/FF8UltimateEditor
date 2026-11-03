@@ -1,0 +1,271 @@
+{
+ "format": 1,
+ "effect": 24,
+ "name": "Esuna",
+ "doc": "Esuna (spell; the act family, Drain's master): once its children are gone the actor pools and the stage wobble in, then one emitter per action - its sound, the actor system around its target, the master's release, the result (the status cure); after the last action a wait, the stage wobble out. Its parts are the port's code (FFNx mag024_esuna.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x88CF50",
+   "setup": "0x88CF70",
+   "root": "0x88D0A0"
+  },
+  "memory": {
+   "texture_file": "0x2700470",
+   "packet_cursor": "0x2700474",
+   "packet_limit": "0x2700490",
+   "arena_a": "0x2701184",
+   "limit_a": "0x270057C",
+   "arena_b": "0x2701180",
+   "limit_b": "0x2700578",
+   "arena_top": "0x27011AC",
+   "init_flag_a": "0x27011A8",
+   "init_flag_b": "0x2700574",
+   "cam_ptr_a": "0x27011A0",
+   "cam_ptr_b": "0x2700494",
+   "root_queue": "0x2700560",
+   "root_pool": "0x2700498",
+   "particle_pool": "0x270118C",
+   "actor_pool": "0x27011A4",
+   "particle_next": "0x2700570",
+   "actor_next": "0x2701198",
+   "cursor_c": "0x2701188",
+   "cursor_d": "0x2700478",
+   "count_a": "0x270119A",
+   "count_b": "0x270118A"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 24,
+  "from": "0x2700470",
+  "size": "0xD48",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1614274",
+   "size": 16
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x161374C",
+   "size": 2856
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x1613748",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xA000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared, the stage in task; after the last action its wait, the stage out task; the actor counters cleared every tick",
+   "stage_in": "stage_in",
+   "stage_out": "stage_out",
+   "wait": "$master.wait",
+   "pools": {
+    "particle_pool": "0x10E0",
+    "actor_pool": "0x10680"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2701010",
+   "storage": "0x2701020",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x2700D70",
+   "storage": "0x2700580",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x2701000",
+   "storage": "0x2700D80",
+   "size": 64,
+   "count": 10
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the actor system, the master's release, the result; the master's wait"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage wobble",
+   "doc": "The stage wobble out after the last action"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "At the emitter's start: Start, Length (ticks), Mode (0: the targets' positions)"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Result tick",
+   "doc": "The action's result (the heal, the cure) from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "master.wait",
+   "part": "emitter",
+   "label": "Wait",
+   "doc": "After the last action, the wobble out after these ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "emitter",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "emitter",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "Its amplitude from this level",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.step",
+   "part": "stage",
+   "label": "Step",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x88D3B0",
+   "code": "0x88D3B0",
+   "native": "0x88D3B0",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the actor system, the master's release, the result."
+  },
+  {
+   "key": "stage_in",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x88D290",
+   "code": "0x88D290",
+   "native": "0x88D290",
+   "doc": "The stage wobble in (the port's task: the four stage wobble words up to their level)."
+  },
+  {
+   "key": "stage_out",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x892ED0",
+   "code": "0x892ED0",
+   "native": "0x892ED0",
+   "doc": "The stage wobble out (the port's task: from its level down a step a tick to 0)."
+  }
+ ]
+}
