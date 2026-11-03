@@ -1055,3 +1055,10 @@ Potion's description is the same with its own sequences and sound.
        light ramps (step, level), the lid's flight (start, ticks, velocity, gravity, spins), the debris
        sprites (frames, colour). Data: the sound, the camera track, "mag019.tim".
      - *Fujin:* its tabs (Emitter, Lid); no + menu family.
+   - **Triple (21)** (FFNx 2201fd70; the spell, Double's bigger sibling; a port director, Ray-Bomb's kind):
+     one emitter per action - eight runes around the target, two opposite a step, each with its glow,
+     motes and a rising column; the last column starts a screen fade and the big rune; a flash quad
+     jumps on the target's top; the result.
+     - *Inputs* (`TripleParams`): the emitter's sound and release tick, the runes' step, height, spin,
+       fades, shrink and column tick, the motes (until, radius). Data: the sound, "mag020.tim".
+     - *Fujin:* its tabs (Emitter, Runes); no + menu family (Double's family describes its sibling).

@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    21: ("mag020.tim", 11, "runes.every 5\nrunes.spin 300\nmotes.until 3\nemitter.release 40\n"),
     17: ("mag010.tim", 7, "caster.descent 80\nburst.ticks 10\nend 110\n"),
     16: ("mag015.tim", 9, "stage.level 1024\nactors.length 30\ndirector.result 30\n"),
     15: ("mag014.tim", 8, "ribbons.twist 600\nemitter.release 20\nemitter.length 25\nsounds.b 100\n"),
@@ -306,7 +307,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover and Elvoret's entrance from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance and Triple from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -751,3 +752,10 @@ def test_norg_pod_opening_runs_from_its_description(tmp_path):
         task.pop("function", None)
     new, log = record_pod(225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
     assert "program: New_pod" in log and untag(new) == original
+
+
+def test_triple_description_compiles():
+    """Triple: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory."""
+    lines = compile_program(load_description(21)).splitlines()
+    for line in ['director port -1', 'port 0x89DEF0 0x89DED0 0x89DFF0', 'module 21 0x2714F28 0xC658']:
+        assert line in lines, line

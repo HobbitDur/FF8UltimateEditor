@@ -1,0 +1,192 @@
+{
+ "format": 1,
+ "effect": 21,
+ "name": "Triple",
+ "doc": "Triple (spell; Double's bigger sibling): one emitter per action - eight runes around the target, two opposite every few ticks, each with its glow, motes and a rising column; the last one's column starts a screen fade and the big rune (sprites, a morphing ring); a flash quad jumps on the target's top; the result. Its tasks are the port's code (FFNx mag021_triple.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x89DED0",
+   "setup": "0x89DEF0",
+   "root": "0x89DFF0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 21,
+  "from": "0x2714F28",
+  "size": "0xC658"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1629C44",
+   "size": 12
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x16269D8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x89DEF0",
+  "file_loader": "0x89DED0",
+  "root": "0x89DFF0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the root going on and the flash at its tick, the result"
+  },
+  {
+   "id": 0,
+   "key": "runes",
+   "title": "Runes",
+   "doc": "Eight runes around the target, two opposite a step: their fades, spin, columns and motes"
+  }
+ ],
+ "groups": [
+  {
+   "key": "motes",
+   "label": "Motes",
+   "doc": "A mote a tick spiralling in, until this tick of its rune; their spiral radius (+ rand 0..0x1FF)"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The root may start the next action, and the flash, at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.every",
+   "part": "runes",
+   "label": "Every",
+   "doc": "Two opposite runes every these ticks (four steps)",
+   "type": "i16",
+   "min": 1,
+   "max": 30,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.height",
+   "part": "runes",
+   "label": "Height",
+   "doc": "The runes and columns this above the target",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 640,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.spin",
+   "part": "runes",
+   "label": "Spin",
+   "doc": "A rune's and its column's spin a tick (4096: a turn)",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 320,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.fade_in",
+   "part": "runes",
+   "label": "Fade in",
+   "doc": "A tick (4096: shown)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.fade_out",
+   "part": "runes",
+   "label": "Fade out",
+   "doc": "A tick, while it shrinks",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.shrink",
+   "part": "runes",
+   "label": "Shrink",
+   "doc": "Its scale down a tick while it fades out",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.column_tick",
+   "part": "runes",
+   "label": "Column tick",
+   "doc": "Its column at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 30,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.until",
+   "part": "runes",
+   "label": "Until",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 30,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.radius",
+   "part": "runes",
+   "label": "Radius",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
