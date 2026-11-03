@@ -1,0 +1,361 @@
+{
+ "format": 1,
+ "effect": 45,
+ "name": "Stare",
+ "doc": "Stare (Vysage's enemy attack; the act family, Tonberry's kind without an actor system): one emitter per action - the director's phase: its sound, two eye stares in front of the caster's eyes, the target's mark, the stage darkening; the damage at its cue. Its parts are the port's code (FFNx mag045_stare.cpp) run on the program's memory; the master's view-axis matrix (for records along the view axes) is a call before the prim-model queue.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x836570",
+   "setup": "0x836590",
+   "root": "0x8366E0"
+  },
+  "memory": {
+   "texture_file": "0x26543B0",
+   "packet_cursor": "0x26543B4",
+   "packet_limit": "0x26544B4",
+   "arena_a": "0x26553C4",
+   "limit_a": "0x2654FB4",
+   "arena_b": "0x26553C0",
+   "limit_b": "0x2654FB0",
+   "arena_top": "0x2655754",
+   "init_flag_a": "0x2655750",
+   "init_flag_b": "0x2654728",
+   "cam_ptr_a": "0x265574C",
+   "cam_ptr_b": "0x26544B8",
+   "root_queue": "0x2654588",
+   "root_pool": "0x26544C0",
+   "view_matrix": "0x2655758"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 45,
+  "from": "0x26543B0",
+  "size": "0x13C8",
+  "pointers": [
+   [
+    2,
+    "0x15C357C"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15C3670",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15C3584",
+   "size": 236
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x15C3580",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xC000",
+  "release_file": false
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2655250",
+   "storage": "0x2655260",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x2654490",
+   "storage": "0x26543B8",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "stage",
+   "queue": "0x2654598",
+   "storage": "0x26545A8",
+   "size": 48,
+   "count": 8,
+   "keep": true,
+   "doc": "the stage darkening (the engine's task, its states the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x2654FA0",
+   "storage": "0x2654730",
+   "size": 720,
+   "count": 3,
+   "keep": true,
+   "doc": "the eye stares and the target's mark (the port's)",
+   "before": {
+    "doc": "The master's view-axis matrix from the camera (the module's function), every tick before this queue",
+    "call": "0x836840",
+    "args": [
+     "0x1D97778",
+     "@view_matrix"
+    ]
+   }
+  },
+  {
+   "key": "tint",
+   "queue": "0x2655240",
+   "storage": "0x2654FC0",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the engine's screen tints, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its phase: the sound, the two eye stares at the caster, the target's mark, the stage darkening, the damage cue"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage darkening",
+   "doc": "The stage group darkened, held, back"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "Played once phase 1 runs",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage cue",
+   "doc": "The damage of the target this many ticks into the phase",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "eyes.forward",
+   "part": "director",
+   "label": "Eyes forward",
+   "doc": "The eye stares this far in front of the caster's eyes, along its facing",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step_in",
+   "part": "stage",
+   "label": "Step in",
+   "doc": "Up by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.hold",
+   "part": "stage",
+   "label": "Hold until",
+   "doc": "Held until this tick of its task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step_out",
+   "part": "stage",
+   "label": "Step out",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x836990",
+   "code": "0x836990",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; sets up the director block (the target's position, the facing to it) and starts the director; the damage of its target at the director's cue; then waits, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x836A10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8397E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x839820"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x839840"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x839860"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x836AC0",
+   "code": "0x836AC0",
+   "doc": "The director: every tick the phase bookkeeping (phase 1: the eye stares, the mark, the stage darkening), then its states: the cue to phase 1, the sound, the damage cue, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x836B30"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x836B80"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x836BD0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x836C20"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x836C40"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x836C60"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

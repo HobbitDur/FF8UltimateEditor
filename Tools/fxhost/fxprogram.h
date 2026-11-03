@@ -116,6 +116,8 @@ namespace fxprog
 		uint32_t queue = 0, storage = 0;
 		int size = 0, count = 0, tag = -1, base = 0;   // base 1: storage in the magic buffer
 		bool own_queue = false, own_storage = false;  // allocated in the program's own memory
+		uint32_t before = 0;                          // a module function the master calls before this queue runs (Stare's view axes)
+		std::vector<std::string> before_args;         // its arguments: numbers, @memory names (a copy's moved)
 	};
 	enum Director { PER_ACTION, MASTER, CYCLE, CHAIN, PORT };
 	// a value written into data before every cast (an actor definition's field: the act family's)
@@ -1736,6 +1738,8 @@ namespace fxprog
 		}
 	}
 
+	inline void PoolBefore(const Pool &pool);
+
 	// the short form (Double 0x8D5180): 0 on, 1 the current action's task (busy), 2 when it is over the
 	// next action (back to 1) or on, 3 every queue empty: done; the arenas are memory words (arena_a
 	// on odd ticks)
@@ -1776,6 +1780,7 @@ namespace fxprog
 		r->alive = 0;
 		for (const Pool &pool : g_program->pools)
 		{
+			if (pool.before) PoolBefore(pool);
 			if (pool.tag >= 0) FX_PART(pool.tag);
 			r->alive = (int16_t)(r->alive + ExecuteTaskQueue((TaskQueue *)pool.queue));
 			if (pool.tag >= 0) FX_PART(0);
@@ -1783,6 +1788,28 @@ namespace fxprog
 		r->tick++;
 		r->h.counter++;
 		return EndWhenDone(&r->h);
+	}
+
+	// a pool's call before its queue runs: the module's function with its arguments (Stare's view-axis matrix
+	// between its third and fourth queues)
+	inline void PoolBefore(const Pool &pool)
+	{
+#ifdef FXPROG_ACTORS
+		uint32_t a[3] = {};
+		const size_t count = pool.before_args.size() < 3 ? pool.before_args.size() : 3;
+		for (size_t i = 0; i < count; i++)
+		{
+			const std::string &arg = pool.before_args[i];
+			a[i] = arg[0] == '@' ? Mem(arg.c_str() + 1) : (uint32_t)strtoul(arg.c_str(), nullptr, 0);
+		}
+		UseModule();
+		if (count == 0) ff8fx::act::callp(pool.before);
+		else if (count == 1) ff8fx::act::callp(pool.before, a[0]);
+		else if (count == 2) ff8fx::act::callp(pool.before, a[0], a[1]);
+		else ff8fx::act::callp(pool.before, a[0], a[1], a[2]);
+#else
+		(void)pool;
+#endif
 	}
 
 	inline uint32_t PerActionDirector(TaskNode *n)
@@ -1809,6 +1836,7 @@ namespace fxprog
 		for (const std::string &word : g_program->act_clear) var<uint16_t>(Mem(word.c_str())) = 0;
 		for (const Pool &pool : g_program->pools)
 		{
+			if (pool.before) PoolBefore(pool);
 			if (pool.tag >= 0) FX_PART(pool.tag);
 			r->alive = (int16_t)(r->alive + ExecuteTaskQueue((TaskQueue *)pool.queue));
 			if (pool.tag >= 0) FX_PART(0);
@@ -2436,6 +2464,11 @@ namespace fxprog
 				pool.tag = atoi(w[5].c_str());
 				pool.base = w.size() > 6 ? atoi(w[6].c_str()) : 0;
 				g.pools.push_back(pool);
+			}
+			else if (d == "pool_before" && need(2) && !g.pools.empty())
+			{
+				g.pools.back().before = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
+				g.pools.back().before_args.assign(w.begin() + 2, w.end());
 			}
 			else if (d == "magic_buffer" && need(4))
 			{

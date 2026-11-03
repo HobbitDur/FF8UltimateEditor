@@ -369,6 +369,12 @@ def compile_program(description, values=None):
         storage = "own" if own and not in_buffer else f"0x{_number(pool['storage']):X}"
         lines.append(f"pool {queue} {storage} {pool['size']} {pool['count']} "
                      f"{parts[pool['part']] if pool.get('part') else -1} {1 if in_buffer else 0}")
+        if pool.get("before"):   # a module function the master calls before this queue (Stare's view axes)
+            before = pool["before"]
+            args = [a if isinstance(a, str) and a.startswith("@") else f"0x{_number(a):X}" for a in before.get("args", [])]
+            if len(args) > 3:
+                raise DescriptionError(f"pool {pool.get('key')}: a before call takes at most 3 arguments")
+            lines.append(" ".join([f"pool_before 0x{_number(before['call']):X}"] + args))
     if "magic_buffer" in description:
         buffer = description["magic_buffer"]
         arena_a, arena_b = buffer["arenas"]

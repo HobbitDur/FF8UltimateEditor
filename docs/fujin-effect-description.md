@@ -1247,3 +1247,14 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`JunkParams`): the sound, the shake word and the targets' bounce, the falling items'
        first tick, span and step, the big item's tick, the gravity. Data: the sound, "mag043.tim".
      - *Fujin:* its tab (Controller); no + menu family.
+   - **Stare (45)** (FFNx ba0fbeac; Vysage's enemy attack; the act family without an actor system, Doom's
+     description): one emitter per action - the director's phase: its sound, two eye stares in front of
+     the caster's eyes, the target's mark, the stage darkening; the damage at its cue.
+     - *Added:* a pool's `"before"` (the program's `pool_before <function> <args>`): a module function
+       the master calls before that pool's queue runs, its arguments numbers or `@memory` names (a
+       copy's moved). Stare's master builds its view-axis matrix there, between its third and fourth
+       queues; the lab's run of Stare records the same without it (no record of its layouts is placed
+       along the view axes), so the call is kept for faithfulness, not checked by a recording.
+     - *Inputs* (`StareParams`): the director's sound and damage cue, the eyes' offset, the stage
+       darkening's level, steps and hold. Data: the sound, the camera track, "mag044.tim".
+     - *Fujin:* its tabs (Director, Stage darkening); no + menu family.
