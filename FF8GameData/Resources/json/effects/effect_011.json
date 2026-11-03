@@ -1,0 +1,428 @@
+{
+ "format": 1,
+ "effect": 11,
+ "name": "Storm Breath",
+ "doc": "Storm Breath (Elvoret's enemy attack): a breath stream from the caster's mouth sweeping its targets in turn, layouts at the mouth, mist and rings blown along it, hit sparks on the targets, sparks and debris off the stream. Its tasks are the port's code (FFNx mag011_storm_breath.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6EA510",
+   "setup": "0x6EA500",
+   "root": "0x6EA5B0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 11,
+  "from": "0x2556140",
+  "size": "0x88"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12E3370",
+   "size": 12
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x136B970",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6EA500",
+  "file_loader": "0x6EA510",
+  "root": "0x6EA5B0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The breath's sound and its end (draws nothing)"
+  },
+  {
+   "id": 0,
+   "key": "stream",
+   "title": "Stream",
+   "doc": "The breath stream from the mouth sweeping the targets, its angles; the layouts at the mouth"
+  },
+  {
+   "id": 0,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Hit sparks on the current target, sparks and debris off the stream"
+  },
+  {
+   "id": 0,
+   "key": "mist",
+   "title": "Mist and rings",
+   "doc": "Mist blown out of the mouth, rings along the stream"
+  }
+ ],
+ "groups": [
+  {
+   "key": "hits",
+   "label": "Hits",
+   "doc": "From tick From for Ticks: two a tick, scale Scale + (rand & Spread)"
+  },
+  {
+   "key": "debris",
+   "label": "Debris",
+   "doc": "Within the sparks' first Ticks: chance Chance / 32768, thrown up by Speed + (rand & Spread)"
+  },
+  {
+   "key": "mist",
+   "label": "Mist",
+   "doc": "Two a tick: slow from From for Ticks, then fast from From 2 for Ticks 2"
+  },
+  {
+   "key": "rings",
+   "label": "Rings",
+   "doc": "From tick From for Ticks, one every Every ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The breath's sound block (its world sound id)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "timing",
+   "label": "End",
+   "doc": "The breath ends at this tick",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 75,
+   "unit": "plain"
+  },
+  {
+   "key": "stream.start",
+   "part": "stream",
+   "label": "Start",
+   "doc": "The stream from this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "stream.ticks",
+   "part": "stream",
+   "label": "Ticks",
+   "doc": "...for this many",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "stream.sweep_from",
+   "part": "stream",
+   "label": "Sweep from",
+   "doc": "It sweeps the targets from this tick of it",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "stream_angles.wobble",
+   "part": "stream",
+   "label": "Wobble",
+   "doc": "Its wobble angle a tick (4096: a turn)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "stream_angles.sway",
+   "part": "stream",
+   "label": "Sway",
+   "doc": "Its sway angle a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.mouth_ticks",
+   "part": "stream",
+   "label": "Mouth layout until",
+   "doc": "The layout at the mouth until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.cone_from",
+   "part": "stream",
+   "label": "Cone from",
+   "doc": "The cone along the stream from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 29,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.from",
+   "part": "sparks",
+   "label": "From",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.ticks",
+   "part": "sparks",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.scale",
+   "part": "sparks",
+   "label": "Scale",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 3072,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.scale_rand",
+   "part": "sparks",
+   "label": "Spread",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2047,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.from",
+   "part": "sparks",
+   "label": "Stream sparks from",
+   "doc": "Sparks off the stream's vertices from this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.ticks",
+   "part": "sparks",
+   "label": "Stream sparks ticks",
+   "doc": "...for this many",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.chance",
+   "part": "sparks",
+   "label": "Stream spark chance",
+   "doc": "Per vertex above the ground, a tick (/ 32768)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.scale",
+   "part": "sparks",
+   "label": "Stream spark scale",
+   "doc": "Their scale: this + rand & 0x7FF",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.rise",
+   "part": "sparks",
+   "label": "Stream spark rise",
+   "doc": "They rise by this a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.ticks",
+   "part": "sparks",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.chance",
+   "part": "sparks",
+   "label": "Chance",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.speed",
+   "part": "sparks",
+   "label": "Speed",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.speed_rand",
+   "part": "sparks",
+   "label": "Spread",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 127,
+   "unit": "plain"
+  },
+  {
+   "key": "mist.from",
+   "part": "mist",
+   "label": "From",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "mist.ticks",
+   "part": "mist",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "mist.from2",
+   "part": "mist",
+   "label": "From 2",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "mist.ticks2",
+   "part": "mist",
+   "label": "Ticks 2",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.from",
+   "part": "mist",
+   "label": "From",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.ticks",
+   "part": "mist",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.every",
+   "part": "mist",
+   "label": "Every",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 50,
+   "default": 4,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -977,3 +977,10 @@ Potion's description is the same with its own sequences and sound.
        flash, the beam, the smoke, the shockwave, the debris, the bounce, the screen flash ramps and
        the end. Data: the two sounds, "mag009.tim".
      - *Fujin:* its tabs (Timing, Charge, Muzzle flash, Beam, Blast, Bounce); no + menu family.
+   - **Storm Breath (11)** (FFNx 352bade2; Elvoret's attack; a port director, Ray-Bomb's kind): a breath
+     stream from the caster's mouth sweeping its targets in turn, layouts at the mouth, mist and rings blown
+     along it, hit sparks on the targets, sparks and debris off the stream.
+     - *Inputs* (`StormParams`): the sound and the end, the stream (start, ticks, sweep, its angles), the
+       layouts at the mouth, the hit sparks, the stream's sparks and debris, the mist and rings. Data: the
+       sound, "mag010.tim".
+     - *Fujin:* its tabs (Timing, Stream, Sparks, Mist and rings); no + menu family.
