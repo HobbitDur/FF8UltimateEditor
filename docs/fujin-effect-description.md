@@ -1096,3 +1096,10 @@ Potion's description is the same with its own sequences and sound.
        fade bases, the glow's lift and swirl sparks, the sparkles' and particles' spread. Data: the
        sound, the camera track, "mag024-050.tim".
      - *Fujin:* its tabs (Emitter, Glow); no + menu family.
+   - **Clash (26)** (FFNx 737b3cce; X-ATM092's enemy attack; a port director, Ray-Bomb's kind, on an act
+     engine port): one emitter per target - bursts of rings and sparks at the caster's bones, two shock
+     waves, dust, a screen flash, the target knocked back (thrown up spinning, landing, walking back), the
+     result.
+     - *Inputs* (`ClashParams`): the emitter's sound and its tick, its start and end, the dust count, the
+       bursts' ticks, sparks and radius, the knock-back's gravity. Data: the sound, "mag025.tim".
+     - *Fujin:* its tabs (Emitter, Bursts); no + menu family.

@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    26: ("mag025.tim", 12, "bursts.sparks 4\nknock.gravity 64\nemitter.dust 2\nbursts.radius 512\n"),
     25: ("mag024-050.tim", 9, "glow.sparks 4\naura.second 1024\nemitter.heal 40\nsparkles.spread 1024\n"),
     24: ("mag023-066.tim", 9, "actors.length 30\nmaster.wait 30\nwobble.step 64\nemitter.release 25\n"),
     22: ("mag021.tim", 9, "emitter.blob 40\nblob.cycles 3\nemitter.pools_every 3\nblob.spin -100\n"),
@@ -310,7 +311,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna and Cura from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura and Clash from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -825,4 +826,11 @@ def test_cura_description_compiles():
     """Cura: Doom's kind with Double's short root - the module, its arenas in the magic buffer, its own emitter."""
     lines = compile_program(load_description(25)).splitlines()
     for line in ['module 25 0x26E5908 0x1AB68', 'magic_buffer 0x0 0x12000 0x0', 'director per_action 0 short', 'native 0x889F40']:
+        assert line in lines, line
+
+
+def test_clash_description_compiles():
+    """Clash: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory."""
+    lines = compile_program(load_description(26)).splitlines()
+    for line in ['director port -1', 'port 0x8885D0 0x8885B0 0x8886C0', 'module 26 0x26D9050 0xC8A0']:
         assert line in lines, line

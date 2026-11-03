@@ -1,0 +1,203 @@
+{
+ "format": 1,
+ "effect": 26,
+ "name": "Clash",
+ "doc": "Clash (X-ATM092's enemy attack): one emitter per target - bursts of rings and sparks at the caster's bones, two shock waves, dust, a screen flash, the target knocked back (thrown up, spinning, landing with a ring and sparks, walking back), the result. Its tasks are the port's code (FFNx mag026_clash.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x8885B0",
+   "setup": "0x8885D0",
+   "root": "0x8886C0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 26,
+  "from": "0x26D9050",
+  "size": "0xC8A0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x161078C",
+   "size": 12
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x160F6C8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x8885D0",
+  "file_loader": "0x8885B0",
+  "root": "0x8886C0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per target: its sound, the shock waves, the knock-back, the dust, the screen flash"
+  },
+  {
+   "id": 0,
+   "key": "bursts",
+   "title": "Bursts",
+   "doc": "Rings and sparks at the caster's bones (target 0's emitter)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "bursts",
+   "label": "Bursts",
+   "doc": "Ticks: First and Last (bones 0x34, 0x35, 0x36, 0x33 with rings), A (bone 0x36), B (bone 0x34); sparks each, their radius"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its tick (target 0's emitter)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound_tick",
+   "part": "emitter",
+   "label": "Sound tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.start",
+   "part": "emitter",
+   "label": "Start tick",
+   "doc": "The shock waves, the knock-back, the dust and the flash from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.end",
+   "part": "emitter",
+   "label": "End after",
+   "doc": "Done after this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.dust",
+   "part": "emitter",
+   "label": "Dust",
+   "doc": "Dust sprites at its start",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "knock.gravity",
+   "part": "emitter",
+   "label": "Knock-back gravity",
+   "doc": "Added to the target's upward speed a tick",
+   "type": "i16",
+   "min": -512,
+   "max": 512,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.first",
+   "part": "bursts",
+   "label": "First",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.last",
+   "part": "bursts",
+   "label": "Last",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.a",
+   "part": "bursts",
+   "label": "A",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.b",
+   "part": "bursts",
+   "label": "B",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.sparks",
+   "part": "bursts",
+   "label": "Sparks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.radius",
+   "part": "bursts",
+   "label": "Radius",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
