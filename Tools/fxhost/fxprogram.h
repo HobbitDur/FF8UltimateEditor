@@ -46,6 +46,8 @@
 #include "fx_sway.h"
 #include "fx_ripple.h"
 #include "fx_barrier.h"
+#include "fx_rays.h"
+#include "fx_ribbon.h"
 
 namespace fxprog
 {
@@ -67,17 +69,19 @@ namespace fxprog
 	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value, count; Step draw; };   // (count: WITHIN's)
 	// a plain node's fields (offsets in the node; -1: none)
 	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, F_END, F_SEQ, F_RADIUS, F_ANGLE, F_SPEED, F_FADE,
-	             F_LEAF, F_COLOUR, F_RIPPLE, F_SPARK, F_BARRIER, F_ORBIT, F_GROWTH, FIELD_COUNT };
+	             F_LEAF, F_COLOUR, F_RIPPLE, F_SPARK, F_BARRIER, F_ORBIT, F_GROWTH, F_RAYS, F_RIBBON, F_MOTE, F_DRAWN, FIELD_COUNT };
 	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity",
 	                                                      "layout_b", "spawn", "end", "seq", "radius", "angle", "speed", "fade",
-	                                                      "leaf", "colour", "ripple", "spark", "barrier", "orbit", "growth" };
+	                                                      "leaf", "colour", "ripple", "spark", "barrier", "orbit", "growth",
+	                                                      "rays", "ribbon", "mote", "drawn" };
 	struct Task
 	{
 		std::string key;
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		bool plain = false, draws_first = false;
-		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		                           -1, -1, -1, -1 };
 		int layout_size = 0, layout_b_size = 0;
 		Step end;                                 // a plain node's end (after its counter)
 		std::vector<Step> at_end;                 // actions when it ends
@@ -132,19 +136,19 @@ namespace fxprog
 		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET, SCREEN_FLASH_CURVE, SCREEN_FLASH_OFF, SPIN, WHIRL_LEAF_MOVE,
 		FLASH_LEVEL_RAISE, FOLLOW_BONE, SOUND_3D_AT_POSITION, FLASH_LEVEL_CLEAR, SCREEN_FLASH_LEVEL, POINT_AT_POSITION,
 		MARK_RING_FROM, UNMARK_RING, FLASH_LEVEL_HOLD, FLASH_LEVEL_SET, MARK_TARGET, TINT_TARGET, SPARK_STEP, SPARK_MOVE,
-		BARRIER_FRAME, BARRIER_CENTER, DEAD_BEAMS, ORBIT_MOVE, GROWTH_STEP,
+		BARRIER_FRAME, BARRIER_CENTER, DEAD_BEAMS, ORBIT_MOVE, GROWTH_STEP, SPAWN_TO_FEET, RAY_SPAWN, MOTE_STEP,
 		// conditions
-		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE,
+		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE, RAYS_DONE, RIBBON_DONE, MOTE_DONE,
 		// motions
 		HELIX,
 		// placements
 		CIRCLE_DROP, GLINT, AT_PARENT, TABLE_POINT, RANDOM_TARGET_BONE, RANDOM_TARGET_POINT, ACTION_TARGETS,
-		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING, WHIRL_LEAF, COLLAPSE_SPARKS, ORBIT_SPAWN, GROWTH_SPAWN,
+		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING, WHIRL_LEAF, COLLAPSE_SPARKS, ORBIT_SPAWN, GROWTH_SPAWN, RIBBON_START, EMBER_RING, SPARK_NEAR,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
 		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET, LAYOUT_SCALED_ON_TARGET,
 		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR, LAYOUT_ON_POINT, SWAY_OVERLAY, RIPPLE_SILHOUETTE, SPARK_SPRITE,
-		BARRIER_WALL, ORBIT_MODEL, GROWTH_MODEL,
+		BARRIER_WALL, ORBIT_MODEL, GROWTH_MODEL, SEQUENCE_AT_ANCHOR, PULSE_MODEL, LAYOUT_TABLE_AT_SPAWN, LIGHT_RAYS, RIBBON, MOTE_SPRITE,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -180,6 +184,10 @@ namespace fxprog
 		{ "spark_sprite", SPARK_SPRITE }, { "barrier_frame", BARRIER_FRAME }, { "barrier_center", BARRIER_CENTER },
 		{ "dead_beams", DEAD_BEAMS }, { "orbit_move", ORBIT_MOVE }, { "growth_step", GROWTH_STEP }, { "orbit_spawn", ORBIT_SPAWN },
 		{ "growth_spawn", GROWTH_SPAWN }, { "barrier_wall", BARRIER_WALL }, { "orbit_model", ORBIT_MODEL }, { "growth_model", GROWTH_MODEL },
+		{ "spawn_to_feet", SPAWN_TO_FEET }, { "ray_spawn", RAY_SPAWN }, { "mote_step", MOTE_STEP }, { "rays_done", RAYS_DONE },
+		{ "ribbon_done", RIBBON_DONE }, { "mote_done", MOTE_DONE }, { "ribbon_start", RIBBON_START }, { "ember_ring", EMBER_RING },
+		{ "spark_near", SPARK_NEAR }, { "sequence_at_anchor", SEQUENCE_AT_ANCHOR }, { "pulse_model", PULSE_MODEL },
+		{ "layout_table_at_spawn", LAYOUT_TABLE_AT_SPAWN }, { "light_rays", LIGHT_RAYS }, { "ribbon", RIBBON }, { "mote_sprite", MOTE_SPRITE },
 	};
 
 	inline Program *g_program = nullptr;
@@ -386,6 +394,17 @@ namespace fxprog
 			break;
 		}
 		case GROWTH_STEP: layouts::GrowthStep(Fld<layouts::Growth>(t, n, F_GROWTH), V(a[0])); break;   // least growth
+		case SPAWN_TO_FEET: // tick: the node's spawn point's height = its entity's feet (Berserk's, at its start)
+			if (Tick(t, n) == V(a[0])) Fld<int16_t>(t, n, F_SPAWN)[1] = *(const int16_t *)(*Fld<uint8_t *>(t, n, F_ENTITY) + 0x24);
+			break;
+		case RAY_SPAWN: // from, ticks, count, colours, speed, length, its speed, brake, width, its speed, brake: new rays in the node's table
+			if ((uint32_t)(Tick(t, n) - V(a[0])) < (uint32_t)V(a[1]))
+			{
+				const layouts::RayMotion mo = { V(a[4]), V(a[5]), V(a[6]), V(a[7]), V(a[8]), V(a[9]), V(a[10]) };
+				layouts::RaySpawn(0x20, Fld<layouts::LightRay>(t, n, F_RAYS), V(a[2]), (const uint32_t *)V(a[3]), mo);
+			}
+			break;
+		case MOTE_STEP: layouts::MoteStep(Fld<layouts::Mote>(t, n, F_MOTE), V(a[0]) != 0, V(a[1])); break;   // rising, frames
 		case SPARK_MOVE: // its direction turned, its age
 			if (Fld<layouts::CollapseSpark>(t, n, F_SPARK)->mode != -2) layouts::CollapseSparkMove(Fld<layouts::CollapseSpark>(t, n, F_SPARK));
 			break;
@@ -453,6 +472,31 @@ namespace fxprog
 	{
 		const std::vector<Val> &a = sp.place.a;
 		const Task &t = g_program->tasks[sp.task];
+		if (sp.place.op == EMBER_RING)
+		{
+			// count, sequence, scale, angle step, distance base, mask, lift shift, accel base, mask (Berserk's
+			// embers): around the spawner's spawn point from one rand angle (each: its distance's rand, then,
+			// when the pool has room, its lift's and acceleration's)
+			const int16_t *spawn = Fld<int16_t>(from, n, F_SPAWN);
+			int32_t angle = CrtRand();
+			for (int32_t k = V(a[0]); k > 0; k--)
+			{
+				const int32_t dist = (CrtRand() & V(a[5])) + V(a[4]);
+				TaskNode *f = (TaskNode *)SpawnTask(sp.task, n);
+				if (!f) continue;
+				layouts::Mote *p = Fld<layouts::Mote>(t, f, F_MOTE);
+				p->seq = (uint32_t)V(a[1]);
+				p->scale = (int16_t)V(a[2]);
+				p->pos[0] = (int16_t)((mul32(ComputeSin(angle), dist) >> 12) + spawn[0]);
+				p->pos[2] = (int16_t)((mul32(parts::ComputeCos(angle), dist) >> 12) + spawn[2]);
+				const int32_t r1 = CrtRand();
+				p->pos[1] = (int16_t)(spawn[1] - (int16_t)(r1 >> V(a[6])));
+				const int32_t r2 = CrtRand();
+				angle += V(a[3]);
+				p->accel = (int8_t)(uint8_t)(V(a[7]) - (r2 & V(a[8])));
+			}
+			return;
+		}
 		if (sp.place.op == ORBIT_SPAWN)
 		{
 			// count, tilt, angle step, turn, tilt speed base, mask (Reflect's hexagons): around the spawner's
@@ -536,6 +580,18 @@ namespace fxprog
 			pos[0] = (int16_t)(pos[0] + spread.roll(CrtRand()));
 			*Fld<int16_t>(t, m, F_SCALE) = (int16_t)scale.roll(CrtRand() >> 4);
 			DecodeLayout(t, m, ((const uint32_t *)V(a[4]))[e % (uint32_t)V(a[5])]);
+			break;
+		}
+		case RIBBON_START: // angle, angle step, wave: a ribbon around the spawner's anchor, its first angle angle + the spawner's tick x step
+			layouts::RibbonStart(Fld<layouts::Ribbon>(t, m, F_RIBBON), Fld<int16_t>(from, n, F_ANCHOR), Tick(from, n) * V(a[1]) + V(a[0]), V(a[2]));
+			break;
+		case SPARK_NEAR: // sequence, scale, mask, offset: at the spawner's anchor + (rand & mask) - offset on each axis
+		{
+			const int16_t *anchor = Fld<int16_t>(from, n, F_ANCHOR);
+			layouts::Mote *p = Fld<layouts::Mote>(t, m, F_MOTE);
+			p->seq = (uint32_t)V(a[0]);
+			p->scale = (int16_t)V(a[1]);
+			for (int k = 0; k < 3; k++) p->pos[k] = (int16_t)((CrtRand() & V(a[2])) + anchor[k] - V(a[3]));
 			break;
 		}
 		case GROWTH_SPAWN: // wall, wall from, grow, size, growth, brake, size shift: above the spawner's barrier at the wall's top this tick (scaled by the barrier's)
@@ -785,6 +841,36 @@ namespace fxprog
 			layouts::RippleSilhouetteTick(*Fld<uint8_t *>(t, n, F_ENTITY), Fld<int16_t>(t, n, F_ANCHOR), Tick(t, n) - V(a[0]), V(a[1]),
 			                              Fld<int32_t>(t, n, F_RIPPLE), layouts::RippleTablesAt((uint32_t)V(a[2])));
 			break;
+		case SEQUENCE_AT_ANCHOR: // sequence, from, rotation a, b: at the node's anchor, frame = the tick - from
+			layouts::DrawSequenceSprite(Fld<int16_t>(t, n, F_ANCHOR), fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])), (int16_t)(Tick(t, n) - V(a[1])),
+			                            V(a[2]), V(a[3]), PacketCursor());
+			break;
+		case PULSE_MODEL: // model, from, ticks, scale base, fade base, draw mode: at the node's anchor, pulsing and fading
+			layouts::PulseModelDraw((uint32_t)V(a[0]), Fld<int16_t>(t, n, F_ANCHOR), Tick(t, n) - V(a[1]), V(a[2]), V(a[3]), V(a[4]), (uint32_t)V(a[5]),
+			                        PacketCursor());
+			break;
+		case LAYOUT_TABLE_AT_SPAWN: // words: the node's layout through the table callback, the camera its frame, at its spawn point
+		{
+			layouts::TableArg table;
+			table.m = Camera();
+			memcpy(table.offset, Fld<int16_t>(t, n, F_SPAWN), sizeof(table.offset));
+			table.flags = (uint32_t)V(a[0]);
+			table.morph = arg.morph;
+			table.cursor = arg.cursor;
+			const int frames = layouts::PlayWithTable(Fld<uint8_t>(t, n, F_LAYOUT), &table);
+			left = left < 0 ? frames : left | frames;
+			break;
+		}
+		case LIGHT_RAYS: // the node's rays drawn around its anchor, then moved (the count drawn: its drawn field)
+			*Fld<int32_t>(t, n, F_DRAWN) = layouts::RayDraw(0x20, Fld<layouts::LightRay>(t, n, F_RAYS), Fld<int16_t>(t, n, F_ANCHOR), PacketCursor());
+			break;
+		case RIBBON: // push ticks, per tick, angle step, fade, strip window, reset window: the node's ribbon a tick
+		{
+			const layouts::RibbonMotion mo = { V(a[0]), V(a[1]), V(a[2]), V(a[3]) };
+			layouts::RibbonTick(Fld<layouts::Ribbon>(t, n, F_RIBBON), Tick(t, n), mo, (const uint8_t *)V(a[4]), (const uint8_t *)V(a[5]), PacketCursor());
+			break;
+		}
+		case MOTE_SPRITE: layouts::MoteDraw(Fld<layouts::Mote>(t, n, F_MOTE), PacketCursor()); break;   // the node's sprite sequence
 		case BARRIER_WALL: // wall, from, ticks, grow, fade: the wall through the node's barrier, growing, its texture scrolling, then fading
 		{
 			const int32_t e = Tick(t, n) - V(a[1]);
@@ -983,6 +1069,9 @@ namespace fxprog
 		case TICK_AT_NODE_END: ends = Tick(t, n) >= *Fld<int16_t>(t, n, F_END); break;   // its own frame count
 		case LEAF_GONE: ends = Fld<layouts::WhirlLeaf>(t, n, F_LEAF)->scale <= 0; break;
 		case SPARK_GONE: ends = Fld<layouts::CollapseSpark>(t, n, F_SPARK)->mode == -2; break;
+		case RAYS_DONE: ends = Tick(t, n) > V(t.end.a[0]) && *Fld<int32_t>(t, n, F_DRAWN) == 0; break;   // after that tick, once no ray was drawn
+		case RIBBON_DONE: ends = Tick(t, n) > V(t.end.a[0]) && Fld<layouts::Ribbon>(t, n, F_RIBBON)->count < 2; break;   // after that tick, fewer than 2 positions
+		case MOTE_DONE: ends = (int8_t)Fld<layouts::Mote>(t, n, F_MOTE)->counter >= V(t.end.a[0]); break;   // its frame reached that
 		default: break;
 		}
 		if (!ends) return 0;

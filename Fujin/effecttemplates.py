@@ -1,5 +1,5 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's), and the description an effect made
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's, Berserk's), and the description an effect made
 of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
@@ -8,7 +8,7 @@ from its source effect's whole description, keeping what its parts bring: all of
 together are that effect exactly (whatever order they were added in), some of them a smaller effect
 of the same kind. Parts of two families never mix: their nodes and directors differ (the heal
 ring's effect-library nodes and per-action director, Hypnotize's plain nodes and master, Antidote's
-one layout on the target, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's and Reflect's cycles of one task per action).
+one layout on the target, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's and Berserk's cycles of one task per action).
 
 No Qt here.
 """
@@ -145,6 +145,23 @@ TEMPLATES = {
                          ("reflect",), "Hexagon models orbiting a point that climbs the wall, tilting, then squashed and faded."),
     "reflect_rings": ("growing above the target", "Moving parts", "per_action_barrier", 106, "rings", ("ring",), (),
                       ("reflect",), "Ring models growing above the target, one every few wall steps."),
+    # Berserk's family (one main task per action: light rays; swirls, a flash, a glow, a burst, embers, sparks)
+    "berserk": ("one per action, rays around its target", "How the effect starts", "per_action_rays", 108, "rays",
+                ("main",), (), (), "One main task per action, every few ticks (not while a young one runs on that "
+                "target): light rays turning around the target's effect position, fading; a screen fade, its sound, "
+                "the result, its end once the rays are gone (Berserk's way)."),
+    "berserk_swirls": ("spiralling in", "Moving parts", "per_action_rays", 108, "swirls", ("swirl",), (), ("berserk",),
+                       "Textured ribbons spiralling in towards the target's effect position."),
+    "berserk_flash": ("a flash at the target", "Drawn by another part", "per_action_rays", 108, "flash", (), (),
+                      ("berserk",), "A sprite sequence at the target's effect position."),
+    "berserk_glow": ("a pulsing glow", "Drawn by another part", "per_action_rays", 108, "glow", (), (), ("berserk",),
+                     "A model at the target's effect position, pulsing and fading."),
+    "berserk_burst": ("at the target's feet", "Drawn by another part", "per_action_rays", 108, "burst", (), (),
+                      ("berserk",), "A layout at the target's feet, its objects' draw modes from a table."),
+    "berserk_embers": ("rising around the target", "Moving parts", "per_action_rays", 108, "embers", ("ember",), (),
+                       ("berserk",), "Sprites rising from a circle around the target's feet."),
+    "berserk_sparks": ("around the target", "Moving parts", "per_action_rays", 108, "sparks", ("spark",), (),
+                       ("berserk",), "Sprites at random points around the target's effect position."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout",
@@ -152,7 +169,7 @@ STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout
           "per_action_ring": "flash_ring", "per_action_aura": "aura",
           "per_action_wind": "wind", "per_action_flash": "blind",
           "per_action_stare": "stare", "per_action_sway": "zombie",
-          "per_action_burst": "flare", "per_action_barrier": "reflect"}
+          "per_action_burst": "flare", "per_action_barrier": "reflect", "per_action_rays": "berserk"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
             "on_target": "One layout on the target (Antidote's kind)",
@@ -166,7 +183,8 @@ FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "per_action_stare": "From the caster, then on its target (Petrify Stare's kind)",
             "per_action_sway": "One per action, its target swaying (Zombie's kind)",
             "per_action_burst": "One per action, a burst on its target (Flare's kind)",
-            "per_action_barrier": "One per action, a wall around its target (Reflect's kind)"}
+            "per_action_barrier": "One per action, a wall around its target (Reflect's kind)",
+            "per_action_rays": "One per action, rays around its target (Berserk's kind)"}
 
 
 @functools.cache

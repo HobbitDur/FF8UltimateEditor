@@ -266,6 +266,8 @@ CYCLES = {
     124: ("mag123.tim", 34, "tint.ticks 16\ntint.shift 8\nsparks.count 4\nsilhouette.from 30\nflash.level 1500\n"
                             "burst.depth.shift 4\n"),
     106: ("mag105.tim", 32, "hexagons.count 5\nwall.grow 15\nrings.every 4\nbeams.count 6\ntiming.size_shift 3\n"),
+    108: ("mag107.tim", 51, "rays.count 5\nembers.count 2\nswirls.per_tick 3\nglow.ticks 12\nsparks.every 3\n"
+                            "rays.width 200\n"),
 }
 
 
@@ -285,7 +287,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare and Reflect from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect and Berserk from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -420,3 +422,18 @@ def test_reflect_description_compiles():
     assert any(line.startswith("spawn_every ") and " orbit_spawn " in line for line in lines)
     assert any(line.startswith("spawn_every ") and " growth_spawn " in line for line in lines)
     assert "event dead_beams $13 $31 3" in lines and any(" barrier_wall " in line for line in lines)
+
+
+def test_berserk_description_compiles():
+    """Berserk: the main task's spawn point on the target's feet, its swirls, embers and sparks (the
+    embers and sparks two tasks of one pool), its rays spawned after them and drawn last; it ends once
+    no ray was drawn."""
+    program = compile_program(load_description(108))
+    lines = program.splitlines()
+    assert "tick spawn_to_feet 0" in lines and "end rays_done $6" in lines
+    assert [line.split()[5] for line in lines if line.startswith("spawn_every ")] == ["ribbon_start", "ember_ring", "spark_near"]
+    assert any(line.startswith("event ray_spawn ") for line in lines)
+    ops = ("sequence_at_anchor", "pulse_model", "layout_table_at_spawn", "light_rays")
+    draws = [next(op for op in ops if f" {op}" in line) for line in lines if line.startswith("draw ") and any(f" {op}" in line for op in ops)]
+    assert draws == list(ops)
+    assert "end ribbon_done $16" in lines and lines.count("draw 5 0 - - mote_sprite") == 1

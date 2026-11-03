@@ -1,0 +1,1031 @@
+{
+ "format": 1,
+ "effect": 108,
+ "name": "Berserk",
+ "doc": "Berserk (spell): one main task per action, in turn (one every 10 ticks, not while one of 43 ticks or less runs on that target): ribbons spiralling in towards the target, a flash and a pulsing glow, a burst layout at its feet, embers rising around it, sparks, light rays turning around it; the result at 43, the end once the rays are gone.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6CFCE0",
+   "setup": "0x6CFCD0",
+   "root": "0x6CFD70"
+  },
+  "memory": {
+   "texture_file": "0x2521AC0",
+   "magic_buffer": "0x2521AC4",
+   "ctx": "0x2521AC8",
+   "root_pool": "0x2521AD0",
+   "packet_cursor": "0x2521AE4",
+   "root_queue": "0x2521B18"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "sparks.seq": {
+   "kind": "seq",
+   "address": "0x12E6C48",
+   "size": 404
+  },
+  "flash.seq": {
+   "kind": "seq",
+   "address": "0x12E6DDC",
+   "size": 188
+  },
+  "embers.seq": {
+   "kind": "seq",
+   "address": "0x12E6E98",
+   "size": 376
+  },
+  "glow": {
+   "kind": "model",
+   "address": "0x12E7010",
+   "size": 2992,
+   "doc": "a prim model (drawn by 0x572200)"
+  },
+  "burst": {
+   "kind": "layout",
+   "address": "0x12E7BC0",
+   "size": 15892
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x12EB9D4",
+   "size": 2360
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x12EC30C",
+   "size": 4
+  },
+  "strip": {
+   "kind": "table",
+   "address": "0x12EC310",
+   "size": 8,
+   "doc": "the swirls' texture window (a RECT)"
+  },
+  "reset": {
+   "kind": "table",
+   "address": "0x12EC318",
+   "size": 8,
+   "doc": "the texture window restored after each of their quads"
+  },
+  "ray_colours": {
+   "kind": "table",
+   "address": "0x12EC320",
+   "size": 16,
+   "doc": "the rays' centre colour, its fade a tick, their middle colour, its fade"
+  },
+  "burst_words": {
+   "kind": "table",
+   "address": "0x12EC330",
+   "size": 28,
+   "doc": "one word per object of the burst layout: its draw mode (bit 0x10000000: its offset through the camera, its rotation kept)"
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12EC34C",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the layout's blended vertex frames (after the main, swirl and particle nodes).",
+  "arenas": [
+   "0x554C",
+   "0x1D54C"
+  ],
+  "morph": "0x52CC"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "main",
+  "every": "$timing.every",
+  "place": [
+   "action_target",
+   0,
+   "@burst",
+   0,
+   "0xF1",
+   "$timing.busy_tick",
+   0,
+   0,
+   0
+  ]
+ },
+ "pools": [
+  {
+   "key": "mains",
+   "queue": "0x2521B08",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 2244,
+   "count": 3
+  },
+  {
+   "key": "swirls",
+   "queue": "0x2521AF8",
+   "storage": "0x1A4C",
+   "in_magic_buffer": true,
+   "size": 1056,
+   "count": 12
+  },
+  {
+   "key": "particles",
+   "queue": "0x2521AE8",
+   "storage": "0x4BCC",
+   "in_magic_buffer": true,
+   "size": 28,
+   "count": 64
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one main task per action, in turn (not while a young one runs on that target); each main task's clock: its sound, a screen fade, its result; it ends once its rays are gone (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "swirls",
+   "title": "Swirls",
+   "doc": "Textured ribbons spiralling in towards the target's effect position"
+  },
+  {
+   "id": 2,
+   "key": "flash",
+   "title": "Flash",
+   "doc": "A sprite sequence at the target's effect position"
+  },
+  {
+   "id": 3,
+   "key": "glow",
+   "title": "Glow",
+   "doc": "A model at the target's effect position, pulsing and fading"
+  },
+  {
+   "id": 4,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "The burst layout at the target's feet (its objects' draw modes from a table)"
+  },
+  {
+   "id": 5,
+   "key": "embers",
+   "title": "Embers",
+   "doc": "Sprites rising from a circle around the target's feet"
+  },
+  {
+   "id": 6,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sprites at random points around the target's effect position"
+  },
+  {
+   "id": 7,
+   "key": "rays",
+   "title": "Rays",
+   "doc": "Light rays turning around the target's effect position, fading"
+  }
+ ],
+ "groups": [
+  {
+   "key": "embers.dist",
+   "label": "Distance",
+   "doc": "Base + (rand & Mask) from the target's feet point"
+  },
+  {
+   "key": "embers.accel",
+   "label": "Acceleration",
+   "doc": "(int8)(Base - (rand & Mask)) a tick (negative: up)"
+  },
+  {
+   "key": "sparks.spread",
+   "label": "Spread",
+   "doc": "(rand & Mask) - Offset on each axis"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's main task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.busy_tick",
+   "part": "timing",
+   "label": "Busy tick",
+   "doc": "Not while a main task on that target is at this tick or before (the cycle restarts; -1: never)",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 43,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the target's effect position when the main tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 257,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the main tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 43,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The main task ends from this tick, once no ray is left",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 53,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade_tick",
+   "part": "timing",
+   "label": "Fade tick",
+   "doc": "The engine's screen fade starts when the main tick == this",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "swirls.last_tick",
+   "part": "swirls",
+   "label": "Last tick",
+   "doc": "A swirl is spawned at main ticks 0 .. this",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "swirls.angle",
+   "part": "swirls",
+   "label": "Angle",
+   "doc": "Its first angle: this + the main tick x Angle step",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "swirls.angle_step",
+   "part": "swirls",
+   "label": "Angle step",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "swirls.amp",
+   "part": "swirls",
+   "label": "Wave",
+   "doc": "Its radius's wave amplitude (4096 = its own)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "swirls.push_ticks",
+   "part": "swirls",
+   "label": "Push ticks",
+   "doc": "Positions are pushed over its ticks 0 .. this...",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "swirls.per_tick",
+   "part": "swirls",
+   "label": "Per tick",
+   "doc": "...this many a tick (32 kept)...",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "swirls.step",
+   "part": "swirls",
+   "label": "Step",
+   "doc": "...this far apart (angle)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "swirls.fade",
+   "part": "swirls",
+   "label": "Fade",
+   "doc": "Its positions' brightness change a tick (x 8)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": -40,
+   "unit": "plain"
+  },
+  {
+   "key": "swirls.end_after",
+   "part": "swirls",
+   "label": "End after",
+   "doc": "It ends after this tick once fewer than two positions are left",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.from",
+   "part": "flash",
+   "label": "From tick",
+   "doc": "The flash sequence from this main tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.ticks",
+   "part": "flash",
+   "label": "Ticks",
+   "doc": "...for this many (frame = tick - from)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.from",
+   "part": "glow",
+   "label": "From tick",
+   "doc": "The glow from this main tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.ticks",
+   "part": "glow",
+   "label": "Ticks",
+   "doc": "...for this many",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.scale",
+   "part": "glow",
+   "label": "Size",
+   "doc": "Its size: sin(e x 1024 / ticks) + this (4096 = its own)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.fade",
+   "part": "glow",
+   "label": "Fade",
+   "doc": "Its fade: e x 2048 / ticks + this",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.from",
+   "part": "burst",
+   "label": "From tick",
+   "doc": "The burst layout from this main tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.ticks",
+   "part": "burst",
+   "label": "Ticks",
+   "doc": "...for this many",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.from",
+   "part": "embers",
+   "label": "From tick",
+   "doc": "Embers spawned from this main tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.last",
+   "part": "embers",
+   "label": "Last tick",
+   "doc": "...to this one...",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 31,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.count",
+   "part": "embers",
+   "label": "Count",
+   "doc": "...this many a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.angle_step",
+   "part": "embers",
+   "label": "Angle step",
+   "doc": "Their angles apart around the feet point",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 1365,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.dist.base",
+   "part": "embers",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 150,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.dist.mask",
+   "part": "embers",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.rise_shift",
+   "part": "embers",
+   "label": "Lift shift",
+   "doc": "Lifted by rand >> this",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.accel.base",
+   "part": "embers",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -128,
+   "max": 255,
+   "default": -2,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.accel.mask",
+   "part": "embers",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 127,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.frames",
+   "part": "embers",
+   "label": "Frames",
+   "doc": "An ember ends at this frame",
+   "type": "i16",
+   "min": 1,
+   "max": 127,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.from",
+   "part": "sparks",
+   "label": "From tick",
+   "doc": "Sparks spawned from this main tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.last",
+   "part": "sparks",
+   "label": "Last tick",
+   "doc": "...to this one...",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.every",
+   "part": "sparks",
+   "label": "Every",
+   "doc": "...one every this many",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.spread.mask",
+   "part": "sparks",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 511,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.spread.offset",
+   "part": "sparks",
+   "label": "Offset",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.frames",
+   "part": "sparks",
+   "label": "Frames",
+   "doc": "A spark ends at this frame",
+   "type": "i16",
+   "min": 1,
+   "max": 127,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "rays.from",
+   "part": "rays",
+   "label": "From tick",
+   "doc": "Rays spawned from this main tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "rays.ticks",
+   "part": "rays",
+   "label": "Ticks",
+   "doc": "...for this many...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "rays.count",
+   "part": "rays",
+   "label": "Count",
+   "doc": "...this many a tick (the table holds 32)",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "rays.speed",
+   "part": "rays",
+   "label": "Turn",
+   "doc": "Their turn a tick (its side random)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "rays.length",
+   "part": "rays",
+   "label": "Length",
+   "doc": "Their first length (x 8)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 160,
+   "unit": "plain"
+  },
+  {
+   "key": "rays.length_vel",
+   "part": "rays",
+   "label": "Length speed",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2880,
+   "unit": "plain"
+  },
+  {
+   "key": "rays.length_acc",
+   "part": "rays",
+   "label": "Length brake",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -32,
+   "unit": "plain"
+  },
+  {
+   "key": "rays.width",
+   "part": "rays",
+   "label": "Width",
+   "doc": "Their first width (x 8)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 160,
+   "unit": "plain"
+  },
+  {
+   "key": "rays.width_vel",
+   "part": "rays",
+   "label": "Width speed",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "rays.width_acc",
+   "part": "rays",
+   "label": "Width brake",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -20,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "main",
+   "pool": "mains",
+   "size": 2244,
+   "function": "0x6CFF60",
+   "doc": "One per action: its spawn point at the target's effect point 0xF1 on its feet, its anchor at its effect position; swirls over its first ticks, a flash and a glow, embers, sparks, rays, a screen fade, the burst layout at the spawn point (through the table callback, the camera its frame), the rays drawn and moved; its sound, the result; it ends once no ray is left.",
+   "node": [
+    "counter",
+    "action",
+    "drawn",
+    "entity",
+    "spawn",
+    "anchor",
+    "rays",
+    [
+     "layout",
+     668
+    ]
+   ],
+   "every_tick": [
+    [
+     "spawn_to_feet",
+     0
+    ]
+   ],
+   "spawns": [
+    {
+     "task": "swirl",
+     "window": [
+      0,
+      "$swirls.last_tick"
+     ],
+     "every": 1,
+     "place": [
+      "ribbon_start",
+      "$swirls.angle",
+      "$swirls.angle_step",
+      "$swirls.amp"
+     ]
+    },
+    {
+     "task": "ember",
+     "window": [
+      "$embers.from",
+      "$embers.last"
+     ],
+     "every": 1,
+     "place": [
+      "ember_ring",
+      "$embers.count",
+      "@embers.seq",
+      "0x800",
+      "$embers.angle_step",
+      "$embers.dist.base",
+      "$embers.dist.mask",
+      "$embers.rise_shift",
+      "$embers.accel.base",
+      "$embers.accel.mask"
+     ]
+    },
+    {
+     "task": "spark",
+     "window": [
+      "$sparks.from",
+      "$sparks.last"
+     ],
+     "every": "$sparks.every",
+     "place": [
+      "spark_near",
+      "@sparks.seq",
+      "0x1000",
+      "$sparks.spread.mask",
+      "$sparks.spread.offset"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "ray_spawn",
+     "$rays.from",
+     "$rays.ticks",
+     "$rays.count",
+     "@ray_colours",
+     "$rays.speed",
+     "$rays.length",
+     "$rays.length_vel",
+     "$rays.length_acc",
+     "$rays.width",
+     "$rays.width_vel",
+     "$rays.width_acc"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "flash",
+     "within": [
+      "$flash.from",
+      "$flash.ticks"
+     ],
+     "draw": [
+      "sequence_at_anchor",
+      "@flash.seq",
+      "$flash.from",
+      "0x2000",
+      -2048
+     ]
+    },
+    {
+     "part": "glow",
+     "within": [
+      "$glow.from",
+      "$glow.ticks"
+     ],
+     "draw": [
+      "pulse_model",
+      "@glow",
+      "$glow.from",
+      "$glow.ticks",
+      "$glow.scale",
+      "$glow.fade",
+      "0xF0"
+     ]
+    },
+    {
+     "part": "burst",
+     "within": [
+      "$burst.from",
+      "$burst.ticks"
+     ],
+     "draw": [
+      "layout_table_at_spawn",
+      "@burst_words"
+     ]
+    },
+    {
+     "part": "rays",
+     "draw": [
+      "light_rays"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "screen_fade_at",
+     "$timing.fade_tick",
+     0,
+     1,
+     1,
+     "0x80"
+    ],
+    [
+     "sound_3d_at_position",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume",
+     0
+    ],
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "rays_done",
+    "$timing.end_tick"
+   ]
+  },
+  {
+   "key": "swirl",
+   "pool": "swirls",
+   "size": 1056,
+   "function": "0x6D0C20",
+   "doc": "A textured ribbon spiralling in towards its main task's effect position: positions pushed over its first ticks, their brightness rising then falling, their angles waving; it ends once fewer than two are left.",
+   "node": [
+    "counter",
+    "ribbon"
+   ],
+   "draws": [
+    {
+     "part": "swirls",
+     "draw": [
+      "ribbon",
+      "$swirls.push_ticks",
+      "$swirls.per_tick",
+      "$swirls.step",
+      "$swirls.fade",
+      "@strip",
+      "@reset"
+     ]
+    }
+   ],
+   "end": [
+    "ribbon_done",
+    "$swirls.end_after"
+   ]
+  },
+  {
+   "key": "ember",
+   "pool": "particles",
+   "size": 28,
+   "function": "0x6D1250",
+   "doc": "A sprite sequence rising (decelerating) from the circle it was spawned on, its frame its counter.",
+   "node": [
+    "mote"
+   ],
+   "draws": [
+    {
+     "part": "embers",
+     "draw": [
+      "mote_sprite"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "mote_step",
+     1,
+     "$embers.frames"
+    ]
+   ],
+   "end": [
+    "mote_done",
+    "$embers.frames"
+   ]
+  },
+  {
+   "key": "spark",
+   "pool": "particles",
+   "size": 28,
+   "doc": "A sprite sequence in place, its frame its counter (the embers' task in the original, its sequence another).",
+   "node": [
+    "mote"
+   ],
+   "draws": [
+    {
+     "part": "sparks",
+     "draw": [
+      "mote_sprite"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "mote_step",
+     0,
+     "$sparks.frames"
+    ]
+   ],
+   "end": [
+    "mote_done",
+    "$sparks.frames"
+   ]
+  }
+ ]
+}

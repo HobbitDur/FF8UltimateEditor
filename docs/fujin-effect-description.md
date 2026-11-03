@@ -738,3 +738,41 @@ Potion's description is the same with its own sequences and sound.
        models, the camera track (1968 bytes), the sound, the sin / cos table, "mag105.tim".
      - *Fujin:* its tabs (Timing, Wall, Hexagons, Rings); a fourteenth family in the + menu, "One
        per action, a wall around its target (Reflect's kind)": Wall (the start), Hexagons, Rings.
+   - **Berserk (108)** (FFNx 2049d2ec): the cycle director (not while a main task of 43 ticks or less runs
+     on that target); per action ribbons spiralling in, a flash and a pulsing glow, a burst layout at
+     the target's feet, embers rising, sparks, light rays turning around the target; the result at
+     43, the end once the rays are gone.
+     - *Shared:* the cycle director and its busy wait, the table callback (Aura's: one word per
+       object for its draw mode; now with an offset, Berserk's spawn point, the camera its frame),
+       the sequence sprite, the texture windows and the Z rotation (Reflect's), `screen_fade_at`,
+       `sound_3d_at_position`, `heal_action_at`, the plain spawns (windows, every few ticks).
+     - *Added:*
+       - the library's light rays (`fx_rays.h`, Berserk's 0x6D0B40 / 0x6D0600: a table of 32 rays,
+         each a Gouraud triangle + quad turning around a point, fading, growing): the node fields
+         `rays` (0x600 bytes) and `drawn` (the rays drawn this tick), the action `ray_spawn` (from,
+         ticks, count, colours, turn, length, its speed and brake, width, its speed and brake), the
+         draw `light_rays`, the end `rays_done` (after a tick, once no ray was drawn);
+       - the library's swirl ribbon (`fx_ribbon.h`, 0x6D0C20: up to 32 positions spiralling in,
+         textured Gouraud quads between texture windows): the node field `ribbon`, the placement
+         `ribbon_start` (angle, step a spawner tick, wave), the draw `ribbon` (push ticks, per
+         tick, angle step, fade, the two windows' RECTs), the end `ribbon_done` (after a tick, fewer
+         than two positions);
+       - the library's sprite motes (0x6D1250: a sequence in place, frame its counter; rising ones
+         decelerate): the node field `mote`, the placements `ember_ring` (count, sequence, scale,
+         angle step, distance base / mask, lift shift, acceleration base / mask: CRT rand in the
+         original's order) and `spark_near` (sequence, scale, mask, offset), the action `mote_step`
+         (rising, frames), the draw `mote_sprite`, the end `mote_done` (frames); the original's one
+         particle task is two here (embers and sparks, one pool);
+       - the draws `sequence_at_anchor` (sequence, from, rotation a, b), `pulse_model` (model,
+         from, ticks, scale base, fade base, draw mode: the library's `PulseModelDraw`) and
+         `layout_table_at_spawn` (the words); the action `spawn_to_feet` (tick: the spawn point's
+         height on the entity's feet).
+     - *Inputs* (`BerserkParams`): the cycle, sound, damage, end and fade ticks, the swirls (last
+       tick, angle, step, wave, pushes, fade, end), the flash, glow and burst windows (the glow's
+       size and fade), the embers and sparks (windows, count, spacing, distance, lift, acceleration,
+       spread, frames), the rays (window, count, turn, length, width and their motion). Data: the
+       three sequences, the glow model, the burst layout (15892 bytes), the camera track (2360
+       bytes), the sound, the texture windows, the ray colours, the burst's words, "mag107.tim".
+     - *Fujin:* its tabs (Timing, Swirls, Flash, Glow, Burst, Embers, Sparks, Rays); a fifteenth
+       family in the + menu, "One per action, rays around its target (Berserk's kind)": Rays (the
+       start), Swirls, Flash, Glow, Burst, Embers, Sparks.
