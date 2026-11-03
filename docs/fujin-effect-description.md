@@ -1174,3 +1174,9 @@ Potion's description is the same with its own sequences and sound.
        and spread phase (until, radius, height spread, ring height). Data: the sound, the camera track,
        "mag004-034.tim".
      - *Fujin:* its tab (Emitter); no + menu family.
+   - **Confuse (36)** (FFNx 4f772f37; the spell; the act family with Drain's master, Wind Blast's
+     description): the actor pools, one emitter per action - its sound, the actor system around its
+     target, the target's chain transformation, a camera shake and a screen overlay, the result.
+     - *Inputs* (`ConfuseParams`): the emitter's sound, shake, chain, release and damage ticks, the actor
+       system. Data: the sound, the camera track, "mag035.tim".
+     - *Fujin:* its tabs (Emitter, Actor system); no + menu family.

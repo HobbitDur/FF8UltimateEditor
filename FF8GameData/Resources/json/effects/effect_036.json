@@ -1,0 +1,244 @@
+{
+ "format": 1,
+ "effect": 36,
+ "name": "Confuse",
+ "doc": "Confuse (spell; the act family, Drain's master): once its children are gone the actor pools, then one emitter per action - its sound, the actor system around its target, the target's chain transformation, a camera shake and a screen overlay, the master's release, the result. Its parts are the port's code (FFNx mag036_confuse.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x85F4C0",
+   "setup": "0x85F4E0",
+   "root": "0x85F620"
+  },
+  "memory": {
+   "texture_file": "0x26A8E7C",
+   "packet_cursor": "0x26A8E80",
+   "packet_limit": "0x26A8E9C",
+   "arena_a": "0x26A9B94",
+   "limit_a": "0x26A8F8C",
+   "arena_b": "0x26A9B90",
+   "limit_b": "0x26A8F88",
+   "arena_top": "0x26A9BBC",
+   "init_flag_a": "0x26A9BB8",
+   "init_flag_b": "0x26A8F84",
+   "cam_ptr_a": "0x26A9BB0",
+   "cam_ptr_b": "0x26A8EA0",
+   "root_queue": "0x26A8F70",
+   "root_pool": "0x26A8EA8",
+   "particle_pool": "0x26A9B9C",
+   "actor_pool": "0x26A9BB4",
+   "particle_next": "0x26A8F80",
+   "actor_next": "0x26A9BA8",
+   "cursor_c": "0x26A9B98",
+   "cursor_d": "0x26A8E84",
+   "count_a": "0x26A9BAA",
+   "count_b": "0x26A9B9A"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 36,
+  "from": "0x26A8DB8",
+  "size": "0xE0C",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15E637C",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15E5674",
+   "size": 3336
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15D97F8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xE000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0xCA8",
+    "actor_pool": "0x8340"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x26A9A20",
+   "storage": "0x26A9A30",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "overlay",
+   "queue": "0x26A8DB8",
+   "storage": "0x26A8DC8",
+   "size": 60,
+   "count": 3,
+   "keep": true,
+   "doc": "the screen overlay (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x26A9780",
+   "storage": "0x26A8F90",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "shake",
+   "queue": "0x26A9A10",
+   "storage": "0x26A9790",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the camera shake (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the camera shake and screen overlay, the target's chain transformation, the master's release, the damage"
+  },
+  {
+   "id": 0,
+   "key": "actors",
+   "title": "Actor system",
+   "doc": "The actor system around the target (its actor data the exe's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.shake",
+   "part": "emitter",
+   "label": "Shake tick",
+   "doc": "The camera shake and the screen overlay at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.chain",
+   "part": "emitter",
+   "label": "Chain tick",
+   "doc": "The target's chain transformation (kind 4) at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The damage of its target from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "actors",
+   "label": "Start",
+   "doc": "Its start tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "actors",
+   "label": "Length",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "actors",
+   "label": "Mode",
+   "doc": "Its placement mode",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x85F840",
+   "code": "0x85F840",
+   "native": "0x85F840",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the actor system, the chain transformation, the shake and overlay, the master's release, the result."
+  }
+ ]
+}
