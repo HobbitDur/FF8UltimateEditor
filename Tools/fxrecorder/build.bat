@@ -29,15 +29,25 @@ rem FX_LAB_MODULE (older sources: Cure)
 set "FX=%~dp0..\..\ExternalTools\FFNx\fx"
 set LAB=
 if not exist "%FX%\fx_params.h" goto compile
-set MODULES=
-for /f "delims=" %%f in ('findstr /m /c:"FX_LAB_MODULE(register" "%FX%\mag*.cpp" 2^>nul') do set MODULES=!MODULES! "%%f"
-if "!MODULES!"=="" set MODULES="%FX%\mag001_cure.cpp"
+rem (the modules listed in a response file: more of them than a command line holds)
+set "RSP=obj\lab.rsp"
+if exist "%RSP%" del "%RSP%"
+for /f "delims=" %%f in ('findstr /m /c:"FX_LAB_MODULE(register" "%FX%\mag*.cpp" 2^>nul') do echo "%%f">>"%RSP%"
+if not exist "%RSP%" echo "%FX%\mag001_cure.cpp">"%RSP%"
+set ACT=
+set ACTORS=
+set GFC=
+for /f "usebackq delims=" %%f in ("%RSP%") do (
+  findstr /m /c:"act_engine.h" %%f >nul 2>nul && set ACT=1
+  findstr /m /c:"fx_actors.h" %%f >nul 2>nul && set ACTORS=1
+  findstr /m /c:"gfc_engine.h" %%f >nul 2>nul && set GFC=1
+)
 rem the modules built on the actor engine (act_engine.h) need it and its actor system compiled in
-findstr /m /c:"act_engine.h" !MODULES! >nul 2>nul && if exist "%FX%\act_engine.cpp" set MODULES=!MODULES! "%FX%\act_engine.cpp"
-findstr /m /c:"fx_actors.h" !MODULES! >nul 2>nul && if exist "%FX%\fx_actors.cpp" set MODULES=!MODULES! "%FX%\fx_actors.cpp"
+if defined ACT if exist "%FX%\act_engine.cpp" echo "%FX%\act_engine.cpp">>"%RSP%"
+if defined ACTORS if exist "%FX%\fx_actors.cpp" echo "%FX%\fx_actors.cpp">>"%RSP%"
 rem the modules built on the GF cinematic engine (gfc_engine.h) need it compiled in
-findstr /m /c:"gfc_engine.h" !MODULES! >nul 2>nul && if exist "%FX%\gfc_engine.cpp" set MODULES=!MODULES! "%FX%\gfc_engine.cpp"
-set LAB=/DFF8_FX_LAB /I"%FX%" !MODULES!
+if defined GFC if exist "%FX%\gfc_engine.cpp" echo "%FX%\gfc_engine.cpp">>"%RSP%"
+set LAB=/DFF8_FX_LAB /I"%FX%" @"%RSP%"
 :compile
 cl /nologo /std:c++20 /EHa /W3 /O1 /MT /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS fxrecorder.cpp %LAB% /Foobj\ /Fefxrecorder.exe /link /BASE:0x10000000 /DYNAMICBASE:NO /FIXED /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%

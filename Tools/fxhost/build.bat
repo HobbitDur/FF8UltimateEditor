@@ -32,11 +32,17 @@ set ACTORS=
 if exist "%FX%\fx_actors.cpp" set ACTORS="%FX%\act_engine.cpp" "%FX%\fx_actors.cpp"
 rem the effect ports with parameters (FX_LAB_MODULE): a program runs their code as its pieces (Doom's kind), with
 rem its parameters - only with sources that have the act engine's registered modules (register_mod)
+rem (listed in a response file: more of them than a command line holds)
 set PORTS=
+set "RSP=obj\ports.rsp"
+if exist "%RSP%" del "%RSP%"
 findstr /m /c:"register_mod(" "%FX%\act_engine.h" >nul 2>nul || goto host
-for /f "delims=" %%f in ('findstr /m /c:"FX_LAB_MODULE(register" "%FX%\mag*.cpp" 2^>nul') do set PORTS=!PORTS! "%%f"
-findstr /m /c:"gfc_engine.h" !PORTS! >nul 2>nul && if exist "%FX%\gfc_engine.cpp" set PORTS=!PORTS! "%FX%\gfc_engine.cpp"
-if not "!PORTS!"=="" set PORTS=/DFF8_FX_LAB !PORTS!
+for /f "delims=" %%f in ('findstr /m /c:"FX_LAB_MODULE(register" "%FX%\mag*.cpp" 2^>nul') do echo "%%f">>"%RSP%"
+if not exist "%RSP%" goto host
+set GFC=
+for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"gfc_engine.h" %%f >nul 2>nul && set GFC=1
+if defined GFC if exist "%FX%\gfc_engine.cpp" echo "%FX%\gfc_engine.cpp">>"%RSP%"
+set PORTS=/DFF8_FX_LAB @"%RSP%"
 :host
 cl /nologo /std:c++20 /EHa /W3 /O1 /MT /LD /bigobj /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS /I"%FX%" fxhost.cpp %ACTORS% !PORTS! /Foobj\ /FeFujinEffects.dll /link /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%

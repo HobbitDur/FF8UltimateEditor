@@ -1062,3 +1062,12 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`TripleParams`): the emitter's sound and release tick, the runes' step, height, spin,
        fades, shrink and column tick, the motes (until, radius). Data: the sound, "mag020.tim".
      - *Fujin:* its tabs (Emitter, Runes); no + menu family (Double's family describes its sibling).
+   - **Bio (22)** (FFNx b2602950; the spell; a port director, Ray-Bomb's kind): one emitter per action -
+     the stage wobbling, acid pools morphing around the target, bubbles and splashes, a boiling acid
+     blob (its palette cycling) bursting into droplets and a flash, mists, the target redrawn wobbling;
+     the damage once the blob burst.
+     - *Inputs* (`BioParams`): the emitter's sound and its spawns' ticks (bubbles, pools, blob, mists,
+       overlay), the blob's cycles and spin. Data: the sound, "mag021.tim".
+     - *Fujin:* its tabs (Emitter, Blob); no + menu family.
+     - *Lab:* the recorder and host builds list their modules in a response file (more of them than
+       a command line holds).
