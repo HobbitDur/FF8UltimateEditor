@@ -1,0 +1,224 @@
+{
+ "format": 1,
+ "effect": 52,
+ "name": "X-Potion",
+ "doc": "X-Potion (battle item; the act family, Curaga's code without its stage wobble): once its children are gone the actor pools, then one emitter per action - its sound, a screen flash, the actor system, the master's release, the heal. Its parts are the port's code (FFNx mag052_xpotion.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8173F0",
+   "setup": "0x817410",
+   "root": "0x817540"
+  },
+  "memory": {
+   "texture_file": "0x2619494",
+   "packet_cursor": "0x2619498",
+   "packet_limit": "0x26194B4",
+   "arena_a": "0x2619F1C",
+   "limit_a": "0x26195A4",
+   "arena_b": "0x2619F18",
+   "limit_b": "0x26195A0",
+   "arena_top": "0x2619F44",
+   "init_flag_a": "0x2619F40",
+   "init_flag_b": "0x261959C",
+   "cam_ptr_a": "0x2619F38",
+   "cam_ptr_b": "0x26194B8",
+   "root_queue": "0x2619588",
+   "root_pool": "0x26194C0",
+   "particle_pool": "0x2619F24",
+   "actor_pool": "0x2619F3C",
+   "particle_next": "0x2619598",
+   "actor_next": "0x2619F30",
+   "cursor_c": "0x2619F20",
+   "cursor_d": "0x261949C",
+   "count_a": "0x2619F32",
+   "count_b": "0x2619F22"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 52,
+  "from": "0x26193D0",
+  "size": "0xB7C",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15A9DB8",
+   "size": 16
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15A9218",
+   "size": 2976
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15A9214",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x6000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x25F8",
+    "actor_pool": "0x16F80"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2619DA8",
+   "storage": "0x2619DB8",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "flash",
+   "queue": "0x26193D0",
+   "storage": "0x26193E0",
+   "size": 60,
+   "count": 3,
+   "keep": true,
+   "doc": "the screen flash (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x2619D98",
+   "storage": "0x26195A8",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the screen flash, the master's release, the heal"
+  },
+  {
+   "id": 0,
+   "key": "actors",
+   "title": "Actor system",
+   "doc": "The actor system (its actor data the exe's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.flash",
+   "part": "emitter",
+   "label": "Flash tick",
+   "doc": "The screen flash at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Heal tick",
+   "doc": "The heal of its target from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "actors",
+   "label": "Start",
+   "doc": "Its start tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "actors",
+   "label": "Length",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "actors",
+   "label": "Mode",
+   "doc": "Its placement mode",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x817750",
+   "code": "0x817750",
+   "native": "0x817750",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the screen flash, the actor system, the master's release, the heal."
+  }
+ ]
+}

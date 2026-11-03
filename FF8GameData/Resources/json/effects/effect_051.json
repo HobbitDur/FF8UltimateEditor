@@ -1,0 +1,226 @@
+{
+ "format": 1,
+ "effect": 51,
+ "name": "Hi-Potion",
+ "doc": "Hi-Potion (battle items Hi-Potion and Hi-Potion+; a relocated copy of Cura's module, the act family's framework with Double's short root): one emitter per action - its sound, a glow with swirl sparks and trail motes, four aura players fading in turn, spinning rings, rising sparkles, the light, the target overlay, falling particles; the heal. Its parts are the port's code (FFNx mag051_hipotion.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x81C7E0",
+   "setup": "0x81C800",
+   "root": "0x81C8E0"
+  },
+  "memory": {
+   "texture_file": "0x2619F50",
+   "packet_cursor": "0x2619F54",
+   "root_pool": "0x2619F80",
+   "root_queue": "0x261A048",
+   "arena_a": "0x263175C",
+   "arena_b": "0x2631758"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 51,
+  "from": "0x2619F50",
+  "size": "0x1AB68",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15ACD68",
+   "size": 16
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15AA734",
+   "size": 2120
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15A9DC8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "The packet arenas in the magic buffer (odd ticks, even ticks); no morph block",
+  "arenas": [
+   "0x0",
+   "0x12000"
+  ],
+  "morph": "0x0"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "root": "short"
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x26315E8",
+   "storage": "0x26315F8",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "players",
+   "queue": "0x2631760",
+   "storage": "0x2631770",
+   "size": 200,
+   "count": 64,
+   "keep": true,
+   "doc": "the model players, spawners and the target overlay (the port's)"
+  },
+  {
+   "key": "sprites",
+   "queue": "0x262B1C8",
+   "storage": "0x261AFF8",
+   "size": 132,
+   "count": 500,
+   "keep": true,
+   "doc": "the glow, sparks, motes, sparkles and particles (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the aura players, the particle emitter, the heal"
+  },
+  {
+   "id": 0,
+   "key": "glow",
+   "title": "Glow",
+   "doc": "The glow over the target with its swirl sparks; the sparkles"
+  }
+ ],
+ "groups": [
+  {
+   "key": "aura",
+   "label": "Aura players",
+   "doc": "The second to fourth aura players' fade bases (the first's: 0)"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.particles",
+   "part": "emitter",
+   "label": "Particles after",
+   "doc": "The particle emitter after this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.heal",
+   "part": "emitter",
+   "label": "Heal after",
+   "doc": "The heal after this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "aura.second",
+   "part": "emitter",
+   "label": "Second",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "aura.third",
+   "part": "emitter",
+   "label": "Third",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 3072,
+   "unit": "plain"
+  },
+  {
+   "key": "aura.fourth",
+   "part": "emitter",
+   "label": "Fourth",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 3584,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.lift",
+   "part": "glow",
+   "label": "Lift",
+   "doc": "The glow this above the anchor",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.sparks",
+   "part": "glow",
+   "label": "Swirl sparks",
+   "doc": "Thrown out at its start, an eighth of a turn apart",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.spread",
+   "part": "glow",
+   "label": "Spread",
+   "doc": "The sparkles' and the particles' random offset",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x81C9E0",
+   "code": "0x81C9E0",
+   "native": "0x81C9E0",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the glow, the aura players, the spawners, the light, the target overlay, the particle emitter, the heal."
+  }
+ ]
+}

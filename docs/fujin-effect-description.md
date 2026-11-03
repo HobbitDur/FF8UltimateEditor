@@ -1295,3 +1295,17 @@ Potion's description is the same with its own sequences and sound.
      - *Lab:* the module registries now hold every effect (the lab's module list and the parameter
        registry kept 64: past them the last modules lost their parameters, FFNx a6c4a957).
      - *Fujin:* its tabs (Director, Screen warp); no + menu family.
+   - **Hi-Potion (51)** (FFNx ae7a28ae; the battle items Hi-Potion and Hi-Potion+; a relocated copy of
+     Cura's module, Cura's description): one emitter per action - its sound, a glow with swirl sparks and
+     trail motes, four aura players fading in turn, spinning rings, rising sparkles, the light, the target
+     overlay, falling particles; the heal.
+     - *Inputs* (`HiPotionParams`): Cura's - the emitter's sound, particle and heal ticks, the aura
+       players' fade bases, the glow's lift and swirl sparks, the sparkles' spread. Data: the sound, the
+       camera track, "mag024-050.tim".
+     - *Fujin:* its tabs (Emitter, Glow); no + menu family.
+   - **X-Potion (52)** (FFNx 400c08d4; the battle item; the act family with Drain's master, Curaga's
+     code without its stage wobble): the actor pools, one emitter per action - its sound, a screen flash,
+     the actor system, the heal.
+     - *Inputs* (`XPotionParams`): the emitter's sound, flash, release and heal ticks, the actor system.
+       Data: the sound, the camera track, "mag027-051.tim".
+     - *Fujin:* its tabs (Emitter, Actor system); no + menu family.
