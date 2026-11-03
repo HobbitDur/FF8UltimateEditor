@@ -1,0 +1,391 @@
+{
+ "format": 1,
+ "effect": 49,
+ "name": "Resonance",
+ "doc": "Resonance (Iguion's enemy attack; the act family, Stare's kind without an actor system): one emitter per action - the director's phase: its sound, the screen warp (the scene drawn off-screen and copied back through a waving grid), two prim models at the monsters of slots 3 and 4, a hit task per target (its reaction, the damage). Its parts are the port's code (FFNx mag049_resonance.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x821520",
+   "setup": "0x821540",
+   "root": "0x821690"
+  },
+  "memory": {
+   "texture_file": "0x26464D8",
+   "packet_cursor": "0x26464DC",
+   "packet_limit": "0x26465DC",
+   "arena_a": "0x264781C",
+   "limit_a": "0x26472D4",
+   "arena_b": "0x2647818",
+   "limit_b": "0x26472D0",
+   "arena_top": "0x26480EC",
+   "init_flag_a": "0x26480E8",
+   "init_flag_b": "0x2646BE8",
+   "cam_ptr_a": "0x26480E4",
+   "cam_ptr_b": "0x26465E0",
+   "root_queue": "0x26466C0",
+   "root_pool": "0x26465E8"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 49,
+  "from": "0x26464D8",
+  "size": "0x1C18",
+  "pointers": [
+   [
+    2,
+    "0x15ADAF0"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15ADC1C",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15ADAF8",
+   "size": 288
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x15ADAF4",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xC000",
+  "release_file": true
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x26475F0",
+   "storage": "0x2647600",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x26465B8",
+   "storage": "0x26464E0",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "misc",
+   "queue": "0x26466D0",
+   "storage": "0x26467E8",
+   "size": 128,
+   "count": 8,
+   "keep": true,
+   "doc": "the screen warp and the hit tasks (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x26472C0",
+   "storage": "0x2646BF0",
+   "size": 872,
+   "count": 2,
+   "keep": true,
+   "doc": "the two prim models (the port's)"
+  },
+  {
+   "key": "tint",
+   "queue": "0x26475E0",
+   "storage": "0x2647360",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its phase: the sound, the two prim models at the monsters of slots 3 and 4, the targets' reactions and damage"
+  },
+  {
+   "id": 0,
+   "key": "warp",
+   "title": "Screen warp",
+   "doc": "The scene drawn off-screen and copied back through a waving grid"
+  }
+ ],
+ "groups": [
+  {
+   "key": "hit",
+   "label": "Targets",
+   "doc": "Ticks into the phase: their reaction (animation 4 or 5), then 6 after the second cue, the damage once it ended after the last"
+  }
+ ],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.sound_tick",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "Played this many ticks into the phase",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "prims.place",
+   "part": "director",
+   "label": "Models tick",
+   "doc": "The two prim models placed at their entities from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "hit.react",
+   "part": "director",
+   "label": "React",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "hit.second",
+   "part": "director",
+   "label": "Second",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "hit.last",
+   "part": "director",
+   "label": "Last",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 75,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.start",
+   "part": "warp",
+   "label": "Start tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.step_in",
+   "part": "warp",
+   "label": "Step in",
+   "doc": "Its amplitude up by this a tick (4096: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.hold",
+   "part": "warp",
+   "label": "Hold until",
+   "doc": "Held until this tick of its task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 56,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.step_out",
+   "part": "warp",
+   "label": "Step out",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 128,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x821840",
+   "code": "0x821840",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; sets up the director block (the target's position, the facing to it) and starts the director; waits for the director's cue; then waits, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8218C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x824B90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x824BB0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x824BD0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x824BF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x821970",
+   "code": "0x821970",
+   "doc": "The director: every tick the phase bookkeeping (phase 1: the screen warp, the two prim models, a hit task per target), then its states: the cue to phase 1, cue 1, the sound, the cue, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x8219E0"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x821A30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x821A80"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x821AC0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x821AF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x821B10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

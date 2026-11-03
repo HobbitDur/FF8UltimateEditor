@@ -1276,3 +1276,22 @@ Potion's description is the same with its own sequences and sound.
      - *Lab:* checked with Vysage and both hands in the battle, and in the default cast (no hands: the
        hands' models are not found).
      - *Fujin:* its tabs (Director, Stage darkening); no + menu family.
+   - **Magma Breath (48)** (FFNx bae38507; Iguion's enemy attack; the act family with Drain's master,
+     Counter Laser-Eye's description): the actor pools and the stage light ramp up, one emitter per action
+     - its sound, a red screen flash, the lava stream's actor system, the damage; after the last action a
+     wait, the light ramp down.
+     - *Inputs* (`MagmaParams`): the emitter's sound, flash, release and damage ticks, the master's wait,
+       the actor system, the stage light's level and steps. Data: the sound, the camera track,
+       "mag047.tim".
+     - *Fujin:* its tabs (Emitter, Stage light); no + menu family.
+   - **Resonance (49)** (FFNx 27ad7eec; Iguion's enemy attack; the act family without an actor system,
+     Stare's kind): one emitter per action - the director's phase: its sound, the screen warp (the scene
+     drawn off-screen, copied back through a waving grid), two prim models at the monsters of slots 3
+     and 4, a hit task per target (its reaction, the damage). The warp block's exe word (pointing into
+     the module) is moved with the module's memory.
+     - *Inputs* (`ResonanceParams`): the director's sound and its tick, the screen warp's start, steps
+       and hold, the targets' reaction cues, the prim models' placing tick. Data: the sound, the camera
+       track, "mag048.tim".
+     - *Lab:* the module registries now hold every effect (the lab's module list and the parameter
+       registry kept 64: past them the last modules lost their parameters, FFNx a6c4a957).
+     - *Fujin:* its tabs (Director, Screen warp); no + menu family.

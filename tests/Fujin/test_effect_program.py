@@ -243,6 +243,8 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    49: ("mag048.tim", 10, "warp.step_in 512\nwarp.hold 40\ndirector.sound_tick 20\nprims.place 10\n"),
+    48: ("mag047.tim", 11, "emitter.flash 8\nmaster.wait 20\nlight.step_in 128\nactors.length 30\nemitter.result 45\n"),
     47: ("mag046.tim", 10, "director.damage 40\nprims.middle 20\ndarken.level 1024\ndarken.step_out 128\n"),
     46: ("mag045.tim", 13, "sigh.fade 30\nsigh.show 6\nmaster.wait 12\nwobble.step_in 128\nemitter.release 45\n"),
     45: ("mag044.tim", 7, "darken.level 1024\ndarken.hold 30\ndirector.damage 25\neyes.forward 128\n"),
@@ -330,7 +332,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh and Curse from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath and Resonance from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -1076,4 +1078,18 @@ def test_curse_description_compiles():
     """Curse: Doom's kind - the per-action director, the phase data's exe word, the emitter's and the director's state tables, its file released at the end."""
     lines = compile_program(load_description(47)).splitlines()
     for line in ['module 47 0x264B3C8 0x3898', 'module_pointer 2 0x15B8028', 'release_file', 'code 0x82B170']:
+        assert line in lines, line
+
+
+def test_magma_breath_description_compiles():
+    """Magma Breath: Doom's kind with Drain's master (Counter Laser-Eye's) - its actor pools, the stage light ramps (native tasks) after its wait."""
+    lines = compile_program(load_description(48)).splitlines()
+    for line in ['module 48 0x26480F0 0x14FC', 'act_stage 1 2 $4', 'act_pool actor_pool 67200', 'native 0x825170']:
+        assert line in lines, line
+
+
+def test_resonance_description_compiles():
+    """Resonance: Doom's kind without actor pools - the director block's exe word, the emitter's and the director's state tables, its file released at the end."""
+    lines = compile_program(load_description(49)).splitlines()
+    for line in ['module 49 0x26464D8 0x1C18', 'module_pointer 2 0x15ADAF0', 'release_file', 'code 0x821970']:
         assert line in lines, line

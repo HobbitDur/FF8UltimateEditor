@@ -1,0 +1,311 @@
+{
+ "format": 1,
+ "effect": 48,
+ "name": "Magma Breath",
+ "doc": "Magma Breath (Iguion's enemy attack; the act family, Counter Laser-Eye's master): once its children are gone the actor pools and the stage light ramp up, then one emitter per action - its sound, a red screen flash, the lava stream's actor system (its texture scrolling, stretching with the ticks), the master's release, the damage; after the last action a wait, the light ramp down. Its parts are the port's code (FFNx mag048_magma_breath.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x824CD0",
+   "setup": "0x824CF0",
+   "root": "0x824E40"
+  },
+  "memory": {
+   "texture_file": "0x26481B4",
+   "packet_cursor": "0x26481B8",
+   "packet_limit": "0x26481D4",
+   "arena_a": "0x26495BC",
+   "limit_a": "0x26489B4",
+   "arena_b": "0x26495B8",
+   "limit_b": "0x26489B0",
+   "arena_top": "0x26495E4",
+   "init_flag_a": "0x26495E0",
+   "init_flag_b": "0x26489AC",
+   "cam_ptr_a": "0x26495D8",
+   "cam_ptr_b": "0x26481D8",
+   "root_queue": "0x26482A8",
+   "root_pool": "0x26481E0",
+   "particle_pool": "0x26495C4",
+   "actor_pool": "0x26495DC",
+   "particle_next": "0x26489A8",
+   "actor_next": "0x26495D0",
+   "cursor_c": "0x26495C0",
+   "cursor_d": "0x26481BC",
+   "count_a": "0x26495D2",
+   "count_b": "0x26495C2"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 48,
+  "from": "0x26480F0",
+  "size": "0x14FC",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15B801C",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15B7D8C",
+   "size": 656
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15ADC68",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x6000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared; the stage in task; after the last action its wait, the stage out task; the actor counters cleared every tick",
+   "stage_in": "stage_in",
+   "stage_out": "stage_out",
+   "wait": "$master.wait",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x10680"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2649448",
+   "storage": "0x2649458",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "flash",
+   "queue": "0x26480F0",
+   "storage": "0x2648100",
+   "size": 60,
+   "count": 3,
+   "keep": true,
+   "doc": "the screen flash (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x26491A8",
+   "storage": "0x26489B8",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "shake",
+   "queue": "0x26482B8",
+   "storage": "0x26482C8",
+   "size": 88,
+   "count": 20,
+   "keep": true,
+   "doc": "the shake task (it does nothing in this copy)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x2649438",
+   "storage": "0x26491B8",
+   "size": 64,
+   "count": 10
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the screen flash, the lava stream's actor system, the master's release, the damage; the master's wait"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage light",
+   "doc": "The stage light ramp up before the first action, down after the last one"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "At the emitter's start: Start, Length (ticks), Mode"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.flash",
+   "part": "emitter",
+   "label": "Flash tick",
+   "doc": "The screen flash at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The damage of its target from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "master.wait",
+   "part": "emitter",
+   "label": "Wait",
+   "doc": "After the last action, the light ramp down after these ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "emitter",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "emitter",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "light.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "light.step_in",
+   "part": "stage",
+   "label": "Step up",
+   "doc": "Up by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "light.step_out",
+   "part": "stage",
+   "label": "Step down",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x825170",
+   "code": "0x825170",
+   "native": "0x825170",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the screen flash, the actor system, the master's release, the damage."
+  },
+  {
+   "key": "stage_in",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x825050",
+   "code": "0x825050",
+   "native": "0x825050",
+   "doc": "The stage light ramp up (the port's task: the four stage light words up a step a tick)."
+  },
+  {
+   "key": "stage_out",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x82A6A0",
+   "code": "0x82A6A0",
+   "native": "0x82A6A0",
+   "doc": "The stage light ramp down (the port's task: from its level down a step a tick to 0)."
+  }
+ ]
+}
