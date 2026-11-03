@@ -1,0 +1,224 @@
+{
+ "format": 1,
+ "effect": 12,
+ "name": "Blade Shot",
+ "doc": "Blade Shot (Mesmerize's enemy attack): a blade thrown from the caster's hand at its target and back, its after-images, the impact's sprites, rings, wings, sparks, glints and streaks. Its tasks are the port's code (FFNx mag012_blade_shot.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6E8AC0",
+   "setup": "0x6E8AE0",
+   "root": "0x6E8C90"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 12,
+  "from": "0x2545188",
+  "size": "0x10FB8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1365714",
+   "size": 12
+  },
+  "sound.throw_sound": {
+   "kind": "sound",
+   "address": "0x136562C",
+   "size": 4
+  },
+  "sound.catch_sound": {
+   "kind": "sound",
+   "address": "0x1365630",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6E8AE0",
+  "file_loader": "0x6E8AC0",
+  "root": "0x6E8C90"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "blade",
+   "title": "Blade",
+   "doc": "The blade thrown at the target and back to the caster's hand, its after-images, its sounds"
+  },
+  {
+   "id": 0,
+   "key": "impact",
+   "title": "Impact",
+   "doc": "Sparks, glints and streaks thrown out of the impact"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sparks",
+   "label": "Sparks",
+   "doc": "Two a tick for Ticks from the impact: life Life, scale Scale + rand"
+  },
+  {
+   "key": "fans",
+   "label": "Glints and streaks",
+   "doc": "Five each at the impact: life Life, scale Scale, turned by Spread + rand between them"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound.throw_sound",
+   "part": "blade",
+   "label": "Throw sound",
+   "doc": "Played at the caster's hand at its tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound.throw_sound",
+   "unit": "plain"
+  },
+  {
+   "key": "sound.throw_tick",
+   "part": "blade",
+   "label": "Throw sound tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "sound.catch_sound",
+   "part": "blade",
+   "label": "Catch sound",
+   "doc": "Played when the caster catches the blade",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound.catch_sound",
+   "unit": "plain"
+  },
+  {
+   "key": "blade.tilt",
+   "part": "blade",
+   "label": "Tilt",
+   "doc": "Flying out, its tilt a tick (4096: a turn)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "blade.spin",
+   "part": "blade",
+   "label": "Spin",
+   "doc": "Flying back, its spin a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 528,
+   "unit": "plain"
+  },
+  {
+   "key": "blade.catch_lift",
+   "part": "blade",
+   "label": "Catch height",
+   "doc": "The catch sprite this above the blade",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "blade.trails_until",
+   "part": "blade",
+   "label": "After-images until",
+   "doc": "Two after-images a tick until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 62,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.ticks",
+   "part": "impact",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 30,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "impact",
+   "label": "Life",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.scale",
+   "part": "impact",
+   "label": "Scale",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 3072,
+   "unit": "plain"
+  },
+  {
+   "key": "fans.life",
+   "part": "impact",
+   "label": "Life",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "fans.scale",
+   "part": "impact",
+   "label": "Scale",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "fans.spread",
+   "part": "impact",
+   "label": "Spread",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 787,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

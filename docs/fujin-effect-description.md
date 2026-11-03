@@ -984,3 +984,9 @@ Potion's description is the same with its own sequences and sound.
        layouts at the mouth, the hit sparks, the stream's sparks and debris, the mist and rings. Data: the
        sound, "mag010.tim".
      - *Fujin:* its tabs (Timing, Stream, Sparks, Mist and rings); no + menu family.
+   - **Blade Shot (12)** (FFNx 1f598a55; Mesmerize's attack; a port director, Ray-Bomb's kind): a blade
+     thrown from the caster's hand at its target and back, its after-images, the impact's sprites, rings,
+     wings, sparks, glints and streaks. Its packet arenas are in its module's memory (moved with a copy).
+     - *Inputs* (`BladeParams`): the two sounds, the blade's tilt and spin, the catch sprite's height, the
+       after-images, the impact's sparks, glints and streaks. Data: the sounds, "mag011.tim".
+     - *Fujin:* its tabs (Blade, Impact); no + menu family.
