@@ -1,0 +1,230 @@
+{
+ "format": 1,
+ "effect": 38,
+ "name": "Quake",
+ "doc": "Quake (spell): the stage ground rebuilt as a mesh - the caster's side darkened to black, the ground cracking along its zones, rippling and settling, rocks, dust, chips and debris thrown from it, the targets bounced on the ripples, the camera shaking; without a stage ground two sounds and the shake only; the damage. Its tasks are the port's code (FFNx mag038_quake.cpp) run on the program's memory; its texture is exe data (the setup's), its file loader the engine's nullsub.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x8D8510",
+   "root": "0x8D8610"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 38,
+  "from": "0x278C8E0",
+  "size": "0x6580"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.rumble": {
+   "kind": "sound",
+   "address": "0x1642D68",
+   "size": 4
+  },
+  "sounds.quake": {
+   "kind": "sound",
+   "address": "0x1642D6C",
+   "size": 4
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x8D8510",
+  "file_loader": "0x0",
+  "root": "0x8D8610"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "sequence",
+   "title": "Ground sequence",
+   "doc": "The stage ground rebuilt as a mesh: the caster's side darkened, the ground cracking, rippling and settling, rocks, dust, chips and debris thrown, the targets bounced"
+  },
+  {
+   "id": 0,
+   "key": "fallback",
+   "title": "Fallback",
+   "doc": "The camera shake; without a stage ground: two sounds and the shake only"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The rumble once the caster's side is dark, the quake once the ripples start (the fallback's too)"
+  },
+  {
+   "key": "quake",
+   "label": "Ripples",
+   "doc": "The ripples' ticks; the most debris, rocks and dust alive (more are thrown while fewer)"
+  },
+  {
+   "key": "bounce",
+   "label": "Bounce",
+   "doc": "The targets on the ripples"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.rumble",
+   "part": "sequence",
+   "label": "Rumble",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.rumble",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.quake",
+   "part": "sequence",
+   "label": "Quake",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.quake",
+   "unit": "plain"
+  },
+  {
+   "key": "sequence.wait",
+   "part": "sequence",
+   "label": "Wait",
+   "doc": "Ticks after the mesh is built before the caster's side darkens",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sequence.fade_out",
+   "part": "sequence",
+   "label": "Fade out",
+   "doc": "The caster's side fade to black a tick (4096: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "sequence.fade_in",
+   "part": "sequence",
+   "label": "Fade in",
+   "doc": "Its fade back a tick (4096: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "quake.length",
+   "part": "sequence",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "quake.debris",
+   "part": "sequence",
+   "label": "Debris",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 34,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "quake.rocks",
+   "part": "sequence",
+   "label": "Rocks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 12,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "quake.dust",
+   "part": "sequence",
+   "label": "Dust",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "bounce.speed",
+   "part": "sequence",
+   "label": "Speed",
+   "doc": "Their upward speed when the ripple drops under them",
+   "type": "i16",
+   "min": 0,
+   "max": 1024,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "bounce.gravity",
+   "part": "sequence",
+   "label": "Gravity",
+   "doc": "Added to their speed a tick while they fall back",
+   "type": "i16",
+   "min": 1,
+   "max": 1024,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "fallback.shake",
+   "part": "fallback",
+   "label": "Shake after",
+   "doc": "The camera shake starts after this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "fallback.sound",
+   "part": "fallback",
+   "label": "Sound tick",
+   "doc": "No ground: the second sound at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "fallback.end",
+   "part": "fallback",
+   "label": "End tick",
+   "doc": "No ground: done at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 96,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

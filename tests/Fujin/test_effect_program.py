@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    38: ("mag036.tim", 14, "fallback.sound 40\nfallback.shake 5\nsequence.fade_out 256\nquake.length 30\n"),
     37: ("mag036.tim", 18, "ribbons.twist 600\nemitter.release 20\nstreaks.accel 80\norb.scale 8000\norb.hold 10\n"),
     36: ("mag035.tim", 8, "emitter.shake 12\nactors.length 30\nemitter.release 25\nemitter.chain 10\n"),
     35: ("mag004-034.tim", 9, "grow.radius 200\nspread.until 25\nemitter.result 40\ngrow.until 6\n"),
@@ -321,7 +322,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse and Drink Magic from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic and Quake from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -957,4 +958,11 @@ def test_drink_magic_description_compiles():
     """Drink Magic: Doom's kind (Draw's), its emitter the module's own (a native task: the port's task function)."""
     lines = compile_program(load_description(37)).splitlines()
     for line in ['module 37 0x26A05C8 0x87F0', 'arena_size 36864', 'act_pool particle_pool 1080', 'native 0x856D70']:
+        assert line in lines, line
+
+
+def test_quake_description_compiles():
+    """Quake: a port director (Ray-Bomb's kind) - its setup the port's, its file loader the engine's nullsub, run on the program's memory."""
+    lines = compile_program(load_description(38)).splitlines()
+    for line in ['director port -1', 'port 0x8D8510 0x0 0x8D8610', 'module 38 0x278C8E0 0x6580']:
         assert line in lines, line

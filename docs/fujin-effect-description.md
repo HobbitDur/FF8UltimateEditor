@@ -1188,3 +1188,13 @@ Potion's description is the same with its own sequences and sound.
        ribbons' ticks, spread and twist, the streaks' ticks and acceleration, the orb's tick, scale, fade,
        hold and spin. Data: the sound, the camera track, "mag036.tim".
      - *Fujin:* its tabs (Emitter, Ribbons, Orb); no + menu family.
+   - **Quake (38)** (FFNx 8ab7c8a5; the spell; a port director, Ray-Bomb's kind): the stage ground
+     rebuilt as a mesh - the caster's side darkened, the ground cracking, rippling and settling, rocks,
+     dust, chips and debris thrown, the targets bounced, the camera shaking; without a stage ground two
+     sounds and the shake only; the damage.
+     - *Inputs* (`QuakeParams`): the two sounds, the sequence's wait and fades, the ripples' length and
+       the most debris, rocks and dust alive, the targets' bounce, the shake's start, the fallback's sound
+       and end. Data: the sounds (its texture is exe data, its file loader the engine's nullsub).
+     - *Fujin:* its tabs (Ground sequence, Fallback); no + menu family.
+     - *Lab:* the recorder has no battle stage, so its checks run the fallback; the ground sequence is
+       the same port code on the program's memory, not recorded.
