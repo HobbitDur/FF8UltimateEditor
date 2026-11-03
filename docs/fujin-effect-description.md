@@ -670,3 +670,39 @@ Potion's description is the same with its own sequences and sound.
        bytes), the sound, the wave table (8192 bytes), "mag113.tim".
      - *Fujin:* its tabs (Timing, Mist, Overlay); a twelfth family in the + menu, "One per
        action, its target swaying (Zombie's kind)": Mist (the start), Overlay.
+   - **Flare (124)** (FFNx a7cf09e1): the cycle director with the effect camera matrix and the screen
+     flash events (Blind's), not while a task of 60 ticks or less runs on that target; per target
+     a flash, two fades, the target turned red and back, a burst and a ring layout scaled by its
+     size, over ticks 40..79 the target hidden and redrawn rippled, collapsing sparks.
+     - *Shared:* the cycle director, its busy wait (Dispel's), camera matrix (Haste's) and flash
+       events (Blind's), the scaled layout draw (Aero's, Zombie's), the anchor callback, the depth
+       and size rules, `sound_3d_at`, `screen_fade_at`, `heal_action_at`, `unmark_target`,
+       `layout_end`.
+     - *Added:*
+       - the node field `colour` (the target's colour before the task): the director fills it,
+         from the target or from an older task still on it (Flare's hand-over);
+       - the actions `flash_level_hold` (rise, up, level, fall after, end, down: the library's
+         `ScreenFlashRiseHoldFall`), `flash_level_set` (tick, level), `mark_target` (bits, every
+         tick) and `tint_target` (the tint, from, ticks, shift, back from, back ticks, back shift:
+         the library's `TintEntity`);
+       - `layout_scaled_on_target`: at 2 (the node's anchor as is), a depth shift of -1 (the base
+         as is), two far objects (at a quarter depth: Flare's 2 and 3; the anchor callback's
+         `far_objects`); the anchor callback tests 0x1000 before 0x200 (Flare's order: no other
+         build honours both);
+       - the library's ripple silhouette (`fx_ripple.h`, Flare's 0x6BC8A0: the entity hidden and
+         redrawn flat in its colour, its vertices rippled around a point, after its shadow, into
+         the frame arena), drawn by `ripple_silhouette` (from, ticks, its three tables as one data
+         block: the distance lookup reads one row past its own table) with the node field
+         `ripple` (the last draw's largest offset);
+       - the library's collapsing sparks (`CollapseSpark*`): the node field `spark`, the
+         placement `collapse_sparks` (count, collapse window, turn, sprite size, scale base /
+         shift; stops when the pool is full), the actions `spark_step` (burst, fade) and
+         `spark_move`, the draw `spark_sprite` (sequence), the end `spark_gone`.
+     - *Inputs* (`FlareParams`): the cycle and its busy tick, the sound, the damage tick, the
+       flash's curve, fade and set ticks, the tint's two ramps, the layouts' depth and size, the
+       silhouette's window, the sparks' ticks, count, collapse window, turn, sprite size, burst
+       and fade ticks. Data: the spark sequence, the two layouts (39352 / 2812 bytes), the camera
+       track (3548 bytes), the sound, the ripple tables (29696 bytes), the red, "mag123.tim".
+     - *Fujin:* its tabs (Timing, Burst, Ring, Silhouette, Sparks); a thirteenth family in the +
+       menu, "One per action, a burst on its target (Flare's kind)": Burst (the start), Ring,
+       Silhouette, Sparks.

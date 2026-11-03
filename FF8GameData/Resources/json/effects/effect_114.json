@@ -390,7 +390,9 @@
       "0x20300",
       0,
       "$mist.additive.a",
-      "$mist.additive.b"
+      "$mist.additive.b",
+      -1,
+      -1
      ]
     },
     {

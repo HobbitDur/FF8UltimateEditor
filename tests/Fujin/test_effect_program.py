@@ -263,6 +263,8 @@ CYCLES = {
     127: ("mag126.tim", 20, "stare.ahead 3\nstone.from 10\nstone.ticks 20\n"),
     114: ("mag113.tim", 20, "overlay.amp.base 800\nmist.additive.b -1\noverlay.from 20\ntiming.mark_from 25\n"
                             "mist.depth.shift 4\n"),
+    124: ("mag123.tim", 34, "tint.ticks 16\ntint.shift 8\nsparks.count 4\nsilhouette.from 30\nflash.level 1500\n"
+                            "burst.depth.shift 4\n"),
 }
 
 
@@ -282,7 +284,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares and Zombie from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie and Flare from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -385,5 +387,21 @@ def test_zombie_description_compiles():
     lines = program.splitlines()
     director = next(line for line in lines if line.startswith("director cycle"))
     assert director.endswith(" 1") and "tick mark_ring_from $7 8" in lines and "at_end unmark_ring 8" in lines
-    assert any(line.startswith("draw 1 0 - - layout_scaled_on_target 0 1 ") and line.endswith(" $12 $13") for line in lines)
+    assert any(line.startswith("draw 1 0 - - layout_scaled_on_target 0 1 ") and line.endswith(" $12 $13 -1 -1") for line in lines)
     assert any(line.startswith("draw 2 0 - - sway_overlay $14 $15 ") for line in lines)
+
+
+def test_flare_description_compiles():
+    """Flare: the director hands an older task's saved colour over; the target task raises the
+    flash (risen, held, fallen), sets it once, tints its target, draws the burst at its anchor and
+    the ring at its feet (objects 2 and 3 at a quarter depth), the ripple silhouette from its one
+    block of tables, and spawns collapsing sparks, a second task."""
+    program = compile_program(load_description(124))
+    lines = program.splitlines()
+    assert "field colour 36 4" in lines and "field ripple 40 4" in lines and "field spark 12 32" in lines
+    assert "tick flash_level_hold $6 $7 $8 $9 $10 $11" in lines and "tick flash_level_set $13 $14" in lines
+    assert any(line.startswith("tick tint_target ") for line in lines) and "tick mark_target 2048" in lines
+    assert sum(line.startswith("draw ") and "layout_scaled_on_target" in line and line.endswith(" -1 -1 2 3")
+               for line in lines) == 2
+    assert any(" ripple_silhouette $25 $26 " in line for line in lines) and "end spark_gone" in lines
+    assert any(" collapse_sparks $28 " in line for line in lines)

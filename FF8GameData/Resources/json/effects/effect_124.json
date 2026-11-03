@@ -1,0 +1,741 @@
+{
+ "format": 1,
+ "effect": 124,
+ "name": "Flare",
+ "doc": "Flare (spell): one target task per action, in turn (one every 10 ticks, not while one of 60 ticks or less runs on that target): a screen flash, two fades, the target turning red and back, a burst layout at its effect position and a ring at its feet scaled by its size, over ticks 40..79 the target hidden and redrawn rippled, sparks collapsing into it and bursting out; the result at 80, the end with both layouts.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6BBDB0",
+   "setup": "0x6BBDA0",
+   "root": "0x6BBE40"
+  },
+  "memory": {
+   "flash_level": "0x25213D0",
+   "texture_file": "0x25213D4",
+   "magic_buffer": "0x25213D8",
+   "ctx": "0x25213DC",
+   "root_pool": "0x25213E0",
+   "packet_cursor": "0x25213F4",
+   "camera_matrix": "0x25213F8",
+   "root_queue": "0x2521438"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "sparks.seq": {
+   "kind": "seq",
+   "address": "0x1252BE4",
+   "size": 40
+  },
+  "burst": {
+   "kind": "layout",
+   "address": "0x1252C0C",
+   "size": 39352
+  },
+  "ring": {
+   "kind": "layout",
+   "address": "0x125C5C4",
+   "size": 2812
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x125D0C0",
+   "size": 3548
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x125DE9C",
+   "size": 4
+  },
+  "ripple": {
+   "kind": "table",
+   "address": "0x125DEA0",
+   "size": 29696,
+   "doc": "three tables, one after the other (the distance lookup reads one row past its own): u8 [128][128] the distance of (|dy|, |dx|) on screen; u16 [20][128] a vertex's offset weight by its distance (4.12), per ripple step; s16 [4096] the wobble"
+  },
+  "red": {
+   "kind": "colour",
+   "address": "0x12652A0",
+   "size": 4,
+   "doc": "the colour the target turns (RGB + code)"
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12652A4",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the layouts' blended vertex frames (after the target and spark nodes).",
+  "arenas": [
+   "0x30BC",
+   "0x1B0BC"
+  ],
+  "morph": "0x2CCC"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "target",
+  "every": "$timing.every",
+  "camera_matrix": true,
+  "place": [
+   "action_target",
+   0,
+   "@burst",
+   "@ring",
+   "0xF0",
+   "$timing.busy_tick",
+   0,
+   0,
+   0
+  ],
+  "events_first": [
+   [
+    "flash_level_clear"
+   ]
+  ],
+  "events": [
+   [
+    "screen_flash_level"
+   ]
+  ]
+ },
+ "pools": [
+  {
+   "key": "targets",
+   "queue": "0x2521428",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 2884,
+   "count": 3
+  },
+  {
+   "key": "sparks",
+   "queue": "0x2521418",
+   "storage": "0x21CC",
+   "in_magic_buffer": true,
+   "size": 44,
+   "count": 64
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one target task per action, in turn (not while a young one runs on that target); each target task's clock: its sound, the screen flash and fades, the target's red tint, its result; it ends when both layouts have finished"
+  },
+  {
+   "id": 1,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "The burst layout at the target's effect position, scaled by its size"
+  },
+  {
+   "id": 2,
+   "key": "ring",
+   "title": "Ring",
+   "doc": "The ring layout at the target's feet"
+  },
+  {
+   "id": 3,
+   "key": "silhouette",
+   "title": "Silhouette",
+   "doc": "The target hidden and redrawn rippled around its effect position"
+  },
+  {
+   "id": 4,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sprites on a sphere around the target that collapse into it, then burst out"
+  }
+ ],
+ "groups": [
+  {
+   "key": "burst.depth",
+   "label": "Depth",
+   "doc": "Its drawing depth: (Base - the target's size word) >> Shift (objects 2 and 3: >> 2 more)"
+  },
+  {
+   "key": "burst.scale",
+   "label": "Size",
+   "doc": "Both layouts scaled by ((the target's size >> 1) + Base) >> Shift (4096 = their own size); the sparks' radius too"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's target task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.busy_tick",
+   "part": "timing",
+   "label": "Busy tick",
+   "doc": "Not while a target task on that target is at this tick or before (the cycle restarts; -1: never)",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the target's effect position when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.rise",
+   "part": "timing",
+   "label": "Flash rise",
+   "doc": "The screen flash rises (Up a tick) before this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.up",
+   "part": "timing",
+   "label": "Flash up",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "timing",
+   "label": "Flash level",
+   "doc": "...stays at least at this level...",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fall_after",
+   "part": "timing",
+   "label": "Flash fall after",
+   "doc": "...and falls (Down a tick) to 0 at End after this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 76,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.end",
+   "part": "timing",
+   "label": "Flash end",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.down",
+   "part": "timing",
+   "label": "Flash down",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fade_tick",
+   "part": "timing",
+   "label": "Fade tick",
+   "doc": "A screen fade starts at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.set_tick",
+   "part": "timing",
+   "label": "Flash set tick",
+   "doc": "At this tick the flash level is set (and a second fade starts)...",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 41,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.set_level",
+   "part": "timing",
+   "label": "Flash set level",
+   "doc": "...to this",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.from",
+   "part": "timing",
+   "label": "Red from",
+   "doc": "The target turns red from this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.ticks",
+   "part": "timing",
+   "label": "Red ticks",
+   "doc": "...over this many ticks...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.shift",
+   "part": "timing",
+   "label": "Red shift",
+   "doc": "...its weight (tick - from) << this (4096 = red)",
+   "type": "i16",
+   "min": 0,
+   "max": 12,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.back_from",
+   "part": "timing",
+   "label": "Back from",
+   "doc": "It turns back from this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 72,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.back_ticks",
+   "part": "timing",
+   "label": "Back ticks",
+   "doc": "...over this many ticks...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.back_shift",
+   "part": "timing",
+   "label": "Back shift",
+   "doc": "...its weight (tick - from) << this",
+   "type": "i16",
+   "min": 0,
+   "max": 12,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.depth.base",
+   "part": "burst",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -2048,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.depth.shift",
+   "part": "burst",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.scale.base",
+   "part": "burst",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.scale.shift",
+   "part": "burst",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "silhouette.from",
+   "part": "silhouette",
+   "label": "From tick",
+   "doc": "The target is redrawn rippled from this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "silhouette.ticks",
+   "part": "silhouette",
+   "label": "Ticks",
+   "doc": "...for this many ticks (the ripple grows and shrinks back)",
+   "type": "i16",
+   "min": 2,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.last_tick",
+   "part": "sparks",
+   "label": "Last tick",
+   "doc": "Sparks are spawned at target ticks 0 .. this...",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.count",
+   "part": "sparks",
+   "label": "Count",
+   "doc": "...this many a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.window",
+   "part": "sparks",
+   "label": "Collapse window",
+   "doc": "Each collapses at a random tick in a window this long",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.speed",
+   "part": "sparks",
+   "label": "Turn",
+   "doc": "Its direction turns this much a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.sprite",
+   "part": "sparks",
+   "label": "Sprite size",
+   "doc": "Its sprite's size (4096 = its own)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 1200,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.burst",
+   "part": "sparks",
+   "label": "Burst tick",
+   "doc": "It bursts out from this tick of its own...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 41,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.fade",
+   "part": "sparks",
+   "label": "Fade tick",
+   "doc": "...and fades out from this one",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 56,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 2884,
+   "function": "0x6BC040",
+   "doc": "One per action: its sound at the target's effect position; the screen flash level raised (risen, held, fallen), two fades; the target marked (flags 0x800) and turned red then back; the burst at the target's effect position and the ring at its feet, scaled by its size (record flags 0x40000: angles in YXZ order; 0x1000: the offset through the effect camera; 0x200; 0x100), objects 2 and 3 at a quarter depth; the silhouette; sparks over its first ticks; the result; it ends when both layouts have finished.",
+   "node": [
+    "counter",
+    "action",
+    "entity",
+    "anchor",
+    "spawn",
+    "colour",
+    "ripple",
+    [
+     "layout",
+     2672
+    ],
+    [
+     "layout_b",
+     168
+    ]
+   ],
+   "every_tick": [
+    [
+     "sound_3d_at",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume"
+    ],
+    [
+     "flash_level_hold",
+     "$flash.rise",
+     "$flash.up",
+     "$flash.level",
+     "$flash.fall_after",
+     "$flash.end",
+     "$flash.down"
+    ],
+    [
+     "screen_fade_at",
+     "$flash.fade_tick",
+     0,
+     1,
+     0,
+     "0x60"
+    ],
+    [
+     "flash_level_set",
+     "$flash.set_tick",
+     "$flash.set_level"
+    ],
+    [
+     "screen_fade_at",
+     "$flash.set_tick",
+     0,
+     1,
+     1,
+     "0xC0"
+    ],
+    [
+     "mark_target",
+     "0x800"
+    ],
+    [
+     "tint_target",
+     "@red",
+     "$tint.from",
+     "$tint.ticks",
+     "$tint.shift",
+     "$tint.back_from",
+     "$tint.back_ticks",
+     "$tint.back_shift"
+    ]
+   ],
+   "spawns": [
+    {
+     "task": "spark",
+     "window": [
+      0,
+      "$sparks.last_tick"
+     ],
+     "every": 1,
+     "place": [
+      "collapse_sparks",
+      "$sparks.count",
+      "$sparks.window",
+      "$sparks.speed",
+      "$sparks.sprite",
+      "$burst.scale.base",
+      "$burst.scale.shift"
+     ]
+    }
+   ],
+   "draws": [
+    {
+     "part": "burst",
+     "draw": [
+      "layout_scaled_on_target",
+      0,
+      2,
+      "$burst.depth.base",
+      "$burst.depth.shift",
+      "$burst.scale.base",
+      "$burst.scale.shift",
+      "0x41300",
+      0,
+      -1,
+      -1,
+      2,
+      3
+     ]
+    },
+    {
+     "part": "ring",
+     "draw": [
+      "layout_scaled_on_target",
+      1,
+      0,
+      0,
+      -1,
+      "$burst.scale.base",
+      "$burst.scale.shift",
+      "0x41300",
+      0,
+      -1,
+      -1,
+      2,
+      3
+     ]
+    },
+    {
+     "part": "silhouette",
+     "draw": [
+      "ripple_silhouette",
+      "$silhouette.from",
+      "$silhouette.ticks",
+      "@ripple"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "layout_end"
+   ],
+   "at_end": [
+    [
+     "unmark_target",
+     "0x800"
+    ]
+   ]
+  },
+  {
+   "key": "spark",
+   "pool": "sparks",
+   "size": 44,
+   "function": "0x6BD020",
+   "doc": "A sprite on a sphere around the target, its direction turning: it shows at its spawn radius, collapses into the centre at its own random tick, bursts out again and fades out.",
+   "node": [
+    "spark"
+   ],
+   "every_tick": [
+    [
+     "spark_step",
+     "$sparks.burst",
+     "$sparks.fade"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "sparks",
+     "draw": [
+      "spark_sprite",
+      "@sparks.seq"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "spark_move"
+    ]
+   ],
+   "end": [
+    "spark_gone"
+   ]
+  }
+ ]
+}

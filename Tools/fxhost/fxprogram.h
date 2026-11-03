@@ -44,6 +44,7 @@
 #include "mag_heal_ring_code.h"
 #include "fx_layouts.h"
 #include "fx_sway.h"
+#include "fx_ripple.h"
 
 namespace fxprog
 {
@@ -65,17 +66,17 @@ namespace fxprog
 	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value, count; Step draw; };   // (count: WITHIN's)
 	// a plain node's fields (offsets in the node; -1: none)
 	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, F_END, F_SEQ, F_RADIUS, F_ANGLE, F_SPEED, F_FADE,
-	             F_LEAF, FIELD_COUNT };
+	             F_LEAF, F_COLOUR, F_RIPPLE, F_SPARK, FIELD_COUNT };
 	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity",
 	                                                      "layout_b", "spawn", "end", "seq", "radius", "angle", "speed", "fade",
-	                                                      "leaf" };
+	                                                      "leaf", "colour", "ripple", "spark" };
 	struct Task
 	{
 		std::string key;
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		bool plain = false, draws_first = false;
-		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 		int layout_size = 0, layout_b_size = 0;
 		Step end;                                 // a plain node's end (after its counter)
 		std::vector<Step> at_end;                 // actions when it ends
@@ -127,18 +128,18 @@ namespace fxprog
 		HEAL_FIRST_TARGET, ANCHOR_AT_BONE, SOUND_3D_AT, HEAL_ACTION_AT, UNMARK_TARGET, ANCHOR_AT_POSITION,
 		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET, SCREEN_FLASH_CURVE, SCREEN_FLASH_OFF, SPIN, WHIRL_LEAF_MOVE,
 		FLASH_LEVEL_RAISE, FOLLOW_BONE, SOUND_3D_AT_POSITION, FLASH_LEVEL_CLEAR, SCREEN_FLASH_LEVEL, POINT_AT_POSITION,
-		MARK_RING_FROM, UNMARK_RING,
+		MARK_RING_FROM, UNMARK_RING, FLASH_LEVEL_HOLD, FLASH_LEVEL_SET, MARK_TARGET, TINT_TARGET, SPARK_STEP, SPARK_MOVE,
 		// conditions
-		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE,
+		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE,
 		// motions
 		HELIX,
 		// placements
 		CIRCLE_DROP, GLINT, AT_PARENT, TABLE_POINT, RANDOM_TARGET_BONE, RANDOM_TARGET_POINT, ACTION_TARGETS,
-		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING, WHIRL_LEAF,
+		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING, WHIRL_LEAF, COLLAPSE_SPARKS,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
 		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET, LAYOUT_SCALED_ON_TARGET,
-		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR, LAYOUT_ON_POINT, SWAY_OVERLAY,
+		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR, LAYOUT_ON_POINT, SWAY_OVERLAY, RIPPLE_SILHOUETTE, SPARK_SPRITE,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -168,7 +169,10 @@ namespace fxprog
 		{ "flash_level_clear", FLASH_LEVEL_CLEAR }, { "screen_flash_level", SCREEN_FLASH_LEVEL },
 		{ "layout_engine_at_anchor", LAYOUT_ENGINE_AT_ANCHOR }, { "point_at_position", POINT_AT_POSITION },
 		{ "layout_on_point", LAYOUT_ON_POINT }, { "mark_ring_from", MARK_RING_FROM }, { "unmark_ring", UNMARK_RING },
-		{ "sway_overlay", SWAY_OVERLAY },
+		{ "sway_overlay", SWAY_OVERLAY }, { "flash_level_hold", FLASH_LEVEL_HOLD }, { "flash_level_set", FLASH_LEVEL_SET },
+		{ "mark_target", MARK_TARGET }, { "tint_target", TINT_TARGET }, { "spark_step", SPARK_STEP }, { "spark_move", SPARK_MOVE },
+		{ "spark_gone", SPARK_GONE }, { "collapse_sparks", COLLAPSE_SPARKS }, { "ripple_silhouette", RIPPLE_SILHOUETTE },
+		{ "spark_sprite", SPARK_SPRITE },
 	};
 
 	inline Program *g_program = nullptr;
@@ -333,6 +337,28 @@ namespace fxprog
 			if (Tick(t, n) >= V(a[0])) layouts::MarkRing(*Fld<uint8_t *>(t, n, F_ENTITY), (uint16_t)V(a[1]), true);
 			break;
 		case UNMARK_RING: layouts::MarkRing(*Fld<uint8_t *>(t, n, F_ENTITY), (uint16_t)V(a[0]), false); break;   // bits
+		case FLASH_LEVEL_HOLD: // rise, up, level, fall after, end, down: the program's flash level raised to this tick's (Flare's)
+		{
+			const int32_t v = layouts::ScreenFlashRiseHoldFall(Tick(t, n), V(a[0]), V(a[1]), V(a[2]), V(a[3]), V(a[4]), V(a[5]));
+			int32_t &level = var<int32_t>(Mem("flash_level"));
+			if (v > level) level = v;
+			break;
+		}
+		case FLASH_LEVEL_SET: if (Tick(t, n) == V(a[0])) var<int32_t>(Mem("flash_level")) = V(a[1]); break;   // tick, level
+		case MARK_TARGET: (*Fld<uint16_t *>(t, n, F_ENTITY))[0] |= (uint16_t)V(a[0]); break;   // bits of the entity's flags word, every tick
+		case TINT_TARGET: // tint, from, ticks, shift, back from, back ticks, back shift: the entity's colour from the node's saved one
+			layouts::TintEntity(*Fld<uint8_t *>(t, n, F_ENTITY), (const void *)V(a[0]), Fld<uint32_t>(t, n, F_COLOUR), Tick(t, n),
+			                    V(a[1]), V(a[2]), V(a[3]), V(a[4]), V(a[5]), V(a[6]));
+			break;
+		case SPARK_STEP: // burst, fade: the spark's size and brightness for this tick (its mode: drawn, not, gone)
+		{
+			layouts::CollapseSpark *f = Fld<layouts::CollapseSpark>(t, n, F_SPARK);
+			f->mode = (int16_t)layouts::CollapseSparkPrepare(f, V(a[0]), V(a[1]));
+			break;
+		}
+		case SPARK_MOVE: // its direction turned, its age
+			if (Fld<layouts::CollapseSpark>(t, n, F_SPARK)->mode != -2) layouts::CollapseSparkMove(Fld<layouts::CollapseSpark>(t, n, F_SPARK));
+			break;
 		case POINT_AT_POSITION: // tick: the node's point = the entity's default effect position, on that tick
 			if (Tick(t, n) == V(a[0])) GetDefaultEffectPosition(*Fld<uint8_t *>(t, n, F_ENTITY), Fld<int16_t>(t, n, F_POINT));
 			break;
@@ -397,6 +423,21 @@ namespace fxprog
 	{
 		const std::vector<Val> &a = sp.place.a;
 		const Task &t = g_program->tasks[sp.task];
+		if (sp.place.op == COLLAPSE_SPARKS)
+		{
+			// count, collapse window, turn, sprite size, scale base, shift (Flare's): around the spawner's
+			// anchor, their radius from its entity's size (CRT rand: each spark's start, then its angles)
+			uint8_t *ent = *Fld<uint8_t *>(from, n, F_ENTITY);
+			const int32_t scale = layouts::SizeScale(ent, V(a[4]), V(a[5]));
+			for (int32_t k = 0; k < V(a[0]); k++)
+			{
+				TaskNode *f = (TaskNode *)SpawnTask(sp.task, n);
+				if (!f) break;   // (the pool is full: the original stops)
+				layouts::CollapseSparkStart(Fld<layouts::CollapseSpark>(t, f, F_SPARK), Fld<int16_t>(from, n, F_ANCHOR), Tick(from, n), scale,
+				                            V(a[1]), V(a[2]), V(a[3]));
+			}
+			return;
+		}
 		if (sp.place.op == SPINNING_RING)
 		{
 			// count, bone, lift, angle step, radius base / mask, speed base / mask, fade base / mask (Aura's
@@ -594,7 +635,7 @@ namespace fxprog
 			left = left < 0 ? frames : left | frames;
 			break;
 		}
-		case LAYOUT_SCALED_ON_TARGET: // layout (0, 1: b), at (0: the anchor's x / z on the feet, 1: the effect position now), depth base, shift, scale base, shift, flags, 16-bit record scale, additive objects a, b (-1: none; their gouraud quads only)
+		case LAYOUT_SCALED_ON_TARGET: // layout (0, 1: b), at (0: the anchor's x / z on the feet, 1: the effect position now, 2: the anchor), depth base, shift (-1: base as is), scale base, shift, flags, 16-bit record scale, additive objects a, b (-1: none; their gouraud quads only), far objects a, b (at a quarter depth)
 		{
 			// Aero's wind: the anchor callback scaled by the entity's size, its depth from it, its
 			// matrix the program's camera matrix
@@ -608,11 +649,12 @@ namespace fxprog
 				anchor_arg.anchor[1] = *(const int16_t *)(e + 0x24);
 				anchor_arg.anchor[3] = 0;
 			}
+			else if (V(a[1]) == 2) memcpy(anchor_arg.anchor, anchor, sizeof(anchor_arg.anchor));
 			else GetDefaultEffectPosition(e, anchor_arg.anchor);
 			const int32_t s = layouts::SizeScale(e, V(a[4]), V(a[5]));
 			anchor_arg.scale[0] = anchor_arg.scale[1] = anchor_arg.scale[2] = s;
 			anchor_arg.scaled = 1;
-			anchor_arg.depth = layouts::DepthFromSize(e, V(a[2]), V(a[3]));
+			anchor_arg.depth = V(a[3]) < 0 ? V(a[2]) : layouts::DepthFromSize(e, V(a[2]), V(a[3]));
 			anchor_arg.morph = arg.morph;
 			anchor_arg.honoured = (uint32_t)V(a[6]);
 			anchor_arg.cursor = arg.cursor;
@@ -621,6 +663,8 @@ namespace fxprog
 			for (int k = 8; k < 10; k++)   // (Zombie's mist)
 				if ((uint32_t)V(a[k]) < 32) anchor_arg.additive_objects |= 1u << V(a[k]);
 			anchor_arg.quads_gouraud_only = true;
+			for (int k = 10; k < 12; k++)   // (Flare's burst and ring)
+				if ((uint32_t)V(a[k]) < 32) anchor_arg.far_objects |= 1u << V(a[k]);
 			const int frames = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, V(a[0]) ? F_LAYOUT_B : F_LAYOUT), &anchor_arg);
 			left = left < 0 ? frames : left | frames;
 			break;
@@ -670,6 +714,16 @@ namespace fxprog
 			layouts::SwayArg o;
 			layouts::SwayOverlayParams(e, V(a[1]), layouts::SizeScale(ent, V(a[3]), V(a[4])), V(a[5]), V(a[6]), V(a[7]), V(a[8]), &o);
 			layouts::DrawSwayOverlay(ent, &o, (const int16_t *)V(a[2]), PacketCursor());
+			break;
+		}
+		case RIPPLE_SILHOUETTE: // from, ticks, tables (distance, weights, sine, one block): the node's entity redrawn rippled around its anchor
+			layouts::RippleSilhouetteTick(*Fld<uint8_t *>(t, n, F_ENTITY), Fld<int16_t>(t, n, F_ANCHOR), Tick(t, n) - V(a[0]), V(a[1]),
+			                              Fld<int32_t>(t, n, F_RIPPLE), layouts::RippleTablesAt((uint32_t)V(a[2])));
+			break;
+		case SPARK_SPRITE: // sequence: the node's spark, when its mode draws it
+		{
+			const layouts::CollapseSpark *f = Fld<layouts::CollapseSpark>(t, n, F_SPARK);
+			if (f->mode >= 0) layouts::CollapseSparkDraw(f, f->mode, fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])), PacketCursor());
 			break;
 		}
 		case TUMBLING_MODEL: // model, draw mode: the node's leaf (not when it is gone)
@@ -848,6 +902,7 @@ namespace fxprog
 		case TICK_ABOVE: ends = Tick(t, n) > V(t.end.a[0]); break;   // the counter (before this tick's step) reached it
 		case TICK_AT_NODE_END: ends = Tick(t, n) >= *Fld<int16_t>(t, n, F_END); break;   // its own frame count
 		case LEAF_GONE: ends = Fld<layouts::WhirlLeaf>(t, n, F_LEAF)->scale <= 0; break;
+		case SPARK_GONE: ends = Fld<layouts::CollapseSpark>(t, n, F_SPARK)->mode == -2; break;
 		default: break;
 		}
 		if (!ends) return 0;
@@ -1048,6 +1103,7 @@ namespace fxprog
 				const Task &t = g.tasks[g.director_spawns];
 				// not while a task of that kind at the busy tick or before runs on that target (Dispel: the cycle restarts)
 				uint8_t *target = Entity(Ctx()->actions[action].targets[0]);
+				uint32_t colour = *(const uint32_t *)(target + 0x28);   // (the node's colour field: an older task's own on that target)
 				bool busy = false;
 				if (V(a[4]) >= 0)
 				{
@@ -1055,8 +1111,9 @@ namespace fxprog
 					for (int k = 0; k < pool.count && !busy; k++)
 					{
 						uint8_t *node = (uint8_t *)PoolStorage(pool) + k * pool.size;
-						busy = (*(const uint8_t *)&((TaskNode *)node)->flags & 1) && (V(a[7]) || *Fld<uint8_t *>(t, node, F_ENTITY) == target)
-						       && *Fld<int16_t>(t, node, F_COUNTER) <= V(a[4]);   // (on any target: Zombie's)
+						const bool running = (*(const uint8_t *)&((TaskNode *)node)->flags & 1) && (V(a[7]) || *Fld<uint8_t *>(t, node, F_ENTITY) == target);
+						busy = running && *Fld<int16_t>(t, node, F_COUNTER) <= V(a[4]);   // (on any target: Zombie's)
+						if (running && !busy && t.field[F_COLOUR] >= 0) colour = *Fld<uint32_t>(t, node, F_COLOUR);
 					}
 				}
 				// (the next action only once its task started: Dispel's, Blind's, Petrify Stare's one-node pool)
@@ -1066,6 +1123,7 @@ namespace fxprog
 					*Fld<int16_t>(t, s, F_ACTION) = (int16_t)(uint16_t)action;
 					uint8_t *e = Entity(Ctx()->actions[action].targets[0]);
 					*Fld<uint8_t *>(t, s, F_ENTITY) = e;
+					if (uint32_t *saved = Fld<uint32_t>(t, s, F_COLOUR)) *saved = colour;
 					e[0] |= (uint8_t)V(a[0]);
 					e[1] |= (uint8_t)(V(a[0]) >> 8);
 					if (int16_t *anchor = Fld<int16_t>(t, s, F_ANCHOR))
