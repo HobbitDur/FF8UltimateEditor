@@ -1034,3 +1034,13 @@ Potion's description is the same with its own sequences and sound.
        loader reads them).
      - *Inputs* (`ProgramFiles<18>`): its two script files (MAG017_B.00 / .01; empty: the game's).
      - *Fujin:* its tab (Files); no + menu family.
+   - **Raldo Throw (19)** (FFNx 082a049f; Granaldo's Raldo Ball / Raldo Throw; the act family, Doom's description):
+     Granaldo takes the Raldo standing at it, morphs it into a ball and throws it at its target - the ball's
+     actor system, the stage wobble, debris at each landing - then the ball rolls back with two bounces and
+     the Raldo is given back.
+     - *Inputs* (`RaldoParams`): the sound and its tick, the ball's radii, the throw (progress, spin, morph,
+       lifts, gravity), the rebound (progress back, bounce lift, unmorph), the debris spawners' ticks, the
+       ball's actor system (start, mode), the wait before the Raldo turns back. Data: the sound, the camera
+       track, "mag018.tim".
+     - *Fujin:* its tabs (Raldo, Ball actors); no + menu family. The lab's monsters carry their com id
+       (entity +4), which the effect finds its Raldo by.

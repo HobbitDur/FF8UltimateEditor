@@ -661,3 +661,47 @@ def test_elvoret_death_runs_from_its_description(tmp_path):
     del description["copy"]["functions"]
     new, log = record_elvoret(tmp_path, 225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
     assert "program: New_death" in log and untag(new) == original
+
+
+def test_raldo_throw_description_compiles():
+    """Raldo Throw: Doom's kind - the per-action director, the module, the emitter's and the director's state tables."""
+    lines = compile_program(load_description(19)).splitlines()
+    for line in ['module 19 0x2726900 0x9B98', 'module_pointer 2 0x1629FA8', 'arena_size 16384', 'code 0x8A3760']:
+        assert line in lines, line
+    assert "release_file" not in lines
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag018.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m095.dat", "extracted_files/battle/c0m096.dat")
+def test_raldo_throw_runs_from_its_description(tmp_path):
+    """Raldo Throw as Granaldo (c0m095, slot 3) casts it on Squall, its Raldo (c0m096, com id 0x70) standing at it in
+    slot 4: what the exe's code records; with parameters, what FFNx's port records with them; as effect 225, itself
+    again."""
+    def record_raldo(effect, tag, *extra):
+        recorder = lab_recorder()
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(recorder), str(effect), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m095.dat'}", f"slot4={BATTLE / 'c0m096.dat'}", "pos4=0,0,-3000",
+                              "caster=3", "target=0", *extra],
+                             cwd=str(recorder.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return out.read_text().splitlines(), run.stdout
+
+    program = write_program(load_description(19), tmp_path / "effect.fxprog")
+    original, _log = record_raldo(19, "original")
+    described, log = record_raldo(19, "described", f"program={program}")
+    assert "2 tasks, 18 params" in log and untag(described) == original and len(original) > 50000
+    assert any(line.startswith("N ") for line in original) and any(line.startswith("S ") for line in original)
+    params = tmp_path / "params.txt"
+    params.write_text("toss.speed 300" + chr(10) + "raldo.radius 600" + chr(10) + "debris.take 5" + chr(10) + "ball.start 20" + chr(10))
+    native, _log = record_raldo(19, "native", "native=1", f"params={params}")
+    described, log = record_raldo(19, "described_params", f"program={program}", f"params={params}")
+    assert "4 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(19))
+    description["effect"], description["name"] = 225, "New throw"
+    del description["copy"]["functions"]
+    for task in description["tasks"]:
+        task.pop("function", None)
+    new, log = record_raldo(225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_throw" in log and untag(new) == original

@@ -1,0 +1,514 @@
+{
+ "format": 1,
+ "effect": 19,
+ "name": "Raldo Throw",
+ "doc": "Raldo Ball / Raldo Throw (Granaldo's enemy attacks; the act family): Granaldo takes the Raldo standing at it (the entity of com id 0x70 there), morphs it into a ball and throws it at its target - the ball's actor system, the stage wobble, debris at each landing - the damage at the hit, then the ball rolls back with two bounces, unmorphs and the Raldo is given back. Its parts are the port's code (FFNx mag019_raldo_throw.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8A3280",
+   "setup": "0x8A32A0",
+   "root": "0x8A33F0"
+  },
+  "memory": {
+   "texture_file": "0x2726900",
+   "packet_cursor": "0x2726904",
+   "packet_limit": "0x272B8F4",
+   "arena_a": "0x27303E4",
+   "limit_a": "0x272DDE4",
+   "arena_b": "0x27303E0",
+   "limit_b": "0x272DDE0",
+   "arena_top": "0x2730490",
+   "init_flag_a": "0x273048C",
+   "init_flag_b": "0x272DDDC",
+   "cam_ptr_a": "0x2730484",
+   "cam_ptr_b": "0x272B8F8",
+   "root_queue": "0x272B9C8",
+   "root_pool": "0x272B900",
+   "particle_pool": "0x2730470",
+   "actor_pool": "0x2730488",
+   "particle_next": "0x272DDD8",
+   "actor_next": "0x273047C",
+   "cursor_c": "0x2730414",
+   "cursor_d": "0x2726908",
+   "count_a": "0x273047E",
+   "count_b": "0x273046C"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 19,
+  "from": "0x2726900",
+  "size": "0x9B98",
+  "pointers": [
+   [
+    2,
+    "0x1629FA8"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x162A478",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x162A204",
+   "size": 620
+  },
+  "raldo.sound": {
+   "kind": "sound",
+   "address": "0x1629FAC",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x4000",
+  "release_file": false,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x438",
+    "actor_pool": "0xB7C0"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2730270",
+   "storage": "0x2730280",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x2726AB0",
+   "storage": "0x27269D8",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "ball",
+   "queue": "0x272E090",
+   "storage": "0x272DDE8",
+   "size": 676,
+   "count": 1,
+   "keep": true,
+   "doc": "the ball's actor system (the port's)"
+  },
+  {
+   "key": "raldo",
+   "queue": "0x272B9D8",
+   "storage": "0x272B9E8",
+   "size": 184,
+   "count": 50,
+   "keep": true,
+   "doc": "the Raldo, its debris spawners and debris (the port's)"
+  },
+  {
+   "key": "wobble",
+   "queue": "0x2730260",
+   "storage": "0x272FFE0",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the stage wobble at the take (the engine's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "raldo",
+   "title": "Raldo",
+   "doc": "The Raldo taken from the caster, morphed into a ball, thrown at the target and rolled back; its sound and debris"
+  },
+  {
+   "id": 0,
+   "key": "ball",
+   "title": "Ball actors",
+   "doc": "The ball's actor system (its actor data the exe's)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "toss",
+   "label": "Throw",
+   "doc": "To the target: Progress (4096: there), Spin, Morph (into a ball), Lift (its first vertical speed), Hit lift (at the target), Gravity, a tick"
+  },
+  {
+   "key": "rebound",
+   "label": "Rebound",
+   "doc": "Back to the caster: Progress back a tick, the second bounce's lift, Unmorph a tick"
+  },
+  {
+   "key": "debris",
+   "label": "Debris",
+   "doc": "The debris spawners' ticks: at the take, at each landing, at the first bounce back"
+  }
+ ],
+ "params": [
+  {
+   "key": "raldo.sound",
+   "part": "raldo",
+   "label": "Sound",
+   "doc": "Played at its tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@raldo.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "raldo.sound_tick",
+   "part": "raldo",
+   "label": "Sound tick",
+   "doc": "The sound at this tick of the Raldo task (then it is taken)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "raldo.radius",
+   "part": "raldo",
+   "label": "Ball radius",
+   "doc": "The ball's radii (x, y, z)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 448,
+   "unit": "plain"
+  },
+  {
+   "key": "raldo.give_back",
+   "part": "raldo",
+   "label": "Turn back after",
+   "doc": "Its rotation put back these ticks after it is given back",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "toss.speed",
+   "part": "raldo",
+   "label": "Progress",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "toss.spin",
+   "part": "raldo",
+   "label": "Spin",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "toss.morph",
+   "part": "raldo",
+   "label": "Morph",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "toss.lift",
+   "part": "raldo",
+   "label": "Lift",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -384,
+   "unit": "plain"
+  },
+  {
+   "key": "toss.hit_lift",
+   "part": "raldo",
+   "label": "Hit lift",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -608,
+   "unit": "plain"
+  },
+  {
+   "key": "toss.gravity",
+   "part": "raldo",
+   "label": "Gravity",
+   "doc": "",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "rebound.speed",
+   "part": "raldo",
+   "label": "Progress back",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "rebound.bounce_lift",
+   "part": "raldo",
+   "label": "Bounce lift",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -384,
+   "unit": "plain"
+  },
+  {
+   "key": "rebound.unmorph",
+   "part": "raldo",
+   "label": "Unmorph",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 768,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.take",
+   "part": "raldo",
+   "label": "At the take",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.landing",
+   "part": "raldo",
+   "label": "At a landing",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.bounce",
+   "part": "raldo",
+   "label": "At the bounce",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.start",
+   "part": "ball",
+   "label": "Start",
+   "doc": "Its actor system's start (its 4th word)",
+   "type": "i16",
+   "min": 0,
+   "max": 1000,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.mode",
+   "part": "ball",
+   "label": "Mode",
+   "doc": "Its placement mode (4: at the caster)",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 4,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x8A3620",
+   "code": "0x8A3620",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; keeps the caster and target positions and the caster's facing in the director block and starts the director; the damage once the ball hit; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8A36A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AAFE0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AB020"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AB040"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8AB060"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x8A3760",
+   "code": "0x8A3760",
+   "doc": "The director: every tick the phase bookkeeping (phase 1: the ball's actor system and the Raldo task), then its states: the cues, 4 ticks, tick 0x2D, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x8A37E0"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8A3830"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8A3880"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8A38C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8A38E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8A3900"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

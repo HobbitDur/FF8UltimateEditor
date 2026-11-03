@@ -813,9 +813,14 @@ static bool load_models()
 				for (int i = 0; i < n; i++) if (!char_used[free_ids[i]]) { com = free_ids[i]; break; }
 			}
 			if (com < 0x10) char_used[com] = true;
+			if (com >= 0x10) *(uint8_t *)(e + 4) = (uint8_t)com;   // its com id (Raldo Throw finds its Raldo by it)
 			if (com < 0x10 ? !load_character(e, slot, com, O.body[slot], O.weapon[slot]) : !load_entity(com, slot, O.body[slot])) return false;
 		}
-		else if (!load_entity(0x10 + O.model, slot, "")) return false;
+		else
+		{
+			*(uint8_t *)(e + 4) = (uint8_t)(0x10 + O.model);
+			if (!load_entity(0x10 + O.model, slot, "")) return false;
+		}
 		g_drawn_slot[slot] = true;
 		*(uint32_t *)(e + 0x7C) = 0xFFFFFFFF;       // every object visible
 		// its state block (BattleStateEntity[slot]): read by the animation code, no sequence runs
