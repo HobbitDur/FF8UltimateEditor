@@ -86,7 +86,7 @@ def test_a_description_runs_in_a_free_slot(tmp_path):
     description["effect"], description["name"] = 224, "New heal"
     del description["copy"]["functions"]
     for task in description["tasks"]:
-        task.pop("function")
+        task.pop("function", None)
     program = write_program(description, tmp_path / "new.fxprog")
     cure, _log = record(tmp_path, 1, "cure")
     new, log = record(tmp_path, 224, "new", f"program={program}")
@@ -161,7 +161,7 @@ def test_hypnotize_runs_from_its_description(tmp_path):
     description["effect"], description["name"] = 225, "New hypnosis"
     del description["copy"]["functions"]
     for task in description["tasks"]:
-        task.pop("function")
+        task.pop("function", None)
     program = write_program(description, tmp_path / "new.fxprog")
     new, log = record_hypnotize(tmp_path, 225, "new", f"program={program}")
     assert "program: New_hypnosis" in log and untag(new) == original
@@ -215,7 +215,7 @@ def test_status_item_runs_from_its_description(tmp_path, effect):
     description["effect"], description["name"] = 225, "New item"
     del description["copy"]["functions"]
     for task in description["tasks"]:
-        task.pop("function")
+        task.pop("function", None)
     program = write_program(description, tmp_path / "new.fxprog")
     new, log = record(tmp_path, 225, "new", f"program={program}")
     assert "program: New_item" in log and untag(new) == original
@@ -305,7 +305,7 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     description["effect"], description["name"] = 225, "New cycle"
     del description["copy"]["functions"]
     for task in description["tasks"]:
-        task.pop("function")
+        task.pop("function", None)   # (Berserk's sparks: a task of their own, no exe function)
     program = write_program(description, tmp_path / "new.fxprog")
     new, log = record(tmp_path, 225, "new", f"program={program}")
     assert "program: New_cycle" in log and untag(new) == original
