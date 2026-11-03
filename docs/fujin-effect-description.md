@@ -1162,3 +1162,8 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`ShellParams`): the emitter's sound, release and result ticks, the master's wait, the
        actor system, the stage darkening (level, step). Data: the sound, the camera track, "mag032.tim".
      - *Fujin:* its tabs (Emitter, Stage darkening); no + menu family.
+   - **Pain (34)** (FFNx e5312c05; the spell; the act family with Drain's master, no actor pools nor stage
+     tasks): one emitter per action - its sound, two prim-model players on the target, the damage.
+     - *Inputs* (`PainParams`): the emitter's sound, release and damage ticks. Data: the sound, the camera
+       track, "mag033.tim".
+     - *Fujin:* its tab (Emitter); no + menu family.

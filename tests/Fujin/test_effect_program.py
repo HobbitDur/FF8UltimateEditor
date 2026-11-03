@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    34: ("mag033.tim", 3, "emitter.release 30\nemitter.result 30\n"),
     33: ("mag032.tim", 9, "actors.length 30\nmaster.wait 20\nfade.step 64\nemitter.release 25\n"),
     32: ("mag031.tim", 9, "emitter.flash 10\nmaster.wait 15\nwobble.step 64\nparticles.from 22\n"),
     30: ("mag029.tim", 13, "laser.grow 512\nlaser.hold 20\nmaster.wait 30\nlight.step 64\n"),
@@ -317,7 +318,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect and Shell from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell and Pain from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -925,4 +926,11 @@ def test_shell_description_compiles():
     """Shell: Doom's kind with Drain's master - its actor pools, the stage darkening in and out (native tasks) after its wait."""
     lines = compile_program(load_description(33)).splitlines()
     for line in ['module 33 0x26C0380 0x3510', 'act_stage 1 2 $3', 'act_pool actor_pool 33600', 'native 0x866470']:
+        assert line in lines, line
+
+
+def test_pain_description_compiles():
+    """Pain: Doom's kind with Drain's master without actor pools or stage tasks, its own emitter."""
+    lines = compile_program(load_description(34)).splitlines()
+    for line in ['module 34 0x26BA9E0 0x59A0', 'act_stage -1 -1 0', 'native 0x8658A0']:
         assert line in lines, line
