@@ -1377,3 +1377,14 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`RecoverParams`, Revive's own): the director's sound and result cue, the actor system,
        the stage darkening. Data: the sound, the camera track, "mag060.tim".
      - *Fujin:* its tabs (Director, Stage darkening); no + menu family.
+   - **Devour (62)** (FFNx 3ba28300; the command ability; the act family with Pain's master): one emitter
+     per action - the cast: one of three pictures and the title strip scrolling over the screen, the stage
+     and the entities darkened (the devoured target hidden), the music faded, the outcome's sound (the
+     exe's table by the result); the master's release, the result.
+     - *Added:* `resources.files` (the program's `load_file <memory> <name> [first]`): more files the
+       program's file loader loads into memory words of the copy (moved with it), before its texture
+       when `"first"` (as Devour's loader does) or after it; each name an exe data entry.
+     - *Inputs* (`DevourParams`): the emitter's release, result and outcome sound ticks, the picture's
+       start, scroll, fade start and step, the darkening's start, hold and step, the music fade's start,
+       step and return. Data: the camera track, "mag061.tim" and its four pictures' names.
+     - *Fujin:* its tabs (Emitter, Picture, Darkening); no + menu family.

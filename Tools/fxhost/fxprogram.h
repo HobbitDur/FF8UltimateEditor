@@ -130,6 +130,8 @@ namespace fxprog
 		std::map<std::string, uint32_t> memory;
 		uint32_t file_loader = 0, setup = 0, root = 0, camera = 0, texture_name = 0;
 		uint32_t texture_data = 0;                      // a TIM the setup uploads as it is (Thunder's exe data): the file loader loads nothing
+		struct ExtraFile { std::string memory; uint32_t name = 0; bool first = false; };
+		std::vector<ExtraFile> files;                   // more files the file loader loads into memory words (Devour's pictures), in order
 		uint32_t director_fn = 0;                       // the director task the setup starts (0: DirectorTask)
 		int texture_param = -1, director_spawns = -1;
 		int director = PER_ACTION, director_start = 1;
@@ -2077,8 +2079,12 @@ namespace fxprog
 		if (g.texture_data) return 0;   // (Thunder's loader loads nothing: its setup uploads exe data)
 		fxp::FileName name = {};
 		if (g.texture_param >= 0) strncpy(name.name, g.params[g.texture_param].text.c_str(), sizeof(name.name) - 1);
+		for (const Program::ExtraFile &f : g.files)   // (the ones the game loads before its texture)
+			if (f.first) var<uint32_t>(Mem(f.memory.c_str())) = IO_GetFile_MAGIC((const char *)f.name);
 		const uint32_t file = IO_GetFile_MAGIC(fxp::file(name, (const char *)g.texture_name));
 		var<uint32_t>(Mem("texture_file")) = file;
+		for (const Program::ExtraFile &f : g.files)
+			if (!f.first) var<uint32_t>(Mem(f.memory.c_str())) = IO_GetFile_MAGIC((const char *)f.name);
 		return file;
 	}
 
@@ -2451,6 +2457,7 @@ namespace fxprog
 			else if (d == "texture" && need(3)) { g.texture_name = ParseNumber(w[1]); g.texture_param = atoi(w[2].c_str()); }
 			else if (d == "camera" && need(2)) g.camera = ParseNumber(w[1]);
 			else if (d == "texture_data" && need(2)) g.texture_data = ParseNumber(w[1]);
+			else if (d == "load_file" && need(3)) g.files.push_back({ w[1], ParseNumber(w[2]), w.size() > 3 && w[3] == "first" });
 			else if (d == "own" && need(3)) g.own.push_back({ w[1], (uint32_t)strtoul(w[2].c_str(), nullptr, 0) });
 			else if (d == "pool" && need(6))
 			{

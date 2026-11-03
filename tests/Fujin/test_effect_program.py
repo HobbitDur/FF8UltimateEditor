@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    62: ("mag061.tim", 13, "picture.scroll 8\ndarken.step 256\nmusic.step 16\nemitter.sound 30\n"),
     61: ("mag060.tim", 9, "stage.level 1024\nactors.length 30\ndirector.result 30\n"),
     60: ("mag059.tim", 15, "strike.push_by 800\ndarken.level 1024\ndebris.until 50\nactors.length 30\ndirector.damage 30\n"),
     59: ("mag057-058.tim", 11, "emitter.sound_tick 4\nmaster.wait 20\nfade.step_in 128\nactors.length 35\n"),
@@ -343,7 +344,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike and Revive from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive and Devour from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -1180,4 +1181,11 @@ def test_revive_ability_description_compiles():
     """Revive: Recover's kind (its code Recover's at its own addresses) - the director block's exe word, the emitter's and the director's state tables."""
     lines = compile_program(load_description(61)).splitlines()
     for line in ['module 61 0x2601920 0x2750', 'module_pointer 2 0x1596AD4', 'act_pool actor_pool 67200', 'code 0x7E5D80']:
+        assert line in lines, line
+
+
+def test_devour_description_compiles():
+    """Devour: Doom's kind with Pain's master (no actor pools, no stage tasks), its own emitter, its four pictures loaded by the program's file loader before its texture."""
+    lines = compile_program(load_description(62)).splitlines()
+    for line in ['module 62 0x2601318 0x608', 'load_file tim_title 22637192 first', 'load_file tim_pic3 22637240 first', 'native 0x7E4D90']:
         assert line in lines, line

@@ -1,0 +1,312 @@
+{
+ "format": 1,
+ "effect": 62,
+ "name": "Devour",
+ "doc": "Devour (command ability; the act family, Pain's master): one emitter per action - the cast: one of three pictures and the title strip scrolling over the screen, the stage and the entities darkened (the devoured target hidden), the music faded, the outcome's sound; the master's release, the result. Its parts are the port's code (FFNx mag062_devour.cpp) run on the program's memory; its four pictures are loaded by the program's file loader.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7E4AB0",
+   "setup": "0x7E4B00",
+   "root": "0x7E4C10"
+  },
+  "memory": {
+   "texture_file": "0x2601318",
+   "packet_cursor": "0x260131C",
+   "packet_limit": "0x2601334",
+   "arena_a": "0x26018F4",
+   "limit_a": "0x2601778",
+   "arena_b": "0x26018F0",
+   "limit_b": "0x2601774",
+   "arena_top": "0x260191C",
+   "init_flag_a": "0x2601918",
+   "init_flag_b": "0x2601770",
+   "cam_ptr_a": "0x2601914",
+   "cam_ptr_b": "0x2601338",
+   "root_queue": "0x2601408",
+   "root_pool": "0x2601340",
+   "tim_title": "0x2601900",
+   "tim_pic1": "0x2601904",
+   "tim_pic2": "0x26018F8",
+   "tim_pic3": "0x26018FC"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 62,
+  "from": "0x2601318",
+  "size": "0x608",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1596AC8",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15962D8",
+   "size": 1968
+  },
+  "title_name": {
+   "kind": "name",
+   "address": "0x1596A88",
+   "size": 16
+  },
+  "picture1_name": {
+   "kind": "name",
+   "address": "0x1596A98",
+   "size": 16
+  },
+  "picture2_name": {
+   "kind": "name",
+   "address": "0x1596AA8",
+   "size": 16
+  },
+  "picture3_name": {
+   "kind": "name",
+   "address": "0x1596AB8",
+   "size": 16
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera",
+  "files": [
+   {
+    "memory": "tim_title",
+    "game_name": "@title_name",
+    "first": true
+   },
+   {
+    "memory": "tim_pic1",
+    "game_name": "@picture1_name",
+    "first": true
+   },
+   {
+    "memory": "tim_pic2",
+    "game_name": "@picture2_name",
+    "first": true
+   },
+   {
+    "memory": "tim_pic3",
+    "game_name": "@picture3_name",
+    "first": true
+   }
+  ]
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x6000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone"
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2601780",
+   "storage": "0x2601790",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "tasks",
+   "queue": "0x2601418",
+   "storage": "0x2601428",
+   "size": 84,
+   "count": 10,
+   "keep": true,
+   "doc": "the cast, the picture, the darkening, the music fade (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: the cast (its picture, darkening, music fade), the outcome's sound, the master's release, the result"
+  },
+  {
+   "id": 0,
+   "key": "picture",
+   "title": "Picture",
+   "doc": "One of the three pictures and the title strip, scrolling, fading"
+  },
+  {
+   "id": 0,
+   "key": "darken",
+   "title": "Darkening",
+   "doc": "The stage and the entities darkened, the devoured target hidden; the music faded"
+  }
+ ],
+ "groups": [
+  {
+   "key": "music",
+   "label": "Music",
+   "doc": "Its volume down from its tick by a step a tick, back up after its tick"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 75,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Result tick",
+   "doc": "The result of its target from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 83,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Outcome sound tick",
+   "doc": "The outcome's sound (the exe's table by the result) at this tick of the cast",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "picture.start",
+   "part": "picture",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "picture.scroll",
+   "part": "picture",
+   "label": "Scroll",
+   "doc": "Pixels a tick to the left",
+   "type": "i16",
+   "min": -64,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "picture.fade_from",
+   "part": "picture",
+   "label": "Fade from",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 75,
+   "unit": "plain"
+  },
+  {
+   "key": "picture.fade",
+   "part": "picture",
+   "label": "Fade",
+   "doc": "Brightness down a tick (0x80: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 128,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.start",
+   "part": "darken",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.hold",
+   "part": "darken",
+   "label": "Hold until",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 83,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step",
+   "part": "darken",
+   "label": "Step",
+   "doc": "Back by this a tick (4096: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "music.start",
+   "part": "darken",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "music.step",
+   "part": "darken",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 127,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "music.back",
+   "part": "darken",
+   "label": "Back after",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 83,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7E4D90",
+   "code": "0x7E4D90",
+   "native": "0x7E4D90",
+   "doc": "One per action: the module's own emitter (the port's task): the cast task, the master's release, the result."
+  }
+ ]
+}
