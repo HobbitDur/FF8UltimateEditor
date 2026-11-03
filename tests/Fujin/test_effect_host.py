@@ -61,7 +61,7 @@ def test_a_new_effect_made_with_the_exe_has_its_own_data():
         code = "\n".join(line for line in program.splitlines() if not line.startswith(("data ", "data_actors ", "#"))
                          # (a port module's copy: its code's identities and its memory moved into its block)
                          and not ("module" in source and line.startswith(("module", "memory ", "pool ", "code ", "tick call ",
-                                                                          "phase_tick call ", "port ", "native "))))
+                                                                          "phase_tick call ", "port ", "native ", "pool_before "))))
         assert not EXE_ADDRESS.findall(code), EXE_ADDRESS.findall(code)[:5]
         # its part tabs show the exe's copy of its sequences and sounds
         defaults = {field["key"]: field["default"] for field in description_schema(new)["fields"]}
