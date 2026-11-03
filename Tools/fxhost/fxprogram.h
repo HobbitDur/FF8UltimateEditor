@@ -54,6 +54,10 @@
 #include "fx_bolt.h"
 #include "fx_runes.h"
 #include "fx_revive.h"
+#if __has_include("fx_actors.h")
+#include "fx_actors.h"   // the act family's actor system (FFNx sources with it: fx_actors.cpp and act_engine.cpp built in)
+#define FXPROG_ACTORS 1
+#endif
 
 namespace fxprog
 {
@@ -112,6 +116,8 @@ namespace fxprog
 		bool own_queue = false, own_storage = false;  // allocated in the program's own memory
 	};
 	enum Director { PER_ACTION, MASTER, CYCLE, CHAIN };
+	// a value written into data before every cast (an actor definition's field: the act family's)
+	struct Patch { uint32_t at = 0; int type = 0; Val value; };
 	enum DrawOnlyKind { NO_DRAW_ONLY, DRAW_ONLY_SKIP, DRAW_ONLY_DRAWS };
 	struct Program
 	{
@@ -126,6 +132,23 @@ namespace fxprog
 		int director_single = -1;                       // CHAIN: the lone target's director task (director_spawns: several targets')
 		bool director_short = false;                    // PER_ACTION: Double's short root (4 phases, arenas of the magic buffer) and setup
 		bool short_upload_always = false;               // its setup uploads the texture even when the cast repeats (Phoenix Down's)
+		uint32_t arena_size = 0x10000;                  // PER_ACTION: each of its two packet arenas in the texture file (Mega Phoenix: 0xA000)
+		bool per_target = false;                        // PER_ACTION: its task for each target of the action, in turn (Mega Phoenix's), not each action
+		// PER_ACTION, the act family's master (Mega Phoenix 0x8CE4F0): once the children are gone (state 2) room
+		// carved from the arena top for memory words (act_pools: name, bytes), cleared, u16 words zeroed
+		// (act_zero), the stage fade in task; after the last action, act_wait ticks, then the stage fade
+		// out task; u16 words cleared every tick before the queues (act_clear)
+		int act_stage_in = -1, act_stage_out = -1;
+		Val act_wait;
+		std::vector<std::pair<std::string, uint32_t>> act_pools;
+		std::vector<std::string> act_zero, act_clear;
+		int act_part = 0, act_first_part = 0;            // the lab's parts: the actor system's, its definition 0's (k: + k)
+		std::vector<Patch> patches;                     // written by the setup, before anything runs
+#ifdef FXPROG_ACTORS
+		ff8fx::act::actors::Mem actor_mem = {};         // the actor system's memory (its own or the copy's) and descriptor
+		ff8fx::act::Mod actor_mod = {};
+		bool actors_ready = false;
+#endif
 		Val director_every;                             // CYCLE: one task per action every this many ticks
 		Step director_place;
 		std::vector<Step> director_events;              // the master's, on its counter, after its queues...
@@ -159,10 +182,10 @@ namespace fxprog
 		SPAWN_SIZE_WORD, SOUND_3D_AT_SPAWN,
 		ADD, SET, COPY, FLAGS, SET_WHEN, ADD_WHEN, ADD_BELOW, ADD_VAR, SPIN_VAR, CIRCLE_PLACE, CIRCLE_PLACE_VAR, ANCHOR_XZ, ANCHOR_TOP,
 		RAND_MASK, RAND_HOP, INDEX_TIMES, TICK_TIMES, TURNED_OFFSET, FADE_PULSE, GREY_PULSE, MORPH, SPAWN_WHEN, SPAWN_UNLESS_TARGET_BITS,
-		SCREEN_FADE_WHEN, WRAP, REVIVE_RING_STEP,
+		SCREEN_FADE_WHEN, WRAP, REVIVE_RING_STEP, ACTOR_SETUP, ACTOR_STEP, STAGE_CLEAR, STAGE_FADE,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE, RAYS_DONE, RIBBON_DONE, MOTE_DONE, LIFE_OUT,
-		VAR_AT_MOST, VAR_AT_LEAST, VAR_EQUALS, NEVER, AT_LEAST_VAR, AT_LEAST_WHEN, EQUALS_WHEN, VAR_ABOVE,
+		VAR_AT_MOST, VAR_AT_LEAST, VAR_EQUALS, NEVER, AT_LEAST_VAR, AT_LEAST_WHEN, EQUALS_WHEN, VAR_ABOVE, ACTOR_DONE,
 		// motions
 		HELIX,
 		// placements
@@ -235,6 +258,8 @@ namespace fxprog
 		{ "revive_ring_step", REVIVE_RING_STEP }, { "above", VAR_ABOVE }, { "revive_rising", REVIVE_RISING }, { "revive_at", REVIVE_AT },
 		{ "revive_scatter", REVIVE_SCATTER }, { "revive_ring", REVIVE_RING }, { "revive_fall", REVIVE_FALL },
 		{ "revive_sparkle", REVIVE_SPARKLE }, { "revive_sparkle_sized", REVIVE_SPARKLE_SIZED },
+		{ "actor_setup", ACTOR_SETUP }, { "actor_step", ACTOR_STEP }, { "actor_done", ACTOR_DONE }, { "stage_clear", STAGE_CLEAR },
+		{ "stage_fade", STAGE_FADE },
 	};
 
 	inline Program *g_program = nullptr;
@@ -286,6 +311,48 @@ namespace fxprog
 		}
 	}
 	inline uint8_t *VarAt(TaskNode *n, int32_t token) { uint8_t *b = VarBase(n, token); return b ? b + (token & 0xFFFF) : nullptr; }
+
+	// ------------------------------------------------------------------
+	// The act family's actor system (fx_actors.h, Mega Phoenix's copy) on the program's memory: its
+	// words (the copy's or its own), the engine's module descriptor with its globals there; the
+	// library's functions keep Mega Phoenix's addresses as their dispatch keys
+	// ------------------------------------------------------------------
+	inline uint32_t g_actor_done = 0;             // the last step's result (1: the system has finished)
+	inline void UseActors()
+	{
+#ifdef FXPROG_ACTORS
+		using namespace ff8fx::act;
+		Program &g = *g_program;
+		if (!g.actors_ready)
+		{
+			actors::register_dispatch();
+			g.actor_mem = { Mem("actor_state"), Mem("cam_ptr_a"), Mem("packet_cursor"), Mem("particle_pool"), Mem("particle_next"),
+			                Mem("actor_pool"), Mem("actor_next"), Mem("count_a"), Mem("count_b"), g.act_part, g.act_first_part };
+			g.actor_mod = actors::MOD_007;
+			g.actor_mod.g[G_257F9B0] = Mem("cam_ptr_b");   // the scratch stack's top
+			g.actor_mod.g[G_258FB78] = Mem("actor_state");
+			g.actor_mod.g[G_258BA90] = 0;                  // (the module's queues: the program spawns its tasks itself)
+			g.actor_mod.g[G_258BE30] = 0;
+			g.actors_ready = true;
+		}
+		actors::Use(&g.actor_mem, &g.actor_mod);
+#endif
+	}
+	// the stage's four fade layers (Effect library, 0x1D98992 + k * 0x2C: the level word, the bytes +0x26..+0x28)
+	inline void StageClear()
+	{
+		for (uint32_t p = 0x1D989BA, k = 0; k < 4; k++, p += 0x2C)
+		{
+			var<uint16_t>(p - 0x28) = 0;
+			var<uint8_t>(p) = 0;
+			var<uint8_t>(p - 1) = 0;
+			var<uint8_t>(p - 2) = 0;
+		}
+	}
+	inline void StageLevel(uint16_t level)
+	{
+		for (uint32_t p = 0x1D98992, k = 0; k < 4; k++, p += 0x2C) var<uint16_t>(p) = level;
+	}
 	inline int32_t GetVar(TaskNode *n, int32_t token)
 	{
 		const uint8_t *p = VarAt(n, token);
@@ -654,6 +721,25 @@ namespace fxprog
 			break;
 		case SCREEN_FADE_WHEN: if (GetVar(n, V(a[0])) == V(a[1])) ScreenFadeTask(V(a[2]), V(a[3]), V(a[4]), V(a[5])); break;   // test var, value, the fade's four values
 		case REVIVE_RING_STEP: layouts::ReviveRingStep((uint8_t *)n, V(a[0]), V(a[1])); break;   // spin, rise: a ring sparkle's orbit
+#ifdef FXPROG_ACTORS
+		case ACTOR_SETUP: UseActors(); ff8fx::act::actors::mf_8CE9A0((uint32_t)n); break;   // the actor system's set-up (its node: data +0x30, state +0x34...)
+		case ACTOR_STEP: UseActors(); g_actor_done = ff8fx::act::actors::mf_8CF3D0((uint32_t)n); break;   // a step: update, draws
+#endif
+		case STAGE_CLEAR: StageClear(); break;
+		case STAGE_FADE: // level var, step, limit: the level by the step; at the limit, done (and the next phase); the layers at it
+		{
+			const int32_t step = V(a[1]), limit = V(a[2]);
+			AddVar(n, V(a[0]), step);
+			const int32_t level = GetVar(n, V(a[0]));
+			if (step >= 0 ? level >= limit : level <= limit)
+			{
+				*(uint8_t *)&h->flags |= 1;
+				SetVar(n, V(a[0]), limit);
+				h->phase++;
+			}
+			StageLevel((uint16_t)GetVar(n, V(a[0])));
+			break;
+		}
 		case WRAP: // var, last var: var + 1, back to 0 past the last
 			SetVar(n, V(a[0]), GetVar(n, V(a[0])) + 1);
 			if (GetVar(n, V(a[0])) > GetVar(n, V(a[1]))) SetVar(n, V(a[0]), 0);
@@ -701,6 +787,7 @@ namespace fxprog
 		case AT_LEAST_WHEN: return GetVar(n, V(s.a[2])) == V(s.a[3]) && GetVar(n, V(s.a[0])) >= V(s.a[1]);   // var, value, test var, test value
 		case EQUALS_WHEN: return GetVar(n, V(s.a[2])) == V(s.a[3]) && GetVar(n, V(s.a[0])) == V(s.a[1]);
 		case VAR_ABOVE: return GetVar(n, V(s.a[0])) > V(s.a[1]);   // var, value
+		case ACTOR_DONE: return g_actor_done != 0;
 		default: return true;
 		}
 	}
@@ -1473,6 +1560,23 @@ namespace fxprog
 	// ------------------------------------------------------------------
 	static const uint32_t CAM_SNAPSHOT = 0x2793E58;       // Effect_SharedCamMatrixSnapshot
 
+	inline int16_t &ActCountdown(RootNode *r) { return *(int16_t *)((uint8_t *)r + 0x60); }
+	// the act family's actor pools (Mega Phoenix 0x8CE650): carved from the arena top, cleared (0x8DCC00), their
+	// cursors zeroed; the stage fade in
+	inline void ActPools(RootNode *r)
+	{
+		Program &g = *g_program;
+		for (const auto &pool : g.act_pools)
+		{
+			const uint32_t at = var<uint32_t>(Mem("arena_top"));
+			var<uint32_t>(Mem(pool.first.c_str())) = at;
+			var<uint32_t>(Mem("arena_top")) = at + pool.second;
+		}
+		for (const auto &pool : g.act_pools) fn<void (__cdecl *)(uint32_t, uint32_t)>(0x8DCC00)(var<uint32_t>(Mem(pool.first.c_str())), pool.second);
+		for (const std::string &word : g.act_zero) var<uint16_t>(Mem(word.c_str())) = 0;
+		if (g.act_stage_in >= 0) SpawnTask(g.act_stage_in, r);
+	}
+
 	inline void DirectorPhase(RootNode *r)
 	{
 		switch (r->h.phase)
@@ -1481,8 +1585,12 @@ namespace fxprog
 		case 1:
 			r->h.phase++;
 			break;
-		case 2: // children gone
-			if (r->h.children == 0) r->h.phase++;
+		case 2: // children gone (the act family's: its actor pools, the stage fade in)
+			if (r->h.children == 0)
+			{
+				if (!g_program->act_pools.empty() || g_program->act_stage_in >= 0) ActPools(r);
+				r->h.phase++;
+			}
 			break;
 		case 3: // the spawned task of the current action
 			r->busy = 1;
@@ -1492,17 +1600,27 @@ namespace fxprog
 		case 4: // when it is over, the next action (back to 3) or on
 			if (r->busy == 0)
 			{
-				const int8_t a = r->h.action;
-				if ((int16_t)a < r->last_action)
+				const int8_t a = r->h.action, t = r->h.target;
+				if (g_program->per_target ? (int32_t)t < (int32_t)r->target_count - 1 : (int16_t)a < r->last_action)
 				{
-					r->h.action = (int8_t)(a + 1);
+					if (g_program->per_target) r->h.target = (int8_t)(t + 1);   // (the next target record)
+					else r->h.action = (int8_t)(a + 1);
 					r->h.line++;
 					r->h.phase--;
 				}
-				else r->h.phase++;
+				else
+				{
+					if (g_program->act_stage_out >= 0) ActCountdown(r) = (int16_t)V(g_program->act_wait);
+					r->h.phase++;
+				}
 			}
 			break;
-		case 5:
+		case 5: // (the act family's: after its countdown, the stage fade out)
+			if (g_program->act_stage_out >= 0)
+			{
+				if (--ActCountdown(r) > 0) break;
+				SpawnTask(g_program->act_stage_out, r);
+			}
 			r->h.phase++;
 			break;
 		case 6: // every queue empty
@@ -1589,6 +1707,7 @@ namespace fxprog
 		UpdateTargetPosFromBones(r);
 		DirectorPhase(r);
 		r->alive = 0;
+		for (const std::string &word : g_program->act_clear) var<uint16_t>(Mem(word.c_str())) = 0;
 		for (const Pool &pool : g_program->pools)
 		{
 			if (pool.tag >= 0) FX_PART(pool.tag);
@@ -1883,9 +2002,21 @@ namespace fxprog
 		return root_queue;
 	}
 
+	inline void ApplyPatches()
+	{
+		for (const Patch &p : g_program->patches)
+			switch (p.type)
+			{
+			case VAR_I16: case VAR_U16: var<int16_t>(p.at) = (int16_t)V(p.value); break;
+			case VAR_I32: var<int32_t>(p.at) = V(p.value); break;
+			default: var<uint8_t>(p.at) = (uint8_t)V(p.value); break;
+			}
+	}
+
 	inline TaskQueue *__cdecl Setup(CastContext *ctx)
 	{
 		Program &g = *g_program;
+		ApplyPatches();
 		if (g.director == CHAIN) return ChainSetup(ctx);
 		if (g.director == MASTER) return MasterSetup(ctx);
 		if (g.director == CYCLE) return g.master_setup ? MasterSetup(ctx) : CycleSetup(ctx);
@@ -1934,10 +2065,10 @@ namespace fxprog
 		}
 		const uint32_t file = var<uint32_t>(Mem("texture_file"));
 		var<uint32_t>(Mem("arena_a")) = file;
-		var<uint32_t>(Mem("limit_a")) = file + 0x10000;
-		var<uint32_t>(Mem("arena_b")) = file + 0x10000;
-		var<uint32_t>(Mem("arena_top")) = file + 0x20000;
-		var<uint32_t>(Mem("limit_b")) = file + 0x20000;
+		var<uint32_t>(Mem("limit_a")) = file + g.arena_size;
+		var<uint32_t>(Mem("arena_b")) = file + g.arena_size;
+		var<uint32_t>(Mem("arena_top")) = file + 2 * g.arena_size;
+		var<uint32_t>(Mem("limit_b")) = file + 2 * g.arena_size;
 		for (const Pool &pool : g.pools) InitTaskQueuePool((TaskQueue *)pool.queue, (void *)pool.storage, pool.size, pool.count);
 		return root_queue;
 	}
@@ -2044,6 +2175,58 @@ namespace fxprog
 					uint8_t *out = (uint8_t *)AddBlob(g, w[1], hex.size() / 2);
 					for (size_t i = 0; i < hex.size(); i += 2) out[i / 2] = (uint8_t)strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
 				}
+			}
+			else if (d == "data_actors" && need(5))
+			{
+				// key, header offset, the exe address the bytes come from, hex: an act family's actor data copied whole
+				// (its definitions, models, sequences and the header of their 4 tables); its pointers (the tables',
+				// each definition's 32 per-frame tables) moved to the copy, the header's "relocated" flag kept
+				const std::string &hex = w[4];
+				const uint32_t header = (uint32_t)strtoul(w[2].c_str(), nullptr, 0), from = (uint32_t)strtoul(w[3].c_str(), nullptr, 0);
+				const uint32_t size = (uint32_t)hex.size() / 2;
+				if (hex.size() % 2 || header + 0x104 > size) error = "line " + std::to_string(number) + ": data_actors " + w[1] + " is not actor data";
+				else
+				{
+					uint8_t *out = (uint8_t *)AddBlob(g, w[1], size);
+					for (size_t i = 0; i < hex.size(); i += 2) out[i / 2] = (uint8_t)strtoul(hex.substr(i, 2).c_str(), nullptr, 16);
+					// (tables the game left all zero point into the exe's zero-filled data, after the module's globals:
+					// a zero block of its own instead)
+					const uint32_t zeros = AddBlob(g, w[1] + ".zeros", 0x400);
+					auto move = [&](uint32_t &p)
+					{
+						if (p >= from && p < from + size) p = p - from + (uint32_t)out;
+						else if (p >= 0x188C000 && p < 0x279F000) p = zeros;
+					};
+					uint32_t *tables = (uint32_t *)(out + header + 4);
+					for (int k = 0; k < 64; k++) move(tables[k]);
+					for (int k = 0; k < 16; k++)
+						if (tables[k]) for (int j = 0; j < 32; j++) move(((uint32_t *)(tables[k] + 0xC8))[j]);
+					g.data[w[1]] = (uint32_t)out + header;
+				}
+			}
+			else if (d == "patch" && need(5))
+			{
+				Patch p;
+				p.at = ParseNumber(w[1]) + (uint32_t)strtoul(w[2].c_str(), nullptr, 0);
+				p.type = w[3] == "i16" ? VAR_I16 : w[3] == "u16" ? VAR_U16 : w[3] == "i32" ? VAR_I32 : VAR_U8;
+				p.value = ParseVal(w[4]);
+				g.patches.push_back(p);
+			}
+			else if (d == "arena_size" && need(2)) g.arena_size = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
+			else if (d == "per_target") g.per_target = true;
+			else if (d == "act_stage" && need(4))
+			{
+				g.act_stage_in = atoi(w[1].c_str());
+				g.act_stage_out = atoi(w[2].c_str());
+				g.act_wait = ParseVal(w[3]);
+			}
+			else if (d == "act_pool" && need(3)) g.act_pools.push_back({ w[1], (uint32_t)strtoul(w[2].c_str(), nullptr, 0) });
+			else if (d == "act_zero" && need(2)) g.act_zero.push_back(w[1]);
+			else if (d == "act_clear" && need(2)) g.act_clear.push_back(w[1]);
+			else if (d == "act_parts" && need(3))
+			{
+				g.act_part = atoi(w[1].c_str());
+				g.act_first_part = atoi(w[2].c_str());
 			}
 			else if (d == "data_pointers" && need(3))
 			{

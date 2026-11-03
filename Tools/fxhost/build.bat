@@ -27,7 +27,10 @@ echo FFNx's effect sources are missing (ExternalTools\FFNx\fx: the updater's FFN
 exit /b 3
 :compile
 if not exist obj mkdir obj
-cl /nologo /std:c++20 /EHa /W3 /O1 /MT /LD /bigobj /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS /I"%FX%" fxhost.cpp /Foobj\ /FeFujinEffects.dll /link /LARGEADDRESSAWARE
+rem the act family's actor system (described effects built on it: Mega Phoenix's kind), when the sources have it
+set ACTORS=
+if exist "%FX%\fx_actors.cpp" set ACTORS="%FX%\act_engine.cpp" "%FX%\fx_actors.cpp"
+cl /nologo /std:c++20 /EHa /W3 /O1 /MT /LD /bigobj /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS /I"%FX%" fxhost.cpp %ACTORS% /Foobj\ /FeFujinEffects.dll /link /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%
 echo build FujinEffects.dll exit %E%
 exit /b %E%

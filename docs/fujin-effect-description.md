@@ -901,3 +901,38 @@ Potion's description is the same with its own sequences and sound.
      - *Fujin:* its tabs (Emitter, Sparkles, Ring, Falling sparkles, Glints); a nineteenth family
        in the + menu, "Around one target at a time, sparkles rising (Phoenix Down's kind)":
        Sparkles (the start), Ring, Falling sparkles, Glints.
+   - **Mega Phoenix (7)** (FFNx 997aee97; the actor/heal library's act family, Mega-Potion's kind):
+     Cure's per-action director in the act family's form, one emitter per target of the action in
+     turn, each spawning an actor system: the particle actors its actor data defines (flipbooks and
+     prim models, placed by the caster and its target), drawn into the module arena; the revive;
+     the stage's fade layers up while it plays and down after its last target. No camera track.
+     - *Shared:* Cure's director phases and setup (the root of 0x64 bytes, its arenas in the texture
+       file), `follow_target`, `unblock_director`, `heal`, `sound_at`, the node variables
+       (Double's).
+     - *Added:*
+       - the director's `"each": "target"` (the program's `per_target`: its task for each target of
+         the action, not each action), `"arena_size"` (each packet arena's size: 0xA000 here) and
+         `"act"`: the actor pools carved from the arena top at state 2 and cleared (`act_pool`,
+         `act_zero`), the stage fade tasks and the wait before the fade out (`act_stage`, either
+         fade may be left out), u16 counters cleared before the queues every tick (`act_clear`),
+         the parts of the actors' draws (`act_parts`: the system's, each definition's from
+         `first_part`);
+       - the actor system (FFNx `fx_actors.h` / `fx_actors.cpp`, Mega Phoenix's copy
+         0x8CE970..0x8D41E0, on the program's memory words): the actions `actor_setup` and
+         `actor_step`, the condition `actor_done`; the stage fades: the actions `stage_clear` and
+         `stage_fade` (a level variable by a step to a limit, then done);
+       - the exe data kind `actors`: the actor data whole (its header and, from `body`, what its
+         tables point at); an own copy is the program's `data_actors` line, its pointers moved to
+         the copy (the tables the game left all zero, in the exe's zero-filled data: a zero block
+         of its own);
+       - `patches`: values written into data before every cast (the program's `patch` lines):
+         every field of the actor definitions, at its offset from the header.
+     - *Inputs* (`MegaPhoenixParams`): the emitter (sound, the master's release tick, the revive
+       tick); the actor system (start tick, length, mode, skip mask); the fades (the wait, steps,
+       levels); each of its five definitions (`DefParams`, 76 fields): where its emitter sits and
+       faces, when and how many it emits and how they spread, its particles' kind, orientation,
+       rotation, depth, end and timer, angles, motion (speed, gravity, damping, velocity,
+       acceleration), follow-up and sub-emitters. Data: the actor data, the sound, "mag006.tim".
+     - *Fujin:* its tabs (Emitter, Actors, Stage fades, Actor 0, 1, 2, 3, 5); a twentieth family in
+       the + menu, "Around one target at a time, an actor system (Mega Phoenix's kind)": Emitter (the
+       start: the emitter and its actor system), Stage fades.

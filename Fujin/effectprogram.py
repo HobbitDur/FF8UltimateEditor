@@ -72,10 +72,10 @@ ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, 
            "spin_var": 3, "circle_place": 4, "circle_place_var": 4, "anchor_xz": 2, "anchor_top": 1, "rand_mask": 3,
            "rand_hop": 3, "index_times": 2, "tick_times": 3, "turned_offset": 5, "fade_pulse": 9, "grey_pulse": 5,
            "morph": 4, "spawn_when": 3, "spawn_unless_target_bits": 2, "screen_fade_when": 6, "wrap": 2,
-           "revive_ring_step": 2}
+           "revive_ring_step": 2, "actor_setup": 0, "actor_step": 0, "stage_clear": 0, "stage_fade": 3}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1, "tick_at_node_end": 0, "leaf_gone": 0, "spark_gone": 0, "rays_done": 1, "ribbon_done": 1,
               "mote_done": 1, "life_out": 0, "at_most": 2, "at_least": 2, "equals": 2, "never": 0, "at_least_var": 2,
-              "at_least_when": 4, "equals_when": 4, "above": 2}
+              "at_least_when": 4, "equals_when": 4, "above": 2, "actor_done": 0}
 # a task's hold (after its every-tick actions: when it holds, its tick stops there)
 HOLDS = {"claim_target": 0}
 DRAW_ONLY = ("skip", "after_draws")
@@ -109,7 +109,7 @@ VAR_ARGS = {"add": (0,), "set": (0,), "copy": (0, 1), "set_when": (0, 2), "add_w
             "screen_fade_when": (0,), "wrap": (0, 1), "at_most": (0,), "at_least": (0,), "equals": (0,),
             "at_least_var": (0, 1), "at_least_when": (0, 2), "equals_when": (0, 2), "prim_model": (0, 1, 2, 3, 4),
             "prim_model_as": (1, 2, 3, 4), "sprite_turned": (0, 1, 2, 3, 4, 5), "ground_flipbook_colour": (4,),
-            "above": (0,), "revive_sparkle": (0,)}
+            "above": (0,), "revive_sparkle": (0,), "stage_fade": (0,)}
 # a node variable's type: its code (fxprogram.h VarType) and size; an effect node's header fields
 VAR_TYPES = {"i16": (1, 2), "i32": (2, 4), "u8": (3, 1), "grey": (4, 4), "u16": (5, 2), "i8": (6, 1)}
 HEADER_VARS = {"pos": (0x1C, "i16", 4), "counter": (0x24, "i16", 1), "flags": (0x26, "u16", 1), "phase": (0x29, "i8", 1)}
@@ -325,6 +325,9 @@ def compile_program(description, values=None):
                 data = bytes.fromhex(entry["hex"])
             except (KeyError, ValueError):
                 raise DescriptionError(f"data {key}: its bytes as \"hex\"") from None
+            if entry.get("kind") == "actors":   # the program moves its pointers to the copy
+                lines.append(f"data_actors {key} {_number(entry['header'])} {_number(entry['body'])} {data.hex()}")
+                continue
             lines.append(f"data {key} {data.hex()}")
     for key, entry in own_data.items():
         if "pointers" in entry:
@@ -379,6 +382,24 @@ def compile_program(description, values=None):
         if short and director.get("upload") == "always":   # Phoenix Down's: the texture even when the cast repeats
             short += " upload_always"
         lines.append(f"director per_action {tasks[director['spawns']]}{short}")
+        if "arena_size" in director:
+            lines.append(f"arena_size {_number(director['arena_size'])}")
+        if director.get("each") == "target":   # its task for each target of the action, in turn (Mega Phoenix's)
+            lines.append("per_target")
+        act = director.get("act")
+        if act:   # the act family's master (Mega Phoenix's): its actor pools, the stage fades, its wait
+            for name in ("stage_in", "stage_out"):   # (either may be left out: no fade)
+                if name in act and act[name] not in tasks:
+                    raise DescriptionError(f"director: act {name} names no task")
+            lines.append(f"act_stage {tasks.get(act.get('stage_in'), -1)} {tasks.get(act.get('stage_out'), -1)} "
+                         f"{value(act.get('wait', 0), 'director')}")
+            lines += [f"act_pool {name} {_number(size)}" for name, size in act.get("pools", {}).items()]
+            lines += [f"act_zero {name}" for name in act.get("zero", [])]
+            lines += [f"act_clear {name}" for name in act.get("clear", [])]
+            if act.get("part"):   # the parts of its draws: the system's, each definition's from first_part
+                if act["part"] not in parts:
+                    raise DescriptionError(f"director: act part names no part {act['part']}")
+                lines.append(f"act_parts {parts[act['part']]} {_number(act['first_part'])}")
     if director.get("camera_matrix"):
         lines.append("camera_matrix")
     if director.get("setup") == "master":
@@ -387,6 +408,11 @@ def compile_program(description, values=None):
         lines.append("seed_shared_rand")
     if director["kind"] == "cycle" and "spawn_tick" in director:
         lines.append(f"cycle_spawn_tick {_number(director['spawn_tick'])}")
+    for patch in description.get("patches", []):   # values written into data before every cast
+        if patch.get("type") not in VAR_TYPES or patch["type"] == "grey":
+            raise DescriptionError(f"patch {patch.get('offset')}: of a type i16, u16, i32, u8 or i8")
+        lines.append(f"patch {value(patch['data'], 'patch')} {_number(patch['offset'])} {patch['type']} "
+                     f"{value(patch['value'], 'patch')}")
     for param in description["params"]:
         current = values.get(param["key"], param["default"])
         where = f"parameter {param['key']}"
@@ -506,6 +532,14 @@ def own_data(description, exe):
         address = _number(entry["address"])
         if entry.get("kind") == "pointers":
             data[key] = {"kind": "pointers", "from": entry["address"], "pointers": list(entry["items"])}
+            continue
+        if entry.get("kind") == "actors":   # its header and what its tables point at, below it
+            body = _number(entry["body"])
+            start, end = body - IMAGE_BASE, address + entry["size"] - IMAGE_BASE
+            if not 0 <= start < end <= len(exe):
+                raise DescriptionError(f"exe data {key}: 0x{body:X} is not in this exe")
+            data[key] = {"kind": "actors", "from": entry["address"], "body": entry["body"], "header": address - body,
+                         "hex": exe[start:end].hex()}
             continue
         start = address - IMAGE_BASE
         if not 0 <= start <= len(exe) - entry["size"]:

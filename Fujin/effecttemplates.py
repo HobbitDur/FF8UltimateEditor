@@ -1,5 +1,5 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's, Berserk's, Fire's, Thunder's, Double's, Phoenix Down's), and the description an effect made
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's, Berserk's, Fire's, Thunder's, Double's, Phoenix Down's, Mega Phoenix's), and the description an effect made
 of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
@@ -214,6 +214,13 @@ TEMPLATES = {
                     "Flipbooks falling round the target."),
     "revive_glints": ("streaks at the target's centre", "Moving parts", "per_action_revive", 5, "glints", (), (), ("revive",),
                       "The effect library's glints, growing, spinning and shrinking at the target's centre."),
+    # the act family (the actor/heal library's: an actor system per target, its actor data's definitions)
+    "act_actors": ("one per target, an actor system", "How the effect starts", "per_action_act", 7, "emitter",
+                   ("emitter", "actors"), (), (), "One emitter per target, in turn, each running an actor system: the "
+                   "particle actors its actor data defines (flipbooks, prim models) placed by the caster and the target; "
+                   "the sound, the result (Mega Phoenix's way: its definitions are its Actor tabs)."),
+    "act_fades": ("the stage fading in and out", "Moving parts", "per_action_act", 7, "fades", ("fade_in", "fade_out"), (),
+                  ("act_actors",), "The stage's fade layers up while the effect plays and down after its last target."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout",
@@ -223,7 +230,7 @@ STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout
           "per_action_stare": "stare", "per_action_sway": "zombie",
           "per_action_burst": "flare", "per_action_barrier": "reflect", "per_action_rays": "berserk",
           "per_action_chain": "fire", "per_action_bolt": "thunder", "per_action_runes": "double",
-          "per_action_revive": "revive"}
+          "per_action_revive": "revive", "per_action_act": "act_actors"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
             "on_target": "One layout on the target (Antidote's kind)",
@@ -242,7 +249,8 @@ FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "per_action_chain": "One director per action, flames around its targets (Fire's kind)",
             "per_action_bolt": "One per action, a bolt on its target (Thunder's kind)",
             "per_action_runes": "Around one target at a time, runes (Double's kind)",
-            "per_action_revive": "Around one target at a time, sparkles rising (Phoenix Down's kind)"}
+            "per_action_revive": "Around one target at a time, sparkles rising (Phoenix Down's kind)",
+            "per_action_act": "Around one target at a time, an actor system (Mega Phoenix's kind)"}
 
 
 @functools.cache
@@ -378,6 +386,15 @@ def build_effect(effect_id, name, parts, exe=None, keep=None):
         tasks.append(task)
     d["tasks"] = tasks
     director = d.get("director") or {}
+    act = director.get("act")
+    if act:   # (the act family's master without its fades: no fade task, no wait)
+        for key in ("stage_in", "stage_out"):
+            if act.get(key) in gone_tasks:
+                del act[key]
+        if "wait" in act and gone(act["wait"]):
+            del act["wait"]
+    if "patches" in d:
+        d["patches"] = [patch for patch in d["patches"] if not gone(patch)]
     for key in ("events", "events_first"):
         if key in director:
             director[key] = [event for event in director[key] if not gone(event) and event[0] not in gone_actions]

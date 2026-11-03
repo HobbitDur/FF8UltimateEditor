@@ -1,0 +1,7363 @@
+{
+ "format": 1,
+ "effect": 7,
+ "name": "Mega Phoenix",
+ "doc": "Mega Phoenix (battle item; the actor/heal library's act family, Mega-Potion's kind): one emitter per target in turn, each running an actor system whose actor data defines its particle actors (flipbooks and prim models placed by the caster and its target); the revive; the stage fading in and out. No camera track.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8CE3B0",
+   "setup": "0x8CE3D0",
+   "root": "0x8CE4F0"
+  },
+  "memory": {
+   "texture_file": "0x275FB80",
+   "packet_cursor": "0x275FB84",
+   "packet_limit": "0x275FBA0",
+   "arena_a": "0x2760B34",
+   "limit_a": "0x275FC8C",
+   "arena_b": "0x2760B30",
+   "limit_b": "0x275FC88",
+   "arena_top": "0x2760B5C",
+   "init_flag_a": "0x2760B58",
+   "init_flag_b": "0x275FC84",
+   "cam_ptr_a": "0x2760B50",
+   "cam_ptr_b": "0x275FBA4",
+   "root_queue": "0x275FC70",
+   "root_pool": "0x275FBA8",
+   "actor_state": "0x2760B60",
+   "particle_pool": "0x2760B3C",
+   "particle_next": "0x275FC80",
+   "actor_pool": "0x2760B54",
+   "actor_next": "0x2760B48",
+   "count_a": "0x2760B4A",
+   "count_b": "0x2760B3A",
+   "cursor_c": "0x2760B38",
+   "cursor_d": "0x275FB88"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\"); the actor data whole, its pointers moved to the copy.",
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x163ACD0",
+   "size": 4
+  },
+  "actors": {
+   "kind": "actors",
+   "address": "0x163E198",
+   "size": 260,
+   "body": "0x163ACD4",
+   "doc": "The actor data: the header of its 4 tables of 16 (the actor definitions, their models, sequences and vertex blocks) and, below it from body, what they point at"
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x163E29C",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "each": "target",
+  "arena_size": "0xA000",
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared, the stage fade in; after the last target its wait, the fade out",
+   "stage_in": "fade_in",
+   "stage_out": "fade_out",
+   "wait": "$wait",
+   "pools": {
+    "particle_pool": "0xA8C",
+    "actor_pool": "0xD200"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ],
+   "part": "actors",
+   "first_part": 2
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x27609C0",
+   "storage": "0x27609D0",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x2760720",
+   "storage": "0x275FC90",
+   "size": 676,
+   "count": 4,
+   "part": "actors"
+  },
+  {
+   "key": "stage",
+   "queue": "0x27609B0",
+   "storage": "0x2760730",
+   "size": 64,
+   "count": 10
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per target of the action, in turn: the actor system, the master's release, the revive, its sound (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "actors",
+   "title": "Actors",
+   "doc": "The actor system: the engine's particle actors its actor data defines, placed by the caster and the target"
+  },
+  {
+   "id": 0,
+   "key": "fades",
+   "title": "Stage fades",
+   "doc": "The stage's fade layers: up while the effect plays, down after (draws nothing itself)"
+  },
+  {
+   "id": 2,
+   "key": "actor0",
+   "title": "Actor 0",
+   "doc": "Definition 0 of the actor data: the morphing ring model (its emitter and its particles)"
+  },
+  {
+   "id": 3,
+   "key": "actor1",
+   "title": "Actor 1",
+   "doc": "Definition 1 of the actor data: the rising ring models (its emitter and its particles)"
+  },
+  {
+   "id": 4,
+   "key": "actor2",
+   "title": "Actor 2",
+   "doc": "Definition 2 of the actor data: the rings climbing the path (its emitter and its particles)"
+  },
+  {
+   "id": 5,
+   "key": "actor3",
+   "title": "Actor 3",
+   "doc": "Definition 3 of the actor data: the sparkles up to the target (its emitter and its particles)"
+  },
+  {
+   "id": 7,
+   "key": "actor5",
+   "title": "Actor 5",
+   "doc": "Definition 5 of the actor data: the sparks bursting up (its emitter and its particles)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "fade_in",
+   "label": "Fade in",
+   "doc": "Once the master's children are gone: the level up by Step a tick, to Level"
+  },
+  {
+   "key": "fade_out",
+   "label": "Fade out",
+   "doc": "After the last target: from Level down by Step a tick, to 0"
+  },
+  {
+   "key": "actor0.offset",
+   "label": "Offset",
+   "doc": "From its point, world units, turned by its matrix"
+  },
+  {
+   "key": "actor0.loop",
+   "label": "Loop",
+   "doc": "Kind 2: frames First to Last looped..."
+  },
+  {
+   "key": "actor0.loops",
+   "label": "Loops",
+   "doc": "...a random number of times in [Min, Max)"
+  },
+  {
+   "key": "actor0.timer",
+   "label": "Timer",
+   "doc": "Its life in frames: at random in [Min, Max)"
+  },
+  {
+   "key": "actor0.dir",
+   "label": "Direction",
+   "doc": "Each particle's speed direction (angles X, Y, Z)"
+  },
+  {
+   "key": "actor0.dir_jitter",
+   "label": "Direction jitter",
+   "doc": "Each angle up or down by half of this at random"
+  },
+  {
+   "key": "actor0.angle",
+   "label": "Angles",
+   "doc": "The record's angles X, Y, Z; its per-frame angle tables added"
+  },
+  {
+   "key": "actor0.angle_jitter",
+   "label": "Angles jitter",
+   "doc": "Each up or down by half of this at random"
+  },
+  {
+   "key": "actor0.speed",
+   "label": "Speed",
+   "doc": "Along its direction, world units a frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor0.speed_step",
+   "label": "Speed change",
+   "doc": "Added to its speed every frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor0.gravity",
+   "label": "Gravity",
+   "doc": "Added to its velocity's height every frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor0.velocity",
+   "label": "Velocity",
+   "doc": "World units a frame on each axis: at random from Min to Max"
+  },
+  {
+   "key": "actor0.accel",
+   "label": "Acceleration",
+   "doc": "Added to its velocity every frame: at random from Min to Max"
+  },
+  {
+   "key": "actor0.accel_step",
+   "label": "Acceleration change",
+   "doc": "Added to its acceleration every frame: at random from Min to Max"
+  },
+  {
+   "key": "actor0.sub",
+   "label": "Sub-emitters",
+   "doc": "When a record starts: an emitter of each definition whose On is 1"
+  },
+  {
+   "key": "actor1.offset",
+   "label": "Offset",
+   "doc": "From its point, world units, turned by its matrix"
+  },
+  {
+   "key": "actor1.loop",
+   "label": "Loop",
+   "doc": "Kind 2: frames First to Last looped..."
+  },
+  {
+   "key": "actor1.loops",
+   "label": "Loops",
+   "doc": "...a random number of times in [Min, Max)"
+  },
+  {
+   "key": "actor1.timer",
+   "label": "Timer",
+   "doc": "Its life in frames: at random in [Min, Max)"
+  },
+  {
+   "key": "actor1.dir",
+   "label": "Direction",
+   "doc": "Each particle's speed direction (angles X, Y, Z)"
+  },
+  {
+   "key": "actor1.dir_jitter",
+   "label": "Direction jitter",
+   "doc": "Each angle up or down by half of this at random"
+  },
+  {
+   "key": "actor1.angle",
+   "label": "Angles",
+   "doc": "The record's angles X, Y, Z; its per-frame angle tables added"
+  },
+  {
+   "key": "actor1.angle_jitter",
+   "label": "Angles jitter",
+   "doc": "Each up or down by half of this at random"
+  },
+  {
+   "key": "actor1.speed",
+   "label": "Speed",
+   "doc": "Along its direction, world units a frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor1.speed_step",
+   "label": "Speed change",
+   "doc": "Added to its speed every frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor1.gravity",
+   "label": "Gravity",
+   "doc": "Added to its velocity's height every frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor1.velocity",
+   "label": "Velocity",
+   "doc": "World units a frame on each axis: at random from Min to Max"
+  },
+  {
+   "key": "actor1.accel",
+   "label": "Acceleration",
+   "doc": "Added to its velocity every frame: at random from Min to Max"
+  },
+  {
+   "key": "actor1.accel_step",
+   "label": "Acceleration change",
+   "doc": "Added to its acceleration every frame: at random from Min to Max"
+  },
+  {
+   "key": "actor1.sub",
+   "label": "Sub-emitters",
+   "doc": "When a record starts: an emitter of each definition whose On is 1"
+  },
+  {
+   "key": "actor2.offset",
+   "label": "Offset",
+   "doc": "From its point, world units, turned by its matrix"
+  },
+  {
+   "key": "actor2.loop",
+   "label": "Loop",
+   "doc": "Kind 2: frames First to Last looped..."
+  },
+  {
+   "key": "actor2.loops",
+   "label": "Loops",
+   "doc": "...a random number of times in [Min, Max)"
+  },
+  {
+   "key": "actor2.timer",
+   "label": "Timer",
+   "doc": "Its life in frames: at random in [Min, Max)"
+  },
+  {
+   "key": "actor2.dir",
+   "label": "Direction",
+   "doc": "Each particle's speed direction (angles X, Y, Z)"
+  },
+  {
+   "key": "actor2.dir_jitter",
+   "label": "Direction jitter",
+   "doc": "Each angle up or down by half of this at random"
+  },
+  {
+   "key": "actor2.angle",
+   "label": "Angles",
+   "doc": "The record's angles X, Y, Z; its per-frame angle tables added"
+  },
+  {
+   "key": "actor2.angle_jitter",
+   "label": "Angles jitter",
+   "doc": "Each up or down by half of this at random"
+  },
+  {
+   "key": "actor2.speed",
+   "label": "Speed",
+   "doc": "Along its direction, world units a frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor2.speed_step",
+   "label": "Speed change",
+   "doc": "Added to its speed every frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor2.gravity",
+   "label": "Gravity",
+   "doc": "Added to its velocity's height every frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor2.velocity",
+   "label": "Velocity",
+   "doc": "World units a frame on each axis: at random from Min to Max"
+  },
+  {
+   "key": "actor2.accel",
+   "label": "Acceleration",
+   "doc": "Added to its velocity every frame: at random from Min to Max"
+  },
+  {
+   "key": "actor2.accel_step",
+   "label": "Acceleration change",
+   "doc": "Added to its acceleration every frame: at random from Min to Max"
+  },
+  {
+   "key": "actor2.sub",
+   "label": "Sub-emitters",
+   "doc": "When a record starts: an emitter of each definition whose On is 1"
+  },
+  {
+   "key": "actor3.offset",
+   "label": "Offset",
+   "doc": "From its point, world units, turned by its matrix"
+  },
+  {
+   "key": "actor3.loop",
+   "label": "Loop",
+   "doc": "Kind 2: frames First to Last looped..."
+  },
+  {
+   "key": "actor3.loops",
+   "label": "Loops",
+   "doc": "...a random number of times in [Min, Max)"
+  },
+  {
+   "key": "actor3.timer",
+   "label": "Timer",
+   "doc": "Its life in frames: at random in [Min, Max)"
+  },
+  {
+   "key": "actor3.dir",
+   "label": "Direction",
+   "doc": "Each particle's speed direction (angles X, Y, Z)"
+  },
+  {
+   "key": "actor3.dir_jitter",
+   "label": "Direction jitter",
+   "doc": "Each angle up or down by half of this at random"
+  },
+  {
+   "key": "actor3.angle",
+   "label": "Angles",
+   "doc": "The record's angles X, Y, Z; its per-frame angle tables added"
+  },
+  {
+   "key": "actor3.angle_jitter",
+   "label": "Angles jitter",
+   "doc": "Each up or down by half of this at random"
+  },
+  {
+   "key": "actor3.speed",
+   "label": "Speed",
+   "doc": "Along its direction, world units a frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor3.speed_step",
+   "label": "Speed change",
+   "doc": "Added to its speed every frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor3.gravity",
+   "label": "Gravity",
+   "doc": "Added to its velocity's height every frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor3.velocity",
+   "label": "Velocity",
+   "doc": "World units a frame on each axis: at random from Min to Max"
+  },
+  {
+   "key": "actor3.accel",
+   "label": "Acceleration",
+   "doc": "Added to its velocity every frame: at random from Min to Max"
+  },
+  {
+   "key": "actor3.accel_step",
+   "label": "Acceleration change",
+   "doc": "Added to its acceleration every frame: at random from Min to Max"
+  },
+  {
+   "key": "actor3.sub",
+   "label": "Sub-emitters",
+   "doc": "When a record starts: an emitter of each definition whose On is 1"
+  },
+  {
+   "key": "actor5.offset",
+   "label": "Offset",
+   "doc": "From its point, world units, turned by its matrix"
+  },
+  {
+   "key": "actor5.loop",
+   "label": "Loop",
+   "doc": "Kind 2: frames First to Last looped..."
+  },
+  {
+   "key": "actor5.loops",
+   "label": "Loops",
+   "doc": "...a random number of times in [Min, Max)"
+  },
+  {
+   "key": "actor5.timer",
+   "label": "Timer",
+   "doc": "Its life in frames: at random in [Min, Max)"
+  },
+  {
+   "key": "actor5.dir",
+   "label": "Direction",
+   "doc": "Each particle's speed direction (angles X, Y, Z)"
+  },
+  {
+   "key": "actor5.dir_jitter",
+   "label": "Direction jitter",
+   "doc": "Each angle up or down by half of this at random"
+  },
+  {
+   "key": "actor5.angle",
+   "label": "Angles",
+   "doc": "The record's angles X, Y, Z; its per-frame angle tables added"
+  },
+  {
+   "key": "actor5.angle_jitter",
+   "label": "Angles jitter",
+   "doc": "Each up or down by half of this at random"
+  },
+  {
+   "key": "actor5.speed",
+   "label": "Speed",
+   "doc": "Along its direction, world units a frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor5.speed_step",
+   "label": "Speed change",
+   "doc": "Added to its speed every frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor5.gravity",
+   "label": "Gravity",
+   "doc": "Added to its velocity's height every frame: at random in [Min, Max)"
+  },
+  {
+   "key": "actor5.velocity",
+   "label": "Velocity",
+   "doc": "World units a frame on each axis: at random from Min to Max"
+  },
+  {
+   "key": "actor5.accel",
+   "label": "Acceleration",
+   "doc": "Added to its velocity every frame: at random from Min to Max"
+  },
+  {
+   "key": "actor5.accel_step",
+   "label": "Acceleration change",
+   "doc": "Added to its acceleration every frame: at random from Min to Max"
+  },
+  {
+   "key": "actor5.sub",
+   "label": "Sub-emitters",
+   "doc": "When a record starts: an emitter of each definition whose On is 1"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "The sound block played at its first tick (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Next target at tick",
+   "doc": "The master starts the next target's emitter when this one's tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Revive from tick",
+   "doc": "Its target revived (the action's result) from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "actors",
+   "label": "Start tick",
+   "doc": "The actor system starts when its own tick reaches this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "actors",
+   "label": "Ticks",
+   "doc": "It spawns its actors for this many ticks, then ends once they are gone",
+   "type": "i16",
+   "min": 0,
+   "max": 1000,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "actors",
+   "label": "Mode",
+   "doc": "Where it takes its reference points: 0 the caster's bones, 2 none, 1 / 3 / 4 their extra set-ups",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mask",
+   "part": "actors",
+   "label": "Skipped definitions",
+   "doc": "Bit k set: definition k spawns nothing",
+   "type": "i16",
+   "min": 0,
+   "max": 65535,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "wait",
+   "part": "fades",
+   "label": "Fade out after",
+   "doc": "Ticks after the last target's emitter released the master",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "fade_in.step",
+   "part": "fades",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 1024,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "fade_in.level",
+   "part": "fades",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "fade_out.level",
+   "part": "fades",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "fade_out.step",
+   "part": "fades",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 1024,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.placement",
+   "part": "actor0",
+   "label": "Placement",
+   "doc": "Where its emitter sits: 0 a point of its target, 1 a point of the caster, 2 its owner's position, 3 following its owner, 4 along a path (its per-frame tables)",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.point",
+   "part": "actor0",
+   "label": "Point",
+   "doc": "Placements 0 / 1: 0 the ground under it, 1 its bone 0xF1, 2 its bone 0xF0, 3 its height point",
+   "type": "u8",
+   "min": 0,
+   "max": 3,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.facing",
+   "part": "actor0",
+   "label": "Facing",
+   "doc": "Its emitter's matrix: 0 none, 1 the caster-to-target yaw, 2 the reverse, 3 its owner's, 4 the caster's yaw",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.offset.x",
+   "part": "actor0",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.offset.y",
+   "part": "actor0",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.offset.z",
+   "part": "actor0",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.between",
+   "part": "actor0",
+   "label": "Between positions",
+   "doc": "1: at the midpoint of its owner's position and the previous one",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.tick",
+   "part": "actor0",
+   "label": "Spawn tick",
+   "doc": "Its emitter starts when the actor system's tick == this",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.per_target",
+   "part": "actor0",
+   "label": "Per target",
+   "doc": "1: an emitter for each target, else one",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.frames",
+   "part": "actor0",
+   "label": "Emitter frames",
+   "doc": "Its emitter lives this many frames (its per-frame tables: how many it emits, where)",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.batch",
+   "part": "actor0",
+   "label": "Batch",
+   "doc": "Particles a record holds (1..4): what a frame emits, in records of this many",
+   "type": "u8",
+   "min": 1,
+   "max": 4,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.spread",
+   "part": "actor0",
+   "label": "Spread",
+   "doc": "Where they start round the emitter: 0 on it, 1 a random sphere, 2 a ring (its per-frame radii)",
+   "type": "u8",
+   "min": 0,
+   "max": 2,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.exact",
+   "part": "actor0",
+   "label": "Exact spread",
+   "doc": "A sphere: 1 at its radii exactly, 0 at random within; a ring: 1 only the height at random",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.kind",
+   "part": "actor0",
+   "label": "Kind",
+   "doc": "0 a flipbook played once, 1 looping, 2 looping some times, 3 nothing, 4 a prim model (its scale and fade tables), 5 a morphing prim model",
+   "type": "u8",
+   "min": 0,
+   "max": 5,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.loop.first",
+   "part": "actor0",
+   "label": "First",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.loop.last",
+   "part": "actor0",
+   "label": "Last",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.loops.min",
+   "part": "actor0",
+   "label": "Min",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.loops.max",
+   "part": "actor0",
+   "label": "Max",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.orientation",
+   "part": "actor0",
+   "label": "Orientation",
+   "doc": "0 facing the camera with its roll, 1 flat on the ground, 2 the camera's yaw only, 3 / 4 its angles",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.rotation",
+   "part": "actor0",
+   "label": "Rotation",
+   "doc": "Its angles from: 0 / 1 its owner's matrix (or none), Z X Y / Y X Z; 2 / 3 the camera's, Z X Y / Y X Z",
+   "type": "u8",
+   "min": 0,
+   "max": 3,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.turn_offsets",
+   "part": "actor0",
+   "label": "Turned offsets",
+   "doc": "1: its offsets turned by its angles",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.depth",
+   "part": "actor0",
+   "label": "Depth bias",
+   "doc": "Added to its depth once projected (negative: drawn nearer)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.one_sided",
+   "part": "actor0",
+   "label": "One-sided",
+   "doc": "Prim models: 0 drawn both sides, 1 its back faces culled",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.end",
+   "part": "actor0",
+   "label": "End",
+   "doc": "A record ends: 0 when its flipbook is done, 1 when its timer runs out, 2 either",
+   "type": "u8",
+   "min": 0,
+   "max": 2,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.timer.min",
+   "part": "actor0",
+   "label": "Min",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.timer.max",
+   "part": "actor0",
+   "label": "Max",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.angle_from",
+   "part": "actor0",
+   "label": "Directions",
+   "doc": "Each particle's direction: 0 Direction with its jitter, 1 the spread's",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.dir.x",
+   "part": "actor0",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.dir.y",
+   "part": "actor0",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.dir.z",
+   "part": "actor0",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.dir_jitter.x",
+   "part": "actor0",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.dir_jitter.y",
+   "part": "actor0",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.dir_jitter.z",
+   "part": "actor0",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.angle.x",
+   "part": "actor0",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.angle.y",
+   "part": "actor0",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.angle.z",
+   "part": "actor0",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.angle_jitter.x",
+   "part": "actor0",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.angle_jitter.y",
+   "part": "actor0",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 4084,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.angle_jitter.z",
+   "part": "actor0",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor0.motion",
+   "part": "actor0",
+   "label": "Motion",
+   "doc": "0 physics (speed, velocity, acceleration, gravity), 1 its keyed offsets (its per-frame tables)",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.relative",
+   "part": "actor0",
+   "label": "Follows its emitter",
+   "doc": "1: placed from its emitter every frame, else left behind",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.speed.min",
+   "part": "actor0",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.speed.max",
+   "part": "actor0",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.speed_step.min",
+   "part": "actor0",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.speed_step.max",
+   "part": "actor0",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.gravity.min",
+   "part": "actor0",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.gravity.max",
+   "part": "actor0",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.damping",
+   "part": "actor0",
+   "label": "Damping",
+   "doc": "Its speed and velocity lose this / 65536 every frame",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.velocity.min.x",
+   "part": "actor0",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.velocity.min.y",
+   "part": "actor0",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.velocity.min.z",
+   "part": "actor0",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.velocity.max.x",
+   "part": "actor0",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.velocity.max.y",
+   "part": "actor0",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.velocity.max.z",
+   "part": "actor0",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel.min.x",
+   "part": "actor0",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel.min.y",
+   "part": "actor0",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel.min.z",
+   "part": "actor0",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel.max.x",
+   "part": "actor0",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel.max.y",
+   "part": "actor0",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel.max.z",
+   "part": "actor0",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel_step.min.x",
+   "part": "actor0",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel_step.min.y",
+   "part": "actor0",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel_step.min.z",
+   "part": "actor0",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel_step.max.x",
+   "part": "actor0",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel_step.max.y",
+   "part": "actor0",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.accel_step.max.z",
+   "part": "actor0",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.follow",
+   "part": "actor0",
+   "label": "Follow-up",
+   "doc": "1: when a record ends, an emitter of definition Follow-up definition where it was",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.follow_def",
+   "part": "actor0",
+   "label": "Follow-up definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.sub[0].on",
+   "part": "actor0",
+   "label": "1: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.sub[0].def",
+   "part": "actor0",
+   "label": "1: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.sub[1].on",
+   "part": "actor0",
+   "label": "2: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.sub[1].def",
+   "part": "actor0",
+   "label": "2: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.sub[2].on",
+   "part": "actor0",
+   "label": "3: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.sub[2].def",
+   "part": "actor0",
+   "label": "3: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.sub[3].on",
+   "part": "actor0",
+   "label": "4: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor0.sub[3].def",
+   "part": "actor0",
+   "label": "4: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.placement",
+   "part": "actor1",
+   "label": "Placement",
+   "doc": "Where its emitter sits: 0 a point of its target, 1 a point of the caster, 2 its owner's position, 3 following its owner, 4 along a path (its per-frame tables)",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.point",
+   "part": "actor1",
+   "label": "Point",
+   "doc": "Placements 0 / 1: 0 the ground under it, 1 its bone 0xF1, 2 its bone 0xF0, 3 its height point",
+   "type": "u8",
+   "min": 0,
+   "max": 3,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.facing",
+   "part": "actor1",
+   "label": "Facing",
+   "doc": "Its emitter's matrix: 0 none, 1 the caster-to-target yaw, 2 the reverse, 3 its owner's, 4 the caster's yaw",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.offset.x",
+   "part": "actor1",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.offset.y",
+   "part": "actor1",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -200,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.offset.z",
+   "part": "actor1",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.between",
+   "part": "actor1",
+   "label": "Between positions",
+   "doc": "1: at the midpoint of its owner's position and the previous one",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.tick",
+   "part": "actor1",
+   "label": "Spawn tick",
+   "doc": "Its emitter starts when the actor system's tick == this",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.per_target",
+   "part": "actor1",
+   "label": "Per target",
+   "doc": "1: an emitter for each target, else one",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.frames",
+   "part": "actor1",
+   "label": "Emitter frames",
+   "doc": "Its emitter lives this many frames (its per-frame tables: how many it emits, where)",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.batch",
+   "part": "actor1",
+   "label": "Batch",
+   "doc": "Particles a record holds (1..4): what a frame emits, in records of this many",
+   "type": "u8",
+   "min": 1,
+   "max": 4,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.spread",
+   "part": "actor1",
+   "label": "Spread",
+   "doc": "Where they start round the emitter: 0 on it, 1 a random sphere, 2 a ring (its per-frame radii)",
+   "type": "u8",
+   "min": 0,
+   "max": 2,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.exact",
+   "part": "actor1",
+   "label": "Exact spread",
+   "doc": "A sphere: 1 at its radii exactly, 0 at random within; a ring: 1 only the height at random",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.kind",
+   "part": "actor1",
+   "label": "Kind",
+   "doc": "0 a flipbook played once, 1 looping, 2 looping some times, 3 nothing, 4 a prim model (its scale and fade tables), 5 a morphing prim model",
+   "type": "u8",
+   "min": 0,
+   "max": 5,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.loop.first",
+   "part": "actor1",
+   "label": "First",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.loop.last",
+   "part": "actor1",
+   "label": "Last",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.loops.min",
+   "part": "actor1",
+   "label": "Min",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.loops.max",
+   "part": "actor1",
+   "label": "Max",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.orientation",
+   "part": "actor1",
+   "label": "Orientation",
+   "doc": "0 facing the camera with its roll, 1 flat on the ground, 2 the camera's yaw only, 3 / 4 its angles",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.rotation",
+   "part": "actor1",
+   "label": "Rotation",
+   "doc": "Its angles from: 0 / 1 its owner's matrix (or none), Z X Y / Y X Z; 2 / 3 the camera's, Z X Y / Y X Z",
+   "type": "u8",
+   "min": 0,
+   "max": 3,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.turn_offsets",
+   "part": "actor1",
+   "label": "Turned offsets",
+   "doc": "1: its offsets turned by its angles",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.depth",
+   "part": "actor1",
+   "label": "Depth bias",
+   "doc": "Added to its depth once projected (negative: drawn nearer)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.one_sided",
+   "part": "actor1",
+   "label": "One-sided",
+   "doc": "Prim models: 0 drawn both sides, 1 its back faces culled",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.end",
+   "part": "actor1",
+   "label": "End",
+   "doc": "A record ends: 0 when its flipbook is done, 1 when its timer runs out, 2 either",
+   "type": "u8",
+   "min": 0,
+   "max": 2,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.timer.min",
+   "part": "actor1",
+   "label": "Min",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.timer.max",
+   "part": "actor1",
+   "label": "Max",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.angle_from",
+   "part": "actor1",
+   "label": "Directions",
+   "doc": "Each particle's direction: 0 Direction with its jitter, 1 the spread's",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.dir.x",
+   "part": "actor1",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.dir.y",
+   "part": "actor1",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.dir.z",
+   "part": "actor1",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.dir_jitter.x",
+   "part": "actor1",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.dir_jitter.y",
+   "part": "actor1",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.dir_jitter.z",
+   "part": "actor1",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.angle.x",
+   "part": "actor1",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.angle.y",
+   "part": "actor1",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.angle.z",
+   "part": "actor1",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.angle_jitter.x",
+   "part": "actor1",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.angle_jitter.y",
+   "part": "actor1",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.angle_jitter.z",
+   "part": "actor1",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 4084,
+   "unit": "angle"
+  },
+  {
+   "key": "actor1.motion",
+   "part": "actor1",
+   "label": "Motion",
+   "doc": "0 physics (speed, velocity, acceleration, gravity), 1 its keyed offsets (its per-frame tables)",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.relative",
+   "part": "actor1",
+   "label": "Follows its emitter",
+   "doc": "1: placed from its emitter every frame, else left behind",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.speed.min",
+   "part": "actor1",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.speed.max",
+   "part": "actor1",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.speed_step.min",
+   "part": "actor1",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.speed_step.max",
+   "part": "actor1",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.gravity.min",
+   "part": "actor1",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.gravity.max",
+   "part": "actor1",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.damping",
+   "part": "actor1",
+   "label": "Damping",
+   "doc": "Its speed and velocity lose this / 65536 every frame",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.velocity.min.x",
+   "part": "actor1",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.velocity.min.y",
+   "part": "actor1",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.velocity.min.z",
+   "part": "actor1",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.velocity.max.x",
+   "part": "actor1",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.velocity.max.y",
+   "part": "actor1",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.velocity.max.z",
+   "part": "actor1",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel.min.x",
+   "part": "actor1",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel.min.y",
+   "part": "actor1",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel.min.z",
+   "part": "actor1",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel.max.x",
+   "part": "actor1",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel.max.y",
+   "part": "actor1",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel.max.z",
+   "part": "actor1",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel_step.min.x",
+   "part": "actor1",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel_step.min.y",
+   "part": "actor1",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel_step.min.z",
+   "part": "actor1",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel_step.max.x",
+   "part": "actor1",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel_step.max.y",
+   "part": "actor1",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.accel_step.max.z",
+   "part": "actor1",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.follow",
+   "part": "actor1",
+   "label": "Follow-up",
+   "doc": "1: when a record ends, an emitter of definition Follow-up definition where it was",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.follow_def",
+   "part": "actor1",
+   "label": "Follow-up definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.sub[0].on",
+   "part": "actor1",
+   "label": "1: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.sub[0].def",
+   "part": "actor1",
+   "label": "1: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.sub[1].on",
+   "part": "actor1",
+   "label": "2: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.sub[1].def",
+   "part": "actor1",
+   "label": "2: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.sub[2].on",
+   "part": "actor1",
+   "label": "3: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.sub[2].def",
+   "part": "actor1",
+   "label": "3: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.sub[3].on",
+   "part": "actor1",
+   "label": "4: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor1.sub[3].def",
+   "part": "actor1",
+   "label": "4: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.placement",
+   "part": "actor2",
+   "label": "Placement",
+   "doc": "Where its emitter sits: 0 a point of its target, 1 a point of the caster, 2 its owner's position, 3 following its owner, 4 along a path (its per-frame tables)",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.point",
+   "part": "actor2",
+   "label": "Point",
+   "doc": "Placements 0 / 1: 0 the ground under it, 1 its bone 0xF1, 2 its bone 0xF0, 3 its height point",
+   "type": "u8",
+   "min": 0,
+   "max": 3,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.facing",
+   "part": "actor2",
+   "label": "Facing",
+   "doc": "Its emitter's matrix: 0 none, 1 the caster-to-target yaw, 2 the reverse, 3 its owner's, 4 the caster's yaw",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.offset.x",
+   "part": "actor2",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.offset.y",
+   "part": "actor2",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.offset.z",
+   "part": "actor2",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.between",
+   "part": "actor2",
+   "label": "Between positions",
+   "doc": "1: at the midpoint of its owner's position and the previous one",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.tick",
+   "part": "actor2",
+   "label": "Spawn tick",
+   "doc": "Its emitter starts when the actor system's tick == this",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.per_target",
+   "part": "actor2",
+   "label": "Per target",
+   "doc": "1: an emitter for each target, else one",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.frames",
+   "part": "actor2",
+   "label": "Emitter frames",
+   "doc": "Its emitter lives this many frames (its per-frame tables: how many it emits, where)",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 23,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.batch",
+   "part": "actor2",
+   "label": "Batch",
+   "doc": "Particles a record holds (1..4): what a frame emits, in records of this many",
+   "type": "u8",
+   "min": 1,
+   "max": 4,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.spread",
+   "part": "actor2",
+   "label": "Spread",
+   "doc": "Where they start round the emitter: 0 on it, 1 a random sphere, 2 a ring (its per-frame radii)",
+   "type": "u8",
+   "min": 0,
+   "max": 2,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.exact",
+   "part": "actor2",
+   "label": "Exact spread",
+   "doc": "A sphere: 1 at its radii exactly, 0 at random within; a ring: 1 only the height at random",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.kind",
+   "part": "actor2",
+   "label": "Kind",
+   "doc": "0 a flipbook played once, 1 looping, 2 looping some times, 3 nothing, 4 a prim model (its scale and fade tables), 5 a morphing prim model",
+   "type": "u8",
+   "min": 0,
+   "max": 5,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.loop.first",
+   "part": "actor2",
+   "label": "First",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.loop.last",
+   "part": "actor2",
+   "label": "Last",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.loops.min",
+   "part": "actor2",
+   "label": "Min",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.loops.max",
+   "part": "actor2",
+   "label": "Max",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.orientation",
+   "part": "actor2",
+   "label": "Orientation",
+   "doc": "0 facing the camera with its roll, 1 flat on the ground, 2 the camera's yaw only, 3 / 4 its angles",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.rotation",
+   "part": "actor2",
+   "label": "Rotation",
+   "doc": "Its angles from: 0 / 1 its owner's matrix (or none), Z X Y / Y X Z; 2 / 3 the camera's, Z X Y / Y X Z",
+   "type": "u8",
+   "min": 0,
+   "max": 3,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.turn_offsets",
+   "part": "actor2",
+   "label": "Turned offsets",
+   "doc": "1: its offsets turned by its angles",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.depth",
+   "part": "actor2",
+   "label": "Depth bias",
+   "doc": "Added to its depth once projected (negative: drawn nearer)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.one_sided",
+   "part": "actor2",
+   "label": "One-sided",
+   "doc": "Prim models: 0 drawn both sides, 1 its back faces culled",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.end",
+   "part": "actor2",
+   "label": "End",
+   "doc": "A record ends: 0 when its flipbook is done, 1 when its timer runs out, 2 either",
+   "type": "u8",
+   "min": 0,
+   "max": 2,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.timer.min",
+   "part": "actor2",
+   "label": "Min",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.timer.max",
+   "part": "actor2",
+   "label": "Max",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.angle_from",
+   "part": "actor2",
+   "label": "Directions",
+   "doc": "Each particle's direction: 0 Direction with its jitter, 1 the spread's",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.dir.x",
+   "part": "actor2",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.dir.y",
+   "part": "actor2",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.dir.z",
+   "part": "actor2",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.dir_jitter.x",
+   "part": "actor2",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.dir_jitter.y",
+   "part": "actor2",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.dir_jitter.z",
+   "part": "actor2",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.angle.x",
+   "part": "actor2",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.angle.y",
+   "part": "actor2",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.angle.z",
+   "part": "actor2",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.angle_jitter.x",
+   "part": "actor2",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.angle_jitter.y",
+   "part": "actor2",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.angle_jitter.z",
+   "part": "actor2",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 4084,
+   "unit": "angle"
+  },
+  {
+   "key": "actor2.motion",
+   "part": "actor2",
+   "label": "Motion",
+   "doc": "0 physics (speed, velocity, acceleration, gravity), 1 its keyed offsets (its per-frame tables)",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.relative",
+   "part": "actor2",
+   "label": "Follows its emitter",
+   "doc": "1: placed from its emitter every frame, else left behind",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.speed.min",
+   "part": "actor2",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.speed.max",
+   "part": "actor2",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.speed_step.min",
+   "part": "actor2",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.speed_step.max",
+   "part": "actor2",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.gravity.min",
+   "part": "actor2",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.gravity.max",
+   "part": "actor2",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.damping",
+   "part": "actor2",
+   "label": "Damping",
+   "doc": "Its speed and velocity lose this / 65536 every frame",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.velocity.min.x",
+   "part": "actor2",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.velocity.min.y",
+   "part": "actor2",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.velocity.min.z",
+   "part": "actor2",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.velocity.max.x",
+   "part": "actor2",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.velocity.max.y",
+   "part": "actor2",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.velocity.max.z",
+   "part": "actor2",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel.min.x",
+   "part": "actor2",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel.min.y",
+   "part": "actor2",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel.min.z",
+   "part": "actor2",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel.max.x",
+   "part": "actor2",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel.max.y",
+   "part": "actor2",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel.max.z",
+   "part": "actor2",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel_step.min.x",
+   "part": "actor2",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel_step.min.y",
+   "part": "actor2",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel_step.min.z",
+   "part": "actor2",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel_step.max.x",
+   "part": "actor2",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel_step.max.y",
+   "part": "actor2",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.accel_step.max.z",
+   "part": "actor2",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.follow",
+   "part": "actor2",
+   "label": "Follow-up",
+   "doc": "1: when a record ends, an emitter of definition Follow-up definition where it was",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.follow_def",
+   "part": "actor2",
+   "label": "Follow-up definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.sub[0].on",
+   "part": "actor2",
+   "label": "1: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.sub[0].def",
+   "part": "actor2",
+   "label": "1: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.sub[1].on",
+   "part": "actor2",
+   "label": "2: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.sub[1].def",
+   "part": "actor2",
+   "label": "2: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.sub[2].on",
+   "part": "actor2",
+   "label": "3: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.sub[2].def",
+   "part": "actor2",
+   "label": "3: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.sub[3].on",
+   "part": "actor2",
+   "label": "4: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor2.sub[3].def",
+   "part": "actor2",
+   "label": "4: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.placement",
+   "part": "actor3",
+   "label": "Placement",
+   "doc": "Where its emitter sits: 0 a point of its target, 1 a point of the caster, 2 its owner's position, 3 following its owner, 4 along a path (its per-frame tables)",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.point",
+   "part": "actor3",
+   "label": "Point",
+   "doc": "Placements 0 / 1: 0 the ground under it, 1 its bone 0xF1, 2 its bone 0xF0, 3 its height point",
+   "type": "u8",
+   "min": 0,
+   "max": 3,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.facing",
+   "part": "actor3",
+   "label": "Facing",
+   "doc": "Its emitter's matrix: 0 none, 1 the caster-to-target yaw, 2 the reverse, 3 its owner's, 4 the caster's yaw",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.offset.x",
+   "part": "actor3",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.offset.y",
+   "part": "actor3",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.offset.z",
+   "part": "actor3",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.between",
+   "part": "actor3",
+   "label": "Between positions",
+   "doc": "1: at the midpoint of its owner's position and the previous one",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.tick",
+   "part": "actor3",
+   "label": "Spawn tick",
+   "doc": "Its emitter starts when the actor system's tick == this",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.per_target",
+   "part": "actor3",
+   "label": "Per target",
+   "doc": "1: an emitter for each target, else one",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.frames",
+   "part": "actor3",
+   "label": "Emitter frames",
+   "doc": "Its emitter lives this many frames (its per-frame tables: how many it emits, where)",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.batch",
+   "part": "actor3",
+   "label": "Batch",
+   "doc": "Particles a record holds (1..4): what a frame emits, in records of this many",
+   "type": "u8",
+   "min": 1,
+   "max": 4,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.spread",
+   "part": "actor3",
+   "label": "Spread",
+   "doc": "Where they start round the emitter: 0 on it, 1 a random sphere, 2 a ring (its per-frame radii)",
+   "type": "u8",
+   "min": 0,
+   "max": 2,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.exact",
+   "part": "actor3",
+   "label": "Exact spread",
+   "doc": "A sphere: 1 at its radii exactly, 0 at random within; a ring: 1 only the height at random",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.kind",
+   "part": "actor3",
+   "label": "Kind",
+   "doc": "0 a flipbook played once, 1 looping, 2 looping some times, 3 nothing, 4 a prim model (its scale and fade tables), 5 a morphing prim model",
+   "type": "u8",
+   "min": 0,
+   "max": 5,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.loop.first",
+   "part": "actor3",
+   "label": "First",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.loop.last",
+   "part": "actor3",
+   "label": "Last",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.loops.min",
+   "part": "actor3",
+   "label": "Min",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.loops.max",
+   "part": "actor3",
+   "label": "Max",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.orientation",
+   "part": "actor3",
+   "label": "Orientation",
+   "doc": "0 facing the camera with its roll, 1 flat on the ground, 2 the camera's yaw only, 3 / 4 its angles",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.rotation",
+   "part": "actor3",
+   "label": "Rotation",
+   "doc": "Its angles from: 0 / 1 its owner's matrix (or none), Z X Y / Y X Z; 2 / 3 the camera's, Z X Y / Y X Z",
+   "type": "u8",
+   "min": 0,
+   "max": 3,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.turn_offsets",
+   "part": "actor3",
+   "label": "Turned offsets",
+   "doc": "1: its offsets turned by its angles",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.depth",
+   "part": "actor3",
+   "label": "Depth bias",
+   "doc": "Added to its depth once projected (negative: drawn nearer)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.one_sided",
+   "part": "actor3",
+   "label": "One-sided",
+   "doc": "Prim models: 0 drawn both sides, 1 its back faces culled",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.end",
+   "part": "actor3",
+   "label": "End",
+   "doc": "A record ends: 0 when its flipbook is done, 1 when its timer runs out, 2 either",
+   "type": "u8",
+   "min": 0,
+   "max": 2,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.timer.min",
+   "part": "actor3",
+   "label": "Min",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.timer.max",
+   "part": "actor3",
+   "label": "Max",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.angle_from",
+   "part": "actor3",
+   "label": "Directions",
+   "doc": "Each particle's direction: 0 Direction with its jitter, 1 the spread's",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.dir.x",
+   "part": "actor3",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.dir.y",
+   "part": "actor3",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.dir.z",
+   "part": "actor3",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.dir_jitter.x",
+   "part": "actor3",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.dir_jitter.y",
+   "part": "actor3",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.dir_jitter.z",
+   "part": "actor3",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.angle.x",
+   "part": "actor3",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.angle.y",
+   "part": "actor3",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.angle.z",
+   "part": "actor3",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.angle_jitter.x",
+   "part": "actor3",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.angle_jitter.y",
+   "part": "actor3",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.angle_jitter.z",
+   "part": "actor3",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor3.motion",
+   "part": "actor3",
+   "label": "Motion",
+   "doc": "0 physics (speed, velocity, acceleration, gravity), 1 its keyed offsets (its per-frame tables)",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.relative",
+   "part": "actor3",
+   "label": "Follows its emitter",
+   "doc": "1: placed from its emitter every frame, else left behind",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.speed.min",
+   "part": "actor3",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.speed.max",
+   "part": "actor3",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.speed_step.min",
+   "part": "actor3",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.speed_step.max",
+   "part": "actor3",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.gravity.min",
+   "part": "actor3",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.gravity.max",
+   "part": "actor3",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.damping",
+   "part": "actor3",
+   "label": "Damping",
+   "doc": "Its speed and velocity lose this / 65536 every frame",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.velocity.min.x",
+   "part": "actor3",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.velocity.min.y",
+   "part": "actor3",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.velocity.min.z",
+   "part": "actor3",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.velocity.max.x",
+   "part": "actor3",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.velocity.max.y",
+   "part": "actor3",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.velocity.max.z",
+   "part": "actor3",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel.min.x",
+   "part": "actor3",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel.min.y",
+   "part": "actor3",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel.min.z",
+   "part": "actor3",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel.max.x",
+   "part": "actor3",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel.max.y",
+   "part": "actor3",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel.max.z",
+   "part": "actor3",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel_step.min.x",
+   "part": "actor3",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel_step.min.y",
+   "part": "actor3",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel_step.min.z",
+   "part": "actor3",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel_step.max.x",
+   "part": "actor3",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel_step.max.y",
+   "part": "actor3",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.accel_step.max.z",
+   "part": "actor3",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.follow",
+   "part": "actor3",
+   "label": "Follow-up",
+   "doc": "1: when a record ends, an emitter of definition Follow-up definition where it was",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.follow_def",
+   "part": "actor3",
+   "label": "Follow-up definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.sub[0].on",
+   "part": "actor3",
+   "label": "1: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.sub[0].def",
+   "part": "actor3",
+   "label": "1: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.sub[1].on",
+   "part": "actor3",
+   "label": "2: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.sub[1].def",
+   "part": "actor3",
+   "label": "2: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.sub[2].on",
+   "part": "actor3",
+   "label": "3: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.sub[2].def",
+   "part": "actor3",
+   "label": "3: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.sub[3].on",
+   "part": "actor3",
+   "label": "4: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor3.sub[3].def",
+   "part": "actor3",
+   "label": "4: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.placement",
+   "part": "actor5",
+   "label": "Placement",
+   "doc": "Where its emitter sits: 0 a point of its target, 1 a point of the caster, 2 its owner's position, 3 following its owner, 4 along a path (its per-frame tables)",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.point",
+   "part": "actor5",
+   "label": "Point",
+   "doc": "Placements 0 / 1: 0 the ground under it, 1 its bone 0xF1, 2 its bone 0xF0, 3 its height point",
+   "type": "u8",
+   "min": 0,
+   "max": 3,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.facing",
+   "part": "actor5",
+   "label": "Facing",
+   "doc": "Its emitter's matrix: 0 none, 1 the caster-to-target yaw, 2 the reverse, 3 its owner's, 4 the caster's yaw",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.offset.x",
+   "part": "actor5",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.offset.y",
+   "part": "actor5",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -200,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.offset.z",
+   "part": "actor5",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.between",
+   "part": "actor5",
+   "label": "Between positions",
+   "doc": "1: at the midpoint of its owner's position and the previous one",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.tick",
+   "part": "actor5",
+   "label": "Spawn tick",
+   "doc": "Its emitter starts when the actor system's tick == this",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.per_target",
+   "part": "actor5",
+   "label": "Per target",
+   "doc": "1: an emitter for each target, else one",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.frames",
+   "part": "actor5",
+   "label": "Emitter frames",
+   "doc": "Its emitter lives this many frames (its per-frame tables: how many it emits, where)",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 34,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.batch",
+   "part": "actor5",
+   "label": "Batch",
+   "doc": "Particles a record holds (1..4): what a frame emits, in records of this many",
+   "type": "u8",
+   "min": 1,
+   "max": 4,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.spread",
+   "part": "actor5",
+   "label": "Spread",
+   "doc": "Where they start round the emitter: 0 on it, 1 a random sphere, 2 a ring (its per-frame radii)",
+   "type": "u8",
+   "min": 0,
+   "max": 2,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.exact",
+   "part": "actor5",
+   "label": "Exact spread",
+   "doc": "A sphere: 1 at its radii exactly, 0 at random within; a ring: 1 only the height at random",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.kind",
+   "part": "actor5",
+   "label": "Kind",
+   "doc": "0 a flipbook played once, 1 looping, 2 looping some times, 3 nothing, 4 a prim model (its scale and fade tables), 5 a morphing prim model",
+   "type": "u8",
+   "min": 0,
+   "max": 5,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.loop.first",
+   "part": "actor5",
+   "label": "First",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.loop.last",
+   "part": "actor5",
+   "label": "Last",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.loops.min",
+   "part": "actor5",
+   "label": "Min",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.loops.max",
+   "part": "actor5",
+   "label": "Max",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.orientation",
+   "part": "actor5",
+   "label": "Orientation",
+   "doc": "0 facing the camera with its roll, 1 flat on the ground, 2 the camera's yaw only, 3 / 4 its angles",
+   "type": "u8",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.rotation",
+   "part": "actor5",
+   "label": "Rotation",
+   "doc": "Its angles from: 0 / 1 its owner's matrix (or none), Z X Y / Y X Z; 2 / 3 the camera's, Z X Y / Y X Z",
+   "type": "u8",
+   "min": 0,
+   "max": 3,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.turn_offsets",
+   "part": "actor5",
+   "label": "Turned offsets",
+   "doc": "1: its offsets turned by its angles",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.depth",
+   "part": "actor5",
+   "label": "Depth bias",
+   "doc": "Added to its depth once projected (negative: drawn nearer)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.one_sided",
+   "part": "actor5",
+   "label": "One-sided",
+   "doc": "Prim models: 0 drawn both sides, 1 its back faces culled",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.end",
+   "part": "actor5",
+   "label": "End",
+   "doc": "A record ends: 0 when its flipbook is done, 1 when its timer runs out, 2 either",
+   "type": "u8",
+   "min": 0,
+   "max": 2,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.timer.min",
+   "part": "actor5",
+   "label": "Min",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.timer.max",
+   "part": "actor5",
+   "label": "Max",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 127,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.angle_from",
+   "part": "actor5",
+   "label": "Directions",
+   "doc": "Each particle's direction: 0 Direction with its jitter, 1 the spread's",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.dir.x",
+   "part": "actor5",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.dir.y",
+   "part": "actor5",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.dir.z",
+   "part": "actor5",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.dir_jitter.x",
+   "part": "actor5",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 2048,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.dir_jitter.y",
+   "part": "actor5",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 4084,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.dir_jitter.z",
+   "part": "actor5",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 2048,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.angle.x",
+   "part": "actor5",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.angle.y",
+   "part": "actor5",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.angle.z",
+   "part": "actor5",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.angle_jitter.x",
+   "part": "actor5",
+   "label": "X",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.angle_jitter.y",
+   "part": "actor5",
+   "label": "Y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.angle_jitter.z",
+   "part": "actor5",
+   "label": "Z",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "actor5.motion",
+   "part": "actor5",
+   "label": "Motion",
+   "doc": "0 physics (speed, velocity, acceleration, gravity), 1 its keyed offsets (its per-frame tables)",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.relative",
+   "part": "actor5",
+   "label": "Follows its emitter",
+   "doc": "1: placed from its emitter every frame, else left behind",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.speed.min",
+   "part": "actor5",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 70,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.speed.max",
+   "part": "actor5",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.speed_step.min",
+   "part": "actor5",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.speed_step.max",
+   "part": "actor5",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.gravity.min",
+   "part": "actor5",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -5,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.gravity.max",
+   "part": "actor5",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -7,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.damping",
+   "part": "actor5",
+   "label": "Damping",
+   "doc": "Its speed and velocity lose this / 65536 every frame",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 6553,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.velocity.min.x",
+   "part": "actor5",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -3,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.velocity.min.y",
+   "part": "actor5",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.velocity.min.z",
+   "part": "actor5",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -3,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.velocity.max.x",
+   "part": "actor5",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.velocity.max.y",
+   "part": "actor5",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.velocity.max.z",
+   "part": "actor5",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel.min.x",
+   "part": "actor5",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -3,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel.min.y",
+   "part": "actor5",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel.min.z",
+   "part": "actor5",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -3,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel.max.x",
+   "part": "actor5",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel.max.y",
+   "part": "actor5",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel.max.z",
+   "part": "actor5",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel_step.min.x",
+   "part": "actor5",
+   "label": "Min X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel_step.min.y",
+   "part": "actor5",
+   "label": "Min Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel_step.min.z",
+   "part": "actor5",
+   "label": "Min Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel_step.max.x",
+   "part": "actor5",
+   "label": "Max X",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel_step.max.y",
+   "part": "actor5",
+   "label": "Max Y",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.accel_step.max.z",
+   "part": "actor5",
+   "label": "Max Z",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.follow",
+   "part": "actor5",
+   "label": "Follow-up",
+   "doc": "1: when a record ends, an emitter of definition Follow-up definition where it was",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.follow_def",
+   "part": "actor5",
+   "label": "Follow-up definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.sub[0].on",
+   "part": "actor5",
+   "label": "1: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.sub[0].def",
+   "part": "actor5",
+   "label": "1: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.sub[1].on",
+   "part": "actor5",
+   "label": "2: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.sub[1].def",
+   "part": "actor5",
+   "label": "2: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.sub[2].on",
+   "part": "actor5",
+   "label": "3: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.sub[2].def",
+   "part": "actor5",
+   "label": "3: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.sub[3].on",
+   "part": "actor5",
+   "label": "4: On",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actor5.sub[3].def",
+   "part": "actor5",
+   "label": "4: Definition",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  }
+ ],
+ "patches": [
+  {
+   "data": "@actors",
+   "offset": "-0x6a7",
+   "type": "u8",
+   "value": "$actor0.placement"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x693",
+   "type": "u8",
+   "value": "$actor0.point"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x69c",
+   "type": "u8",
+   "value": "$actor0.facing"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x6b6",
+   "type": "i16",
+   "value": "$actor0.offset.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x6b2",
+   "type": "i16",
+   "value": "$actor0.offset.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x6ae",
+   "type": "i16",
+   "value": "$actor0.offset.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x683",
+   "type": "u8",
+   "value": "$actor0.between"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x6a5",
+   "type": "u8",
+   "value": "$actor0.tick"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x681",
+   "type": "u8",
+   "value": "$actor0.per_target"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x6a6",
+   "type": "u8",
+   "value": "$actor0.frames"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x682",
+   "type": "u8",
+   "value": "$actor0.batch"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x684",
+   "type": "u8",
+   "value": "$actor0.spread"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x685",
+   "type": "u8",
+   "value": "$actor0.exact"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x6a2",
+   "type": "u8",
+   "value": "$actor0.kind"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x6a1",
+   "type": "u8",
+   "value": "$actor0.loop.first"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x6a0",
+   "type": "u8",
+   "value": "$actor0.loop.last"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x69f",
+   "type": "u8",
+   "value": "$actor0.loops.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x69e",
+   "type": "u8",
+   "value": "$actor0.loops.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x69d",
+   "type": "u8",
+   "value": "$actor0.orientation"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x69b",
+   "type": "u8",
+   "value": "$actor0.rotation"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x692",
+   "type": "u8",
+   "value": "$actor0.turn_offsets"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x680",
+   "type": "i16",
+   "value": "$actor0.depth"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x67e",
+   "type": "i16",
+   "value": "$actor0.one_sided"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x69a",
+   "type": "u8",
+   "value": "$actor0.end"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x699",
+   "type": "u8",
+   "value": "$actor0.timer.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x698",
+   "type": "u8",
+   "value": "$actor0.timer.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x697",
+   "type": "u8",
+   "value": "$actor0.angle_from"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x67c",
+   "type": "i16",
+   "value": "$actor0.dir.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x67a",
+   "type": "i16",
+   "value": "$actor0.dir.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x678",
+   "type": "i16",
+   "value": "$actor0.dir.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x674",
+   "type": "i16",
+   "value": "$actor0.dir_jitter.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x672",
+   "type": "i16",
+   "value": "$actor0.dir_jitter.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x670",
+   "type": "i16",
+   "value": "$actor0.dir_jitter.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x570",
+   "type": "i16",
+   "value": "$actor0.angle.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x56e",
+   "type": "i16",
+   "value": "$actor0.angle.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x56c",
+   "type": "i16",
+   "value": "$actor0.angle.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x568",
+   "type": "i16",
+   "value": "$actor0.angle_jitter.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x566",
+   "type": "i16",
+   "value": "$actor0.angle_jitter.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x564",
+   "type": "i16",
+   "value": "$actor0.angle_jitter.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x691",
+   "type": "u8",
+   "value": "$actor0.motion"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x696",
+   "type": "u8",
+   "value": "$actor0.relative"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x66a",
+   "type": "i16",
+   "value": "$actor0.speed.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x666",
+   "type": "i16",
+   "value": "$actor0.speed.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x662",
+   "type": "i16",
+   "value": "$actor0.speed_step.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x65e",
+   "type": "i16",
+   "value": "$actor0.speed_step.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x65a",
+   "type": "i16",
+   "value": "$actor0.gravity.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x656",
+   "type": "i16",
+   "value": "$actor0.gravity.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x654",
+   "type": "i16",
+   "value": "$actor0.damping"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x64e",
+   "type": "i16",
+   "value": "$actor0.velocity.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x64a",
+   "type": "i16",
+   "value": "$actor0.velocity.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x646",
+   "type": "i16",
+   "value": "$actor0.velocity.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x63e",
+   "type": "i16",
+   "value": "$actor0.velocity.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x63a",
+   "type": "i16",
+   "value": "$actor0.velocity.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x636",
+   "type": "i16",
+   "value": "$actor0.velocity.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x62e",
+   "type": "i16",
+   "value": "$actor0.accel.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x62a",
+   "type": "i16",
+   "value": "$actor0.accel.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x626",
+   "type": "i16",
+   "value": "$actor0.accel.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x61e",
+   "type": "i16",
+   "value": "$actor0.accel.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x61a",
+   "type": "i16",
+   "value": "$actor0.accel.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x616",
+   "type": "i16",
+   "value": "$actor0.accel.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x60e",
+   "type": "i16",
+   "value": "$actor0.accel_step.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x60a",
+   "type": "i16",
+   "value": "$actor0.accel_step.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x606",
+   "type": "i16",
+   "value": "$actor0.accel_step.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x5fe",
+   "type": "i16",
+   "value": "$actor0.accel_step.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x5fa",
+   "type": "i16",
+   "value": "$actor0.accel_step.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x5f6",
+   "type": "i16",
+   "value": "$actor0.accel_step.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x688",
+   "type": "u8",
+   "value": "$actor0.follow"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x687",
+   "type": "u8",
+   "value": "$actor0.follow_def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x690",
+   "type": "u8",
+   "value": "$actor0.sub[0].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x68c",
+   "type": "u8",
+   "value": "$actor0.sub[0].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x68f",
+   "type": "u8",
+   "value": "$actor0.sub[1].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x68b",
+   "type": "u8",
+   "value": "$actor0.sub[1].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x68e",
+   "type": "u8",
+   "value": "$actor0.sub[2].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x68a",
+   "type": "u8",
+   "value": "$actor0.sub[2].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x68d",
+   "type": "u8",
+   "value": "$actor0.sub[3].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x689",
+   "type": "u8",
+   "value": "$actor0.sub[3].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x54f",
+   "type": "u8",
+   "value": "$actor1.placement"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x53b",
+   "type": "u8",
+   "value": "$actor1.point"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x544",
+   "type": "u8",
+   "value": "$actor1.facing"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x55e",
+   "type": "i16",
+   "value": "$actor1.offset.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x55a",
+   "type": "i16",
+   "value": "$actor1.offset.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x556",
+   "type": "i16",
+   "value": "$actor1.offset.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x52b",
+   "type": "u8",
+   "value": "$actor1.between"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x54d",
+   "type": "u8",
+   "value": "$actor1.tick"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x529",
+   "type": "u8",
+   "value": "$actor1.per_target"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x54e",
+   "type": "u8",
+   "value": "$actor1.frames"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x52a",
+   "type": "u8",
+   "value": "$actor1.batch"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x52c",
+   "type": "u8",
+   "value": "$actor1.spread"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x52d",
+   "type": "u8",
+   "value": "$actor1.exact"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x54a",
+   "type": "u8",
+   "value": "$actor1.kind"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x549",
+   "type": "u8",
+   "value": "$actor1.loop.first"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x548",
+   "type": "u8",
+   "value": "$actor1.loop.last"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x547",
+   "type": "u8",
+   "value": "$actor1.loops.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x546",
+   "type": "u8",
+   "value": "$actor1.loops.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x545",
+   "type": "u8",
+   "value": "$actor1.orientation"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x543",
+   "type": "u8",
+   "value": "$actor1.rotation"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x53a",
+   "type": "u8",
+   "value": "$actor1.turn_offsets"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x528",
+   "type": "i16",
+   "value": "$actor1.depth"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x526",
+   "type": "i16",
+   "value": "$actor1.one_sided"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x542",
+   "type": "u8",
+   "value": "$actor1.end"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x541",
+   "type": "u8",
+   "value": "$actor1.timer.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x540",
+   "type": "u8",
+   "value": "$actor1.timer.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x53f",
+   "type": "u8",
+   "value": "$actor1.angle_from"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x524",
+   "type": "i16",
+   "value": "$actor1.dir.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x522",
+   "type": "i16",
+   "value": "$actor1.dir.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x520",
+   "type": "i16",
+   "value": "$actor1.dir.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x51c",
+   "type": "i16",
+   "value": "$actor1.dir_jitter.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x51a",
+   "type": "i16",
+   "value": "$actor1.dir_jitter.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x518",
+   "type": "i16",
+   "value": "$actor1.dir_jitter.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x418",
+   "type": "i16",
+   "value": "$actor1.angle.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x416",
+   "type": "i16",
+   "value": "$actor1.angle.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x414",
+   "type": "i16",
+   "value": "$actor1.angle.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x410",
+   "type": "i16",
+   "value": "$actor1.angle_jitter.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x40e",
+   "type": "i16",
+   "value": "$actor1.angle_jitter.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x40c",
+   "type": "i16",
+   "value": "$actor1.angle_jitter.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x539",
+   "type": "u8",
+   "value": "$actor1.motion"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x53e",
+   "type": "u8",
+   "value": "$actor1.relative"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x512",
+   "type": "i16",
+   "value": "$actor1.speed.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x50e",
+   "type": "i16",
+   "value": "$actor1.speed.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x50a",
+   "type": "i16",
+   "value": "$actor1.speed_step.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x506",
+   "type": "i16",
+   "value": "$actor1.speed_step.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x502",
+   "type": "i16",
+   "value": "$actor1.gravity.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4fe",
+   "type": "i16",
+   "value": "$actor1.gravity.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4fc",
+   "type": "i16",
+   "value": "$actor1.damping"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4f6",
+   "type": "i16",
+   "value": "$actor1.velocity.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4f2",
+   "type": "i16",
+   "value": "$actor1.velocity.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4ee",
+   "type": "i16",
+   "value": "$actor1.velocity.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4e6",
+   "type": "i16",
+   "value": "$actor1.velocity.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4e2",
+   "type": "i16",
+   "value": "$actor1.velocity.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4de",
+   "type": "i16",
+   "value": "$actor1.velocity.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4d6",
+   "type": "i16",
+   "value": "$actor1.accel.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4d2",
+   "type": "i16",
+   "value": "$actor1.accel.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4ce",
+   "type": "i16",
+   "value": "$actor1.accel.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4c6",
+   "type": "i16",
+   "value": "$actor1.accel.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4c2",
+   "type": "i16",
+   "value": "$actor1.accel.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4be",
+   "type": "i16",
+   "value": "$actor1.accel.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4b6",
+   "type": "i16",
+   "value": "$actor1.accel_step.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4b2",
+   "type": "i16",
+   "value": "$actor1.accel_step.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4ae",
+   "type": "i16",
+   "value": "$actor1.accel_step.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4a6",
+   "type": "i16",
+   "value": "$actor1.accel_step.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4a2",
+   "type": "i16",
+   "value": "$actor1.accel_step.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x49e",
+   "type": "i16",
+   "value": "$actor1.accel_step.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x530",
+   "type": "u8",
+   "value": "$actor1.follow"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x52f",
+   "type": "u8",
+   "value": "$actor1.follow_def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x538",
+   "type": "u8",
+   "value": "$actor1.sub[0].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x534",
+   "type": "u8",
+   "value": "$actor1.sub[0].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x537",
+   "type": "u8",
+   "value": "$actor1.sub[1].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x533",
+   "type": "u8",
+   "value": "$actor1.sub[1].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x536",
+   "type": "u8",
+   "value": "$actor1.sub[2].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x532",
+   "type": "u8",
+   "value": "$actor1.sub[2].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x535",
+   "type": "u8",
+   "value": "$actor1.sub[3].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x531",
+   "type": "u8",
+   "value": "$actor1.sub[3].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3f7",
+   "type": "u8",
+   "value": "$actor2.placement"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3e3",
+   "type": "u8",
+   "value": "$actor2.point"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3ec",
+   "type": "u8",
+   "value": "$actor2.facing"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x406",
+   "type": "i16",
+   "value": "$actor2.offset.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x402",
+   "type": "i16",
+   "value": "$actor2.offset.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3fe",
+   "type": "i16",
+   "value": "$actor2.offset.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3d3",
+   "type": "u8",
+   "value": "$actor2.between"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3f5",
+   "type": "u8",
+   "value": "$actor2.tick"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3d1",
+   "type": "u8",
+   "value": "$actor2.per_target"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3f6",
+   "type": "u8",
+   "value": "$actor2.frames"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3d2",
+   "type": "u8",
+   "value": "$actor2.batch"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3d4",
+   "type": "u8",
+   "value": "$actor2.spread"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3d5",
+   "type": "u8",
+   "value": "$actor2.exact"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3f2",
+   "type": "u8",
+   "value": "$actor2.kind"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3f1",
+   "type": "u8",
+   "value": "$actor2.loop.first"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3f0",
+   "type": "u8",
+   "value": "$actor2.loop.last"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3ef",
+   "type": "u8",
+   "value": "$actor2.loops.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3ee",
+   "type": "u8",
+   "value": "$actor2.loops.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3ed",
+   "type": "u8",
+   "value": "$actor2.orientation"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3eb",
+   "type": "u8",
+   "value": "$actor2.rotation"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3e2",
+   "type": "u8",
+   "value": "$actor2.turn_offsets"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3d0",
+   "type": "i16",
+   "value": "$actor2.depth"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3ce",
+   "type": "i16",
+   "value": "$actor2.one_sided"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3ea",
+   "type": "u8",
+   "value": "$actor2.end"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3e9",
+   "type": "u8",
+   "value": "$actor2.timer.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3e8",
+   "type": "u8",
+   "value": "$actor2.timer.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3e7",
+   "type": "u8",
+   "value": "$actor2.angle_from"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3cc",
+   "type": "i16",
+   "value": "$actor2.dir.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3ca",
+   "type": "i16",
+   "value": "$actor2.dir.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3c8",
+   "type": "i16",
+   "value": "$actor2.dir.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3c4",
+   "type": "i16",
+   "value": "$actor2.dir_jitter.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3c2",
+   "type": "i16",
+   "value": "$actor2.dir_jitter.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3c0",
+   "type": "i16",
+   "value": "$actor2.dir_jitter.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x2c0",
+   "type": "i16",
+   "value": "$actor2.angle.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x2be",
+   "type": "i16",
+   "value": "$actor2.angle.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x2bc",
+   "type": "i16",
+   "value": "$actor2.angle.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x2b8",
+   "type": "i16",
+   "value": "$actor2.angle_jitter.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x2b6",
+   "type": "i16",
+   "value": "$actor2.angle_jitter.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x2b4",
+   "type": "i16",
+   "value": "$actor2.angle_jitter.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3e1",
+   "type": "u8",
+   "value": "$actor2.motion"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3e6",
+   "type": "u8",
+   "value": "$actor2.relative"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3ba",
+   "type": "i16",
+   "value": "$actor2.speed.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3b6",
+   "type": "i16",
+   "value": "$actor2.speed.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3b2",
+   "type": "i16",
+   "value": "$actor2.speed_step.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3ae",
+   "type": "i16",
+   "value": "$actor2.speed_step.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3aa",
+   "type": "i16",
+   "value": "$actor2.gravity.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3a6",
+   "type": "i16",
+   "value": "$actor2.gravity.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3a4",
+   "type": "i16",
+   "value": "$actor2.damping"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x39e",
+   "type": "i16",
+   "value": "$actor2.velocity.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x39a",
+   "type": "i16",
+   "value": "$actor2.velocity.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x396",
+   "type": "i16",
+   "value": "$actor2.velocity.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x38e",
+   "type": "i16",
+   "value": "$actor2.velocity.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x38a",
+   "type": "i16",
+   "value": "$actor2.velocity.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x386",
+   "type": "i16",
+   "value": "$actor2.velocity.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x37e",
+   "type": "i16",
+   "value": "$actor2.accel.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x37a",
+   "type": "i16",
+   "value": "$actor2.accel.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x376",
+   "type": "i16",
+   "value": "$actor2.accel.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x36e",
+   "type": "i16",
+   "value": "$actor2.accel.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x36a",
+   "type": "i16",
+   "value": "$actor2.accel.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x366",
+   "type": "i16",
+   "value": "$actor2.accel.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x35e",
+   "type": "i16",
+   "value": "$actor2.accel_step.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x35a",
+   "type": "i16",
+   "value": "$actor2.accel_step.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x356",
+   "type": "i16",
+   "value": "$actor2.accel_step.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x34e",
+   "type": "i16",
+   "value": "$actor2.accel_step.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x34a",
+   "type": "i16",
+   "value": "$actor2.accel_step.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x346",
+   "type": "i16",
+   "value": "$actor2.accel_step.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3d8",
+   "type": "u8",
+   "value": "$actor2.follow"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3d7",
+   "type": "u8",
+   "value": "$actor2.follow_def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3e0",
+   "type": "u8",
+   "value": "$actor2.sub[0].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3dc",
+   "type": "u8",
+   "value": "$actor2.sub[0].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3df",
+   "type": "u8",
+   "value": "$actor2.sub[1].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3db",
+   "type": "u8",
+   "value": "$actor2.sub[1].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3de",
+   "type": "u8",
+   "value": "$actor2.sub[2].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3da",
+   "type": "u8",
+   "value": "$actor2.sub[2].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3dd",
+   "type": "u8",
+   "value": "$actor2.sub[3].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x3d9",
+   "type": "u8",
+   "value": "$actor2.sub[3].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x29f",
+   "type": "u8",
+   "value": "$actor3.placement"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x28b",
+   "type": "u8",
+   "value": "$actor3.point"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x294",
+   "type": "u8",
+   "value": "$actor3.facing"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x2ae",
+   "type": "i16",
+   "value": "$actor3.offset.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x2aa",
+   "type": "i16",
+   "value": "$actor3.offset.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x2a6",
+   "type": "i16",
+   "value": "$actor3.offset.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x27b",
+   "type": "u8",
+   "value": "$actor3.between"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x29d",
+   "type": "u8",
+   "value": "$actor3.tick"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x279",
+   "type": "u8",
+   "value": "$actor3.per_target"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x29e",
+   "type": "u8",
+   "value": "$actor3.frames"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x27a",
+   "type": "u8",
+   "value": "$actor3.batch"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x27c",
+   "type": "u8",
+   "value": "$actor3.spread"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x27d",
+   "type": "u8",
+   "value": "$actor3.exact"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x29a",
+   "type": "u8",
+   "value": "$actor3.kind"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x299",
+   "type": "u8",
+   "value": "$actor3.loop.first"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x298",
+   "type": "u8",
+   "value": "$actor3.loop.last"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x297",
+   "type": "u8",
+   "value": "$actor3.loops.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x296",
+   "type": "u8",
+   "value": "$actor3.loops.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x295",
+   "type": "u8",
+   "value": "$actor3.orientation"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x293",
+   "type": "u8",
+   "value": "$actor3.rotation"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x28a",
+   "type": "u8",
+   "value": "$actor3.turn_offsets"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x278",
+   "type": "i16",
+   "value": "$actor3.depth"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x276",
+   "type": "i16",
+   "value": "$actor3.one_sided"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x292",
+   "type": "u8",
+   "value": "$actor3.end"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x291",
+   "type": "u8",
+   "value": "$actor3.timer.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x290",
+   "type": "u8",
+   "value": "$actor3.timer.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x28f",
+   "type": "u8",
+   "value": "$actor3.angle_from"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x274",
+   "type": "i16",
+   "value": "$actor3.dir.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x272",
+   "type": "i16",
+   "value": "$actor3.dir.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x270",
+   "type": "i16",
+   "value": "$actor3.dir.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x26c",
+   "type": "i16",
+   "value": "$actor3.dir_jitter.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x26a",
+   "type": "i16",
+   "value": "$actor3.dir_jitter.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x268",
+   "type": "i16",
+   "value": "$actor3.dir_jitter.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x168",
+   "type": "i16",
+   "value": "$actor3.angle.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x166",
+   "type": "i16",
+   "value": "$actor3.angle.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x164",
+   "type": "i16",
+   "value": "$actor3.angle.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x160",
+   "type": "i16",
+   "value": "$actor3.angle_jitter.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x15e",
+   "type": "i16",
+   "value": "$actor3.angle_jitter.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x15c",
+   "type": "i16",
+   "value": "$actor3.angle_jitter.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x289",
+   "type": "u8",
+   "value": "$actor3.motion"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x28e",
+   "type": "u8",
+   "value": "$actor3.relative"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x262",
+   "type": "i16",
+   "value": "$actor3.speed.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x25e",
+   "type": "i16",
+   "value": "$actor3.speed.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x25a",
+   "type": "i16",
+   "value": "$actor3.speed_step.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x256",
+   "type": "i16",
+   "value": "$actor3.speed_step.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x252",
+   "type": "i16",
+   "value": "$actor3.gravity.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x24e",
+   "type": "i16",
+   "value": "$actor3.gravity.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x24c",
+   "type": "i16",
+   "value": "$actor3.damping"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x246",
+   "type": "i16",
+   "value": "$actor3.velocity.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x242",
+   "type": "i16",
+   "value": "$actor3.velocity.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x23e",
+   "type": "i16",
+   "value": "$actor3.velocity.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x236",
+   "type": "i16",
+   "value": "$actor3.velocity.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x232",
+   "type": "i16",
+   "value": "$actor3.velocity.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x22e",
+   "type": "i16",
+   "value": "$actor3.velocity.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x226",
+   "type": "i16",
+   "value": "$actor3.accel.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x222",
+   "type": "i16",
+   "value": "$actor3.accel.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x21e",
+   "type": "i16",
+   "value": "$actor3.accel.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x216",
+   "type": "i16",
+   "value": "$actor3.accel.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x212",
+   "type": "i16",
+   "value": "$actor3.accel.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x20e",
+   "type": "i16",
+   "value": "$actor3.accel.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x206",
+   "type": "i16",
+   "value": "$actor3.accel_step.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x202",
+   "type": "i16",
+   "value": "$actor3.accel_step.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x1fe",
+   "type": "i16",
+   "value": "$actor3.accel_step.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x1f6",
+   "type": "i16",
+   "value": "$actor3.accel_step.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x1f2",
+   "type": "i16",
+   "value": "$actor3.accel_step.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x1ee",
+   "type": "i16",
+   "value": "$actor3.accel_step.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x280",
+   "type": "u8",
+   "value": "$actor3.follow"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x27f",
+   "type": "u8",
+   "value": "$actor3.follow_def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x288",
+   "type": "u8",
+   "value": "$actor3.sub[0].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x284",
+   "type": "u8",
+   "value": "$actor3.sub[0].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x287",
+   "type": "u8",
+   "value": "$actor3.sub[1].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x283",
+   "type": "u8",
+   "value": "$actor3.sub[1].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x286",
+   "type": "u8",
+   "value": "$actor3.sub[2].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x282",
+   "type": "u8",
+   "value": "$actor3.sub[2].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x285",
+   "type": "u8",
+   "value": "$actor3.sub[3].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x281",
+   "type": "u8",
+   "value": "$actor3.sub[3].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x147",
+   "type": "u8",
+   "value": "$actor5.placement"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x133",
+   "type": "u8",
+   "value": "$actor5.point"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x13c",
+   "type": "u8",
+   "value": "$actor5.facing"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x156",
+   "type": "i16",
+   "value": "$actor5.offset.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x152",
+   "type": "i16",
+   "value": "$actor5.offset.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x14e",
+   "type": "i16",
+   "value": "$actor5.offset.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x123",
+   "type": "u8",
+   "value": "$actor5.between"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x145",
+   "type": "u8",
+   "value": "$actor5.tick"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x121",
+   "type": "u8",
+   "value": "$actor5.per_target"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x146",
+   "type": "u8",
+   "value": "$actor5.frames"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x122",
+   "type": "u8",
+   "value": "$actor5.batch"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x124",
+   "type": "u8",
+   "value": "$actor5.spread"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x125",
+   "type": "u8",
+   "value": "$actor5.exact"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x142",
+   "type": "u8",
+   "value": "$actor5.kind"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x141",
+   "type": "u8",
+   "value": "$actor5.loop.first"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x140",
+   "type": "u8",
+   "value": "$actor5.loop.last"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x13f",
+   "type": "u8",
+   "value": "$actor5.loops.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x13e",
+   "type": "u8",
+   "value": "$actor5.loops.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x13d",
+   "type": "u8",
+   "value": "$actor5.orientation"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x13b",
+   "type": "u8",
+   "value": "$actor5.rotation"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x132",
+   "type": "u8",
+   "value": "$actor5.turn_offsets"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x120",
+   "type": "i16",
+   "value": "$actor5.depth"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x11e",
+   "type": "i16",
+   "value": "$actor5.one_sided"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x13a",
+   "type": "u8",
+   "value": "$actor5.end"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x139",
+   "type": "u8",
+   "value": "$actor5.timer.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x138",
+   "type": "u8",
+   "value": "$actor5.timer.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x137",
+   "type": "u8",
+   "value": "$actor5.angle_from"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x11c",
+   "type": "i16",
+   "value": "$actor5.dir.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x11a",
+   "type": "i16",
+   "value": "$actor5.dir.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x118",
+   "type": "i16",
+   "value": "$actor5.dir.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x114",
+   "type": "i16",
+   "value": "$actor5.dir_jitter.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x112",
+   "type": "i16",
+   "value": "$actor5.dir_jitter.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x110",
+   "type": "i16",
+   "value": "$actor5.dir_jitter.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x10",
+   "type": "i16",
+   "value": "$actor5.angle.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xe",
+   "type": "i16",
+   "value": "$actor5.angle.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xc",
+   "type": "i16",
+   "value": "$actor5.angle.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x8",
+   "type": "i16",
+   "value": "$actor5.angle_jitter.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x6",
+   "type": "i16",
+   "value": "$actor5.angle_jitter.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x4",
+   "type": "i16",
+   "value": "$actor5.angle_jitter.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x131",
+   "type": "u8",
+   "value": "$actor5.motion"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x136",
+   "type": "u8",
+   "value": "$actor5.relative"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x10a",
+   "type": "i16",
+   "value": "$actor5.speed.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x106",
+   "type": "i16",
+   "value": "$actor5.speed.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x102",
+   "type": "i16",
+   "value": "$actor5.speed_step.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xfe",
+   "type": "i16",
+   "value": "$actor5.speed_step.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xfa",
+   "type": "i16",
+   "value": "$actor5.gravity.min"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xf6",
+   "type": "i16",
+   "value": "$actor5.gravity.max"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xf4",
+   "type": "i16",
+   "value": "$actor5.damping"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xee",
+   "type": "i16",
+   "value": "$actor5.velocity.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xea",
+   "type": "i16",
+   "value": "$actor5.velocity.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xe6",
+   "type": "i16",
+   "value": "$actor5.velocity.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xde",
+   "type": "i16",
+   "value": "$actor5.velocity.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xda",
+   "type": "i16",
+   "value": "$actor5.velocity.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xd6",
+   "type": "i16",
+   "value": "$actor5.velocity.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xce",
+   "type": "i16",
+   "value": "$actor5.accel.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xca",
+   "type": "i16",
+   "value": "$actor5.accel.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xc6",
+   "type": "i16",
+   "value": "$actor5.accel.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xbe",
+   "type": "i16",
+   "value": "$actor5.accel.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xba",
+   "type": "i16",
+   "value": "$actor5.accel.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xb6",
+   "type": "i16",
+   "value": "$actor5.accel.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xae",
+   "type": "i16",
+   "value": "$actor5.accel_step.min.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xaa",
+   "type": "i16",
+   "value": "$actor5.accel_step.min.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0xa6",
+   "type": "i16",
+   "value": "$actor5.accel_step.min.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x9e",
+   "type": "i16",
+   "value": "$actor5.accel_step.max.x"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x9a",
+   "type": "i16",
+   "value": "$actor5.accel_step.max.y"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x96",
+   "type": "i16",
+   "value": "$actor5.accel_step.max.z"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x128",
+   "type": "u8",
+   "value": "$actor5.follow"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x127",
+   "type": "u8",
+   "value": "$actor5.follow_def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x130",
+   "type": "u8",
+   "value": "$actor5.sub[0].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x12c",
+   "type": "u8",
+   "value": "$actor5.sub[0].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x12f",
+   "type": "u8",
+   "value": "$actor5.sub[1].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x12b",
+   "type": "u8",
+   "value": "$actor5.sub[1].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x12e",
+   "type": "u8",
+   "value": "$actor5.sub[2].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x12a",
+   "type": "u8",
+   "value": "$actor5.sub[2].def"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x12d",
+   "type": "u8",
+   "value": "$actor5.sub[3].on"
+  },
+  {
+   "data": "@actors",
+   "offset": "-0x129",
+   "type": "u8",
+   "value": "$actor5.sub[3].def"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x8CE800",
+   "doc": "One per target of the action, in turn: follows it; spawns the actor system; releases the master at its tick (the next target's emitter), revives its target from its tick; its sound at its first tick.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "do": [
+      [
+       "spawn",
+       "actors"
+      ],
+      [
+       "set",
+       "child.data",
+       "@actors"
+      ],
+      [
+       "set",
+       "child.start",
+       "$actors.start"
+      ],
+      [
+       "set",
+       "child.length",
+       "$actors.length"
+      ],
+      [
+       "set",
+       "child.mode",
+       "$actors.mode"
+      ],
+      [
+       "set",
+       "child.mask",
+       "$actors.mask"
+      ]
+     ]
+    },
+    {
+     "wait": [
+      "equals",
+      "counter",
+      "$emitter.release"
+     ],
+     "do": [
+      [
+       "unblock_director"
+      ]
+     ]
+    },
+    {
+     "wait": [
+      "at_least",
+      "counter",
+      "$emitter.result"
+     ],
+     "do": [
+      [
+       "heal"
+      ],
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "events": [
+    [
+     "sound_at",
+     0,
+     "$emitter.sound",
+     128
+    ]
+   ]
+  },
+  {
+   "key": "actors",
+   "pool": "actors",
+   "size": 676,
+   "function": "0x8CE910",
+   "doc": "The actor system (the act family's, fx_actors.h): from its start tick its set-up (the reference points of the caster and its target) and a step a tick (the actors its data defines: spawned, moved, drawn) until they are all gone after its ticks.",
+   "body": [
+    [
+     "data",
+     "i32"
+    ],
+    [
+     "pad",
+     612
+    ],
+    [
+     "start",
+     "i16"
+    ],
+    [
+     "mask",
+     "i16"
+    ],
+    [
+     "mode",
+     "i16"
+    ],
+    [
+     "length",
+     "i16"
+    ]
+   ],
+   "phases": [
+    {
+     "wait": [
+      "at_least_var",
+      "counter",
+      "start"
+     ],
+     "do": [
+      [
+       "actor_setup"
+      ],
+      [
+       "actor_step"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "actor_step"
+      ]
+     ],
+     "wait": [
+      "actor_done"
+     ],
+     "do": [
+      [
+       "done"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "key": "fade_in",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x8CE6E0",
+   "doc": "The stage's four fade layers cleared, then their level up a step a tick to its level.",
+   "phases": [
+    {
+     "do": [
+      [
+       "set",
+       "pos.0",
+       0
+      ],
+      [
+       "stage_clear"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "stage_fade",
+       "pos.0",
+       "$fade_in.step",
+       "$fade_in.level"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "fade_out",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x8D4300",
+   "doc": "The stage's fade layers from its level down a step a tick to 0.",
+   "phases": [
+    {
+     "do": [
+      [
+       "set",
+       "pos.0",
+       "$fade_out.level"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "stage_fade",
+       "pos.0",
+       "-$fade_out.step",
+       0
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

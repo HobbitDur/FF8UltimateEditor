@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from Fujin.effectprogram import DescriptionError, compile_program, load_description, write_program
+from Fujin.effectprogram import DescriptionError, compile_program, load_description, new_effect, write_program
 
 ROOT = Path(__file__).resolve().parents[2]
 EXE = ROOT / "extracted_files/FF8_EN.exe"
@@ -269,6 +269,8 @@ CYCLES = {
     106: ("mag105.tim", 32, "hexagons.count 5\nwall.grow 15\nrings.every 4\nbeams.count 6\ntiming.size_shift 3\n"),
     108: ("mag107.tim", 51, "rays.count 5\nembers.count 2\nswirls.per_tick 3\nglow.ticks 12\nsparks.every 3\n"
                             "rays.width 200\n"),
+    7: ("mag006.tim", 392, "actor5.speed.max 140\nactor2.frames 18\nactor0.depth -300\nactor1.offset.y -400\n"
+                           "emitter.release 4\nfade_in.step 128\nwait 20\n"),
     5: ("mag004-034.tim", 65, "rising.count 2\nring.spin 200\nfall.speed.base 30\nglints.rate[2].count 1\n"
                                "emitter.grow.radius 150\nrevive.every 3\n"),
     4: ("mag003.tim", 79, "runes.spin 200\ncolumns.peak 8000\nmotes.spin 50\nglows.level 40\nbig.fade_out 600\nsprites.count 3\n"
@@ -294,7 +296,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double and Phoenix Down from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down and Mega Phoenix from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -500,3 +502,22 @@ def test_phoenix_down_description_compiles():
     assert sum(line.startswith("wait above ") for line in lines) == 3 and lines.count("spawn_gate 2") == 4
     places = [line.split()[-7 if line.startswith("spawn_every") else 0] for line in lines if line.startswith("spawn")]
     assert any("revive_rising" in line for line in lines) and any(line.startswith("spawn -1 2 ") and " glint " in line for line in lines)
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_mega_phoenix_description_compiles():
+    """Mega Phoenix: the per-action director in the act family's form (its task per target, arenas of
+    0xA000, the actor pools carved at state 2, the fades, the counters cleared every tick, the parts of
+    its actors' draws); the emitter spawning the actor system with its actor data; every field of its five
+    definitions a patch of that data; an own copy carries the actor data whole."""
+    description = load_description(7)
+    lines = compile_program(description).splitlines()
+    for line in ("director per_action 0", "per_target", "arena_size 40960", "act_stage 2 3 $7", "act_pool particle_pool 2700",
+                 "act_pool actor_pool 53760", "act_clear count_a", "act_parts 1 2", "camera 0"):
+        assert line in lines, line
+    assert sum(line.startswith("patch 23323032 ") for line in lines) == 5 * 76
+    assert "phase_tick actor_step" in lines and "wait actor_done" in lines and "phase_tick stage_fade 65564 $8 $9" in lines
+    own = compile_program(new_effect(description, 224, "Own", EXE.read_bytes())).splitlines()
+    actors = next(line for line in own if line.startswith("data_actors actors "))
+    assert actors.split()[2:4] == [str(0x163E198 - 0x163ACD4), str(0x163ACD4)] and len(actors.split()[4]) == 2 * (0x163E29C - 0x163ACD4)
+    assert sum(line.startswith("patch @actors ") for line in own) == 5 * 76
