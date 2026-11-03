@@ -269,6 +269,8 @@ CYCLES = {
     106: ("mag105.tim", 32, "hexagons.count 5\nwall.grow 15\nrings.every 4\nbeams.count 6\ntiming.size_shift 3\n"),
     108: ("mag107.tim", 51, "rays.count 5\nembers.count 2\nswirls.per_tick 3\nglow.ticks 12\nsparks.every 3\n"
                             "rays.width 200\n"),
+    4: ("mag003.tim", 79, "runes.spin 200\ncolumns.peak 8000\nmotes.spin 50\nglows.level 40\nbig.fade_out 600\nsprites.count 3\n"
+                          "morph.step 300\nflash.jump -100\nemitter.release_tick 25\n"),
     3: ("mag003.tim", 32, "strike.lift 400\nground.tilt 200\ntiming.sound_tick 2\nsmoke.window.frames 10\nflash.window.frames 3\n"),
     2: ("mag001.tim", 57, "flames.count 6\nsparks.count 3\nembers.rise.base -40\nflames.glow.base 96\ntiming.sound_tick 3\n"),
 }
@@ -290,7 +292,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire and Thunder from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder and Double from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -465,3 +467,23 @@ def test_thunder_description_compiles():
     assert "tick spawn_size_word 0 $3 $4" in lines and "tick sound_3d_at_spawn $6 $5 $7" in lines
     draws = [line.split()[6] for line in lines if line.startswith("draw ")]
     assert draws == ["screen_quad"] + ["point_layer"] * 6 + ["ground_layer", "point_layer"]
+
+
+def test_double_description_compiles():
+    """Double: the heal ring's director in its short form; node variables as tokens (base << 20 |
+    type << 16 | offset: the rune's fade an i16 at 0x50, the column's emitter's signal at 0x58); a
+    negated parameter; the spawns' child actions, the runes' motion after their phase, the
+    column's flash model drawn while its flash is on."""
+    from Fujin.effectprogram import DescriptionError
+    description = load_description(4)
+    lines = compile_program(description).splitlines()
+    assert "director per_action 0 short" in lines
+    fade, signal = (1 << 16) | 0x50, (1 << 20) | (1 << 16) | 0x58
+    assert any(line == f"phase_tick add {fade} -$13" for line in lines)
+    assert any(line.startswith(f"wait equals {signal} 2") for line in lines)
+    assert sum(line.startswith("spawn_init ") for line in lines) > 30 and any(line.startswith("move circle_place ") for line in lines)
+    assert any(line.startswith("draw_when equals ") for line in lines)
+    broken = copy.deepcopy(description)
+    broken["tasks"][2]["after_phase"][0][1] = "nowhere"
+    with pytest.raises(DescriptionError, match="names no nowhere"):
+        compile_program(broken)

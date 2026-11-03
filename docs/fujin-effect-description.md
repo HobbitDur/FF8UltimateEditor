@@ -834,3 +834,42 @@ Potion's description is the same with its own sequences and sound.
      - *Fujin:* its tabs (Timing, Screen flash, Strike, Ground, Smoke); a seventeenth family in the
        + menu, "One per action, a bolt on its target (Thunder's kind)": Strike (the start), Screen
        flash, Ground, Smoke.
+   - **Double (4)** (FFNx 6887b441): the heal ring's director in a short form (Double's root: four
+     phases, its packet arenas memory words set in the magic buffer; its setup), one emitter per
+     target in turn: a sequencer spawns five runes around the target, one a tick, each with a glow
+     on the ground; a rune fades in (motes spiralling in, a column at its tick 3), then shrinks out;
+     a column widens, rises, settles and flashes; the last one's signals its emitter: a screen fade
+     and the big rune (sprites, two morphing rings), the glows and columns pulse; a flash quad jumps
+     on the target's top; the result.
+     - *Shared:* the effect-library nodes and their phases, `follow_target`, `spawn`,
+       `unblock_director`, `heal`, `done`, `sound_at`, the `sprite` draw (the motes).
+     - *Added:*
+       - node variables: an effect node's header fields (pos, counter, flags, phase) and its
+         `body` (laid out from 0x30, typed: i16, i32, u8, grey, u16, i8), named as the node's own,
+         `emitter.`, `child.` (the node a spawning action or the spawn whose `init` this is just
+         made) and `name.k`; compiled to tokens (base << 20 | type << 16 | offset);
+       - their actions `add`, `set`, `copy`, `flags`, `set_when`, `add_when`, `add_below`,
+         `add_var`, `spin_var`, `rand_mask`, `rand_hop`, `index_times`, `tick_times`,
+         `circle_place` / `circle_place_var` (a centre, an angle, a radius, a divisor),
+         `anchor_xz` / `anchor_top` (the emitter's target anchors), `turned_offset`, `wrap`,
+         `spawn_when`, `spawn_unless_target_bits`, `screen_fade_when`; the conditions `at_most`,
+         `at_least`, `equals`, `never`, `at_least_var`, `at_least_when`, `equals_when`;
+       - a negated parameter `-$key`; a task's `after_phase` actions (after its phase, before its
+         draws and spawns); a spawn's `init` actions; a draw's `when` condition; the part tag
+         cleared after every task's draws (it was after a plain task's only);
+       - the library's runes (`fx_runes.h`, Double's 0x8D5440 / 0x8D5950 / 0x8D57C0 / 0x8D6790):
+         the draws `prim_model` / `prim_model_as` (a model at the node, its angles, scale, colour,
+         fade), `sprite_turned`, `ground_flipbook_colour` (the ground flipbook in a colour word of
+         the node), `screen_tex_quad`; the actions `fade_pulse` (the column's flash), `grey_pulse`
+         (the glow's), `morph` (a model's vertices blended between two vertex sets).
+     - *Inputs* (`DoubleParams`): the emitter (sound, the next action's tick, the screen fade, the
+       target bits that skip the flash); the runes (count, angle step, height, radius, fades,
+       shrinking, spin); the columns (tick, fades, widths, rise, peak, settle, the flash's two
+       fades and steps, spin, orbit speed); the motes, glows, big rune, sprites, morphing rings and
+       flash (ticks, counts, radii, greys, steps, the quad's texture). Data: the three sequences,
+       the five models, the two vertex sets, the sound, the camera track (1584 bytes), "mag003.tim".
+     - *Fujin:* its tabs (Emitter, Runes, Columns, Motes, Glows, Big rune, Sprites, Morphing rings,
+       Flash); an eighteenth family in the + menu, "Around one target at a time, runes (Double's
+       kind)": Runes (the start), Columns, Motes, Glows and Big rune (with Columns), Sprites and
+       Morphing rings (with Big rune), Flash. Removing a part drops a spawning action naming its
+       task with the child actions after it.

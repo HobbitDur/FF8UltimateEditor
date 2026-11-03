@@ -1,0 +1,3036 @@
+{
+ "format": 1,
+ "effect": 4,
+ "name": "Double",
+ "doc": "Double (spell): one emitter per action, in turn; five runes around the target one a tick, each with a glow on the ground, motes spiralling in and a column that grows and flashes; the last one's column starts a screen fade and the big rune over the target (sprites, two morphing rings); a flash jumps on the target's top; the result at the end.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8D5060",
+   "setup": "0x8D5080",
+   "root": "0x8D5180"
+  },
+  "memory": {
+   "texture_file": "0x276FB00",
+   "packet_cursor": "0x276FB04",
+   "root_pool": "0x2774F90",
+   "root_queue": "0x2775058",
+   "arena_a": "0x277A344",
+   "arena_b": "0x277A340"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x163E92C",
+   "size": 4
+  },
+  "mote.seq": {
+   "kind": "seq",
+   "address": "0x163E930",
+   "size": 352
+  },
+  "sprite.seq": {
+   "kind": "seq",
+   "address": "0x163EA90",
+   "size": 220
+  },
+  "glow.seq": {
+   "kind": "seq",
+   "address": "0x163EB6C",
+   "size": 40
+  },
+  "column.model": {
+   "kind": "model",
+   "address": "0x163EB94",
+   "size": 608
+  },
+  "columnflash.model": {
+   "kind": "model",
+   "address": "0x163EDF4",
+   "size": 544
+  },
+  "rune.model": {
+   "kind": "model",
+   "address": "0x163F014",
+   "size": 528
+  },
+  "big.model": {
+   "kind": "model",
+   "address": "0x163F224",
+   "size": 2268
+  },
+  "morph.a": {
+   "kind": "table",
+   "address": "0x163FB00",
+   "size": 616,
+   "doc": "a vertex set the morphing ring's vertices blend between (+4 count, 8 bytes a vertex from +8)"
+  },
+  "morph.b": {
+   "kind": "table",
+   "address": "0x163FD68",
+   "size": 616,
+   "doc": "a vertex set the morphing ring's vertices blend between (+4 count, 8 bytes a vertex from +8)"
+  },
+  "morph.model": {
+   "kind": "model",
+   "address": "0x163FFD0",
+   "size": 4536,
+   "doc": "the morphing ring's model: its vertex block (+8) is rewritten before each draw"
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x16417B8",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1641188",
+   "size": 1584
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas (the setup sets the arena words to them).",
+  "arenas": [
+   "0x0",
+   "0x6000"
+  ],
+  "morph": "0x0"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "root": "short"
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x277A1C0",
+   "storage": "0x277A1D0",
+   "size": 92,
+   "count": 4
+  },
+  {
+   "key": "sequencers",
+   "queue": "0x277A348",
+   "storage": "0x277A358",
+   "size": 64,
+   "count": 40
+  },
+  {
+   "key": "sprites",
+   "queue": "0x277A1A8",
+   "storage": "0x2775068",
+   "size": 104,
+   "count": 200
+  },
+  {
+   "key": "models",
+   "queue": "0x2774F68",
+   "storage": "0x276FB08",
+   "size": 108,
+   "count": 200
+  },
+  {
+   "key": "flashes",
+   "queue": "0x277AE98",
+   "storage": "0x277AD58",
+   "size": 80,
+   "count": 4
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action, on its target: starts the rune sequencer, plays the sound, lets the next action start, gives the result; when the last rune's column settles, a screen fade and the big rune (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "runes",
+   "title": "Runes",
+   "doc": "Prim models on a circle around the target, one a tick, each fading in and spinning, then shrinking out"
+  },
+  {
+   "id": 2,
+   "key": "columns",
+   "title": "Columns",
+   "doc": "A column on each rune: it grows, settles and flashes (the last one's starts the big rune), flashes again then fades out"
+  },
+  {
+   "id": 3,
+   "key": "motes",
+   "title": "Motes",
+   "doc": "Flipbooks spiralling in towards each rune while it fades in"
+  },
+  {
+   "id": 4,
+   "key": "glows",
+   "title": "Glows",
+   "doc": "A flipbook on the ground under each rune, brightening, pulsing when the big rune starts, then fading"
+  },
+  {
+   "id": 5,
+   "key": "big",
+   "title": "Big rune",
+   "doc": "A prim model over the target, fading in (its sprites and rings) then out"
+  },
+  {
+   "id": 6,
+   "key": "sprites",
+   "title": "Sprites",
+   "doc": "Flipbooks around the big rune while it fades in, their frames and angles at random, brightening then dimming"
+  },
+  {
+   "id": 7,
+   "key": "morph",
+   "title": "Morphing rings",
+   "doc": "Prim models whose vertices blend from one shape to another while they fade"
+  },
+  {
+   "id": 8,
+   "key": "flash",
+   "title": "Flash",
+   "doc": "A textured quad on the target's top that jumps up and falls back"
+  }
+ ],
+ "groups": [
+  {
+   "key": "emitter.fade",
+   "label": "Screen fade",
+   "doc": "ScreenFadeTask's four values"
+  },
+  {
+   "key": "columns.flash",
+   "label": "Flash",
+   "doc": "Its first flash at fade First (it settled), its second at fade Second (the big rune started), each down by its step a tick, in grey Grey"
+  },
+  {
+   "key": "motes.radius",
+   "label": "Spiral radius",
+   "doc": "Base + (rand & Mask)"
+  },
+  {
+   "key": "glows.pulse",
+   "label": "Pulse",
+   "doc": "When the big rune starts: grey Peak, then down by Step a tick back to the level"
+  },
+  {
+   "key": "sprites.x",
+   "label": "Across",
+   "doc": "x = rand % Mod + Base (then turned with the sprite)"
+  },
+  {
+   "key": "sprites.grey",
+   "label": "Grey",
+   "doc": "A sprite's grey tick by tick: A, B, C, C, B, A, then done"
+  },
+  {
+   "key": "flash.tex",
+   "label": "Texture",
+   "doc": "The quad's texture page (VRAM x, y), CLUT (VRAM x, y), texel origin and size"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound_tick",
+   "part": "emitter",
+   "label": "Sound tick",
+   "doc": "The sound plays when the emitter tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound_pan",
+   "part": "emitter",
+   "label": "Sound pan",
+   "doc": "Where it plays between the speakers: 128 the middle (BdPlaySE's pan)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release_tick",
+   "part": "emitter",
+   "label": "Next action tick",
+   "doc": "From this emitter tick the next action may start; the flash starts then",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 19,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.fade.a",
+   "part": "emitter",
+   "label": "A",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.fade.b",
+   "part": "emitter",
+   "label": "B",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.fade.c",
+   "part": "emitter",
+   "label": "C",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.fade.d",
+   "part": "emitter",
+   "label": "D",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.target_bit",
+   "part": "emitter",
+   "label": "No flash bits",
+   "doc": "No flash when the target record's +3 has these bits",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.last",
+   "part": "runes",
+   "label": "Last rune",
+   "doc": "Runes 0 .. this, one a tick; the last one's column starts the big rune",
+   "type": "i16",
+   "min": 0,
+   "max": 20,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.angle_step",
+   "part": "runes",
+   "label": "Angle step",
+   "doc": "Rune k at angle k x this on the circle (4096: a full turn)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 819,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.lift",
+   "part": "runes",
+   "label": "Height",
+   "doc": "The circle this high over the target's feet (the columns' and the big rune's too)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 640,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.radius",
+   "part": "runes",
+   "label": "Radius",
+   "doc": "The circle's radius: 1024 x this / 4096 (the glows' and columns' too)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.fade_in",
+   "part": "runes",
+   "label": "Fade in",
+   "doc": "Its fade goes down by this a tick from 4096 (hidden) to 0 while it spawns",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.fade_out",
+   "part": "runes",
+   "label": "Fade out",
+   "doc": "Then up by this a tick back to 4096...",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.shrink",
+   "part": "runes",
+   "label": "Shrink",
+   "doc": "...while its size goes down by this a tick...",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.end_scale",
+   "part": "runes",
+   "label": "End size",
+   "doc": "...to this, then it is hidden and done",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "runes.spin",
+   "part": "runes",
+   "label": "Spin",
+   "doc": "It turns this much a tick about y",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 320,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.tick",
+   "part": "columns",
+   "label": "Rune tick",
+   "doc": "A rune's column starts at this rune tick (while it spawns)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.fade_in",
+   "part": "columns",
+   "label": "Fade in",
+   "doc": "Its fade goes down by this a tick (from 4096) while...",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.grow",
+   "part": "columns",
+   "label": "Widen",
+   "doc": "...its width goes up by this a tick; seen, its width is...",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.width",
+   "part": "columns",
+   "label": "Width",
+   "doc": "...this",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.rise",
+   "part": "columns",
+   "label": "Rise",
+   "doc": "Then its height up by this a tick...",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.peak",
+   "part": "columns",
+   "label": "Peak",
+   "doc": "...to this...",
+   "type": "i16",
+   "min": 4096,
+   "max": 32767,
+   "default": 6144,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.settle",
+   "part": "columns",
+   "label": "Settle",
+   "doc": "...then down by this a tick (its width up by it) back to 4096: it flashes",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.fade_out",
+   "part": "columns",
+   "label": "Fade out",
+   "doc": "At the end its fade up by this a tick to 4096, then done",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.flash.first",
+   "part": "columns",
+   "label": "First",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.flash.second",
+   "part": "columns",
+   "label": "Second",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.flash.step_first",
+   "part": "columns",
+   "label": "First step",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.flash.step_second",
+   "part": "columns",
+   "label": "Second step",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.flash.grey",
+   "part": "columns",
+   "label": "Grey",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.spin",
+   "part": "columns",
+   "label": "Spin",
+   "doc": "It turns this much a tick about y",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 320,
+   "unit": "plain"
+  },
+  {
+   "key": "columns.orbit_speed",
+   "part": "columns",
+   "label": "Orbit speed",
+   "doc": "It goes round the circle this much a tick (the game's: 0)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.from",
+   "part": "motes",
+   "label": "From tick",
+   "doc": "A mote a rune tick from this rune tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.last",
+   "part": "motes",
+   "label": "Last tick",
+   "doc": "...to this one (while the rune spawns)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.radius.base",
+   "part": "motes",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.radius.mask",
+   "part": "motes",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 511,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.spin",
+   "part": "motes",
+   "label": "Spin",
+   "doc": "Its angle on the spiral goes round this much a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 96,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.brighten",
+   "part": "motes",
+   "label": "Brighten",
+   "doc": "Its grey up by this a tick while below...",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.brightest",
+   "part": "motes",
+   "label": "Brightest",
+   "doc": "...this",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.shrink",
+   "part": "motes",
+   "label": "Shrink",
+   "doc": "Its radius down by this a tick: done when it is gone",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 96,
+   "unit": "plain"
+  },
+  {
+   "key": "motes.frames",
+   "part": "motes",
+   "label": "Last frame",
+   "doc": "Its flipbook's last frame (it loops)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "glows.up",
+   "part": "glows",
+   "label": "Brighten",
+   "doc": "Its grey up by this a tick to...",
+   "type": "i16",
+   "min": 1,
+   "max": 255,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "glows.level",
+   "part": "glows",
+   "label": "Level",
+   "doc": "...this",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "glows.pulse.peak",
+   "part": "glows",
+   "label": "Peak",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "glows.pulse.step",
+   "part": "glows",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 255,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "glows.down",
+   "part": "glows",
+   "label": "Dim",
+   "doc": "At the end its grey down by this a tick to 0, then hidden and done",
+   "type": "i16",
+   "min": 1,
+   "max": 255,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "big.lift",
+   "part": "big",
+   "label": "Height",
+   "doc": "This high over the target's feet (the morphing rings' too)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 640,
+   "unit": "plain"
+  },
+  {
+   "key": "big.turn",
+   "part": "big",
+   "label": "Turn",
+   "doc": "Turned this much about y (the morphing rings' too)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 409,
+   "unit": "plain"
+  },
+  {
+   "key": "big.fade",
+   "part": "big",
+   "label": "Fade",
+   "doc": "Its fade starts at this...",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "big.fade_in",
+   "part": "big",
+   "label": "Fade in",
+   "doc": "...goes down by this a tick to 0 (it spawns its sprites and rings)...",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "big.fade_out",
+   "part": "big",
+   "label": "Fade out",
+   "doc": "...then up by this a tick to 4096: hidden and done",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 768,
+   "unit": "plain"
+  },
+  {
+   "key": "big.grey",
+   "part": "big",
+   "label": "Grey",
+   "doc": "Its grey while it fades in (then black)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.from",
+   "part": "sprites",
+   "label": "From tick",
+   "doc": "Sprites over big rune ticks from this...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.last",
+   "part": "sprites",
+   "label": "Last tick",
+   "doc": "...to this one...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.count",
+   "part": "sprites",
+   "label": "Count",
+   "doc": "...this many a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 50,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.angle_step",
+   "part": "sprites",
+   "label": "Angle step",
+   "doc": "Sprite k turned k x this about y",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 819,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.x.mod",
+   "part": "sprites",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 768,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.x.base",
+   "part": "sprites",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -384,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.back",
+   "part": "sprites",
+   "label": "Out",
+   "doc": "z = -this from the big rune (then turned)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 704,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.grey.a",
+   "part": "sprites",
+   "label": "A",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.grey.b",
+   "part": "sprites",
+   "label": "B",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.grey.c",
+   "part": "sprites",
+   "label": "C",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.hop",
+   "part": "sprites",
+   "label": "Frame hop",
+   "doc": "Its frame a tick: (frame + 1 + rand % this) & Frame mask",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.mask",
+   "part": "sprites",
+   "label": "Frame mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "morph.first",
+   "part": "morph",
+   "label": "First tick",
+   "doc": "A morphing ring at this big rune tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "morph.second",
+   "part": "morph",
+   "label": "Second tick",
+   "doc": "...and this one (while it spawns)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "morph.step",
+   "part": "morph",
+   "label": "Step",
+   "doc": "Its blend and its fade up by this a tick: done at 4096",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.jump",
+   "part": "flash",
+   "label": "Jump",
+   "doc": "Its speed up at the start (y goes down: negative)...",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -144,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.gravity",
+   "part": "flash",
+   "label": "Gravity",
+   "doc": "...slowing by this a tick until it is back at the target's top",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.ticks",
+   "part": "flash",
+   "label": "End tick",
+   "doc": "It ends at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.tex.tx",
+   "part": "flash",
+   "label": "Page x",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 1023,
+   "default": 576,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.tex.ty",
+   "part": "flash",
+   "label": "Page y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 511,
+   "default": 288,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.tex.cx",
+   "part": "flash",
+   "label": "CLUT x",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 1023,
+   "default": 320,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.tex.cy",
+   "part": "flash",
+   "label": "CLUT y",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 511,
+   "default": 244,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.tex.u",
+   "part": "flash",
+   "label": "U",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.tex.v",
+   "part": "flash",
+   "label": "V",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.tex.w",
+   "part": "flash",
+   "label": "Width",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.tex.h",
+   "part": "flash",
+   "label": "Height",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 16,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 92,
+   "function": "0x8D52A0",
+   "doc": "One per action, on its target: follows it, starts the rune sequencer, lets the next action start and starts the flash, gives the result; its sound; when the last rune's column settles (signal 1) a screen fade and the big rune, the signal 2 for a tick (the glows and columns react), then 0.",
+   "body": [
+    [
+     "pad",
+     40
+    ],
+    [
+     "signal",
+     "i16"
+    ]
+   ],
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "do": [
+      [
+       "spawn",
+       "sequencer"
+      ]
+     ]
+    },
+    {
+     "wait": [
+      "tick_at_least",
+      "$emitter.release_tick"
+     ],
+     "do": [
+      [
+       "unblock_director"
+      ],
+      [
+       "spawn_unless_target_bits",
+       "flash",
+       "$emitter.target_bit"
+      ],
+      [
+       "anchor_top",
+       "child.pos"
+      ],
+      [
+       "copy",
+       "child.target",
+       "child.pos",
+       4
+      ]
+     ]
+    },
+    {
+     "do": [
+      [
+       "heal"
+      ],
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "events": [
+    [
+     "sound_at",
+     "$emitter.sound_tick",
+     "$emitter.sound",
+     "$emitter.sound_pan"
+    ],
+    [
+     "set_when",
+     "signal",
+     0,
+     "signal",
+     2
+    ],
+    [
+     "screen_fade_when",
+     "signal",
+     1,
+     "$emitter.fade.a",
+     "$emitter.fade.b",
+     "$emitter.fade.c",
+     "$emitter.fade.d"
+    ],
+    [
+     "spawn_when",
+     "big",
+     "signal",
+     1
+    ],
+    [
+     "anchor_xz",
+     "child.pos",
+     "-$big.lift"
+    ],
+    [
+     "set",
+     "child.scale.0",
+     4096
+    ],
+    [
+     "set",
+     "child.scale.1",
+     4096
+    ],
+    [
+     "set",
+     "child.scale.2",
+     4096
+    ],
+    [
+     "set",
+     "child.angle.1",
+     "$big.turn"
+    ],
+    [
+     "set",
+     "child.model",
+     "@big.model"
+    ],
+    [
+     "set",
+     "child.fade",
+     "$big.fade"
+    ],
+    [
+     "set",
+     "child.rgb",
+     "$big.grey"
+    ],
+    [
+     "set_when",
+     "signal",
+     2,
+     "signal",
+     1
+    ]
+   ]
+  },
+  {
+   "key": "sequencer",
+   "pool": "sequencers",
+   "size": 64,
+   "function": "0x8D5B40",
+   "doc": "A rune and its glow a tick, rune k at angle k x the step on the circle (the last one flagged), then done.",
+   "phases": [
+    {
+     "wait": [
+      "tick_at_least",
+      "$runes.last"
+     ],
+     "do": [
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "spawns": [
+    {
+     "task": "rune",
+     "window": [
+      0,
+      "$runes.last"
+     ],
+     "every": 1,
+     "place": [
+      "at_parent"
+     ],
+     "init": [
+      [
+       "anchor_xz",
+       "child.pos",
+       "-$runes.lift"
+      ],
+      [
+       "copy",
+       "child.base",
+       "child.pos",
+       4
+      ],
+      [
+       "set_when",
+       "child.flagged",
+       1,
+       "counter",
+       "$runes.last"
+      ],
+      [
+       "tick_times",
+       "child.orbit",
+       "$runes.angle_step",
+       4095
+      ],
+      [
+       "set",
+       "child.model",
+       "@rune.model"
+      ],
+      [
+       "set",
+       "child.fade",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.0",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.1",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.2",
+       4096
+      ]
+     ]
+    },
+    {
+     "task": "glow",
+     "window": [
+      0,
+      "$runes.last"
+     ],
+     "every": 1,
+     "place": [
+      "at_parent"
+     ],
+     "init": [
+      [
+       "anchor_xz",
+       "child.pos",
+       0
+      ],
+      [
+       "copy",
+       "child.base",
+       "child.pos",
+       4
+      ],
+      [
+       "tick_times",
+       "child.angle",
+       "$runes.angle_step",
+       4095
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "key": "rune",
+   "pool": "models",
+   "size": 108,
+   "function": "0x8D5C80",
+   "doc": "On the circle, spinning: fades in (spawning its column and motes), then shrinks while fading out, hidden and done.",
+   "body": [
+    [
+     "scale",
+     "i32",
+     3
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "rgb",
+     "grey"
+    ],
+    [
+     "angle",
+     "i16",
+     3
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "model",
+     "i32"
+    ],
+    [
+     "fade",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "base",
+     "i16",
+     4
+    ],
+    [
+     "orbit",
+     "i16"
+    ],
+    [
+     "flagged",
+     "i16"
+    ],
+    [
+     "flash",
+     "i16"
+    ],
+    [
+     "radius",
+     "i16"
+    ],
+    [
+     "flash_on",
+     "i16"
+    ],
+    [
+     "orbit_step",
+     "i16"
+    ],
+    [
+     "morph",
+     "i16"
+    ],
+    [
+     "arg",
+     "i16"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "add",
+       "fade",
+       "-$runes.fade_in"
+      ],
+      [
+       "flags",
+       2,
+       0
+      ]
+     ],
+     "wait": [
+      "at_most",
+      "fade",
+      0
+     ],
+     "do": [
+      [
+       "set",
+       "fade",
+       0
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add",
+       "fade",
+       "$runes.fade_out"
+      ],
+      [
+       "add",
+       "scale.0",
+       "-$runes.shrink"
+      ],
+      [
+       "add",
+       "scale.1",
+       "-$runes.shrink"
+      ],
+      [
+       "add",
+       "scale.2",
+       "-$runes.shrink"
+      ]
+     ],
+     "wait": [
+      "at_least",
+      "fade",
+      4096
+     ],
+     "do": [
+      [
+       "set",
+       "fade",
+       4096
+      ],
+      [
+       "set",
+       "scale.0",
+       "$runes.end_scale"
+      ],
+      [
+       "set",
+       "scale.1",
+       "$runes.end_scale"
+      ],
+      [
+       "set",
+       "scale.2",
+       "$runes.end_scale"
+      ],
+      [
+       "flags",
+       5,
+       2
+      ]
+     ]
+    }
+   ],
+   "after_phase": [
+    [
+     "spin_var",
+     "angle.1",
+     "$runes.spin",
+     4095
+    ],
+    [
+     "circle_place",
+     "base",
+     "orbit",
+     "$runes.radius",
+     16384
+    ]
+   ],
+   "spawns": [
+    {
+     "task": "column",
+     "window": [
+      "$columns.tick",
+      "$columns.tick"
+     ],
+     "every": 1,
+     "place": [
+      "at_parent"
+     ],
+     "init": [
+      [
+       "set",
+       "child.radius",
+       "$runes.radius"
+      ],
+      [
+       "set",
+       "child.flash_on",
+       0
+      ],
+      [
+       "copy",
+       "child.flagged",
+       "flagged",
+       1
+      ],
+      [
+       "copy",
+       "child.arg",
+       "arg",
+       1
+      ],
+      [
+       "anchor_xz",
+       "child.pos",
+       "-$runes.lift"
+      ],
+      [
+       "copy",
+       "child.base",
+       "child.pos",
+       4
+      ],
+      [
+       "copy",
+       "child.orbit",
+       "orbit",
+       1
+      ],
+      [
+       "copy",
+       "child.angle.1",
+       "orbit",
+       1
+      ],
+      [
+       "set",
+       "child.model",
+       "@column.model"
+      ],
+      [
+       "set",
+       "child.fade",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.0",
+       16
+      ],
+      [
+       "set",
+       "child.scale.1",
+       16
+      ],
+      [
+       "set",
+       "child.scale.2",
+       16
+      ]
+     ],
+     "if": "spawning"
+    },
+    {
+     "task": "mote",
+     "window": [
+      "$motes.from",
+      "$motes.last"
+     ],
+     "every": 1,
+     "place": [
+      "at_parent"
+     ],
+     "init": [
+      [
+       "copy",
+       "child.base",
+       "child.pos",
+       4
+      ],
+      [
+       "set",
+       "child.seq",
+       "@mote.seq"
+      ],
+      [
+       "rand_mask",
+       "child.radius",
+       "$motes.radius.mask",
+       "$motes.radius.base"
+      ],
+      [
+       "set",
+       "child.last",
+       "$motes.frames"
+      ],
+      [
+       "rand_mask",
+       "child.ay",
+       4095,
+       0
+      ],
+      [
+       "set",
+       "child.scale.0",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.1",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.2",
+       4096
+      ]
+     ],
+     "if": "spawning"
+    }
+   ],
+   "draws": [
+    {
+     "part": "runes",
+     "draw": [
+      "prim_model",
+      "model",
+      "angle",
+      "scale",
+      "rgb",
+      "fade"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "column",
+   "pool": "models",
+   "size": 108,
+   "function": "0x8D5E60",
+   "doc": "On its rune's place, going round the circle: widens while fading in, rises to its peak, settles (flashes; the flagged one signals its emitter), flashes again on the emitter's signal, then fades out.",
+   "body": [
+    [
+     "scale",
+     "i32",
+     3
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "rgb",
+     "grey"
+    ],
+    [
+     "angle",
+     "i16",
+     3
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "model",
+     "i32"
+    ],
+    [
+     "fade",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "base",
+     "i16",
+     4
+    ],
+    [
+     "orbit",
+     "i16"
+    ],
+    [
+     "flagged",
+     "i16"
+    ],
+    [
+     "flash",
+     "i16"
+    ],
+    [
+     "radius",
+     "i16"
+    ],
+    [
+     "flash_on",
+     "i16"
+    ],
+    [
+     "orbit_step",
+     "i16"
+    ],
+    [
+     "morph",
+     "i16"
+    ],
+    [
+     "arg",
+     "i16"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "add",
+       "fade",
+       "-$columns.fade_in"
+      ],
+      [
+       "add",
+       "scale.0",
+       "$columns.grow"
+      ],
+      [
+       "add",
+       "scale.2",
+       "$columns.grow"
+      ]
+     ],
+     "wait": [
+      "at_most",
+      "fade",
+      0
+     ],
+     "do": [
+      [
+       "set",
+       "fade",
+       0
+      ],
+      [
+       "set",
+       "scale.0",
+       "$columns.width"
+      ],
+      [
+       "set",
+       "scale.2",
+       "$columns.width"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add",
+       "scale.1",
+       "$columns.rise"
+      ]
+     ],
+     "wait": [
+      "at_least",
+      "scale.1",
+      4096
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add",
+       "scale.1",
+       "$columns.rise"
+      ]
+     ],
+     "wait": [
+      "at_least",
+      "scale.1",
+      "$columns.peak"
+     ],
+     "do": [
+      [
+       "set",
+       "scale.1",
+       "$columns.peak"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add",
+       "scale.0",
+       "$columns.settle"
+      ],
+      [
+       "add",
+       "scale.1",
+       "-$columns.settle"
+      ],
+      [
+       "add",
+       "scale.2",
+       "$columns.settle"
+      ]
+     ],
+     "wait": [
+      "at_most",
+      "scale.1",
+      4096
+     ],
+     "do": [
+      [
+       "set",
+       "scale.0",
+       4096
+      ],
+      [
+       "set",
+       "scale.1",
+       4096
+      ],
+      [
+       "set",
+       "scale.2",
+       4096
+      ],
+      [
+       "set_when",
+       "flash",
+       1,
+       "flagged",
+       0
+      ],
+      [
+       "set_when",
+       "emitter.signal",
+       1,
+       "flagged",
+       1
+      ]
+     ]
+    },
+    {
+     "wait": [
+      "equals",
+      "emitter.signal",
+      2
+     ],
+     "do": [
+      [
+       "set",
+       "flash",
+       3
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add_when",
+       "fade",
+       "$columns.fade_out",
+       "flash",
+       0
+      ]
+     ],
+     "wait": [
+      "at_least_when",
+      "fade",
+      4096,
+      "flash",
+      0
+     ],
+     "do": [
+      [
+       "done"
+      ],
+      [
+       "set",
+       "fade",
+       4096
+      ]
+     ]
+    }
+   ],
+   "after_phase": [
+    [
+     "fade_pulse",
+     "flash",
+     "flash_on",
+     "fade",
+     "rgb",
+     "$columns.flash.first",
+     "$columns.flash.second",
+     "$columns.flash.step_first",
+     "$columns.flash.step_second",
+     "$columns.flash.grey"
+    ],
+    [
+     "spin_var",
+     "orbit",
+     "$columns.orbit_speed",
+     4095
+    ],
+    [
+     "spin_var",
+     "angle.1",
+     "$columns.spin",
+     4095
+    ],
+    [
+     "circle_place_var",
+     "base",
+     "orbit",
+     "radius",
+     16384
+    ]
+   ],
+   "draws": [
+    {
+     "part": "columns",
+     "draw": [
+      "prim_model_as",
+      "@columnflash.model",
+      "angle",
+      "scale",
+      "rgb",
+      "fade"
+     ],
+     "when": [
+      "equals",
+      "flash_on",
+      1
+     ]
+    },
+    {
+     "part": "columns",
+     "draw": [
+      "prim_model",
+      "model",
+      "angle",
+      "scale",
+      "rgb",
+      "fade"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "glow",
+   "pool": "sprites",
+   "size": 104,
+   "function": "0x8D6200",
+   "doc": "A flipbook on the ground under its rune: brightens, pulses on the emitter's signal, then dims, hidden and done.",
+   "body": [
+    [
+     "scale",
+     "i32",
+     3
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "ax",
+     "i16"
+    ],
+    [
+     "ay",
+     "i16"
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "rgb",
+     "grey"
+    ],
+    [
+     "seq",
+     "i32"
+    ],
+    [
+     "frame",
+     "i16"
+    ],
+    [
+     "last",
+     "i16"
+    ],
+    [
+     "shade",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "base",
+     "i16",
+     4
+    ],
+    [
+     "radius",
+     "i16"
+    ],
+    [
+     "angle",
+     "i16"
+    ],
+    [
+     "pulse",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "add",
+       "rgb",
+       "$glows.up"
+      ]
+     ],
+     "wait": [
+      "at_least",
+      "rgb",
+      "$glows.level"
+     ]
+    },
+    {
+     "wait": [
+      "equals",
+      "emitter.signal",
+      2
+     ],
+     "do": [
+      [
+       "set",
+       "pulse",
+       3
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add_when",
+       "rgb",
+       "-$glows.down",
+       "pulse",
+       0
+      ]
+     ],
+     "wait": [
+      "equals_when",
+      "rgb",
+      0,
+      "pulse",
+      0
+     ],
+     "do": [
+      [
+       "flags",
+       5,
+       0
+      ]
+     ]
+    }
+   ],
+   "after_phase": [
+    [
+     "grey_pulse",
+     "pulse",
+     "rgb",
+     "$glows.pulse.peak",
+     "$glows.pulse.step",
+     "$glows.level"
+    ],
+    [
+     "circle_place",
+     "base",
+     "angle",
+     "$runes.radius",
+     16384
+    ]
+   ],
+   "draws": [
+    {
+     "part": "glows",
+     "draw": [
+      "ground_flipbook_colour",
+      "@glow.seq",
+      1024,
+      0,
+      0,
+      "rgb"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "mote",
+   "pool": "sprites",
+   "size": 104,
+   "function": "0x8D6490",
+   "doc": "A flipbook spiralling in towards its rune, brightening, until its radius is gone.",
+   "body": [
+    [
+     "scale",
+     "i32",
+     3
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "ax",
+     "i16"
+    ],
+    [
+     "ay",
+     "i16"
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "rgb",
+     "grey"
+    ],
+    [
+     "seq",
+     "i32"
+    ],
+    [
+     "frame",
+     "i16"
+    ],
+    [
+     "last",
+     "i16"
+    ],
+    [
+     "shade",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "base",
+     "i16",
+     4
+    ],
+    [
+     "radius",
+     "i16"
+    ],
+    [
+     "angle",
+     "i16"
+    ],
+    [
+     "pulse",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "spin_var",
+       "ay",
+       "$motes.spin",
+       4095
+      ],
+      [
+       "add_below",
+       "rgb",
+       "$motes.brighten",
+       "$motes.brightest"
+      ],
+      [
+       "add",
+       "radius",
+       "-$motes.shrink"
+      ]
+     ],
+     "wait": [
+      "at_most",
+      "radius",
+      0
+     ],
+     "do": [
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "after_phase": [
+    [
+     "circle_place_var",
+     "base",
+     "ay",
+     "radius",
+     4096
+    ]
+   ],
+   "draws": [
+    {
+     "part": "motes",
+     "draw": [
+      "sprite",
+      128,
+      128,
+      128,
+      4096
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "wrap",
+     "frame",
+     "last"
+    ]
+   ]
+  },
+  {
+   "key": "big",
+   "pool": "models",
+   "size": 108,
+   "function": "0x8D53C0",
+   "doc": "Over the target: fades in (spawning its sprites and morphing rings), then out, hidden and done.",
+   "body": [
+    [
+     "scale",
+     "i32",
+     3
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "rgb",
+     "grey"
+    ],
+    [
+     "angle",
+     "i16",
+     3
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "model",
+     "i32"
+    ],
+    [
+     "fade",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "base",
+     "i16",
+     4
+    ],
+    [
+     "orbit",
+     "i16"
+    ],
+    [
+     "flagged",
+     "i16"
+    ],
+    [
+     "flash",
+     "i16"
+    ],
+    [
+     "radius",
+     "i16"
+    ],
+    [
+     "flash_on",
+     "i16"
+    ],
+    [
+     "orbit_step",
+     "i16"
+    ],
+    [
+     "morph",
+     "i16"
+    ],
+    [
+     "arg",
+     "i16"
+    ]
+   ],
+   "draws_first": true,
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "add",
+       "fade",
+       "-$big.fade_in"
+      ],
+      [
+       "flags",
+       2,
+       0
+      ]
+     ],
+     "wait": [
+      "at_most",
+      "fade",
+      0
+     ],
+     "do": [
+      [
+       "set",
+       "fade",
+       0
+      ],
+      [
+       "set",
+       "rgb",
+       0
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add",
+       "fade",
+       "$big.fade_out"
+      ]
+     ],
+     "wait": [
+      "at_least",
+      "fade",
+      4096
+     ],
+     "do": [
+      [
+       "set",
+       "fade",
+       4096
+      ],
+      [
+       "flags",
+       5,
+       2
+      ]
+     ]
+    }
+   ],
+   "draws": [
+    {
+     "part": "big",
+     "draw": [
+      "prim_model",
+      "model",
+      "angle",
+      "scale",
+      "rgb",
+      "fade"
+     ]
+    }
+   ],
+   "spawns": [
+    {
+     "task": "sprite",
+     "if": "spawning",
+     "window": [
+      "$sprites.from",
+      "$sprites.last"
+     ],
+     "count": [
+      0,
+      "$sprites.count",
+      32767,
+      0,
+      32767,
+      0,
+      32767,
+      0
+     ],
+     "place": [
+      "at_parent"
+     ],
+     "init": [
+      [
+       "set",
+       "child.seq",
+       "@sprite.seq"
+      ],
+      [
+       "set",
+       "child.last",
+       7
+      ],
+      [
+       "set",
+       "child.scale.0",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.1",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.2",
+       4096
+      ],
+      [
+       "index_times",
+       "child.ay",
+       "$sprites.angle_step"
+      ],
+      [
+       "turned_offset",
+       "child.ay",
+       "$sprites.x.mod",
+       "$sprites.x.base",
+       0,
+       "-$sprites.back"
+      ]
+     ]
+    },
+    {
+     "task": "morph",
+     "window": [
+      "$morph.first",
+      "$morph.first"
+     ],
+     "every": 1,
+     "place": [
+      "at_parent"
+     ],
+     "init": [
+      [
+       "anchor_xz",
+       "child.pos",
+       "-$big.lift"
+      ],
+      [
+       "set",
+       "child.angle.1",
+       "$big.turn"
+      ],
+      [
+       "set",
+       "child.model",
+       "@morph.model"
+      ],
+      [
+       "set",
+       "child.fade",
+       0
+      ],
+      [
+       "set",
+       "child.scale.0",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.1",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.2",
+       4096
+      ],
+      [
+       "set",
+       "child.rgb",
+       0
+      ]
+     ],
+     "if": "spawning"
+    },
+    {
+     "task": "morph",
+     "window": [
+      "$morph.second",
+      "$morph.second"
+     ],
+     "every": 1,
+     "place": [
+      "at_parent"
+     ],
+     "init": [
+      [
+       "anchor_xz",
+       "child.pos",
+       "-$big.lift"
+      ],
+      [
+       "set",
+       "child.angle.1",
+       "$big.turn"
+      ],
+      [
+       "set",
+       "child.model",
+       "@morph.model"
+      ],
+      [
+       "set",
+       "child.fade",
+       0
+      ],
+      [
+       "set",
+       "child.scale.0",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.1",
+       4096
+      ],
+      [
+       "set",
+       "child.scale.2",
+       4096
+      ],
+      [
+       "set",
+       "child.rgb",
+       0
+      ]
+     ],
+     "if": "spawning"
+    }
+   ]
+  },
+  {
+   "key": "morph",
+   "pool": "models",
+   "size": 108,
+   "function": "0x8D5750",
+   "doc": "Its vertices blended from one set to the other, fading, until done.",
+   "body": [
+    [
+     "scale",
+     "i32",
+     3
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "rgb",
+     "grey"
+    ],
+    [
+     "angle",
+     "i16",
+     3
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "model",
+     "i32"
+    ],
+    [
+     "fade",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "base",
+     "i16",
+     4
+    ],
+    [
+     "orbit",
+     "i16"
+    ],
+    [
+     "flagged",
+     "i16"
+    ],
+    [
+     "flash",
+     "i16"
+    ],
+    [
+     "radius",
+     "i16"
+    ],
+    [
+     "flash_on",
+     "i16"
+    ],
+    [
+     "orbit_step",
+     "i16"
+    ],
+    [
+     "morph",
+     "i16"
+    ],
+    [
+     "arg",
+     "i16"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "add",
+       "morph",
+       "$morph.step"
+      ],
+      [
+       "add",
+       "fade",
+       "$morph.step"
+      ]
+     ],
+     "wait": [
+      "at_least",
+      "fade",
+      4096
+     ],
+     "do": [
+      [
+       "done"
+      ],
+      [
+       "set",
+       "fade",
+       4096
+      ]
+     ]
+    }
+   ],
+   "after_phase": [
+    [
+     "morph",
+     "@morph.a",
+     "@morph.b",
+     "@morph.model",
+     "morph"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "morph",
+     "draw": [
+      "prim_model",
+      "model",
+      "angle",
+      "scale",
+      "rgb",
+      "fade"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "sprite",
+   "pool": "sprites",
+   "size": 104,
+   "function": "0x8D58A0",
+   "doc": "A flipbook around the big rune, its frame and x angle at random every tick, brightening then dimming, then done.",
+   "body": [
+    [
+     "scale",
+     "i32",
+     3
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "ax",
+     "i16"
+    ],
+    [
+     "ay",
+     "i16"
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "rgb",
+     "grey"
+    ],
+    [
+     "seq",
+     "i32"
+    ],
+    [
+     "frame",
+     "i16"
+    ],
+    [
+     "last",
+     "i16"
+    ],
+    [
+     "shade",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "base",
+     "i16",
+     4
+    ],
+    [
+     "radius",
+     "i16"
+    ],
+    [
+     "angle",
+     "i16"
+    ],
+    [
+     "pulse",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ]
+   ],
+   "phases": [
+    {
+     "do": [
+      [
+       "set",
+       "rgb",
+       "$sprites.grey.a"
+      ]
+     ]
+    },
+    {
+     "do": [
+      [
+       "set",
+       "rgb",
+       "$sprites.grey.b"
+      ]
+     ]
+    },
+    {
+     "do": [
+      [
+       "set",
+       "rgb",
+       "$sprites.grey.c"
+      ]
+     ]
+    },
+    {},
+    {
+     "do": [
+      [
+       "set",
+       "rgb",
+       "$sprites.grey.b"
+      ]
+     ]
+    },
+    {
+     "do": [
+      [
+       "set",
+       "rgb",
+       "$sprites.grey.a"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "done"
+      ],
+      [
+       "set",
+       "rgb",
+       0
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ],
+   "after_phase": [
+    [
+     "rand_mask",
+     "ax",
+     4095,
+     0
+    ],
+    [
+     "rand_hop",
+     "frame",
+     "$sprites.hop",
+     "$sprites.mask"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "sprites",
+     "draw": [
+      "sprite_turned",
+      "seq",
+      "frame",
+      "ax",
+      "ay",
+      "scale",
+      "rgb"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "flash",
+   "pool": "flashes",
+   "size": 80,
+   "function": "0x8D6790",
+   "doc": "A textured quad on the target's top: jumps up, falls back, ends at its last tick.",
+   "body": [
+    [
+     "pad",
+     2
+    ],
+    [
+     "vel",
+     "i16"
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "target",
+     "i16",
+     4
+    ]
+   ],
+   "phases": [
+    {
+     "do": [
+      [
+       "set",
+       "vel",
+       "$flash.jump"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add",
+       "vel",
+       "$flash.gravity"
+      ],
+      [
+       "add_var",
+       "pos.1",
+       "vel"
+      ]
+     ],
+     "wait": [
+      "at_least_var",
+      "pos.1",
+      "target.1"
+     ],
+     "do": [
+      [
+       "copy",
+       "pos.1",
+       "target.1",
+       1
+      ]
+     ]
+    },
+    {
+     "wait": [
+      "tick_at_least",
+      "$flash.ticks"
+     ],
+     "do": [
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "draws": [
+    {
+     "part": "flash",
+     "draw": [
+      "screen_tex_quad",
+      "$flash.tex.tx",
+      "$flash.tex.ty",
+      "$flash.tex.cx",
+      "$flash.tex.cy",
+      "$flash.tex.u",
+      "$flash.tex.v",
+      "$flash.tex.w",
+      "$flash.tex.h"
+     ]
+    }
+   ]
+  }
+ ]
+}

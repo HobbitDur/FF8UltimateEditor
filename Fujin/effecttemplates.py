@@ -1,5 +1,5 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's, Berserk's, Fire's, Thunder's), and the description an effect made
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's, Berserk's, Fire's, Thunder's, Double's), and the description an effect made
 of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
@@ -19,6 +19,8 @@ import re
 
 from Fujin.effectprogram import load_description, new_effect
 
+# the actions that spawn a task (their first value)
+SPAWNING = ("spawn", "spawn_when", "spawn_unless_target_bits")
 # key: hint (a few words beside its name in the + menu: its name is its tab's title, title()), group,
 # family, source effect, part key (its parameters' "part"), the tasks it owns, the actions it adds to
 # its host's phases, the parts it needs, doc
@@ -182,6 +184,25 @@ TEMPLATES = {
                        "A sprite sequence on a plane at the target's feet."),
     "thunder_smoke": ("after the strike", "Drawn by another part", "per_action_bolt", 3, "smoke", (), (), ("thunder",),
                       "A sprite sequence at the target's effect point, after the strike."),
+    # Double's family (effect-library nodes, one emitter per target in turn: runes on a circle, their columns, a big rune)
+    "double": ("one per target, runes around it", "How the effect starts", "per_action_runes", 4, "runes",
+               ("emitter", "sequencer", "rune"), (), (), "One emitter per target, in turn: prim-model runes on a circle "
+               "around the target, one a tick, each fading in and spinning, then shrinking out; the sound, the result "
+               "(Double's way)."),
+    "double_columns": ("rising on each rune", "Moving parts", "per_action_runes", 4, "columns", ("column",), (), ("double",),
+                       "A column on each rune that grows, settles and flashes; the last one starts the big rune."),
+    "double_motes": ("spiralling into each rune", "Moving parts", "per_action_runes", 4, "motes", ("mote",), (), ("double",),
+                     "Flipbooks spiralling in towards each rune while it fades in."),
+    "double_glows": ("on the ground under each rune", "Drawn by another part", "per_action_runes", 4, "glows", ("glow",), (),
+                     ("double_columns",), "A flipbook on the ground under each rune, pulsing when the big rune starts."),
+    "double_big": ("over the target, at the end", "Moving parts", "per_action_runes", 4, "big", ("big",), (), ("double_columns",),
+                   "A prim model over the target once the last column settles, with a screen fade."),
+    "double_sprites": ("around the big rune", "Moving parts", "per_action_runes", 4, "sprites", ("sprite",), (), ("double_big",),
+                       "Flipbooks around the big rune, their frames and angles at random."),
+    "double_morph": ("rings changing shape", "Moving parts", "per_action_runes", 4, "morph", ("morph",), (), ("double_big",),
+                     "Prim models whose vertices blend from one shape to another while they fade."),
+    "double_flash": ("on the target's top", "Moving parts", "per_action_runes", 4, "flash", ("flash",), (), ("double",),
+                     "A textured quad on the target's top that jumps up and falls back."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout",
@@ -190,7 +211,7 @@ STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout
           "per_action_wind": "wind", "per_action_flash": "blind",
           "per_action_stare": "stare", "per_action_sway": "zombie",
           "per_action_burst": "flare", "per_action_barrier": "reflect", "per_action_rays": "berserk",
-          "per_action_chain": "fire", "per_action_bolt": "thunder"}
+          "per_action_chain": "fire", "per_action_bolt": "thunder", "per_action_runes": "double"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
             "on_target": "One layout on the target (Antidote's kind)",
@@ -207,7 +228,8 @@ FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "per_action_barrier": "One per action, a wall around its target (Reflect's kind)",
             "per_action_rays": "One per action, rays around its target (Berserk's kind)",
             "per_action_chain": "One director per action, flames around its targets (Fire's kind)",
-            "per_action_bolt": "One per action, a bolt on its target (Thunder's kind)"}
+            "per_action_bolt": "One per action, a bolt on its target (Thunder's kind)",
+            "per_action_runes": "Around one target at a time, runes (Double's kind)"}
 
 
 @functools.cache
@@ -304,14 +326,27 @@ def build_effect(effect_id, name, parts, exe=None, keep=None):
         params, _data = _refs(entry)
         return bool(params & gone_params)
 
+    def kept(entries):
+        """The actions of a list still there: a spawning one naming a gone task goes with the actions
+        on its child after it (Double's)."""
+        out, dropping = [], False
+        for a in entries:
+            if a[0] in SPAWNING:
+                dropping = a[1] in gone_tasks
+            elif not any(isinstance(x, str) and x.startswith("child.") for x in a[1:]):
+                dropping = False
+            if dropping or a[0] in gone_actions or gone(a):
+                continue
+            out.append(a)
+        return out
+
     tasks = []
     for task in d["tasks"]:
         if task["key"] in gone_tasks:
             continue
         for phase in task.get("phases", []):
-            phase["do"] = [a for a in phase.get("do", []) if a[0] not in gone_actions and not gone(a)
-                           and not (a[0] == "spawn" and a[1] in gone_tasks)]
-            phase["each_tick"] = [a for a in phase.get("each_tick", []) if not gone(a)]
+            phase["do"] = kept(phase.get("do", []))
+            phase["each_tick"] = kept(phase.get("each_tick", []))
             if "wait" in phase and gone(phase["wait"]):
                 del phase["wait"]
             for key in ("do", "each_tick"):
@@ -321,10 +356,12 @@ def build_effect(effect_id, name, parts, exe=None, keep=None):
             if key in task:
                 task[key] = [s for s in task[key] if s.get("task") not in gone_tasks and not gone(s)
                              and s.get("pool") not in {p["key"] for p in d["pools"] if p.get("part") in gone_parts}]
-        for key in ("draws", "events", "every_tick", "after_draws"):
+        for key in ("draws", "events", "every_tick", "after_draws", "after_phase", "at_end"):
             if key in task:
-                task[key] = [x for x in task[key] if (x.get("part") not in gone_parts if isinstance(x, dict) else True)
-                             and not gone(x)]
+                if key == "draws":
+                    task[key] = [x for x in task[key] if x.get("part") not in gone_parts and not gone(x)]
+                else:
+                    task[key] = kept(task[key])
         tasks.append(task)
     d["tasks"] = tasks
     director = d.get("director") or {}

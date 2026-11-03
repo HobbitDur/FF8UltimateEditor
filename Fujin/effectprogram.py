@@ -27,7 +27,15 @@ root alternating "packet_arena_a" / "packet_arena_b" by its counter). An effect 
 resource starts no camera track; a texture "tim" (data) is uploaded as it is, no file loaded
 (Thunder's). A task's "draw_only" says what it does while the battle only draws
 ("skip": nothing, "after_draws": its first draws only), its "hold" stops its tick early (Fire's
-lone target's director waits until its target is free).
+lone target's director waits until its target is free). The heal ring's director can be "root":
+"short" (Double's: four phases, its packet arenas memory words set in the magic buffer).
+
+A task can name node variables (Double's): an effect node's header fields (pos, counter, flags,
+phase) and its "body" ([name, type, count] laid out from 0x30: i16, i32, u8, grey - three colour
+bytes as one -, u16, i8), "emitter.name" (its emitter's), "child.name" (the node the last spawning
+action, or the spawn whose "init" this is, made), "name.k" (element k); "-$key" is a parameter
+negated. Its "after_phase" actions run after its phase, before its draws and spawns; a draw's
+"when" is a condition on the node.
 
 The memory an effect works in is its exe copy's ("copy": "memory", addresses) or its own
 ("own_memory": name: size in bytes, allocated by the runtime), its pools' queues and storage then
@@ -58,9 +66,14 @@ ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, 
            "barrier_frame": 1, "barrier_center": 3, "dead_beams": 3, "orbit_move": 0, "growth_step": 1,
            "spawn_to_feet": 1, "ray_spawn": 11, "mote_step": 2, "chain_next": 1, "release_target": 0,
            "heal_action_all_at": 1, "sound_pan_at": 4, "ember_rise": 2, "fire_spark_move": 2,
-           "spawn_size_word": 3, "sound_3d_at_spawn": 3}
+           "spawn_size_word": 3, "sound_3d_at_spawn": 3,
+           "add": 2, "set": 2, "copy": 3, "flags": 2, "set_when": 4, "add_when": 4, "add_below": 3, "add_var": 2,
+           "spin_var": 3, "circle_place": 4, "circle_place_var": 4, "anchor_xz": 2, "anchor_top": 1, "rand_mask": 3,
+           "rand_hop": 3, "index_times": 2, "tick_times": 3, "turned_offset": 5, "fade_pulse": 9, "grey_pulse": 5,
+           "morph": 4, "spawn_when": 3, "spawn_unless_target_bits": 2, "screen_fade_when": 6, "wrap": 2}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1, "tick_at_node_end": 0, "leaf_gone": 0, "spark_gone": 0, "rays_done": 1, "ribbon_done": 1,
-              "mote_done": 1, "life_out": 0}
+              "mote_done": 1, "life_out": 0, "at_most": 2, "at_least": 2, "equals": 2, "never": 0, "at_least_var": 2,
+              "at_least_when": 4, "equals_when": 4}
 # a task's hold (after its every-tick actions: when it holds, its tick stops there)
 HOLDS = {"claim_target": 0}
 DRAW_ONLY = ("skip", "after_draws")
@@ -81,7 +94,22 @@ DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_s
          "spark_sprite": 1, "barrier_wall": 5, "orbit_model": 5, "growth_model": 3,
          "sequence_at_anchor": 4, "pulse_model": 6, "layout_table_at_spawn": 1, "light_rays": 0, "ribbon": 6,
          "mote_sprite": 0, "flame": 8, "ember": 2, "fire_spark": 5,
-         "screen_quad": 2, "point_layer": 4, "ground_layer": 4}
+         "screen_quad": 2, "point_layer": 4, "ground_layer": 4,
+         "prim_model": 5, "prim_model_as": 5, "sprite_turned": 6, "ground_flipbook_colour": 5, "screen_tex_quad": 8}
+# the arguments of an operation that name a node variable (Double's): "name" (the node's own),
+# "emitter.name", "child.name" (the node an action or a spawn just made), an element "name.k"
+VAR_ARGS = {"add": (0,), "set": (0,), "copy": (0, 1), "set_when": (0, 2), "add_when": (0, 2), "add_below": (0,),
+            "add_var": (0, 1), "spin_var": (0,), "circle_place": (0, 1), "circle_place_var": (0, 1, 2), "anchor_xz": (0,),
+            "anchor_top": (0,), "rand_mask": (0,), "rand_hop": (0,), "index_times": (0,), "tick_times": (0,),
+            "turned_offset": (0,), "fade_pulse": (0, 1, 2, 3), "grey_pulse": (0, 1), "morph": (3,), "spawn_when": (1,),
+            "screen_fade_when": (0,), "wrap": (0, 1), "at_most": (0,), "at_least": (0,), "equals": (0,),
+            "at_least_var": (0, 1), "at_least_when": (0, 2), "equals_when": (0, 2), "prim_model": (0, 1, 2, 3, 4),
+            "prim_model_as": (1, 2, 3, 4), "sprite_turned": (0, 1, 2, 3, 4, 5), "ground_flipbook_colour": (4,)}
+# a node variable's type: its code (fxprogram.h VarType) and size; an effect node's header fields
+VAR_TYPES = {"i16": (1, 2), "i32": (2, 4), "u8": (3, 1), "grey": (4, 4), "u16": (5, 2), "i8": (6, 1)}
+HEADER_VARS = {"pos": (0x1C, "i16", 4), "counter": (0x24, "i16", 1), "flags": (0x26, "u16", 1), "phase": (0x29, "i8", 1)}
+VAR_BASES = {"emitter": 1, "child": 2, "root": 3}
+EFFECT_NODE_HEADER = 0x30
 # a plain node's fields and their sizes (a layout's is given: ["layout", size])
 FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14, "anchor": 8, "action": 2, "entity": 4, "spawn": 8, "end": 2, "seq": 4, "radius": 2, "angle": 2, "speed": 2, "fade": 2, "leaf": 0x30, "colour": 4, "ripple": 4, "spark": 0x20, "barrier": 0x48,
           "orbit": 0x0E, "growth": 0x0E, "rays": 0x600, "ribbon": 0x412, "mote": 0x10, "drawn": 4,
@@ -141,6 +169,8 @@ def compile_program(description, values=None):
     exe_data, own_data = _entries(description.get("exe_data")), _entries(description.get("data"))
 
     def value(item, where):
+        if isinstance(item, str) and item.startswith("-$"):   # a parameter negated
+            return "-" + value(item[1:], where)
         if isinstance(item, str) and item.startswith("$"):
             if item[1:] not in params:
                 raise DescriptionError(f"{where}: no parameter {item[1:]}")
@@ -175,9 +205,85 @@ def compile_program(description, values=None):
                 out.append(value(argument, where))
         return " ".join(out)
 
-    def action(entry, where):
-        names = {0: tasks} if entry[0] == "spawn" else {2: pools} if entry[0] == "dead_beams" else ()
-        return step(entry, ACTIONS, where, names=names)
+    by_key = {task["key"]: task for task in description["tasks"]}
+    body = {}
+
+    def body_vars(key):
+        """name: (offset, type, count) of task `key`'s node variables: an effect node's header
+        fields, then its "body" laid out from 0x30 ([name, type, count], ["pad", n])."""
+        if key not in body:
+            task, out, offset = by_key[key], dict(HEADER_VARS), EFFECT_NODE_HEADER
+            for item in task.get("body", []):
+                if item[0] == "pad":
+                    offset += _number(item[1])
+                    continue
+                if item[1] not in VAR_TYPES:
+                    raise DescriptionError(f"task {key}: body {item[0]} is of no type {item[1]}")
+                count = _number(item[2]) if len(item) > 2 else 1
+                out[item[0]] = (offset, item[1], count)
+                offset += VAR_TYPES[item[1]][1] * count
+            if offset > task["size"]:
+                raise DescriptionError(f"task {key}: its body takes {offset:#x} bytes, the node {task['size']:#x}")
+            body[key] = out
+        return body[key]
+
+    class Vars:
+        """The node variables an operation can name from task `own` (child: the task just spawned)."""
+        def __init__(self, own, child):
+            self.own, self.child = own, child
+
+        def token(self, name):
+            words = str(name).split(".")
+            base, owner = 0, self.own
+            if words[0] in VAR_BASES:
+                base = VAR_BASES[words[0]]
+                owner = {1: description["director"].get("spawns"), 2: self.child, 3: None}[base]
+                words = words[1:]
+            if not words or (owner is not None and owner not in by_key):
+                raise KeyError(name)
+            table = body_vars(owner) if owner else HEADER_VARS
+            if words[0] not in table or len(words) > 2:
+                raise KeyError(name)
+            offset, kind, count = table[words[0]]
+            index = int(words[1]) if len(words) > 1 else 0
+            if not 0 <= index < count:
+                raise KeyError(name)
+            code, size = VAR_TYPES[kind]
+            return (base << 20) | (code << 16) | (offset + index * size)
+
+        def __contains__(self, name):
+            try:
+                self.token(name)
+                return True
+            except (KeyError, ValueError):
+                return False
+
+        def __getitem__(self, name):
+            return self.token(name)
+
+    def op(entry, known, where, own=None, child=None):
+        """An operation naming tasks, pools or node variables."""
+        names = {}
+        if entry[0] in ("spawn", "spawn_when", "spawn_unless_target_bits"):
+            names[0] = tasks
+        if entry[0] == "dead_beams":
+            names[2] = pools
+        if own is not None:
+            for position in VAR_ARGS.get(entry[0], ()):
+                names[position] = Vars(own, child)
+        return step(entry, known, where, names=names)
+
+    def action(entry, where, own=None, child=None):
+        return op(entry, ACTIONS, where, own, child)
+
+    def actions(entries, prefix, where, own, child=None):
+        """The lines of a list of actions; a spawning action makes its task the child of the next ones."""
+        out = []
+        for entry in entries:
+            out.append(f"{prefix} {action(entry, where, own, child)}")
+            if entry[0] in ("spawn", "spawn_when", "spawn_unless_target_bits"):
+                child = entry[1]
+        return out
 
     def flag(name, where):
         if name is None:
@@ -264,7 +370,8 @@ def compile_program(description, values=None):
                   for entry in director.get("events_first", [])]
         lines += [f"director_event {step(entry, DIRECTOR_EVENTS, 'director')}" for entry in director.get("events", [])]
     if director["kind"] == "per_action":
-        lines.append(f"director per_action {tasks[director['spawns']]}")
+        short = " short" if director.get("root") == "short" else ""   # Double's root and setup
+        lines.append(f"director per_action {tasks[director['spawns']]}{short}")
     if director.get("camera_matrix"):
         lines.append("camera_matrix")
     if director.get("setup") == "master":
@@ -297,23 +404,26 @@ def compile_program(description, values=None):
             lines.append(f"draw_only {task['draw_only']}")
         if task.get("hold"):
             lines.append(f"hold {step(task['hold'], HOLDS, where)}")
+        own = task["key"]
         if task.get("end"):
-            lines.append(f"end {step(task['end'], CONDITIONS, where)}")
-        lines += [f"at_end {action(entry, where)}" for entry in task.get("at_end", [])]
-        lines += [f"tick {action(entry, where)}" for entry in task.get("every_tick", [])]
+            lines.append(f"end {op(task['end'], CONDITIONS, where, own)}")
+        lines += actions(task.get("at_end", []), "at_end", where, own)
+        lines += actions(task.get("every_tick", []), "tick", where, own)
         for number, phase in enumerate(task.get("phases", [])):
             here = f"{where} phase {number}"
             lines.append("phase")
-            lines += [f"phase_tick {action(entry, here)}" for entry in phase.get("each_tick", [])]
+            lines += actions(phase.get("each_tick", []), "phase_tick", here, own)
             if phase.get("wait"):
-                lines.append(f"wait {step(phase['wait'], CONDITIONS, here)}")
-            lines += [f"do {action(entry, here)}" for entry in phase.get("do", [])]
+                lines.append(f"wait {op(phase['wait'], CONDITIONS, here, own)}")
+            lines += actions(phase.get("do", []), "do", here, own)
+        lines += actions(task.get("after_phase", []), "move", where, own)
         if task.get("motion"):
             lines.append(f"motion {step(task['motion'], MOTIONS, where)}")
         for spawn in task.get("step_spawns", []):
             first, last = (value(item, where) for item in spawn["window"])
             lines.append(f"step_spawn {tasks[spawn['task']]} {flag(spawn.get('if'), where)} {first} {last} "
                          f"{step(spawn.get('place', ['at_parent']), PLACES, where)}")
+            lines += actions(spawn.get("init", []), "spawn_init", where, own, spawn["task"])
         for spawn in task.get("spawns", []):
             target = tasks.get(spawn.get("task"), -1)
             first, last = (value(item, where) for item in spawn["window"])
@@ -322,14 +432,16 @@ def compile_program(description, values=None):
                     raise DescriptionError(f"{where}: a spawn every n ticks of no task")
                 lines.append(f"spawn_every {target} {first} {last} {value(spawn['every'], where)} "
                              f"{step(spawn['place'], PLACES, where)}")
+                lines += actions(spawn.get("init", []), "spawn_init", where, own, spawn["task"])
                 continue
             count = [value(item, where) for item in spawn["count"]]
             if len(count) != 8:
                 raise DescriptionError(f"{where}: a spawn count is 4 (from tick, how many) pairs")
             place = step(spawn["place"], PLACES, where, names={0: pools} if spawn["place"][0] == "glint" else ())
             lines.append(f"spawn {target} {flag(spawn.get('if'), where)} {first} {last} {' '.join(count)} {place}")
-        lines += [f"event {action(entry, where)}" for entry in task.get("events", [])]
-        lines += [f"after {action(entry, where)}" for entry in task.get("after_draws", [])]
+            lines += actions(spawn.get("init", []), "spawn_init", where, own, spawn.get("task"))
+        lines += actions(task.get("events", []), "event", where, own)
+        lines += actions(task.get("after_draws", []), "after", where, own)
         for draw in task.get("draws", []):
             limit = "-", "-"
             if "while_tick_below" in draw:
@@ -341,7 +453,9 @@ def compile_program(description, values=None):
             elif "within" in draw:   # [from, count]: from .. from + count - 1
                 limit = "within", " ".join(value(item, where) for item in draw["within"])
             lines.append(f"draw {parts.get(draw.get('part'), 0)} {flag(draw.get('if'), where)} {limit[0]} {limit[1]} "
-                         f"{step(draw['draw'], DRAWS, where)}")
+                         f"{op(draw['draw'], DRAWS, where, own)}")
+            if draw.get("when"):   # a condition on the node (Double's column flash)
+                lines.append(f"draw_when {op(draw['when'], CONDITIONS, where, own)}")
     return "\n".join(lines) + "\n"
 
 

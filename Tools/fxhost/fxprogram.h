@@ -52,6 +52,7 @@
 #include "fx_ribbon.h"
 #include "fx_flames.h"
 #include "fx_bolt.h"
+#include "fx_runes.h"
 
 namespace fxprog
 {
@@ -64,13 +65,13 @@ namespace fxprog
 	using ff8fx::healring::RootNode;
 	using ff8fx::overlay::OverlayCtx;
 
-	struct Val { bool param = false; int32_t v = 0; };
+	struct Val { bool param = false; int32_t v = 0; bool neg = false; };   // (neg: a parameter's value negated, "-$n")
 	struct Param { std::string key, type, text; int32_t value = 0, game = 0; };
 	struct Step { int op = 0; std::vector<Val> a; };
 	struct Phase { std::vector<Step> each_tick; Step wait; std::vector<Step> act; };
-	struct Spawn { int task = -1; int gate = 0; Val first, last; Val schedule[8]; bool every_kind = false; Val every; Step place; };
+	struct Spawn { int task = -1; int gate = 0; Val first, last; Val schedule[8]; bool every_kind = false; Val every; Step place; std::vector<Step> init; };   // init: actions on the new node (child.)
 	enum Limit { NO_LIMIT, BELOW, AT_MOST, AT_LEAST, WITHIN };
-	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value, count; Step draw; };   // (count: WITHIN's)
+	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value, count; Step draw; Step when; };   // (count: WITHIN's; when: a condition on the node)
 	// a plain node's fields (offsets in the node; -1: none)
 	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, F_END, F_SEQ, F_RADIUS, F_ANGLE, F_SPEED, F_FADE,
 	             F_LEAF, F_COLOUR, F_RIPPLE, F_SPARK, F_BARRIER, F_ORBIT, F_GROWTH, F_RAYS, F_RIBBON, F_MOTE, F_DRAWN,
@@ -97,6 +98,7 @@ namespace fxprog
 		std::vector<Step> at_end;                 // actions when it ends
 		std::vector<Step> every_tick;
 		std::vector<Phase> phases;
+		std::vector<Step> moves;                  // after its phase, before its draws and spawns (Double's motion)
 		Step motion;
 		std::vector<Spawn> step_spawns, spawns;
 		std::vector<Step> events, after;          // after: once its draws are done
@@ -121,6 +123,7 @@ namespace fxprog
 		int texture_param = -1, director_spawns = -1;
 		int director = PER_ACTION, director_start = 1;
 		int director_single = -1;                       // CHAIN: the lone target's director task (director_spawns: several targets')
+		bool director_short = false;                    // PER_ACTION: Double's short root (4 phases, arenas of the magic buffer) and setup
 		Val director_every;                             // CYCLE: one task per action every this many ticks
 		Step director_place;
 		std::vector<Step> director_events;              // the master's, on its counter, after its queues...
@@ -152,8 +155,12 @@ namespace fxprog
 		BARRIER_FRAME, BARRIER_CENTER, DEAD_BEAMS, ORBIT_MOVE, GROWTH_STEP, SPAWN_TO_FEET, RAY_SPAWN, MOTE_STEP,
 		CHAIN_NEXT, RELEASE_TARGET, HEAL_ACTION_ALL_AT, SOUND_PAN_AT, EMBER_RISE, FIRE_SPARK_MOVE, CLAIM_TARGET,
 		SPAWN_SIZE_WORD, SOUND_3D_AT_SPAWN,
+		ADD, SET, COPY, FLAGS, SET_WHEN, ADD_WHEN, ADD_BELOW, ADD_VAR, SPIN_VAR, CIRCLE_PLACE, CIRCLE_PLACE_VAR, ANCHOR_XZ, ANCHOR_TOP,
+		RAND_MASK, RAND_HOP, INDEX_TIMES, TICK_TIMES, TURNED_OFFSET, FADE_PULSE, GREY_PULSE, MORPH, SPAWN_WHEN, SPAWN_UNLESS_TARGET_BITS,
+		SCREEN_FADE_WHEN, WRAP,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE, RAYS_DONE, RIBBON_DONE, MOTE_DONE, LIFE_OUT,
+		VAR_AT_MOST, VAR_AT_LEAST, VAR_EQUALS, NEVER, AT_LEAST_VAR, AT_LEAST_WHEN, EQUALS_WHEN,
 		// motions
 		HELIX,
 		// placements
@@ -166,6 +173,7 @@ namespace fxprog
 		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR, LAYOUT_ON_POINT, SWAY_OVERLAY, RIPPLE_SILHOUETTE, SPARK_SPRITE,
 		BARRIER_WALL, ORBIT_MODEL, GROWTH_MODEL, SEQUENCE_AT_ANCHOR, PULSE_MODEL, LAYOUT_TABLE_AT_SPAWN, LIGHT_RAYS, RIBBON, MOTE_SPRITE,
 		FLAME, EMBER, FIRE_SPARK, SCREEN_QUAD, POINT_LAYER, GROUND_LAYER,
+		PRIM_MODEL, PRIM_MODEL_AS, SPRITE_TURNED, GROUND_FLIPBOOK_COLOUR, SCREEN_TEX_QUAD,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -211,6 +219,16 @@ namespace fxprog
 		{ "flame", FLAME }, { "ember", EMBER }, { "fire_spark", FIRE_SPARK },
 		{ "spawn_size_word", SPAWN_SIZE_WORD }, { "sound_3d_at_spawn", SOUND_3D_AT_SPAWN }, { "screen_quad", SCREEN_QUAD },
 		{ "point_layer", POINT_LAYER }, { "ground_layer", GROUND_LAYER },
+		{ "add", ADD }, { "set", SET }, { "copy", COPY }, { "flags", FLAGS }, { "set_when", SET_WHEN }, { "add_when", ADD_WHEN },
+		{ "add_below", ADD_BELOW }, { "add_var", ADD_VAR }, { "spin_var", SPIN_VAR }, { "circle_place", CIRCLE_PLACE },
+		{ "circle_place_var", CIRCLE_PLACE_VAR }, { "anchor_xz", ANCHOR_XZ }, { "anchor_top", ANCHOR_TOP }, { "rand_mask", RAND_MASK },
+		{ "rand_hop", RAND_HOP }, { "index_times", INDEX_TIMES }, { "tick_times", TICK_TIMES }, { "turned_offset", TURNED_OFFSET },
+		{ "fade_pulse", FADE_PULSE }, { "grey_pulse", GREY_PULSE }, { "morph", MORPH }, { "spawn_when", SPAWN_WHEN },
+		{ "spawn_unless_target_bits", SPAWN_UNLESS_TARGET_BITS }, { "screen_fade_when", SCREEN_FADE_WHEN }, { "wrap", WRAP },
+		{ "at_most", VAR_AT_MOST }, { "at_least", VAR_AT_LEAST }, { "equals", VAR_EQUALS }, { "never", NEVER }, { "at_least_var", AT_LEAST_VAR },
+		{ "at_least_when", AT_LEAST_WHEN }, { "equals_when", EQUALS_WHEN },
+		{ "prim_model", PRIM_MODEL }, { "prim_model_as", PRIM_MODEL_AS }, { "sprite_turned", SPRITE_TURNED },
+		{ "ground_flipbook_colour", GROUND_FLIPBOOK_COLOUR }, { "screen_tex_quad", SCREEN_TEX_QUAD },
 	};
 
 	inline Program *g_program = nullptr;
@@ -220,8 +238,8 @@ namespace fxprog
 	// ------------------------------------------------------------------
 	// Values
 	// ------------------------------------------------------------------
-	inline int32_t V(const Val &x) { return x.param ? g_program->params[x.v].value : x.v; }
-	inline int32_t G(const Val &x) { return x.param ? g_program->params[x.v].game : x.v; }     // the game's value
+	inline int32_t V(const Val &x) { return x.param ? (x.neg ? -g_program->params[x.v].value : g_program->params[x.v].value) : x.v; }
+	inline int32_t G(const Val &x) { return x.param ? (x.neg ? -g_program->params[x.v].game : g_program->params[x.v].game) : x.v; }     // the game's value
 	inline uint32_t Mem(const char *name) { auto it = g_program->memory.find(name); return it == g_program->memory.end() ? 0 : it->second; }
 	inline bool HasMem(const char *name) { return g_program->memory.count(name) != 0; }
 	inline uint32_t &PacketCursor() { return var<uint32_t>(Mem("packet_cursor")); }
@@ -241,6 +259,72 @@ namespace fxprog
 		if (type == "i16") return (int16_t)v;
 		if (type == "u8") return (uint8_t)v;
 		return v;
+	}
+
+	// ------------------------------------------------------------------
+	// Node variables (Double's): Fujin/effectprogram.py's tokens, base << 20 | type << 16 | offset;
+	// the base is the node, its emitter, the node just spawned (child) or its root
+	// ------------------------------------------------------------------
+	enum VarType { VAR_I16 = 1, VAR_I32, VAR_U8, VAR_GREY, VAR_U16, VAR_I8 };
+	inline TaskNode *g_child = nullptr;           // the node an action or a spawn just made (child.)
+	inline int32_t g_spawn_index = 0;             // its number among the tick's spawns of that kind
+	inline uint8_t *VarBase(TaskNode *n, int32_t token)
+	{
+		switch ((token >> 20) & 0xF)
+		{
+		case 0: return (uint8_t *)n;
+		case 1: return (uint8_t *)((FxNode *)n)->emitter;
+		case 2: return (uint8_t *)g_child;
+		case 3: return (uint8_t *)((FxNode *)n)->root;
+		default: return nullptr;
+		}
+	}
+	inline uint8_t *VarAt(TaskNode *n, int32_t token) { uint8_t *b = VarBase(n, token); return b ? b + (token & 0xFFFF) : nullptr; }
+	inline int32_t GetVar(TaskNode *n, int32_t token)
+	{
+		const uint8_t *p = VarAt(n, token);
+		if (!p) return 0;
+		switch ((token >> 16) & 0xF)
+		{
+		case VAR_I16: return *(const int16_t *)p;
+		case VAR_I32: return *(const int32_t *)p;
+		case VAR_U16: return *(const uint16_t *)p;
+		case VAR_I8: return *(const int8_t *)p;
+		default: return *p;   // u8, grey: its first byte
+		}
+	}
+	inline void SetVar(TaskNode *n, int32_t token, int32_t v)
+	{
+		uint8_t *p = VarAt(n, token);
+		if (!p) return;
+		switch ((token >> 16) & 0xF)
+		{
+		case VAR_I16: case VAR_U16: *(int16_t *)p = (int16_t)v; break;
+		case VAR_I32: *(int32_t *)p = v; break;
+		case VAR_GREY: p[0] = p[1] = p[2] = (uint8_t)v; break;
+		default: *p = (uint8_t)v; break;
+		}
+	}
+	inline void AddVar(TaskNode *n, int32_t token, int32_t d)
+	{
+		uint8_t *p = VarAt(n, token);
+		if (!p) return;
+		if (((token >> 16) & 0xF) == VAR_GREY)
+		{
+			p[1] = (uint8_t)(p[1] + d);
+			p[0] = (uint8_t)(p[0] + d);
+			p[2] = (uint8_t)(p[2] + d);
+		}
+		else SetVar(n, token, GetVar(n, token) + d);
+	}
+	inline int32_t VarSize(int32_t token)
+	{
+		switch ((token >> 16) & 0xF)
+		{
+		case VAR_I16: case VAR_U16: return 2;
+		case VAR_I32: case VAR_GREY: return 4;
+		default: return 1;
+		}
 	}
 
 	inline uint32_t __cdecl RunTask(int k, TaskNode *n);
@@ -296,7 +380,7 @@ namespace fxprog
 			Emitter_UpdatePos(n);
 			Emitter_ComputeModelBounds(n);
 			break;
-		case SPAWN: SpawnTask(V(a[0]), n); break;
+		case SPAWN: g_child = (TaskNode *)SpawnTask(V(a[0]), n); break;
 		case HEAL: ApplyActionResultToTarget(h->ctx->actions[h->action].targets + h->target * TARGET_STRIDE); break;
 		case DONE: *(uint8_t *)&h->flags |= 1; break;
 		case SPAWNING:
@@ -502,6 +586,71 @@ namespace fxprog
 			if (Tick(t, n) == V(a[0])) BdPlaySE((const void *)fxp::sound((uint32_t)V(a[1]), (uint32_t)G(a[1])), V(a[2]), V(a[3]));
 			break;
 		case EMBER_RISE: layouts::EmberRise(Fld<layouts::Ember>(t, n, F_EMBER), V(a[0]), V(a[1])); break;   // speed-up shift, shrink shift
+		case ADD: AddVar(n, V(a[0]), V(a[1])); break;   // var, value
+		case SET: SetVar(n, V(a[0]), V(a[1])); break;   // var, value
+		case COPY: // var, from var, count (of the var's elements)
+			if (uint8_t *to = VarAt(n, V(a[0])))
+				if (const uint8_t *from = VarAt(n, V(a[1]))) memcpy(to, from, VarSize(V(a[0])) * V(a[2]));
+			break;
+		case FLAGS: h->flags = (uint16_t)((h->flags & ~V(a[1])) | V(a[0])); break;   // set, clear
+		case SET_WHEN: if (GetVar(n, V(a[2])) == V(a[3])) SetVar(n, V(a[0]), V(a[1])); break;   // var, value, test var, test value
+		case ADD_WHEN: if (GetVar(n, V(a[2])) == V(a[3])) AddVar(n, V(a[0]), V(a[1])); break;   // var, value, test var, test value
+		case ADD_BELOW: if (GetVar(n, V(a[0])) < V(a[2])) AddVar(n, V(a[0]), V(a[1])); break;   // var, value, while below
+		case ADD_VAR: AddVar(n, V(a[0]), GetVar(n, V(a[1]))); break;   // var, var added
+		case SPIN_VAR: SetVar(n, V(a[0]), (GetVar(n, V(a[0])) + V(a[1])) & V(a[2])); break;   // var, step, mask
+		case CIRCLE_PLACE: // centre var, angle var, radius, divisor: the node's position on a circle round its centre
+		case CIRCLE_PLACE_VAR: // centre var, angle var, radius var, divisor
+		{
+			const int32_t radius = s.op == CIRCLE_PLACE ? V(a[2]) : GetVar(n, V(a[2]));
+			if (const int16_t *centre = (const int16_t *)VarAt(n, V(a[0])))
+				layouts::CirclePlace((int16_t *)(VarBase(n, V(a[0])) + 0x1C), centre, (int16_t)GetVar(n, V(a[1])), radius, V(a[3]));
+			break;
+		}
+		case ANCHOR_XZ: // node's pos var, y added: its position = its emitter's target anchor (x, z; y + this)
+			if (uint8_t *node = VarBase(n, V(a[0])))
+			{
+				parts::CopyAnchorXZFromSource(node, (int16_t *)(node + 0x1C));
+				*(int16_t *)(node + 0x1E) = (int16_t)(*(int16_t *)(node + 0x1E) + V(a[1]));
+			}
+			break;
+		case ANCHOR_TOP: if (uint8_t *node = VarBase(n, V(a[0]))) layouts::CopyAnchorTopFromSource(node, (int16_t *)(node + 0x1C)); break;   // node's pos var: its target's top anchor
+		case RAND_MASK: SetVar(n, V(a[0]), (CrtRand() & V(a[1])) + V(a[2])); break;   // var, mask, base
+		case RAND_HOP: // var, mod, mask: (var + 1 + rand % mod) & mask, in a byte
+		{
+			const int32_t r = CrtRand() % V(a[1]);
+			SetVar(n, V(a[0]), (uint8_t)(r + (uint8_t)GetVar(n, V(a[0])) + 1) & V(a[2]));
+			break;
+		}
+		case INDEX_TIMES: SetVar(n, V(a[0]), g_spawn_index * V(a[1])); break;   // var, step: the spawn's number x step
+		case TICK_TIMES: SetVar(n, V(a[0]), (Tick(t, n) * V(a[1])) & V(a[2])); break;   // var, step, mask: the node's tick x step
+		case TURNED_OFFSET: // angle var, x mod, x base, y, z: the angle's node moved by (rand % mod + base, y, z) turned by it about y
+			if (uint8_t *node = VarBase(n, V(a[0])))
+			{
+				int16_t v[4];
+				const int32_t r = CrtRand() % V(a[1]);
+				v[1] = (int16_t)V(a[3]);
+				v[2] = (int16_t)V(a[4]);
+				v[0] = (int16_t)(r + V(a[2]));
+				layouts::TurnedOffset((int16_t *)(node + 0x1C), (int16_t)GetVar(n, V(a[0])), v);
+			}
+			break;
+		case FADE_PULSE: // state, on, fade, colour vars, first, second, first step, second step, grey: a flash over a model
+		{
+			const layouts::FadePulse pulse = { V(a[4]), V(a[5]), V(a[6]), V(a[7]), V(a[8]) };
+			layouts::FadePulseStep((int16_t *)VarAt(n, V(a[0])), (int16_t *)VarAt(n, V(a[1])), (int16_t *)VarAt(n, V(a[2])), VarAt(n, V(a[3])), pulse);
+			break;
+		}
+		case GREY_PULSE: layouts::GreyPulseStep((int16_t *)VarAt(n, V(a[0])), VarAt(n, V(a[1])), V(a[2]), V(a[3]), V(a[4])); break;   // state, colour vars, peak, step, floor
+		case MORPH: layouts::MorphVertices((const uint8_t *)V(a[0]), (const uint8_t *)V(a[1]), (uint8_t *)V(a[2]), (int16_t)GetVar(n, V(a[3]))); break;   // vertex sets a, b, model, blend var
+		case SPAWN_WHEN: g_child = GetVar(n, V(a[1])) == V(a[2]) ? (TaskNode *)SpawnTask(V(a[0]), n) : nullptr; break;   // task, test var, test value
+		case SPAWN_UNLESS_TARGET_BITS: // task, bits: unless the node's action's target record +3 has them
+			g_child = (h->ctx->actions[h->action].targets[3] & V(a[1])) ? nullptr : (TaskNode *)SpawnTask(V(a[0]), n);
+			break;
+		case SCREEN_FADE_WHEN: if (GetVar(n, V(a[0])) == V(a[1])) ScreenFadeTask(V(a[2]), V(a[3]), V(a[4]), V(a[5])); break;   // test var, value, the fade's four values
+		case WRAP: // var, last var: var + 1, back to 0 past the last
+			SetVar(n, V(a[0]), GetVar(n, V(a[0])) + 1);
+			if (GetVar(n, V(a[0])) > GetVar(n, V(a[1]))) SetVar(n, V(a[0]), 0);
+			break;
 		case SPAWN_SIZE_WORD: // tick, base, shift: the spawn point's 4th word = (base - the entity's size) >> shift (Thunder's camera offset)
 			if (Tick(t, n) == V(a[0])) Fld<int16_t>(t, n, F_SPAWN)[3] = (int16_t)((V(a[1]) - (int32_t)*(const int16_t *)(EntityOf(t, n) + 0x26)) >> V(a[2]));
 			break;
@@ -537,6 +686,13 @@ namespace fxprog
 		{
 		case TICK_AT_LEAST: return h->counter >= V(s.a[0]);
 		case FLIPBOOK_END: return FlipbookExpired(p->frame, p->last, p->h.flags);
+		case VAR_AT_MOST: return GetVar(n, V(s.a[0])) <= V(s.a[1]);   // var, value
+		case VAR_AT_LEAST: return GetVar(n, V(s.a[0])) >= V(s.a[1]);
+		case VAR_EQUALS: return GetVar(n, V(s.a[0])) == V(s.a[1]);
+		case NEVER: return false;
+		case AT_LEAST_VAR: return GetVar(n, V(s.a[0])) >= GetVar(n, V(s.a[1]));   // var, var
+		case AT_LEAST_WHEN: return GetVar(n, V(s.a[2])) == V(s.a[3]) && GetVar(n, V(s.a[0])) >= V(s.a[1]);   // var, value, test var, test value
+		case EQUALS_WHEN: return GetVar(n, V(s.a[2])) == V(s.a[3]) && GetVar(n, V(s.a[0])) == V(s.a[1]);
 		default: return true;
 		}
 	}
@@ -764,8 +920,15 @@ namespace fxprog
 		}
 	}
 
-	// a spawn's placement of each new piece around the spawner
-	inline void Place(const Spawn &sp, Particle *r)
+	// a spawn's placement of each new piece around the spawner, then its init actions (on child.)
+	inline void PlaceNode(const Spawn &sp, Particle *r);
+	inline void Place(const Spawn &sp, Particle *r, const Task &from)
+	{
+		g_child = nullptr;
+		PlaceNode(sp, r);
+		for (const Step &s : sp.init) Act(from, s, (TaskNode *)r);
+	}
+	inline void PlaceNode(const Spawn &sp, Particle *r)
 	{
 		const std::vector<Val> &a = sp.place.a;
 		switch (sp.place.op)
@@ -777,6 +940,7 @@ namespace fxprog
 			const fxp::Scaled radius = { (int16_t)V(a[5]), (int16_t)V(a[6]), (int16_t)V(a[7]) };
 			const int32_t angle_rolled = angle.roll(CrtRand());
 			Particle *m = (Particle *)SpawnTask(sp.task, r);
+			g_child = (TaskNode *)m;
 			CopyAnchorXZFromSource(m, m->h.pos);
 			m->h.pos[1] = r->h.pos[1];
 			int32_t d = (int32_t)r->h.pos[1] - (int32_t)(int16_t)BoundsMaxWorldY(r);
@@ -801,7 +965,7 @@ namespace fxprog
 			SpawnGlint((TaskQueue *)g_program->pools[V(a[0])].queue, r, Mem("packet_cursor"), style);
 			break;
 		}
-		default: SpawnTask(sp.task, r); break;   // at_parent: the new node takes the spawner's place
+		default: g_child = (TaskNode *)SpawnTask(sp.task, r); break;   // at_parent: the new node takes the spawner's place
 		}
 	}
 
@@ -809,8 +973,29 @@ namespace fxprog
 	{
 		const std::vector<Val> &a = d.draw.a;
 		const bool hidden = (p->h.flags & 4) != 0;
+		TaskNode *n = (TaskNode *)p;
+		auto word = [&](const Val &v) { const uint8_t *q = VarAt(n, V(v)); return q ? *(const uint32_t *)q : 0u; };
 		switch (d.draw.op)
 		{
+		case PRIM_MODEL: // model, angle, scale, colour, fade vars: the node's prim model at its position
+		case PRIM_MODEL_AS: // model (data), angle, scale, colour, fade vars
+			layouts::EffectModelDraw(p->h.pos, hidden, (const int16_t *)VarAt(n, V(a[1])), (const int32_t *)VarAt(n, V(a[2])), word(a[3]),
+			                         GetVar(n, V(a[4])), d.draw.op == PRIM_MODEL ? word(a[0]) : (uint32_t)V(a[0]), PacketCursor());
+			break;
+		case SPRITE_TURNED: // sequence, frame, x angle, y angle, scale, colour vars: a flipbook frame turned by its angles
+			layouts::EffectSpriteTurned(p->h.pos, hidden, (int16_t)GetVar(n, V(a[2])), (int16_t)GetVar(n, V(a[3])), (const int32_t *)VarAt(n, V(a[4])),
+			                            word(a[0]), (int16_t)GetVar(n, V(a[1])), word(a[5]), PacketCursor());
+			break;
+		case GROUND_FLIPBOOK_COLOUR: // sequence, tilt, height, frame, colour var: a flipbook frame on the ground under the node
+			parts::DrawGroundFlipbook(p->h.pos, hidden, fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])), (int16_t)V(a[1]), (int16_t)V(a[2]),
+			                          (int16_t)V(a[3]), word(a[4]), PacketCursor());
+			break;
+		case SCREEN_TEX_QUAD: // texture page x, y, CLUT x, y, u, v, width, height: a raw textured quad, its bottom on the node projected
+		{
+			const layouts::TexQuad q = { V(a[0]), V(a[1]), V(a[2]), V(a[3]), V(a[4]), V(a[5]), V(a[6]), V(a[7]) };
+			PacketCursor() = layouts::ScreenTexQuad(p->h.pos, q, PacketCursor());
+			break;
+		}
 		case SPRITE: // r, g, b, size
 		{
 			const fxp::Colour colour = { (uint8_t)V(a[0]), (uint8_t)V(a[1]), (uint8_t)V(a[2]), 0 };
@@ -1147,11 +1332,12 @@ namespace fxprog
 				if (d.limit == AT_MOST && !((uint16_t)Tick(t, n) <= (uint16_t)V(d.value))) continue;
 				if (d.limit == AT_LEAST && !(Tick(t, n) >= V(d.value))) continue;
 				if (d.limit == WITHIN && !((uint32_t)(Tick(t, n) - V(d.value)) < (uint32_t)V(d.count))) continue;
+				if (d.when.op && !Holds(d.when, n)) continue;
 				FX_PART(d.tag);
 				if (t.plain) DrawPlain(d, t, n, left);
 				else DrawOne(d, p);
 			}
-			if (t.plain && !t.draws.empty()) FX_PART(0);   // what a plain task does after its draws is no part's
+			if (!t.draws.empty()) FX_PART(0);   // what a task does after its draws is no part's
 		};
 		if (t.draw_only == DRAW_ONLY_SKIP && DrawOnly()) return 0;
 		if (int16_t *delay = Fld<int16_t>(t, n, F_DELAY); delay && *delay > 0)   // (a plain node's delay: a tick of its own, not while only drawing)
@@ -1171,6 +1357,7 @@ namespace fxprog
 				h->phase++;
 			}
 		}
+		for (const Step &s : t.moves) Act(t, s, n);
 		if (t.draws_first) draws();
 		if (t.draw_only == DRAW_ONLY_DRAWS && DrawOnly()) return 0;
 		if (t.motion.op == HELIX) // steps per tick, angle a step
@@ -1183,7 +1370,7 @@ namespace fxprog
 				for (const Spawn &sp : t.step_spawns)
 				{
 					const fxp::Window w = { (int16_t)V(sp.first), (int16_t)V(sp.last) };
-					if ((h->flags & sp.gate) && w.has(h->counter)) Place(sp, p);
+					if ((h->flags & sp.gate) && w.has(h->counter)) Place(sp, p, t);
 				}
 			}
 		}
@@ -1200,7 +1387,11 @@ namespace fxprog
 				if (every <= 0 || (c - w.first) % every != 0) continue;
 				const uint32_t e = (uint32_t)((c - w.first) / every);
 				if (plain) PlacePlain(sp, t, n, e, c - w.first);
-				else Place(sp, p);
+				else
+				{
+					g_spawn_index = 0;
+					Place(sp, p, t);
+				}
 				continue;
 			}
 			fxp::Schedule schedule;
@@ -1209,9 +1400,14 @@ namespace fxprog
 				schedule.from[j] = (int16_t)V(sp.schedule[2 * j]);
 				schedule.count[j] = (int16_t)V(sp.schedule[2 * j + 1]);
 			}
-			for (int32_t m = schedule.at(c); m > 0; m--)
+			const int32_t count = schedule.at(c);
+			for (int32_t m = count; m > 0; m--)
 				if (plain) PlacePlain(sp, t, n, 0);
-				else Place(sp, p);
+				else
+				{
+					g_spawn_index = count - m;
+					Place(sp, p, t);
+				}
 		}
 		for (const Step &s : t.events) Act(t, s, n);
 		if (!t.draws_first) draws();
@@ -1290,8 +1486,58 @@ namespace fxprog
 		}
 	}
 
+	// the short form (Double 0x8D5180): 0 on, 1 the current action's task (busy), 2 when it is over the
+	// next action (back to 1) or on, 3 every queue empty: done; the arenas are memory words (arena_a
+	// on odd ticks)
+	inline uint32_t ShortDirector(TaskNode *n)
+	{
+		RootNode *r = (RootNode *)n;
+		PacketCursor() = var<uint32_t>(Mem((r->tick & 1) ? "arena_a" : "arena_b"));
+		UpdateTargetPosFromBones(r);
+		switch (r->h.phase)
+		{
+		case 0: r->h.phase++; break;
+		case 1:
+			r->busy = 1;
+			SpawnTask(g_program->director_spawns, r);
+			r->h.phase++;
+			break;
+		case 2:
+			if (r->busy == 0)
+			{
+				const int8_t a = r->h.action;
+				if ((int16_t)a < r->last_action)
+				{
+					r->h.action = (int8_t)(a + 1);
+					r->h.phase--;
+				}
+				else r->h.phase++;
+			}
+			break;
+		case 3:
+			if (r->alive == 0)
+			{
+				*(uint8_t *)&r->h.flags |= 1;
+				r->h.phase++;
+			}
+			break;
+		default: break;
+		}
+		r->alive = 0;
+		for (const Pool &pool : g_program->pools)
+		{
+			if (pool.tag >= 0) FX_PART(pool.tag);
+			r->alive = (int16_t)(r->alive + ExecuteTaskQueue((TaskQueue *)pool.queue));
+			if (pool.tag >= 0) FX_PART(0);
+		}
+		r->tick++;
+		r->h.counter++;
+		return EndWhenDone(&r->h);
+	}
+
 	inline uint32_t PerActionDirector(TaskNode *n)
 	{
+		if (g_program->director_short) return ShortDirector(n);
 		RootNode *r = (RootNode *)n;
 		memcpy((void *)CAM_SNAPSHOT, &Camera(), 0x20);
 		var<uint32_t>(Mem("cam_ptr_a")) = CAM_SNAPSHOT;
@@ -1609,6 +1855,29 @@ namespace fxprog
 		if (g.director == CHAIN) return ChainSetup(ctx);
 		if (g.director == MASTER) return MasterSetup(ctx);
 		if (g.director == CYCLE) return g.master_setup ? MasterSetup(ctx) : CycleSetup(ctx);
+		if (g.director_short)
+		{
+			// Double's (0x8D5080): the root of the first target's slot, the cast; the camera and the
+			// texture unless the cast repeats; the arenas in the magic buffer; the pools
+			const uint8_t slot = ctx->actions[0].targets[0];
+			TaskQueue *root_queue = (TaskQueue *)Mem("root_queue");
+			InitTaskQueuePool(root_queue, (void *)Mem("root_pool"), 0x64, 2);
+			RootNode *r = (RootNode *)AddEffectTask(root_queue, g.root ? g.root : g.director_fn ? g.director_fn : (uint32_t)DirectorTask, 0x64, nullptr);
+			r->h.ctx = ctx;
+			r->h.slot = slot;
+			r->target_count = ctx->actions[0].target_count;
+			r->last_action = ctx->actions[0].last_action;
+			if (!(ctx->flags & 1))
+			{
+				if (g.camera) PlayCameraAnimation((const void *)g.camera);
+				QueueTimUpload(var<uint32_t>(Mem("texture_file")));
+			}
+			const uint32_t buffer = layouts::MagicBuffer();
+			var<uint32_t>(Mem("arena_a")) = buffer + g.arena_a;
+			var<uint32_t>(Mem("arena_b")) = buffer + g.arena_b;
+			for (const Pool &pool : g.pools) InitTaskQueuePool((TaskQueue *)pool.queue, (void *)pool.storage, pool.size, pool.count);
+			return root_queue;
+		}
 		var<uint32_t>(Mem("init_flag_a")) = 0;
 		var<uint32_t>(Mem("init_flag_b")) = 0;
 		TaskQueue *root_queue = (TaskQueue *)Mem("root_queue");
@@ -1648,6 +1917,7 @@ namespace fxprog
 	{
 		Val v;
 		if (!token.empty() && token[0] == '$') { v.param = true; v.v = atoi(token.c_str() + 1); }
+		else if (token.size() > 1 && token[0] == '-' && token[1] == '$') { v.param = true; v.neg = true; v.v = atoi(token.c_str() + 2); }
 		else if (!token.empty() && token[0] == '@')
 		{
 			auto it = g_parsing ? g_parsing->data.find(token.substr(1)) : std::map<std::string, uint32_t>::iterator();
@@ -1796,7 +2066,8 @@ namespace fxprog
 					g.director_every = ParseVal(w[3]);
 					g.director_place = ParseStep(w, 4, &error);
 				}
-				else if (w[1] != "per_action") error = "line " + std::to_string(number) + ": unknown director " + w[1];
+				else if (w[1] == "per_action") g.director_short = w.size() > 3 && w[3] == "short";
+				else error = "line " + std::to_string(number) + ": unknown director " + w[1];
 			}
 			else if (d == "director_event") g.director_events.push_back(ParseStep(w, 1, &error));
 			else if (d == "director_event_first") g.director_events_first.push_back(ParseStep(w, 1, &error));
@@ -1843,6 +2114,9 @@ namespace fxprog
 			else if (d == "order" && need(2)) task->draws_first = w[1] == "draws_first";
 			else if (d == "draw_only" && need(2)) task->draw_only = w[1] == "skip" ? DRAW_ONLY_SKIP : w[1] == "after_draws" ? DRAW_ONLY_DRAWS : NO_DRAW_ONLY;
 			else if (d == "hold") task->hold = ParseStep(w, 1, &error);
+			else if (d == "move") task->moves.push_back(ParseStep(w, 1, &error));
+			else if (d == "spawn_init" && !task->spawns.empty()) task->spawns.back().init.push_back(ParseStep(w, 1, &error));
+			else if (d == "draw_when" && !task->draws.empty()) task->draws.back().when = ParseStep(w, 1, &error);
 			else if (d == "end") task->end = ParseStep(w, 1, &error);
 			else if (d == "at_end") task->at_end.push_back(ParseStep(w, 1, &error));
 			else if (d == "tick") task->every_tick.push_back(ParseStep(w, 1, &error));
