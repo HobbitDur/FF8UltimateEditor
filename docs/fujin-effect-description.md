@@ -1198,3 +1198,11 @@ Potion's description is the same with its own sequences and sound.
      - *Fujin:* its tabs (Ground sequence, Fallback); no + menu family.
      - *Lab:* the recorder has no battle stage, so its checks run the fallback; the ground sequence is
        the same port code on the program's memory, not recorded.
+   - **Drain (39)** (FFNx 05e2e937; the spell; the act family, the master Esuna's and the others' copy):
+     the actor pools and the stage wobble in, one emitter per action - its sound, two screen flashes, the
+     actor system streaming from the target to the caster, the damage; after the last action a wait, the
+     stage wobble out.
+     - *Inputs* (`DrainParams`): the emitter's sound, flash, release and damage ticks, the master's wait,
+       the actor system, the stage wobble's level and steps in and out. Data: the sound, the camera
+       track, "mag038-055.tim".
+     - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
