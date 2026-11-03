@@ -345,6 +345,13 @@ namespace fxprog
 			if (g_program->tasks[k].code == orig) return TaskFunction((int)k);
 		return 0;
 	}
+	// the original the program's task `fn` mirrors (its "code"), for the port code that reads its node's function
+	inline uint32_t ProgramOrigOf(uint32_t fn)
+	{
+		for (size_t k = 0; k < g_program->tasks.size(); k++)
+			if (g_program->tasks[k].code && TaskFunction((int)k) == fn) return g_program->tasks[k].code;
+		return 0;
+	}
 	// the port module of the program (its descriptor with its globals moved, the data words pointing into it
 	// its own words), current: its code runs on the program's memory, spawning the program's tasks or thunks of
 	// its ports
@@ -390,6 +397,7 @@ namespace fxprog
 		g_reloc = g.module_reloc;
 		g_own = true;
 		g_spawn_hook = ProgramTaskOf;
+		g_orig_hook = ProgramOrigOf;
 #endif
 	}
 	inline void UseActors()

@@ -705,3 +705,49 @@ def test_raldo_throw_runs_from_its_description(tmp_path):
         task.pop("function", None)
     new, log = record_raldo(225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
     assert "program: New_throw" in log and untag(new) == original
+
+
+def test_norg_pod_opening_description_compiles():
+    """NORG Pod opening: Doom's kind with Drain's master - the stage light ramps as the act director's stage in and
+    out after its wait, no actor pools; the module's own emitter and ramps (native tasks)."""
+    lines = compile_program(load_description(20)).splitlines()
+    for line in ['module 20 0x2721590 0x5370', 'arena_size 40960', 'act_stage 1 2 $3', 'native 0x89FFB0',
+                 'native 0x89FE90', 'native 0x8A3150']:
+        assert line in lines, line
+    assert not any(line.startswith(("act_pool ", "module_pointer ")) for line in lines)
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag019.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m068.dat")
+def test_norg_pod_opening_runs_from_its_description(tmp_path):
+    """NORG Pod opening as the NORG Pod (c0m068, slot 3) casts it on Squall: what the exe's code records; with
+    parameters, what FFNx's port records with them; as effect 225 (its ramps' state tables found through their code),
+    itself again."""
+    def record_pod(effect, tag, *extra):
+        recorder = lab_recorder()
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(recorder), str(effect), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m068.dat'}", "caster=3", "target=0", *extra],
+                             cwd=str(recorder.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return out.read_text().splitlines(), run.stdout
+
+    program = write_program(load_description(20), tmp_path / "effect.fxprog")
+    original, _log = record_pod(20, "original")
+    described, log = record_pod(20, "described", f"program={program}")
+    assert "3 tasks, 16 params" in log and untag(described) == original and len(original) > 30000
+    assert any(line.startswith("N ") for line in original) and any(line.startswith("S ") for line in original)
+    params = tmp_path / "params.txt"
+    params.write_text(chr(10).join(["lid.gravity 60", "light.level 2048", "master.wait 25", "debris.frames 10",
+                                    "emitter.release 40"]) + chr(10))
+    native, _log = record_pod(20, "native", "native=1", f"params={params}")
+    described, log = record_pod(20, "described_params", f"program={program}", f"params={params}")
+    assert "5 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(20))
+    description["effect"], description["name"] = 225, "New pod"
+    del description["copy"]["functions"]
+    for task in description["tasks"]:
+        task.pop("function", None)
+    new, log = record_pod(225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_pod" in log and untag(new) == original

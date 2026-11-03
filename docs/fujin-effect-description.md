@@ -1044,3 +1044,14 @@ Potion's description is the same with its own sequences and sound.
        track, "mag018.tim".
      - *Fujin:* its tabs (Raldo, Ball actors); no + menu family. The lab's monsters carry their com id
        (entity +4), which the effect finds its Raldo by.
+   - **NORG Pod opening (20)** (FFNx 69e43bd4; the NORG Pod's enemy attack; the act family with Drain's master):
+     the stage light ramps up, the pod's shell (the caster's bone 1) is thrown off - the stage wobble, the
+     caster's chain transformation, debris sprites and prim-model chunks - the damage; after the last
+     action a wait, the light ramps down.
+     - *Added:* an act director without actor pools (`act` with only `stage_in` / `stage_out` / `wait`);
+       native tasks as its stage tasks; a port's engine task reading its node's function (its state
+       table) finds the program's task's `code` (act_engine.h `g_orig_hook`), so it also runs in a copy.
+     - *Inputs* (`NorgParams`): the emitter's sound, release and damage ticks, the master's wait, the stage
+       light ramps (step, level), the lid's flight (start, ticks, velocity, gravity, spins), the debris
+       sprites (frames, colour). Data: the sound, the camera track, "mag019.tim".
+     - *Fujin:* its tabs (Emitter, Lid); no + menu family.

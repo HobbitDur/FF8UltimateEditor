@@ -1,0 +1,340 @@
+{
+ "format": 1,
+ "effect": 20,
+ "name": "NORG Pod opening",
+ "doc": "NORG Pod opening (the NORG Pod's enemy attack; the act family, Drain's master): the stage light ramps up, then one emitter per action - its sound, the pod's shell (the caster's bone 1) thrown off with the stage wobble and the caster's chain transformation, debris sprites and prim-model chunks from it, the damage; after the last action a wait, the light ramps down. Its parts are the port's code (FFNx mag020_norg_pod_opening.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x89FBA0",
+   "setup": "0x89FBC0",
+   "root": "0x89FD00"
+  },
+  "memory": {
+   "texture_file": "0x2721590",
+   "packet_cursor": "0x2721594",
+   "packet_limit": "0x27215AC",
+   "arena_a": "0x27268E4",
+   "limit_a": "0x27264DC",
+   "arena_b": "0x27268E0",
+   "limit_b": "0x27264D8",
+   "arena_top": "0x27268FC",
+   "init_flag_a": "0x27268F8",
+   "init_flag_b": "0x2722960",
+   "cam_ptr_a": "0x27268F4",
+   "cam_ptr_b": "0x27215B0",
+   "root_queue": "0x2721680",
+   "root_pool": "0x27215B8"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 20,
+  "from": "0x2721590",
+  "size": "0x5370",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1629F9C",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1629E60",
+   "size": 180
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x1629C50",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xA000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the stage light ramp up; after the last action its wait, the ramp down (no actor pools)",
+   "stage_in": "light_up",
+   "stage_out": "light_down",
+   "wait": "$master.wait"
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2726770",
+   "storage": "0x2726780",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "pod",
+   "queue": "0x2721690",
+   "storage": "0x27216A0",
+   "size": 120,
+   "count": 40,
+   "keep": true,
+   "doc": "the lid and its debris sprites (the port's)"
+  },
+  {
+   "key": "chunks",
+   "queue": "0x2722968",
+   "storage": "0x2722978",
+   "size": 152,
+   "count": 100,
+   "keep": true,
+   "doc": "the prim-model chunks (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x2726760",
+   "storage": "0x27264E0",
+   "size": 64,
+   "count": 10
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the master's release, the damage; the master's wait and the stage light ramps"
+  },
+  {
+   "id": 0,
+   "key": "lid",
+   "title": "Lid",
+   "doc": "The pod's shell (the caster's bone 1) thrown off, and its debris"
+  }
+ ],
+ "groups": [
+  {
+   "key": "light",
+   "label": "Stage light",
+   "doc": "Its ramps up (before the first action) and down (after the wait): Step a tick, Level"
+  },
+  {
+   "key": "lid.velocity",
+   "label": "Velocity",
+   "doc": "The lid's first velocity a tick (x, y: negative up, z)"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.damage",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The action's result from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "master.wait",
+   "part": "emitter",
+   "label": "Wait",
+   "doc": "After the last action, the light ramp down after these ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "light.step",
+   "part": "emitter",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "light.level",
+   "part": "emitter",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "lid.start",
+   "part": "lid",
+   "label": "Start tick",
+   "doc": "It flies off (the stage wobble, the caster's chain transformation) from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 34,
+   "unit": "plain"
+  },
+  {
+   "key": "lid.ticks",
+   "part": "lid",
+   "label": "Flight ticks",
+   "doc": "Its flight lasts these ticks (then the caster's presence 6)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "lid.gravity",
+   "part": "lid",
+   "label": "Gravity",
+   "doc": "Added to its y velocity a tick",
+   "type": "i16",
+   "min": -512,
+   "max": 512,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "lid.spin_x",
+   "part": "lid",
+   "label": "Spin x",
+   "doc": "Its x angle a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": -64,
+   "unit": "plain"
+  },
+  {
+   "key": "lid.spin_z",
+   "part": "lid",
+   "label": "Spin z",
+   "doc": "Its z angle a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "lid.velocity.x",
+   "part": "lid",
+   "label": "x",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 288,
+   "unit": "plain"
+  },
+  {
+   "key": "lid.velocity.y",
+   "part": "lid",
+   "label": "y",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -320,
+   "unit": "plain"
+  },
+  {
+   "key": "lid.velocity.z",
+   "part": "lid",
+   "label": "z",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.frames",
+   "part": "lid",
+   "label": "Debris frames",
+   "doc": "Its debris sprites' frames",
+   "type": "i16",
+   "min": 1,
+   "max": 60,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.colour",
+   "part": "lid",
+   "label": "Debris colour",
+   "doc": "Its debris sprites' colour word",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -512,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x89FFB0",
+   "code": "0x89FFB0",
+   "native": "0x89FFB0",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the lid, the master's release, the damage."
+  },
+  {
+   "key": "light_up",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x89FE90",
+   "code": "0x89FE90",
+   "native": "0x89FE90",
+   "doc": "The stage light ramp up (the port's task: the four stage light words up a step a tick to the level)."
+  },
+  {
+   "key": "light_down",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x8A3150",
+   "code": "0x8A3150",
+   "native": "0x8A3150",
+   "doc": "The stage light ramp down (the port's task: from the level down a step a tick to 0)."
+  }
+ ]
+}
