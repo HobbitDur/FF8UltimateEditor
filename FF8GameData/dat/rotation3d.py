@@ -106,6 +106,13 @@ def slerp_matrix(matrix_a, matrix_b, ratio: float) -> list:
     return _multiply(matrix_a, _rotation_around(axis, angle * ratio))
 
 
+def angle_between_raw(rotation_a, rotation_b) -> float:
+    """How far a bone really turns between two poses, in degrees (0..180): the one 3D turn, not
+    the change of the three stored angles, which can be large for a small turn near 90 deg on X."""
+    relative = _multiply(_transpose(euler_raw_to_matrix(rotation_a)), euler_raw_to_matrix(rotation_b))
+    return math.degrees(_axis_angle(relative)[1])
+
+
 def blend_euler_raw(rotation_a, rotation_b, ratio: float) -> list:
     """The three raw angles `ratio` of the way from one pose to the other, turning the short way.
 

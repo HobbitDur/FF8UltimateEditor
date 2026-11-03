@@ -178,6 +178,20 @@ def blend_arm(mode, nb_insert=6):
                    for index in range(1, nb_insert + 1)]
 
 
+def blend_angles_separately(nb_insert=6):
+    """The poses a straight line on each of the three angles gives - what the plain modes did
+    before the arc fallback."""
+    frame_list = []
+    for index in range(1, nb_insert + 1):
+        ratio = index / (nb_insert + 1)
+        pose = [round(a + (b - a) * ratio) for a, b in zip(ARM_A[1], ARM_B[1])]
+        frame = AnimationFrame(2)
+        frame.rotation_vector_data = [[RotationType(True, 0, 0) for _ in range(3)],
+                                      [RotationType(True, 0, raw) for raw in pose]]
+        frame_list.append(frame)
+    return frame_list
+
+
 def turn_between(pose_a, pose_b) -> float:
     """How far one pose is from the other, as the single turn that takes one to the other."""
     relative = rotation3d._multiply(rotation3d._transpose(rotation3d.euler_raw_to_matrix(pose_a)),
@@ -202,7 +216,15 @@ def test_the_arc_puts_every_inserted_pose_on_the_way_and_the_angles_do_not():
     the bone off the way and back, which is the T-pose an arm goes through in a real file."""
     arc = interpolation.InterpolationMode(interpolation.LINEAR, {"shortest_arc": True})
     assert detour_of(blend_arm(arc)[1]) < math.radians(0.5)
-    assert detour_of(blend_arm(interpolation.LINEAR)[1]) > math.radians(10.0)
+    assert detour_of(blend_angles_separately()) > math.radians(10.0)
+
+
+def test_without_the_setting_a_blend_far_off_the_turn_falls_back_to_the_arc():
+    """The three-angle blend is kept only while it stays near the real turn
+    (Animation.ARC_FALLBACK_DEGREES): this arm leaves it by far more, so the plain mode gives the
+    arc too - Squall's anim 6 upper body, near 90 deg on X, did a 180 deg flick without this."""
+    limit = math.radians(Animation.ARC_FALLBACK_DEGREES)
+    assert detour_of(blend_arm(interpolation.LINEAR)[1]) < 2 * limit
 
 
 def test_the_arc_keeps_the_bone_the_length_it_is():

@@ -1476,6 +1476,13 @@ class Animation:
             return
 
         source_frames = self.frames
+        if smooth_loop and not Animation._wraps_cleanly(
+                source_frames, wrap_frame if wrap_frame is not None else source_frames[0]):
+            # The sequences loop it, but its end does not meet the pose it wraps to: it is in fact
+            # chained into another animation once it ends (Squall d0c000 anim 20 -> 21, A0 14 then
+            # A0 15 after exactly its 16 frames). An in-between back to its own start would swing
+            # the model half-way there for one frame; holding the last pose is what vanilla shows.
+            smooth_loop = False
         new_frames = []
         for frame_index, frame in enumerate(source_frames):
             new_frames.append(frame)
@@ -1506,6 +1513,31 @@ class Animation:
         # The bit-stream is fully re-encoded: the original tail no longer
         # applies (zero-fill for byte-alignment is fine, the game never reads it).
         self.original_tail = b""
+
+    # A loop's end "meets" its start when no bone turns more there than this, or than twice the
+    # largest turn of the steps on either side of the seam (a fast loop moves a lot every frame;
+    # a fast move in the MIDDLE of an animation says nothing about its seam - Squall anim 20 has
+    # 56 deg steps mid-way, 8 and 3 at its two ends, and a 109 deg jump back to its start).
+    WRAP_MIN_DEGREES = 20.0
+    WRAP_SEAM_STEPS = 2
+
+    @staticmethod
+    def _wraps_cleanly(frames: List['AnimationFrame'], wrap_frame: 'AnimationFrame') -> bool:
+        """Whether going from the last frame back to wrap_frame is one more step of the motion."""
+        def largest_turn(frame_a, frame_b):
+            turn = 0.0
+            for bone_index in range(min(len(frame_a.rotation_vector_data),
+                                        len(frame_b.rotation_vector_data))):
+                pose_a = [Animation._rotation_raw_of(frame_a, bone_index, axis) for axis in range(3)]
+                pose_b = [Animation._rotation_raw_of(frame_b, bone_index, axis) for axis in range(3)]
+                turn = max(turn, rotation3d.angle_between_raw(pose_a, pose_b))
+            return turn
+
+        nb_step = len(frames) - 1
+        seam = Animation.WRAP_SEAM_STEPS
+        seam_index = sorted(set(range(min(seam, nb_step))) | set(range(max(0, nb_step - seam), nb_step)))
+        seam_step = max(largest_turn(frames[index], frames[index + 1]) for index in seam_index)
+        return largest_turn(frames[-1], wrap_frame) <= max(Animation.WRAP_MIN_DEGREES, 2 * seam_step)
 
     @staticmethod
     def _neighbour_frame(frames: List['AnimationFrame'], index: int, wrap: bool):
@@ -1559,6 +1591,39 @@ class Animation:
                                                         step, mode)
             new_rotations.append(RotationType(True, 0, round(raw_value)))
         return new_rotations
+
+    # Angle by angle stays the blend while it agrees with the real 3D turn; past this many degrees
+    # apart the bone is near 90 deg on X, where a small turn rewrites Y and Z by a lot (Squall
+    # d0c000 anim 6, last step: a 17 deg turn of the upper body stored as +121 / -115), and the
+    # angle blend would twist it off its path for a frame.
+    ARC_FALLBACK_DEGREES = 3.0
+    # Below this change on every stored angle the two blends cannot disagree that much: not worth
+    # the matrices (a few hundred thousand bones per conversion).
+    _ARC_CHECK_MIN_RAW = 256
+
+    @staticmethod
+    def _arc_where_angle_blend_leaves_it(frame_a, frame_b, bone_index, step, mode):
+        """The bone's in-between as its real 3D turn when the straight angle-by-angle line leaves
+        that turn, else None (blend angle by angle). The straight line is compared, not the curve:
+        a spline may bend away from it on purpose, which is fine while the angles behave.
+
+        The angles come back on the turn nearest that line, so the next original frame, stored
+        as a delta from this one, keeps its vanilla numbers (same pose either way)."""
+        pose_a = [Animation._rotation_raw_of(frame_a, bone_index, axis) or 0 for axis in range(3)]
+        pose_b = [Animation._rotation_raw_of(frame_b, bone_index, axis) for axis in range(3)]
+        if any(value is None for value in pose_b):
+            return None
+        pose_b = [interpolation.unwrap_rotation_raw(a, b) for a, b in zip(pose_a, pose_b)]
+        if all(abs(b - a) < Animation._ARC_CHECK_MIN_RAW for a, b in zip(pose_a, pose_b)):
+            return None
+        ratio = interpolation.shaped_step(step, mode)
+        line = [round(a + (b - a) * ratio) for a, b in zip(pose_a, pose_b)]
+        matrix = rotation3d.slerp_matrix(rotation3d.euler_raw_to_matrix(pose_a),
+                                         rotation3d.euler_raw_to_matrix(pose_b), ratio)
+        arc = rotation3d.matrix_to_euler_raw(matrix, line)
+        if rotation3d.angle_between_raw(line, arc) <= Animation.ARC_FALLBACK_DEGREES:
+            return None
+        return arc
 
     @staticmethod
     def _blend_bone_in_arc(frame_a: 'AnimationFrame', frame_b: 'AnimationFrame', bone_index: int,
@@ -1614,8 +1679,12 @@ class Animation:
                      if interpolation.rotates_in_arc(mode) else None)
         for bone_index in range(nb_bones):
             if arc_ratio is None:
-                new_frame.rotation_vector_data[bone_index] = Animation._blend_bone_by_angle(
-                    frame_a, frame_b, frame_before, frame_after, bone_index, step, mode)
+                arc = Animation._arc_where_angle_blend_leaves_it(frame_a, frame_b, bone_index, step, mode)
+                if arc is None:
+                    new_frame.rotation_vector_data[bone_index] = Animation._blend_bone_by_angle(
+                        frame_a, frame_b, frame_before, frame_after, bone_index, step, mode)
+                else:
+                    new_frame.rotation_vector_data[bone_index] = [RotationType(True, 0, raw) for raw in arc]
             else:
                 new_frame.rotation_vector_data[bone_index] = Animation._blend_bone_in_arc(
                     frame_a, frame_b, bone_index, arc_ratio)

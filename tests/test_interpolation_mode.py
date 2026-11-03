@@ -239,11 +239,11 @@ def test_hold_leaves_the_inserted_frames_on_the_pose_before_them():
         assert anim.frames[index + 4].position[2].get_pos_raw() == anim.frames[4].position[2].get_pos_raw()
 
 
-def _converted_pair(mode_a, mode_b, factor=4, smooth_loop=False):
+def _converted_pair(mode_a, mode_b, factor=4, smooth_loop=False, nb_frames=5):
     """The same animation converted twice, once per mode, as two frame lists."""
     converted = []
     for mode in (mode_a, mode_b):
-        anim, bones = _straight_line_animation()
+        anim, bones = _straight_line_animation(nb_frames)
         anim.create_interpolated_frames(bones, factor, smooth_loop=smooth_loop, mode=mode)
         converted.append(anim.frames)
     return converted
@@ -280,10 +280,26 @@ def test_spline_eases_out_of_the_ends_of_a_one_shot_animation():
 def test_a_looping_animation_finds_its_neighbours_across_the_wrap():
     """A smoothed loop has no ends: the frame before the first one is the LAST one. The spline
     must use it, so the seam of a loop is interpolated differently from the same segment in a
-    one-shot animation, where there is nothing behind frame 0."""
+    one-shot animation, where there is nothing behind frame 0.
+
+    4 frames: the bone's last pose is then 17 deg from its first, close enough to wrap (the 5-frame
+    one ends 22.5 deg away and is treated as chained, see the test below)."""
     looping, one_shot = (_converted_pair(interpolation.SPLINE, interpolation.SPLINE,
-                                         smooth_loop=wrap)[0] for wrap in (True, False))
+                                         smooth_loop=wrap, nb_frames=4)[0] for wrap in (True, False))
     assert (looping[1].position[2].get_pos_raw() != one_shot[1].position[2].get_pos_raw())
+
+
+def test_a_loop_that_does_not_end_near_its_start_holds_its_last_pose():
+    """A0-looped animation the sequence leaves before it wraps (Squall d0c000 anim 20 goes on to
+    anim 21): its last pose is far from its first, so no frame is blended back to frame 0 - the
+    tail holds the last pose, as the one-shot conversion does."""
+    looping, one_shot = (_converted_pair(interpolation.LINEAR, interpolation.LINEAR,
+                                         smooth_loop=wrap)[0] for wrap in (True, False))
+    assert len(looping) == len(one_shot)
+    for frame_loop, frame_once in zip(looping, one_shot):
+        assert frame_loop.position[2].get_pos_raw() == frame_once.position[2].get_pos_raw()
+        assert (int(frame_loop.rotation_vector_data[1][2].get_rotate_raw())
+                == int(frame_once.rotation_vector_data[1][2].get_rotate_raw()))
 
 
 def test_smooth_and_linear_disagree_on_the_frames_they_insert():
