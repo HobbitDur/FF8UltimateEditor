@@ -1,0 +1,380 @@
+{
+ "format": 1,
+ "effect": 37,
+ "name": "Drink Magic",
+ "doc": "Drink Magic (Ochu's enemy attack; the act family): one emitter per action - its sound, an actor system (its actor data the exe's) and the drunk magic: streaks and five twisted ribbons with their sparks from round the target to the caster, the swelling orb at the caster fading out and back in; the damage. Its parts are the port's code (FFNx mag037_drink_magic.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8569D0",
+   "setup": "0x8569F0",
+   "root": "0x856B40"
+  },
+  "memory": {
+   "texture_file": "0x26A05C8",
+   "packet_cursor": "0x26A05CC",
+   "packet_limit": "0x26A05E8",
+   "arena_a": "0x26A8D7C",
+   "limit_a": "0x26A8174",
+   "arena_b": "0x26A8D78",
+   "limit_b": "0x26A8170",
+   "arena_top": "0x26A8DAC",
+   "init_flag_a": "0x26A8DA8",
+   "init_flag_b": "0x26A7D9C",
+   "cam_ptr_a": "0x26A8DA0",
+   "cam_ptr_b": "0x26A05EC",
+   "root_queue": "0x26A06B8",
+   "root_pool": "0x26A05F0",
+   "particle_pool": "0x26A8D8C",
+   "actor_pool": "0x26A8DA4",
+   "particle_next": "0x26A7D98",
+   "actor_next": "0x26A8D98",
+   "cursor_c": "0x26A8D88",
+   "cursor_d": "0x26A05D0",
+   "count_a": "0x26A8D9A",
+   "count_b": "0x26A8D8A"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 37,
+  "from": "0x26A05C8",
+  "size": "0x87F0",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15D97D0",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15D8EB4",
+   "size": 1088
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15D62E8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x9000",
+  "release_file": false,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x438",
+    "actor_pool": "0x6900"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x26A8C08",
+   "storage": "0x26A8C18",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x26A8968",
+   "storage": "0x26A8178",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor system (the port's)"
+  },
+  {
+   "key": "ribbons",
+   "queue": "0x26A06C8",
+   "storage": "0x26A06D8",
+   "size": 304,
+   "count": 100,
+   "keep": true,
+   "doc": "the ribbon spawner, the streaks, the ribbons and their sparks (the port's)"
+  },
+  {
+   "key": "orb",
+   "queue": "0x26A7DA0",
+   "storage": "0x26A7DB0",
+   "size": 96,
+   "count": 10,
+   "keep": true,
+   "doc": "the orb (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x26A8BF8",
+   "storage": "0x26A8978",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the actor system (its actor data the exe's), the ribbon spawner, the master's release, the damage"
+  },
+  {
+   "id": 0,
+   "key": "ribbons",
+   "title": "Ribbons",
+   "doc": "The drunk magic: five twisted ribbons with their sparks and the streaks, from round the target to the caster"
+  },
+  {
+   "id": 0,
+   "key": "orb",
+   "title": "Orb",
+   "doc": "The swelling orb at the caster: fades out, holds, fades back in"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "Spawned by the emitter (its actor data the exe's)"
+  },
+  {
+   "key": "streaks",
+   "label": "Streaks",
+   "doc": "One a tick of the spawner, flying to the caster"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The damage of its target from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "Its start tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "emitter",
+   "label": "Length",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "emitter",
+   "label": "Mode",
+   "doc": "Its placement mode",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbons.first",
+   "part": "ribbons",
+   "label": "First tick",
+   "doc": "The first ribbon at this spawner tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbons.every",
+   "part": "ribbons",
+   "label": "Every",
+   "doc": "The next ones every this many ticks (the last two together)",
+   "type": "i16",
+   "min": 1,
+   "max": 50,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbons.spread",
+   "part": "ribbons",
+   "label": "Spread",
+   "doc": "How far from the emitter's midpoint the ribbons and streaks start",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbons.twist",
+   "part": "ribbons",
+   "label": "Twist",
+   "doc": "A ribbon's twist a tick (4096: a turn)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 384,
+   "unit": "plain"
+  },
+  {
+   "key": "streaks.from",
+   "part": "ribbons",
+   "label": "From",
+   "doc": "The first streak at this spawner tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "streaks.until",
+   "part": "ribbons",
+   "label": "Until",
+   "doc": "The last streak at this spawner tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 62,
+   "unit": "plain"
+  },
+  {
+   "key": "streaks.accel",
+   "part": "ribbons",
+   "label": "Acceleration",
+   "doc": "Added to a streak's speed a tick (4096: the whole line)",
+   "type": "i16",
+   "min": 1,
+   "max": 1024,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.appear",
+   "part": "orb",
+   "label": "Appear tick",
+   "doc": "Shown at the caster from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.scale",
+   "part": "orb",
+   "label": "Scale",
+   "doc": "Its scale (4096: the model's size)",
+   "type": "i16",
+   "min": 256,
+   "max": 32767,
+   "default": 5120,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.fade",
+   "part": "orb",
+   "label": "Fade",
+   "doc": "Its fade out and back in a tick (4096: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.hold",
+   "part": "orb",
+   "label": "Hold",
+   "doc": "Ticks between its fade out and fade in",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.spin",
+   "part": "orb",
+   "label": "Spin",
+   "doc": "Its twist and swell angles a tick (4096: a turn)",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 160,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x856D70",
+   "code": "0x856D70",
+   "native": "0x856D70",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the actor system and the ribbon spawner, the master's release, the damage."
+  }
+ ]
+}

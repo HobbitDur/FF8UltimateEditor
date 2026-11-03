@@ -1180,3 +1180,11 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`ConfuseParams`): the emitter's sound, shake, chain, release and damage ticks, the actor
        system. Data: the sound, the camera track, "mag035.tim".
      - *Fujin:* its tabs (Emitter, Actor system); no + menu family.
+   - **Drink Magic (37)** (FFNx ca15b370; Ochu's enemy attack; the act family, Draw's description): one
+     emitter per action - its sound, an actor system and the drunk magic: streaks and five twisted ribbons
+     with their sparks from round the target to the caster, the swelling orb at the caster fading out and
+     back in; the damage.
+     - *Inputs* (`DrinkParams`): the emitter's sound, release and damage ticks, the actor system, the
+       ribbons' ticks, spread and twist, the streaks' ticks and acceleration, the orb's tick, scale, fade,
+       hold and spin. Data: the sound, the camera track, "mag036.tim".
+     - *Fujin:* its tabs (Emitter, Ribbons, Orb); no + menu family.
