@@ -269,6 +269,7 @@ CYCLES = {
     106: ("mag105.tim", 32, "hexagons.count 5\nwall.grow 15\nrings.every 4\nbeams.count 6\ntiming.size_shift 3\n"),
     108: ("mag107.tim", 51, "rays.count 5\nembers.count 2\nswirls.per_tick 3\nglow.ticks 12\nsparks.every 3\n"
                             "rays.width 200\n"),
+    10: ("mag009.tim", 39, "beam.width 4096\ndust.count 3\npuffs.first 55\nring.tick 75\ncharge.count 4\n"),
     8: ("mag007.tim", 36, "dust.radius 400\nsmoke.ticks 25\nreaper.rise 100\nscythe.y -1200\nwobble.level 1024\n"
                           "aura.length 30\n"),
     7: ("mag006.tim", 392, "actor5.speed.max 140\nactor2.frames 18\nactor0.depth -300\nactor1.offset.y -400\n"
@@ -298,7 +299,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix and Doom from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom and Ray-Bomb from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -541,3 +542,11 @@ def test_doom_description_compiles():
     own = compile_program(new_effect(description, 224, "Own", EXE.read_bytes())).splitlines()
     assert "module 8 0x2758500 0x7680 own" in own and "memory root_queue 0x2758958" in own
     assert not any(line.startswith("function ") for line in own)
+
+
+def test_ray_bomb_description_compiles():
+    """Ray-Bomb: a port director - the port's file loader, setup and root run on the program's memory
+    (its module's), no task of its own; its parameters the port's."""
+    lines = compile_program(load_description(10)).splitlines()
+    assert "director port -1" in lines and "port 0x627E60 0x627E40 0x629730" in lines and "module 10 0x24C91D8 0x1638" in lines
+    assert not any(line.startswith(("task ", "pool ")) for line in lines)

@@ -116,7 +116,7 @@ namespace fxprog
 		int size = 0, count = 0, tag = -1, base = 0;   // base 1: storage in the magic buffer
 		bool own_queue = false, own_storage = false;  // allocated in the program's own memory
 	};
-	enum Director { PER_ACTION, MASTER, CYCLE, CHAIN };
+	enum Director { PER_ACTION, MASTER, CYCLE, CHAIN, PORT };
 	// a value written into data before every cast (an actor definition's field: the act family's)
 	struct Patch { uint32_t at = 0; int type = 0; Val value; };
 	enum DrawOnlyKind { NO_DRAW_ONLY, DRAW_ONLY_SKIP, DRAW_ONLY_DRAWS };
@@ -136,6 +136,7 @@ namespace fxprog
 		uint32_t arena_size = 0x10000;                  // PER_ACTION: each of its two packet arenas in the texture file (Mega Phoenix: 0xA000)
 		bool per_target = false;                        // PER_ACTION: its task for each target of the action, in turn (Mega Phoenix's), not each action
 		bool release_file = false;                      // PER_ACTION: at its end its file's release asked and waited for (Doom's)
+		uint32_t port_setup = 0, port_loader = 0, port_root = 0;   // PORT: the port's (originals: own::find)
 		// PER_ACTION, the act family's master (Mega Phoenix 0x8CE4F0): once the children are gone (state 2) room
 		// carved from the arena top for memory words (act_pools: name, bytes), cleared, u16 words zeroed
 		// (act_zero), the stage fade in task; after the last action, act_wait ticks, then the stage fade
@@ -333,8 +334,11 @@ namespace fxprog
 	inline uint32_t g_actor_done = 0;             // the last step's result (1: the system has finished)
 	inline uint32_t TaskFunction(int k);
 	// a port module's code spawning the original `orig`: the program's task mirroring it, if any (else its port)
+	inline uint32_t __cdecl DirectorTask(TaskNode *n);
 	inline uint32_t ProgramTaskOf(uint32_t orig)
 	{
+		if (g_program->director == PORT && orig == g_program->port_root)   // (its root: the director, which makes the module current)
+			return g_program->director_fn ? g_program->director_fn : (uint32_t)DirectorTask;
 		for (size_t k = 0; k < g_program->tasks.size(); k++)
 			if (g_program->tasks[k].code == orig) return TaskFunction((int)k);
 		return 0;
@@ -348,18 +352,21 @@ namespace fxprog
 		using namespace ff8fx::act;
 		Program &g = *g_program;
 		if (!g.module) return;
+		static bool registered = false;   // (the ports of every module built in: the dispatch of their originals)
+		if (!registered)
+		{
+			registered = true;
+#ifdef FF8_FX_LAB
+			for (int i = 0; i < ff8fx::fxp::g_lab_module_count; i++) ff8fx::fxp::g_lab_modules[i]();
+#endif
+		}
+		ff8fx::own::active = true;
+		ff8fx::own::reloc = g.module_reloc;
+		ff8fx::own::task_of = ProgramTaskOf;
 		if (!g.module_ready)
 		{
-			static bool registered = false;   // (the ports of every module built in: the dispatch of their originals)
-			if (!registered)
-			{
-				registered = true;
-#ifdef FF8_FX_LAB
-				for (int i = 0; i < ff8fx::fxp::g_lab_module_count; i++) ff8fx::fxp::g_lab_modules[i]();
-#endif
-			}
 			const Mod *m = find_mod(g.module);
-			if (!m) return;   // (its port not built in)
+			if (!m) return;   // (not of the act engine: the generic layer only)
 			g.module_mod = *m;
 			for (uint32_t &w : g.module_mod.g)
 				if (w >= g.module_lo && w < g.module_lo + g.module_size) w += g.module_reloc;
@@ -1992,6 +1999,12 @@ namespace fxprog
 
 	inline uint32_t __cdecl DirectorTask(TaskNode *n)
 	{
+		if (g_program->director == PORT) // the port's root, its module current
+		{
+			UseModule();
+			void *root = ff8fx::own::find(g_program->port_root);
+			return root ? ((uint32_t (__cdecl *)(TaskNode *))root)(n) : TASK_END;
+		}
 		if (g_program->director == CHAIN) return ChainRoot(n);
 		if (g_program->director == CYCLE) return CycleDirector(n);
 		return g_program->director == MASTER ? MasterDirector(n) : PerActionDirector(n);
@@ -2000,6 +2013,12 @@ namespace fxprog
 	inline uint32_t __cdecl FileLoader()
 	{
 		Program &g = *g_program;
+		if (g.director == PORT)
+		{
+			UseModule();
+			void *loader = ff8fx::own::find(g.port_loader);
+			return loader ? ((uint32_t (__cdecl *)())loader)() : 0;
+		}
 		if (g.texture_data) return 0;   // (Thunder's loader loads nothing: its setup uploads exe data)
 		fxp::FileName name = {};
 		if (g.texture_param >= 0) strncpy(name.name, g.params[g.texture_param].text.c_str(), sizeof(name.name) - 1);
@@ -2105,6 +2124,12 @@ namespace fxprog
 		Program &g = *g_program;
 		ApplyPatches();
 		SetModuleParams();
+		if (g.director == PORT)
+		{
+			UseModule();
+			void *setup = ff8fx::own::find(g.port_setup);
+			return setup ? ((TaskQueue *(__cdecl *)(CastContext *))setup)(ctx) : nullptr;
+		}
 		if (g.director == CHAIN) return ChainSetup(ctx);
 		if (g.director == MASTER) return MasterSetup(ctx);
 		if (g.director == CYCLE) return g.master_setup ? MasterSetup(ctx) : CycleSetup(ctx);
@@ -2310,6 +2335,12 @@ namespace fxprog
 			}
 			else if (d == "arena_size" && need(2)) g.arena_size = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
 			else if (d == "per_target") g.per_target = true;
+			else if (d == "port" && need(4))
+			{
+				g.port_setup = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
+				g.port_loader = (uint32_t)strtoul(w[2].c_str(), nullptr, 0);
+				g.port_root = (uint32_t)strtoul(w[3].c_str(), nullptr, 0);
+			}
 			else if (d == "release_file") g.release_file = true;
 			else if (d == "module" && need(4))
 			{
@@ -2390,6 +2421,7 @@ namespace fxprog
 					g.director_every = ParseVal(w[3]);
 					g.director_place = ParseStep(w, 4, &error);
 				}
+				else if (w[1] == "port") g.director = PORT;
 				else if (w[1] == "per_action")
 				{
 					g.director_short = w.size() > 3 && w[3] == "short";
@@ -2503,7 +2535,7 @@ namespace fxprog
 			else if (error.empty()) error = "line " + std::to_string(number) + ": unknown " + d;
 		}
 		if (error.empty() && (int)g.tasks.size() > (int)(sizeof(THUNKS) / sizeof(THUNKS[0]))) error = "too many tasks";
-		if (error.empty() && (g.director_spawns < 0 || g.director_spawns >= (int)g.tasks.size())) error = "the director spawns no task";
+		if (error.empty() && g.director != PORT && (g.director_spawns < 0 || g.director_spawns >= (int)g.tasks.size())) error = "the director spawns no task";
 		if (error.empty() && g.director == CHAIN && (g.director_single < 0 || g.director_single >= (int)g.tasks.size())) error = "the chain has no lone target's director";
 		if (error.empty() && !g_parse_error.empty()) error = g_parse_error;
 		g_parsing = nullptr;

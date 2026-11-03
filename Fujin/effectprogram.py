@@ -372,7 +372,12 @@ def compile_program(description, values=None):
         arena_a, arena_b = buffer["arenas"]
         lines.append(f"magic_buffer 0x{_number(arena_a):X} 0x{_number(arena_b):X} 0x{_number(buffer['morph']):X}")
     director = description["director"]
-    if director.get("kind") not in ("per_action", "master", "cycle", "chain") or director.get("spawns") not in tasks:
+    if director.get("kind") == "port":   # the port's file loader, setup and root (Ray Bomb's kind: a port module's)
+        if not module:
+            raise DescriptionError("director: a port director runs a port module's code (\"module\")")
+        lines.append("director port -1")
+        lines.append(f"port 0x{_number(director['setup']):X} 0x{_number(director['file_loader']):X} 0x{_number(director['root']):X}")
+    elif director.get("kind") not in ("per_action", "master", "cycle", "chain") or director.get("spawns") not in tasks:
         raise DescriptionError("director: a per_action, master, cycle or chain director spawning one of the tasks")
     if director["kind"] == "chain":
         if director.get("single") not in tasks:

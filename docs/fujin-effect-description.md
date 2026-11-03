@@ -964,3 +964,16 @@ Potion's description is the same with its own sequences and sound.
        sound, the dust flipbook, the camera track, "mag007.tim".
      - *Fujin:* its tabs (Timing, Reaper, Aura, Dust, Smoke, Scythe, Stage wobble, Screen tint); no
        + menu family (its parts are the port's code, spawned by it).
+   - **Ray-Bomb (10)** (FFNx 60896e12; X-ATM092's attack; its tasks the port's code): a muzzle in front of
+     the caster charging, dust blown from it, a muzzle flash, the beam to the targets with its sparks,
+     smoke, a shockwave ring and debris at the targets, the party thrown up and bounced back.
+     - *Added:* the director kind `"port"` (the program's `director port` and `port <setup> <loader>
+       <root>`): the port's file loader, setup and root run on the program's memory (`"module"`, its
+       block in a copy); the root is the program's director (the module current every tick), the
+       tasks it spawns its ports. FFNx: `fx_port.h` `own::` (any port: `R()`, `Fn()` - the program's
+       own task or the port of an original -, the ports a program may run), Ray-Bomb's memory and
+       spawns through it, its setup and file loader ported.
+     - *Inputs* (`RayBombParams`): the sounds, the muzzle, the charge glows, the dust, the muzzle
+       flash, the beam, the smoke, the shockwave, the debris, the bounce, the screen flash ramps and
+       the end. Data: the two sounds, "mag009.tim".
+     - *Fujin:* its tabs (Timing, Charge, Muzzle flash, Beam, Blast, Bounce); no + menu family.

@@ -39,7 +39,7 @@ EXE_ADDRESS = re.compile(r"(?<![0-9A-Za-z$@])(0x[0-9A-F]{6,7}|1[0-9]{7}|[2-4][0-
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe")
 def test_a_new_effect_made_with_the_exe_has_its_own_data():
     exe = EXE.read_bytes()
-    for effect, keys in ((1, 8), (133, 24), (122, 4), (115, 6), (123, 5), (125, 5), (109, 6), (111, 7), (118, 6), (121, 4), (120, 5), (127, 5), (114, 5), (124, 8), (106, 7), (108, 12), (2, 6), (3, 12), (4, 13), (5, 7), (7, 3), (8, 4), (292, 3), (293, 3), (294, 3), (295, 3), (296, 3)):
+    for effect, keys in ((1, 8), (133, 24), (122, 4), (115, 6), (123, 5), (125, 5), (109, 6), (111, 7), (118, 6), (121, 4), (120, 5), (127, 5), (114, 5), (124, 8), (106, 7), (108, 12), (2, 6), (3, 12), (4, 13), (5, 7), (7, 3), (8, 4), (10, 3), (292, 3), (293, 3), (294, 3), (295, 3), (296, 3)):
         source = load_description(effect)
         new = new_effect(source, 300 + effect % 100, "New", exe)
         assert "exe_data" not in new and "exe_data" in source
@@ -61,7 +61,7 @@ def test_a_new_effect_made_with_the_exe_has_its_own_data():
         code = "\n".join(line for line in program.splitlines() if not line.startswith(("data ", "data_actors ", "#"))
                          # (a port module's copy: its code's identities and its memory moved into its block)
                          and not ("module" in source and line.startswith(("module", "memory ", "pool ", "code ", "tick call ",
-                                                                          "phase_tick call "))))
+                                                                          "phase_tick call ", "port "))))
         assert not EXE_ADDRESS.findall(code), EXE_ADDRESS.findall(code)[:5]
         # its part tabs show the exe's copy of its sequences and sounds
         defaults = {field["key"]: field["default"] for field in description_schema(new)["fields"]}
