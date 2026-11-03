@@ -1234,3 +1234,9 @@ Potion's description is the same with its own sequences and sound.
        kick spawned by the ball runs in the same tick only when its pool comes after the ball's.
      - *Lab:* recorded with three party members (slots 0-2) and Wendigo (c0m032) casting it.
      - *Fujin:* its tabs (Emitter, Ball); no + menu family.
+   - **Melting Bubble (43)** (FFNx fa3feca6; Grand Mantis' enemy attack; the act family with Drain's
+     master, Wind Blast's description): the actor pools, one emitter per action - its sound, the bubbles'
+     actor system (their first speed by the caster -> target distance), the damage of its target.
+     - *Inputs* (`BubbleParams`): the emitter's sound, release and damage ticks, the actor system, the
+       bubbles' reach (the distance's clamp and factor). Data: the sound, the camera track, "mag042.tim".
+     - *Fujin:* its tabs (Emitter, Actor system); no + menu family.

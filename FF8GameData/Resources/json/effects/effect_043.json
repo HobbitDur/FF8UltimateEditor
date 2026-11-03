@@ -1,0 +1,243 @@
+{
+ "format": 1,
+ "effect": 43,
+ "name": "Melting Bubble",
+ "doc": "Melting Bubble (Grand Mantis' enemy attack; the act family, Wind Blast's): once its children are gone the actor pools, then one emitter per action - its sound, the bubbles' actor system (their first speed by the caster -> target distance), the master's release, the damage of its target. Its parts are the port's code (FFNx mag043_melting_bubble.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x839920",
+   "setup": "0x839940",
+   "root": "0x839A60"
+  },
+  "memory": {
+   "texture_file": "0x2655778",
+   "packet_cursor": "0x265577C",
+   "packet_limit": "0x2655798",
+   "arena_a": "0x26561FC",
+   "limit_a": "0x2655884",
+   "arena_b": "0x26561F8",
+   "limit_b": "0x2655880",
+   "arena_top": "0x2656224",
+   "init_flag_a": "0x2656220",
+   "init_flag_b": "0x265587C",
+   "cam_ptr_a": "0x2656218",
+   "cam_ptr_b": "0x265579C",
+   "root_queue": "0x2655868",
+   "root_pool": "0x26557A0",
+   "particle_pool": "0x2656204",
+   "actor_pool": "0x265621C",
+   "particle_next": "0x2655878",
+   "actor_next": "0x2656210",
+   "cursor_c": "0x2656200",
+   "cursor_d": "0x2655780",
+   "count_a": "0x2656212",
+   "count_b": "0x2656202"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 43,
+  "from": "0x2655778",
+  "size": "0xAB4",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15C62AC",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15C6184",
+   "size": 296
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15C3680",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xA000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x10680"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2656088",
+   "storage": "0x2656098",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x2656078",
+   "storage": "0x2655888",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the master's release, the damage of its target"
+  },
+  {
+   "id": 0,
+   "key": "actors",
+   "title": "Actor system",
+   "doc": "The bubbles' actor system (its actor data the exe's)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "reach",
+   "label": "Reach",
+   "doc": "The first speed of the bubbles (definitions 0..2) by the caster -> target distance: clamped to Min..Max, times Scale / 16"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The damage of its target from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "actors",
+   "label": "Start",
+   "doc": "Its start tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "actors",
+   "label": "Length",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "actors",
+   "label": "Mode",
+   "doc": "Its placement mode",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "reach.min",
+   "part": "actors",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "reach.max",
+   "part": "actors",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 6144,
+   "unit": "plain"
+  },
+  {
+   "key": "reach.scale",
+   "part": "actors",
+   "label": "Scale",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 13,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x839C60",
+   "code": "0x839C60",
+   "native": "0x839C60",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the actor system, the master's release, the damage of its target."
+  }
+ ]
+}
