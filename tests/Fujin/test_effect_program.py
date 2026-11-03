@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    14: ("mag013-073-344.tim", 11, "reaper.fade_in 512\nstrike.length 30\nreaper.vanish_frame 14\naura.length 40\n"),
     13: ("mag012.tim", 10, "emitter.damage 60\ncontrol.puffs_until 8\ncontrol.spawner_d 25\n"),
     12: ("mag011.tim", 13, "blade.spin 600\nsparks.ticks 5\nfans.scale 4096\nblade.trails_until 40\n"),
     11: ("mag010.tim", 30, "stream.ticks 40\nhits.scale 2048\nrings.every 3\ntiming.end 70\n"),
@@ -302,7 +303,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot and Dark Mist from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist and Death from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -578,3 +579,10 @@ def test_dark_mist_description_compiles():
     lines = compile_program(load_description(13)).splitlines()
     assert "director port -1" in lines and "port 0x8BE1F0 0x8BE1D0 0x8BE2D0" in lines and "module 13 0x27428A8 0xC73C" in lines
     assert not any(line.startswith(("task ", "pool ")) for line in lines)
+
+
+def test_death_description_compiles():
+    """Death: Doom's kind - the per-action director, the module, the emitter's and the director's state tables."""
+    lines = compile_program(load_description(14)).splitlines()
+    for line in ['module 14 0x273AE80 0x7A20', 'module_pointer 2 0x162B860', 'release_file', 'arena_size 57344', 'code 0x8B6E30']:
+        assert line in lines, line

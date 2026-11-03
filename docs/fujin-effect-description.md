@@ -997,3 +997,10 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`MistParams`): the emitter's sound, its mist controller and damage ticks; the controller's
        ticks (puffs, streams, puffs round the target, the overlay, its end). Data: the sound, "mag012.tim".
      - *Fujin:* its tabs (Emitter, Mist); no + menu family.
+   - **Death (14)** (FFNx ece8c5b6; the act family, the Boko summons' kind; Doom's description): the reaper
+     appears in front of its target, fading in in the dark with its aura's actor system and the stage
+     wobbling, strikes - the dark actor system and dark spark bursts - and vanishes.
+     - *Inputs* (`DeathParams`): the two sounds, the reaper's fades and animation frames (dark until, the
+       strike, the vanish), the aura's and the strike's actor systems (ticks, mode). Data: the sounds, the
+       camera track, "mag013-073-344.tim".
+     - *Fujin:* its tabs (Reaper, Actor systems); no + menu family.
