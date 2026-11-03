@@ -1127,3 +1127,11 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`WindBlastParams`): the emitter's sound, release and damage ticks, the actor system
        (start, length, mode). Data: the sound, the camera track, "mag028.tim".
      - *Fujin:* its tabs (Emitter, Actor system); no + menu family.
+   - **Counter Laser-Eye (30)** (FFNx e068fc2e; Belhelmel's enemy attack; the act family with Drain's
+     master, Esuna's description): the actor pools and the light ramp up, one emitter per action - its
+     sound, the actor system, a laser beam from the caster's eye to its target with its sparks, the
+     damage; after the last action a wait, the light ramp down.
+     - *Inputs* (`LaserEyeParams`): the emitter's sound, release and damage ticks, the master's wait, the
+       actor system, the beam (appear tick, grow, hold until, shrink), the stage light (level, step).
+       Data: the sound, the camera track, "mag029.tim".
+     - *Fujin:* its tabs (Emitter, Laser); no + menu family.

@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    30: ("mag029.tim", 13, "laser.grow 512\nlaser.hold 20\nmaster.wait 30\nlight.step 64\n"),
     29: ("mag028.tim", 6, "actors.start 4\nactors.length 30\nemitter.result 30\nemitter.release 30\n"),
     28: ("mag027-051.tim", 10, "emitter.flash 10\nmaster.wait 20\nfade.step 64\nactors.length 30\n"),
     27: ("mag026.tim", 9, "actors.length 30\nmaster.wait 20\nfade.step 64\nemitter.release 25\n"),
@@ -314,7 +315,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga and Wind Blast from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast and Counter Laser-Eye from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -857,4 +858,11 @@ def test_wind_blast_description_compiles():
     """Wind Blast: Doom's kind with Drain's master - its actor pools, no stage tasks, its own emitter."""
     lines = compile_program(load_description(29)).splitlines()
     for line in ['module 29 0x26D6A40 0xAB8', 'act_stage -1 -1 0', 'act_pool actor_pool 53760', 'native 0x8797C0']:
+        assert line in lines, line
+
+
+def test_counter_laser_eye_description_compiles():
+    """Counter Laser-Eye: Doom's kind with Drain's master - its actor pools, the light ramps (native tasks) after its wait."""
+    lines = compile_program(load_description(30)).splitlines()
+    for line in ['module 30 0x26D40B8 0x2988', 'act_stage 1 2 $3', 'act_pool actor_pool 33600', 'native 0x873A70']:
         assert line in lines, line
