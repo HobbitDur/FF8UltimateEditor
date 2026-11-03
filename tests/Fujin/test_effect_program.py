@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    15: ("mag014.tim", 8, "ribbons.twist 600\nemitter.release 20\nemitter.length 25\nsounds.b 100\n"),
     14: ("mag013-073-344.tim", 11, "reaper.fade_in 512\nstrike.length 30\nreaper.vanish_frame 14\naura.length 40\n"),
     13: ("mag012.tim", 10, "emitter.damage 60\ncontrol.puffs_until 8\ncontrol.spawner_d 25\n"),
     12: ("mag011.tim", 13, "blade.spin 600\nsparks.ticks 5\nfans.scale 4096\nblade.trails_until 40\n"),
@@ -303,7 +304,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist and Death from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death and Draw from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -311,8 +312,10 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     described, log = record(tmp_path, effect, "described", f"program={program}")
     tasks = len(load_description(effect)["tasks"])
     assert f"{tasks} tasks, {count} params" in log and untag(described) == original and len(original) > 10000
-    # (Ray-Bomb hurts the party only: on the monster the recorder casts on, no number)
-    assert (effect == 10 or any(line.startswith("N ") for line in original)) and any(line.startswith("S ") for line in original)
+    # (Ray-Bomb hurts the party only: on the monster the recorder casts on, no number; Draw's sounds are sound
+    # ids, BdPlaySy's, which the recorder does not log)
+    assert effect == 10 or any(line.startswith("N ") for line in original)
+    assert effect == 15 or any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text(values)
     native, _log = record(tmp_path, effect, "native", "native=1", f"params={params}")
@@ -585,4 +588,11 @@ def test_death_description_compiles():
     """Death: Doom's kind - the per-action director, the module, the emitter's and the director's state tables."""
     lines = compile_program(load_description(14)).splitlines()
     for line in ['module 14 0x273AE80 0x7A20', 'module_pointer 2 0x162B860', 'release_file', 'arena_size 57344', 'code 0x8B6E30']:
+        assert line in lines, line
+
+
+def test_draw_description_compiles():
+    """Draw: Doom's kind, its emitter the module's own (a native task: the port's task function)."""
+    lines = compile_program(load_description(15)).splitlines()
+    for line in ['module 15 0x2732BF8 0x8284', 'native 0x8B0C70', 'arena_size 36864', 'act_pool particle_pool 1080']:
         assert line in lines, line

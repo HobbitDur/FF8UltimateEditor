@@ -1004,3 +1004,11 @@ Potion's description is the same with its own sequences and sound.
        strike, the vanish), the aura's and the strike's actor systems (ticks, mode). Data: the sounds, the
        camera track, "mag013-073-344.tim".
      - *Fujin:* its tabs (Reaper, Actor systems); no + menu family.
+   - **Draw (15)** (FFNx c493b814; Lefty's attack; the act family, Doom's description): one emitter per
+     action - its sounds, an actor system and the drawn magic: twisted ribbons from round the target to the
+     caster, their sparks; the damage.
+     - *Added:* a task's `"native"` (the program's `native <original>`): its body the port's task function
+       (the module's own emitter), its module current.
+     - *Inputs* (`DrawParams`): the emitter's three sounds (sound ids), the master's release tick, the actor
+       system's ticks and mode, the ribbons' twist and spread. Data: the camera track, "mag014.tim".
+     - *Fujin:* its tabs (Emitter, Ribbons); no + menu family.

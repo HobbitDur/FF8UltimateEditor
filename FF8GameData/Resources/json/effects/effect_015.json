@@ -1,0 +1,245 @@
+{
+ "format": 1,
+ "effect": 15,
+ "name": "Draw",
+ "doc": "Draw (Lefty's enemy attack; the act family): one emitter per action - its sounds, an actor system (its actor data the exe's) and the drawn magic: twisted ribbons from round the target to the caster, their sparks; the damage. Its parts are the port's code (FFNx mag015_draw.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8B08F0",
+   "setup": "0x8B0910",
+   "root": "0x8B0A50"
+  },
+  "memory": {
+   "texture_file": "0x2732BF8",
+   "packet_cursor": "0x2732BFC",
+   "packet_limit": "0x2732C18",
+   "arena_a": "0x273AE4C",
+   "limit_a": "0x273A244",
+   "arena_b": "0x273AE48",
+   "limit_b": "0x273A240",
+   "arena_top": "0x273AE74",
+   "init_flag_a": "0x273AE70",
+   "init_flag_b": "0x273A23C",
+   "cam_ptr_a": "0x273AE68",
+   "cam_ptr_b": "0x2732C1C",
+   "root_queue": "0x2732CE8",
+   "root_pool": "0x2732C20",
+   "particle_pool": "0x273AE54",
+   "actor_pool": "0x273AE6C",
+   "particle_next": "0x273A238",
+   "actor_next": "0x273AE60",
+   "cursor_c": "0x273AE50",
+   "cursor_d": "0x2732C00",
+   "count_a": "0x273AE62",
+   "count_b": "0x273AE52"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 15,
+  "from": "0x2732BF8",
+  "size": "0x8284",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x162B850",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x162AD54",
+   "size": 1996
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x9000",
+  "release_file": false,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x438",
+    "actor_pool": "0x6900"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x273ACD8",
+   "storage": "0x273ACE8",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x273AA38",
+   "storage": "0x273A248",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor system (the port's)"
+  },
+  {
+   "key": "ribbons",
+   "queue": "0x2732CF8",
+   "storage": "0x2732D08",
+   "size": 300,
+   "count": 100,
+   "keep": true,
+   "doc": "the ribbon spawner, the ribbons and their sparks (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x273ACC8",
+   "storage": "0x273AA48",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sounds, the actor system (its actor data the exe's), the master's release, the damage"
+  },
+  {
+   "id": 0,
+   "key": "ribbons",
+   "title": "Ribbons",
+   "doc": "The drawn magic: twisted ribbons from round the target to the caster, their sparks"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "Played at the emitter's first tick (sound ids)"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.a",
+   "part": "emitter",
+   "label": "1",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 115,
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.b",
+   "part": "emitter",
+   "label": "2",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 116,
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.c",
+   "part": "emitter",
+   "label": "3",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 117,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Next action at tick",
+   "doc": "The master goes on to the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.length",
+   "part": "emitter",
+   "label": "Actor ticks",
+   "doc": "The actor system spawns for this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 1000,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.mode",
+   "part": "emitter",
+   "label": "Actor mode",
+   "doc": "Where it takes its reference points (0: the bones)",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbons.twist",
+   "part": "ribbons",
+   "label": "Twist",
+   "doc": "A ribbon's twist a tick (4096: a turn)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 384,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbons.spread",
+   "part": "ribbons",
+   "label": "Spread",
+   "doc": "How far from the emitter's midpoint the ribbons start",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 128,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x8B0C70",
+   "code": "0x8B0C70",
+   "native": "0x8B0C70",
+   "doc": "One per action: the module's own emitter (the port's task): its sounds, the actor system and the ribbon spawner, the master's release, the damage."
+  }
+ ]
+}

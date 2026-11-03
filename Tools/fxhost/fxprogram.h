@@ -92,6 +92,7 @@ namespace fxprog
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		uint32_t code = 0;                        // the original it mirrors, kept in a copy (a port module's code spawning it finds it)
+		uint32_t native = 0;                      // its body the port of this original (a port module's task, Draw's emitter)
 		bool plain = false, draws_first = false;
 		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 		                           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
@@ -1528,6 +1529,16 @@ namespace fxprog
 			}
 			if (!t.draws.empty()) FX_PART(0);   // what a task does after its draws is no part's
 		};
+		if (t.native) // the port's task function, its module current
+		{
+			UseModule();
+			void *body = nullptr;
+#ifdef FXPROG_ACTORS
+			body = ff8fx::act::port_of(t.native);
+#endif
+			if (!body) body = ff8fx::own::find(t.native);
+			return body ? ((uint32_t (__cdecl *)(TaskNode *))body)(n) : TASK_END;
+		}
 		if (t.draw_only == DRAW_ONLY_SKIP && DrawOnly()) return 0;
 		if (int16_t *delay = Fld<int16_t>(t, n, F_DELAY); delay && *delay > 0)   // (a plain node's delay: a tick of its own, not while only drawing)
 		{
@@ -2351,6 +2362,7 @@ namespace fxprog
 			}
 			else if (d == "module_pointer" && need(3)) g.module_pointers.push_back({ atoi(w[1].c_str()), (uint32_t)strtoul(w[2].c_str(), nullptr, 0) });
 			else if (d == "code" && task && need(2)) task->code = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
+			else if (d == "native" && task && need(2)) task->native = (uint32_t)strtoul(w[1].c_str(), nullptr, 0);
 			else if (d == "act_stage" && need(4))
 			{
 				g.act_stage_in = atoi(w[1].c_str());

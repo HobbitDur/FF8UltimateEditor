@@ -447,6 +447,8 @@ def compile_program(description, values=None):
         lines.append(f"task {task['key']} {pools[task['pool']]} 0x{_number(task.get('function', 0)):X} {task['size']}")
         if task.get("code"):   # the original it mirrors (a port module's code spawning it finds it)
             lines.append(f"code 0x{_number(task['code']):X}")
+        if task.get("native"):   # its body the port of that original (a port module's task)
+            lines.append(f"native 0x{_number(task['native']):X}")
         if "node" in task:
             lines += node(task, where)
         if task.get("draws_first"):
