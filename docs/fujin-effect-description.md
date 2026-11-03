@@ -1155,3 +1155,10 @@ Potion's description is the same with its own sequences and sound.
        wait, the particle spawner's ticks (20..24: its count table a tick), the stage wobble (level,
        step). Data: the sound, the camera track, "mag031.tim".
      - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
+   - **Shell (33)** (FFNx 69f851c6; the spell; the act family with Drain's master, Esuna's description):
+     the actor pools and the stage darkening in, one emitter per action - its sound, the shield model on
+     the target (its size the actor particles' scale), the actor system, the result; after the last
+     action a wait, the darkening out.
+     - *Inputs* (`ShellParams`): the emitter's sound, release and result ticks, the master's wait, the
+       actor system, the stage darkening (level, step). Data: the sound, the camera track, "mag032.tim".
+     - *Fujin:* its tabs (Emitter, Stage darkening); no + menu family.
