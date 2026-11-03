@@ -1147,3 +1147,11 @@ Potion's description is the same with its own sequences and sound.
        master's wait, the actor system, the stage light (level, step). Data: the sound, the camera track,
        "mag030.tim".
      - *Fujin:* its tabs (Emitter, Stage light); no + menu family.
+   - **Protect (32)** (FFNx cf3cf809; the spell; the act family with Drain's master, NORG Pod opening's
+     description): the stage wobble in, one emitter per action - its sound, a screen flash, the shield
+     model played on the target, particles thrown out, the result; after the last action a wait, the
+     stage wobble out.
+     - *Inputs* (`ProtectParams`): the emitter's sound, flash, release and result ticks, the master's
+       wait, the particle spawner's ticks (20..24: its count table a tick), the stage wobble (level,
+       step). Data: the sound, the camera track, "mag031.tim".
+     - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.

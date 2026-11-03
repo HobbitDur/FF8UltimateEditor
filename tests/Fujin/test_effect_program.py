@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    32: ("mag031.tim", 9, "emitter.flash 10\nmaster.wait 15\nwobble.step 64\nparticles.from 22\n"),
     30: ("mag029.tim", 13, "laser.grow 512\nlaser.hold 20\nmaster.wait 30\nlight.step 64\n"),
     29: ("mag028.tim", 6, "actors.start 4\nactors.length 30\nemitter.result 30\nemitter.release 30\n"),
     28: ("mag027-051.tim", 10, "emitter.flash 10\nmaster.wait 20\nfade.step 64\nactors.length 30\n"),
@@ -315,7 +316,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast and Counter Laser-Eye from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye and Protect from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -910,3 +911,10 @@ def test_heartbreak_runs_from_its_description(tmp_path):
         task.pop("function", None)
     new, log = record_creeps(225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
     assert "program: New_heartbreak" in log and untag(new) == original
+
+
+def test_protect_description_compiles():
+    """Protect: Doom's kind with Drain's master without actor pools - the stage wobble in and out (native tasks) after its wait."""
+    lines = compile_program(load_description(32)).splitlines()
+    for line in ['module 32 0x26C3890 0xA438', 'act_stage 1 2 $4', 'native 0x86BDC0']:
+        assert line in lines, line

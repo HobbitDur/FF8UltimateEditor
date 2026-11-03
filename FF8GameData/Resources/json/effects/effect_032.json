@@ -1,0 +1,267 @@
+{
+ "format": 1,
+ "effect": 32,
+ "name": "Protect",
+ "doc": "Protect (spell; the act family, Drain's master without actor pools): once its children are gone the stage wobble in, then one emitter per action - its sound, a screen flash, the shield model played on the target, particles thrown out, the master's release, the result; after the last action a wait, the stage wobble out. Its parts are the port's code (FFNx mag032_protect.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x86B980",
+   "setup": "0x86B9A0",
+   "root": "0x86BB00"
+  },
+  "memory": {
+   "texture_file": "0x26C3954",
+   "packet_cursor": "0x26C3958",
+   "packet_limit": "0x26C3970",
+   "arena_a": "0x26CDAEC",
+   "limit_a": "0x26CD6E4",
+   "arena_b": "0x26CDAE8",
+   "limit_b": "0x26CD6E0",
+   "arena_top": "0x26CDCC4",
+   "init_flag_a": "0x26CDCC0",
+   "init_flag_b": "0x26CA4A0",
+   "cam_ptr_a": "0x26CDCBC",
+   "cam_ptr_b": "0x26C3974",
+   "root_queue": "0x26C3A40",
+   "root_pool": "0x26C3978"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 32,
+  "from": "0x26C3890",
+  "size": "0xA438",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15F8DBC",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15F8278",
+   "size": 2540
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15F3B20",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xB800",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone; the stage in task; after the last action its wait, the stage out task",
+   "stage_in": "stage_in",
+   "stage_out": "stage_out",
+   "wait": "$master.wait"
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x26CD978",
+   "storage": "0x26CD988",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "flash",
+   "queue": "0x26C3890",
+   "storage": "0x26C38A0",
+   "size": 60,
+   "count": 3,
+   "keep": true,
+   "doc": "the screen flash (the port's)"
+  },
+  {
+   "key": "particles",
+   "queue": "0x26C3A50",
+   "storage": "0x26C3A60",
+   "size": 136,
+   "count": 200,
+   "keep": true,
+   "doc": "the particle spawner and particles (the port's)"
+  },
+  {
+   "key": "shields",
+   "queue": "0x26CD6D0",
+   "storage": "0x26CA4A8",
+   "size": 1284,
+   "count": 10,
+   "keep": true,
+   "doc": "the shield model players (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x26CD968",
+   "storage": "0x26CD6E8",
+   "size": 64,
+   "count": 10
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the screen flash, the shield, the particle spawner, the master's release, the result; the master's wait"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage wobble",
+   "doc": "The stage wobble in (once the master's children are gone) and out (after the wait)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "particles",
+   "label": "Particles",
+   "doc": "The particle spawner throws particles from this tick until this one (its count table a tick: 20..24)"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.flash",
+   "part": "emitter",
+   "label": "Flash tick",
+   "doc": "The screen flash at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Result tick",
+   "doc": "The action's result from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "master.wait",
+   "part": "emitter",
+   "label": "Wait",
+   "doc": "After the last action, the wobble out after these ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.from",
+   "part": "emitter",
+   "label": "From",
+   "doc": "",
+   "type": "i16",
+   "min": 20,
+   "max": 24,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.until",
+   "part": "emitter",
+   "label": "Until",
+   "doc": "(its count table has 25 ticks)",
+   "type": "i16",
+   "min": 20,
+   "max": 24,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "Its amplitude (in: up to it, out: from it)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "wobble.step",
+   "part": "stage",
+   "label": "Step",
+   "doc": "Up / down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x86BDC0",
+   "code": "0x86BDC0",
+   "native": "0x86BDC0",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the screen flash, the shield player, the particle spawner, the master's release, the result."
+  },
+  {
+   "key": "stage_in",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x86BCA0",
+   "code": "0x86BCA0",
+   "native": "0x86BCA0",
+   "doc": "The stage wobble in (the port's task: the four stage wobble words up a step a tick)."
+  },
+  {
+   "key": "stage_out",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x86C890",
+   "code": "0x86C890",
+   "native": "0x86C890",
+   "doc": "The stage wobble out (the port's task: from its level down a step a tick to 0)."
+  }
+ ]
+}
