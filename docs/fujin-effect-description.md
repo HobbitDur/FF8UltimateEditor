@@ -1334,3 +1334,18 @@ Potion's description is the same with its own sequences and sound.
        and hold, the water ball's fades and hold, the splash and rain windows. Data: the sound, the
        camera track, "mag054-071.tim".
      - *Fujin:* its tabs (Director, Water ball, Drops); no + menu family.
+   - **Absorb (56)** (FFNx 963b802a; the command ability; a relocated copy of Drain's module, Drain's
+     description): the actor pools and the stage wobble in, one emitter per action - its sound, two
+     screen flashes, the actor system streaming from the target to the caster, the damage; after the
+     last action a wait, the stage wobble out.
+     - *Inputs* (`AbsorbParams`): Drain's - the emitter's sound, flash, release and damage ticks, the
+       master's wait, the actor system, the stage wobble's level and steps. Data: the sound, the camera
+       track, "mag038-055.tim".
+     - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
+   - **Treatment (57)** (FFNx ad6e13ac; the command ability; a relocated copy of Esuna's module, Esuna's
+     description): the actor pools and the stage wobble in, one emitter per action - its sound, the actor
+     system round its target, the result (the heal, the status cure); after the last action a wait, the
+     stage wobble out.
+     - *Inputs* (`TreatmentParams`): Esuna's - the emitter's sound, release and result ticks, the master's
+       wait, the actor system, the stage wobble out. Data: the sound, the camera track, "mag056.tim".
+     - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
