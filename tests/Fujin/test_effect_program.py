@@ -354,9 +354,10 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     described, log = record(tmp_path, effect, "described", f"program={program}")
     tasks = len(load_description(effect)["tasks"])
     assert f"{tasks} tasks, {count} params" in log and untag(described) == original and len(original) > 10000
-    # (Ray-Bomb hurts the party only: on the monster the recorder casts on, no number; Elvoret's entrance hurts
-    # nobody; Draw's sounds are sound ids, BdPlaySy's, which the recorder does not log)
-    assert effect in (10, 17) or any(line.startswith("N ") for line in original)
+    # (Ray-Bomb hurts the party only: on the monster the recorder casts on, no number; Elvoret's entrance and
+    # Ultimecia's model breaking apart hurt nobody; Draw's sounds are sound ids, BdPlaySy's, which the recorder
+    # does not log)
+    assert effect in (10, 17, 64) or any(line.startswith("N ") for line in original)
     assert effect == 15 or any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text(values)
