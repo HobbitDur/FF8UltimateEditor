@@ -990,3 +990,50 @@ def test_dribble_description_compiles():
     lines = compile_program(load_description(41)).splitlines()
     for line in ['module 41 0x267B858 0x1D260', 'arena_size 20480', 'act_pool actor_pool 33600', 'native 0x846900']:
         assert line in lines, line
+
+
+def test_shoot_description_compiles():
+    """Shoot: Doom's kind (Draw's), its emitter the module's own (a native task); its pools run in the master's order (the ball tasks before the prim models)."""
+    lines = compile_program(load_description(42)).splitlines()
+    for line in ['module 42 0x2659108 0x21F1C', 'arena_size 24576', 'act_pool actor_pool 20160', 'native 0x83F020']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag041.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/d1c003.dat",
+                     "extracted_files/battle/d1w008.dat", "extracted_files/battle/d2c006.dat",
+                     "extracted_files/battle/d2w013.dat", "extracted_files/battle/c0m032.dat")
+def test_shoot_runs_from_its_description(tmp_path):
+    """Shoot as Wendigo (c0m032, slot 3) casts it on a party of three (the ball is slot 1, passed between slots 0 and
+    2): what the exe's code records; with parameters, what FFNx's port records with them; as effect 225, itself
+    again."""
+    def record_wendigo(effect, tag, *extra):
+        recorder = lab_recorder()
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(recorder), str(effect), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot1={BATTLE / 'd1c003.dat'}", f"weapon1={BATTLE / 'd1w008.dat'}",
+                              f"slot2={BATTLE / 'd2c006.dat'}", f"weapon2={BATTLE / 'd2w013.dat'}",
+                              f"slot3={BATTLE / 'c0m032.dat'}", "caster=3", "target=0", *extra],
+                             cwd=str(recorder.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return out.read_text().splitlines(), run.stdout
+
+    program = write_program(load_description(42), tmp_path / "effect.fxprog")
+    original, _log = record_wendigo(42, "original")
+    described, log = record_wendigo(42, "described", f"program={program}")
+    assert "1 tasks, 15 params" in log and untag(described) == original and len(original) > 100000
+    assert sum(line.startswith("S ") for line in original) == 2
+    params = tmp_path / "params.txt"
+    params.write_text(chr(10).join(["ball.morph 256", "ball.gravity 64", "ball.shot 2000", "emitter.sound 25",
+                                    "ball.passes 45"]) + chr(10))
+    native, _log = record_wendigo(42, "native", "native=1", f"params={params}")
+    described, log = record_wendigo(42, "described_params", f"program={program}", f"params={params}")
+    assert "5 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(42))
+    description["effect"], description["name"] = 225, "New shoot"
+    del description["copy"]["functions"]
+    for task in description["tasks"]:
+        task.pop("function", None)
+    new, log = record_wendigo(225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_shoot" in log and untag(new) == original

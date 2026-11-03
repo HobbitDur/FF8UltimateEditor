@@ -1223,3 +1223,14 @@ Potion's description is the same with its own sequences and sound.
        ticks, the actor system, the ball's grab ticks, morph, throw tick, lift, gravity and unmorph. Data:
        the sounds, the camera track, "mag040.tim".
      - *Fujin:* its tabs (Emitter, Ball); no + menu family.
+   - **Shoot (42)** (FFNx 2d463a4f; Wendigo's enemy attack; the act family, Draw's description): one
+     emitter per action - the kick sound, the ball's prim models, an actor system and the ball: party slot
+     1 grabbed and morphed into a ball, passed between slots 0 and 2 with kick bursts (the exe's pass and
+     kick scripts), shot away, landing with dust, walking back; the damage.
+     - *Inputs* (`ShootParams`): the kick and landing sounds, the emitter's sound, release and damage
+       ticks, the actor system, the ball's grab ticks, morph, passes tick, shot distance, lift, gravity
+       and unmorph. Data: the sounds, the camera track, "mag041.tim".
+     - *Pools:* listed in the master's queue order (emitters, actors, the ball tasks, the prim models): a
+       kick spawned by the ball runs in the same tick only when its pool comes after the ball's.
+     - *Lab:* recorded with three party members (slots 0-2) and Wendigo (c0m032) casting it.
+     - *Fujin:* its tabs (Emitter, Ball); no + menu family.

@@ -1,0 +1,337 @@
+{
+ "format": 1,
+ "effect": 42,
+ "name": "Shoot",
+ "doc": "Shoot (Wendigo's enemy attack; the act family): one emitter per action - the kick sound, the ball's prim models, an actor system (its actor data the exe's) and the ball: party slot 1 grabbed and morphed into a ball, passed between slots 0 and 2 with kick bursts (the exe's pass and kick scripts), shot away, landing with dust, given back and walking back; the damage. Its parts are the port's code (FFNx mag042_shoot.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x83ECA0",
+   "setup": "0x83ECC0",
+   "root": "0x83EE00"
+  },
+  "memory": {
+   "texture_file": "0x2659108",
+   "packet_cursor": "0x265910C",
+   "packet_limit": "0x266CA8C",
+   "arena_a": "0x267AC64",
+   "limit_a": "0x26725EC",
+   "arena_b": "0x267AC60",
+   "limit_b": "0x26725E8",
+   "arena_top": "0x267B01C",
+   "init_flag_a": "0x267B018",
+   "init_flag_b": "0x2671AE4",
+   "cam_ptr_a": "0x267B010",
+   "cam_ptr_b": "0x266CA90",
+   "root_queue": "0x266CB60",
+   "root_pool": "0x266CA98",
+   "particle_pool": "0x267AC98",
+   "actor_pool": "0x267B014",
+   "particle_next": "0x2671AE0",
+   "actor_next": "0x267ACA4",
+   "cursor_c": "0x267AC94",
+   "cursor_d": "0x2659110",
+   "count_a": "0x267B008",
+   "count_b": "0x267AC96"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 42,
+  "from": "0x2659108",
+  "size": "0x21F1C",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15CA598",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15C9EE4",
+   "size": 564
+  },
+  "sounds.kick": {
+   "kind": "sound",
+   "address": "0x15C62B8",
+   "size": 4
+  },
+  "sounds.land": {
+   "kind": "sound",
+   "address": "0x15C62BC",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x6000",
+  "release_file": false,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x438",
+    "actor_pool": "0x4EC0"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x267AAF0",
+   "storage": "0x267AB00",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x2672DE0",
+   "storage": "0x26725F0",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor system (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x266CB70",
+   "storage": "0x266CB80",
+   "size": 508,
+   "count": 40,
+   "keep": true,
+   "doc": "the ball spawner, the ball, the bursts, the dust (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x26725D8",
+   "storage": "0x2671AE8",
+   "size": 280,
+   "count": 10,
+   "keep": true,
+   "doc": "the ball's and the kicks' prim models (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: the kick sound, the ball's prim models, the actor system (its actor data the exe's), the ball spawner, the master's release, the damage"
+  },
+  {
+   "id": 0,
+   "key": "ball",
+   "title": "Ball",
+   "doc": "Party slot 1 grabbed, morphed into a ball, passed between slots 0 and 2 (the exe's pass and kick scripts), shot away, landing with dust, walking back"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The kick (at the emitter's sound tick), the landing"
+  },
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "At the emitter's start: Start, Length (ticks), Mode"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.kick",
+   "part": "emitter",
+   "label": "Kick",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.kick",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.land",
+   "part": "emitter",
+   "label": "Landing",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.land",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound tick",
+   "doc": "The kick sound at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 125,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The damage of its targets from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 125,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "emitter",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "emitter",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.grab",
+   "part": "ball",
+   "label": "Grab ticks",
+   "doc": "The morph starts at this tick of the ball",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 19,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.morph",
+   "part": "ball",
+   "label": "Morph",
+   "doc": "Into the ball a tick (4096: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.passes",
+   "part": "ball",
+   "label": "Passes tick",
+   "doc": "Held until this tick, then the passes",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.shot",
+   "part": "ball",
+   "label": "Shot distance",
+   "doc": "The shot lands this far along the entity's facing from its place",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 3072,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.lift",
+   "part": "ball",
+   "label": "Lift",
+   "doc": "The shot's upward speed",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.gravity",
+   "part": "ball",
+   "label": "Gravity",
+   "doc": "Added to its falling speed a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 1024,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.unmorph",
+   "part": "ball",
+   "label": "Unmorph",
+   "doc": "Back from the ball a tick in the shot (4096: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x83F020",
+   "code": "0x83F020",
+   "native": "0x83F020",
+   "doc": "One per action: the module's own emitter (the port's task): the kick sound, the ball's prim models, the actor system and the ball spawner, the master's release, the damage."
+  }
+ ]
+}
