@@ -1,0 +1,673 @@
+{
+ "format": 1,
+ "effect": 106,
+ "name": "Reflect",
+ "doc": "Reflect (spell; Carbuncle's Ruby Light's \"ruby\" part in its own copy): one barrier per action, in turn (one every 10 ticks, not while one of 35 ticks or less runs on that target): a frame on the target turned with it and scaled by its size, a wall model growing up through it with a scrolling texture then fading out, eight hexagons orbiting a point that climbs the wall, three rings growing above the target; the result at 35, the end at 40. Its beams are vanilla dead code: allocated, never drawn, they still draw shared random numbers.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory (no magic buffer: its pools and packet arenas are module memory).",
+  "functions": {
+   "file_loader": "0x6D2AC0",
+   "setup": "0x6D2AE0",
+   "root": "0x6D2C00"
+  },
+  "memory": {
+   "texture_file": "0x2521F70",
+   "ctx": "0x2523B78",
+   "root_pool": "0x2523C80",
+   "packet_arena_a": "0x2523C98",
+   "packet_arena_b": "0x2533C98",
+   "packet_cursor": "0x2543C98",
+   "root_queue": "0x2543CA0"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "wall": {
+   "kind": "model",
+   "address": "0x12F9B80",
+   "size": 7968,
+   "doc": "the reflect wall (+4 vertex count, +8 vertices of 8 bytes, then its primitive lists)"
+  },
+  "hexagon": {
+   "kind": "model",
+   "address": "0x12FBAA0",
+   "size": 216,
+   "doc": "a prim model (drawn by 0x572200)"
+  },
+  "ring": {
+   "kind": "model",
+   "address": "0x12FBB78",
+   "size": 1672,
+   "doc": "a prim model (drawn by 0x572200)"
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x12FC200",
+   "size": 1968
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x12FC9B0",
+   "size": 4
+  },
+  "sincos": {
+   "kind": "table",
+   "address": "0x12FC9B4",
+   "size": 16384,
+   "doc": "0x1000 x { s16 sin, s16 cos }"
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x13009B4",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "barrier",
+  "every": "$timing.every",
+  "spawn_tick": 0,
+  "seed_shared_rand": true,
+  "place": [
+   "action_target",
+   0,
+   0,
+   0,
+   0,
+   "$timing.busy_tick",
+   0,
+   0,
+   0
+  ]
+ },
+ "pools": [
+  {
+   "key": "barriers",
+   "queue": "0x2543CB0",
+   "storage": "0x2521BB8",
+   "size": 92,
+   "count": 3
+  },
+  {
+   "key": "hexagons",
+   "queue": "0x2543CD0",
+   "storage": "0x2521CD0",
+   "size": 28,
+   "count": 24
+  },
+  {
+   "key": "rings",
+   "queue": "0x2543CE0",
+   "storage": "0x2523B80",
+   "size": 28,
+   "count": 9
+  },
+  {
+   "key": "beams",
+   "queue": "0x2543CC0",
+   "storage": "0x2521F78",
+   "size": 28,
+   "count": 256
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The director starts one barrier per action, in turn (not while a young one runs on that target), with its hexagons; each barrier's clock: its frame on the target, its sound, its result, its end; the dead beams (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "wall",
+   "title": "Wall",
+   "doc": "The wall model growing up through the barrier's frame, its texture scrolling, then fading out"
+  },
+  {
+   "id": 2,
+   "key": "hexagons",
+   "title": "Hexagons",
+   "doc": "Hexagon models orbiting a point that climbs the wall, tilting, then squashed and faded"
+  },
+  {
+   "id": 3,
+   "key": "rings",
+   "title": "Rings",
+   "doc": "Ring models growing above the target, one every few wall steps"
+  }
+ ],
+ "groups": [
+  {
+   "key": "hexagons.tilt_speed",
+   "label": "Tilt speed",
+   "doc": "Their tilt a tick: Base - (rand & Mask)"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The director starts the next action's barrier every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.busy_tick",
+   "part": "timing",
+   "label": "Busy tick",
+   "doc": "Not while a barrier on that target is at this tick or before (the cycle restarts; -1: never)",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the target's effect position when the barrier tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 257,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the barrier tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The barrier ends when its tick reaches this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.size_shift",
+   "part": "timing",
+   "label": "Size shift",
+   "doc": "Its frame scaled by min(the target's size << this, 4096)",
+   "type": "i16",
+   "min": 0,
+   "max": 12,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "wall.from",
+   "part": "wall",
+   "label": "From tick",
+   "doc": "The wall is drawn from this barrier tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "wall.ticks",
+   "part": "wall",
+   "label": "Ticks",
+   "doc": "...for this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "wall.grow",
+   "part": "wall",
+   "label": "Grow steps",
+   "doc": "It grows up over its first steps (this many + 1)...",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "wall.fade",
+   "part": "wall",
+   "label": "Fade steps",
+   "doc": "...then fades out over this many",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.count",
+   "part": "hexagons",
+   "label": "Count",
+   "doc": "Hexagons spawned with each barrier",
+   "type": "i16",
+   "min": 0,
+   "max": 24,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.climb_ticks",
+   "part": "hexagons",
+   "label": "Climb ticks",
+   "doc": "Their centre climbs the wall's vertices over the barrier's first ticks...",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.climb_steps",
+   "part": "hexagons",
+   "label": "Climb steps",
+   "doc": "...this many vertices",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.tilt",
+   "part": "hexagons",
+   "label": "Tilt",
+   "doc": "Their first X rotation (4096 = a turn)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.angle_step",
+   "part": "hexagons",
+   "label": "Angle step",
+   "doc": "Their first angles apart around the centre",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.turn",
+   "part": "hexagons",
+   "label": "Turn",
+   "doc": "Their turn a tick (its side random)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.tilt_speed.base",
+   "part": "hexagons",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -37,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.tilt_speed.mask",
+   "part": "hexagons",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4095,
+   "default": 31,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.end_tick",
+   "part": "hexagons",
+   "label": "End tick",
+   "doc": "A hexagon ends when its tick reaches this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.fade_from",
+   "part": "hexagons",
+   "label": "Fade from",
+   "doc": "Squashed and faded after this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "hexagons.fade_ticks",
+   "part": "hexagons",
+   "label": "Fade ticks",
+   "doc": "...over this many",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.every",
+   "part": "rings",
+   "label": "Every",
+   "doc": "A ring every this many wall steps from the wall's first tick...",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.last_tick",
+   "part": "rings",
+   "label": "Last tick",
+   "doc": "...to this barrier tick",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.scale",
+   "part": "rings",
+   "label": "Size",
+   "doc": "Its first size (4096 = its own)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.speed",
+   "part": "rings",
+   "label": "Growth",
+   "doc": "Its first growth a tick",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.accel",
+   "part": "rings",
+   "label": "Brake",
+   "doc": "Added to its growth a tick...",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -8,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.min_speed",
+   "part": "rings",
+   "label": "Least growth",
+   "doc": "...down to this",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.end_tick",
+   "part": "rings",
+   "label": "End tick",
+   "doc": "A ring ends when its tick reaches this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.fade_ticks",
+   "part": "rings",
+   "label": "Fade ticks",
+   "doc": "Faded in and out (a half sine) over this many",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "beams.count",
+   "part": "timing",
+   "label": "Dead beams",
+   "doc": "Vanilla dead code: beams allocated a tick while the centre climbs, each drawing a shared random number while their pool has room (never drawn)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 12,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "barrier",
+   "pool": "barriers",
+   "size": 92,
+   "function": "0x6D3160",
+   "doc": "One per action: its frame on the target (turned with it, scaled by its size, at the middle of its effect points 0xF0 / 0xF1) and the hexagons' centre climbing the wall's vertices; the hexagons at its first tick; the dead beams; the wall growing, scrolling, fading; a ring every few wall steps; its sound, the result, its end.",
+   "node": [
+    "counter",
+    "action",
+    "entity",
+    "barrier"
+   ],
+   "every_tick": [
+    [
+     "barrier_frame",
+     "$timing.size_shift"
+    ],
+    [
+     "barrier_center",
+     "@wall",
+     "$hexagons.climb_ticks",
+     "$hexagons.climb_steps"
+    ]
+   ],
+   "spawns": [
+    {
+     "task": "hexagon",
+     "window": [
+      0,
+      0
+     ],
+     "every": 1,
+     "place": [
+      "orbit_spawn",
+      "$hexagons.count",
+      "$hexagons.tilt",
+      "$hexagons.angle_step",
+      "$hexagons.turn",
+      "$hexagons.tilt_speed.base",
+      "$hexagons.tilt_speed.mask"
+     ]
+    },
+    {
+     "task": "ring",
+     "window": [
+      "$wall.from",
+      "$rings.last_tick"
+     ],
+     "every": "$rings.every",
+     "place": [
+      "growth_spawn",
+      "@wall",
+      "$wall.from",
+      "$wall.grow",
+      "$rings.scale",
+      "$rings.speed",
+      "$rings.accel",
+      "$timing.size_shift"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "dead_beams",
+     "$hexagons.climb_ticks",
+     "$beams.count",
+     "beams"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "wall",
+     "draw": [
+      "barrier_wall",
+      "@wall",
+      "$wall.from",
+      "$wall.ticks",
+      "$wall.grow",
+      "$wall.fade"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "sound_3d_at_position",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume",
+     0
+    ],
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "tick_above",
+    "$timing.end_tick"
+   ]
+  },
+  {
+   "key": "hexagon",
+   "pool": "hexagons",
+   "size": 28,
+   "function": "0x6D2F30",
+   "doc": "A hexagon model orbiting the barrier's climbing centre, Z-rotated against its angle, tilting, squashed and faded at the end.",
+   "node": [
+    "counter",
+    "orbit"
+   ],
+   "draws": [
+    {
+     "part": "hexagons",
+     "draw": [
+      "orbit_model",
+      "@hexagon",
+      "$hexagons.fade_from",
+      "$hexagons.fade_ticks",
+      "0xF3",
+      "@sincos"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "orbit_move"
+    ]
+   ],
+   "end": [
+    "tick_above",
+    "$hexagons.end_tick"
+   ]
+  },
+  {
+   "key": "ring",
+   "pool": "rings",
+   "size": 28,
+   "function": "0x6D3AF0",
+   "doc": "A ring model above the barrier at the wall's top when it spawned, growing (braking), faded in and out.",
+   "node": [
+    "counter",
+    "growth"
+   ],
+   "draws": [
+    {
+     "part": "rings",
+     "draw": [
+      "growth_model",
+      "@ring",
+      "$rings.fade_ticks",
+      "0xF3"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "growth_step",
+     "$rings.min_speed"
+    ]
+   ],
+   "end": [
+    "tick_above",
+    "$rings.end_tick"
+   ]
+  }
+ ]
+}

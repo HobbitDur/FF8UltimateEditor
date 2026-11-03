@@ -1,5 +1,5 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's), and the description an effect made
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's), and the description an effect made
 of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
@@ -8,7 +8,7 @@ from its source effect's whole description, keeping what its parts bring: all of
 together are that effect exactly (whatever order they were added in), some of them a smaller effect
 of the same kind. Parts of two families never mix: their nodes and directors differ (the heal
 ring's effect-library nodes and per-action director, Hypnotize's plain nodes and master, Antidote's
-one layout on the target, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's and Flare's cycles of one task per action).
+one layout on the target, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's and Reflect's cycles of one task per action).
 
 No Qt here.
 """
@@ -136,6 +136,15 @@ TEMPLATES = {
                          (), ("flare",), "The target hidden and redrawn rippled around its effect position."),
     "flare_sparks": ("collapsing into the target", "Moving parts", "per_action_burst", 124, "sparks", ("spark",), (),
                      ("flare",), "Sprites on a sphere around the target that collapse into it, then burst out."),
+    # Reflect's family (one barrier per action: a frame on the target, a wall growing through it; hexagons, rings)
+    "reflect": ("one per action, a wall around its target", "How the effect starts", "per_action_barrier", 106, "wall",
+                ("barrier",), (), (), "One barrier per action, every few ticks (not while a young one runs on that "
+                "target): a frame turned with the target, a wall model growing up through it with a scrolling texture, "
+                "then fading; its sound, the result (Reflect's way)."),
+    "reflect_hexagons": ("orbiting up the wall", "Moving parts", "per_action_barrier", 106, "hexagons", ("hexagon",), (),
+                         ("reflect",), "Hexagon models orbiting a point that climbs the wall, tilting, then squashed and faded."),
+    "reflect_rings": ("growing above the target", "Moving parts", "per_action_barrier", 106, "rings", ("ring",), (),
+                      ("reflect",), "Ring models growing above the target, one every few wall steps."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout",
@@ -143,7 +152,7 @@ STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout
           "per_action_ring": "flash_ring", "per_action_aura": "aura",
           "per_action_wind": "wind", "per_action_flash": "blind",
           "per_action_stare": "stare", "per_action_sway": "zombie",
-          "per_action_burst": "flare"}
+          "per_action_burst": "flare", "per_action_barrier": "reflect"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
             "on_target": "One layout on the target (Antidote's kind)",
@@ -156,7 +165,8 @@ FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "per_action_flash": "One per action, left on its target (Blind's kind)",
             "per_action_stare": "From the caster, then on its target (Petrify Stare's kind)",
             "per_action_sway": "One per action, its target swaying (Zombie's kind)",
-            "per_action_burst": "One per action, a burst on its target (Flare's kind)"}
+            "per_action_burst": "One per action, a burst on its target (Flare's kind)",
+            "per_action_barrier": "One per action, a wall around its target (Reflect's kind)"}
 
 
 @functools.cache
@@ -283,7 +293,7 @@ def build_effect(effect_id, name, parts, exe=None, keep=None):
             if not director[key]:
                 del director[key]
     used_pools = {t["pool"] for t in tasks} | {s["place"][1] for t in tasks for s in t.get("spawns", [])
-                                              if s.get("place", [None])[0] == "glint"}
+                                              if s.get("place", [None])[0] == "glint"}         | {a[3] for t in tasks for a in t.get("events", []) if a[0] == "dead_beams"}   # (Reflect's beam pool)
     d["pools"] = [p for p in d["pools"] if p["key"] in used_pools]
     if "param" in d["resources"].get("texture", {}) and d["resources"]["texture"]["param"] not in kept_params:
         del d["resources"]["texture"]["param"]

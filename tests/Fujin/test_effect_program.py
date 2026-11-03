@@ -265,6 +265,7 @@ CYCLES = {
                             "mist.depth.shift 4\n"),
     124: ("mag123.tim", 34, "tint.ticks 16\ntint.shift 8\nsparks.count 4\nsilhouette.from 30\nflash.level 1500\n"
                             "burst.depth.shift 4\n"),
+    106: ("mag105.tim", 32, "hexagons.count 5\nwall.grow 15\nrings.every 4\nbeams.count 6\ntiming.size_shift 3\n"),
 }
 
 
@@ -284,7 +285,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie and Flare from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare and Reflect from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -405,3 +406,17 @@ def test_flare_description_compiles():
                for line in lines) == 2
     assert any(" ripple_silhouette $25 $26 " in line for line in lines) and "end spark_gone" in lines
     assert any(" collapse_sparks $28 " in line for line in lines)
+
+
+def test_reflect_description_compiles():
+    """Reflect: the cycle director starts its barrier at counter 0, the setup seeds the shared LCG,
+    its packet arenas are its own memory (no magic buffer); the barrier spawns its hexagons at its
+    first tick and its rings over the wall's steps, draws the wall, and its dead beams draw shared
+    rands from the beam pool."""
+    program = compile_program(load_description(106))
+    lines = program.splitlines()
+    assert "seed_shared_rand" in lines and "cycle_spawn_tick 0" in lines and "memory packet_arena_a 0x2523C98" in lines
+    assert not any(line.startswith("magic_buffer") for line in lines) and "field barrier 20 72" in lines
+    assert any(line.startswith("spawn_every ") and " orbit_spawn " in line for line in lines)
+    assert any(line.startswith("spawn_every ") and " growth_spawn " in line for line in lines)
+    assert "event dead_beams $13 $31 3" in lines and any(" barrier_wall " in line for line in lines)

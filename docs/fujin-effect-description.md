@@ -706,3 +706,35 @@ Potion's description is the same with its own sequences and sound.
      - *Fujin:* its tabs (Timing, Burst, Ring, Silhouette, Sparks); a thirteenth family in the +
        menu, "One per action, a burst on its target (Flare's kind)": Burst (the start), Ring,
        Silhouette, Sparks.
+   - **Reflect (106)** (FFNx dcb47aa1; Carbuncle's Ruby Light's "ruby" part in its own copy): the cycle
+     director starting one barrier per action at counter 0 (not while one of 35 ticks or less runs on
+     that target); a frame turned with the target, a wall model growing up through it, hexagons
+     orbiting a point climbing the wall, rings above the target. No magic buffer: its pools and
+     packet arenas are module memory.
+     - *Shared:* the cycle director and its busy wait, `sound_3d_at_position`, `heal_action_at`,
+       `tick_above`, the plain spawns (every few ticks of a window).
+     - *Added:*
+       - the director's `"spawn_tick"` (the counter it starts a task at; Reflect 0) and
+         `"seed_shared_rand"` (the setup seeds the effects' shared LCG, 0x2557098, with a CRT
+         rand, as Reflect's _Init); the memory `packet_arena_a` / `packet_arena_b` (0x10000 bytes
+         each) for arenas of the effect's own, with no `magic_buffer`;
+       - the library's barrier (`fx_barrier.h`): the node fields `barrier` (its frame, view and
+         climbing centre: the director puts it at the middle of the target's effect points 0xF0
+         / 0xF1), `orbit` and `growth` (a hexagon's and a ring's, each pointing at its barrier);
+         the actions `barrier_frame` (size shift), `barrier_center` (wall, ticks, steps),
+         `dead_beams` (ticks, count, the beam pool: Reflect's vanilla dead beams, never drawn,
+         still drawing shared rands while their pool has room), `orbit_move`, `growth_step`
+         (least growth); the placements `orbit_spawn` (count, tilt, angle step, turn, tilt speed
+         base / mask: shared rands) and `growth_spawn` (wall, wall from, grow, size, growth,
+         brake, size shift); the draws `barrier_wall` (wall, from, ticks, grow, fade: the wall's
+         textured quads, gouraud triangles and gouraud quads between texture windows, its V
+         scrolling, its vertices drawn up to its growing top: the height range measured from the
+         model as _Init does), `orbit_model` (model, fade from / ticks, draw mode, sin / cos
+         table) and `growth_model` (model, fade ticks, draw mode).
+     - *Inputs* (`ReflectParams`): the cycle and its busy tick, the sound, damage and end ticks,
+       the frame's size shift, the wall's window, growth and fade, the hexagons' count, climb,
+       tilt, angle step, turn, tilt speed, end and fade, the rings' spacing, last tick, size,
+       growth, brake, end and fade, the dead beams' count. Data: the wall, hexagon and ring
+       models, the camera track (1968 bytes), the sound, the sin / cos table, "mag105.tim".
+     - *Fujin:* its tabs (Timing, Wall, Hexagons, Rings); a fourteenth family in the + menu, "One
+       per action, a wall around its target (Reflect's kind)": Wall (the start), Hexagons, Rings.

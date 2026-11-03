@@ -45,6 +45,7 @@
 #include "fx_layouts.h"
 #include "fx_sway.h"
 #include "fx_ripple.h"
+#include "fx_barrier.h"
 
 namespace fxprog
 {
@@ -66,17 +67,17 @@ namespace fxprog
 	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value, count; Step draw; };   // (count: WITHIN's)
 	// a plain node's fields (offsets in the node; -1: none)
 	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, F_END, F_SEQ, F_RADIUS, F_ANGLE, F_SPEED, F_FADE,
-	             F_LEAF, F_COLOUR, F_RIPPLE, F_SPARK, FIELD_COUNT };
+	             F_LEAF, F_COLOUR, F_RIPPLE, F_SPARK, F_BARRIER, F_ORBIT, F_GROWTH, FIELD_COUNT };
 	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity",
 	                                                      "layout_b", "spawn", "end", "seq", "radius", "angle", "speed", "fade",
-	                                                      "leaf", "colour", "ripple", "spark" };
+	                                                      "leaf", "colour", "ripple", "spark", "barrier", "orbit", "growth" };
 	struct Task
 	{
 		std::string key;
 		int pool = 0, size = 0;
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		bool plain = false, draws_first = false;
-		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 		int layout_size = 0, layout_b_size = 0;
 		Step end;                                 // a plain node's end (after its counter)
 		std::vector<Step> at_end;                 // actions when it ends
@@ -109,6 +110,8 @@ namespace fxprog
 		std::vector<Step> director_events_first;        // ...or before them
 		bool camera_matrix = false;                     // the master's own camera matrix (memory camera_matrix), every tick
 		bool master_setup = false;                      // a cycle director set up as the master is (Petrify Stare's: the caster kept, the camera always)
+		bool seed_shared_rand = false;                  // the setup seeds the effects' shared LCG with a CRT rand (Reflect's)
+		int director_spawn_tick = 1;                    // the cycle director's counter it starts a task at (Reflect: 0)
 		uint32_t arena_a = 0, arena_b = 0, morph = 0;   // in the magic buffer
 		std::vector<std::pair<std::string, uint32_t>> own;   // memory of its own: name, size
 		std::vector<uint8_t> block;                     // that memory (never resized once allocated)
@@ -129,17 +132,19 @@ namespace fxprog
 		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET, SCREEN_FLASH_CURVE, SCREEN_FLASH_OFF, SPIN, WHIRL_LEAF_MOVE,
 		FLASH_LEVEL_RAISE, FOLLOW_BONE, SOUND_3D_AT_POSITION, FLASH_LEVEL_CLEAR, SCREEN_FLASH_LEVEL, POINT_AT_POSITION,
 		MARK_RING_FROM, UNMARK_RING, FLASH_LEVEL_HOLD, FLASH_LEVEL_SET, MARK_TARGET, TINT_TARGET, SPARK_STEP, SPARK_MOVE,
+		BARRIER_FRAME, BARRIER_CENTER, DEAD_BEAMS, ORBIT_MOVE, GROWTH_STEP,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE,
 		// motions
 		HELIX,
 		// placements
 		CIRCLE_DROP, GLINT, AT_PARENT, TABLE_POINT, RANDOM_TARGET_BONE, RANDOM_TARGET_POINT, ACTION_TARGETS,
-		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING, WHIRL_LEAF, COLLAPSE_SPARKS,
+		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING, WHIRL_LEAF, COLLAPSE_SPARKS, ORBIT_SPAWN, GROWTH_SPAWN,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
 		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET, LAYOUT_SCALED_ON_TARGET,
 		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR, LAYOUT_ON_POINT, SWAY_OVERLAY, RIPPLE_SILHOUETTE, SPARK_SPRITE,
+		BARRIER_WALL, ORBIT_MODEL, GROWTH_MODEL,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -172,7 +177,9 @@ namespace fxprog
 		{ "sway_overlay", SWAY_OVERLAY }, { "flash_level_hold", FLASH_LEVEL_HOLD }, { "flash_level_set", FLASH_LEVEL_SET },
 		{ "mark_target", MARK_TARGET }, { "tint_target", TINT_TARGET }, { "spark_step", SPARK_STEP }, { "spark_move", SPARK_MOVE },
 		{ "spark_gone", SPARK_GONE }, { "collapse_sparks", COLLAPSE_SPARKS }, { "ripple_silhouette", RIPPLE_SILHOUETTE },
-		{ "spark_sprite", SPARK_SPRITE },
+		{ "spark_sprite", SPARK_SPRITE }, { "barrier_frame", BARRIER_FRAME }, { "barrier_center", BARRIER_CENTER },
+		{ "dead_beams", DEAD_BEAMS }, { "orbit_move", ORBIT_MOVE }, { "growth_step", GROWTH_STEP }, { "orbit_spawn", ORBIT_SPAWN },
+		{ "growth_spawn", GROWTH_SPAWN }, { "barrier_wall", BARRIER_WALL }, { "orbit_model", ORBIT_MODEL }, { "growth_model", GROWTH_MODEL },
 	};
 
 	inline Program *g_program = nullptr;
@@ -183,7 +190,8 @@ namespace fxprog
 	// ------------------------------------------------------------------
 	inline int32_t V(const Val &x) { return x.param ? g_program->params[x.v].value : x.v; }
 	inline int32_t G(const Val &x) { return x.param ? g_program->params[x.v].game : x.v; }     // the game's value
-	inline uint32_t Mem(const char *name) { return g_program->memory[name]; }
+	inline uint32_t Mem(const char *name) { auto it = g_program->memory.find(name); return it == g_program->memory.end() ? 0 : it->second; }
+	inline bool HasMem(const char *name) { return g_program->memory.count(name) != 0; }
 	inline uint32_t &PacketCursor() { return var<uint32_t>(Mem("packet_cursor")); }
 	inline OverlayCtx &Overlay() { return var<OverlayCtx>(Mem("overlay_ctx")); }
 	inline uint32_t &MagicBuffer() { return var<uint32_t>(Mem("magic_buffer")); }
@@ -356,6 +364,28 @@ namespace fxprog
 			f->mode = (int16_t)layouts::CollapseSparkPrepare(f, V(a[0]), V(a[1]));
 			break;
 		}
+		case BARRIER_FRAME: // size shift: the node's barrier turned with its entity, scaled by min(its size << shift, 4096), through the camera
+			layouts::BarrierFrame(Fld<layouts::Barrier>(t, n, F_BARRIER), *Fld<uint8_t *>(t, n, F_ENTITY), V(a[0]));
+			break;
+		case BARRIER_CENTER: // wall, ticks, steps: the barrier's centre climbing the wall model's vertices over its first ticks
+			if ((uint32_t)Tick(t, n) < (uint32_t)V(a[1]))
+				layouts::BarrierCenter((uint32_t)V(a[0]), Tick(t, n), V(a[2]), V(a[1]), Fld<layouts::Barrier>(t, n, F_BARRIER)->center);
+			break;
+		case DEAD_BEAMS: // ticks, count, pool: Reflect's dead beams over the first ticks (shared rands while the pool has room)
+			if ((uint32_t)Tick(t, n) < (uint32_t)V(a[0]))
+			{
+				const Pool &pool = g_program->pools[V(a[2])];
+				layouts::DeadBeams(pool.base ? MagicBuffer() + pool.storage : pool.storage, pool.size, pool.count, V(a[1]));
+			}
+			break;
+		case ORBIT_MOVE: // the node's orbit turned and tilted a tick
+		{
+			layouts::Orbit *o = Fld<layouts::Orbit>(t, n, F_ORBIT);
+			o->angle = (int16_t)(o->angle + o->dangle);
+			o->tilt = (int16_t)(o->tilt + o->dtilt);
+			break;
+		}
+		case GROWTH_STEP: layouts::GrowthStep(Fld<layouts::Growth>(t, n, F_GROWTH), V(a[0])); break;   // least growth
 		case SPARK_MOVE: // its direction turned, its age
 			if (Fld<layouts::CollapseSpark>(t, n, F_SPARK)->mode != -2) layouts::CollapseSparkMove(Fld<layouts::CollapseSpark>(t, n, F_SPARK));
 			break;
@@ -423,6 +453,28 @@ namespace fxprog
 	{
 		const std::vector<Val> &a = sp.place.a;
 		const Task &t = g_program->tasks[sp.task];
+		if (sp.place.op == ORBIT_SPAWN)
+		{
+			// count, tilt, angle step, turn, tilt speed base, mask (Reflect's hexagons): around the spawner's
+			// barrier, from one shared rand (its turn's side and tilt speed: two more each; a full pool
+			// skips a node, its angle not advanced)
+			const layouts::Barrier *parent = Fld<layouts::Barrier>(from, n, F_BARRIER);
+			int32_t angle = layouts::SharedRand();
+			for (int32_t k = V(a[0]); k > 0; k--)
+			{
+				TaskNode *f = (TaskNode *)SpawnTask(sp.task, n);
+				if (!f) continue;
+				layouts::Orbit *o = Fld<layouts::Orbit>(t, f, F_ORBIT);
+				o->parent = parent;
+				o->tilt = (int16_t)V(a[1]);
+				o->angle = (int16_t)angle;
+				o->dangle = (int16_t)V(a[3]);
+				if (layouts::SharedRand() & 1) o->dangle = (int16_t)-o->dangle;
+				o->dtilt = (int16_t)(V(a[4]) - (layouts::SharedRand() & V(a[5])));
+				angle += V(a[2]);
+			}
+			return;
+		}
 		if (sp.place.op == COLLAPSE_SPARKS)
 		{
 			// count, collapse window, turn, sprite size, scale base, shift (Flare's): around the spawner's
@@ -484,6 +536,19 @@ namespace fxprog
 			pos[0] = (int16_t)(pos[0] + spread.roll(CrtRand()));
 			*Fld<int16_t>(t, m, F_SCALE) = (int16_t)scale.roll(CrtRand() >> 4);
 			DecodeLayout(t, m, ((const uint32_t *)V(a[4]))[e % (uint32_t)V(a[5])]);
+			break;
+		}
+		case GROWTH_SPAWN: // wall, wall from, grow, size, growth, brake, size shift: above the spawner's barrier at the wall's top this tick (scaled by the barrier's)
+		{
+			uint8_t *ent = *Fld<uint8_t *>(from, n, F_ENTITY);
+			int32_t scale = shl32(*(const int16_t *)(ent + 0x26), V(a[6]));
+			if (scale > 0x1000) scale = 0x1000;
+			layouts::Growth *g = Fld<layouts::Growth>(t, m, F_GROWTH);
+			g->parent = Fld<layouts::Barrier>(from, n, F_BARRIER);
+			g->height = (int16_t)(mul32((int16_t)layouts::WallHeight((uint32_t)V(a[0]), Tick(from, n) - V(a[1]), V(a[2])), scale) >> 12);
+			g->scale = (int16_t)V(a[3]);
+			g->speed = (int16_t)V(a[4]);
+			g->accel = (int16_t)V(a[5]);
 			break;
 		}
 		case WHIRL_LEAF: // size, turn, climb speed, reach base, shift: around the spawner's anchor, its reach from its entity's size
@@ -595,7 +660,7 @@ namespace fxprog
 	{
 		const std::vector<Val> &a = d.draw.a;
 		layouts::PrimArg arg;
-		arg.morph = MagicBuffer() + g_program->morph;
+		arg.morph = HasMem("magic_buffer") ? MagicBuffer() + g_program->morph : 0;   // (Reflect: no magic buffer)
 		arg.cursor = &PacketCursor();
 		switch (d.draw.op)
 		{
@@ -719,6 +784,21 @@ namespace fxprog
 		case RIPPLE_SILHOUETTE: // from, ticks, tables (distance, weights, sine, one block): the node's entity redrawn rippled around its anchor
 			layouts::RippleSilhouetteTick(*Fld<uint8_t *>(t, n, F_ENTITY), Fld<int16_t>(t, n, F_ANCHOR), Tick(t, n) - V(a[0]), V(a[1]),
 			                              Fld<int32_t>(t, n, F_RIPPLE), layouts::RippleTablesAt((uint32_t)V(a[2])));
+			break;
+		case BARRIER_WALL: // wall, from, ticks, grow, fade: the wall through the node's barrier, growing, its texture scrolling, then fading
+		{
+			const int32_t e = Tick(t, n) - V(a[1]);
+			if ((uint32_t)e >= (uint32_t)V(a[2])) break;
+			layouts::WallDraw((uint32_t)V(a[0]), Tick(t, n), layouts::WallHeight((uint32_t)V(a[0]), e, V(a[3])), layouts::WallFade(e, V(a[3]), V(a[4])),
+			                  &Fld<layouts::Barrier>(t, n, F_BARRIER)->view, PacketCursor());
+			break;
+		}
+		case ORBIT_MODEL: // model, fade from, fade ticks, draw mode, sin / cos table: the node's orbit around its barrier's centre
+			layouts::OrbitDraw((uint32_t)V(a[0]), Fld<layouts::Orbit>(t, n, F_ORBIT), Tick(t, n), V(a[1]), V(a[2]), (uint32_t)V(a[3]), (uint32_t)V(a[4]),
+			                   PacketCursor());
+			break;
+		case GROWTH_MODEL: // model, fade ticks, draw mode: the node's ring above its barrier
+			layouts::GrowthDraw((uint32_t)V(a[0]), Fld<layouts::Growth>(t, n, F_GROWTH), Tick(t, n), V(a[1]), (uint32_t)V(a[2]), PacketCursor());
 			break;
 		case SPARK_SPRITE: // sequence: the node's spark, when its mode draws it
 		{
@@ -1077,18 +1157,20 @@ namespace fxprog
 	{
 		Program &g = *g_program;
 		MasterNode *m = (MasterNode *)n;
+		// (arenas of its own memory: Reflect's, no magic buffer)
+		const bool own_arenas = HasMem("packet_arena_a");
 		if (m->arena)
 		{
-			PacketCursor() = MagicBuffer() + g.arena_a;
+			PacketCursor() = own_arenas ? Mem("packet_arena_a") : MagicBuffer() + g.arena_a;
 			m->arena = 0;
 		}
 		else
 		{
-			PacketCursor() = MagicBuffer() + g.arena_b;
+			PacketCursor() = own_arenas ? Mem("packet_arena_b") : MagicBuffer() + g.arena_b;
 			m->arena = 1;
 		}
 		MasterEvents(g.director_events_first, m);
-		if (m->counter == 1)
+		if (m->counter == g.director_spawn_tick)
 		{
 			if (!m->started)
 			{
@@ -1132,7 +1214,15 @@ namespace fxprog
 						if (V(a[6])) anchor[3] = (int16_t)((*(const int16_t *)(e + 0x26) + V(a[5])) * V(a[6]));   // its size word
 					}
 					if (int16_t *spawn = Fld<int16_t>(t, s, F_SPAWN)) layouts::GetEffectSpawnPosition(e, V(a[3]), 0, spawn);
-					DecodeLayout(t, s, (uint32_t)V(a[1]));
+					if (layouts::Barrier *b = Fld<layouts::Barrier>(t, s, F_BARRIER))   // (Reflect's: at the middle of its effect points 0xF0 / 0xF1)
+					{
+						int16_t c[4];
+						layouts::EffectCentre(e, c);
+						b->model.t[0] = c[0];
+						b->model.t[1] = c[1];
+						b->model.t[2] = c[2];
+					}
+					if (t.field[F_LAYOUT] >= 0) DecodeLayout(t, s, (uint32_t)V(a[1]));
 					if (V(a[2])) DecodeLayoutB(t, s, (uint32_t)V(a[2]));
 					action++;
 				}
@@ -1195,7 +1285,7 @@ namespace fxprog
 	inline TaskQueue *CycleSetup(CastContext *ctx)
 	{
 		Program &g = *g_program;
-		MagicBuffer() = layouts::MagicBuffer();
+		if (HasMem("magic_buffer")) MagicBuffer() = layouts::MagicBuffer();   // (Reflect: none)
 		Ctx() = ctx;
 		TaskQueue *root_queue = (TaskQueue *)Mem("root_queue");
 		InitTaskQueuePool(root_queue, (void *)Mem("root_pool"), sizeof(MasterNode), 1);
@@ -1206,6 +1296,7 @@ namespace fxprog
 			if (g.camera) PlayCameraAnimation((const void *)g.camera);
 			QueueTimUpload(var<uint32_t>(Mem("texture_file")));
 		}
+		if (g.seed_shared_rand) layouts::SeedSharedRand(CrtRand());
 		return root_queue;
 	}
 
@@ -1401,6 +1492,8 @@ namespace fxprog
 			else if (d == "director_event_first") g.director_events_first.push_back(ParseStep(w, 1, &error));
 			else if (d == "camera_matrix") g.camera_matrix = true;
 			else if (d == "master_setup") g.master_setup = true;
+			else if (d == "seed_shared_rand") g.seed_shared_rand = true;
+			else if (d == "cycle_spawn_tick" && need(2)) g.director_spawn_tick = atoi(w[1].c_str());
 			else if (d == "param" && need(5))
 			{
 				Param p;

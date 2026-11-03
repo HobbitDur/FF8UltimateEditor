@@ -48,30 +48,33 @@ ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, 
            "heal_action": 0, "screen_fade_at": 5, "blink_target": 2, "screen_flash_curve": 4, "screen_flash_off": 0,
            "spin": 0, "whirl_leaf_move": 2, "flash_level_raise": 5, "follow_bone": 3, "sound_3d_at_position": 4,
            "point_at_position": 1, "mark_ring_from": 2, "unmark_ring": 1, "flash_level_hold": 6,
-           "flash_level_set": 2, "mark_target": 1, "tint_target": 7, "spark_step": 2, "spark_move": 0}
+           "flash_level_set": 2, "mark_target": 1, "tint_target": 7, "spark_step": 2, "spark_move": 0,
+           "barrier_frame": 1, "barrier_center": 3, "dead_beams": 3, "orbit_move": 0, "growth_step": 1}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1, "tick_at_node_end": 0, "leaf_gone": 0, "spark_gone": 0}
 # the master director's own events (on its counter, after its queues: "events"; before: "events_first")
 DIRECTOR_EVENTS = {"sound_at": 3, "flash_level_clear": 0, "screen_flash_level": 0}
 MOTIONS = {"helix": 2}
 PLACES = {"at_parent": 0, "circle_drop": 8, "glint": 13, "table_point": 3, "random_target_bone": 6,
           "random_target_point": 7, "action_targets": 1, "target_anchor": 7, "action_target": 8, "random_around": 4,
-          "rising_circle": 5, "spinning_ring": 10, "whirl_leaf": 5, "collapse_sparks": 6}
+          "rising_circle": 5, "spinning_ring": 10, "whirl_leaf": 5, "collapse_sparks": 6, "orbit_spawn": 6,
+          "growth_spawn": 7}
 DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_screen": 5, "layout_at_caster_bone": 1,
          "layout_scaled": 1, "sequence_sprite": 3, "layout_at_anchor": 2, "layout_on_target": 5,
          "layout_turned": 10, "node_sequence_sprite": 1,
          "layout_table": 3, "spinning_model": 6, "sequence_at_feet": 7,
          "layout_scaled_on_target": 12, "tumbling_model": 2, "layout_engine_at_anchor": 4,
          "layout_on_point": 7, "sway_overlay": 10, "ripple_silhouette": 3,
-         "spark_sprite": 1}
+         "spark_sprite": 1, "barrier_wall": 5, "orbit_model": 5, "growth_model": 3}
 # a plain node's fields and their sizes (a layout's is given: ["layout", size])
-FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14, "anchor": 8, "action": 2, "entity": 4, "spawn": 8, "end": 2, "seq": 4, "radius": 2, "angle": 2, "speed": 2, "fade": 2, "leaf": 0x30, "colour": 4, "ripple": 4, "spark": 0x20}
+FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14, "anchor": 8, "action": 2, "entity": 4, "spawn": 8, "end": 2, "seq": 4, "radius": 2, "angle": 2, "speed": 2, "fade": 2, "leaf": 0x30, "colour": 4, "ripple": 4, "spark": 0x20, "barrier": 0x48,
+          "orbit": 0x0E, "growth": 0x0E}
 NODE_HEADER = 0xC
 TASK_QUEUE = 0x10
 # what each named memory holds (fxprogram.h), in bytes: a word, an engine task queue, the root pool
 # (the director's kind), the projector overlay's context (fx_overlay.h OverlayCtx), its model draw
 # descriptor and its vertex buffer (Cure's room for them)
 MEMORY_SIZES = {"root_queue": TASK_QUEUE, "overlay_ctx": 0xF8, "overlay_sprite": 0x40, "overlay_verts": 0x6400,
-                "camera_matrix": 0x20}
+                "camera_matrix": 0x20, "packet_arena_a": 0x10000, "packet_arena_b": 0x10000}
 ROOT_POOL = {"per_action": 2 * 0x64, "master": 0x14, "cycle": 0x14}
 
 
@@ -155,7 +158,8 @@ def compile_program(description, values=None):
         return " ".join(out)
 
     def action(entry, where):
-        return step(entry, ACTIONS, where, names={0: tasks} if entry[0] == "spawn" else ())
+        names = {0: tasks} if entry[0] == "spawn" else {2: pools} if entry[0] == "dead_beams" else ()
+        return step(entry, ACTIONS, where, names=names)
 
     def flag(name, where):
         if name is None:
@@ -240,6 +244,10 @@ def compile_program(description, values=None):
         lines.append("camera_matrix")
     if director.get("setup") == "master":
         lines.append("master_setup")
+    if director.get("seed_shared_rand"):
+        lines.append("seed_shared_rand")
+    if director["kind"] == "cycle" and "spawn_tick" in director:
+        lines.append(f"cycle_spawn_tick {_number(director['spawn_tick'])}")
     for param in description["params"]:
         current = values.get(param["key"], param["default"])
         where = f"parameter {param['key']}"
