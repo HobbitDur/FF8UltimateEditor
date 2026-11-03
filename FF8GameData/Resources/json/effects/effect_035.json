@@ -1,0 +1,234 @@
+{
+ "format": 1,
+ "effect": 35,
+ "name": "Life",
+ "doc": "Life (spell; the act family's framework with Double's short root): one emitter per action - its sound, sparkles rising, reviving, ringing round and falling on its target, glints, its phases growing and spreading them; the result (the revive). Its parts are the port's code (FFNx mag035_life.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8649A0",
+   "setup": "0x8649C0",
+   "root": "0x864AB0"
+  },
+  "memory": {
+   "texture_file": "0x26AC780",
+   "packet_cursor": "0x26AC784",
+   "root_pool": "0x26AC7A0",
+   "root_queue": "0x26AC868",
+   "arena_a": "0x26B7174",
+   "arena_b": "0x26B7170"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 35,
+  "from": "0x26AC780",
+  "size": "0xE260",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15E702C",
+   "size": 16
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15E69FC",
+   "size": 1584
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x15E6388",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "The packet arenas in the magic buffer (odd ticks, even ticks); no morph block",
+  "arenas": [
+   "0x0",
+   "0x2000"
+  ],
+  "morph": "0x0"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "root": "short"
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x26B4BD0",
+   "storage": "0x26B6FD0",
+   "size": 100,
+   "count": 4
+  },
+  {
+   "key": "unused",
+   "queue": "0x26B7178",
+   "storage": "0x26B7188",
+   "size": 48,
+   "count": 300,
+   "keep": true,
+   "doc": "never spawned into"
+  },
+  {
+   "key": "sprites",
+   "queue": "0x26B4BB8",
+   "storage": "0x26AC878",
+   "size": 112,
+   "count": 300,
+   "keep": true,
+   "doc": "the sparkles (the port's)"
+  },
+  {
+   "key": "glints",
+   "queue": "0x26B7160",
+   "storage": "0x26B4BE0",
+   "size": 92,
+   "count": 100,
+   "keep": true,
+   "doc": "the glints (the engine's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the sparkles (rising, reviving, ring, falling) and glints it spawns, the result"
+  }
+ ],
+ "groups": [
+  {
+   "key": "grow",
+   "label": "Grow",
+   "doc": "Phase 1, until its tick: the sparkles' scale and the radius up a tick"
+  },
+  {
+   "key": "spread",
+   "label": "Spread",
+   "doc": "Phase 2, until its tick: the radius down, the height spread up, the ring height down a tick"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Result after",
+   "doc": "The action's result (and the master's release) after this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "grow.until",
+   "part": "emitter",
+   "label": "Until",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "grow.scale",
+   "part": "emitter",
+   "label": "Scale",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 384,
+   "unit": "plain"
+  },
+  {
+   "key": "grow.radius",
+   "part": "emitter",
+   "label": "Radius",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 102,
+   "unit": "plain"
+  },
+  {
+   "key": "spread.until",
+   "part": "emitter",
+   "label": "Until",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "spread.radius",
+   "part": "emitter",
+   "label": "Radius down",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 76,
+   "unit": "plain"
+  },
+  {
+   "key": "spread.spread",
+   "part": "emitter",
+   "label": "Spread",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "spread.ring",
+   "part": "emitter",
+   "label": "Ring down",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 38,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 100,
+   "function": "0x864BC0",
+   "code": "0x864BC0",
+   "native": "0x864BC0",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, its phases, the sparkles and glints, the result."
+  }
+ ]
+}

@@ -1167,3 +1167,10 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`PainParams`): the emitter's sound, release and damage ticks. Data: the sound, the camera
        track, "mag033.tim".
      - *Fujin:* its tab (Emitter); no + menu family.
+   - **Life (35)** (FFNx 7c3b5ca4; the spell; the act family's framework with Double's short root, Cura's
+     description): one emitter per action - its sound, sparkles rising, reviving, ringing round and
+     falling on its target, glints, its phases growing and spreading them; the result.
+     - *Inputs* (`LifeParams`): the emitter's sound and result tick, its grow phase (until, scale, radius)
+       and spread phase (until, radius, height spread, ring height). Data: the sound, the camera track,
+       "mag004-034.tim".
+     - *Fujin:* its tab (Emitter); no + menu family.
