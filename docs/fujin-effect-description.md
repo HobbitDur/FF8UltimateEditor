@@ -1240,3 +1240,10 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`BubbleParams`): the emitter's sound, release and damage ticks, the actor system, the
        bubbles' reach (the distance's clamp and factor). Data: the sound, the camera track, "mag042.tim".
      - *Fujin:* its tabs (Emitter, Actor system); no + menu family.
+   - **Junk (44)** (FFNx 34c2dc9e; Tonberry King's enemy attack; a port director, Ray-Bomb's kind): its
+     sound, smoke waves at the caster with a camera shake, the targets bouncing, junk falling round them,
+     bouncing and breaking into smoke, the big item above every target (its debris, the damage); the
+     battle textures restored at the end.
+     - *Inputs* (`JunkParams`): the sound, the shake word and the targets' bounce, the falling items'
+       first tick, span and step, the big item's tick, the gravity. Data: the sound, "mag043.tim".
+     - *Fujin:* its tab (Controller); no + menu family.

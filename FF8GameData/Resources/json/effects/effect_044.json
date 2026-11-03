@@ -1,0 +1,153 @@
+{
+ "format": 1,
+ "effect": 44,
+ "name": "Junk",
+ "doc": "Junk (Tonberry King's enemy attack): its sound, smoke waves at the caster with a camera shake, the targets bouncing, junk falling round them, bouncing and breaking into smoke, the big item above every target - its debris and the damage; the battle textures restored at the end. Its tasks are the port's code (FFNx mag044_junk.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6E7AF0",
+   "setup": "0x6E7AE0",
+   "root": "0x6E7B90"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 44,
+  "from": "0x2545100",
+  "size": "0x84"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x13627D8",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x1354B7C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6E7AE0",
+  "file_loader": "0x6E7AF0",
+  "root": "0x6E7B90"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "control",
+   "title": "Controller",
+   "doc": "Its sound, smoke waves at the caster with a camera shake, the targets bouncing, the falling junk, the big item on every target"
+  }
+ ],
+ "groups": [
+  {
+   "key": "items",
+   "label": "Items",
+   "doc": "Junk falling round the targets from a tick, for some ticks, one every few; the big item above every target at its tick (its hit: debris, the damage)"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "control",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "control.shake",
+   "part": "control",
+   "label": "Shake",
+   "doc": "The camera shake word set with each smoke wave",
+   "type": "i16",
+   "min": 0,
+   "max": 1024,
+   "default": 150,
+   "unit": "plain"
+  },
+  {
+   "key": "control.amp",
+   "part": "control",
+   "label": "Bounce",
+   "doc": "The targets' least bounce height (a random 0..511 added)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "items.from",
+   "part": "control",
+   "label": "From",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "items.span",
+   "part": "control",
+   "label": "For",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "items.every",
+   "part": "control",
+   "label": "Every",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 20,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "items.big",
+   "part": "control",
+   "label": "Big item tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 62,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.gravity",
+   "part": "control",
+   "label": "Gravity",
+   "doc": "Added to an item's falling speed a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 1024,
+   "default": 50,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
