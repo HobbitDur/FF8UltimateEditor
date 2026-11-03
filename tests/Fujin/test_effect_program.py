@@ -236,7 +236,7 @@ def test_silence_description_compiles():
     assert "draw 1 0 - - layout_on_target $7 $8 768 $9 $10" in program and "at_end unmark_target 8192" in program
     broken = copy.deepcopy(load_description(122))
     broken["director"]["kind"] = "loop"
-    with pytest.raises(DescriptionError, match="per_action, master or cycle"):
+    with pytest.raises(DescriptionError, match="per_action, master, cycle or chain"):
         compile_program(broken)
 
 
