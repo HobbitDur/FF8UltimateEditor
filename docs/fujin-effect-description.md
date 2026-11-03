@@ -1266,3 +1266,13 @@ Potion's description is the same with its own sequences and sound.
        actor system, the sigh's show and fade ticks and the breath's first burst, the stage wobble's level
        and steps. Data: the sound, the camera track, "mag045.tim".
      - *Fujin:* its tabs (Emitter, Sigh, Stage wobble); no + menu family.
+   - **Curse (47)** (FFNx 983a91c1; Vysage's enemy attack; the act family, Doom's description without
+     its reaper): one emitter per action - its load script and the director's phases: the sound; phase 1
+     the curse's prim models at Vysage's hands (Lefty and Righty, com ids 0x37 / 0x38) and between them,
+     the stage darkening, the damage cue; phase 2 an actor system.
+     - *Inputs* (`CurseParams`): the director's sound, phase ticks and damage cue, the middle curse's
+       start, phase 2's actor system, the stage darkening's level and steps. Data: the sound, the camera
+       track, "mag046.tim".
+     - *Lab:* checked with Vysage and both hands in the battle, and in the default cast (no hands: the
+       hands' models are not found).
+     - *Fujin:* its tabs (Director, Stage darkening); no + menu family.

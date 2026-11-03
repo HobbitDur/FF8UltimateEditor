@@ -1,0 +1,511 @@
+{
+ "format": 1,
+ "effect": 47,
+ "name": "Curse",
+ "doc": "Curse (Vysage's enemy attack; the act family, Doom's kind without its reaper): one emitter per action - its load script and the director's phases: the sound; phase 1 - the curse's prim models at Vysage's hands (the entities of com ids 0x37 / 0x38: Lefty and Righty) and between them, the stage darkening, the damage cue; phase 2 - an actor system. Its parts are the port's code (FFNx mag047_curse.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x82A7D0",
+   "setup": "0x82A7F0",
+   "root": "0x82A970"
+  },
+  "memory": {
+   "texture_file": "0x264B3C8",
+   "packet_cursor": "0x264B3CC",
+   "packet_limit": "0x264B4D4",
+   "arena_a": "0x264E69C",
+   "limit_a": "0x264DFDC",
+   "arena_b": "0x264E698",
+   "limit_b": "0x264DFD8",
+   "arena_top": "0x264EAE8",
+   "init_flag_a": "0x264EAE4",
+   "init_flag_b": "0x264D82C",
+   "cam_ptr_a": "0x264EADC",
+   "cam_ptr_b": "0x264B4D8",
+   "root_queue": "0x264B5A8",
+   "root_pool": "0x264B4E0",
+   "particle_pool": "0x264E708",
+   "actor_pool": "0x264EAE0",
+   "particle_next": "0x264D828",
+   "actor_next": "0x264E714",
+   "cursor_c": "0x264E6A4",
+   "cursor_d": "0x264B3D0",
+   "count_a": "0x264EAC0",
+   "count_b": "0x264E704"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 47,
+  "from": "0x264B3C8",
+  "size": "0x3898",
+  "pointers": [
+   [
+    2,
+    "0x15B8028"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15B8290",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15B8030",
+   "size": 512
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x15B802C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x4000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x438",
+    "actor_pool": "0xB7C0"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x264E528",
+   "storage": "0x264E538",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x264B4B0",
+   "storage": "0x264B3D8",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "load",
+   "queue": "0x264EAC8",
+   "storage": "0x264E718",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "the load script (the engine's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x264E288",
+   "storage": "0x264DFE0",
+   "size": 676,
+   "count": 1,
+   "keep": true,
+   "doc": "phase 2's actor system (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x264B5B8",
+   "storage": "0x264B5C8",
+   "size": 176,
+   "count": 50,
+   "keep": true,
+   "doc": "the stage darkening (the engine's task, its states the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x264DFC8",
+   "storage": "0x264D830",
+   "size": 648,
+   "count": 3,
+   "keep": true,
+   "doc": "the curse's prim models (the port's)"
+  },
+  {
+   "key": "unused",
+   "queue": "0x264E518",
+   "storage": "0x264E298",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its phases: the sound; phase 1 - the curse at both hands (Vysage's Lefty and Righty) and between them, the stage darkening, the damage cue; phase 2 - the actor system"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage darkening",
+   "doc": "The stage group darkened, held until the director's cue 3, back"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "Phase 2's (its actor data the exe's): Start, Length (ticks), Mode"
+  }
+ ],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "Played once cue 1 runs",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.length",
+   "part": "director",
+   "label": "Phase ticks",
+   "doc": "Phase 1 is over after these ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 54,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage cue",
+   "doc": "The damage of the target after this tick of the phase",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "prims.middle",
+   "part": "director",
+   "label": "Middle tick",
+   "doc": "The curse between both hands from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "director",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "director",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step_in",
+   "part": "stage",
+   "label": "Step in",
+   "doc": "Up by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step_out",
+   "part": "stage",
+   "label": "Step out",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x82ABC0",
+   "code": "0x82ABC0",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; sets up the phase data and the asset table, starts the load script and the director; the damage of its target at the director's cue; then waits, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82AC40"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8319D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x831A10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x831A30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x831A50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x82B170",
+   "code": "0x82B170",
+   "doc": "The director: every tick the phase bookkeeping (phase 1: the curse's prim models and the stage darkening; phase 2: the actor system), then its states: the script cues, the sound, the effect light, the phase ticks and the damage cue, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x82B220"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B270"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B2C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B310"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B370"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B400"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B420"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B440"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B460"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B480"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B4A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B4C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x82B4E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}
