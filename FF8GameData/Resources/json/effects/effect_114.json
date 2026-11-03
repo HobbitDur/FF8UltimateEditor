@@ -125,6 +125,11 @@
    "doc": "These two objects of the layout are drawn as their gouraud quads only, additive (-1: none)"
   },
   {
+   "key": "overlay.window",
+   "label": "Redrawn",
+   "doc": "The target is redrawn swayed from tick From tick for Ticks ticks (its lift and tint: a quarter sine over them)"
+  },
+  {
    "key": "overlay.amp",
    "label": "Sway",
    "doc": "Amplitude Base + Step x the step's 4096ths"
@@ -286,10 +291,10 @@
    "unit": "plain"
   },
   {
-   "key": "overlay.from",
+   "key": "overlay.window.from",
    "part": "overlay",
    "label": "From tick",
-   "doc": "The target is redrawn swayed from this tick...",
+   "doc": "",
    "type": "i16",
    "min": 0,
    "max": 200,
@@ -297,10 +302,10 @@
    "unit": "plain"
   },
   {
-   "key": "overlay.ticks",
+   "key": "overlay.window.ticks",
    "part": "overlay",
    "label": "Ticks",
-   "doc": "...for this many ticks (its lift and tint: a quarter sine over them)",
+   "doc": "",
    "type": "i16",
    "min": 1,
    "max": 200,
@@ -399,8 +404,8 @@
      "part": "overlay",
      "draw": [
       "sway_overlay",
-      "$overlay.from",
-      "$overlay.ticks",
+      "$overlay.window.from",
+      "$overlay.window.ticks",
       "@wave",
       "$mist.scale.base",
       "$mist.scale.shift",

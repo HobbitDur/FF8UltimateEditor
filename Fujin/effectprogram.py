@@ -21,7 +21,12 @@ at its start tick - with the targets of action 0, or at an anchor on target 0 - 
 before) and, with "camera_matrix", keeps a camera matrix of its own (memory camera_matrix, every
 tick: Echo Screen's)) or "cycle" (Silence's: every "every" ticks it starts one task for the next
 action, on its target; its "events" too, every tick: Blind's screen flash; "setup": "master", set
-up as the master is: Petrify Stare's). An effect with no "camera" resource starts no camera track.
+up as the master is: Petrify Stare's) or "chain" (Fire's: one director task per action, each
+starting the next one's - "spawns" when the action has several targets, "single" when one - the
+root alternating "packet_arena_a" / "packet_arena_b" by its counter). An effect with no "camera"
+resource starts no camera track. A task's "draw_only" says what it does while the battle only draws
+("skip": nothing, "after_draws": its first draws only), its "hold" stops its tick early (Fire's
+lone target's director waits until its target is free).
 
 The memory an effect works in is its exe copy's ("copy": "memory", addresses) or its own
 ("own_memory": name: size in bytes, allocated by the runtime), its pools' queues and storage then
@@ -50,16 +55,21 @@ ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, 
            "point_at_position": 1, "mark_ring_from": 2, "unmark_ring": 1, "flash_level_hold": 6,
            "flash_level_set": 2, "mark_target": 1, "tint_target": 7, "spark_step": 2, "spark_move": 0,
            "barrier_frame": 1, "barrier_center": 3, "dead_beams": 3, "orbit_move": 0, "growth_step": 1,
-           "spawn_to_feet": 1, "ray_spawn": 11, "mote_step": 2}
+           "spawn_to_feet": 1, "ray_spawn": 11, "mote_step": 2, "chain_next": 1, "release_target": 0,
+           "heal_action_all_at": 1, "sound_pan_at": 4, "ember_rise": 2, "fire_spark_move": 2}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1, "tick_at_node_end": 0, "leaf_gone": 0, "spark_gone": 0, "rays_done": 1, "ribbon_done": 1,
-              "mote_done": 1}
+              "mote_done": 1, "life_out": 0}
+# a task's hold (after its every-tick actions: when it holds, its tick stops there)
+HOLDS = {"claim_target": 0}
+DRAW_ONLY = ("skip", "after_draws")
 # the master director's own events (on its counter, after its queues: "events"; before: "events_first")
 DIRECTOR_EVENTS = {"sound_at": 3, "flash_level_clear": 0, "screen_flash_level": 0}
 MOTIONS = {"helix": 2}
 PLACES = {"at_parent": 0, "circle_drop": 8, "glint": 13, "table_point": 3, "random_target_bone": 6,
           "random_target_point": 7, "action_targets": 1, "target_anchor": 7, "action_target": 8, "random_around": 4,
           "rising_circle": 5, "spinning_ring": 10, "whirl_leaf": 5, "collapse_sparks": 6, "orbit_spawn": 6,
-          "growth_spawn": 7, "ribbon_start": 3, "ember_ring": 9, "spark_near": 4}
+          "growth_spawn": 7, "ribbon_start": 3, "ember_ring": 9, "spark_near": 4,
+          "flames_on_targets": 11, "flame_embers": 9, "flame_sparks": 12}
 DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_screen": 5, "layout_at_caster_bone": 1,
          "layout_scaled": 1, "sequence_sprite": 3, "layout_at_anchor": 2, "layout_on_target": 5,
          "layout_turned": 10, "node_sequence_sprite": 1,
@@ -68,18 +78,19 @@ DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_s
          "layout_on_point": 7, "sway_overlay": 10, "ripple_silhouette": 3,
          "spark_sprite": 1, "barrier_wall": 5, "orbit_model": 5, "growth_model": 3,
          "sequence_at_anchor": 4, "pulse_model": 6, "layout_table_at_spawn": 1, "light_rays": 0, "ribbon": 6,
-         "mote_sprite": 0}
+         "mote_sprite": 0, "flame": 8, "ember": 2, "fire_spark": 5}
 # a plain node's fields and their sizes (a layout's is given: ["layout", size])
 FIELDS = {"counter": 2, "pos": 6, "scale": 2, "point": 8, "targets": 14, "anchor": 8, "action": 2, "entity": 4, "spawn": 8, "end": 2, "seq": 4, "radius": 2, "angle": 2, "speed": 2, "fade": 2, "leaf": 0x30, "colour": 4, "ripple": 4, "spark": 0x20, "barrier": 0x48,
-          "orbit": 0x0E, "growth": 0x0E, "rays": 0x600, "ribbon": 0x412, "mote": 0x10, "drawn": 4}
+          "orbit": 0x0E, "growth": 0x0E, "rays": 0x600, "ribbon": 0x412, "mote": 0x10, "drawn": 4,
+          "slot": 2, "chain": 2, "delay": 2, "life": 2, "flame": 0x14, "ember": 0x14, "fire_spark": 0x14}
 NODE_HEADER = 0xC
 TASK_QUEUE = 0x10
 # what each named memory holds (fxprogram.h), in bytes: a word, an engine task queue, the root pool
 # (the director's kind), the projector overlay's context (fx_overlay.h OverlayCtx), its model draw
 # descriptor and its vertex buffer (Cure's room for them)
 MEMORY_SIZES = {"root_queue": TASK_QUEUE, "overlay_ctx": 0xF8, "overlay_sprite": 0x40, "overlay_verts": 0x6400,
-                "camera_matrix": 0x20, "packet_arena_a": 0x10000, "packet_arena_b": 0x10000}
-ROOT_POOL = {"per_action": 2 * 0x64, "master": 0x14, "cycle": 0x14}
+                "camera_matrix": 0x20, "packet_arena_a": 0x10000, "packet_arena_b": 0x10000, "target_free": 7 * 4}
+ROOT_POOL = {"per_action": 2 * 0x64, "master": 0x14, "cycle": 0x14, "chain": 0x10}
 
 
 class DescriptionError(ValueError):
@@ -230,8 +241,12 @@ def compile_program(description, values=None):
         arena_a, arena_b = buffer["arenas"]
         lines.append(f"magic_buffer 0x{_number(arena_a):X} 0x{_number(arena_b):X} 0x{_number(buffer['morph']):X}")
     director = description["director"]
-    if director.get("kind") not in ("per_action", "master", "cycle") or director.get("spawns") not in tasks:
-        raise DescriptionError("director: a per_action, master or cycle director spawning one of the tasks")
+    if director.get("kind") not in ("per_action", "master", "cycle", "chain") or director.get("spawns") not in tasks:
+        raise DescriptionError("director: a per_action, master, cycle or chain director spawning one of the tasks")
+    if director["kind"] == "chain":
+        if director.get("single") not in tasks:
+            raise DescriptionError("director: a chain names its lone target's director (\"single\")")
+        lines.append(f"director chain {tasks[director['spawns']]} {tasks[director['single']]}")
     if director["kind"] == "cycle":
         lines.append(f"director cycle {tasks[director['spawns']]} {value(director['every'], 'director')} "
                      f"{step(director['place'], PLACES, 'director')}")
@@ -270,6 +285,12 @@ def compile_program(description, values=None):
             lines += node(task, where)
         if task.get("draws_first"):
             lines.append("order draws_first")
+        if task.get("draw_only"):
+            if task["draw_only"] not in DRAW_ONLY:
+                raise DescriptionError(f"{where}: draw_only is one of {', '.join(DRAW_ONLY)}")
+            lines.append(f"draw_only {task['draw_only']}")
+        if task.get("hold"):
+            lines.append(f"hold {step(task['hold'], HOLDS, where)}")
         if task.get("end"):
             lines.append(f"end {step(task['end'], CONDITIONS, where)}")
         lines += [f"at_end {action(entry, where)}" for entry in task.get("at_end", [])]

@@ -776,3 +776,38 @@ Potion's description is the same with its own sequences and sound.
      - *Fujin:* its tabs (Timing, Swirls, Flash, Glow, Burst, Embers, Sparks, Rays); a fifteenth
        family in the + menu, "One per action, rays around its target (Berserk's kind)": Rays (the
        start), Swirls, Flash, Glow, Burst, Embers, Sparks.
+   - **Fire (2)** (FFNx 48a76e86): a fourth director kind, the chain: one director task per action,
+     each starting the next action's at its own tick 12; several targets: one flame around each, the
+     result on all of them, the sound panned; a lone target: its director waits until no other Fire
+     burns on it (the 7 "target free" words), then 4 flames around it, the result, the sound at its
+     effect position, the target free again at its end (22). Each flame a flipbook over a ground
+     glow, at its first frame 4 embers and 10 sparks.
+     - *Shared:* `heal_action_at`, `sound_3d_at_position` (its entity now the node's slot's when it
+       has no entity field), the plain spawns (every tick of a window), `tick_at_least`.
+     - *Added:*
+       - the director `chain` (several targets' task, the lone target's): the setup (the cast, its
+         attacker, every slot free, a root of 0x10 bytes, the pools, action 0's director; the camera
+         and the texture upload unless the cast repeats), the root (`packet_arena_a` / `_b` by its
+         counter's parity, the queues, the end when they are empty); the action `chain_next` (tick:
+         the next action's director when the node's chain counter is at it), the hold
+         `claim_target` (a task's `hold`: its tick stops there while it holds), the action
+         `release_target`; the node fields `slot` and `chain`;
+       - a task's `draw_only` (what it does while the battle only draws: `skip`, nothing;
+         `after_draws`, its first draws only) and its `delay` field (a plain node waits it out,
+         not counting while the battle only draws);
+       - the library's fire (`fx_flames.h`, Fire's 0x629C10 / 0x62A0A0 / 0x629F90; Firaga's area
+         flame draws as the flame): the node fields `flame`, `ember`, `fire_spark` and `life`; the
+         placements `flames_on_targets` (all targets or the lone one, count, delay, spread, lift,
+         size), `flame_embers` and `flame_sparks` (around the spawner's flame, CRT rand in the
+         original's order); the draws `flame` (its flipbook, then its ground glow, its grey from the
+         flame's height), `ember`, `fire_spark` (a shared effect sprite, its frame from its life);
+         the actions `ember_rise`, `fire_spark_move`, `heal_action_all_at`, `sound_pan_at` (BdPlaySE
+         with a volume and a pan); the end `life_out`.
+     - *Inputs* (`FireParams`): the chain, flames, sound, damage and end ticks, the sound's volume
+       and pan; the flames (count, delay, spread, lift, size, frames, the ground glow's tilt, mode,
+       grey); the embers and the sparks (count, delay, spread, speeds, size, frames or life, their
+       sprite, drag and shrinking). Data: the three sequences, the sound, the camera track (1584
+       bytes), "mag001.tim".
+     - *Fujin:* its tabs (Timing, Flames, Embers, Sparks); a sixteenth family in the + menu, "One
+       director per action, flames around its targets (Fire's kind)": Flames (the start), Embers,
+       Sparks.

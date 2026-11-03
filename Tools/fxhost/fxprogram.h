@@ -16,9 +16,11 @@
 // be prim layouts (fx_layouts.h). A task ends when it is done (effect nodes) or by its end
 // condition, then runs its at-end actions.
 //
-// The director (the root task), the setup and the file loader are of one of three kinds: the effect
+// The director (the root task), the setup and the file loader are of one of four kinds: the effect
 // library's per-action director (one emitter per action, in turn, until every queue is empty), a
-// cycle (Silence's: one task per action, every n ticks, on the action's target) or a master
+// chain (Fire's: one director task per action, each starting the next one's, the root alternating
+// two packet arenas by its counter), a cycle (Silence's: one task per action, every n ticks, on the
+// action's target) or a master
 // (Hypnotize's, Antidote's): it alternates two packet arenas of the magic buffer, sets up
 // the pools at its start tick, starts one task (with the targets of action 0, or at target 0's
 // anchor), runs its own events on its counter before or after its queues (and, for Echo Screen,
@@ -48,6 +50,7 @@
 #include "fx_barrier.h"
 #include "fx_rays.h"
 #include "fx_ribbon.h"
+#include "fx_flames.h"
 
 namespace fxprog
 {
@@ -69,11 +72,13 @@ namespace fxprog
 	struct Draw { int tag = 0; int gate = 0; int limit = NO_LIMIT; Val value, count; Step draw; };   // (count: WITHIN's)
 	// a plain node's fields (offsets in the node; -1: none)
 	enum Field { F_COUNTER, F_POS, F_SCALE, F_POINT, F_TARGETS, F_LAYOUT, F_ANCHOR, F_ACTION, F_ENTITY, F_LAYOUT_B, F_SPAWN, F_END, F_SEQ, F_RADIUS, F_ANGLE, F_SPEED, F_FADE,
-	             F_LEAF, F_COLOUR, F_RIPPLE, F_SPARK, F_BARRIER, F_ORBIT, F_GROWTH, F_RAYS, F_RIBBON, F_MOTE, F_DRAWN, FIELD_COUNT };
+	             F_LEAF, F_COLOUR, F_RIPPLE, F_SPARK, F_BARRIER, F_ORBIT, F_GROWTH, F_RAYS, F_RIBBON, F_MOTE, F_DRAWN,
+	             F_SLOT, F_CHAIN, F_DELAY, F_LIFE, F_FLAME, F_EMBER, F_FIRE_SPARK, FIELD_COUNT };
 	static const char *const FIELD_NAMES[FIELD_COUNT] = { "counter", "pos", "scale", "point", "targets", "layout", "anchor", "action", "entity",
 	                                                      "layout_b", "spawn", "end", "seq", "radius", "angle", "speed", "fade",
 	                                                      "leaf", "colour", "ripple", "spark", "barrier", "orbit", "growth",
-	                                                      "rays", "ribbon", "mote", "drawn" };
+	                                                      "rays", "ribbon", "mote", "drawn",
+	                                                      "slot", "chain", "delay", "life", "flame", "ember", "fire_spark" };
 	struct Task
 	{
 		std::string key;
@@ -81,7 +86,11 @@ namespace fxprog
 		uint32_t function = 0;                    // the original it stands in for (0: a new task)
 		bool plain = false, draws_first = false;
 		int field[FIELD_COUNT] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-		                           -1, -1, -1, -1 };
+		                           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+		// while the battle only draws (DrawOnly): NO_DRAW_ONLY runs as always, DRAW_ONLY_SKIP does
+		// nothing (Fire's directors), DRAW_ONLY_DRAWS stops after its first draws (Fire's flames)
+		int draw_only = 0;
+		Step hold;                                // after its every-tick actions: when it holds, the tick stops there
 		int layout_size = 0, layout_b_size = 0;
 		Step end;                                 // a plain node's end (after its counter)
 		std::vector<Step> at_end;                 // actions when it ends
@@ -98,7 +107,8 @@ namespace fxprog
 		int size = 0, count = 0, tag = -1, base = 0;   // base 1: storage in the magic buffer
 		bool own_queue = false, own_storage = false;  // allocated in the program's own memory
 	};
-	enum Director { PER_ACTION, MASTER, CYCLE };
+	enum Director { PER_ACTION, MASTER, CYCLE, CHAIN };
+	enum DrawOnlyKind { NO_DRAW_ONLY, DRAW_ONLY_SKIP, DRAW_ONLY_DRAWS };
 	struct Program
 	{
 		int effect = 0;
@@ -108,6 +118,7 @@ namespace fxprog
 		uint32_t director_fn = 0;                       // the director task the setup starts (0: DirectorTask)
 		int texture_param = -1, director_spawns = -1;
 		int director = PER_ACTION, director_start = 1;
+		int director_single = -1;                       // CHAIN: the lone target's director task (director_spawns: several targets')
 		Val director_every;                             // CYCLE: one task per action every this many ticks
 		Step director_place;
 		std::vector<Step> director_events;              // the master's, on its counter, after its queues...
@@ -137,18 +148,21 @@ namespace fxprog
 		FLASH_LEVEL_RAISE, FOLLOW_BONE, SOUND_3D_AT_POSITION, FLASH_LEVEL_CLEAR, SCREEN_FLASH_LEVEL, POINT_AT_POSITION,
 		MARK_RING_FROM, UNMARK_RING, FLASH_LEVEL_HOLD, FLASH_LEVEL_SET, MARK_TARGET, TINT_TARGET, SPARK_STEP, SPARK_MOVE,
 		BARRIER_FRAME, BARRIER_CENTER, DEAD_BEAMS, ORBIT_MOVE, GROWTH_STEP, SPAWN_TO_FEET, RAY_SPAWN, MOTE_STEP,
+		CHAIN_NEXT, RELEASE_TARGET, HEAL_ACTION_ALL_AT, SOUND_PAN_AT, EMBER_RISE, FIRE_SPARK_MOVE, CLAIM_TARGET,
 		// conditions
-		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE, RAYS_DONE, RIBBON_DONE, MOTE_DONE,
+		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE, RAYS_DONE, RIBBON_DONE, MOTE_DONE, LIFE_OUT,
 		// motions
 		HELIX,
 		// placements
 		CIRCLE_DROP, GLINT, AT_PARENT, TABLE_POINT, RANDOM_TARGET_BONE, RANDOM_TARGET_POINT, ACTION_TARGETS,
 		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING, WHIRL_LEAF, COLLAPSE_SPARKS, ORBIT_SPAWN, GROWTH_SPAWN, RIBBON_START, EMBER_RING, SPARK_NEAR,
+		FLAMES_ON_TARGETS, FLAME_EMBERS, FLAME_SPARKS,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
 		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET, LAYOUT_SCALED_ON_TARGET,
 		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR, LAYOUT_ON_POINT, SWAY_OVERLAY, RIPPLE_SILHOUETTE, SPARK_SPRITE,
 		BARRIER_WALL, ORBIT_MODEL, GROWTH_MODEL, SEQUENCE_AT_ANCHOR, PULSE_MODEL, LAYOUT_TABLE_AT_SPAWN, LIGHT_RAYS, RIBBON, MOTE_SPRITE,
+		FLAME, EMBER, FIRE_SPARK,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -188,6 +202,10 @@ namespace fxprog
 		{ "ribbon_done", RIBBON_DONE }, { "mote_done", MOTE_DONE }, { "ribbon_start", RIBBON_START }, { "ember_ring", EMBER_RING },
 		{ "spark_near", SPARK_NEAR }, { "sequence_at_anchor", SEQUENCE_AT_ANCHOR }, { "pulse_model", PULSE_MODEL },
 		{ "layout_table_at_spawn", LAYOUT_TABLE_AT_SPAWN }, { "light_rays", LIGHT_RAYS }, { "ribbon", RIBBON }, { "mote_sprite", MOTE_SPRITE },
+		{ "chain_next", CHAIN_NEXT }, { "release_target", RELEASE_TARGET }, { "heal_action_all_at", HEAL_ACTION_ALL_AT },
+		{ "sound_pan_at", SOUND_PAN_AT }, { "ember_rise", EMBER_RISE }, { "fire_spark_move", FIRE_SPARK_MOVE }, { "claim_target", CLAIM_TARGET },
+		{ "life_out", LIFE_OUT }, { "flames_on_targets", FLAMES_ON_TARGETS }, { "flame_embers", FLAME_EMBERS }, { "flame_sparks", FLAME_SPARKS },
+		{ "flame", FLAME }, { "ember", EMBER }, { "fire_spark", FIRE_SPARK },
 	};
 
 	inline Program *g_program = nullptr;
@@ -243,6 +261,14 @@ namespace fxprog
 	}
 	inline void DecodeLayout(const Task &t, void *n, uint32_t data) { layouts::DecodeModelPrimLayout(data, Fld<uint8_t>(t, n, F_LAYOUT), t.layout_size); }
 	inline void DecodeLayoutB(const Task &t, void *n, uint32_t data) { layouts::DecodeModelPrimLayout(data, Fld<uint8_t>(t, n, F_LAYOUT_B), t.layout_b_size); }
+	// a plain node's entity: its entity field, else its slot field's entity
+	inline uint8_t *EntityOf(const Task &t, void *n)
+	{
+		if (t.field[F_ENTITY] >= 0) return *Fld<uint8_t *>(t, n, F_ENTITY);
+		return Entity(*Fld<int16_t>(t, n, F_SLOT));
+	}
+	inline uint32_t *TargetFree() { return (uint32_t *)Mem("target_free"); }   // [slot]: 1 = no director of the effect runs on it (Fire's)
+	inline void SpawnChainDirector(int action);
 	// a random entity of a plain node's targets field (count, then the entities)
 	inline uint8_t *RandomTargetOf(const Task &t, void *n)
 	{
@@ -430,7 +456,7 @@ namespace fxprog
 			if (Tick(t, n) == V(a[0]))
 			{
 				int16_t pos[4];
-				GetDefaultEffectPosition(V(a[3]) ? Caster() : *Fld<uint8_t *>(t, n, F_ENTITY), pos);
+				GetDefaultEffectPosition(V(a[3]) ? Caster() : EntityOf(t, n), pos);
 				BdPlaySE3D((const void *)fxp::sound((uint32_t)V(a[1]), (uint32_t)G(a[1])), V(a[2]), pos);
 			}
 			break;
@@ -450,7 +476,44 @@ namespace fxprog
 			break;
 		case ANCHOR_AT_POSITION: GetDefaultEffectPosition(*Fld<uint8_t *>(t, n, F_ENTITY), g_anchor); break;   // the entity's default effect position
 		case UNMARK_TARGET: (*Fld<uint16_t *>(t, n, F_ENTITY))[0] &= (uint16_t)~V(a[0]); break;   // bits of the entity's flags word
+		case CHAIN_NEXT: // tick: the next action's director when the node's chain counter is at it (then it counts on)
+		{
+			int16_t *chain = Fld<int16_t>(t, n, F_CHAIN);
+			const int next = *Fld<int16_t>(t, n, F_ACTION) + 1;
+			if (*chain == V(a[0]) && next <= Ctx()->actions[0].last_action) SpawnChainDirector(next);
+			(*chain)++;
+			break;
+		}
+		case RELEASE_TARGET: TargetFree()[*Fld<int16_t>(t, n, F_SLOT)] = 1; break;   // the node's slot free for the next one
+		case HEAL_ACTION_ALL_AT: // tick: every target of the node's action takes the result
+			if (Tick(t, n) == V(a[0]))
+			{
+				const ActionData *ad = &Ctx()->actions[*Fld<int16_t>(t, n, F_ACTION)];
+				ApplyActionResultToTargets(ad->targets, ad->target_count);
+			}
+			break;
+		case SOUND_PAN_AT: // tick, sound, volume, pan
+			if (Tick(t, n) == V(a[0])) BdPlaySE((const void *)fxp::sound((uint32_t)V(a[1]), (uint32_t)G(a[1])), V(a[2]), V(a[3]));
+			break;
+		case EMBER_RISE: layouts::EmberRise(Fld<layouts::Ember>(t, n, F_EMBER), V(a[0]), V(a[1])); break;   // speed-up shift, shrink shift
+		case FIRE_SPARK_MOVE: layouts::FireSparkMove(Fld<layouts::FireSpark>(t, n, F_FIRE_SPARK), Fld<int16_t>(t, n, F_LIFE), V(a[0]), V(a[1])); break;   // drag shift, shrink
 		default: break;
+		}
+	}
+
+	// a task's hold (after its every-tick actions): true stops its tick there
+	inline bool Hold(const Task &t, const Step &s, TaskNode *n)
+	{
+		switch (s.op)
+		{
+		case CLAIM_TARGET: // at its first tick, wait until the node's slot is free, then take it (Fire's lone target)
+		{
+			const int16_t slot = *Fld<int16_t>(t, n, F_SLOT);
+			if (TargetFree()[slot] == 0 && Tick(t, n) == 0) return true;
+			if (Tick(t, n) == 0) TargetFree()[slot] = 0;
+			return false;
+		}
+		default: return false;
 		}
 	}
 
@@ -494,6 +557,55 @@ namespace fxprog
 				const int32_t r2 = CrtRand();
 				angle += V(a[3]);
 				p->accel = (int8_t)(uint8_t)(V(a[7]) - (r2 & V(a[8])));
+			}
+			return;
+		}
+		if (sp.place.op == FLAMES_ON_TARGETS)
+		{
+			// all, count, delay mod, step, spread num, max, low, lift base, mod, scale base, mod (Fire's
+			// directors): around every target of the node's action (all: 1) or its lone target, `count`
+			// flames each
+			const layouts::FlameRolls r = { V(a[2]), V(a[3]), V(a[4]), V(a[5]), V(a[6]), { V(a[7]), V(a[8]), -1 }, { V(a[9]), V(a[10]), 1 } };
+			const ActionData *ad = &Ctx()->actions[*Fld<int16_t>(from, n, F_ACTION)];
+			const int targets = V(a[0]) ? ad->target_count : 1;
+			for (int j = 0; j < targets; j++)
+			{
+				const int slot = V(a[0]) ? ad->targets[j * TARGET_STRIDE] : *Fld<int16_t>(from, n, F_SLOT);
+				const int32_t spread = layouts::FlameSpread(EntitySize(slot), r);
+				int16_t pos[4];
+				GetDefaultEffectPosition(Entity(slot), pos);
+				for (int k = 0; k < V(a[1]); k++)
+				{
+					TaskNode *f = (TaskNode *)SpawnTask(sp.task, n);
+					layouts::FlameStart(Fld<layouts::Flame>(t, f, F_FLAME), Fld<int16_t>(t, f, F_DELAY), pos, EntityHeight(slot), spread, k, r);
+				}
+			}
+			return;
+		}
+		if (sp.place.op == FLAME_EMBERS)
+		{
+			// count, delay mod, step, spread, above, rise base, mod, scale base, mod: around the spawner's flame
+			const layouts::EmberRolls r = { V(a[1]), V(a[2]), { -(V(a[3]) >> 1), V(a[3]), 1 }, { 0, V(a[4]), -1 }, { -(V(a[3]) >> 1), V(a[3]), 1 },
+			                                { V(a[5]), V(a[6]), -1 }, { V(a[7]), V(a[8]), 1 } };
+			for (int k = 0; k < V(a[0]); k++)
+			{
+				TaskNode *f = (TaskNode *)SpawnTask(sp.task, n);
+				layouts::EmberStart(Fld<layouts::Ember>(t, f, F_EMBER), Fld<int16_t>(t, f, F_DELAY), Fld<layouts::Flame>(from, n, F_FLAME)->pos, k, r);
+			}
+			return;
+		}
+		if (sp.place.op == FLAME_SPARKS)
+		{
+			// count, life base, mod, delay mod, step, spread, above, speed, rise base, mod, scale base, mod: around the spawner's flame
+			const int32_t spread = V(a[5]), speed = V(a[7]);
+			const layouts::SparkRolls r = { { V(a[1]), V(a[2]), 1 }, V(a[3]), V(a[4]), { -(spread >> 1), spread, 1 }, { 0, V(a[6]), -1 },
+			                                { -(spread >> 1), spread, 1 }, { -(speed >> 1), speed, 1 }, { V(a[8]), V(a[9]), -1 },
+			                                { -(speed >> 1), speed, 1 }, { V(a[10]), V(a[11]), 1 } };
+			for (int k = 0; k < V(a[0]); k++)
+			{
+				TaskNode *f = (TaskNode *)SpawnTask(sp.task, n);
+				layouts::FireSparkStart(Fld<layouts::FireSpark>(t, f, F_FIRE_SPARK), Fld<int16_t>(t, f, F_LIFE), Fld<int16_t>(t, f, F_DELAY),
+				                        Fld<layouts::Flame>(from, n, F_FLAME)->pos, k, r);
 			}
 			return;
 		}
@@ -871,6 +983,22 @@ namespace fxprog
 			break;
 		}
 		case MOTE_SPRITE: layouts::MoteDraw(Fld<layouts::Mote>(t, n, F_MOTE), PacketCursor()); break;   // the node's sprite sequence
+		case FLAME: // sequence, glow sequence, shade shift, glow tilt, mode, high, span, base: the node's flame, frame = the tick, over its ground glow
+		{
+			const layouts::FlameLook look = { fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])), fxp::sequence((uint32_t)V(a[1]), (uint32_t)G(a[1])),
+			                                  V(a[2]), V(a[3]), V(a[4]), V(a[5]), V(a[6]), V(a[7]) };
+			layouts::FlameDraw(Fld<layouts::Flame>(t, n, F_FLAME), (int16_t)Tick(t, n), look, PacketCursor());
+			break;
+		}
+		case EMBER: // sequence, shade shift: the node's ember, frame = the tick
+			layouts::EmberDraw(Fld<layouts::Ember>(t, n, F_EMBER), (int16_t)Tick(t, n), fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])), V(a[1]), PacketCursor());
+			break;
+		case FIRE_SPARK: // sprite, last frame, header byte +0x20, draw mode, shade shift: the node's spark, frame = last - its life
+		{
+			const layouts::SparkLook look = { V(a[0]), V(a[1]), V(a[2]), V(a[3]), V(a[4]) };
+			layouts::FireSparkDraw(Fld<layouts::FireSpark>(t, n, F_FIRE_SPARK), *Fld<int16_t>(t, n, F_LIFE), look, PacketCursor());
+			break;
+		}
 		case BARRIER_WALL: // wall, from, ticks, grow, fade: the wall through the node's barrier, growing, its texture scrolling, then fading
 		{
 			const int32_t e = Tick(t, n) - V(a[1]);
@@ -1003,7 +1131,14 @@ namespace fxprog
 			}
 			if (t.plain && !t.draws.empty()) FX_PART(0);   // what a plain task does after its draws is no part's
 		};
+		if (t.draw_only == DRAW_ONLY_SKIP && DrawOnly()) return 0;
+		if (int16_t *delay = Fld<int16_t>(t, n, F_DELAY); delay && *delay > 0)   // (a plain node's delay: a tick of its own, not while only drawing)
+		{
+			if (!DrawOnly()) (*delay)--;
+			return 0;
+		}
 		for (const Step &s : t.every_tick) Act(t, s, n);
+		if (t.hold.op && Hold(t, t.hold, n)) return 0;
 		if (!t.plain && h->phase >= 0 && h->phase < (int)t.phases.size())
 		{
 			const Phase &ph = t.phases[h->phase];
@@ -1015,6 +1150,7 @@ namespace fxprog
 			}
 		}
 		if (t.draws_first) draws();
+		if (t.draw_only == DRAW_ONLY_DRAWS && DrawOnly()) return 0;
 		if (t.motion.op == HELIX) // steps per tick, angle a step
 		{
 			const int32_t substeps = V(t.motion.a[0]);
@@ -1072,6 +1208,7 @@ namespace fxprog
 		case RAYS_DONE: ends = Tick(t, n) > V(t.end.a[0]) && *Fld<int32_t>(t, n, F_DRAWN) == 0; break;   // after that tick, once no ray was drawn
 		case RIBBON_DONE: ends = Tick(t, n) > V(t.end.a[0]) && Fld<layouts::Ribbon>(t, n, F_RIBBON)->count < 2; break;   // after that tick, fewer than 2 positions
 		case MOTE_DONE: ends = (int8_t)Fld<layouts::Mote>(t, n, F_MOTE)->counter >= V(t.end.a[0]); break;   // its frame reached that
+		case LIFE_OUT: ends = *Fld<int16_t>(t, n, F_LIFE) < 0; break;   // its life counted down past 0
 		default: break;
 		}
 		if (!ends) return 0;
@@ -1336,8 +1473,40 @@ namespace fxprog
 		return 0;
 	}
 
+	// one director per action, each starting the next one's (Fire 0x62A610): the root, a node of 0x10
+	// bytes (its counter at +0x0C), alternates two packet arenas by its counter's parity and runs the
+	// queues; the effect ends when they are empty
+	inline uint32_t ChainRoot(TaskNode *n)
+	{
+		uint16_t &counter = *(uint16_t *)(n + 1);
+		PacketCursor() = Mem("packet_arena_b");
+		if (!(counter & 1)) PacketCursor() = Mem("packet_arena_a");
+		bool alive = false;
+		for (const Pool &pool : g_program->pools)
+		{
+			if (pool.tag >= 0) FX_PART(pool.tag);
+			if (ExecuteTaskQueue((TaskQueue *)pool.queue)) alive = true;
+			if (pool.tag >= 0) FX_PART(0);
+		}
+		counter++;
+		return alive ? 0 : TASK_END;
+	}
+	// the director of `action`: the several targets' one when it has more than one target, else the
+	// lone target's (its slot)
+	inline void SpawnChainDirector(int action)
+	{
+		const Program &g = *g_program;
+		const ActionData *ad = &Ctx()->actions[action];
+		const int k = ad->target_count > 1 ? g.director_spawns : g.director_single;
+		const Task &t = g.tasks[k];
+		TaskNode *d = (TaskNode *)SpawnTask(k, nullptr);
+		*Fld<int16_t>(t, d, F_ACTION) = (int16_t)action;
+		if (k == g.director_single && t.field[F_SLOT] >= 0) *Fld<int16_t>(t, d, F_SLOT) = (int16_t)(uint16_t)ad->targets[0];
+	}
+
 	inline uint32_t __cdecl DirectorTask(TaskNode *n)
 	{
+		if (g_program->director == CHAIN) return ChainRoot(n);
 		if (g_program->director == CYCLE) return CycleDirector(n);
 		return g_program->director == MASTER ? MasterDirector(n) : PerActionDirector(n);
 	}
@@ -1389,9 +1558,32 @@ namespace fxprog
 		return root_queue;
 	}
 
+	// the chain's setup (Fire 0x6298A0): the cast, its attacker, every slot free, the root, the pools,
+	// action 0's director; unless the cast repeats (flags & 1), the camera and the texture upload
+	inline TaskQueue *ChainSetup(CastContext *ctx)
+	{
+		Program &g = *g_program;
+		Ctx() = ctx;
+		if (HasMem("attacker_slot")) var<uint32_t>(Mem("attacker_slot")) = ctx->attacker;
+		if (HasMem("target_free")) for (int k = 0; k < 7; k++) TargetFree()[k] = 1;
+		TaskQueue *root_queue = (TaskQueue *)Mem("root_queue");
+		InitTaskQueuePool(root_queue, (void *)Mem("root_pool"), 0x10, 1);
+		TaskNode *r = AddTaskToQueue(root_queue, g.root ? g.root : g.director_fn ? g.director_fn : (uint32_t)DirectorTask);
+		*(uint16_t *)(r + 1) = 0;
+		for (const Pool &pool : g.pools) InitTaskQueuePool((TaskQueue *)pool.queue, (void *)PoolStorage(pool), pool.size, pool.count);
+		SpawnChainDirector(0);
+		if (!(ctx->flags & 1))
+		{
+			if (g.camera) PlayCameraAnimation((const void *)g.camera);
+			QueueTimUpload(var<uint32_t>(Mem("texture_file")));
+		}
+		return root_queue;
+	}
+
 	inline TaskQueue *__cdecl Setup(CastContext *ctx)
 	{
 		Program &g = *g_program;
+		if (g.director == CHAIN) return ChainSetup(ctx);
 		if (g.director == MASTER) return MasterSetup(ctx);
 		if (g.director == CYCLE) return g.master_setup ? MasterSetup(ctx) : CycleSetup(ctx);
 		var<uint32_t>(Mem("init_flag_a")) = 0;
@@ -1569,6 +1761,11 @@ namespace fxprog
 					g.director_start = atoi(w[3].c_str());
 					g.director_place = ParseStep(w, 4, &error);
 				}
+				else if (w[1] == "chain" && need(4))
+				{
+					g.director = CHAIN;
+					g.director_single = atoi(w[3].c_str());
+				}
 				else if (w[1] == "cycle" && need(5))
 				{
 					g.director = CYCLE;
@@ -1620,6 +1817,8 @@ namespace fxprog
 				}
 			}
 			else if (d == "order" && need(2)) task->draws_first = w[1] == "draws_first";
+			else if (d == "draw_only" && need(2)) task->draw_only = w[1] == "skip" ? DRAW_ONLY_SKIP : w[1] == "after_draws" ? DRAW_ONLY_DRAWS : NO_DRAW_ONLY;
+			else if (d == "hold") task->hold = ParseStep(w, 1, &error);
 			else if (d == "end") task->end = ParseStep(w, 1, &error);
 			else if (d == "at_end") task->at_end.push_back(ParseStep(w, 1, &error));
 			else if (d == "tick") task->every_tick.push_back(ParseStep(w, 1, &error));
@@ -1678,6 +1877,7 @@ namespace fxprog
 		}
 		if (error.empty() && (int)g.tasks.size() > (int)(sizeof(THUNKS) / sizeof(THUNKS[0]))) error = "too many tasks";
 		if (error.empty() && (g.director_spawns < 0 || g.director_spawns >= (int)g.tasks.size())) error = "the director spawns no task";
+		if (error.empty() && g.director == CHAIN && (g.director_single < 0 || g.director_single >= (int)g.tasks.size())) error = "the chain has no lone target's director";
 		if (error.empty() && !g_parse_error.empty()) error = g_parse_error;
 		g_parsing = nullptr;
 		if (error.empty()) Allocate(g);

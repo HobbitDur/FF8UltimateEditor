@@ -1,0 +1,1086 @@
+{
+ "format": 1,
+ "effect": 2,
+ "name": "Fire",
+ "doc": "Fire (spell): one director per action, each starting the next action's 12 ticks in (several targets: one flame around each; a lone target: waits until no other Fire burns on it, then 4 flames around it); each flame a flipbook over a ground glow, starting embers rising and sparks drifting at its first frame; the sound at 6, the result at 8, the director's end at 22.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x629880",
+   "setup": "0x6298A0",
+   "root": "0x62A610"
+  },
+  "memory": {
+   "root_pool": "0x24CA818",
+   "root_queue": "0x24CA828",
+   "ctx": "0x24CBD60",
+   "attacker_slot": "0x24CBD64",
+   "texture_file": "0x24CBD68",
+   "packet_arena_a": "0x24CBD6C",
+   "packet_arena_b": "0x24D5D6C",
+   "packet_cursor": "0x24DFD6C",
+   "target_free": "0xDEE360"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "flame.seq": {
+   "kind": "seq",
+   "address": "0xDEDC2C",
+   "size": 428
+  },
+  "glow.seq": {
+   "kind": "seq",
+   "address": "0xDEDDD8",
+   "size": 428
+  },
+  "ember.seq": {
+   "kind": "seq",
+   "address": "0xDEDF84",
+   "size": 428
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0xDEE130",
+   "size": 4
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDEE37C",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0xDED5FC",
+   "size": 1584
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "chain",
+  "spawns": "director",
+  "single": "director_single"
+ },
+ "pools": [
+  {
+   "key": "particles",
+   "queue": "0x24CA838",
+   "storage": "0x24CA848",
+   "size": 36,
+   "count": 150
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "One director per action, each starting the next one's; its clock: the flames' start, its sound, its result, its end (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "flames",
+   "title": "Flames",
+   "doc": "Flipbooks around the action's targets, each over a ground glow; at its first frame a flame starts its embers and sparks"
+  },
+  {
+   "id": 2,
+   "key": "embers",
+   "title": "Embers",
+   "doc": "Flipbooks rising from each flame, faster and faster, shrinking"
+  },
+  {
+   "id": 3,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Shared effect sprites drifting from each flame, slowing, shrinking"
+  }
+ ],
+ "groups": [
+  {
+   "key": "flames.delay",
+   "label": "Delay",
+   "doc": "Flame k (0, 1...) waits rand % Mod + Step x k ticks before its first frame"
+  },
+  {
+   "key": "flames.spread",
+   "label": "Spread",
+   "doc": "Around the target's effect position, each axis + rand % s - s / 2: s = the target's size x Times / 4096, at most At most"
+  },
+  {
+   "key": "flames.lift",
+   "label": "Lift",
+   "doc": "A flame lower than the target's height - Low goes up: y += Base - rand % Mod"
+  },
+  {
+   "key": "flames.scale",
+   "label": "Size",
+   "doc": "Base + rand % Mod (4096: the sequence's own size)"
+  },
+  {
+   "key": "flames.glow",
+   "label": "Ground glow",
+   "doc": "Under each flame, on the target's height plane: turned by Tilt about x (1024: flat), draw mode Mode; its grey = ((the flame's y, at least High) x 4096 / -High) x Span / 4096 + Base"
+  },
+  {
+   "key": "embers.delay",
+   "label": "Delay",
+   "doc": "Ember k (0, 1...) waits rand % Mod + Step x k ticks before its first frame"
+  },
+  {
+   "key": "embers.rise",
+   "label": "Rise speed",
+   "doc": "Its speed up: Base - rand % Mod (y goes down: up)"
+  },
+  {
+   "key": "embers.scale",
+   "label": "Size",
+   "doc": "Base + rand % Mod (4096: the sequence's own size)"
+  },
+  {
+   "key": "sparks.life",
+   "label": "Life",
+   "doc": "It lives Base + rand % Mod + 1 ticks: its frame Last frame - life (life counting down to 0)"
+  },
+  {
+   "key": "sparks.delay",
+   "label": "Delay",
+   "doc": "Spark k (0, 1...) waits rand % Mod + Step x k ticks before its first frame"
+  },
+  {
+   "key": "sparks.rise",
+   "label": "Rise speed",
+   "doc": "Its speed up: Base - rand % Mod (y goes down: up)"
+  },
+  {
+   "key": "sparks.scale",
+   "label": "Size",
+   "doc": "Base + rand % Mod (4096: the sprite's own size)"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.chain_tick",
+   "part": "timing",
+   "label": "Next action",
+   "doc": "A director starts the next action's director at this tick of its own (counted from its start, waiting or not)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.flames_tick",
+   "part": "timing",
+   "label": "Flames tick",
+   "doc": "The flames start at this director tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at this director tick (a lone target: at its effect position)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE's and BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_pan",
+   "part": "timing",
+   "label": "Sound pan",
+   "doc": "Several targets: where it plays between the speakers (128: the middle)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's targets take the result at this director tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The director ends at this tick (its lone target is free for the next one)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.count",
+   "part": "flames",
+   "label": "Count",
+   "doc": "Flames around a lone target (several targets: one around each)",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.delay.mod",
+   "part": "flames",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.delay.step",
+   "part": "flames",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.spread.num",
+   "part": "flames",
+   "label": "Times",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2800,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.spread.max",
+   "part": "flames",
+   "label": "At most",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.low",
+   "part": "flames",
+   "label": "Low",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 550,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.lift.base",
+   "part": "flames",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -500,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.lift.mod",
+   "part": "flames",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 300,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.scale.base",
+   "part": "flames",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3328,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.scale.mod",
+   "part": "flames",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.frames",
+   "part": "flames",
+   "label": "Frames",
+   "doc": "The flipbook's frames: the flame ends after them",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.shade_shift",
+   "part": "flames",
+   "label": "Shade shift",
+   "doc": "The camera offset it is drawn with: -(its size >> this)",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.glow.tilt",
+   "part": "flames",
+   "label": "Tilt",
+   "doc": "",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.glow.mode",
+   "part": "flames",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.glow.high",
+   "part": "flames",
+   "label": "High",
+   "doc": "",
+   "type": "i16",
+   "min": -32767,
+   "max": -1,
+   "default": -2000,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.glow.span",
+   "part": "flames",
+   "label": "Span",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 160,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.glow.base",
+   "part": "flames",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 160,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.count",
+   "part": "embers",
+   "label": "Count",
+   "doc": "Embers each flame starts at its first frame",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.delay.mod",
+   "part": "embers",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.delay.step",
+   "part": "embers",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.spread",
+   "part": "embers",
+   "label": "Spread",
+   "doc": "Around the flame: x and z + rand % this - this / 2",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 300,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.drop",
+   "part": "embers",
+   "label": "Above",
+   "doc": "Above the flame: y - rand % this",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.rise.base",
+   "part": "embers",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -20,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.rise.mod",
+   "part": "embers",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.scale.base",
+   "part": "embers",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2560,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.scale.mod",
+   "part": "embers",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1280,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.frames",
+   "part": "embers",
+   "label": "Frames",
+   "doc": "The flipbook's frames: the ember ends after them",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.shade_shift",
+   "part": "embers",
+   "label": "Shade shift",
+   "doc": "The camera offset it is drawn with: -(its size >> this)",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.accel",
+   "part": "embers",
+   "label": "Speed-up shift",
+   "doc": "Its speed grows by itself >> this a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "embers.shrink",
+   "part": "embers",
+   "label": "Shrink shift",
+   "doc": "Its size shrinks by itself >> this a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.count",
+   "part": "sparks",
+   "label": "Count",
+   "doc": "Sparks each flame starts at its first frame",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life.base",
+   "part": "sparks",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life.mod",
+   "part": "sparks",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.delay.mod",
+   "part": "sparks",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.delay.step",
+   "part": "sparks",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.spread",
+   "part": "sparks",
+   "label": "Spread",
+   "doc": "Around the flame: x and z + rand % this - this / 2",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 400,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.drop",
+   "part": "sparks",
+   "label": "Above",
+   "doc": "Above the flame: y - rand % this",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.speed",
+   "part": "sparks",
+   "label": "Speed",
+   "doc": "x and z speed: rand % this - this / 2",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.rise.base",
+   "part": "sparks",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -20,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.rise.mod",
+   "part": "sparks",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.scale.base",
+   "part": "sparks",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2304,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.scale.mod",
+   "part": "sparks",
+   "label": "Mod",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.sprite",
+   "part": "sparks",
+   "label": "Sprite",
+   "doc": "The shared effect sprite drawn",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.last",
+   "part": "sparks",
+   "label": "Last frame",
+   "doc": "Its frame: this - its life",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.flag20",
+   "part": "sparks",
+   "label": "Header +0x20",
+   "doc": "The sprite header's byte +0x20",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.mode",
+   "part": "sparks",
+   "label": "Draw mode",
+   "doc": "The sprite header's draw mode (+0x24)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.shade_shift",
+   "part": "sparks",
+   "label": "Shade shift",
+   "doc": "The camera offset it is drawn with: -(its size >> this)",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.drag",
+   "part": "sparks",
+   "label": "Drag shift",
+   "doc": "x and z speeds slow by themselves >> this a tick, y's grows so",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.shrink",
+   "part": "sparks",
+   "label": "Shrink",
+   "doc": "Its size shrinks by this a tick",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 64,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "director",
+   "pool": "particles",
+   "size": 36,
+   "function": "0x629990",
+   "doc": "An action with several targets: one flame around each at its flames tick; the next action's director, the result on every target, the sound (BdPlaySE, panned); nothing while the battle only draws.",
+   "node": [
+    "counter",
+    "action",
+    [
+     "pad",
+     16
+    ],
+    "slot",
+    "chain"
+   ],
+   "draw_only": "skip",
+   "every_tick": [
+    [
+     "chain_next",
+     "$timing.chain_tick"
+    ]
+   ],
+   "spawns": [
+    {
+     "task": "flame",
+     "window": [
+      "$timing.flames_tick",
+      "$timing.flames_tick"
+     ],
+     "every": 1,
+     "place": [
+      "flames_on_targets",
+      1,
+      1,
+      "$flames.delay.mod",
+      "$flames.delay.step",
+      "$flames.spread.num",
+      "$flames.spread.max",
+      "$flames.low",
+      "$flames.lift.base",
+      "$flames.lift.mod",
+      "$flames.scale.base",
+      "$flames.scale.mod"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "heal_action_all_at",
+     "$timing.damage_tick"
+    ],
+    [
+     "sound_pan_at",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume",
+     "$timing.sound_pan"
+    ]
+   ],
+   "end": [
+    "tick_at_least",
+    "$timing.end_tick"
+   ]
+  },
+  {
+   "key": "director_single",
+   "pool": "particles",
+   "size": 36,
+   "function": "0x62A380",
+   "doc": "An action with a lone target: waits (its first tick) until no other Fire burns on it, then takes it; Count flames around it at its flames tick; the next action's director, the result, the sound at the target's effect position; at its end the target is free again; nothing while the battle only draws.",
+   "node": [
+    "counter",
+    "action",
+    [
+     "pad",
+     16
+    ],
+    "slot",
+    "chain"
+   ],
+   "draw_only": "skip",
+   "every_tick": [
+    [
+     "chain_next",
+     "$timing.chain_tick"
+    ]
+   ],
+   "hold": [
+    "claim_target"
+   ],
+   "spawns": [
+    {
+     "task": "flame",
+     "window": [
+      "$timing.flames_tick",
+      "$timing.flames_tick"
+     ],
+     "every": 1,
+     "place": [
+      "flames_on_targets",
+      0,
+      "$flames.count",
+      "$flames.delay.mod",
+      "$flames.delay.step",
+      "$flames.spread.num",
+      "$flames.spread.max",
+      "$flames.low",
+      "$flames.lift.base",
+      "$flames.lift.mod",
+      "$flames.scale.base",
+      "$flames.scale.mod"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ],
+    [
+     "sound_3d_at_position",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume",
+     0
+    ]
+   ],
+   "end": [
+    "tick_at_least",
+    "$timing.end_tick"
+   ],
+   "at_end": [
+    [
+     "release_target"
+    ]
+   ]
+  },
+  {
+   "key": "flame",
+   "pool": "particles",
+   "size": 36,
+   "function": "0x629C10",
+   "doc": "After its delay: the flame flipbook (frame = its tick) over its ground glow; at its first frame its embers and sparks; it ends after its frames.",
+   "node": [
+    "counter",
+    "delay",
+    "flame"
+   ],
+   "draws_first": true,
+   "draw_only": "after_draws",
+   "draws": [
+    {
+     "part": "flames",
+     "draw": [
+      "flame",
+      "@flame.seq",
+      "@glow.seq",
+      "$flames.shade_shift",
+      "$flames.glow.tilt",
+      "$flames.glow.mode",
+      "$flames.glow.high",
+      "$flames.glow.span",
+      "$flames.glow.base"
+     ]
+    }
+   ],
+   "spawns": [
+    {
+     "task": "ember",
+     "window": [
+      0,
+      0
+     ],
+     "every": 1,
+     "place": [
+      "flame_embers",
+      "$embers.count",
+      "$embers.delay.mod",
+      "$embers.delay.step",
+      "$embers.spread",
+      "$embers.drop",
+      "$embers.rise.base",
+      "$embers.rise.mod",
+      "$embers.scale.base",
+      "$embers.scale.mod"
+     ]
+    },
+    {
+     "task": "spark",
+     "window": [
+      0,
+      0
+     ],
+     "every": 1,
+     "place": [
+      "flame_sparks",
+      "$sparks.count",
+      "$sparks.life.base",
+      "$sparks.life.mod",
+      "$sparks.delay.mod",
+      "$sparks.delay.step",
+      "$sparks.spread",
+      "$sparks.drop",
+      "$sparks.speed",
+      "$sparks.rise.base",
+      "$sparks.rise.mod",
+      "$sparks.scale.base",
+      "$sparks.scale.mod"
+     ]
+    }
+   ],
+   "end": [
+    "tick_at_least",
+    "$flames.frames"
+   ]
+  },
+  {
+   "key": "spark",
+   "pool": "particles",
+   "size": 36,
+   "function": "0x629F90",
+   "doc": "After its delay: the shared sprite (frame = Last frame - its life), then it drifts and shrinks; it ends once its life is past 0.",
+   "node": [
+    "life",
+    "delay",
+    "fire_spark"
+   ],
+   "draws_first": true,
+   "draw_only": "after_draws",
+   "draws": [
+    {
+     "part": "sparks",
+     "draw": [
+      "fire_spark",
+      "$sparks.sprite",
+      "$sparks.last",
+      "$sparks.flag20",
+      "$sparks.mode",
+      "$sparks.shade_shift"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "fire_spark_move",
+     "$sparks.drag",
+     "$sparks.shrink"
+    ]
+   ],
+   "end": [
+    "life_out"
+   ]
+  },
+  {
+   "key": "ember",
+   "pool": "particles",
+   "size": 36,
+   "function": "0x62A0A0",
+   "doc": "After its delay: the ember flipbook (frame = its tick), then it rises faster and shrinks; it ends after its frames.",
+   "node": [
+    "counter",
+    "delay",
+    "ember"
+   ],
+   "draws_first": true,
+   "draw_only": "after_draws",
+   "draws": [
+    {
+     "part": "embers",
+     "draw": [
+      "ember",
+      "@ember.seq",
+      "$embers.shade_shift"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "ember_rise",
+     "$embers.accel",
+     "$embers.shrink"
+    ]
+   ],
+   "end": [
+    "tick_at_least",
+    "$embers.frames"
+   ]
+  }
+ ]
+}

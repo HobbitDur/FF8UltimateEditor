@@ -240,7 +240,8 @@ def test_silence_description_compiles():
         compile_program(broken)
 
 
-# the effects whose director starts one task per action every n ticks: texture, parameters set, values
+# the effects whose director starts one task per action every n ticks (and Fire's, one director per
+# action, each starting the next one's): texture, parameters set, values
 CYCLES = {
     122: ("mag121.tim", 11, "timing.every 7\ntiming.sound_tick 3\ntiming.damage_tick 30\ntiming.end_tick 45\n"
                             "layout.depth.base -1000\nlayout.nearer.object 2\nlayout.bone 241\n"),
@@ -261,13 +262,14 @@ CYCLES = {
     120: ("mag119.tim", 20, "stare.ahead 3\nstone.from 10\nstare.follow 5\ntiming.fade_tick 6\n"
                             "stone.depth.base -1000\ntiming.end_tick 45\n"),
     127: ("mag126.tim", 20, "stare.ahead 3\nstone.from 10\nstone.ticks 20\n"),
-    114: ("mag113.tim", 20, "overlay.amp.base 800\nmist.additive.b -1\noverlay.from 20\ntiming.mark_from 25\n"
+    114: ("mag113.tim", 20, "overlay.amp.base 800\nmist.additive.b -1\noverlay.window.from 20\ntiming.mark_from 25\n"
                             "mist.depth.shift 4\n"),
     124: ("mag123.tim", 34, "tint.ticks 16\ntint.shift 8\nsparks.count 4\nsilhouette.from 30\nflash.level 1500\n"
                             "burst.depth.shift 4\n"),
     106: ("mag105.tim", 32, "hexagons.count 5\nwall.grow 15\nrings.every 4\nbeams.count 6\ntiming.size_shift 3\n"),
     108: ("mag107.tim", 51, "rays.count 5\nembers.count 2\nswirls.per_tick 3\nglow.ticks 12\nsparks.every 3\n"
                             "rays.width 200\n"),
+    2: ("mag001.tim", 57, "flames.count 6\nsparks.count 3\nembers.rise.base -40\nflames.glow.base 96\ntiming.sound_tick 3\n"),
 }
 
 
@@ -287,7 +289,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect and Berserk from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk and Fire from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -437,3 +439,16 @@ def test_berserk_description_compiles():
     draws = [next(op for op in ops if f" {op}" in line) for line in lines if line.startswith("draw ") and any(f" {op}" in line for op in ops)]
     assert draws == list(ops)
     assert "end ribbon_done $16" in lines and lines.count("draw 5 0 - - mote_sprite") == 1
+
+
+def test_fire_description_compiles():
+    """Fire: the chain director (several targets' director, the lone target's); each director starts
+    the next action's on its chain counter, does nothing while the battle only draws; the lone
+    target's waits for its target and frees it at its end; the flames wait their delay, draw first,
+    then spawn their embers and sparks."""
+    lines = compile_program(load_description(2)).splitlines()
+    assert "director chain 0 1" in lines and lines.count("draw_only skip") == 2 and lines.count("draw_only after_draws") == 3
+    assert "hold claim_target" in lines and "at_end release_target" in lines and lines.count("tick chain_next $0") == 2
+    assert [line.split()[5] for line in lines if line.startswith("spawn_every ")] == ["flames_on_targets", "flames_on_targets",
+                                                                                      "flame_embers", "flame_sparks"]
+    assert "field delay 14 2" in lines and "end life_out" in lines
