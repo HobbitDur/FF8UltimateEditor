@@ -1,0 +1,204 @@
+{
+ "format": 1,
+ "effect": 29,
+ "name": "Wind Blast",
+ "doc": "Wind Blast (Thrustaevis' enemy attack; the act family, Drain's master): once its children are gone the actor pools, then one emitter per action - its sound, the wind's actor system, the master's release, the damage of its targets. Its parts are the port's code (FFNx mag029_wind_blast.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x879480",
+   "setup": "0x8794A0",
+   "root": "0x8795C0"
+  },
+  "memory": {
+   "texture_file": "0x26D6A40",
+   "packet_cursor": "0x26D6A44",
+   "packet_limit": "0x26D6A60",
+   "arena_a": "0x26D74C4",
+   "limit_a": "0x26D6B4C",
+   "arena_b": "0x26D74C0",
+   "limit_b": "0x26D6B48",
+   "arena_top": "0x26D74EC",
+   "init_flag_a": "0x26D74E8",
+   "init_flag_b": "0x26D6B44",
+   "cam_ptr_a": "0x26D74E0",
+   "cam_ptr_b": "0x26D6A64",
+   "root_queue": "0x26D6B30",
+   "root_pool": "0x26D6A68",
+   "particle_pool": "0x26D74CC",
+   "actor_pool": "0x26D74E4",
+   "particle_next": "0x26D6B40",
+   "actor_next": "0x26D74D8",
+   "cursor_c": "0x26D74C8",
+   "cursor_d": "0x26D6A48",
+   "count_a": "0x26D74DA",
+   "count_b": "0x26D74CA"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 29,
+  "from": "0x26D6A40",
+  "size": "0xAB8",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x160E094",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x160DF80",
+   "size": 276
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x160DF7C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x10E0",
+    "actor_pool": "0xD200"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x26D7350",
+   "storage": "0x26D7360",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x26D7340",
+   "storage": "0x26D6B50",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: its sound, the master's release, the damage of its targets"
+  },
+  {
+   "id": 0,
+   "key": "actors",
+   "title": "Actor system",
+   "doc": "The wind's actor system (its actor data the exe's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at its first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 41,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The damage of every target of its action from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 41,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "actors",
+   "label": "Start",
+   "doc": "Its start tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "actors",
+   "label": "Length",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "actors",
+   "label": "Mode",
+   "doc": "Its placement mode",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 1,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x8797C0",
+   "code": "0x8797C0",
+   "native": "0x8797C0",
+   "doc": "One per action: the module's own emitter (the port's task): its sound, the actor system, the master's release, the damage of its targets."
+  }
+ ]
+}

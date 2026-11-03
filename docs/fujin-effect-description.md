@@ -1119,3 +1119,11 @@ Potion's description is the same with its own sequences and sound.
        the actor system (start, length, mode), the stage wobble (amplitude, step). Data: the sound, the
        camera track, "mag027-051.tim".
      - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
+   - **Wind Blast (29)** (FFNx 1ad1591d; Thrustaevis' enemy attack; the act family with Drain's master, no
+     stage tasks): once its children are gone the actor pools, one emitter per action - its sound, the
+     wind's actor system, the master's release, the damage of its targets.
+     - *Added:* an act director with actor pools and no stage tasks (`act` without `stage_in` /
+       `stage_out` / `wait`).
+     - *Inputs* (`WindBlastParams`): the emitter's sound, release and damage ticks, the actor system
+       (start, length, mode). Data: the sound, the camera track, "mag028.tim".
+     - *Fujin:* its tabs (Emitter, Actor system); no + menu family.
