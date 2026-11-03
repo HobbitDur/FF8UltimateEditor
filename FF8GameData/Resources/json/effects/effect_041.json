@@ -1,0 +1,317 @@
+{
+ "format": 1,
+ "effect": 41,
+ "name": "Dribble",
+ "doc": "Dribble (Wendigo's enemy attack; the act family): one emitter per action - the grab sound, an actor system (its actor data the exe's) and the dribble: the target grabbed, morphed into a ball and bounced in the caster's hand, thrown, landing with dust, given back and walking back; the damage. Its parts are the port's code (FFNx mag041_dribble.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8465A0",
+   "setup": "0x8465C0",
+   "root": "0x8466F0"
+  },
+  "memory": {
+   "texture_file": "0x267B858",
+   "packet_cursor": "0x267B85C",
+   "packet_limit": "0x268F1B4",
+   "arena_a": "0x2698A5C",
+   "limit_a": "0x26903E4",
+   "arena_b": "0x2698A58",
+   "limit_b": "0x26903E0",
+   "arena_top": "0x2698AB0",
+   "init_flag_a": "0x2698AAC",
+   "init_flag_b": "0x26903DC",
+   "cam_ptr_a": "0x2698AA4",
+   "cam_ptr_b": "0x268F1B8",
+   "root_queue": "0x268F288",
+   "root_pool": "0x268F1C0",
+   "particle_pool": "0x2698A90",
+   "actor_pool": "0x2698AA8",
+   "particle_next": "0x26903D8",
+   "actor_next": "0x2698A9C",
+   "cursor_c": "0x2698A8C",
+   "cursor_d": "0x267B860",
+   "count_a": "0x2698A9E",
+   "count_b": "0x2698A8E"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 41,
+  "from": "0x267B858",
+  "size": "0x1D260",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15CDDD8",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x15CD9B4",
+   "size": 712
+  },
+  "sounds.grab": {
+   "kind": "sound",
+   "address": "0x15CA5A8",
+   "size": 4
+  },
+  "sounds.land": {
+   "kind": "sound",
+   "address": "0x15CA5AC",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x5000",
+  "release_file": false,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x8340"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x26988E8",
+   "storage": "0x26988F8",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x2690BD8",
+   "storage": "0x26903E8",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor system (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x268F298",
+   "storage": "0x268F2A8",
+   "size": 220,
+   "count": 20,
+   "keep": true,
+   "doc": "the dribble spawner, the dribble, the dust (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: the grab sound, the actor system (its actor data the exe's), the dribble spawner, the master's release, the damage"
+  },
+  {
+   "id": 0,
+   "key": "ball",
+   "title": "Ball",
+   "doc": "The target grabbed, morphed into a ball, bounced in the caster's hand, thrown, landing with dust, walking back"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The grab (at the emitter's sound tick), the landing"
+  },
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "At the emitter's start: Start, Length (ticks), Mode"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.grab",
+   "part": "emitter",
+   "label": "Grab",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.grab",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.land",
+   "part": "emitter",
+   "label": "Landing",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.land",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound tick",
+   "doc": "The grab sound at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 116,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The damage of its target from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 116,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "emitter",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "emitter",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.grab",
+   "part": "ball",
+   "label": "Grab ticks",
+   "doc": "The morph starts at this tick of the dribble",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 19,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.morph",
+   "part": "ball",
+   "label": "Morph",
+   "doc": "Into the ball a tick (4096: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.bounce",
+   "part": "ball",
+   "label": "Throw tick",
+   "doc": "Bounced in the caster's hand until this tick, then thrown",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 51,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.lift",
+   "part": "ball",
+   "label": "Lift",
+   "doc": "The throw's upward speed",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.gravity",
+   "part": "ball",
+   "label": "Gravity",
+   "doc": "Added to its falling speed a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 1024,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.unmorph",
+   "part": "ball",
+   "label": "Unmorph",
+   "doc": "Back from the ball a tick in the flight (4096: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x846900",
+   "code": "0x846900",
+   "native": "0x846900",
+   "doc": "One per action: the module's own emitter (the port's task): the grab sound, the actor system and the dribble spawner, the master's release, the damage."
+  }
+ ]
+}

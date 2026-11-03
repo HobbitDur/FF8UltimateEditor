@@ -1216,3 +1216,10 @@ Potion's description is the same with its own sequences and sound.
        the port moves that word's value with `own::R()`; the scanner's spawn (two functions by the
        target's record) goes through `own::Fn()` too.
      - *Fujin:* its tab (Scanner); no + menu family.
+   - **Dribble (41)** (FFNx b9506b73; Wendigo's enemy attack; the act family, Draw's description): one
+     emitter per action - the grab sound, an actor system and the dribble: the target grabbed, morphed into
+     a ball and bounced in the caster's hand, thrown, landing with dust, walking back; the damage.
+     - *Inputs* (`DribbleParams`): the grab and landing sounds, the emitter's sound, release and damage
+       ticks, the actor system, the ball's grab ticks, morph, throw tick, lift, gravity and unmorph. Data:
+       the sounds, the camera track, "mag040.tim".
+     - *Fujin:* its tabs (Emitter, Ball); no + menu family.
