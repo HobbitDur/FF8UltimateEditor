@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    13: ("mag012.tim", 10, "emitter.damage 60\ncontrol.puffs_until 8\ncontrol.spawner_d 25\n"),
     12: ("mag011.tim", 13, "blade.spin 600\nsparks.ticks 5\nfans.scale 4096\nblade.trails_until 40\n"),
     11: ("mag010.tim", 30, "stream.ticks 40\nhits.scale 2048\nrings.every 3\ntiming.end 70\n"),
     122: ("mag121.tim", 11, "timing.every 7\ntiming.sound_tick 3\ntiming.damage_tick 30\ntiming.end_tick 45\n"
@@ -301,7 +302,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath and Blade Shot from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot and Dark Mist from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -568,4 +569,12 @@ def test_blade_shot_description_compiles():
     memory (its module's), no task of its own; its parameters the port's."""
     lines = compile_program(load_description(12)).splitlines()
     assert "director port -1" in lines and "port 0x6E8AE0 0x6E8AC0 0x6E8C90" in lines and "module 12 0x2545188 0x10FB8" in lines
+    assert not any(line.startswith(("task ", "pool ")) for line in lines)
+
+
+def test_dark_mist_description_compiles():
+    """Dark Mist: a port director - the port's file loader, setup and root run on the program's
+    memory (its module's), no task of its own; its parameters the port's."""
+    lines = compile_program(load_description(13)).splitlines()
+    assert "director port -1" in lines and "port 0x8BE1F0 0x8BE1D0 0x8BE2D0" in lines and "module 13 0x27428A8 0xC73C" in lines
     assert not any(line.startswith(("task ", "pool ")) for line in lines)

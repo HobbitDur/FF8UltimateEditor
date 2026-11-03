@@ -990,3 +990,10 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`BladeParams`): the two sounds, the blade's tilt and spin, the catch sprite's height, the
        after-images, the impact's sparks, glints and streaks. Data: the sounds, "mag011.tim".
      - *Fujin:* its tabs (Blade, Impact); no + menu family.
+   - **Dark Mist (13)** (FFNx f65b4c97; Anacondaur's Dark Mist / Poison Mist; a port director, Ray-Bomb's
+     kind; effect-library nodes): one emitter per action - a swirl at the caster's mouth, a mist controller
+     throwing a cloud, mist puffs and streams toward the target, puffs round it, the target redrawn
+     wobbling; the damage.
+     - *Inputs* (`MistParams`): the emitter's sound, its mist controller and damage ticks; the controller's
+       ticks (puffs, streams, puffs round the target, the overlay, its end). Data: the sound, "mag012.tim".
+     - *Fujin:* its tabs (Emitter, Mist); no + menu family.

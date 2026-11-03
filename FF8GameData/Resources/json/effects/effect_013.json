@@ -1,0 +1,175 @@
+{
+ "format": 1,
+ "effect": 13,
+ "name": "Dark Mist",
+ "doc": "Dark Mist / Poison Mist (Anacondaur's enemy attacks): one emitter per action - a swirl at the caster's mouth, a mist controller throwing a cloud, mist puffs and streams toward the target, puffs round it, the target redrawn wobbling; the damage. Its tasks are the port's code (FFNx mag013_dark_mist.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x8BE1D0",
+   "setup": "0x8BE1F0",
+   "root": "0x8BE2D0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 13,
+  "from": "0x27428A8",
+  "size": "0xC73C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1634B70",
+   "size": 12
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x16309F8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x8BE1F0",
+  "file_loader": "0x8BE1D0",
+  "root": "0x8BE2D0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: the swirl at the caster's mouth at once, the mist controller, the damage, its sound"
+  },
+  {
+   "id": 0,
+   "key": "mist",
+   "title": "Mist",
+   "doc": "The mist controller: the cloud, the mist puffs thrown to the target, the streams, the puffs round the target, the target's wobbling overlay"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "Played at the emitter's first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.control",
+   "part": "emitter",
+   "label": "Mist from",
+   "doc": "The mist controller from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.damage",
+   "part": "emitter",
+   "label": "Damage at",
+   "doc": "The action's result from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 70,
+   "unit": "plain"
+  },
+  {
+   "key": "control.puffs_until",
+   "part": "mist",
+   "label": "Puffs until",
+   "doc": "Four mist puffs a tick until this tick of the controller",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "control.stream_a",
+   "part": "mist",
+   "label": "Stream 1",
+   "doc": "A stream at this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "control.stream_b",
+   "part": "mist",
+   "label": "Stream 2",
+   "doc": "...and one at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 23,
+   "unit": "plain"
+  },
+  {
+   "key": "control.spawner_c",
+   "part": "mist",
+   "label": "Target puffs 1",
+   "doc": "Puffs round the target from this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "control.spawner_d",
+   "part": "mist",
+   "label": "Target puffs 2",
+   "doc": "...and more from this one",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "control.overlay",
+   "part": "mist",
+   "label": "Overlay at",
+   "doc": "The target's wobbling overlay from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "control.end",
+   "part": "mist",
+   "label": "End",
+   "doc": "The controller is done after this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
