@@ -1,0 +1,1543 @@
+{
+ "format": 1,
+ "effect": 5,
+ "name": "Phoenix Down",
+ "doc": "Phoenix Down (the revive module, Life's and Phoenix Down's: one source): one emitter per action, in turn, on its target; sparkles rising from a disc round it, revive sparkles scattered above, sparkles orbiting up a ring, sparkles falling, the effect library's glints; the revive once the sparkles' size has faded. No camera track; its texture uploaded even when the cast repeats.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8D4430",
+   "setup": "0x8D4450",
+   "root": "0x8D4530"
+  },
+  "memory": {
+   "texture_file": "0x27618A0",
+   "packet_cursor": "0x27618A4",
+   "root_pool": "0x27618C0",
+   "root_queue": "0x2761988",
+   "arena_a": "0x276C294",
+   "arena_b": "0x276C290"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x163E2A8",
+   "size": 4
+  },
+  "rise_a.seq": {
+   "kind": "seq",
+   "address": "0x163E2AC",
+   "size": 428
+  },
+  "rise_b.seq": {
+   "kind": "seq",
+   "address": "0x163E458",
+   "size": 428
+  },
+  "ring.seq": {
+   "kind": "seq",
+   "address": "0x163E604",
+   "size": 428
+  },
+  "revive.seq": {
+   "kind": "seq",
+   "address": "0x163E7B0",
+   "size": 92
+  },
+  "fall.seq": {
+   "kind": "seq",
+   "address": "0x163E80C",
+   "size": 272
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x163E91C",
+   "size": 16
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas (the setup sets the arena words to them).",
+  "arenas": [
+   "0x0",
+   "0x2000"
+  ],
+  "morph": "0x0"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "root": "short",
+  "upload": "always"
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2769CF0",
+   "storage": "0x276C0F0",
+   "size": 100,
+   "count": 4
+  },
+  {
+   "key": "unused",
+   "queue": "0x276C298",
+   "storage": "0x276C2A8",
+   "size": 48,
+   "count": 300,
+   "keep": true,
+   "doc": "the director runs it; nothing is ever spawned there"
+  },
+  {
+   "key": "sparkles",
+   "queue": "0x2769CD8",
+   "storage": "0x2761998",
+   "size": 112,
+   "count": 300
+  },
+  {
+   "key": "glints",
+   "queue": "0x276C280",
+   "storage": "0x2769D00",
+   "size": 92,
+   "count": 100,
+   "part": "glints"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action, on its target: its spawn parameters animated by phases, its sound, the result (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "sparkles",
+   "title": "Sparkles",
+   "doc": "Flipbooks rising from a disc round the target, and revive sparkles scattered above it"
+  },
+  {
+   "id": 2,
+   "key": "ring",
+   "title": "Ring",
+   "doc": "Flipbooks orbiting up a ring round the target"
+  },
+  {
+   "id": 3,
+   "key": "fall",
+   "title": "Falling sparkles",
+   "doc": "Flipbooks falling round the target"
+  },
+  {
+   "id": 4,
+   "key": "glints",
+   "title": "Glints",
+   "doc": "The shared effect library's glints at the target's centre, growing then shrinking, spinning"
+  }
+ ],
+ "groups": [
+  {
+   "key": "emitter.size",
+   "label": "Sparkle size",
+   "doc": "The sparkles' size ramp at the start: from Start towards End"
+  },
+  {
+   "key": "emitter.grow",
+   "label": "Grow",
+   "doc": "Until emitter tick Ticks: the start size up by Size a tick, the radius by Radius"
+  },
+  {
+   "key": "emitter.spread",
+   "label": "Spread",
+   "doc": "Until emitter tick Ticks: the radius down by Radius, the height spread up by Spread, the ring's height down by Ring; then the end size End"
+  },
+  {
+   "key": "emitter.fade",
+   "label": "Fade",
+   "doc": "Until emitter tick Ticks: the start size down by Size a tick; then the result"
+  },
+  {
+   "key": "ring.divisor",
+   "label": "Radius",
+   "doc": "Its orbit's radius 4096 / ((emitter tick - Sub) / Div + Add)"
+  },
+  {
+   "key": "fall.lift",
+   "label": "Above",
+   "doc": "Above the anchor by Base + (rand & Mask)"
+  },
+  {
+   "key": "fall.speed",
+   "label": "Speed",
+   "doc": "Falling Base + (rand & Mask) a tick"
+  },
+  {
+   "key": "glints.rate",
+   "label": "How many",
+   "doc": "Glints per tick = the count of the last rate whose from tick <= the emitter tick"
+  },
+  {
+   "key": "glints.grow",
+   "label": "Growth",
+   "doc": "width, height += this every tick while growing"
+  },
+  {
+   "key": "glints.shrink",
+   "label": "Shrinking",
+   "doc": "width, height -= this every tick while shrinking"
+  },
+  {
+   "key": "glints.centre",
+   "label": "Centre colour step",
+   "doc": "centre colour += this every tick while growing, -= while shrinking"
+  },
+  {
+   "key": "glints.tip",
+   "label": "Tip colour step",
+   "doc": "tip colour += this every tick while growing, -= while shrinking"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound_tick",
+   "part": "emitter",
+   "label": "Sound tick",
+   "doc": "The sound plays when the emitter tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound_pan",
+   "part": "emitter",
+   "label": "Sound pan",
+   "doc": "Where it plays between the speakers: 128 the middle (BdPlaySE's pan)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.size.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.size.end",
+   "part": "emitter",
+   "label": "End",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.grow.ticks",
+   "part": "emitter",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.grow.size",
+   "part": "emitter",
+   "label": "Size",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 384,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.grow.radius",
+   "part": "emitter",
+   "label": "Radius",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 102,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.spread.ticks",
+   "part": "emitter",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.spread.radius",
+   "part": "emitter",
+   "label": "Radius",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 76,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.spread.spread",
+   "part": "emitter",
+   "label": "Spread",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.spread.ring",
+   "part": "emitter",
+   "label": "Ring",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 38,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.spread.end",
+   "part": "emitter",
+   "label": "End",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.fade.ticks",
+   "part": "emitter",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.fade.size",
+   "part": "emitter",
+   "label": "Size",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "rising.last",
+   "part": "sparkles",
+   "label": "Rising until",
+   "doc": "Rising sparkles up to this emitter tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "rising.count",
+   "part": "sparkles",
+   "label": "Rising a tick",
+   "doc": "...this many a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "rising.frames",
+   "part": "sparkles",
+   "label": "Rising last frame",
+   "doc": "Their flipbook's last frame",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "rising.shade",
+   "part": "sparkles",
+   "label": "Rising shade",
+   "doc": "Their camera offset",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "rising.lift",
+   "part": "sparkles",
+   "label": "Rising below",
+   "doc": "Below the disc by this + rand % the height spread",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "rising.steps",
+   "part": "sparkles",
+   "label": "Rising steps",
+   "doc": "Their size ramp in this many steps",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "revive.first",
+   "part": "sparkles",
+   "label": "Revive first",
+   "doc": "A revive sparkle at the anchor at this emitter tick",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "revive.from",
+   "part": "sparkles",
+   "label": "Revive from",
+   "doc": "Then one scattered from this emitter tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "revive.last",
+   "part": "sparkles",
+   "label": "Revive last",
+   "doc": "...to this one...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "revive.every",
+   "part": "sparkles",
+   "label": "Revive every",
+   "doc": "...every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "revive.frames",
+   "part": "sparkles",
+   "label": "Revive last frame",
+   "doc": "Their flipbook's last frame",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "revive.shade",
+   "part": "sparkles",
+   "label": "Revive shade",
+   "doc": "Their camera offset",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -1024,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.from",
+   "part": "ring",
+   "label": "From tick",
+   "doc": "A ring sparkle a tick from this emitter tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.last",
+   "part": "ring",
+   "label": "Last tick",
+   "doc": "...to this one",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 29,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.frames",
+   "part": "ring",
+   "label": "Last frame",
+   "doc": "Its flipbook's last frame",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.divisor.sub",
+   "part": "ring",
+   "label": "Sub",
+   "doc": "",
+   "type": "i16",
+   "min": -200,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.divisor.div",
+   "part": "ring",
+   "label": "Div",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.divisor.add",
+   "part": "ring",
+   "label": "Add",
+   "doc": "",
+   "type": "i16",
+   "min": -100,
+   "max": 100,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.spin",
+   "part": "ring",
+   "label": "Spin",
+   "doc": "Its phase up by this a tick (4096: a full turn)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.rise",
+   "part": "ring",
+   "label": "Rise",
+   "doc": "Its height up by this a tick",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.from",
+   "part": "fall",
+   "label": "From tick",
+   "doc": "A falling sparkle a tick from this emitter tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 21,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.last",
+   "part": "fall",
+   "label": "Last tick",
+   "doc": "...to this one",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.frames",
+   "part": "fall",
+   "label": "Last frame",
+   "doc": "Its flipbook's last frame",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.radius_div",
+   "part": "fall",
+   "label": "Circle",
+   "doc": "On a circle of radius 4096 / this round the anchor",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.lift.base",
+   "part": "fall",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.lift.mask",
+   "part": "fall",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 511,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.speed.base",
+   "part": "fall",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.speed.mask",
+   "part": "fall",
+   "label": "Mask",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.from",
+   "part": "glints",
+   "label": "From tick",
+   "doc": "Glints from this emitter tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.last",
+   "part": "glints",
+   "label": "Last tick",
+   "doc": "...to this one",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.rate[0].from",
+   "part": "glints",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.rate[0].count",
+   "part": "glints",
+   "label": "Count",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.rate[1].from",
+   "part": "glints",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.rate[1].count",
+   "part": "glints",
+   "label": "Count",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.rate[2].from",
+   "part": "glints",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.rate[2].count",
+   "part": "glints",
+   "label": "Count",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.rate[3].from",
+   "part": "glints",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.rate[3].count",
+   "part": "glints",
+   "label": "Count",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.ticks",
+   "part": "glints",
+   "label": "Growing ticks",
+   "doc": "A glint grows this many ticks, then shrinks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.grow.w",
+   "part": "glints",
+   "label": "Width",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.grow.h",
+   "part": "glints",
+   "label": "Height",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.shrink.w",
+   "part": "glints",
+   "label": "Width",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.shrink.h",
+   "part": "glints",
+   "label": "Height",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.centre[0]",
+   "part": "glints",
+   "label": "Red",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.centre[1]",
+   "part": "glints",
+   "label": "Green",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.centre[2]",
+   "part": "glints",
+   "label": "Blue",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.tip[0]",
+   "part": "glints",
+   "label": "Red",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.tip[1]",
+   "part": "glints",
+   "label": "Green",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.tip[2]",
+   "part": "glints",
+   "label": "Blue",
+   "doc": "",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "glints.spin",
+   "part": "glints",
+   "label": "Spin",
+   "doc": "It turns this much a tick, either way at random",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 64,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 100,
+   "function": "0x8D4640",
+   "doc": "One per action, on its target 0: follows it; its phases animate its spawn parameters (a disc's radius, a height spread, the sparkles' size ramp, the ring's height); while spawning, every tick, the sparkles of each kind on their ticks; the result (the revive) once the size has faded, the next action; its sound.",
+   "body": [
+    [
+     "pad",
+     40
+    ],
+    [
+     "radius",
+     "i16"
+    ],
+    [
+     "spread",
+     "i16"
+    ],
+    [
+     "count",
+     "i16"
+    ],
+    [
+     "scale_start",
+     "i16"
+    ],
+    [
+     "scale_end",
+     "i16"
+    ],
+    [
+     "ring",
+     "i16"
+    ]
+   ],
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "do": [
+      [
+       "flags",
+       2,
+       0
+      ],
+      [
+       "set",
+       "radius",
+       0
+      ],
+      [
+       "set",
+       "spread",
+       0
+      ],
+      [
+       "set",
+       "ring",
+       0
+      ],
+      [
+       "set",
+       "count",
+       "$rising.count"
+      ],
+      [
+       "set",
+       "scale_start",
+       "$emitter.size.start"
+      ],
+      [
+       "set",
+       "scale_end",
+       "$emitter.size.end"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add",
+       "scale_start",
+       "$emitter.grow.size"
+      ],
+      [
+       "add",
+       "radius",
+       "$emitter.grow.radius"
+      ]
+     ],
+     "wait": [
+      "above",
+      "counter",
+      "$emitter.grow.ticks"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add",
+       "radius",
+       "-$emitter.spread.radius"
+      ],
+      [
+       "add",
+       "spread",
+       "$emitter.spread.spread"
+      ],
+      [
+       "add",
+       "ring",
+       "-$emitter.spread.ring"
+      ]
+     ],
+     "wait": [
+      "above",
+      "counter",
+      "$emitter.spread.ticks"
+     ],
+     "do": [
+      [
+       "set",
+       "count",
+       "$rising.count"
+      ],
+      [
+       "set",
+       "scale_end",
+       "$emitter.spread.end"
+      ]
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "add",
+       "scale_start",
+       "-$emitter.fade.size"
+      ]
+     ],
+     "wait": [
+      "above",
+      "counter",
+      "$emitter.fade.ticks"
+     ],
+     "do": [
+      [
+       "unblock_director"
+      ],
+      [
+       "heal"
+      ],
+      [
+       "flags",
+       1,
+       2
+      ]
+     ]
+    }
+   ],
+   "spawns": [
+    {
+     "task": "sparkle",
+     "if": "spawning",
+     "window": [
+      0,
+      "$rising.last"
+     ],
+     "count": [
+      0,
+      "$rising.count",
+      32767,
+      0,
+      32767,
+      0,
+      32767,
+      0
+     ],
+     "place": [
+      "revive_rising",
+      "@rise_a.seq",
+      "@rise_b.seq",
+      "$rising.frames",
+      "$rising.shade",
+      "$rising.lift",
+      "$rising.steps"
+     ]
+    },
+    {
+     "task": "sparkle",
+     "if": "spawning",
+     "window": [
+      "$revive.first",
+      "$revive.first"
+     ],
+     "every": 1,
+     "place": [
+      "revive_at",
+      "@revive.seq",
+      "$revive.frames",
+      "$revive.shade"
+     ]
+    },
+    {
+     "task": "sparkle",
+     "if": "spawning",
+     "window": [
+      "$revive.from",
+      "$revive.last"
+     ],
+     "every": "$revive.every",
+     "place": [
+      "revive_scatter",
+      "@revive.seq",
+      "$revive.frames",
+      "$revive.shade"
+     ]
+    },
+    {
+     "task": "ring",
+     "if": "spawning",
+     "window": [
+      "$ring.from",
+      "$ring.last"
+     ],
+     "every": 1,
+     "place": [
+      "revive_ring",
+      "@ring.seq",
+      "$ring.frames",
+      "$ring.divisor.sub",
+      "$ring.divisor.div",
+      "$ring.divisor.add"
+     ]
+    },
+    {
+     "task": "fall",
+     "if": "spawning",
+     "window": [
+      "$fall.from",
+      "$fall.last"
+     ],
+     "every": 1,
+     "place": [
+      "revive_fall",
+      "@fall.seq",
+      "$fall.frames",
+      "$fall.radius_div",
+      "$fall.lift.base",
+      "$fall.lift.mask",
+      "$fall.speed.base",
+      "$fall.speed.mask"
+     ]
+    },
+    {
+     "pool": "glints",
+     "if": "spawning",
+     "window": [
+      "$glints.from",
+      "$glints.last"
+     ],
+     "count": [
+      "$glints.rate[0].from",
+      "$glints.rate[0].count",
+      "$glints.rate[1].from",
+      "$glints.rate[1].count",
+      "$glints.rate[2].from",
+      "$glints.rate[2].count",
+      "$glints.rate[3].from",
+      "$glints.rate[3].count"
+     ],
+     "place": [
+      "glint",
+      "glints",
+      "$glints.ticks",
+      "$glints.grow.w",
+      "$glints.grow.h",
+      "$glints.shrink.w",
+      "$glints.shrink.h",
+      "$glints.centre[0]",
+      "$glints.centre[1]",
+      "$glints.centre[2]",
+      "$glints.tip[0]",
+      "$glints.tip[1]",
+      "$glints.tip[2]",
+      "$glints.spin"
+     ]
+    }
+   ],
+   "events": [
+    [
+     "sound_at",
+     "$emitter.sound_tick",
+     "$emitter.sound",
+     "$emitter.sound_pan"
+    ]
+   ]
+  },
+  {
+   "key": "sparkle",
+   "pool": "sparkles",
+   "size": 112,
+   "function": "0x8D4E60",
+   "doc": "A rising or revive sparkle: its flipbook, a frame a tick (done after the last), its size up by its step.",
+   "body": [
+    [
+     "pad",
+     18
+    ],
+    [
+     "angle",
+     "i16"
+    ],
+    [
+     "pad",
+     8
+    ],
+    [
+     "seq",
+     "i32"
+    ],
+    [
+     "frame",
+     "i16"
+    ],
+    [
+     "last",
+     "i16"
+    ],
+    [
+     "shade",
+     "i16"
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "speed",
+     "i16"
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "centre",
+     "i16",
+     3
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "scale",
+     "i16"
+    ],
+    [
+     "step",
+     "i16"
+    ],
+    [
+     "divisor",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ]
+   ],
+   "phases": [
+    {},
+    {
+     "wait": [
+      "flipbook_end"
+     ],
+     "do": [
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "after_phase": [
+    [
+     "add_var",
+     "scale",
+     "step"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "sparkles",
+     "draw": [
+      "revive_sparkle",
+      "scale"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "ring",
+   "pool": "sparkles",
+   "size": 112,
+   "function": "0x8D4CF0",
+   "doc": "Orbits up its ring round the target, its flipbook a frame a tick (done after the last), its size up by its step.",
+   "body": [
+    [
+     "pad",
+     18
+    ],
+    [
+     "angle",
+     "i16"
+    ],
+    [
+     "pad",
+     8
+    ],
+    [
+     "seq",
+     "i32"
+    ],
+    [
+     "frame",
+     "i16"
+    ],
+    [
+     "last",
+     "i16"
+    ],
+    [
+     "shade",
+     "i16"
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "speed",
+     "i16"
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "centre",
+     "i16",
+     3
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "scale",
+     "i16"
+    ],
+    [
+     "step",
+     "i16"
+    ],
+    [
+     "divisor",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ]
+   ],
+   "phases": [
+    {},
+    {
+     "each_tick": [
+      [
+       "revive_ring_step",
+       "$ring.spin",
+       "$ring.rise"
+      ]
+     ],
+     "wait": [
+      "flipbook_end"
+     ],
+     "do": [
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "after_phase": [
+    [
+     "add_var",
+     "scale",
+     "step"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "ring",
+     "draw": [
+      "revive_sparkle",
+      "scale"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "fall",
+   "pool": "sparkles",
+   "size": 112,
+   "function": "0x8D4BA0",
+   "doc": "Falls by its speed a tick, its flipbook a frame a tick (done after the last).",
+   "body": [
+    [
+     "pad",
+     18
+    ],
+    [
+     "angle",
+     "i16"
+    ],
+    [
+     "pad",
+     8
+    ],
+    [
+     "seq",
+     "i32"
+    ],
+    [
+     "frame",
+     "i16"
+    ],
+    [
+     "last",
+     "i16"
+    ],
+    [
+     "shade",
+     "i16"
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "speed",
+     "i16"
+    ],
+    [
+     "pad",
+     4
+    ],
+    [
+     "centre",
+     "i16",
+     3
+    ],
+    [
+     "pad",
+     2
+    ],
+    [
+     "scale",
+     "i16"
+    ],
+    [
+     "step",
+     "i16"
+    ],
+    [
+     "divisor",
+     "i16"
+    ],
+    [
+     "pad",
+     2
+    ]
+   ],
+   "phases": [
+    {},
+    {
+     "each_tick": [
+      [
+       "add_var",
+       "pos.1",
+       "speed"
+      ]
+     ],
+     "wait": [
+      "flipbook_end"
+     ],
+     "do": [
+      [
+       "done"
+      ]
+     ]
+    }
+   ],
+   "draws": [
+    {
+     "part": "fall",
+     "draw": [
+      "revive_sparkle_sized",
+      4096
+     ]
+    }
+   ]
+  }
+ ]
+}

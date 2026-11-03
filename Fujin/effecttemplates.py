@@ -1,5 +1,5 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's, Berserk's, Fire's, Thunder's, Double's), and the description an effect made
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's, Flare's, Reflect's, Berserk's, Fire's, Thunder's, Double's, Phoenix Down's), and the description an effect made
 of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
@@ -203,6 +203,17 @@ TEMPLATES = {
                      "Prim models whose vertices blend from one shape to another while they fade."),
     "double_flash": ("on the target's top", "Moving parts", "per_action_runes", 4, "flash", ("flash",), (), ("double",),
                      "A textured quad on the target's top that jumps up and falls back."),
+    # the revive module's family (Phoenix Down's, Life's: effect-library nodes, one emitter per target in turn)
+    "revive": ("one per target, sparkles rising", "How the effect starts", "per_action_revive", 5, "sparkles",
+               ("emitter", "sparkle"), (), (), "One emitter per target, in turn, its spawn parameters animated by phases: "
+               "sparkles rising from a disc round the target and revive sparkles scattered above it; the sound, the result "
+               "(Phoenix Down's and Life's way)."),
+    "revive_ring": ("orbiting up a ring", "Moving parts", "per_action_revive", 5, "ring", ("ring",), (), ("revive",),
+                    "Flipbooks orbiting up a ring round the target."),
+    "revive_fall": ("falling round the target", "Moving parts", "per_action_revive", 5, "fall", ("fall",), (), ("revive",),
+                    "Flipbooks falling round the target."),
+    "revive_glints": ("streaks at the target's centre", "Moving parts", "per_action_revive", 5, "glints", (), (), ("revive",),
+                      "The effect library's glints, growing, spinning and shrinking at the target's centre."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout",
@@ -211,7 +222,8 @@ STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout
           "per_action_wind": "wind", "per_action_flash": "blind",
           "per_action_stare": "stare", "per_action_sway": "zombie",
           "per_action_burst": "flare", "per_action_barrier": "reflect", "per_action_rays": "berserk",
-          "per_action_chain": "fire", "per_action_bolt": "thunder", "per_action_runes": "double"}
+          "per_action_chain": "fire", "per_action_bolt": "thunder", "per_action_runes": "double",
+          "per_action_revive": "revive"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
             "on_target": "One layout on the target (Antidote's kind)",
@@ -229,7 +241,8 @@ FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "per_action_rays": "One per action, rays around its target (Berserk's kind)",
             "per_action_chain": "One director per action, flames around its targets (Fire's kind)",
             "per_action_bolt": "One per action, a bolt on its target (Thunder's kind)",
-            "per_action_runes": "Around one target at a time, runes (Double's kind)"}
+            "per_action_runes": "Around one target at a time, runes (Double's kind)",
+            "per_action_revive": "Around one target at a time, sparkles rising (Phoenix Down's kind)"}
 
 
 @functools.cache
@@ -372,7 +385,7 @@ def build_effect(effect_id, name, parts, exe=None, keep=None):
                 del director[key]
     used_pools = {t["pool"] for t in tasks} | {s["place"][1] for t in tasks for s in t.get("spawns", [])
                                               if s.get("place", [None])[0] == "glint"}         | {a[3] for t in tasks for a in t.get("events", []) if a[0] == "dead_beams"}   # (Reflect's beam pool)
-    d["pools"] = [p for p in d["pools"] if p["key"] in used_pools]
+    d["pools"] = [p for p in d["pools"] if p["key"] in used_pools or p.get("keep")]   # (keep: a pool the director runs, no task in it)
     if "param" in d["resources"].get("texture", {}) and d["resources"]["texture"]["param"] not in kept_params:
         del d["resources"]["texture"]["param"]
     # the data still named somewhere (a pointer table keeps what it points at)

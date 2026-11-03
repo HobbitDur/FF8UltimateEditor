@@ -53,6 +53,7 @@
 #include "fx_flames.h"
 #include "fx_bolt.h"
 #include "fx_runes.h"
+#include "fx_revive.h"
 
 namespace fxprog
 {
@@ -124,6 +125,7 @@ namespace fxprog
 		int director = PER_ACTION, director_start = 1;
 		int director_single = -1;                       // CHAIN: the lone target's director task (director_spawns: several targets')
 		bool director_short = false;                    // PER_ACTION: Double's short root (4 phases, arenas of the magic buffer) and setup
+		bool short_upload_always = false;               // its setup uploads the texture even when the cast repeats (Phoenix Down's)
 		Val director_every;                             // CYCLE: one task per action every this many ticks
 		Step director_place;
 		std::vector<Step> director_events;              // the master's, on its counter, after its queues...
@@ -157,23 +159,24 @@ namespace fxprog
 		SPAWN_SIZE_WORD, SOUND_3D_AT_SPAWN,
 		ADD, SET, COPY, FLAGS, SET_WHEN, ADD_WHEN, ADD_BELOW, ADD_VAR, SPIN_VAR, CIRCLE_PLACE, CIRCLE_PLACE_VAR, ANCHOR_XZ, ANCHOR_TOP,
 		RAND_MASK, RAND_HOP, INDEX_TIMES, TICK_TIMES, TURNED_OFFSET, FADE_PULSE, GREY_PULSE, MORPH, SPAWN_WHEN, SPAWN_UNLESS_TARGET_BITS,
-		SCREEN_FADE_WHEN, WRAP,
+		SCREEN_FADE_WHEN, WRAP, REVIVE_RING_STEP,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE, SPARK_GONE, RAYS_DONE, RIBBON_DONE, MOTE_DONE, LIFE_OUT,
-		VAR_AT_MOST, VAR_AT_LEAST, VAR_EQUALS, NEVER, AT_LEAST_VAR, AT_LEAST_WHEN, EQUALS_WHEN,
+		VAR_AT_MOST, VAR_AT_LEAST, VAR_EQUALS, NEVER, AT_LEAST_VAR, AT_LEAST_WHEN, EQUALS_WHEN, VAR_ABOVE,
 		// motions
 		HELIX,
 		// placements
 		CIRCLE_DROP, GLINT, AT_PARENT, TABLE_POINT, RANDOM_TARGET_BONE, RANDOM_TARGET_POINT, ACTION_TARGETS,
 		TARGET_ANCHOR, ACTION_TARGET, RANDOM_AROUND, RISING_CIRCLE, SPINNING_RING, WHIRL_LEAF, COLLAPSE_SPARKS, ORBIT_SPAWN, GROWTH_SPAWN, RIBBON_START, EMBER_RING, SPARK_NEAR,
 		FLAMES_ON_TARGETS, FLAME_EMBERS, FLAME_SPARKS,
+		REVIVE_RISING, REVIVE_AT, REVIVE_SCATTER, REVIVE_RING, REVIVE_FALL,
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
 		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET, LAYOUT_SCALED_ON_TARGET,
 		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR, LAYOUT_ON_POINT, SWAY_OVERLAY, RIPPLE_SILHOUETTE, SPARK_SPRITE,
 		BARRIER_WALL, ORBIT_MODEL, GROWTH_MODEL, SEQUENCE_AT_ANCHOR, PULSE_MODEL, LAYOUT_TABLE_AT_SPAWN, LIGHT_RAYS, RIBBON, MOTE_SPRITE,
 		FLAME, EMBER, FIRE_SPARK, SCREEN_QUAD, POINT_LAYER, GROUND_LAYER,
-		PRIM_MODEL, PRIM_MODEL_AS, SPRITE_TURNED, GROUND_FLIPBOOK_COLOUR, SCREEN_TEX_QUAD,
+		PRIM_MODEL, PRIM_MODEL_AS, SPRITE_TURNED, GROUND_FLIPBOOK_COLOUR, SCREEN_TEX_QUAD, REVIVE_SPARKLE, REVIVE_SPARKLE_SIZED,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -229,6 +232,9 @@ namespace fxprog
 		{ "at_least_when", AT_LEAST_WHEN }, { "equals_when", EQUALS_WHEN },
 		{ "prim_model", PRIM_MODEL }, { "prim_model_as", PRIM_MODEL_AS }, { "sprite_turned", SPRITE_TURNED },
 		{ "ground_flipbook_colour", GROUND_FLIPBOOK_COLOUR }, { "screen_tex_quad", SCREEN_TEX_QUAD },
+		{ "revive_ring_step", REVIVE_RING_STEP }, { "above", VAR_ABOVE }, { "revive_rising", REVIVE_RISING }, { "revive_at", REVIVE_AT },
+		{ "revive_scatter", REVIVE_SCATTER }, { "revive_ring", REVIVE_RING }, { "revive_fall", REVIVE_FALL },
+		{ "revive_sparkle", REVIVE_SPARKLE }, { "revive_sparkle_sized", REVIVE_SPARKLE_SIZED },
 	};
 
 	inline Program *g_program = nullptr;
@@ -647,6 +653,7 @@ namespace fxprog
 			g_child = (h->ctx->actions[h->action].targets[3] & V(a[1])) ? nullptr : (TaskNode *)SpawnTask(V(a[0]), n);
 			break;
 		case SCREEN_FADE_WHEN: if (GetVar(n, V(a[0])) == V(a[1])) ScreenFadeTask(V(a[2]), V(a[3]), V(a[4]), V(a[5])); break;   // test var, value, the fade's four values
+		case REVIVE_RING_STEP: layouts::ReviveRingStep((uint8_t *)n, V(a[0]), V(a[1])); break;   // spin, rise: a ring sparkle's orbit
 		case WRAP: // var, last var: var + 1, back to 0 past the last
 			SetVar(n, V(a[0]), GetVar(n, V(a[0])) + 1);
 			if (GetVar(n, V(a[0])) > GetVar(n, V(a[1]))) SetVar(n, V(a[0]), 0);
@@ -693,6 +700,7 @@ namespace fxprog
 		case AT_LEAST_VAR: return GetVar(n, V(s.a[0])) >= GetVar(n, V(s.a[1]));   // var, var
 		case AT_LEAST_WHEN: return GetVar(n, V(s.a[2])) == V(s.a[3]) && GetVar(n, V(s.a[0])) >= V(s.a[1]);   // var, value, test var, test value
 		case EQUALS_WHEN: return GetVar(n, V(s.a[2])) == V(s.a[3]) && GetVar(n, V(s.a[0])) == V(s.a[1]);
+		case VAR_ABOVE: return GetVar(n, V(s.a[0])) > V(s.a[1]);   // var, value
 		default: return true;
 		}
 	}
@@ -965,6 +973,30 @@ namespace fxprog
 			SpawnGlint((TaskQueue *)g_program->pools[V(a[0])].queue, r, Mem("packet_cursor"), style);
 			break;
 		}
+		// the revive sparkles (Phoenix Down's, Life's): each spawns its own node, under the spawner
+		case REVIVE_RISING: // sequence a, b, last frame, shade, below, steps
+		{
+			const layouts::ReviveRising rising = { (uint32_t)V(a[0]), (uint32_t)V(a[1]), V(a[2]), V(a[3]), V(a[4]), V(a[5]) };
+			g_child = (TaskNode *)layouts::ReviveRisingSpawn((TaskQueue *)g_program->pools[g_program->tasks[sp.task].pool].queue, TaskFunction(sp.task),
+			                                                 (uint8_t *)r, rising);
+			break;
+		}
+		case REVIVE_AT: // sequence, last frame, shade: at the anchor
+		case REVIVE_SCATTER: // sequence, last frame, shade: scattered above it
+		{
+			TaskQueue *q = (TaskQueue *)g_program->pools[g_program->tasks[sp.task].pool].queue;
+			g_child = (TaskNode *)(sp.place.op == REVIVE_AT ? layouts::ReviveSparkleAt(q, TaskFunction(sp.task), r, (uint32_t)V(a[0]), V(a[1]), V(a[2]))
+			                                                : layouts::ReviveScatterSpawn(q, TaskFunction(sp.task), (uint8_t *)r, (uint32_t)V(a[0]), V(a[1]), V(a[2])));
+			break;
+		}
+		case REVIVE_RING: // sequence, last frame, divisor sub, div, add: on the ring
+			g_child = (TaskNode *)layouts::ReviveRingSpawn((TaskQueue *)g_program->pools[g_program->tasks[sp.task].pool].queue, TaskFunction(sp.task),
+			                                               (uint8_t *)r, (uint32_t)V(a[0]), V(a[1]), V(a[2]), V(a[3]), V(a[4]));
+			break;
+		case REVIVE_FALL: // sequence, last frame, circle divisor, lift base, mask, speed base, mask: falling
+			g_child = (TaskNode *)layouts::ReviveFallSpawn((TaskQueue *)g_program->pools[g_program->tasks[sp.task].pool].queue, TaskFunction(sp.task),
+			                                               (uint8_t *)r, (uint32_t)V(a[0]), V(a[1]), V(a[2]), V(a[3]), V(a[4]), V(a[5]), V(a[6]));
+			break;
 		default: g_child = (TaskNode *)SpawnTask(sp.task, r); break;   // at_parent: the new node takes the spawner's place
 		}
 	}
@@ -990,6 +1022,8 @@ namespace fxprog
 			parts::DrawGroundFlipbook(p->h.pos, hidden, fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])), (int16_t)V(a[1]), (int16_t)V(a[2]),
 			                          (int16_t)V(a[3]), word(a[4]), PacketCursor());
 			break;
+		case REVIVE_SPARKLE: layouts::ReviveSparkleDraw((const uint8_t *)n, (uint16_t)GetVar(n, V(a[0])), PacketCursor()); break;   // size var: a revive sparkle
+		case REVIVE_SPARKLE_SIZED: layouts::ReviveSparkleDraw((const uint8_t *)n, (uint16_t)V(a[0]), PacketCursor()); break;   // size
 		case SCREEN_TEX_QUAD: // texture page x, y, CLUT x, y, u, v, width, height: a raw textured quad, its bottom on the node projected
 		{
 			const layouts::TexQuad q = { V(a[0]), V(a[1]), V(a[2]), V(a[3]), V(a[4]), V(a[5]), V(a[6]), V(a[7]) };
@@ -1867,7 +1901,8 @@ namespace fxprog
 			r->h.slot = slot;
 			r->target_count = ctx->actions[0].target_count;
 			r->last_action = ctx->actions[0].last_action;
-			if (!(ctx->flags & 1))
+			if (g.short_upload_always) QueueTimUpload(var<uint32_t>(Mem("texture_file")));   // (Phoenix Down's: no camera, the texture always)
+			else if (!(ctx->flags & 1))
 			{
 				if (g.camera) PlayCameraAnimation((const void *)g.camera);
 				QueueTimUpload(var<uint32_t>(Mem("texture_file")));
@@ -2066,7 +2101,11 @@ namespace fxprog
 					g.director_every = ParseVal(w[3]);
 					g.director_place = ParseStep(w, 4, &error);
 				}
-				else if (w[1] == "per_action") g.director_short = w.size() > 3 && w[3] == "short";
+				else if (w[1] == "per_action")
+				{
+					g.director_short = w.size() > 3 && w[3] == "short";
+					g.short_upload_always = w.size() > 4 && w[4] == "upload_always";
+				}
 				else error = "line " + std::to_string(number) + ": unknown director " + w[1];
 			}
 			else if (d == "director_event") g.director_events.push_back(ParseStep(w, 1, &error));
@@ -2116,6 +2155,7 @@ namespace fxprog
 			else if (d == "hold") task->hold = ParseStep(w, 1, &error);
 			else if (d == "move") task->moves.push_back(ParseStep(w, 1, &error));
 			else if (d == "spawn_init" && !task->spawns.empty()) task->spawns.back().init.push_back(ParseStep(w, 1, &error));
+			else if (d == "spawn_gate" && need(2) && !task->spawns.empty()) task->spawns.back().gate = atoi(w[1].c_str());
 			else if (d == "draw_when" && !task->draws.empty()) task->draws.back().when = ParseStep(w, 1, &error);
 			else if (d == "end") task->end = ParseStep(w, 1, &error);
 			else if (d == "at_end") task->at_end.push_back(ParseStep(w, 1, &error));

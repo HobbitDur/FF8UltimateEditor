@@ -873,3 +873,31 @@ Potion's description is the same with its own sequences and sound.
        kind)": Runes (the start), Columns, Motes, Glows and Big rune (with Columns), Sprites and
        Morphing rings (with Big rune), Flash. Removing a part drops a spawning action naming its
        task with the child actions after it.
+   - **Phoenix Down (5)** (FFNx 468bcfea; the revive module, Life's too: one source built twice,
+     `mag_revive.h`): the short director again, its setup uploading the texture even when the cast
+     repeats and starting no camera; one emitter per action whose phases animate its spawn
+     parameters (a disc's radius, a height spread, the sparkles' size ramp, a ring's height) and
+     which, while spawning, spawns sparkles rising from the disc, revive sparkles scattered above,
+     sparkles orbiting up a ring, sparkles falling and the effect library's glints, each on its
+     ticks; the revive once the sparkles' size has faded.
+     - *Shared:* the node variables and their actions (Double's), `follow_target`,
+       `unblock_director`, `heal`, the `flipbook_end` condition, the `glint` placement and its rate
+       schedule, `sound_at`.
+     - *Added:*
+       - the director's `"upload": "always"` (the program's `per_action ... short upload_always`);
+       - the condition `above` (a variable over a value: the emitter's phases on its tick);
+       - an every-n-ticks spawn's `if` (the program's `spawn_gate`, a line of its own: Double's
+         spawns ignored it, their windows all fell while spawning);
+       - the library's revive sparkles (`fx_revive.h`, Phoenix Down's 0x8D4700..0x8D4E60): the
+         placements `revive_rising`, `revive_at`, `revive_scatter`, `revive_ring`, `revive_fall`
+         (each spawns its own node under the emitter, CRT rand in the original's order), the action
+         `revive_ring_step` (the ring sparkle's orbit), the draws `revive_sparkle` (its size a
+         variable) and `revive_sparkle_sized`.
+     - *Inputs* (`ReviveParams`): the emitter (sound, the size ramp, the grow / spread / fade
+       phases' ticks and steps); the rising and revive sparkles (ticks, counts, frames, camera
+       offsets, height, steps); the ring (ticks, frames, its radius divisor, spin, rise); the falling
+       sparkles (ticks, frames, circle, height, speed); the glints (ticks, four rates, their style).
+       Data: the five sequences, the sound, "mag004-034.tim"; no camera track.
+     - *Fujin:* its tabs (Emitter, Sparkles, Ring, Falling sparkles, Glints); a nineteenth family
+       in the + menu, "Around one target at a time, sparkles rising (Phoenix Down's kind)":
+       Sparkles (the start), Ring, Falling sparkles, Glints.

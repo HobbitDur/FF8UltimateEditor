@@ -269,6 +269,8 @@ CYCLES = {
     106: ("mag105.tim", 32, "hexagons.count 5\nwall.grow 15\nrings.every 4\nbeams.count 6\ntiming.size_shift 3\n"),
     108: ("mag107.tim", 51, "rays.count 5\nembers.count 2\nswirls.per_tick 3\nglow.ticks 12\nsparks.every 3\n"
                             "rays.width 200\n"),
+    5: ("mag004-034.tim", 65, "rising.count 2\nring.spin 200\nfall.speed.base 30\nglints.rate[2].count 1\n"
+                               "emitter.grow.radius 150\nrevive.every 3\n"),
     4: ("mag003.tim", 79, "runes.spin 200\ncolumns.peak 8000\nmotes.spin 50\nglows.level 40\nbig.fade_out 600\nsprites.count 3\n"
                           "morph.step 300\nflash.jump -100\nemitter.release_tick 25\n"),
     3: ("mag003.tim", 32, "strike.lift 400\nground.tilt 200\ntiming.sound_tick 2\nsmoke.window.frames 10\nflash.window.frames 3\n"),
@@ -292,7 +294,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder and Double from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double and Phoenix Down from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -487,3 +489,14 @@ def test_double_description_compiles():
     broken["tasks"][2]["after_phase"][0][1] = "nowhere"
     with pytest.raises(DescriptionError, match="names no nowhere"):
         compile_program(broken)
+
+
+def test_phoenix_down_description_compiles():
+    """Phoenix Down: the short director whose setup uploads the texture even when the cast repeats (no
+    camera); the emitter's phases on its tick (above), its spawns of the revive sparkles gated by its
+    spawning flag (an every-n-ticks spawn's gate on its own line), the glints by a four-rate schedule."""
+    lines = compile_program(load_description(5)).splitlines()
+    assert "director per_action 0 short upload_always" in lines and "camera 0" in lines
+    assert sum(line.startswith("wait above ") for line in lines) == 3 and lines.count("spawn_gate 2") == 4
+    places = [line.split()[-7 if line.startswith("spawn_every") else 0] for line in lines if line.startswith("spawn")]
+    assert any("revive_rising" in line for line in lines) and any(line.startswith("spawn -1 2 ") and " glint " in line for line in lines)

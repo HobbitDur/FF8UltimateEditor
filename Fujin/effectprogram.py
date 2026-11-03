@@ -28,7 +28,8 @@ resource starts no camera track; a texture "tim" (data) is uploaded as it is, no
 (Thunder's). A task's "draw_only" says what it does while the battle only draws
 ("skip": nothing, "after_draws": its first draws only), its "hold" stops its tick early (Fire's
 lone target's director waits until its target is free). The heal ring's director can be "root":
-"short" (Double's: four phases, its packet arenas memory words set in the magic buffer).
+"short" (Double's: four phases, its packet arenas memory words set in the magic buffer; "upload":
+"always", Phoenix Down's: its texture uploaded even when the cast repeats, no camera).
 
 A task can name node variables (Double's): an effect node's header fields (pos, counter, flags,
 phase) and its "body" ([name, type, count] laid out from 0x30: i16, i32, u8, grey - three colour
@@ -70,10 +71,11 @@ ACTIONS = {"follow_target": 0, "spawn": 1, "heal": 0, "done": 0, "spawning": 1, 
            "add": 2, "set": 2, "copy": 3, "flags": 2, "set_when": 4, "add_when": 4, "add_below": 3, "add_var": 2,
            "spin_var": 3, "circle_place": 4, "circle_place_var": 4, "anchor_xz": 2, "anchor_top": 1, "rand_mask": 3,
            "rand_hop": 3, "index_times": 2, "tick_times": 3, "turned_offset": 5, "fade_pulse": 9, "grey_pulse": 5,
-           "morph": 4, "spawn_when": 3, "spawn_unless_target_bits": 2, "screen_fade_when": 6, "wrap": 2}
+           "morph": 4, "spawn_when": 3, "spawn_unless_target_bits": 2, "screen_fade_when": 6, "wrap": 2,
+           "revive_ring_step": 2}
 CONDITIONS = {"tick_at_least": 1, "flipbook_end": 0, "layout_end": 0, "tick_above": 1, "tick_at_node_end": 0, "leaf_gone": 0, "spark_gone": 0, "rays_done": 1, "ribbon_done": 1,
               "mote_done": 1, "life_out": 0, "at_most": 2, "at_least": 2, "equals": 2, "never": 0, "at_least_var": 2,
-              "at_least_when": 4, "equals_when": 4}
+              "at_least_when": 4, "equals_when": 4, "above": 2}
 # a task's hold (after its every-tick actions: when it holds, its tick stops there)
 HOLDS = {"claim_target": 0}
 DRAW_ONLY = ("skip", "after_draws")
@@ -84,7 +86,8 @@ PLACES = {"at_parent": 0, "circle_drop": 8, "glint": 13, "table_point": 3, "rand
           "random_target_point": 7, "action_targets": 1, "target_anchor": 7, "action_target": 8, "random_around": 4,
           "rising_circle": 5, "spinning_ring": 10, "whirl_leaf": 5, "collapse_sparks": 6, "orbit_spawn": 6,
           "growth_spawn": 7, "ribbon_start": 3, "ember_ring": 9, "spark_near": 4,
-          "flames_on_targets": 11, "flame_embers": 9, "flame_sparks": 12}
+          "flames_on_targets": 11, "flame_embers": 9, "flame_sparks": 12,
+          "revive_rising": 6, "revive_at": 3, "revive_scatter": 3, "revive_ring": 5, "revive_fall": 7}
 DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_screen": 5, "layout_at_caster_bone": 1,
          "layout_scaled": 1, "sequence_sprite": 3, "layout_at_anchor": 2, "layout_on_target": 5,
          "layout_turned": 10, "node_sequence_sprite": 1,
@@ -95,7 +98,8 @@ DRAWS = {"sprite": 4, "ground_flipbook": 6, "projector_overlay": 7, "layout_on_s
          "sequence_at_anchor": 4, "pulse_model": 6, "layout_table_at_spawn": 1, "light_rays": 0, "ribbon": 6,
          "mote_sprite": 0, "flame": 8, "ember": 2, "fire_spark": 5,
          "screen_quad": 2, "point_layer": 4, "ground_layer": 4,
-         "prim_model": 5, "prim_model_as": 5, "sprite_turned": 6, "ground_flipbook_colour": 5, "screen_tex_quad": 8}
+         "prim_model": 5, "prim_model_as": 5, "sprite_turned": 6, "ground_flipbook_colour": 5, "screen_tex_quad": 8,
+         "revive_sparkle": 1, "revive_sparkle_sized": 1}
 # the arguments of an operation that name a node variable (Double's): "name" (the node's own),
 # "emitter.name", "child.name" (the node an action or a spawn just made), an element "name.k"
 VAR_ARGS = {"add": (0,), "set": (0,), "copy": (0, 1), "set_when": (0, 2), "add_when": (0, 2), "add_below": (0,),
@@ -104,7 +108,8 @@ VAR_ARGS = {"add": (0,), "set": (0,), "copy": (0, 1), "set_when": (0, 2), "add_w
             "turned_offset": (0,), "fade_pulse": (0, 1, 2, 3), "grey_pulse": (0, 1), "morph": (3,), "spawn_when": (1,),
             "screen_fade_when": (0,), "wrap": (0, 1), "at_most": (0,), "at_least": (0,), "equals": (0,),
             "at_least_var": (0, 1), "at_least_when": (0, 2), "equals_when": (0, 2), "prim_model": (0, 1, 2, 3, 4),
-            "prim_model_as": (1, 2, 3, 4), "sprite_turned": (0, 1, 2, 3, 4, 5), "ground_flipbook_colour": (4,)}
+            "prim_model_as": (1, 2, 3, 4), "sprite_turned": (0, 1, 2, 3, 4, 5), "ground_flipbook_colour": (4,),
+            "above": (0,), "revive_sparkle": (0,)}
 # a node variable's type: its code (fxprogram.h VarType) and size; an effect node's header fields
 VAR_TYPES = {"i16": (1, 2), "i32": (2, 4), "u8": (3, 1), "grey": (4, 4), "u16": (5, 2), "i8": (6, 1)}
 HEADER_VARS = {"pos": (0x1C, "i16", 4), "counter": (0x24, "i16", 1), "flags": (0x26, "u16", 1), "phase": (0x29, "i8", 1)}
@@ -371,6 +376,8 @@ def compile_program(description, values=None):
         lines += [f"director_event {step(entry, DIRECTOR_EVENTS, 'director')}" for entry in director.get("events", [])]
     if director["kind"] == "per_action":
         short = " short" if director.get("root") == "short" else ""   # Double's root and setup
+        if short and director.get("upload") == "always":   # Phoenix Down's: the texture even when the cast repeats
+            short += " upload_always"
         lines.append(f"director per_action {tasks[director['spawns']]}{short}")
     if director.get("camera_matrix"):
         lines.append("camera_matrix")
@@ -432,6 +439,8 @@ def compile_program(description, values=None):
                     raise DescriptionError(f"{where}: a spawn every n ticks of no task")
                 lines.append(f"spawn_every {target} {first} {last} {value(spawn['every'], where)} "
                              f"{step(spawn['place'], PLACES, where)}")
+                if spawn.get("if"):   # (its own line: an every-n-ticks spawn of an effect node gated by a flag)
+                    lines.append(f"spawn_gate {flag(spawn['if'], where)}")
                 lines += actions(spawn.get("init", []), "spawn_init", where, own, spawn["task"])
                 continue
             count = [value(item, where) for item in spawn["count"]]
