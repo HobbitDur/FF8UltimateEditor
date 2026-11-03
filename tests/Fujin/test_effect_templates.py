@@ -19,7 +19,7 @@ CURE_ORDER = ["emitter", "ring", "overlay", "glow", "sparkles", "motes", "glints
 
 def test_the_parts_and_what_they_need():
     assert addable([]) == ["emitter", "main", "anchor_layout", "cycle_layout", "turned_glyph",
-                           "clock", "flash_ring", "aura", "wind"]   # a start first
+                           "clock", "flash_ring", "aura", "wind", "blind"]   # a start first
     assert addable(["emitter"]) == ["ring", "files"]
     assert set(addable(["emitter", "ring"])) == {"overlay", "glow", "sparkles", "motes", "glints", "files"}
     assert addable(["main"]) == ["main_layout", "rings", "targets", "sprites"]
@@ -36,7 +36,8 @@ def test_the_parts_and_what_they_need():
 
 def test_every_combination_compiles_and_all_of_a_family_is_its_effect():
     combinations = {"heal_ring": 66, "layouts": 16, "on_target": 2, "per_action_target": 1,
-                    "per_action_turned": 2, "per_action_clock": 2, "per_action_ring": 4, "per_action_aura": 4, "per_action_wind": 2}
+                    "per_action_turned": 2, "per_action_clock": 2, "per_action_ring": 4, "per_action_aura": 4, "per_action_wind": 2,
+                    "per_action_flash": 2}
     for kind, start in STARTS.items():
         others = [key for key, template in TEMPLATES.items() if template[2] == kind and key != start]
         built = 0
@@ -115,7 +116,8 @@ def test_built_in_fujin_from_an_empty_slot(qapp, tmp_path):
                                           "One per action, a clock on its target (Haste's kind)",
                                           "One per action, a flash and a ring (Dispel's kind)",
                                           "One per action, at its target's feet (Aura's kind)",
-                                          "One per action, a wind on its target (Aero's kind)"]
+                                          "One per action, a wind on its target (Aero's kind)",
+                                          "One per action, left on its target (Blind's kind)"]
     names = [a.text().split("\t")[0] for a in kinds[0].actions() if not a.isSeparator()]
     assert names[:4] == ["How the effect starts", "Emitter", "Moving parts", "Ring (with Emitter)"]   # group headers
     assert "Sparkles (with Emitter, Ring)" in names
@@ -173,3 +175,14 @@ def test_dispel_parts_share_their_particle_task():
     assert [spawn["place"][0] for spawn in sparkles["tasks"][0]["spawns"]] == ["random_around"]
     compile_program(ring)
     compile_program(sparkles)
+
+
+def test_blind_without_its_flash_keeps_no_flash():
+    """Blind without its flash part: no flash level raised, no fades, no director events setting
+    the screen flash; its layout, sound and result stay."""
+    from Fujin.effectprogram import compile_program
+    program = compile_program(build_effect(224, "Blinding", ["blind"]))
+    assert "flash_level_raise" not in program and "screen_fade_at" not in program and "director_event" not in program
+    assert "layout_engine_at_anchor " in program and "sound_3d_at_position " in program and "heal_action_at " in program
+    program = compile_program(build_effect(224, "Blinding", ["blind", "blind_flash"]))
+    assert program.count("screen_fade_at ") == 3 and "director_event_first flash_level_clear" in program

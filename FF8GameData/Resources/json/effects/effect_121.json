@@ -1,0 +1,461 @@
+{
+ "format": 1,
+ "effect": 121,
+ "name": "Blind",
+ "doc": "Blind (spell): one target task per action, in turn (one every 10 ticks), each a prim-model layout at an effect point of the action's target (followed for 20 ticks, then left there), two of its objects drawn as additive quads; a screen flash all the tasks raise (the highest wins) and three screen fades; the target takes the result at tick 32 and the task ends with its layout.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6BDE90",
+   "setup": "0x6BDE80",
+   "root": "0x6BDF20"
+  },
+  "memory": {
+   "flash_level": "0x25214F8",
+   "texture_file": "0x25214FC",
+   "magic_buffer": "0x2521500",
+   "ctx": "0x2521504",
+   "root_pool": "0x2521508",
+   "packet_cursor": "0x252151C",
+   "root_queue": "0x2521530"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "layout": {
+   "kind": "layout",
+   "address": "0x12726A0",
+   "size": 18272
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1276E00",
+   "size": 2096
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x1277630",
+   "size": 4
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1277634",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the layout's blended vertex frames (after the three target nodes).",
+  "arenas": [
+   "0x1B34",
+   "0x19B34"
+  ],
+  "morph": "0x18B4"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "target",
+  "every": "$timing.every",
+  "place": [
+   "action_target",
+   0,
+   "@layout",
+   0,
+   0,
+   -1,
+   0,
+   0
+  ],
+  "events_first": [
+   [
+    "flash_level_clear"
+   ]
+  ],
+  "events": [
+   [
+    "screen_flash_level"
+   ]
+  ]
+ },
+ "pools": [
+  {
+   "key": "targets",
+   "queue": "0x2521520",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 2108,
+   "count": 3
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one target task per action, in turn; each target task's clock: its sound, its result (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "layout",
+   "title": "Layout",
+   "doc": "The layout played on the action's target, at one of its effect points; the task ends with it"
+  },
+  {
+   "id": 2,
+   "key": "flash",
+   "title": "Flash",
+   "doc": "The screen flash all the target tasks raise, and the screen fades they start"
+  }
+ ],
+ "groups": [
+  {
+   "key": "layout.additive",
+   "label": "Additive objects",
+   "doc": "These two objects of the layout are drawn as their textured quads only, additive (-1: none)"
+  },
+  {
+   "key": "flash.fade_at",
+   "label": "Fade ticks",
+   "doc": "A screen fade starts at each of these target ticks"
+  },
+  {
+   "key": "flash.fade",
+   "label": "Fade",
+   "doc": "ScreenFadeTask's four values"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's target task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the target's effect position when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 257,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.bone",
+   "part": "layout",
+   "label": "Bone",
+   "doc": "The target's effect point the layout is at (0xF0 and up: the engine's named points)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.follow",
+   "part": "layout",
+   "label": "Follow until",
+   "doc": "The layout follows that point while the target tick is below this, then stays",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.ot_shift",
+   "part": "layout",
+   "label": "Depth shift",
+   "doc": "The renderers' depth >> this picks the drawing bucket",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.additive.a",
+   "part": "layout",
+   "label": "Object",
+   "doc": "",
+   "type": "i16",
+   "min": -1,
+   "max": 31,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.additive.b",
+   "part": "layout",
+   "label": "Object",
+   "doc": "",
+   "type": "i16",
+   "min": -1,
+   "max": 31,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.from",
+   "part": "flash",
+   "label": "From",
+   "doc": "The flash rises from this target tick (Up a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.peak",
+   "part": "flash",
+   "label": "Peak",
+   "doc": "...to this one, then falls (Down a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.to",
+   "part": "flash",
+   "label": "To",
+   "doc": "...to 0 at this one",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 34,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.up",
+   "part": "flash",
+   "label": "Up",
+   "doc": "Its level a tick while it rises",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 625,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.down",
+   "part": "flash",
+   "label": "Down",
+   "doc": "Its level a tick while it falls",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 312,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fade_at.first",
+   "part": "flash",
+   "label": "First",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fade_at.second",
+   "part": "flash",
+   "label": "Second",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fade_at.third",
+   "part": "flash",
+   "label": "Third",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 21,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fade.a",
+   "part": "flash",
+   "label": "A",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fade.b",
+   "part": "flash",
+   "label": "B",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fade.c",
+   "part": "flash",
+   "label": "C",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fade.d",
+   "part": "flash",
+   "label": "D",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 96,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 2108,
+   "function": "0x6BE080",
+   "doc": "One per action: the screen flash level raised; the layout at the action's target's effect point (taken while the tick is below 20, then left there), each object's offset added to it through the camera (record flags 0x800: the offset turned by the object's rotation first; 0x200: the anchor through the camera + the offset as is; 0x100: scaled by a diagonal matrix), drawn by the engine's renderer, objects 0 and 3 as additive quads; then its sound at the target's effect position, the screen fades, the result; it ends with the layout.",
+   "node": [
+    "counter",
+    "action",
+    "anchor",
+    "entity",
+    [
+     "layout",
+     2080
+    ]
+   ],
+   "every_tick": [
+    [
+     "flash_level_raise",
+     "$flash.from",
+     "$flash.peak",
+     "$flash.to",
+     "$flash.up",
+     "$flash.down"
+    ],
+    [
+     "follow_bone",
+     "$layout.bone",
+     "$layout.follow"
+    ]
+   ],
+   "draws": [
+    {
+     "part": "layout",
+     "draw": [
+      "layout_engine_at_anchor",
+      "0xB00",
+      "$layout.ot_shift",
+      "$layout.additive.a",
+      "$layout.additive.b"
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "sound_3d_at_position",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume"
+    ],
+    [
+     "screen_fade_at",
+     "$flash.fade_at.first",
+     "$flash.fade.a",
+     "$flash.fade.b",
+     "$flash.fade.c",
+     "$flash.fade.d"
+    ],
+    [
+     "screen_fade_at",
+     "$flash.fade_at.second",
+     "$flash.fade.a",
+     "$flash.fade.b",
+     "$flash.fade.c",
+     "$flash.fade.d"
+    ],
+    [
+     "screen_fade_at",
+     "$flash.fade_at.third",
+     "$flash.fade.a",
+     "$flash.fade.b",
+     "$flash.fade.c",
+     "$flash.fade.d"
+    ],
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "layout_end"
+   ]
+  }
+ ]
+}

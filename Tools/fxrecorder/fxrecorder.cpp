@@ -427,6 +427,7 @@ static bool is_actor_packet(uint32_t pkt)
 	int tx = (page & 0xF) * 64 + (depth == 0 ? u / 4 : depth == 1 ? u / 2 : u), ty = ((page >> 4) & 1) * 256 + v;
 	return in_actor_vram(tx, ty);
 }
+static uint32_t ot_index(uint32_t bucket); // (below, after the battle memory)
 static void write_tick(int t)
 {
 	if (!g_out) return;
@@ -436,7 +437,15 @@ static void write_tick(int t)
 	walk_render_list(drawn);
 	std::map<uint32_t, bool> seen;
 	for (const Ins &r : drawn) seen[r.pkt] = true;
-	for (const Ins &r : g_ins) if (!seen.count(r.pkt)) { drawn.push_back(r); seen[r.pkt] = true; }
+	// (a bucket of the frame's ordering table as its index, as the walk's: its address is this
+	// process's allocation, Blind's last draw-mode packet of a tick)
+	for (Ins r : g_ins)
+		if (!seen.count(r.pkt))
+		{
+			r.bucket = ot_index(r.bucket);
+			drawn.push_back(r);
+			seen[r.pkt] = true;
+		}
 	if (!g_actors)
 		drawn.erase(std::remove_if(drawn.begin(), drawn.end(), [](const Ins &r) {
 			return !(g_keep_parts && r.part) && is_actor_packet(r.pkt); }), drawn.end());
@@ -456,6 +465,10 @@ static void write_tick(int t)
 // ---------------------------------------------------------------- battle memory
 static uint8_t *g_ot, *g_pkt, *g_scr, *g_fake, *g_modelmem;
 static const uint32_t OT_SIZE = 0x20000, PKT_SIZE = 0x400000, SCR_SIZE = 0x40000, FAKE_SIZE = 0x40000;
+static uint32_t ot_index(uint32_t bucket)
+{
+	return bucket >= (uint32_t)g_ot && bucket < (uint32_t)g_ot + OT_SIZE ? (bucket - (uint32_t)g_ot) / 4 : bucket;
+}
 static const uint32_t MODELMEM_SIZE = 0x400000, MODELWORK_SIZE = 0x40000;
 static const uint32_t C3_28 = 0x1D96AAC; // running effect root queue
 

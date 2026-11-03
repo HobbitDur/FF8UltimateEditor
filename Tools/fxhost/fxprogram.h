@@ -124,6 +124,7 @@ namespace fxprog
 		HIDE_TARGET, SHOW_TARGET, UNBLOCK_DIRECTOR, VELOCITY_ROLL, VELOCITY_RISE, DRIFT, SOUND_AT, HEAL_ALL_AT,
 		HEAL_FIRST_TARGET, ANCHOR_AT_BONE, SOUND_3D_AT, HEAL_ACTION_AT, UNMARK_TARGET, ANCHOR_AT_POSITION,
 		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET, SCREEN_FLASH_CURVE, SCREEN_FLASH_OFF, SPIN, WHIRL_LEAF_MOVE,
+		FLASH_LEVEL_RAISE, FOLLOW_BONE, SOUND_3D_AT_POSITION, FLASH_LEVEL_CLEAR, SCREEN_FLASH_LEVEL,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE,
 		// motions
@@ -134,7 +135,7 @@ namespace fxprog
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
 		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET, LAYOUT_SCALED_ON_TARGET,
-		TUMBLING_MODEL,
+		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -160,6 +161,9 @@ namespace fxprog
 		{ "layout_table", LAYOUT_TABLE }, { "spinning_model", SPINNING_MODEL }, { "sequence_at_feet", SEQUENCE_AT_FEET },
 		{ "whirl_leaf_move", WHIRL_LEAF_MOVE }, { "leaf_gone", LEAF_GONE }, { "whirl_leaf", WHIRL_LEAF },
 		{ "layout_scaled_on_target", LAYOUT_SCALED_ON_TARGET }, { "tumbling_model", TUMBLING_MODEL },
+		{ "flash_level_raise", FLASH_LEVEL_RAISE }, { "follow_bone", FOLLOW_BONE }, { "sound_3d_at_position", SOUND_3D_AT_POSITION },
+		{ "flash_level_clear", FLASH_LEVEL_CLEAR }, { "screen_flash_level", SCREEN_FLASH_LEVEL },
+		{ "layout_engine_at_anchor", LAYOUT_ENGINE_AT_ANCHOR },
 	};
 
 	inline Program *g_program = nullptr;
@@ -320,6 +324,29 @@ namespace fxprog
 			SetScreenFlash((uint32_t)layouts::ScreenFlashCurve(Tick(t, n), V(a[0]), V(a[1]), V(a[2]), V(a[3])), 0);
 			break;
 		case SCREEN_FLASH_OFF: SetScreenFlash(0, 0); break;
+		case FLASH_LEVEL_RAISE: // from, peak, to, up, down: the program's flash level raised to this tick's (Blind: the highest of all its tasks)
+		{
+			const int32_t v = layouts::ScreenFlashRiseFall(Tick(t, n), V(a[0]), V(a[1]), V(a[2]), V(a[3]), V(a[4]));
+			int32_t &level = var<int32_t>(Mem("flash_level"));
+			if (v >= 0 && v > level) level = v;
+			break;
+		}
+		case FOLLOW_BONE: // bone, until: the node's anchor at the entity's effect point while the tick is below `until`, then it stays
+			if (Tick(t, n) < V(a[1]))
+			{
+				int16_t *anchor = Fld<int16_t>(t, n, F_ANCHOR);
+				layouts::GetEffectSpawnPosition(*Fld<uint8_t *>(t, n, F_ENTITY), V(a[0]), 0, anchor);
+				anchor[3] = 0;   // (the original's node word, cleared at its start and never written)
+			}
+			break;
+		case SOUND_3D_AT_POSITION: // tick, sound, volume: at the entity's default effect position
+			if (Tick(t, n) == V(a[0]))
+			{
+				int16_t pos[4];
+				GetDefaultEffectPosition(*Fld<uint8_t *>(t, n, F_ENTITY), pos);
+				BdPlaySE3D((const void *)fxp::sound((uint32_t)V(a[1]), (uint32_t)G(a[1])), V(a[2]), pos);
+			}
+			break;
 		case BLINK_TARGET: // from, ticks: the entity's flag bit 3 on the ticks e % (ticks - e) == 0 (e = tick - from)
 		{
 			uint8_t *e8 = *Fld<uint8_t *>(t, n, F_ENTITY);
@@ -580,6 +607,23 @@ namespace fxprog
 			anchor_arg.matrix = g_program->camera_matrix ? &var<Mat4x3>(Mem("camera_matrix")) : &Camera();
 			anchor_arg.short_scale = V(a[7]) != 0;
 			const int frames = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, V(a[0]) ? F_LAYOUT_B : F_LAYOUT), &anchor_arg);
+			left = left < 0 ? frames : left | frames;
+			break;
+		}
+		case LAYOUT_ENGINE_AT_ANCHOR: // record flags honoured, depth shift, additive objects a, b (-1: none): at the node's anchor, the engine's renderer
+		{
+			// Blind's: each object's offset + the anchor through the camera, drawn by 0x572200 (its depth
+			// not written) or, for the additive objects, as their textured quads only, additive
+			layouts::AnchorArg anchor_arg;
+			memcpy(anchor_arg.anchor, Fld<int16_t>(t, n, F_ANCHOR), sizeof(anchor_arg.anchor));
+			anchor_arg.morph = arg.morph;
+			anchor_arg.honoured = (uint32_t)V(a[0]);
+			anchor_arg.cursor = arg.cursor;
+			anchor_arg.engine_draw = true;
+			anchor_arg.ot_shift = V(a[1]);
+			for (int k = 2; k < 4; k++)
+				if ((uint32_t)V(a[k]) < 32) anchor_arg.additive_objects |= 1u << V(a[k]);
+			const int frames = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, F_LAYOUT), &anchor_arg);
 			left = left < 0 ? frames : left | frames;
 			break;
 		}
@@ -862,8 +906,12 @@ namespace fxprog
 	inline void MasterEvents(const std::vector<Step> &events, const MasterNode *m)
 	{
 		for (const Step &e : events)
+		{
 			if (e.op == SOUND_AT && m->counter == V(e.a[0]))   // tick, sound, pan
 				BdPlaySE((const void *)fxp::sound((uint32_t)V(e.a[1]), (uint32_t)G(e.a[1])), 0, V(e.a[2]));
+			if (e.op == FLASH_LEVEL_CLEAR) var<int32_t>(Mem("flash_level")) = 0;   // every tick (Blind: before its tasks raise it)
+			if (e.op == SCREEN_FLASH_LEVEL) SetScreenFlash((uint32_t)var<int32_t>(Mem("flash_level")), 0);   // every tick, after them
+		}
 	}
 
 	inline uint32_t MasterDirector(TaskNode *n)
@@ -938,6 +986,7 @@ namespace fxprog
 			PacketCursor() = MagicBuffer() + g.arena_b;
 			m->arena = 1;
 		}
+		MasterEvents(g.director_events_first, m);
 		if (m->counter == 1)
 		{
 			if (!m->started)
@@ -984,9 +1033,9 @@ namespace fxprog
 			}
 		}
 		if (g.camera_matrix) EffectCameraMatrix(&Camera(), &var<Mat4x3>(Mem("camera_matrix")));   // Haste, Slow: every tick
+		bool alive = false;
 		if (m->started)
 		{
-			bool alive = false;
 			for (const Pool &pool : g.pools)
 			{
 				if (pool.tag >= 0) FX_PART(pool.tag);
@@ -994,8 +1043,9 @@ namespace fxprog
 				if (pool.tag >= 0) FX_PART(0);
 			}
 			FX_PART(0);
-			if (!alive) return TASK_END;
 		}
+		MasterEvents(g.director_events, m);   // (started or not: Blind's screen flash)
+		if (m->started && !alive) return TASK_END;
 		m->counter++;
 		if (m->counter >= V(g.director_every)) m->counter = 0;
 		return 0;

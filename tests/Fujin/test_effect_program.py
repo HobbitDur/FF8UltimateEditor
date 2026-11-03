@@ -256,6 +256,8 @@ CYCLES = {
                             "flames.fade.from 4\nglow.from 10\nglow.rot_b 300\naura.size_shift 10\n"),
     118: ("mag117.tim", 16, "timing.every 6\nwind.from_tick 5\nwind.scale.base 1500\nleaves.window.last 9\n"
                             "leaves.speed 100\nleaves.climb 20\ntiming.sound_tick 2\n"),
+    121: ("mag120.tim", 22, "flash.up 900\nlayout.additive.b -1\nflash.fade_at.second 15\nlayout.follow 10\n"
+                            "timing.sound_tick 6\nlayout.ot_shift 2\n"),
 }
 
 
@@ -275,7 +277,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura and Aero from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero and Blind from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -340,3 +342,17 @@ def test_aero_description_compiles():
     assert program.count("layout_scaled_on_target ") == 2 and "camera_matrix" in program.splitlines()
     assert "whirl_leaf " in program and "tick whirl_leaf_move " in program and "end leaf_gone" in program
     assert "field leaf 12 48" in program and "tumbling_model " in program
+
+
+def test_blind_description_compiles():
+    """Blind: the cycle director clears the flash level before its tasks and sets the screen flash to
+    it after them; each target task raises it, follows the target's effect point for a while, draws
+    its layout by the engine's renderer (objects 0 and 3 additive quads), then its sound, three fades
+    and the result; it ends with its layout."""
+    program = compile_program(load_description(121))
+    lines = program.splitlines()
+    assert "director_event_first flash_level_clear" in lines and "director_event screen_flash_level" in lines
+    assert "tick flash_level_raise " in program and "tick follow_bone " in program
+    assert "layout_engine_at_anchor 2816 " in program   # record flags 0x800 | 0x200 | 0x100
+    assert program.count("after screen_fade_at ") == 3 and "after sound_3d_at_position " in program
+    assert "end layout_end" in program

@@ -591,3 +591,29 @@ Potion's description is the same with its own sequences and sound.
        bytes), the sound, "mag117.tim".
      - *Fujin:* its tabs (Timing, Wind, Leaves); a ninth family in the + menu, "One per action, a
        wind on its target (Aero's kind)": Wind (the start), Leaves.
+   - **Blind (121)** (FFNx 0ff34b84): the cycle director; a layout at the target's effect point
+     0xF0, followed for 20 ticks then left there; a screen flash all the target tasks raise.
+     - *Shared:* the cycle director, the anchor callback (record flags 0x200, 0x100: Silence's),
+       the 3D sound, the screen fades (Haste's), `heal_action_at`, `layout_end`.
+     - *Added:*
+       - the anchor callback's flag 0x800 (the offset turned by the object's own rotation
+         first), its engine renderer option (0x572200, the depth not written, an OT shift) and its
+         additive objects (a bit each: those drawn by the library's `AdditiveQuads`, Blind's
+         0x6BE4E0: only the model's flat and gouraud textured quads, each after an additive
+         draw-mode packet). Draw `layout_engine_at_anchor` (record flags, depth shift, two
+         additive objects, -1: none);
+       - the every-tick actions `follow_bone` (bone, until: the node's anchor at that point
+         while the tick is below `until`) and `flash_level_raise` (from, peak, to, up, down:
+         the library's `ScreenFlashRiseFall`, the memory word `flash_level` raised to it);
+       - `sound_3d_at_position` (tick, sound, volume: at the entity's default effect position);
+       - the cycle director runs director events too: `flash_level_clear` (events_first) and
+         `screen_flash_level` (events: the screen flash set to the level every tick, started or
+         not).
+     - *Inputs* (`BlindParams`): the cycle, the sound, the damage tick, the bone and how long the
+       layout follows it, the depth shift, the two additive objects, the flash's ramp and the
+       three fades' ticks and values. Data: the layout (18272 bytes), the camera track (2096
+       bytes), the sound, "mag120.tim".
+     - *Fujin:* its tabs (Timing, Layout, Flash); a tenth family in the + menu, "One per action,
+       left on its target (Blind's kind)": Layout (the start), Flash.
+     - The recorder logs a hooked insertion its render-list walk misses (Blind's last draw-mode
+       packet of a tick) with its order-table bucket index, not the bucket's address.

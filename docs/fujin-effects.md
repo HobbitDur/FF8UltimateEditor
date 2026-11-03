@@ -121,7 +121,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   Screen and Holy Water, copies of one module: Timing, Layout; Silence: Timing, Layout; Float:
   Timing, Glyph, Upper layout; Slow and Haste, copies of one module: Timing, Clock, Lower layout;
   Dispel: Timing, Ring, Sparkles, Circle; Aura: Timing, Aura, Flames, Glow; Aero: Timing, Wind,
-  Leaves): the
+  Leaves; Blind: Timing, Layout, Flash): the
   part's parameters as a form
   (bold = not the game's value, **Game values** resets them; a value in its unit when the port gives
   one - fx_params.h `Unit`: an angle in degrees, a size as x 1 = its own - the raw value greyed
@@ -199,7 +199,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   by the five status-cure items, `SilenceParams` in `mag122_silence.cpp`, `FloatParams` in `mag115_float.cpp`,
   `ClockSpellParams` in `mag_clock_spell.h`, shared by Slow and Haste, `DispelParams` in
   `mag109_dispel.cpp`, `AuraParams` in `mag111_aura.cpp`,
-  `AeroParams` in `mag118_aero.cpp`, defaults = the game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
+  `AeroParams` in `mag118_aero.cpp`, `BlindParams` in `mag121_blind.cpp`, defaults = the game's values) with a field table the recorder writes out (`fxrecorder <effect> schema=<file>`),
   so the forms are always those of the port it runs. A module with parameters registers itself
   for the recorder (`FX_LAB_MODULE`): `build.bat` compiles in every source file naming it. The previews are one more recording: the recorder runs the port instead of
   the exe's code (`native=1`; with the game's values it draws exactly what the original does,
@@ -225,7 +225,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   top, such as Cure and Potion sharing `mag_heal_ring.h` - into `ExternalTools/FFNx/fx`, `SOURCE.txt` naming the commit, and the recorder is
   built again with them); the release's CI does the same before building the recorder.
   **Description** (Choreography, for the effects Fujin describes: Cure, Potion, Hypnotize,
-  Soft, Eye Drops, Antidote, Echo Screen, Holy Water, Silence, Float, Slow, Haste, Dispel, Aura, Aero): the
+  Soft, Eye Drops, Antidote, Echo Screen, Holy Water, Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind): the
   effect's description as JSON (its parts, tasks, director, pools: see
   [fujin-effect-description.md](fujin-effect-description.md)). Apply checks that it compiles.
   **New effect from this…** (above the tabs, for every described effect, new ones included)
@@ -243,7 +243,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   **Building an effect part by part:** a free slot (224, 225, 346-400) shows **Create a new effect
   here** (beside **Copy an effect here…**). It makes an empty effect there, and Choreography opens with a **+** tab. Clicking +
   lists the parts Fujin knows, named as their tabs, with a few words on each:
-  - an empty effect first offers the nine kinds as submenus:
+  - an empty effect first offers the ten kinds as submenus:
     - around one target at a time (Cure's kind): Emitter, Ring, Overlay, Ground glow, Sparkles,
       Motes, Glints, Files;
     - over the whole cast at once (Hypnotize's kind): Timing, Main layout, Rings, Target
@@ -255,6 +255,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
     - one per action, a flash and a ring (Dispel's kind): Ring, Sparkles, Circle;
     - one per action, at its target's feet (Aura's kind): Aura, Flames, Glow;
     - one per action, a wind on its target (Aero's kind): Wind, Leaves;
+    - one per action, left on its target (Blind's kind): Layout, Flash;
   - once it has parts, + lists only its kind's parts, by group (how the effect starts, moving
     parts, drawn by another part, sound, files). The parts it has are ticked.
 
