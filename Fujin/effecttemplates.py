@@ -1,5 +1,5 @@
 """Building an effect part by part (Choreography's + tab): the parts Fujin knows, each a piece of an
-effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's), and the description an effect made
+effect it describes (Cure's, Hypnotize's, Antidote's, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's, Zombie's), and the description an effect made
 of some of them gets.
 
 A part brings its parameters (at the game's values), its task or what it adds to another part's
@@ -8,7 +8,7 @@ from its source effect's whole description, keeping what its parts bring: all of
 together are that effect exactly (whatever order they were added in), some of them a smaller effect
 of the same kind. Parts of two families never mix: their nodes and directors differ (the heal
 ring's effect-library nodes and per-action director, Hypnotize's plain nodes and master, Antidote's
-one layout on the target, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's and Petrify Stare's cycles of one task per action).
+one layout on the target, Silence's, Float's, Haste's, Dispel's, Aura's, Aero's, Blind's, Petrify Stare's and Zombie's cycles of one task per action).
 
 No Qt here.
 """
@@ -118,13 +118,20 @@ TEMPLATES = {
               "end (Petrify Stare's way)."),
     "stare_stone": ("on the target, later", "Drawn by another part", "per_action_stare", 120, "stone", (), (),
                     ("stare",), "A second layout at the target's effect position, from a later tick."),
+    # Zombie's family (one task per action: a layout scaled by the target's size, the target swaying)
+    "zombie": ("one per action, its target swaying", "How the effect starts", "per_action_sway", 114, "mist",
+               ("target",), (), (), "One task per action, every few ticks (not while any young one runs): a prim "
+               "layout at the target's effect position scaled by its size, two objects additive quads; the target's "
+               "mark, its sound, the result, its end (Zombie's way)."),
+    "zombie_overlay": ("the target redrawn swayed", "Drawn by another part", "per_action_sway", 114, "overlay", (), (),
+                       ("zombie",), "The target redrawn lifted and swayed by a wave, flat additive from black to its tint."),
 }
 GROUPS = ("How the effect starts", "Moving parts", "Drawn by another part", "Sound", "Files")
 STARTS = {"heal_ring": "emitter", "layouts": "main", "on_target": "anchor_layout", "per_action_target": "cycle_layout",
           "per_action_turned": "turned_glyph", "per_action_clock": "clock",
           "per_action_ring": "flash_ring", "per_action_aura": "aura",
           "per_action_wind": "wind", "per_action_flash": "blind",
-          "per_action_stare": "stare"}
+          "per_action_stare": "stare", "per_action_sway": "zombie"}
 FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "layouts": "Over the whole cast at once (Hypnotize's kind)",
             "on_target": "One layout on the target (Antidote's kind)",
@@ -135,7 +142,8 @@ FAMILIES = {"heal_ring": "Around one target at a time (Cure's kind)",
             "per_action_aura": "One per action, at its target's feet (Aura's kind)",
             "per_action_wind": "One per action, a wind on its target (Aero's kind)",
             "per_action_flash": "One per action, left on its target (Blind's kind)",
-            "per_action_stare": "From the caster, then on its target (Petrify Stare's kind)"}
+            "per_action_stare": "From the caster, then on its target (Petrify Stare's kind)",
+            "per_action_sway": "One per action, its target swaying (Zombie's kind)"}
 
 
 @functools.cache

@@ -261,6 +261,8 @@ CYCLES = {
     120: ("mag119.tim", 20, "stare.ahead 3\nstone.from 10\nstare.follow 5\ntiming.fade_tick 6\n"
                             "stone.depth.base -1000\ntiming.end_tick 45\n"),
     127: ("mag126.tim", 20, "stare.ahead 3\nstone.from 10\nstone.ticks 20\n"),
+    114: ("mag113.tim", 20, "overlay.amp.base 800\nmist.additive.b -1\noverlay.from 20\ntiming.mark_from 25\n"
+                            "mist.depth.shift 4\n"),
 }
 
 
@@ -280,7 +282,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind and both Petrify Stares from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares and Zombie from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -373,3 +375,15 @@ def test_petrify_stare_descriptions_compile():
         assert any(line.startswith("draw 2 0 within $16 $17 layout_on_point 1 1 0 -1 ") and line.endswith(flags)
                    for line in lines)
         assert "after sound_3d_at_position $2 $1 $3 1" in lines and "end tick_above $5" in lines
+
+
+def test_zombie_description_compiles():
+    """Zombie: the cycle director waits while any target task is young (on any target); the mist
+    scaled by the target's size with two objects as gouraud additive quads; the target redrawn
+    swayed by its wave table; the target's entities marked from a tick, unmarked at the end."""
+    program = compile_program(load_description(114))
+    lines = program.splitlines()
+    director = next(line for line in lines if line.startswith("director cycle"))
+    assert director.endswith(" 1") and "tick mark_ring_from $7 8" in lines and "at_end unmark_ring 8" in lines
+    assert any(line.startswith("draw 1 0 - - layout_scaled_on_target 0 1 ") and line.endswith(" $12 $13") for line in lines)
+    assert any(line.startswith("draw 2 0 - - sway_overlay $14 $15 ") for line in lines)

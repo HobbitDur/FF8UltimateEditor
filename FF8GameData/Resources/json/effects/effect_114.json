@@ -1,0 +1,438 @@
+{
+ "format": 1,
+ "effect": 114,
+ "name": "Zombie",
+ "doc": "Zombie (spell): one target task per action, in turn (one every 10 ticks, not while any target task of 40 ticks or less runs), each a prim-model layout at the target's effect position scaled by its size, two of its objects drawn as additive quads; over ticks 30..59 the target redrawn lifted and swayed, flat additive from black to its tint, its entities marked from 30; the result at 54, the end at 60.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x6C99D0",
+   "setup": "0x6C99C0",
+   "root": "0x6C9A60"
+  },
+  "memory": {
+   "texture_file": "0x2521818",
+   "magic_buffer": "0x252181C",
+   "ctx": "0x2521820",
+   "root_pool": "0x2521828",
+   "packet_cursor": "0x252183C",
+   "root_queue": "0x2521850"
+  }
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values): where it is in FF8_EN.exe and its size. A new effect copies it into its program (\"data\").",
+  "mist": {
+   "kind": "layout",
+   "address": "0x12BA30C",
+   "size": 13772
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x12BD8D8",
+   "size": 2396
+  },
+  "timing.sound": {
+   "kind": "sound",
+   "address": "0x12BE234",
+   "size": 4
+  },
+  "wave": {
+   "kind": "table",
+   "address": "0x12BE238",
+   "size": 8192,
+   "doc": "s16 [4096]: the overlay's sway, indexed by its phase + the vertex's screen height x 4"
+  },
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12C0238",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "magic_buffer": {
+  "doc": "Offsets in the magic buffer: the two packet arenas the director alternates, the layout's blended vertex frames (after the three target nodes).",
+  "arenas": [
+   "0x1600",
+   "0x19600"
+  ],
+  "morph": "0x1530"
+ },
+ "director": {
+  "kind": "cycle",
+  "spawns": "target",
+  "every": "$timing.every",
+  "place": [
+   "action_target",
+   0,
+   "@mist",
+   0,
+   0,
+   "$timing.busy_tick",
+   0,
+   0,
+   1
+  ]
+ },
+ "pools": [
+  {
+   "key": "targets",
+   "queue": "0x2521840",
+   "storage": "0x0",
+   "in_magic_buffer": true,
+   "size": 1808,
+   "count": 3
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The root starts one target task per action, in turn (not while any young one runs); each target task's clock: its sound, the target's mark, its result, its end (draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "mist",
+   "title": "Mist",
+   "doc": "The layout at the target's effect position, scaled by its size, two objects as additive quads"
+  },
+  {
+   "id": 2,
+   "key": "overlay",
+   "title": "Overlay",
+   "doc": "The target redrawn lifted and swayed, flat additive in a colour going from black to its tint"
+  }
+ ],
+ "groups": [
+  {
+   "key": "mist.depth",
+   "label": "Depth",
+   "doc": "Its drawing depth: (Base - the target's size word) >> Shift"
+  },
+  {
+   "key": "mist.scale",
+   "label": "Size",
+   "doc": "Scaled by ((the target's size >> 1) + Base) >> Shift (4096 = its own size); the overlay's lift too"
+  },
+  {
+   "key": "mist.additive",
+   "label": "Additive objects",
+   "doc": "These two objects of the layout are drawn as their gouraud quads only, additive (-1: none)"
+  },
+  {
+   "key": "overlay.amp",
+   "label": "Sway",
+   "doc": "Amplitude Base + Step x the step's 4096ths"
+  }
+ ],
+ "params": [
+  {
+   "key": "timing.every",
+   "part": "timing",
+   "label": "Every",
+   "doc": "The root starts the next action's target task every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.busy_tick",
+   "part": "timing",
+   "label": "Busy tick",
+   "doc": "Not while any target task is at this tick or before (the cycle restarts; -1: never)",
+   "type": "i16",
+   "min": -1,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound block played (its world sound id: an audio.dat entry)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@timing.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_tick",
+   "part": "timing",
+   "label": "Sound tick",
+   "doc": "The sound plays at the target's effect position when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound_volume",
+   "part": "timing",
+   "label": "Sound volume",
+   "doc": "BdPlaySE3D's volume argument",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 257,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage_tick",
+   "part": "timing",
+   "label": "Damage tick",
+   "doc": "The action's target takes the result when the target tick == this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 54,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_tick",
+   "part": "timing",
+   "label": "End tick",
+   "doc": "The target task ends when its tick reaches this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.mark_from",
+   "part": "timing",
+   "label": "Mark from",
+   "doc": "The target's entities are marked (flags bit 3) from this tick to the end",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "mist.depth.base",
+   "part": "mist",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -2048,
+   "unit": "plain"
+  },
+  {
+   "key": "mist.depth.shift",
+   "part": "mist",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "mist.scale.base",
+   "part": "mist",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "mist.scale.shift",
+   "part": "mist",
+   "label": "Shift",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "mist.additive.a",
+   "part": "mist",
+   "label": "Object",
+   "doc": "",
+   "type": "i16",
+   "min": -1,
+   "max": 31,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "mist.additive.b",
+   "part": "mist",
+   "label": "Object",
+   "doc": "",
+   "type": "i16",
+   "min": -1,
+   "max": 31,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.from",
+   "part": "overlay",
+   "label": "From tick",
+   "doc": "The target is redrawn swayed from this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.ticks",
+   "part": "overlay",
+   "label": "Ticks",
+   "doc": "...for this many ticks (its lift and tint: a quarter sine over them)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.lift_shift",
+   "part": "overlay",
+   "label": "Lift shift",
+   "doc": "Lifted by sin x the mist's size >> this",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.amp.base",
+   "part": "overlay",
+   "label": "Base",
+   "doc": "",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.amp.step",
+   "part": "overlay",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": -16,
+   "max": 16,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "overlay.phase_step",
+   "part": "overlay",
+   "label": "Phase step",
+   "doc": "The sway's wave moves this much a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 8,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "target",
+   "pool": "targets",
+   "size": 1808,
+   "function": "0x6C9BC0",
+   "doc": "One per action: from tick 30 the target's entities marked; the mist at the target's effect position now, scaled by its size (record flags 0x20000: angles in XZY order; 0x200: the anchor through the camera + the offset as is; 0x100: scaled by a diagonal matrix), objects 2 and 3 as their gouraud quads only, additive; over 30..59 (unless the cast's flags have 2) the target redrawn swayed; the sound, the result; at the end the mark cleared.",
+   "node": [
+    "counter",
+    "action",
+    "entity",
+    "anchor",
+    [
+     "layout",
+     1780
+    ]
+   ],
+   "every_tick": [
+    [
+     "mark_ring_from",
+     "$timing.mark_from",
+     8
+    ]
+   ],
+   "draws": [
+    {
+     "part": "mist",
+     "draw": [
+      "layout_scaled_on_target",
+      0,
+      1,
+      "$mist.depth.base",
+      "$mist.depth.shift",
+      "$mist.scale.base",
+      "$mist.scale.shift",
+      "0x20300",
+      0,
+      "$mist.additive.a",
+      "$mist.additive.b"
+     ]
+    },
+    {
+     "part": "overlay",
+     "draw": [
+      "sway_overlay",
+      "$overlay.from",
+      "$overlay.ticks",
+      "@wave",
+      "$mist.scale.base",
+      "$mist.scale.shift",
+      "$overlay.lift_shift",
+      "$overlay.amp.base",
+      "$overlay.amp.step",
+      "$overlay.phase_step",
+      2
+     ]
+    }
+   ],
+   "after_draws": [
+    [
+     "sound_3d_at_position",
+     "$timing.sound_tick",
+     "$timing.sound",
+     "$timing.sound_volume",
+     0
+    ],
+    [
+     "heal_action_at",
+     "$timing.damage_tick"
+    ]
+   ],
+   "end": [
+    "tick_above",
+    "$timing.end_tick"
+   ],
+   "at_end": [
+    [
+     "unmark_ring",
+     8
+    ]
+   ]
+  }
+ ]
+}

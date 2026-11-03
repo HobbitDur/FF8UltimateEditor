@@ -43,6 +43,7 @@
 
 #include "mag_heal_ring_code.h"
 #include "fx_layouts.h"
+#include "fx_sway.h"
 
 namespace fxprog
 {
@@ -126,6 +127,7 @@ namespace fxprog
 		HEAL_FIRST_TARGET, ANCHOR_AT_BONE, SOUND_3D_AT, HEAL_ACTION_AT, UNMARK_TARGET, ANCHOR_AT_POSITION,
 		HEAL_ACTION, SCREEN_FADE_AT, BLINK_TARGET, SCREEN_FLASH_CURVE, SCREEN_FLASH_OFF, SPIN, WHIRL_LEAF_MOVE,
 		FLASH_LEVEL_RAISE, FOLLOW_BONE, SOUND_3D_AT_POSITION, FLASH_LEVEL_CLEAR, SCREEN_FLASH_LEVEL, POINT_AT_POSITION,
+		MARK_RING_FROM, UNMARK_RING,
 		// conditions
 		TICK_AT_LEAST, FLIPBOOK_END, LAYOUT_END, TICK_ABOVE, TICK_AT_NODE_END, LEAF_GONE,
 		// motions
@@ -136,7 +138,7 @@ namespace fxprog
 		// draws
 		SPRITE, GROUND_FLIPBOOK, PROJECTOR_OVERLAY, LAYOUT_ON_SCREEN, LAYOUT_AT_CASTER_BONE, LAYOUT_SCALED, SEQUENCE_SPRITE,
 		LAYOUT_AT_ANCHOR, LAYOUT_ON_TARGET, LAYOUT_TURNED, NODE_SEQUENCE_SPRITE, LAYOUT_TABLE, SPINNING_MODEL, SEQUENCE_AT_FEET, LAYOUT_SCALED_ON_TARGET,
-		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR, LAYOUT_ON_POINT,
+		TUMBLING_MODEL, LAYOUT_ENGINE_AT_ANCHOR, LAYOUT_ON_POINT, SWAY_OVERLAY,
 	};
 	static const std::map<std::string, int> OPS = {
 		{ "none", NONE }, { "follow_target", FOLLOW_TARGET }, { "spawn", SPAWN }, { "heal", HEAL }, { "done", DONE },
@@ -165,7 +167,8 @@ namespace fxprog
 		{ "flash_level_raise", FLASH_LEVEL_RAISE }, { "follow_bone", FOLLOW_BONE }, { "sound_3d_at_position", SOUND_3D_AT_POSITION },
 		{ "flash_level_clear", FLASH_LEVEL_CLEAR }, { "screen_flash_level", SCREEN_FLASH_LEVEL },
 		{ "layout_engine_at_anchor", LAYOUT_ENGINE_AT_ANCHOR }, { "point_at_position", POINT_AT_POSITION },
-		{ "layout_on_point", LAYOUT_ON_POINT },
+		{ "layout_on_point", LAYOUT_ON_POINT }, { "mark_ring_from", MARK_RING_FROM }, { "unmark_ring", UNMARK_RING },
+		{ "sway_overlay", SWAY_OVERLAY },
 	};
 
 	inline Program *g_program = nullptr;
@@ -326,6 +329,10 @@ namespace fxprog
 			SetScreenFlash((uint32_t)layouts::ScreenFlashCurve(Tick(t, n), V(a[0]), V(a[1]), V(a[2]), V(a[3])), 0);
 			break;
 		case SCREEN_FLASH_OFF: SetScreenFlash(0, 0); break;
+		case MARK_RING_FROM: // from, bits: from that tick, the bits on every entity of the node's entity's +0x8C ring
+			if (Tick(t, n) >= V(a[0])) layouts::MarkRing(*Fld<uint8_t *>(t, n, F_ENTITY), (uint16_t)V(a[1]), true);
+			break;
+		case UNMARK_RING: layouts::MarkRing(*Fld<uint8_t *>(t, n, F_ENTITY), (uint16_t)V(a[0]), false); break;   // bits
 		case POINT_AT_POSITION: // tick: the node's point = the entity's default effect position, on that tick
 			if (Tick(t, n) == V(a[0])) GetDefaultEffectPosition(*Fld<uint8_t *>(t, n, F_ENTITY), Fld<int16_t>(t, n, F_POINT));
 			break;
@@ -587,7 +594,7 @@ namespace fxprog
 			left = left < 0 ? frames : left | frames;
 			break;
 		}
-		case LAYOUT_SCALED_ON_TARGET: // layout (0, 1: b), at (0: the anchor's x / z on the feet, 1: the effect position now), depth base, shift, scale base, shift, flags, 16-bit record scale
+		case LAYOUT_SCALED_ON_TARGET: // layout (0, 1: b), at (0: the anchor's x / z on the feet, 1: the effect position now), depth base, shift, scale base, shift, flags, 16-bit record scale, additive objects a, b (-1: none; their gouraud quads only)
 		{
 			// Aero's wind: the anchor callback scaled by the entity's size, its depth from it, its
 			// matrix the program's camera matrix
@@ -611,6 +618,9 @@ namespace fxprog
 			anchor_arg.cursor = arg.cursor;
 			anchor_arg.matrix = g_program->camera_matrix ? &var<Mat4x3>(Mem("camera_matrix")) : &Camera();
 			anchor_arg.short_scale = V(a[7]) != 0;
+			for (int k = 8; k < 10; k++)   // (Zombie's mist)
+				if ((uint32_t)V(a[k]) < 32) anchor_arg.additive_objects |= 1u << V(a[k]);
+			anchor_arg.quads_gouraud_only = true;
 			const int frames = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, V(a[0]) ? F_LAYOUT_B : F_LAYOUT), &anchor_arg);
 			left = left < 0 ? frames : left | frames;
 			break;
@@ -648,6 +658,18 @@ namespace fxprog
 			anchor_arg.cursor = arg.cursor;
 			const int frames = layouts::PlayAtAnchor(Fld<uint8_t>(t, n, V(a[0]) ? F_LAYOUT_B : F_LAYOUT), &anchor_arg);
 			left = left < 0 ? frames : left | frames;
+			break;
+		}
+		case SWAY_OVERLAY: // from, ticks, wave, reach base, shift, lift shift, amp base, step, phase step, cast flags that skip it
+		{
+			// Zombie's: the node's entity redrawn lifted and swayed by the s16 [4096] wave table, flat
+			// additive from black to its tint, over from .. from + ticks - 1
+			const int32_t e = Tick(t, n) - V(a[0]);
+			if ((uint32_t)e >= (uint32_t)V(a[1]) || (Ctx()->flags & (uint32_t)V(a[9]))) break;
+			uint8_t *ent = *Fld<uint8_t *>(t, n, F_ENTITY);
+			layouts::SwayArg o;
+			layouts::SwayOverlayParams(e, V(a[1]), layouts::SizeScale(ent, V(a[3]), V(a[4])), V(a[5]), V(a[6]), V(a[7]), V(a[8]), &o);
+			layouts::DrawSwayOverlay(ent, &o, (const int16_t *)V(a[2]), PacketCursor());
 			break;
 		}
 		case TUMBLING_MODEL: // model, draw mode: the node's leaf (not when it is gone)
@@ -1020,7 +1042,7 @@ namespace fxprog
 			}
 			uint8_t &action = m->pad0E;
 			const std::vector<Val> &a = g.director_place.a;
-			// mark, layout, layout b (0: none), spawn bone, busy tick (-1: none), size word base, times (0: none)
+			// mark, layout, layout b (0: none), spawn bone, busy tick (-1: none), size word base, times (0: none), busy on any target
 			if (action <= Ctx()->actions[0].last_action && g.director_place.op == ACTION_TARGET)
 			{
 				const Task &t = g.tasks[g.director_spawns];
@@ -1033,7 +1055,8 @@ namespace fxprog
 					for (int k = 0; k < pool.count && !busy; k++)
 					{
 						uint8_t *node = (uint8_t *)PoolStorage(pool) + k * pool.size;
-						busy = (*(const uint8_t *)&((TaskNode *)node)->flags & 1) && *Fld<uint8_t *>(t, node, F_ENTITY) == target && *Fld<int16_t>(t, node, F_COUNTER) <= V(a[4]);
+						busy = (*(const uint8_t *)&((TaskNode *)node)->flags & 1) && (V(a[7]) || *Fld<uint8_t *>(t, node, F_ENTITY) == target)
+						       && *Fld<int16_t>(t, node, F_COUNTER) <= V(a[4]);   // (on any target: Zombie's)
 					}
 				}
 				// (the next action only once its task started: Dispel's, Blind's, Petrify Stare's one-node pool)

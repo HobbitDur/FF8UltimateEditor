@@ -645,3 +645,28 @@ Potion's description is the same with its own sequences and sound.
        camera track, the sound, "mag119.tim" / "mag126.tim".
      - *Fujin:* their tabs (Timing, Stare, Stone); an eleventh family in the + menu, "From the
        caster, then on its target (Petrify Stare's kind)": Stare (the start), Stone.
+   - **Zombie (114)** (FFNx 4a39cb68): the cycle director (waiting while ANY target task of 40
+     ticks or less runs); a mist layout at the target's effect position scaled by its size; over
+     ticks 30..59 the target redrawn lifted and swayed.
+     - *Shared:* the cycle director and its busy wait (Dispel's), the scaled layout draw
+       (`layout_scaled_on_target`: Aero's, at the effect position now), the additive quads
+       (Blind's), the depth and size rules, `sound_3d_at_position`, `heal_action_at`, `tick_above`.
+     - *Added:*
+       - the director's place takes a ninth value, busy on any target (1: Zombie's; the other
+         cycle effects 0);
+       - the anchor callback's rotation flag 0x20000 (angles in XZY order, 0x701530) and the
+         additive quads' gouraud-only variant (list 8 alone, its depth + the header's, clamped at
+         0: Zombie's 0x6CA0E0 / 0x6CA1B0); `layout_scaled_on_target` takes two additive objects
+         (-1: none; Aero's none);
+       - the library's sway overlay (`fx_sway.h`: Zombie's 0x6CA560, the entity's model redrawn
+         lifted and swayed sideways by an s16 [4096] wave table, flat additive polygons from black
+         to its tint), drawn by `sway_overlay` (from, ticks, the wave table, reach base / shift,
+         lift shift, amplitude base / step, phase step, the cast flags that skip it);
+       - the actions `mark_ring_from` (from, bits: those bits on every entity of the node
+         entity's +0x8C ring from that tick) and `unmark_ring` (bits).
+     - *Inputs* (`ZombieParams`): the cycle and its busy tick, the sound, the damage and end
+       ticks, when the mark starts, the mist's depth, size and additive objects, the overlay's
+       window, lift, sway and wave step. Data: the layout (13772 bytes), the camera track (2396
+       bytes), the sound, the wave table (8192 bytes), "mag113.tim".
+     - *Fujin:* its tabs (Timing, Mist, Overlay); a twelfth family in the + menu, "One per
+       action, its target swaying (Zombie's kind)": Mist (the start), Overlay.

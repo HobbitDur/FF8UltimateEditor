@@ -78,7 +78,8 @@
    0,
    "$timing.busy_tick",
    "$ring.size_base",
-   "$ring.size_times"
+   "$ring.size_times",
+   0
   ]
  },
  "pools": [
