@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    17: ("mag010.tim", 7, "caster.descent 80\nburst.ticks 10\nend 110\n"),
     16: ("mag015.tim", 9, "stage.level 1024\nactors.length 30\ndirector.result 30\n"),
     15: ("mag014.tim", 8, "ribbons.twist 600\nemitter.release 20\nemitter.length 25\nsounds.b 100\n"),
     14: ("mag013-073-344.tim", 11, "reaper.fade_in 512\nstrike.length 30\nreaper.vanish_frame 14\naura.length 40\n"),
@@ -305,7 +306,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw and Recover from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover and Elvoret's entrance from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -313,9 +314,9 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     described, log = record(tmp_path, effect, "described", f"program={program}")
     tasks = len(load_description(effect)["tasks"])
     assert f"{tasks} tasks, {count} params" in log and untag(described) == original and len(original) > 10000
-    # (Ray-Bomb hurts the party only: on the monster the recorder casts on, no number; Draw's sounds are sound
-    # ids, BdPlaySy's, which the recorder does not log)
-    assert effect == 10 or any(line.startswith("N ") for line in original)
+    # (Ray-Bomb hurts the party only: on the monster the recorder casts on, no number; Elvoret's entrance hurts
+    # nobody; Draw's sounds are sound ids, BdPlaySy's, which the recorder does not log)
+    assert effect in (10, 17) or any(line.startswith("N ") for line in original)
     assert effect == 15 or any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text(values)
@@ -603,4 +604,11 @@ def test_recover_description_compiles():
     """Recover: Doom's kind - the per-action director, the module, the emitter's and the director's state tables."""
     lines = compile_program(load_description(16)).splitlines()
     for line in ['module 16 0x27304A0 0x2750', 'module_pointer 2 0x162A484', 'arena_size 32768', 'code 0x8AB600']:
+        assert line in lines, line
+
+
+def test_elvoret_entrance_description_compiles():
+    """Elvoret's entrance: a port director with no file loader of its own (its TIM is exe data)."""
+    lines = compile_program(load_description(17)).splitlines()
+    for line in ['director port -1', 'port 0x7003C0 0x0 0x700460', 'module 17 0x2556FA0 0x60', 'texture 0 -1']:
         assert line in lines, line

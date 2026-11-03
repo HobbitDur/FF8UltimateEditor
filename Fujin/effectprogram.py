@@ -354,8 +354,10 @@ def compile_program(description, values=None):
         if _number(size) <= 0:
             raise DescriptionError(f"own memory {name}: a size in bytes")
         lines.append(f"own {name} {_number(size)}")
-    texture = description["resources"]["texture"]
-    if "tim" in texture:   # a TIM of its data the setup uploads as it is (Thunder's): no file
+    texture = description["resources"].get("texture")
+    if texture is None:   # (a port's own: its setup uploads it, Elvoret's entrance's exe TIM)
+        lines.append("texture 0 -1")
+    elif "tim" in texture:   # a TIM of its data the setup uploads as it is (Thunder's): no file
         lines.append(f"texture 0 -1\ntexture_data {value(texture['tim'], 'texture')}")
     else:
         lines.append(f"texture {value(texture['game_name'], 'texture')} {params.get(texture.get('param'), -1)}")

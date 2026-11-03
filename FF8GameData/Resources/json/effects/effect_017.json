@@ -1,0 +1,137 @@
+{
+ "format": 1,
+ "effect": 17,
+ "name": "Elvoret's entrance",
+ "doc": "Elvoret's entrance (its AI's own attack animation 17 at Dollet's tower): Elvoret coming down from above, its wings' particles and sounds, a ring burst at its landing, the prim-model layout round it. Its tasks are the port's code (FFNx mag017_elvoret_entrance.cpp) run on the program's memory; its texture is exe data (the setup's), its file loader the engine's nullsub.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x7003C0",
+   "root": "0x700460"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 17,
+  "from": "0x2556FA0",
+  "size": "0x60"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound.wings": {
+   "kind": "sound",
+   "address": "0x14D8E40",
+   "size": 4
+  },
+  "sound.land": {
+   "kind": "sound",
+   "address": "0x14D8E44",
+   "size": 4
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x7003C0",
+  "file_loader": "0x0",
+  "root": "0x700460"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "entrance",
+   "title": "Entrance",
+   "doc": "Elvoret coming down from above, its wings' particles and sounds, the ring burst at its landing"
+  }
+ ],
+ "groups": [
+  {
+   "key": "burst",
+   "label": "Ring burst",
+   "doc": "From tick From for Ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound.wings",
+   "part": "entrance",
+   "label": "Wings sound",
+   "doc": "Every 25 ticks while it comes down",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound.wings",
+   "unit": "plain"
+  },
+  {
+   "key": "sound.land",
+   "part": "entrance",
+   "label": "Landing sound",
+   "doc": "At its landing",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound.land",
+   "unit": "plain"
+  },
+  {
+   "key": "caster.height",
+   "part": "entrance",
+   "label": "Start height",
+   "doc": "It starts this far above the ground (negative: up)",
+   "type": "i16",
+   "min": -16384,
+   "max": 0,
+   "default": -5440,
+   "unit": "plain"
+  },
+  {
+   "key": "caster.descent",
+   "part": "entrance",
+   "label": "Descent",
+   "doc": "It comes down by this a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 1024,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.from",
+   "part": "entrance",
+   "label": "From",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.ticks",
+   "part": "entrance",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "end",
+   "part": "entrance",
+   "label": "End",
+   "doc": "The entrance ends after this tick",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 122,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

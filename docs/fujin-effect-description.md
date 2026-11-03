@@ -1019,3 +1019,9 @@ Potion's description is the same with its own sequences and sound.
        mode), the stage darkening (step, level, hold, out step). Data: the sound, the camera track,
        "mag015.tim".
      - *Fujin:* its tabs (Director, Stage darkening); no + menu family.
+   - **Elvoret's entrance (17)** (FFNx 772f80cc; Elvoret's AI's own animation; a port director, Ray-Bomb's
+     kind): Elvoret coming down from above, its wings' particles and sounds, a ring burst at its landing.
+     - *Added:* a port director's file loader and the texture may be left out (the setup uploads exe data).
+     - *Inputs* (`ElvoretParams`): the two sounds, the start height and descent, the ring burst, the end.
+       Data: the sounds.
+     - *Fujin:* its tab (Entrance); no + menu family.
