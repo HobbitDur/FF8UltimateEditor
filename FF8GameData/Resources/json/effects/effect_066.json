@@ -1,0 +1,126 @@
+{
+ "format": 1,
+ "effect": 66,
+ "name": "Griever's death",
+ "doc": "Griever's death / Ultimecia's transformation (Ultimecia's enemy attack): the master's 0x341-tick timeline - its camera script, the caster's chain transformations, the damage, the caster melting face by face into flying shards, sparks, dust falls, glows, waves, rings, flares, billboards, the screen flashes and feedback, the music and sound fades; the camera put back at its end. Its tasks are the port's code (FFNx mag066_griever_ultimecia_death.cpp) run on the program's memory (two of its particle pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6225F0",
+   "setup": "0x622610",
+   "root": "0x627DF0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 66,
+  "from": "0x24C66B0",
+  "size": "0x2B20"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDEA5B8",
+   "size": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x622610",
+  "file_loader": "0x6225F0",
+  "root": "0x627DF0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "Its 0x341-tick timeline: the camera script, the chain transformations, the caster melting into shards, sparks, dust, glows, waves, rings, flares, billboards, the flashes; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "Up to its tick (by 64 a tick), back down from its tick (by 128 a tick, 16 ticks)"
+  }
+ ],
+ "params": [
+  {
+   "key": "master.damage",
+   "part": "master",
+   "label": "Damage tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 832,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "master.voice",
+   "part": "master",
+   "label": "Voice release",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 832,
+   "default": 829,
+   "unit": "plain"
+  },
+  {
+   "key": "master.end",
+   "part": "master",
+   "label": "End after",
+   "doc": "The camera put back and the effect done after this tick",
+   "type": "i16",
+   "min": 829,
+   "max": 1024,
+   "default": 832,
+   "unit": "plain"
+  },
+  {
+   "key": "melt.push",
+   "part": "master",
+   "label": "Shard push",
+   "doc": "The shards' push: the caster's size times this / 8192",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 1450,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.flash_in",
+   "part": "master",
+   "label": "Up to",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.flash_out_from",
+   "part": "master",
+   "label": "Down from",
+   "doc": "",
+   "type": "i16",
+   "min": 33,
+   "max": 816,
+   "default": 641,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

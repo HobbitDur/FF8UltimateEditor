@@ -1411,3 +1411,12 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`AttractorParams`): the six sounds, the caster's sinking a tick, the targets moved away,
        the damage tick. Data: the sounds, "mag064.tim".
      - *Fujin:* its tab (Master); no + menu family.
+   - **Griever's death (66)** (FFNx 683105ee; Ultimecia's enemy attack, her transformation; a port
+     director, Ray-Bomb's kind): the master's 0x341-tick timeline - its camera script, the caster's chain
+     transformations, the damage, the caster melting face by face into flying shards, sparks, dust,
+     glows, waves, rings, flares, billboards, the screen flashes and feedback; the camera put back.
+     - *Port:* its master-task helper (0x622CD0) takes the task as an argument: it goes through
+       `own::Fn()` too (a copy otherwise ran the exe's spark task on the original memory).
+     - *Inputs* (`GDeathParams`): the damage, voice release and end ticks, the shards' push, the
+       screen flash's ticks. Data: "mag065.tim".
+     - *Fujin:* its tab (Master); no + menu family.
