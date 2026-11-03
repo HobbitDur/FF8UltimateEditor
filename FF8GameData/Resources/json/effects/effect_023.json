@@ -1,0 +1,452 @@
+{
+ "format": 1,
+ "effect": 23,
+ "name": "Psycho Blast",
+ "doc": "Psycho Blast (NORG's enemy attack; the act family): the director's actor system, the stage wobble, a psychic orb with its ring appearing in front of the caster and flying at the target, its burst and debris; the damage once it burst. Its parts are the port's code (FFNx mag023_psycho_blast.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x893000",
+   "setup": "0x893020",
+   "root": "0x893190"
+  },
+  "memory": {
+   "texture_file": "0x27011B8",
+   "packet_cursor": "0x27011BC",
+   "packet_limit": "0x2701300",
+   "arena_a": "0x27041AC",
+   "limit_a": "0x2703AEC",
+   "arena_b": "0x27041A8",
+   "limit_b": "0x2703AE8",
+   "arena_top": "0x27044D4",
+   "init_flag_a": "0x27044D0",
+   "init_flag_b": "0x2703654",
+   "cam_ptr_a": "0x27044C8",
+   "cam_ptr_b": "0x2701304",
+   "root_queue": "0x27013D0",
+   "root_pool": "0x2701308",
+   "particle_pool": "0x2704210",
+   "actor_pool": "0x27044CC",
+   "particle_next": "0x2703650",
+   "actor_next": "0x270421C",
+   "cursor_c": "0x27041B0",
+   "cursor_d": "0x27011C0",
+   "count_a": "0x27044C0",
+   "count_b": "0x270420C"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 23,
+  "from": "0x27011B8",
+  "size": "0x3328",
+  "pointers": [
+   [
+    2,
+    "0x1614284"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x16146D8",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1614384",
+   "size": 832
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x1614288",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x438",
+    "actor_pool": "0xD200"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2704038",
+   "storage": "0x2704048",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x27012A0",
+   "storage": "0x27011C8",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "actors",
+   "queue": "0x2703D98",
+   "storage": "0x2703AF0",
+   "size": 676,
+   "count": 1,
+   "keep": true,
+   "doc": "the actor system (the port's)"
+  },
+  {
+   "key": "debris",
+   "queue": "0x27013E0",
+   "storage": "0x27013F0",
+   "size": 176,
+   "count": 50,
+   "keep": true,
+   "doc": "the debris spawner and debris (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x2703AD8",
+   "storage": "0x2703658",
+   "size": 384,
+   "count": 3,
+   "keep": true,
+   "doc": "the orb, its ring and the burst (the port's)"
+  },
+  {
+   "key": "wobble",
+   "queue": "0x2704028",
+   "storage": "0x2703DA8",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the stage wobble (the engine's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The director's sound, the stage wobble and the actor system"
+  },
+  {
+   "id": 0,
+   "key": "orb",
+   "title": "Orb",
+   "doc": "The psychic orb and its ring, its flight to the target; the burst's debris"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "At phase 1: Start, Length (ticks), Mode (4: at the orb point)"
+  },
+  {
+   "key": "debris",
+   "label": "Debris",
+   "doc": "Debris tasks on the spawner's first and second ticks, their sprites' colour word"
+  }
+ ],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "Played at its tick of the phase",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.sound_tick",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "The sound these ticks into the phase",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "director.wobble",
+   "part": "director",
+   "label": "Wobble ticks",
+   "doc": "The stage wobble lasts these ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "director",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "director",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.appear",
+   "part": "orb",
+   "label": "Appear tick",
+   "doc": "The orb and the ring appear at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.speed",
+   "part": "orb",
+   "label": "Speed",
+   "doc": "Its flight's progress a tick (4096: there)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 1366,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.short_of",
+   "part": "orb",
+   "label": "Short of",
+   "doc": "It stops this short of the target",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.first",
+   "part": "orb",
+   "label": "First",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 30,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.second",
+   "part": "orb",
+   "label": "Second",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 30,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.colour",
+   "part": "orb",
+   "label": "Colour",
+   "doc": "",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -64,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x8933D0",
+   "code": "0x8933D0",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; keeps the target's position and the facing to it in the director block and starts the director; the damage once the burst started; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x893450"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x89A530"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x89A570"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x89A590"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x89A5B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x893500",
+   "code": "0x893500",
+   "doc": "The director: every tick the phase bookkeeping (phase 1: the actor system, the ring, the orb, the stage wobble), then its states: cue 1 (the geometry block), the sound, cue 2, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x893580"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8935D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x893760"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8937A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8937D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8937F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

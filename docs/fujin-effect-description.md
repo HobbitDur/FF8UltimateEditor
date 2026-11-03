@@ -1071,3 +1071,11 @@ Potion's description is the same with its own sequences and sound.
      - *Fujin:* its tabs (Emitter, Blob); no + menu family.
      - *Lab:* the recorder and host builds list their modules in a response file (more of them than
        a command line holds).
+   - **Psycho Blast (23)** (FFNx 8f6af7a5; NORG's enemy attack; the act family, Doom's description): the
+     director's actor system and the stage wobble, a psychic orb with its ring in front of the caster
+     flying at the target, its burst and debris; the damage once it burst. Its geometry block's word (exe
+     data pointing into the module) is moved with the module's memory.
+     - *Inputs* (`PsychoParams`): the director's sound and its tick, the stage wobble's ticks, the actor
+       system (start, length, mode), the orb (appear tick, speed, how short of the target), the debris
+       (counts, colour). Data: the sound, the camera track, "mag022.tim".
+     - *Fujin:* its tabs (Director, Orb); no + menu family.

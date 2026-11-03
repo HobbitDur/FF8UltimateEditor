@@ -767,3 +767,46 @@ def test_bio_description_compiles():
     lines = compile_program(load_description(22)).splitlines()
     for line in ['director port -1', 'port 0x89A6B0 0x89A690 0x89A7B0', 'module 22 0x27044E0 0x10A48']:
         assert line in lines, line
+
+
+def test_psycho_blast_description_compiles():
+    """Psycho Blast: Doom's kind - the per-action director, the module with its director block, the emitter's and the
+    director's state tables, its file released at the end."""
+    lines = compile_program(load_description(23)).splitlines()
+    for line in ['module 23 0x27011B8 0x3328', 'module_pointer 2 0x1614284', 'release_file', 'arena_size 32768',
+                 'code 0x893500']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag022.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m077.dat")
+def test_psycho_blast_runs_from_its_description(tmp_path):
+    """Psycho Blast as NORG (c0m077, slot 3) casts it on Squall: what the exe's code records; with parameters, what
+    FFNx's port records with them; as effect 225, itself again."""
+    def record_norg(effect, tag, *extra):
+        recorder = lab_recorder()
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(recorder), str(effect), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m077.dat'}", "caster=3", "target=0", *extra],
+                             cwd=str(recorder.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return out.read_text().splitlines(), run.stdout
+
+    program = write_program(load_description(23), tmp_path / "effect.fxprog")
+    original, _log = record_norg(23, "original")
+    described, log = record_norg(23, "described", f"program={program}")
+    assert "2 tasks, 12 params" in log and untag(described) == original and len(original) > 30000
+    assert any(line.startswith("N ") for line in original) and any(line.startswith("S ") for line in original)
+    params = tmp_path / "params.txt"
+    params.write_text(chr(10).join(["orb.speed 800", "orb.appear 30", "debris.first 4", "actors.length 30"]) + chr(10))
+    native, _log = record_norg(23, "native", "native=1", f"params={params}")
+    described, log = record_norg(23, "described_params", f"program={program}", f"params={params}")
+    assert "4 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(23))
+    description["effect"], description["name"] = 225, "New blast"
+    del description["copy"]["functions"]
+    for task in description["tasks"]:
+        task.pop("function", None)
+    new, log = record_norg(225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_blast" in log and untag(new) == original
