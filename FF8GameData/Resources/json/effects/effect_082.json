@@ -1,0 +1,338 @@
+{
+ "format": 1,
+ "effect": 82,
+ "name": "Ultimecia's attack (82)",
+ "doc": "Ultimecia's attack (her enemy attack 337; the act family, the same build as 81, Raijin's stage darkening): one emitter per action - the director's cuts: the actor system (sprite and model actors), the stage darkening, the screen tint, the sound; the damage at its cue. Its parts are the port's code (FFNx mag082_ultimecia_blow_away.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x79EE10",
+   "setup": "0x79EE30",
+   "root": "0x79EF80"
+  },
+  "memory": {
+   "texture_file": "0x25CFA88",
+   "packet_cursor": "0x25CFA8C",
+   "packet_limit": "0x25CFB94",
+   "arena_a": "0x25D214C",
+   "limit_a": "0x25D17EC",
+   "arena_b": "0x25D2148",
+   "limit_b": "0x25D17E8",
+   "arena_top": "0x25D21D0",
+   "init_flag_a": "0x25D21CC",
+   "init_flag_b": "0x25D17E4",
+   "cam_ptr_a": "0x25D21C4",
+   "cam_ptr_b": "0x25CFB98",
+   "root_queue": "0x25CFC68",
+   "root_pool": "0x25CFBA0",
+   "particle_pool": "0x25D21B0",
+   "actor_pool": "0x25D21C8",
+   "particle_next": "0x25D17E0",
+   "actor_next": "0x25D21BC",
+   "cursor_c": "0x25D2150",
+   "cursor_d": "0x25CFA90",
+   "count_a": "0x25D21BE",
+   "count_b": "0x25D21AC"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 82,
+  "from": "0x25CFA88",
+  "size": "0x2758",
+  "pointers": [
+   [
+    2,
+    "0x157AEEC"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x157B0F8",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x157AEF4",
+   "size": 500
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x157AEF0",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": false,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x9D80"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25D1FD8",
+   "storage": "0x25D1FE8",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25CFB70",
+   "storage": "0x25CFA98",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "actors",
+   "queue": "0x25D1D38",
+   "storage": "0x25D17F0",
+   "size": 676,
+   "count": 2,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "darken",
+   "queue": "0x25CFC78",
+   "storage": "0x25CFC88",
+   "size": 140,
+   "count": 50,
+   "keep": true,
+   "doc": "the stage darkening (the port's)"
+  },
+  {
+   "key": "tint",
+   "queue": "0x25D1FC8",
+   "storage": "0x25D1D48",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the screen tint (the engine's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its cuts: the actor system (sprite and model actors), the stage darkening, the screen tint, the voice and the sound; the damage cue"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "Played at cut 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage frame",
+   "doc": "The damage cue from this frame of its cut",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "director.actors",
+   "part": "director",
+   "label": "Actor ticks",
+   "doc": "The actor system's run length",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x79F1B0",
+   "code": "0x79F1B0",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; places the director data and starts the director; the damage at its cue; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79F230"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A5050"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A5090"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A50B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A50D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x79F2F0",
+   "code": "0x79F2F0",
+   "doc": "The director: every tick the cut bookkeeping (cut 1: the actor system, the stage darkening, the screen tint), then its states: cue 1, the sound, the damage cue, the wait for cut 2, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x79F370"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79F3C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79F410"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79F460"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79F480"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79F4A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79F4C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

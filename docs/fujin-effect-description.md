@@ -1562,3 +1562,16 @@ Potion's description is the same with its own sequences and sound.
        fewer sprites and does not end within the recorder's 3000 ticks. The free slot 225 records the
        exe's.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Ultimecia's attack (81)** (FFNx 01b180e5; her enemy attack 335; the act family, Magma Breath's kind,
+     Death's description): one emitter per action - the director's cuts: the actor system (sprite and model
+     actors), the stage wobble, the screen tint, the voice and the sound; the damage at its cue.
+     - *Inputs* (`Ultimecia81Params`): the director's sound, its damage cue frame, the actor system's
+       length. Data: the sound, the camera track, "mag080.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Ultimecia's attack (82)** (FFNx a8866967; her enemy attack 337; the act family, the same build as 81
+     with Raijin's stage darkening, Death's description): one emitter per action - the director's cuts: the
+     actor system (sprite and model actors), the stage darkening, the screen tint, the sound; the damage at
+     its cue.
+     - *Inputs* (`Ultimecia82Params`): the director's sound, its damage cue frame, the actor system's
+       length. Data: the sound, the camera track, "mag081.tim".
+     - *Fujin:* its tab (Director); no + menu family.

@@ -1,0 +1,338 @@
+{
+ "format": 1,
+ "effect": 81,
+ "name": "Ultimecia's attack",
+ "doc": "Ultimecia's attack (her enemy attack; the act family, Magma Breath's kind): one emitter per action - the director's cuts: the actor system (sprite and model actors), the stage wobble, the screen tint, the voice and the sound; the damage at its cue. Its parts are the port's code (FFNx mag081_ultimecia_unk4.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7A5190",
+   "setup": "0x7A51B0",
+   "root": "0x7A5300"
+  },
+  "memory": {
+   "texture_file": "0x25D21E0",
+   "packet_cursor": "0x25D21E4",
+   "packet_limit": "0x25D22EC",
+   "arena_a": "0x25D48A4",
+   "limit_a": "0x25D3F44",
+   "arena_b": "0x25D48A0",
+   "limit_b": "0x25D3F40",
+   "arena_top": "0x25D4928",
+   "init_flag_a": "0x25D4924",
+   "init_flag_b": "0x25D3F3C",
+   "cam_ptr_a": "0x25D491C",
+   "cam_ptr_b": "0x25D22F0",
+   "root_queue": "0x25D23C0",
+   "root_pool": "0x25D22F8",
+   "particle_pool": "0x25D4908",
+   "actor_pool": "0x25D4920",
+   "particle_next": "0x25D3F38",
+   "actor_next": "0x25D4914",
+   "cursor_c": "0x25D48A8",
+   "cursor_d": "0x25D21E8",
+   "count_a": "0x25D4916",
+   "count_b": "0x25D4904"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 81,
+  "from": "0x25D21E0",
+  "size": "0x2758",
+  "pointers": [
+   [
+    2,
+    "0x157B104"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x157B2D4",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x157B10C",
+   "size": 440
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x157B108",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": false,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x9D80"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25D4730",
+   "storage": "0x25D4740",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25D22C8",
+   "storage": "0x25D21F0",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "actors",
+   "queue": "0x25D4490",
+   "storage": "0x25D3F48",
+   "size": 676,
+   "count": 2,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "wobble",
+   "queue": "0x25D23D0",
+   "storage": "0x25D23E0",
+   "size": 140,
+   "count": 50,
+   "keep": true,
+   "doc": "the stage wobble (the port's)"
+  },
+  {
+   "key": "tint",
+   "queue": "0x25D4720",
+   "storage": "0x25D44A0",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the screen tint (the engine's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its cuts: the actor system (sprite and model actors), the stage wobble, the screen tint, the voice and the sound; the damage cue"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "Played at cut 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage frame",
+   "doc": "The damage cue from this frame of its cut",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "director.actors",
+   "part": "director",
+   "label": "Actor ticks",
+   "doc": "The actor system's run length",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7A5530",
+   "code": "0x7A5530",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; places the director data and starts the director; the damage at its cue; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A55B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7AB400"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7AB440"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7AB460"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7AB480"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x7A5670",
+   "code": "0x7A5670",
+   "doc": "The director: every tick the cut bookkeeping (cut 1: the actor system, the stage wobble, the screen tint), then its states: cue 1, the voice and the sound, the damage cue, cue 2 (the voice released), done.",
+   "every_tick": [
+    [
+     "call",
+     "0x7A56F0"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A5740"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A5790"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A5800"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A5820"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A5850"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7A5870"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}
