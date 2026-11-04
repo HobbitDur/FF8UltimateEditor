@@ -2328,3 +2328,15 @@ Potion's description is the same with its own sequences and sound.
      shards, the screen flashes and fade, the sounds (ticks 0, 80, 170); the action results at tick 252.
      - *Inputs* (`Pulsar260Params`): the three sounds, the damage tick. Data: the sounds, "mag069-259.tim".
      - *Fujin:* its tab (Master); no + menu family.
+   - **LV Up (271)** (FFNx 2bc3601e; the command; a port root, Ray-Bomb's kind): the level-up layout on the target (its
+     morphing model, the target measured), the sound; the action result when it ends.
+     - *Inputs* (`LvUpParams`): the sound. Data: the sound, "mag270.tim".
+     - *Fujin:* its tab (Root); no + menu family.
+   - **LV Down (272)** (FFNx 2bc3601e; the command; a port root, Ray-Bomb's kind): the level-down layout on the target (its
+     morphing model, the target measured), the sound; the action result when it ends.
+     - *Inputs* (`LvDownParams`): the sound. Data: the sound, "mag271.tim".
+     - *Fujin:* its tab (Root); no + menu family.
+   - **Mad Rush (273)** (FFNx 4beaed47; the command; a port root, Ray-Bomb's kind): one layout per target (its morphing
+     model at its bone), the dust rising, the sound; each target's action result when its layout ends.
+     - *Inputs* (`MadRushParams`): the sound. Data: the sound, "mag272.tim".
+     - *Fujin:* its tab (Root); no + menu family.

@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 272,
+ "name": "LV Down",
+ "doc": "LV Down (the command): the root and the play task - the level-down layout on the target (its morphing model, the target measured), the sound; the action result when it ends. Its tasks are the port's code (FFNx mag272_lv_down.cpp) run on the program's memory (its pool in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x68DC80",
+   "setup": "0x68DC70",
+   "root": "0x68DD20"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 272,
+  "from": "0x2508540",
+  "size": "0x68"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x11162F8",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x1115964",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x68DC70",
+  "file_loader": "0x68DC80",
+  "root": "0x68DD20"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "root",
+   "title": "Root",
+   "doc": "The level-down layout on the target (its morphing model, the target measured), the sound; the action result when it ends"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "root",
+   "label": "Sound",
+   "doc": "When the play task starts",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

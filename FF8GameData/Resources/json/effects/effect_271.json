@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 271,
+ "name": "LV Up",
+ "doc": "LV Up (the command): the root and the play task - the level-up layout on the target (its morphing model, the target measured), the sound; the action result when it ends. Its tasks are the port's code (FFNx mag271_lv_up.cpp) run on the program's memory (its pool in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x68F560",
+   "setup": "0x68F550",
+   "root": "0x68F600"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 271,
+  "from": "0x25085A8",
+  "size": "0x68"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x111B3C0",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x111AA2C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x68F550",
+  "file_loader": "0x68F560",
+  "root": "0x68F600"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "root",
+   "title": "Root",
+   "doc": "The level-up layout on the target (its morphing model, the target measured), the sound; the action result when it ends"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "root",
+   "label": "Sound",
+   "doc": "When the play task starts",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
