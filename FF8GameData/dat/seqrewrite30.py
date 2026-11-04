@@ -13,7 +13,10 @@ The rules (study 2.2 / 2.4), each one tagged in the report under the RULE_* name
 
 - B9 N waits exactly N ticks (0x504C5D): N x2, over several B9 when 2N > 255 (B9 0 = 256).
 - BA (one extra frame advance, 0x5051D2): one vanilla frame = two converted frames -> BA BA.
-- A straight-line A1 (a one-tick yield outside any loop) -> A1 A1.
+- A straight-line A1 (a one-tick yield outside any loop) -> A1 A1. Except the A1 right after
+  the wait-animation-end flag (bit 0x08 of C3/E5 08) is raised: the VM then stays parked until
+  the animation completes and resumes in that same call (0x5043C7 / 0x5043DC), so that A1 is
+  not a tick - doubled, it would add one frame at every entrance -> idle handoff.
 - Task durations 84 (wobble), 9E (move to target), AD/AE (drag target), and the cumulative
   tick stamps of 9F: x2. 96, 99/B1, 81, A6 and A8 run hardcoded 15-tick tasks that FFNx keeps
   at 15 Hz: their data is left alone. AB (Renzokuken) is handled by an FFNx hook on
@@ -64,6 +67,7 @@ RULE_B9 = "B9 wait x2"
 RULE_B9_SPLIT = "B9 wait x2, split over several B9"
 RULE_BA = "BA doubled"
 RULE_STRAIGHT_A1 = "straight A1 doubled"
+RULE_ANIM_END_A1 = "A1 waiting for the animation end kept single"
 RULE_DURATION = "task duration x2 (84/9E/AD/AE)"
 RULE_9F = "9F tick stamps x2"
 RULE_LITERAL_COUNTER = "loop counter from a literal x2"
@@ -111,6 +115,9 @@ _AND_CONST = (0xD4, 0xD5, 0xD6)
 _MOD_CONST = (0xE0, 0xE1, 0xE2)
 _WRITE = 0xE5
 _READ = 0xC3
+_OR_CONST = (0xD8, 0xD9, 0xDA)
+_STATE_FLAGS = 0x08
+_WAIT_ANIM_END = 0x08        # BATTLE_STATE_CONTROLER_WAIT_ANIM_END in C3/E5 08
 
 # Op code families of the arithmetic VM (computeAnimationSequence @0x50DB40): the high bits
 # are the operation, the two low bits the operand (0 = i16, 1 = i8, 2 = u8, 3 = variable).
@@ -206,6 +213,7 @@ class _Rewriter:
         self.double_after = set()    # id(node): emit a copy right after it (A1, BA)
         self.gate_list = []          # (event node, counter var, fire on parity 0/1)
         self.guarded_event = self._frame_guarded_event_set()
+        self.anim_end_wait = self._anim_end_wait_set()
 
     # ---------------------------------------------------------------- analysis
     def _ab_data_set(self):
@@ -298,6 +306,40 @@ class _Rewriter:
                 if inner.op_code in _EVENT_OPS:
                     guarded.add(id(inner))
         return guarded
+
+    def _anim_end_wait_set(self):
+        """The A1 that follow a raise of the wait-animation-end flag: `C3 08 D9 08 E5 08 A1`
+        (or the flag written as a constant with the bit set). The bit is followed along the
+        straight run only - a jump target or any other pause in between forgets it, and that
+        A1 is then doubled like any other."""
+        target_set = {id(node.target) for node in self.node_list if node.target is not None}
+        wait_set = set()
+        accumulator = None          # ("const", value) or ("flags", bits known set)
+        raised = False
+        for node in self.node_list:
+            op_code = node.op_code
+            if id(node) in target_set:
+                accumulator, raised = None, False
+            if op_code is None:
+                continue
+            if op_code == _A1:
+                if raised:
+                    wait_set.add(id(node))
+                accumulator, raised = None, False
+            elif op_code < 0x80 or op_code in (0xA9, _B9, 0xAC) or node.is_jump():
+                accumulator, raised = None, False
+            elif op_code == _READ:
+                accumulator = ("flags", 0) if node.parameters[0] == _STATE_FLAGS else None
+            elif op_code in _LOAD_CONST:
+                accumulator = ("const", _operand(node)[1])
+            elif op_code in _OR_CONST and accumulator is not None:
+                accumulator = (accumulator[0], accumulator[1] | _operand(node)[1])
+            elif op_code == _WRITE:
+                if node.parameters[0] == _STATE_FLAGS:
+                    raised = accumulator is not None and bool(accumulator[1] & _WAIT_ANIM_END)
+            elif _is_arithmetic(op_code):
+                accumulator = None
+        return wait_set
 
     def _writes(self, first, last):
         """(index, var, state) of every E5 between first and last (inclusive)."""
@@ -720,6 +762,8 @@ class _Rewriter:
             if node.op_code == _BA:
                 out.append(SequenceNode(_BA))
                 self.report.rule_set.add(RULE_BA)
+            elif node.op_code == _A1 and id(node) in self.anim_end_wait:
+                self.report.rule_set.add(RULE_ANIM_END_A1)
             elif node.op_code == _A1 and (id(node) in self.double_after
                                           or id(node) not in self.in_tick_loop):
                 out.append(SequenceNode(_A1))

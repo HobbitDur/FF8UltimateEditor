@@ -232,7 +232,7 @@ SPECIAL_VAR_GLOSSARY = {
 # The known bits of the animation-state control flags (BattleStateControlerFlag in
 # FF8_EN.exe, plus the effect-sync pair decoded from usage), for a readable rendering.
 STATE_FLAG_NAME = {0x01: "stop_base_anim", 0x02: "loop_anim", 0x04: "preparation",
-                   0x08: "dont_play_anim", 0x10: "effect_ready", 0x20: "effect_fire",
+                   0x08: "wait_anim_end", 0x10: "effect_ready", 0x20: "effect_fire",
                    0x40: "continue_fight", 0x80: "unk_80_after_hit",
                    0x100: "take_damage", 0x200: "effect_done"}
 

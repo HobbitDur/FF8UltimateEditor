@@ -18,7 +18,9 @@ untouched):
 - C3 09 is the number of frames read, pose index + 1 (pre_Battle_ReadAnimation 0x509440
   reads frame 0 at queue time);
 - C3 2C reads back what E5 2C wrote (both are original_sceneout_position_x, 0x504A83);
-- AB consumes its animation list up to the A1 that ends it (0x504E5B), it does not run it.
+- AB consumes its animation list up to the A1 that ends it (0x504E5B), it does not run it;
+- bit 0x08 of C3/E5 08 (wait for the animation end) parks the VM until the animation
+  completes, which clears it and raises 0x04 (0x5043C7 / 0x5043DC).
 """
 import struct
 
@@ -36,6 +38,12 @@ class ExeInterpreter(bake_module._Interpreter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.scene_out_x = None
+
+    def run_frame(self):
+        if (self.is_waiting_animation and self.anim_frame >= self.anim_total
+                and self.state_flags & 0x08):
+            self.state_flags = (self.state_flags & ~0x0C) | 0x04
+        return super().run_frame()
 
     def _execute(self, command, address):
         if command.op_code == 0xAB and command.parameters is not None:
@@ -64,6 +72,8 @@ class ExeInterpreter(bake_module._Interpreter):
         if parameter == 0x2C:
             self.scene_out_x = value
         super()._write_special(parameter, value)
+        if parameter == 0x08 and value & 0x08:
+            self.is_waiting_animation = True
 
     def _state_key(self):
         return super()._state_key() + (self.scene_out_x,)

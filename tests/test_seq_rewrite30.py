@@ -104,6 +104,21 @@ class TestStraightLineRules:
         assert rw.RULE_STRAIGHT_A1 in report.rule_set
         assert _verify(vm, original, new_data, [4]) == []
 
+    def test_an_a1_waiting_for_the_animation_end_is_not_doubled(self, vm):
+        """c0m028 seq 8 ends `C3 08 D9 08 E5 08 A1 A2`: the A1 parks the VM until the
+        animation completes, and A2 runs in that same call. Doubled, the entrance -> idle
+        handoff would hold the last pose one extra frame at 30 fps."""
+        original, new_data, report = _rewrite(
+            vm, "B5 00 06 02 A8 01 A0 00 C3 0C E1 1E E5 7F BA C3 7F C5 FF E5 7F E7 F9"
+                " C3 08 D9 08 E5 08 A1 A2")
+        assert new_data.endswith(bytes.fromhex("C308D908E508A1A2"))
+        assert rw.RULE_ANIM_END_A1 in report.rule_set
+        assert _verify(vm, original, new_data, [30]) == []
+
+    def test_an_a1_after_the_wait_flag_is_lowered_is_doubled(self, vm):
+        _, new_data, _ = _rewrite(vm, "C3 08 D9 08 E5 08 C3 08 D5 F7 E5 08 A1 A2")
+        assert new_data.endswith(bytes.fromhex("A1A1A2"))
+
     def test_task_durations_double(self, vm):
         _, new_data, _ = _rewrite(vm, "84 0A 9E 01 18 AD 05 00 10 18 AE 01 02 00 10 19 A2")
         assert new_data == bytes.fromhex("8414 9E0130 AD05001030 AE0102001032 A2".replace(" ", ""))
@@ -293,7 +308,7 @@ class TestVerifier:
 
 # ------------------------------------------------------------------------ corpus
 # Pinned over every vanilla c0m/dXc/dXw file (mag* excluded): 3160 sequences.
-EXPECTED_COUNT = {rw.STATUS_REWRITTEN: 889, rw.STATUS_UNCHANGED: 2268, rw.STATUS_FALLBACK: 3}
+EXPECTED_COUNT = {rw.STATUS_REWRITTEN: 838, rw.STATUS_UNCHANGED: 2319, rw.STATUS_FALLBACK: 3}
 EXPECTED_NOT_AUTOMATIC = {("c0m010.dat", 8), ("c0m060.dat", 3), ("c0m073.dat", 13)}
 
 
