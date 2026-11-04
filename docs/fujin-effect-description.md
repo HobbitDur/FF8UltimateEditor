@@ -2375,3 +2375,33 @@ Potion's description is the same with its own sequences and sound.
      - *Module:* shared (a copy runs on the module's memory): the exe helpers the port calls by their original
        addresses (the prim callback 0x681FD0, DamageTarget 0x683920, ...) read the module's words.
      - *Fujin:* its tab (Creature); no + menu family.
+   - **Full-cure (280)** (FFNx 5ad8b9c2; the magic, Selphie's Slot; a port root, Ray-Bomb's kind): the screen flash
+     ramp, every 20 ticks the next target's layout at its effect point with the sound, the sparkles; each
+     target's action result.
+     - *Inputs* (`FullCureParams`): the sound. Data: the sound, "mag279.tim".
+     - *Fujin:* its tab (Control); no + menu family.
+   - **Shotgun (281)** (FFNx 0b7bc4e4; the Esthar Soldiers' enemy attack; a port root, Ray-Bomb's kind): the muzzle
+     layout at the caster's gun and its sparks, the hits on random bones of the target with their layouts and
+     sparks, the sound; the action result.
+     - *Inputs* (`ShotgunParams`): the shot's sound. Data: the sound, "mag280.tim".
+     - *Tests:* cast by an Esthar Soldier (c0m078) on the party (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Main); no + menu family.
+   - **Rapture (288)** (FFNx 3044eac1; the magic, Selphie's Slot; a port root, Ray-Bomb's kind): every 10 ticks the
+     next target - its feathers, wing layouts and sparkles, the target rising away (or bouncing), the sound; the
+     coloured screen flash; each target's action result.
+     - *Inputs* (`RaptureParams`): the sound. Data: the sound, "mag287.tim".
+     - *Fujin:* its tab (Target); no + menu family.
+   - **Brrawghh (289)** (FFNx 6c3b7070; Gerogero's and Gunblade's enemy attack; a port root, Ray-Bomb's kind): the
+     spit tubes from the caster's mouth to the target, the spit, drip and splat sprites, the splash layouts, the
+     layout at the target, the sound; the action result.
+     - *Inputs* (`BrrawghhParams`): the sound. Data: the sound, "mag288.tim".
+     - *Tests:* cast by Gerogero (c0m034) on the party (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Main); no + menu family.
+   - **Pandemona (291)** (FFNx b68a15d2; the GF's Tornado Zone, the timeline family; a port timeline, Ray-Bomb's
+     kind): the tornado layers, prim models and particles, the creature, the targets sucked up, spun, carried
+     round and dropped, the camera, the streamed loads, the voice and the sounds; each target's action result
+     when it lands.
+     - *Inputs* (`PandemonaParams`): the voice, the five sounds. Data: the sounds (its textures are exe data).
+     - *Module:* shared (a copy runs on the module's memory): the exe helpers the port calls by their original
+       addresses read the module's words.
+     - *Fujin:* its tab (Timeline); no + menu family.

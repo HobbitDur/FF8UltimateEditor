@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 280,
+ "name": "Full-cure",
+ "doc": "Full-cure (the magic, Selphie's Slot): the root and the control task - the screen flash ramp, every 20 ticks the next target's layout at its effect point with the sound, the sparkles; each target's action result. Its tasks are the port's code (FFNx mag280_full_cure.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x67E740",
+   "setup": "0x67E730",
+   "root": "0x67E7F0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 280,
+  "from": "0x2507FD8",
+  "size": "0x98"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x10AB128",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x10AB124",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x67E730",
+  "file_loader": "0x67E740",
+  "root": "0x67E7F0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "control",
+   "title": "Control",
+   "doc": "The flash ramp, every 20 ticks the next target's layout at its effect point with the sound, the sparkles; each target's action result"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "control",
+   "label": "Sound",
+   "doc": "At each target's layout start",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
