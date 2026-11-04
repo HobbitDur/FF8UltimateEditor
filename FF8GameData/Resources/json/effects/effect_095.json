@@ -1,0 +1,637 @@
+{
+ "format": 1,
+ "effect": 95,
+ "name": "Siren",
+ "doc": "Siren (the GF's Silent Voice; the act family's own module): one emitter per action - the load script and the director's cuts: the wave, the notes and sparkles, Siren with her harp and particle actors, the water surfaces and orbit sprites, the target sparks and particle systems, the camera script; the damage. Its parts are the port's code (FFNx mag095_siren.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x739D80",
+   "setup": "0x739DA0",
+   "root": "0x739F40"
+  },
+  "memory": {
+   "texture_file": "0x257F8A0",
+   "packet_cursor": "0x257F8A4",
+   "packet_limit": "0x257F9AC",
+   "arena_a": "0x258BFA4",
+   "limit_a": "0x258A024",
+   "arena_b": "0x258BFA0",
+   "limit_b": "0x258A020",
+   "arena_top": "0x258FB74",
+   "init_flag_a": "0x258FB70",
+   "init_flag_b": "0x2585E38",
+   "cam_ptr_a": "0x258FB68",
+   "cam_ptr_b": "0x257F9B0",
+   "root_queue": "0x257FA80",
+   "root_pool": "0x257F9B8",
+   "particle_pool": "0x258EC54",
+   "actor_pool": "0x258FB6C",
+   "particle_next": "0x2585AE0",
+   "actor_next": "0x258EDD0",
+   "cursor_c": "0x258E89C",
+   "cursor_d": "0x257F8A8",
+   "count_a": "0x258FB40",
+   "count_b": "0x258EC50"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 95,
+  "from": "0x257F8A0",
+  "size": "0x10458",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1533E70",
+   "size": 12
+  },
+  "sounds.wave": {
+   "kind": "sound",
+   "address": "0x1533014",
+   "size": 4
+  },
+  "sounds.arrive": {
+   "kind": "sound",
+   "address": "0x1533018",
+   "size": 4
+  },
+  "sounds.sparks": {
+   "kind": "sound",
+   "address": "0x1533020",
+   "size": 4
+  },
+  "sounds.song": {
+   "kind": "sound",
+   "address": "0x153301C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xC00",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x10E0",
+    "actor_pool": "0xC240"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x258BE30",
+   "storage": "0x258BE40",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x257F988",
+   "storage": "0x257F8B0",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "loads",
+   "queue": "0x258FB48",
+   "storage": "0x258EDD8",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "the load script (the port's)"
+  },
+  {
+   "key": "creature",
+   "queue": "0x258EC40",
+   "storage": "0x258EB00",
+   "size": 320,
+   "count": 1,
+   "keep": true,
+   "doc": "Siren (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x258BA90",
+   "storage": "0x258A028",
+   "size": 676,
+   "count": 10,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "models",
+   "queue": "0x258A010",
+   "storage": "0x2587670",
+   "size": 1332,
+   "count": 8,
+   "keep": true,
+   "doc": "the prim-model plays (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x257FA90",
+   "storage": "0x257FAA0",
+   "size": 224,
+   "count": 110,
+   "keep": true,
+   "doc": "the camera script, the wave, notes, harps, water and sparks (the port's)"
+  },
+  {
+   "key": "particles",
+   "queue": "0x2585EF0",
+   "storage": "0x2585F00",
+   "size": 100,
+   "count": 60,
+   "keep": true,
+   "doc": "the particles (the port's)"
+  },
+  {
+   "key": "tint",
+   "queue": "0x258BE20",
+   "storage": "0x258BBA0",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the screen tint (the engine's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The load script and the director's cuts: the wave, the notes and sparkles, Siren with her harp and particle actors, the water surfaces and orbit sprites, the target sparks and particle systems, the camera script; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "Cut 1 (the wave), cut 3 (Siren), cut 6 (the target sparks), her song"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.wave",
+   "part": "director",
+   "label": "Wave",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.wave",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.arrive",
+   "part": "director",
+   "label": "Arrive",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.arrive",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.sparks",
+   "part": "director",
+   "label": "Sparks",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.sparks",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.song",
+   "part": "director",
+   "label": "Song",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.song",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x73A1A0",
+   "code": "0x73A1A0",
+   "doc": "One per action (the engine's emitter, its states the port's): the load script and the director; the damage; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73A220"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x747440"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7474B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7474D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7474F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x73A7B0",
+   "code": "0x73A7B0",
+   "doc": "The director: every tick the cut script (each new cut spawns its tasks), then its 28 states: the camera script, the cues, the sounds, the done flag, the end.",
+   "every_tick": [
+    [
+     "call",
+     "0x73A8E0"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73A930"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73A990"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B790"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B7B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B800"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B880"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B8A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B8C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B8E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B900"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B950"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B9A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73B9D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BA30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BA50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BA70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BAD0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BB00"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BB20"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BBB0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BBD0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BBF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BC10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BC40"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BC60"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BC90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BCB0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x73BCD0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

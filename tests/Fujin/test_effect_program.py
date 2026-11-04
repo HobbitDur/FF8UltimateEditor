@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    95: ("mag094.tim", 4, "sounds.arrive 22311280\nsounds.song 22311276\n"),
     94: ("mag093.tim", 4, "sounds.revive 22311280\ndirector.damage 90\n"),
     93: ("mag092.tim", 4, "sounds.heal 22311280\ndirector.damage 90\n"),
     92: ("mag091.tim", 4, "sounds.walk 22311280\ndirector.damage 120\n"),
@@ -360,6 +361,23 @@ CYCLES = {
 # the battle stage an effect draws (Griever shatters Ultimecia's stage models): the recorder loads it
 CYCLE_STAGES = {69: 142}
 
+# frames an exe quirk draws differently in a copy, left out of the comparisons (R numbers [from, to)): Siren's
+# splash task picks surface vertices past its table 0x258EC70, in the load-script pool's nodes (their pointers)
+CYCLE_QUIRK_FRAMES = {95: (289, 301)}
+
+
+def quirk(effect, lines):
+    if effect not in CYCLE_QUIRK_FRAMES:
+        return lines
+    lo, hi = CYCLE_QUIRK_FRAMES[effect]
+    out, skip = [], False
+    for line in lines:
+        if line.startswith("R "):
+            skip = lo <= int(line.split()[1]) < hi
+        if not skip:
+            out.append(line)
+    return out
+
 
 def cycle_files(effect):
     return ("extracted_files/FF8_EN.exe", "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
@@ -379,7 +397,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover and Angelo Reverse from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse and Siren from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -387,7 +405,8 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     original, _log = record(tmp_path, effect, "original", *stage)
     described, log = record(tmp_path, effect, "described", f"program={program}", *stage)
     tasks = len(load_description(effect)["tasks"])
-    assert f"{tasks} tasks, {count} params" in log and untag(described) == original and len(original) > 10000
+    assert f"{tasks} tasks, {count} params" in log and quirk(effect, untag(described)) == quirk(effect, original)
+    assert len(original) > 10000
     # (Ray-Bomb hurts the party only: on the monster the recorder casts on, no number; Elvoret's entrance and
     # Ultimecia's model breaking apart and Griever hurt nobody; Wishing Star's waves need eight target records a target; Draw's sounds are sound ids, BdPlaySy's, which the
     # recorder does not log)
@@ -397,7 +416,7 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     params.write_text(values)
     native, _log = record(tmp_path, effect, "native", "native=1", f"params={params}", *stage)
     described, log = record(tmp_path, effect, "described_params", f"program={program}", f"params={params}", *stage)
-    assert f"{values.count(chr(10))} set" in log and described == native and native != original
+    assert f"{values.count(chr(10))} set" in log and quirk(effect, described) == quirk(effect, native) and native != original
     description = copy.deepcopy(load_description(effect))
     description["effect"], description["name"] = 225, "New cycle"
     del description["copy"]["functions"]
@@ -405,7 +424,7 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
         task.pop("function", None)   # (Berserk's sparks: a task of their own, no exe function)
     program = write_program(description, tmp_path / "new.fxprog")
     new, log = record(tmp_path, 225, "new", f"program={program}", *stage)
-    assert "program: New_cycle" in log and untag(new) == original
+    assert "program: New_cycle" in log and quirk(effect, untag(new)) == quirk(effect, original)
 
 
 def test_clock_spell_descriptions_compile():
@@ -1502,4 +1521,11 @@ def test_angelo_reverse_description_compiles():
     """Angelo Reverse: Doom's kind - the per-action director, the module with its actor pools, the emitter's and the director's state tables; the two sounds and the director's frames."""
     lines = compile_program(load_description(94)).splitlines()
     for line in ['module 94 0x258FCF8 0x2850', 'release_file', 'arena_size 32768', 'code 0x747B10']:
+        assert line in lines, line
+
+
+def test_siren_description_compiles():
+    """Siren: the act engine's own module - the per-action director with its cut script, the module with its actor pools, the emitter's and the director's state tables; the four sounds."""
+    lines = compile_program(load_description(95)).splitlines()
+    for line in ['module 95 0x257F8A0 0x10458', 'release_file', 'arena_size 3072', 'code 0x73A7B0']:
         assert line in lines, line

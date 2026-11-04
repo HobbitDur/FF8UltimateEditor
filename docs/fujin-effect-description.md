@@ -1665,3 +1665,16 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`ReverseParams`): the two sounds (jump, revive), the revival sound's and the done flag's
        frames. Data: the sounds, "mag093.tim" and the engine camera animation.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Siren (95)** (FFNx f5143077; the GF's Silent Voice; the act engine's own module, Death's description):
+     one emitter per action - the load script and the director's 28 states over its cut script: the wave,
+     the notes and sparkles, Siren with her harp and particle actors, the water surfaces and orbit sprites,
+     the target sparks and particle systems, the camera script; the damage.
+     - *Inputs* (`SirenParams`): the four sounds (wave, arrive, sparks, song). Data: the sounds, "mag094.tim"
+       (no engine camera animation: the camera script task drives the camera).
+     - *Port:* the engine master a_739F40 (Siren's, also Choco Meteor's and Chocobocle's) resets g_reloc like
+       the module masters; the sprite draws call the module's own sequence reader 0x7435E0 through `callo`.
+     - *Exe quirk (copies):* the splash task's spawner picks surface vertices up to the row count inclusive,
+       reading past the vertex table 0x258EC70 into the load-script pool's nodes (their pointers): a copy's
+       are its own, so a few far splash sprites (sequences 0x15331D0 / 0x1533328 / 0x15334A0) land elsewhere
+       (the description and slot 225 from frame 290, slot 224 from frame 236); nothing else differs.
+     - *Fujin:* its tab (Director); no + menu family.
