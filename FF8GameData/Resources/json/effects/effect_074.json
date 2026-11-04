@@ -1,0 +1,456 @@
+{
+ "format": 1,
+ "effect": 74,
+ "name": "LV?Death (Quistis)",
+ "doc": "LV?Death (Quistis' Blue Magic; Death's library relocated; the act family, the Boko summons' kind): one emitter per target - a reaper appears in front of it (the first after the caster's cast animation), fading in in the dark with its aura's actor system and the stage wobbling, strikes - the dark actor system and dark spark bursts - and vanishes; the damage. Its parts are the port's code (FFNx mag074_lvdeath_quistis.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7C4440",
+   "setup": "0x7C4460",
+   "root": "0x7C45E0"
+  },
+  "memory": {
+   "texture_file": "0x25EC518",
+   "packet_cursor": "0x25EC51C",
+   "packet_limit": "0x25EC67C",
+   "arena_a": "0x25F3084",
+   "limit_a": "0x25F21DC",
+   "arena_b": "0x25F3080",
+   "limit_b": "0x25F21D8",
+   "arena_top": "0x25F3F28",
+   "init_flag_a": "0x25F3F24",
+   "init_flag_b": "0x25ECBD4",
+   "cam_ptr_a": "0x25F3EFC",
+   "cam_ptr_b": "0x25EC680",
+   "root_queue": "0x25EC750",
+   "root_pool": "0x25EC688",
+   "particle_pool": "0x25F3EBC",
+   "actor_pool": "0x25F3F20",
+   "particle_next": "0x25ECBD0",
+   "actor_next": "0x25F3EC8",
+   "cursor_c": "0x25F3A88",
+   "cursor_d": "0x25EC520",
+   "count_a": "0x25F3EF4",
+   "count_b": "0x25F3EB8"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 74,
+  "from": "0x25EC518",
+  "size": "0x7A40",
+  "pointers": [
+   [
+    2,
+    "0x1582068"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1587F34",
+   "size": 20
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1582184",
+   "size": 440
+  },
+  "sound.appear": {
+   "kind": "sound",
+   "address": "0x158206C",
+   "size": 4
+  },
+  "sound.strike": {
+   "kind": "sound",
+   "address": "0x1582070",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xE000",
+  "release_file": true,
+  "each": "target",
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x9D80"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25F2F10",
+   "storage": "0x25F2F20",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25EC658",
+   "storage": "0x25EC580",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "reaper",
+   "queue": "0x25F3EA8",
+   "storage": "0x25F3AE8",
+   "size": 320,
+   "count": 3,
+   "keep": true,
+   "doc": "the reapers (the port's, their dark draw)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x25F2C70",
+   "storage": "0x25F21E0",
+   "size": 676,
+   "count": 4,
+   "keep": true,
+   "doc": "the auras' and the strikes' actor systems (the port's)"
+  },
+  {
+   "key": "wobble",
+   "queue": "0x25EC760",
+   "storage": "0x25EC770",
+   "size": 112,
+   "count": 10,
+   "keep": true,
+   "doc": "the stage wobble in and out (the port's)"
+  },
+  {
+   "key": "sparks",
+   "queue": "0x25ECBD8",
+   "storage": "0x25EEB28",
+   "size": 280,
+   "count": 50,
+   "keep": true,
+   "doc": "the dark spark bursts (the port's)"
+  },
+  {
+   "key": "unused",
+   "queue": "0x25F2F00",
+   "storage": "0x25F2C80",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "reaper",
+   "title": "Reaper",
+   "doc": "A reaper in front of each target: fading in in the dark, striking, vanishing; its sounds; the first one waits for the caster's cast animation"
+  },
+  {
+   "id": 0,
+   "key": "actors",
+   "title": "Actor systems",
+   "doc": "The aura's actor system at its appearance, the dark one at the strike (their actor data the exe's)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "aura",
+   "label": "Aura",
+   "doc": "Its actor system at the reaper's appearance: Ticks, Mode (2: the reaper data's fixed positions)"
+  },
+  {
+   "key": "strike",
+   "label": "Strike",
+   "doc": "The dark actor system at the strike: Ticks, Mode (0: the bones)"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound.appear",
+   "part": "reaper",
+   "label": "Appear sound",
+   "doc": "Played when it appears (the first target)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound.appear",
+   "unit": "plain"
+  },
+  {
+   "key": "sound.strike",
+   "part": "reaper",
+   "label": "Strike sound",
+   "doc": "Played when its dark draw ends",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound.strike",
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.wait",
+   "part": "reaper",
+   "label": "Wait",
+   "doc": "The first target's reaper after these ticks (the caster's cast animation)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.fade_in",
+   "part": "reaper",
+   "label": "Fade in",
+   "doc": "Its fade down by this a tick (4096: fully shown)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.dark_until",
+   "part": "reaper",
+   "label": "Dark until frame",
+   "doc": "Drawn dark until this frame of its animation",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.strike_frame",
+   "part": "reaper",
+   "label": "Strike frame",
+   "doc": "It strikes (the damage, the dark actor system, the sparks) at this frame",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.vanish_frame",
+   "part": "reaper",
+   "label": "Vanish from frame",
+   "doc": "It vanishes from this frame",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "reaper.fade_out",
+   "part": "reaper",
+   "label": "Fade out",
+   "doc": "Its fade up by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "aura.length",
+   "part": "actors",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 1000,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "aura.mode",
+   "part": "actors",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.length",
+   "part": "actors",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 1000,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "strike.mode",
+   "part": "actors",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7C4830",
+   "code": "0x7C4830",
+   "doc": "One per target (the engine's emitter, its states the port's): follows its target; places the reaper in front of it and starts the director; the damage once the reaper struck; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7C48B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7CBC30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7CBC70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7CBC90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7CBCB0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x7C49D0",
+   "code": "0x7C49D0",
+   "doc": "The director: every tick the reaper data's phase bookkeeping, then its states: the reaper's textures, the caster's animation set and cast animation, its wait (the first target), the reaper creature, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x7C4A40"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7C4A90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7C4B10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7CBBE0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7CBC00"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

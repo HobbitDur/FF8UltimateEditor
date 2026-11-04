@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    74: ("mag013-073-344.tim", 12, "reaper.fade_in 512\nstrike.length 30\nreaper.vanish_frame 14\naura.length 40\nreaper.wait 20\n"),
     73: ("mag072-077.tim", 10, "emitter.result 50\nmaster.wait 40\ndarken.step 128\n"),
     72: ("mag054-071.tim", 14, "orb.hold 25\ndarken.level 1024\nsplash.until 24\ndirector.damage 40\nrain.from 16\ndirector.wait 8\n"),
     71: ("mag070.tim", 15, "caster.lasers 22\nlaser.grow 512\nemitter.result 30\nlight.step 128\n"),
@@ -361,7 +362,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis) and Mighty Guard (Quistis) from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis) and LV?Death (Quistis) from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1284,4 +1285,11 @@ def test_mighty_guard_quistis_description_compiles():
     """Mighty Guard (Quistis): Doom's kind with Drain's master - its actor pools, the stage darkening in and out (native tasks) after its wait; after the darkening in, its two act calls (the caster's animation set bound, her cast animation queued)."""
     lines = compile_program(load_description(73)).splitlines()
     for line in ['module 73 0x25F3F60 0x1008', 'act_stage 1 2 $4', 'act_pool actor_pool 67200', 'native 0x7CC220', 'act_call 0x5022C0 @caster @bind_block 0x1587F4C', 'act_call 0x505C00 @caster 0x1']:
+        assert line in lines, line
+
+
+def test_lvdeath_quistis_description_compiles():
+    """LV?Death (Quistis): Death's library relocated (Doom's kind) - the director for each target, the module, the emitter's and the director's state tables."""
+    lines = compile_program(load_description(74)).splitlines()
+    for line in ['module 74 0x25EC518 0x7A40', 'module_pointer 2 0x1582068', 'per_target', 'release_file', 'arena_size 57344', 'code 0x7C49D0']:
         assert line in lines, line

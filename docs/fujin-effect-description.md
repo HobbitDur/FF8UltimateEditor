@@ -1484,3 +1484,11 @@ Potion's description is the same with its own sequences and sound.
        BS_BindEntityModelFromComData 0x5022C0 (the module's animation set onto the caster) and
        QueueChainTransformation 0x505C00 (her chain 1: the cast animation).
      - *Fujin:* its tab (Emitter); no + menu family.
+   - **LV?Death (Quistis) (74)** (FFNx 67891849; Quistis' Blue Magic; Death's library relocated; the act
+     family, Death's description with `"each": "target"`): one emitter per target - a reaper appears in
+     front of it (the first after her cast animation: the module's animation set bound to her, a 0xC-tick
+     wait), fading in in the dark with its aura's actor system and the stage wobbling, strikes - the dark
+     actor system and dark spark bursts - and vanishes; its target's damage.
+     - *Inputs* (`LvDeathQParams`): Death's, and the first reaper's wait. Data: the two sounds, the camera
+       track, "mag013-073-344.tim".
+     - *Fujin:* its tabs (Reaper, Actor systems); no + menu family.
