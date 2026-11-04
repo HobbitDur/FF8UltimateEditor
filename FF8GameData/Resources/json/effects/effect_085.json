@@ -1,0 +1,563 @@
+{
+ "format": 1,
+ "effect": 85,
+ "name": "The End",
+ "doc": "The End (Selphie's Slot; the act family, MiniMog's kind): one emitter per action - the cut machinery: the load script (its battle files, the summon stream) and the director's six cuts: the stage fade, wobble and darkening, the music fade, the meteors, the ground, the prim plays with the monsters' shadows, the petals, the glow and the black bars; the sounds, the screen tint, the battle UI off and on; the damage at its cue. Its parts are the port's code (FFNx mag085_the_end.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x784480",
+   "setup": "0x7844A0",
+   "root": "0x784630"
+  },
+  "memory": {
+   "texture_file": "0x25BC390",
+   "packet_cursor": "0x25BC394",
+   "packet_limit": "0x25BC49C",
+   "arena_a": "0x25C1B5C",
+   "limit_a": "0x25C0F54",
+   "arena_b": "0x25C1B58",
+   "limit_b": "0x25C0F50",
+   "arena_top": "0x25C21D8",
+   "init_flag_a": "0x25C21D4",
+   "init_flag_b": "0x25BC894",
+   "cam_ptr_a": "0x25C21CC",
+   "cam_ptr_b": "0x25BC4A0",
+   "root_queue": "0x25BC570",
+   "root_pool": "0x25BC4A8",
+   "particle_pool": "0x25C1CB8",
+   "actor_pool": "0x25C21D0",
+   "particle_next": "0x25BC890",
+   "actor_next": "0x25C1CC4",
+   "cursor_c": "0x25C1C54",
+   "cursor_d": "0x25BC398",
+   "count_a": "0x25C21B0",
+   "count_b": "0x25C1CB4"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 85,
+  "from": "0x25BC390",
+  "size": "0x5FBC",
+  "pointers": [
+   [
+    2,
+    "0x156C7F0"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1572098",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1571CBC",
+   "size": 432
+  },
+  "sounds.a": {
+   "kind": "sound",
+   "address": "0x156C7F4",
+   "size": 4
+  },
+  "sounds.b": {
+   "kind": "sound",
+   "address": "0x156C7F8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x798",
+    "actor_pool": "0x9D80"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25C19E8",
+   "storage": "0x25C19F8",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25BC478",
+   "storage": "0x25BC3A0",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "loads",
+   "queue": "0x25C21B8",
+   "storage": "0x25C1CC8",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "the load script (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x25C1748",
+   "storage": "0x25C0F58",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "emitters2",
+   "queue": "0x25BC580",
+   "storage": "0x25BC590",
+   "size": 96,
+   "count": 8,
+   "keep": true,
+   "doc": "the meteor and petal emitters (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x25BC898",
+   "storage": "0x25BC8A8",
+   "size": 228,
+   "count": 60,
+   "keep": true,
+   "doc": "the meteors, the ground, the petals, the glow and bars, the stage tasks (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x25C0F40",
+   "storage": "0x25BFE18",
+   "size": 732,
+   "count": 6,
+   "keep": true,
+   "doc": "the prim plays (the port's)"
+  },
+  {
+   "key": "tints",
+   "queue": "0x25C19D8",
+   "storage": "0x25C1758",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the screen tint (the engine's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The load script (its battle files, the summon stream) and the director's six cuts: the stage fade, wobble and darkening, the music fade, the meteors, the ground, the prim plays and the shadows, the petals, the glow and the black bars; the sounds, the screen tint; the damage cue"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At cut 1 and cut 3"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.a",
+   "part": "director",
+   "label": "Sound A",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.a",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.b",
+   "part": "director",
+   "label": "Sound B",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.b",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage frame",
+   "doc": "The damage cue and the battle UI back from this frame of its last cut",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 10,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x784890",
+   "code": "0x784890",
+   "doc": "One per action (the engine's emitter, its states the port's): the cut machinery - the director block, the file loader block, the load script and the director; the damage at its cue; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x784910"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78D600"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78D670"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78D690"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78D6B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x784E30",
+   "code": "0x784E30",
+   "doc": "The director: every tick the cut bookkeeping (each cut spawns its tasks), then its 23 states: the battle UI off, the sounds, the music volume, the screen tint, cuts 1 to 6, the damage cue and the battle UI back, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x784F30"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x784F80"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x784FD0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785020"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785080"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785110"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785130"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785150"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785170"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7851C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7851E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785200"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785230"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785250"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785270"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785290"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7852B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7852D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7852F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785310"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785330"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785350"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x785380"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7853A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

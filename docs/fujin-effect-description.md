@@ -1575,3 +1575,19 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`Ultimecia82Params`): the director's sound, its damage cue frame, the actor system's
        length. Data: the sound, the camera track, "mag081.tim".
      - *Fujin:* its tab (Director); no + menu family.
+   - **Ultimecia absorbs into time (83)** (FFNx da009e5c; her enemy attack 336; the act family, 81's
+     build with Boko's master, Death's description): one emitter per action - the director's cuts: the
+     creature (appearing below, sinking, its two animations, rising, fading out), the actor system, the
+     target absorbed polygon by polygon (its model pulled apart, spinning, falling, shrinking), the stage
+     light, the sound; the damage at its cue.
+     - *Inputs* (`Ultimecia83Params`): the director's sound, its damage cue frame, the actor system's
+       length. Data: the sound, the camera track, "mag082.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **The End (85)** (FFNx 2992ac11; Selphie's Slot; the act family, MiniMog's kind, Death's
+     description): one emitter per action - the cut machinery: the load script (its battle files, the summon
+     stream) and the director's six cuts: the stage fade, wobble and darkening, the music fade, the meteors,
+     the ground, the prim plays with the monsters' shadows, the petals, the glow and the black bars; the
+     sounds, the screen tint, the battle UI off and on; the damage at its cue.
+     - *Inputs* (`TheEndParams`): the two sounds, the damage cue frame. Data: the sounds, the camera track,
+       "mag084.tim".
+     - *Fujin:* its tab (Director); no + menu family.

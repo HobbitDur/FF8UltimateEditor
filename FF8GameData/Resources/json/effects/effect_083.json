@@ -1,0 +1,367 @@
+{
+ "format": 1,
+ "effect": 83,
+ "name": "Ultimecia absorbs into time",
+ "doc": "Ultimecia absorbs into time (her enemy attack 336; the act family, 81's build with Boko's master): one emitter per action - the director's cuts: the creature (appearing below, sinking, its two animations, rising, fading out), the actor system, the target absorbed polygon by polygon (its model pulled apart, spinning, falling, shrinking), the stage light, the sound; the damage at its cue. Its parts are the port's code (FFNx mag083_ultimecia_absorb.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7976A0",
+   "setup": "0x7976C0",
+   "root": "0x797840"
+  },
+  "memory": {
+   "texture_file": "0x25C9F70",
+   "packet_cursor": "0x25C9F74",
+   "packet_limit": "0x25CA07C",
+   "arena_a": "0x25CF3EC",
+   "limit_a": "0x25CED2C",
+   "arena_b": "0x25CF3E8",
+   "limit_b": "0x25CED28",
+   "arena_top": "0x25CFA4C",
+   "init_flag_a": "0x25CFA48",
+   "init_flag_b": "0x25CA854",
+   "cam_ptr_a": "0x25CFA40",
+   "cam_ptr_b": "0x25CA080",
+   "root_queue": "0x25CA150",
+   "root_pool": "0x25CA088",
+   "particle_pool": "0x25CFA2C",
+   "actor_pool": "0x25CFA44",
+   "particle_next": "0x25CA850",
+   "actor_next": "0x25CFA38",
+   "cursor_c": "0x25CF878",
+   "cursor_d": "0x25C9F78",
+   "count_a": "0x25CFA3A",
+   "count_b": "0x25CFA28"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 83,
+  "from": "0x25C9F70",
+  "size": "0x5B18",
+  "pointers": [
+   [
+    2,
+    "0x157843C"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x157AEE0",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1578444",
+   "size": 656
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x1578440",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x10E0",
+    "actor_pool": "0x10680"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25CF278",
+   "storage": "0x25CF288",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25CA058",
+   "storage": "0x25C9F80",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "creature",
+   "queue": "0x25CFA18",
+   "storage": "0x25CF8D8",
+   "size": 320,
+   "count": 1,
+   "keep": true,
+   "doc": "the creature (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x25CEFD8",
+   "storage": "0x25CED30",
+   "size": 676,
+   "count": 1,
+   "keep": true,
+   "doc": "the actor system (the port's)"
+  },
+  {
+   "key": "light",
+   "queue": "0x25CA160",
+   "storage": "0x25CA170",
+   "size": 176,
+   "count": 10,
+   "keep": true,
+   "doc": "the stage light (the port's)"
+  },
+  {
+   "key": "absorb",
+   "queue": "0x25CA858",
+   "storage": "0x25CE6E8",
+   "size": 200,
+   "count": 8,
+   "keep": true,
+   "doc": "the target absorption (the port's)"
+  },
+  {
+   "key": "last",
+   "queue": "0x25CF268",
+   "storage": "0x25CEFE8",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its cuts: the creature (appearing, sinking, its animations, rising), the actor system, the target absorbed polygon by polygon, the stage light, the sound; the damage cue"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "Played at cut 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage frame",
+   "doc": "The damage cue from this frame of its cut",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "director.actors",
+   "part": "director",
+   "label": "Actor ticks",
+   "doc": "The actor system's run length",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x797A90",
+   "code": "0x797A90",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; places the director data and starts the director; the damage at its cue; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x797B10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79ECB0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79ECF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79ED10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x79ED30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x797BF0",
+   "code": "0x797BF0",
+   "doc": "The director: every tick the cut bookkeeping (cut 1: the creature, the actor system, the target absorption, the stage light), then its states: the creature's TIM, cue 1, the sound, the damage cue, the wait for cut 2, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x797C70"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x797CC0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x797CE0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x797D30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x797D80"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x797DA0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x797DC0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x797DE0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}
