@@ -243,6 +243,9 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    103: ("mag102.tim", 2, "sound 22311280\nblock.damage 50\n"),
+    102: ("mag101.tim", 2, "sound 22311280\nbolt.damage 20\n"),
+    101: ("mag100.tim", 2, "sound 22311280\nflash 1500\n"),
     100: ("mag096-097-098-099.tim", 4, "sounds.call 22311280\nsounds.second 22311276\n"),
     99: ("mag096-097-098-099.tim", 4, "sounds.call 22311280\nsounds.second 22311276\n"),
     98: ("mag096-097-098-099.tim", 3, "sounds.call 22311280\nsounds.attack 22311276\n"),
@@ -402,7 +405,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor and ChocoBocle from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara and Blizzara from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -413,9 +416,9 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     assert f"{tasks} tasks, {count} params" in log and quirk(effect, untag(described)) == quirk(effect, original)
     assert len(original) > 10000
     # (Ray-Bomb hurts the party only: on the monster the recorder casts on, no number; Elvoret's entrance and
-    # Ultimecia's model breaking apart and Griever hurt nobody; Wishing Star's waves need eight target records a target; Draw's sounds are sound ids, BdPlaySy's, which the
+    # Ultimecia's model breaking apart and Griever hurt nobody; Wishing Star's waves need eight target records a target; Trauma's grab hurts nobody; Draw's sounds are sound ids, BdPlaySy's, which the
     # recorder does not log)
-    assert effect in (10, 17, 64, 69, 89) or any(line.startswith("N ") for line in original)
+    assert effect in (10, 17, 64, 69, 89, 101) or any(line.startswith("N ") for line in original)
     assert effect == 15 or any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text(values)
@@ -1568,4 +1571,25 @@ def test_chocobocle_description_compiles():
     """ChocoBocle: Doom's kind on the shared Boko port - the per-action director, the module with its actor pools and two exe words; its sounds."""
     lines = compile_program(load_description(100)).splitlines()
     for line in ['module 100 0x255EAC8 0x6F68', 'module_pointer 2 0x15297F0', 'module_pointer 3 0x1529CD0', 'release_file', 'arena_size 4096', 'code 0x70F370']:
+        assert line in lines, line
+
+
+def test_trauma_grab_description_compiles():
+    """Trauma's grab: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its grab pool in the magic buffer)."""
+    lines = compile_program(load_description(101)).splitlines()
+    for line in ['director port -1', 'port 0x6DD0C0 0x6DD0D0 0x6DD1A0', 'module 101 0x2544E10 0x68']:
+        assert line in lines, line
+
+
+def test_thundara_description_compiles():
+    """Thundara: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory."""
+    lines = compile_program(load_description(102)).splitlines()
+    for line in ['director port -1', 'port 0x6DC2D0 0x6DC2B0 0x6DC390', 'module 102 0x2543F18 0xEF8']:
+        assert line in lines, line
+
+
+def test_blizzara_description_compiles():
+    """Blizzara: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and model copies in the magic buffer)."""
+    lines = compile_program(load_description(103)).splitlines()
+    for line in ['director port -1', 'port 0x6DA300 0x6DA2E0 0x6DA3A0', 'module 103 0x2543E90 0x88']:
         assert line in lines, line

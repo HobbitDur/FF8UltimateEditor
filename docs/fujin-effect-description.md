@@ -1716,3 +1716,21 @@ Potion's description is the same with its own sequences and sound.
      - *Port:* the shared code reads its module's memory through BG(), which moves the module's own addresses
        with g_reloc; the director word through the engine's G word.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Trauma's grab (101)** (FFNx 3bee79ff; Trauma's enemy attack; a port director, Ray-Bomb's kind): the
+     root pulls the target in front of Trauma (its chain transformation), then the grab: the target shrunk,
+     held at Trauma and turned, the grab's layout, the screen flash, the sound; the target put back where it
+     was. No damage (the attack's result is the engine's).
+     - *Inputs* (`GrabParams`): the sound, the screen flash's level. Data: the sound, "mag100.tim".
+     - *Fujin:* its tab (Grab); no + menu family.
+   - **Thundara (102)** (FFNx 2aef19dc; the spell; a port director, Ray-Bomb's kind): every 15 ticks the
+     bolt of the next action on its first target - twenty sparks around the target thrown outwards, a
+     full-screen flash, the strike's sprite layers and three prim models (two tilted glows, the column, the
+     flash ball), flash sprites around the target, the 3D sound; the damage at the bolt's frame 26.
+     - *Inputs* (`ThundaraParams`): the sound, the bolt's damage frame. Data: the sound, "mag101.tim".
+     - *Fujin:* its tab (Bolt); no + menu family.
+   - **Blizzara (103)** (FFNx 6ef14a2d; the spell; a port director, Ray-Bomb's kind): every 20 ticks the
+     ice block of the next action on its first target - four ice pillars, the burst, the block growing out
+     of the ground with falling chunks and mist, then breaking from the top into spinning shards, the 3D
+     sound; the damage at the block's tick 60.
+     - *Inputs* (`BlizzaraParams`): the sound, the ice block's damage tick. Data: the sound, "mag102.tim".
+     - *Fujin:* its tab (Ice block); no + menu family.

@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 101,
+ "name": "Trauma's grab",
+ "doc": "Trauma's grab (Trauma's enemy attack): the root - the target pulled in front of Trauma (its chain transformation), the grab: the target shrunk, held at Trauma and turned, its layout, the screen flash, the sound; the target put back where it was. No damage. Its tasks are the port's code (FFNx mag101_trauma_grab.cpp) run on the program's memory (its grab pool in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6DD0D0",
+   "setup": "0x6DD0C0",
+   "root": "0x6DD1A0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 101,
+  "from": "0x2544E10",
+  "size": "0x68"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x13249E0",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x13249DC",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6DD0C0",
+  "file_loader": "0x6DD0D0",
+  "root": "0x6DD1A0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "grab",
+   "title": "Grab",
+   "doc": "The target pulled in front of Trauma, shrunk and held, its layout, the screen flash, the sound; the target put back"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "grab",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "flash",
+   "part": "grab",
+   "label": "Flash",
+   "doc": "The screen flash's level",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2200,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

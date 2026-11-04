@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 103,
+ "name": "Blizzara",
+ "doc": "Blizzara (the spell): the director - every 20 ticks the ice block of the next action on its first target: four ice pillars, the burst, the block growing out of the ground with falling chunks and mist, then breaking from the top into spinning shards, the sound; the damage. Its tasks are the port's code (FFNx mag103_blizzara.cpp) run on the program's memory (its pools and model copies in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6DA2E0",
+   "setup": "0x6DA300",
+   "root": "0x6DA3A0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 103,
+  "from": "0x2543E90",
+  "size": "0x88"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x131E754",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x131E750",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6DA300",
+  "file_loader": "0x6DA2E0",
+  "root": "0x6DA3A0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "block",
+   "title": "Ice block",
+   "doc": "One ice block an action on its first target: the ice pillars, the burst, the block growing out of the ground with falling chunks and mist, then breaking into shards, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "block",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "block.damage",
+   "part": "block",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the ice block",
+   "type": "i16",
+   "min": 0,
+   "max": 70,
+   "default": 60,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 102,
+ "name": "Thundara",
+ "doc": "Thundara (the spell): the root - every 15 ticks the bolt of the next action on its first target: twenty sparks around the target thrown outwards, a full-screen flash, the strike's sprite layers and three prim models, flash sprites around the target, the sound; the damage. Its tasks are the port's code (FFNx mag102_thundara.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6DC2B0",
+   "setup": "0x6DC2D0",
+   "root": "0x6DC390"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 102,
+  "from": "0x2543F18",
+  "size": "0xEF8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1321BE0",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x1321BD8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6DC2D0",
+  "file_loader": "0x6DC2B0",
+  "root": "0x6DC390"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "bolt",
+   "title": "Bolt",
+   "doc": "One bolt an action on its first target: the sparks thrown outwards, the screen flash, the strike's sprite layers and prim models, the flash sprites, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "bolt",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "bolt.damage",
+   "part": "bolt",
+   "label": "Damage frame",
+   "doc": "The damage at this frame of the bolt",
+   "type": "i16",
+   "min": 0,
+   "max": 30,
+   "default": 26,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
