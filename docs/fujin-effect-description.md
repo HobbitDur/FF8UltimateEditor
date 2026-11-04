@@ -1446,3 +1446,11 @@ Potion's description is the same with its own sequences and sound.
      - *Recorder:* it shatters the battle stage's models: recorded with `stage=142` (Ultimecia's stage,
        loaded by the exe's own stage code), its cycle test too.
      - *Fujin:* its tab (Timeline); no + menu family.
+   - **Shockwave Pulsar (70)** (FFNx 72c1a7e3; Ultimecia's final form's enemy attack; a port director,
+     Ray-Bomb's kind): the master's 0x106-tick timeline - the screen flash, the targets rising and lifted
+     (their models redrawn spinning and scaled), the layouts at the targets and their centre, the shockwave
+     layout, sparks and model shards, the white tile, the battle camera moved; the damage, then the targets'
+     positions and flags restored.
+     - *Inputs* (`PulsarParams`): the voice and the three sounds, the damage, voice release and end ticks.
+       Data: the four sounds, "mag069-259.tim".
+     - *Fujin:* its tab (Master); no + menu family.

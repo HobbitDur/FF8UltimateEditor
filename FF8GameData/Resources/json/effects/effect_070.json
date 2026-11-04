@@ -1,0 +1,157 @@
+{
+ "format": 1,
+ "effect": 70,
+ "name": "Shockwave Pulsar",
+ "doc": "Shockwave Pulsar (Ultimecia's final form's enemy attack): the master's 0x106-tick timeline - the screen flash, the targets rising and lifted (their models redrawn spinning and scaled), the layouts at the targets and their centre, the shockwave layout, sparks and model shards, the white tile, the battle camera moved all along; the damage, then the targets' positions and flags restored. Its tasks are the port's code (FFNx mag070_shockwave_pulsar.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6DD8E0",
+   "setup": "0x6DD8D0",
+   "root": "0x6DD970"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 70,
+  "from": "0x2544E78",
+  "size": "0xE4"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x112D1A4",
+   "size": 16
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0x1324DAC",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x1324ECC",
+   "size": 4
+  },
+  "sounds.wave": {
+   "kind": "sound",
+   "address": "0x1324ED0",
+   "size": 4
+  },
+  "sounds.burst": {
+   "kind": "sound",
+   "address": "0x1324ED4",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6DD8D0",
+  "file_loader": "0x6DD8E0",
+  "root": "0x6DD970"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "Its 0x106-tick timeline: the screen flash, the targets rising and lifted, spinning and scaled, the layouts at the targets and their centre, the shockwave, sparks and shards, the white tile, the battle camera moved; the damage, then positions and flags restored"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The voice claimed at the start; the sounds at ticks 0, 0x50, 0xAA"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.voice",
+   "part": "master",
+   "label": "Voice",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "master",
+   "label": "Start",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.wave",
+   "part": "master",
+   "label": "Shockwave",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.wave",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.burst",
+   "part": "master",
+   "label": "Burst",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "master.damage",
+   "part": "master",
+   "label": "Damage tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 261,
+   "default": 252,
+   "unit": "plain"
+  },
+  {
+   "key": "master.voice_release",
+   "part": "master",
+   "label": "Voice release",
+   "doc": "The voice released at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 261,
+   "default": 258,
+   "unit": "plain"
+  },
+  {
+   "key": "master.end",
+   "part": "master",
+   "label": "End after",
+   "doc": "Positions and flags restored, the effect done after this tick (the flash fades out from 0xFA)",
+   "type": "i16",
+   "min": 215,
+   "max": 1024,
+   "default": 262,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
