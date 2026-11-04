@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 119,
+ "name": "Stop",
+ "doc": "Stop (the spell): the root - every 20 ticks the target task of the next action on its first target: the clock's keyframed prim-model play in front of the target, a screen fade, the clock pieces breaking into 514 flying, spinning, fading shards, the sound; the status. Its tasks are the port's code (FFNx mag119_stop.cpp) run on the program's memory (its pool and shard buffer in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6BEFE0",
+   "setup": "0x6BEFD0",
+   "root": "0x6BF070"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 119,
+  "from": "0x2521590",
+  "size": "0x48"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1287C38",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x1287C34",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6BEFD0",
+  "file_loader": "0x6BEFE0",
+  "root": "0x6BF070"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "target",
+   "title": "Target",
+   "doc": "One target task an action on its first target: the clock's keyframed prim-model play in front of the target, the screen fade, the clock pieces breaking into shards, the sound; the status"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "target",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "target.status",
+   "part": "target",
+   "label": "Status tick",
+   "doc": "The status (the action's result) at this tick of the target task",
+   "type": "i16",
+   "min": 0,
+   "max": 69,
+   "default": 53,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 126,
+ "name": "Electric Discharge",
+ "doc": "Electric Discharge (Cockatrice's enemy attack): the root and the main task - the screen flash, ribbons crawling over the caster's model, lightning arcs from the caster to the party members, their sparks and tints, the glow layouts, the sound; the damage. Its tasks are the port's code (FFNx mag126_electric_discharge.cpp) run on the program's memory (its pools and point pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6B9A20",
+   "setup": "0x6B9A10",
+   "root": "0x6B9AF0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 126,
+  "from": "0x25212C0",
+  "size": "0xA8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x10E298C",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x1242278",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6B9A10",
+  "file_loader": "0x6B9A20",
+  "root": "0x6B9AF0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The screen flash, ribbons crawling over the caster, lightning arcs to the party members, their sparks and tints, the glow layouts, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "main.damage",
+   "part": "main",
+   "label": "Damage tick",
+   "doc": "The damage (and the main task's end) from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 52,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

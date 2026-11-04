@@ -1794,3 +1794,28 @@ Potion's description is the same with its own sequences and sound.
        by the port): in place in the recorder one quad differs in each of three frames (the cycle test
        leaves them out); the description and the copies match the exe.
      - *Fujin:* its tab (Creature); no + menu family.
+   - **Break (117)** (FFNx 15e13b52; the spell; a port director, Ray-Bomb's kind): every 20 ticks the target
+     task of the next action on its first target - the stone shell's prim-model play, the target hidden and
+     drawn turning to stone (its polygons re-textured through a dither table), the debris falling and the
+     sparks, the 3D sound; the status at tick 78.
+     - *Inputs* (`BreakParams`): the sound, the status tick. Data: the sound, "mag116.tim".
+     - *Fujin:* its tab (Target); no + menu family.
+   - **Stop (119)** (FFNx ac41e82d; the spell; a port director, Ray-Bomb's kind): every 20 ticks the
+     target task of the next action on its first target - the clock's keyframed prim-model play in front of
+     the target, a screen fade, the clock pieces breaking into 514 flying, spinning, fading shards, the 3D
+     sound; the status at tick 53.
+     - *Inputs* (`StopParams`): the sound, the status tick. Data: the sound, "mag118.tim".
+     - *Fujin:* its tab (Target); no + menu family.
+   - **Electric Discharge (126)** (FFNx 7710dbed; Cockatrice's enemy attack; a port director, Ray-Bomb's
+     kind): the main task - the screen flash, ribbons crawling over the caster's model, lightning arcs from the
+     caster to the party members, their sparks and tints, the glow layouts, the 3D sound; the damage and the
+     end at tick 52.
+     - *Inputs* (`DischargeParams`): the sound, the damage tick. Data: the sound, "mag125.tim".
+     - *Tests:* the cycle test casts it from Cockatrice (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Main); no + menu family.
+   - **Gastric Juice (128)** (FFNx 18aff0d9; Gayla's enemy attack; a port director, Ray-Bomb's kind): the
+     target task - the juice sprayed from the caster's mouth in streams, its drips and splashes, the target
+     melting (its model redrawn), the sound; the damage at tick 53.
+     - *Inputs* (`JuiceParams`): the sound, the damage tick. Data: the sound, "mag127.tim".
+     - *Tests:* the cycle test casts it from Gayla (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Target); no + menu family.

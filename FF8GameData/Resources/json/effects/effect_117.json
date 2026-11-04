@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 117,
+ "name": "Break",
+ "doc": "Break (the spell): the root - every 20 ticks the target task of the next action on its first target: the stone shell's prim-model play, the target hidden and drawn turning to stone (its polygons re-textured by a dither table), the debris falling and sparks, the sound; the status. Its tasks are the port's code (FFNx mag117_break.cpp) run on the program's memory (its pools and dither table in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6C16B0",
+   "setup": "0x6C16A0",
+   "root": "0x6C1740"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 117,
+  "from": "0x2521650",
+  "size": "0x88"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1298C5C",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x1298C58",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6C16A0",
+  "file_loader": "0x6C16B0",
+  "root": "0x6C1740"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "target",
+   "title": "Target",
+   "doc": "One target task an action on its first target: the stone shell's prim-model play, the target drawn turning to stone, the debris and sparks, the sound; the status"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "target",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "target.status",
+   "part": "target",
+   "label": "Status tick",
+   "doc": "The status (the action's result) at this tick of the target task",
+   "type": "i16",
+   "min": 0,
+   "max": 83,
+   "default": 78,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 128,
+ "name": "Gastric Juice",
+ "doc": "Gastric Juice (Gayla's enemy attack): the root and the target task - the juice sprayed from the caster's mouth in streams, its drips and splashes, the target melting (its model redrawn), the sound; the damage. Its tasks are the port's code (FFNx mag128_gastric_juice.cpp) run on the program's memory (its pools, stream points and melt amounts in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6B7D10",
+   "setup": "0x6B7D00",
+   "root": "0x6B7DB0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 128,
+  "from": "0x25211E0",
+  "size": "0x90"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1005AD8",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x12337B8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6B7D00",
+  "file_loader": "0x6B7D10",
+  "root": "0x6B7DB0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "target",
+   "title": "Target",
+   "doc": "The juice sprayed from the caster's mouth in streams, its drips and splashes, the target melting; the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "target",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "target.damage",
+   "part": "target",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the target task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 53,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
