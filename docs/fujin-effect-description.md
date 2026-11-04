@@ -2443,3 +2443,30 @@ Potion's description is the same with its own sequences and sound.
      sounds; the action results.
      - *Inputs* (`RayBomb307Params`): the muzzle and blast sounds. Data: the sounds, "mag009.tim".
      - *Fujin:* its tab (Director); no + menu family.
+   - **Hero (309)** (FFNx 18d8e283; the battle items Hero-trial / Hero; a port root, Ray-Bomb's kind): the orbit
+     layouts spiralling in, the main layout and the shards at the target, the sound; the action result.
+     - *Inputs* (`HeroParams`): the sound. Data: the sound, "mag308.tim".
+     - *Fujin:* its tab (Play); no + menu family.
+   - **Holy War (310)** (FFNx 67967bb8; the battle items Holy War-trial / Holy War, Hero's twin for every target; a
+     port root, Ray-Bomb's kind): one target every 5 ticks - the orbit layouts spiralling in, the main layout
+     and the shards at it, the sound; its action result.
+     - *Inputs* (`HolyWarParams`): the sound. Data: the sound, "mag308.tim".
+     - *Fujin:* its tab (Play); no + menu family.
+   - **Gravija (311)** (FFNx cf11742f; Diablos' enemy attack; a port root, Ray-Bomb's kind): the grey screen flash, the
+     layout at the targets' average point, the screen warp around every target, the particles, the sound; the
+     action results.
+     - *Inputs* (`GravijaParams`): the sound. Data: the sound, "mag213-310.tim".
+     - *Tests:* cast by Diablos (c0m066) on the party (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Main); no + menu family.
+   - **Fake President death (315)** (FFNx 883d74d1; its AI's death section; a port root, Ray-Bomb's kind): the Fake
+     President melting into a puddle (drops, bubbles, rings, sparks, splashes) and Gerogero (the next entity
+     slot) rising out of it, the tints, the voice and the sounds; the action result.
+     - *Inputs* (`FakePresidentDeathParams`): the voice, the start and hit sounds. Data: the sounds, "mag314.tim".
+     - *Tests:* cast by the Fake President (c0m075) with Gerogero (c0m034) in the next slot (`CYCLE_CASTS`,
+       `CYCLE_SLOTS`: its rise reads that entity).
+     - *Fujin:* its tab (Master); no + menu family.
+   - **Acid (Quistis) (317)** (FFNx 316f2d95; Quistis' Blue Magic, Gastric Juice adapted; a port root, Ray-Bomb's
+     kind): her cast animation, the acid streams and spray from her to the target, the drips and splashes, the
+     target melting, the sound; the action result.
+     - *Inputs* (`AcidParams`): the sound. Data: the sound, "mag127.tim".
+     - *Fujin:* its tab (Target); no + menu family.
