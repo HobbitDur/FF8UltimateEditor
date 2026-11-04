@@ -33,6 +33,7 @@ namespace ff8fx
 		return ((int (__cdecl *)(prim::Layout *, prim::Callback, int, int))0x701970)(l, cb, arg, paused);
 	}
 	void register_port(uint32_t, void *, const char *, int) {}
+	void *lookup(uint32_t) { return nullptr; }   // (the programs' nodes hold the ports' thunks: call the task's own function)
 #ifdef FF8_FX_LAB
 	// (the ports built in for the programs' port pieces: no lab here to note their parts)
 	void fx_part(int) {}

@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 129,
+ "name": "Breath",
+ "doc": "Breath (Grendel's enemy attack): the master and the main task - the breath from the caster: its branching lightning mesh, arcs and sprites, the screen flash, one target task a target, the sound; the damage. Its tasks are the port's code (FFNx mag129_breath.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6B4C10",
+   "setup": "0x6B4C00",
+   "root": "0x6B4CB0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 129,
+  "from": "0x2521110",
+  "size": "0xD0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12320A8",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x12292F4",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6B4C00",
+  "file_loader": "0x6B4C10",
+  "root": "0x6B4CB0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The breath from the caster: its branching lightning mesh, arcs and sprites, the screen flash, the target tasks, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "target.damage",
+   "part": "main",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of a target task",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 16,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

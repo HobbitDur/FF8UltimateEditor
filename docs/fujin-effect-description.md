@@ -1819,3 +1819,30 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`JuiceParams`): the sound, the damage tick. Data: the sound, "mag127.tim".
      - *Tests:* the cycle test casts it from Gayla (slot 3) on Squall (`CYCLE_CASTS`).
      - *Fujin:* its tab (Target); no + menu family.
+   - **Breath (129)** (FFNx 6a64e276; Grendel's enemy attack; a port director, Ray-Bomb's kind): the main
+     task - the breath from the caster: its branching lightning mesh, arcs and sprites, the screen flash, one
+     target task a target, the sound; the damage at a target task's tick 16.
+     - *Inputs* (`BreathParams`): the sound, the damage tick. Data: the sound, "mag128.tim".
+     - *Tests:* the cycle test casts it from Grendel (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Main); no + menu family.
+   - **Eerie Sound Wave (130)** (FFNx 3a251bd5; Malboro's enemy attack; a port director, Ray-Bomb's kind):
+     the emitter - the sound waves from the caster's mouth towards the targets, their impact layouts on the
+     targets, the sound; the damage at an impact layout's frame 8.
+     - *Inputs* (`WaveParams`): the sound, the impacts' damage frame. Data: the sound, "mag129.tim".
+     - *Tests:* the cycle test casts it from Malboro (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Emitter); no + menu family.
+   - **Bad Breath (Malboro, 131)** (FFNx 3984bf13; Malboro's enemy attack; a port director, Ray-Bomb's kind):
+     the emitter - the breath's mesh from the caster's mouth, its sprites, one target task a target tinting
+     it, the sound; the damage at a target task's tick 40.
+     - *Inputs* (`BreathParams`): the sound, the damage tick. Data: the sound, "mag130-299.tim".
+     - *Port:* the fade colour is an accessor (a static would keep the game's address in a copy).
+     - *Tests:* the cycle test casts it from Malboro (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Emitter); no + menu family.
+   - **Dissolving Acid (132)** (FFNx c4aaea2c; Malboro's enemy attack; a port director, Ray-Bomb's kind): the
+     target task - the acid streams from the caster's model to the target, the drops, splashes and puddle
+     layouts, the sound; the damage and the end at tick 45.
+     - *Inputs* (`AcidParams`): the sound, the damage tick. Data: the sound, "mag131.tim".
+     - *Lab:* the recorder and the host stub the port registry's `lookup` (the drops run their nodes'
+       functions: the lab patches the originals, the programs' nodes hold the ports' thunks).
+     - *Tests:* the cycle test casts it from Malboro (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Target); no + menu family.

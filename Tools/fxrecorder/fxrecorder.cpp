@@ -1021,6 +1021,9 @@ static std::vector<LabPort> g_lab_ports;
 namespace ff8fx
 {
 	void register_port(uint32_t orig, void *port, const char *, int effect_id) { g_lab_ports.push_back({ orig, port, effect_id }); }
+	// (a port calling a task through its registry, Dissolving Acid's drops: the lab patches the originals to their
+	// ports, the programs' nodes hold the ports' thunks - the task's own function is the one to call)
+	void *lookup(uint32_t) { return nullptr; }
 	void register_mag001_cure();
 	// the shared prim-model player: FFNx's twin (fx_primplayer.cpp) needs FFNx itself; the exe's own
 	// 0x701970 plays the same

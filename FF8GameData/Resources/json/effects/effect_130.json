@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 130,
+ "name": "Eerie Sound Wave",
+ "doc": "Eerie Sound Wave (Malboro's enemy attack): the master and the emitter - the sound waves from the caster's mouth towards the targets, their impact layouts on the targets, the sound; the damage. Its tasks are the port's code (FFNx mag130_eerie_sound_wave.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6B4250",
+   "setup": "0x6B4240",
+   "root": "0x6B42F0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 130,
+  "from": "0x25210A8",
+  "size": "0x68"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12238B0",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x122380C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6B4240",
+  "file_loader": "0x6B4250",
+  "root": "0x6B42F0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "The sound waves from the caster's mouth towards the targets, their impact layouts on the targets, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "impact.damage",
+   "part": "emitter",
+   "label": "Damage frame",
+   "doc": "The damage at this frame of an impact's layout play",
+   "type": "i16",
+   "min": 1,
+   "max": 60,
+   "default": 8,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
