@@ -243,6 +243,9 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    94: ("mag093.tim", 4, "sounds.revive 22311280\ndirector.damage 90\n"),
+    93: ("mag092.tim", 4, "sounds.heal 22311280\ndirector.damage 90\n"),
+    92: ("mag091.tim", 4, "sounds.walk 22311280\ndirector.damage 120\n"),
     91: ("mag090.tim", 1, "sound 22311280\n"),
     90: ("mag089_0.tim", 2, "sounds.walk 22311276\n"),
     89: (None, 3, "sounds.sky 21569528\n"),
@@ -376,7 +379,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry and Angelo Rush from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover and Angelo Reverse from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1478,4 +1481,25 @@ def test_angelo_rush_description_compiles():
     """Angelo Rush: Doom's kind - the per-action director, the module with its actor pools, the emitter's and the director's state tables; the dash's sound."""
     lines = compile_program(load_description(91)).splitlines()
     for line in ['module 91 0x2598F28 0x5F80', 'release_file', 'arena_size 32768', 'code 0x7598C0']:
+        assert line in lines, line
+
+
+def test_angelo_search_description_compiles():
+    """Angelo Search: Doom's kind without actor pools - the per-action director, the module, the emitter's and the director's state tables; the three sounds and the found item's frame."""
+    lines = compile_program(load_description(92)).splitlines()
+    for line in ['module 92 0x2594D98 0x4188', 'release_file', 'arena_size 32768', 'code 0x7555B0']:
+        assert line in lines, line
+
+
+def test_angelo_recover_description_compiles():
+    """Angelo Recover: Doom's kind - the per-action director, the module with its actor pools, the emitter's and the director's state tables; the two sounds and the director's frames."""
+    lines = compile_program(load_description(93)).splitlines()
+    for line in ['module 93 0x2592548 0x2850', 'release_file', 'arena_size 32768', 'code 0x74E8B0']:
+        assert line in lines, line
+
+
+def test_angelo_reverse_description_compiles():
+    """Angelo Reverse: Doom's kind - the per-action director, the module with its actor pools, the emitter's and the director's state tables; the two sounds and the director's frames."""
+    lines = compile_program(load_description(94)).splitlines()
+    for line in ['module 94 0x258FCF8 0x2850', 'release_file', 'arena_size 32768', 'code 0x747B10']:
         assert line in lines, line

@@ -1644,3 +1644,24 @@ Potion's description is the same with its own sequences and sound.
        with the Angelo effects) and the engine camera animation.
      - *Port:* the module's own sequence reader (0x761330) called through `callo`, as the game calls it.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Angelo Search (92)** (FFNx da0b9a17; Rinoa's Angelo command; the act family without actor pools,
+     Death's description): one emitter per action - the director's phase: Angelo walking in and sniffing
+     (rings and dust puffs), walking to Rinoa (her chain transformations 1 and 2), the found item's play; the
+     found item at the done flag.
+     - *Inputs* (`SearchParams`): the three sounds (arrive, walk, found), the done flag's frame. Data: the
+       sounds, "mag091.tim" and the engine camera animation.
+     - *Port:* its own master (a hand port, 7 queues); the module's own sequence reader (0x7583C0) called
+       through `callo`, as the game calls it.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Angelo Recover (93)** (FFNx db358603; Rinoa's Angelo command; the act family, Death's description):
+     one emitter per action - the director's phase: Angelo jumping in by the target, the actor system, the
+     stage light, the heal particles falling onto the target; the heal at the done flag.
+     - *Inputs* (`RecoverParams`): the two sounds (jump, heal), the heal sound's and the done flag's frames.
+       Data: the sounds, "mag092.tim" and the engine camera animation.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Angelo Reverse (94)** (FFNx cd6d4f3d; Rinoa's Angelo command; Angelo Recover's twin, the act family,
+     Death's description): one emitter per action - the director's phase: Angelo jumping in by the target,
+     the actor system, the stage light, the particles falling onto the target; the revival at the done flag.
+     - *Inputs* (`ReverseParams`): the two sounds (jump, revive), the revival sound's and the done flag's
+       frames. Data: the sounds, "mag093.tim" and the engine camera animation.
+     - *Fujin:* its tab (Director); no + menu family.

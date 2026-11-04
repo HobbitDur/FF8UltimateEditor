@@ -1,0 +1,342 @@
+{
+ "format": 1,
+ "effect": 92,
+ "name": "Angelo Search",
+ "doc": "Angelo Search (Rinoa's Angelo command; the act family): one emitter per action - the director's phase: Angelo walking in and sniffing (rings and dust puffs), walking to Rinoa (her chain transformations), the found item's play; the found item. Its parts are the port's code (FFNx mag092_angelo_search.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x755110",
+   "setup": "0x755130",
+   "root": "0x7552B0"
+  },
+  "memory": {
+   "texture_file": "0x2594D98",
+   "packet_cursor": "0x2594D9C",
+   "packet_limit": "0x2594E9C",
+   "arena_a": "0x259831C",
+   "limit_a": "0x2597F14",
+   "arena_b": "0x2598318",
+   "limit_b": "0x2597F10",
+   "arena_top": "0x2598F1C",
+   "init_flag_a": "0x2598F18",
+   "init_flag_b": "0x2596610",
+   "cam_ptr_a": "0x2598EF0",
+   "cam_ptr_b": "0x2594EA0",
+   "root_queue": "0x2594F70",
+   "root_pool": "0x2594EA8"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 92,
+  "from": "0x2594D98",
+  "size": "0x4188",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x15430D4",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x153D324",
+   "size": 632
+  },
+  "sounds.arrive": {
+   "kind": "sound",
+   "address": "0x153D1DC",
+   "size": 4
+  },
+  "sounds.walk": {
+   "kind": "sound",
+   "address": "0x153D1E0",
+   "size": 4
+  },
+  "sounds.found": {
+   "kind": "sound",
+   "address": "0x153D1E4",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": true
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25981A8",
+   "storage": "0x25981B8",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x2594E78",
+   "storage": "0x2594DA0",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "angelo",
+   "queue": "0x2598ED0",
+   "storage": "0x2598D78",
+   "size": 340,
+   "count": 1,
+   "keep": true,
+   "doc": "Angelo (the port's)"
+  },
+  {
+   "key": "rings",
+   "queue": "0x2594F80",
+   "storage": "0x2594F90",
+   "size": 144,
+   "count": 40,
+   "keep": true,
+   "doc": "the sniff task and its rings (the port's)"
+  },
+  {
+   "key": "dust",
+   "queue": "0x2596618",
+   "storage": "0x2596628",
+   "size": 140,
+   "count": 40,
+   "keep": true,
+   "doc": "the dust puffs (the port's)"
+  },
+  {
+   "key": "plays",
+   "queue": "0x2597F00",
+   "storage": "0x2597C08",
+   "size": 380,
+   "count": 2,
+   "keep": true,
+   "doc": "the found item's play (the port's)"
+  },
+  {
+   "key": "spare",
+   "queue": "0x2598198",
+   "storage": "0x2597F18",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Angelo walking in, sniffing (rings and dust puffs), walking to Rinoa (her chain transformations), the found item's play; the found item"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "Angelo walking in, walking to Rinoa, the found item's play"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.arrive",
+   "part": "director",
+   "label": "Arrive",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.arrive",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.walk",
+   "part": "director",
+   "label": "Walk",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.walk",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.found",
+   "part": "director",
+   "label": "Found",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.found",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Item frame",
+   "doc": "The done flag (the found item) from this frame of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 155,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x755480",
+   "code": "0x755480",
+   "doc": "One per action (the engine's emitter, its states the port's): the director block and the director; the found item at the done flag; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x755500"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7591F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x759230"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x759250"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x759270"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x7555B0",
+   "code": "0x7555B0",
+   "doc": "The director: every tick the phase bookkeeping (phase 1 spawns Angelo), then its states: the TIM upload, the cue, the gate, the done flag at the found item's frame.",
+   "every_tick": [
+    [
+     "call",
+     "0x755620"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x755670"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x755690"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7556E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x755720"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x755750"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

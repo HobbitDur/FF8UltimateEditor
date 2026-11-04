@@ -1,0 +1,382 @@
+{
+ "format": 1,
+ "effect": 94,
+ "name": "Angelo Reverse",
+ "doc": "Angelo Reverse (Rinoa's Angelo command; the act family): one emitter per action - the director's phase: Angelo jumping in by the target, the actor system, the stage light, the particles falling onto the target; the revival. Its parts are the port's code (FFNx mag094_angelo_reverse.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7475D0",
+   "setup": "0x7475F0",
+   "root": "0x747780"
+  },
+  "memory": {
+   "texture_file": "0x258FCF8",
+   "packet_cursor": "0x258FCFC",
+   "packet_limit": "0x258FE04",
+   "arena_a": "0x259195C",
+   "limit_a": "0x259129C",
+   "arena_b": "0x2591958",
+   "limit_b": "0x2591298",
+   "arena_top": "0x259253C",
+   "init_flag_a": "0x2592538",
+   "init_flag_b": "0x2590CBC",
+   "cam_ptr_a": "0x2592530",
+   "cam_ptr_b": "0x258FE08",
+   "root_queue": "0x258FED8",
+   "root_pool": "0x258FE10",
+   "particle_pool": "0x2592514",
+   "actor_pool": "0x2592534",
+   "particle_next": "0x2590CB8",
+   "actor_next": "0x2592520",
+   "cursor_c": "0x2592360",
+   "cursor_d": "0x258FD00",
+   "count_a": "0x2592528",
+   "count_b": "0x2592510"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 94,
+  "from": "0x258FCF8",
+  "size": "0x2850",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1538710",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1533E88",
+   "size": 500
+  },
+  "sounds.jump": {
+   "kind": "sound",
+   "address": "0x1533E80",
+   "size": 4
+  },
+  "sounds.revive": {
+   "kind": "sound",
+   "address": "0x1533E84",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0xCA8",
+    "actor_pool": "0xEC40"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25917E8",
+   "storage": "0x25917F8",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x258FDE0",
+   "storage": "0x258FD08",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "angelo",
+   "queue": "0x2592500",
+   "storage": "0x25923C0",
+   "size": 320,
+   "count": 1,
+   "keep": true,
+   "doc": "Angelo (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x2591548",
+   "storage": "0x25912A0",
+   "size": 676,
+   "count": 1,
+   "keep": true,
+   "doc": "the actor system (the port's)"
+  },
+  {
+   "key": "light",
+   "queue": "0x258FEE8",
+   "storage": "0x258FEF8",
+   "size": 176,
+   "count": 20,
+   "keep": true,
+   "doc": "the stage light (the port's)"
+  },
+  {
+   "key": "unused",
+   "queue": "0x2590CC0",
+   "storage": "0x2590CD0",
+   "size": 88,
+   "count": 8,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  },
+  {
+   "key": "plays",
+   "queue": "0x2591288",
+   "storage": "0x2590F90",
+   "size": 380,
+   "count": 2,
+   "keep": true,
+   "doc": "the particles' play (the port's)"
+  },
+  {
+   "key": "spare",
+   "queue": "0x25917D8",
+   "storage": "0x2591558",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Angelo jumping in by the target, the actor system, the stage light, the particles falling onto the target; the revival"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "Angelo jumping in, the revival"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.jump",
+   "part": "director",
+   "label": "Jump",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.jump",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.revive",
+   "part": "director",
+   "label": "Revive",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.revive",
+   "unit": "plain"
+  },
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Revive sound frame",
+   "doc": "The revival's sound from this frame of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 44,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Revive frame",
+   "doc": "The done flag (the revival) from this frame of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 75,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7479E0",
+   "code": "0x7479E0",
+   "doc": "One per action (the engine's emitter, its states the port's): the director block and the director; the revival at the done flag; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x747A60"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x74E210"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x74E250"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x74E270"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x74E290"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x747B10",
+   "code": "0x747B10",
+   "doc": "The director: every tick the phase bookkeeping (phase 1 spawns Angelo, the actor system and the stage light), then its states: the TIM upload, phase 1, the cue, the revival's sound, the done flag.",
+   "every_tick": [
+    [
+     "call",
+     "0x747B90"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x747BE0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x747C00"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x747C50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x747C90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x747CC0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x747CF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}
