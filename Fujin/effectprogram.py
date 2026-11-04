@@ -434,6 +434,8 @@ def compile_program(description, values=None):
                             a[1:] not in {**(copy.get("memory") or {}), **((module or {}).get("memory") or {})}:
                         raise DescriptionError(f"director: act call argument {a} names no memory word")
                 lines.append(" ".join([f"act_call 0x{_number(call['call']):X}"] + args))
+            for phase, function in (act.get("states") or {}).items():   # a master phase the module's own state stands in for
+                lines.append(f"act_state {int(phase)} 0x{_number(function):X}")
             if act.get("tail"):   # after the last action the module's own master states from its state 6 (its file load...)
                 lines.append(" ".join(["act_tail"] + [f"0x{_number(a):X}" for a in act["tail"]]))
             lines += [f"act_zero {name}" for name in act.get("zero", [])]

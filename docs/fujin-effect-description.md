@@ -1546,3 +1546,19 @@ Potion's description is the same with its own sequences and sound.
        (UNINIT 0x7BC782) holds module addresses (the particle queue, task nodes), a copy's differ;
        Heartbreak's case. The free slot 225 records the exe's.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Ultimecia junctions to Griever (80)** (FFNx aed7f172; her enemy attack; the act family, MiniMog's
+     kind, Death's description): the caster put above its target, then one emitter per action - the
+     director's four cuts: the junction (the target's model copied, caster and target hidden, the actor
+     sequences, the junction prim model), the stage wobble, the prim model rising on the caster and its
+     orbiting particles, the wobble out, the monsters hidden meanwhile; the damage at its cue.
+     - *Inputs* (`JunctionParams`): the two sounds, the caster's lift above its target, the damage cue
+       frame. Data: the sounds, the camera track, "mag079.tim".
+     - *Added:* the act director's `"states"` (the program's `act_state <phase> <function>`): a master
+       phase the module's own state stands in for, called with the root (it moves the root's state on
+       itself) - here state 1, which puts the caster 0x6E8 above its target.
+     - *Own copy:* not equal to the exe from tick 54 on - the module's MiniMog-family code reads
+       uninitialised stack words (a primitive's texture word: the exe's holds a garbage F877 where its
+       neighbours hold 0x3800), which pick up other values in a relocated copy; that copy then draws
+       fewer sprites and does not end within the recorder's 3000 ticks. The free slot 225 records the
+       exe's.
+     - *Fujin:* its tab (Director); no + menu family.

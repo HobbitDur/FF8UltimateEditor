@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    80: ("mag079.tim", 4, "master.lift 1000\nmaster.damage 120\n"),
     79: ("mag078.tim", 5, "director.damage 100\ndirector.actors 30\n"),
     78: ("mag072-077.tim", 13, "emitter.result 50\nscale.times 5\ndarken.step 128\n"),
     76: ("mag075.tim", 9, "master.sink 40\nhalo.step 4096\nring.size 2000\n"),
@@ -365,7 +366,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard and Ultimecia's final form dies from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies and Ultimecia junctions to Griever from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1390,4 +1391,11 @@ def test_ultimecia_final_death_description_compiles():
     """Ultimecia's final form dies: Doom's kind - the per-action director, the module, the emitter's and the director's state tables, the master's own tail states after the last action."""
     lines = compile_program(load_description(79)).splitlines()
     for line in ['module 79 0x25DF338 0xC1F8', 'module_pointer 2 0x1580B20', 'arena_size 32768', 'code 0x7B55B0', 'act_tail 0x7BE1A0 0x7BE1F0 0x7BE220 0x7BE240 0x7BE270 0x7BE280 0x7BE2A0']:
+        assert line in lines, line
+
+
+def test_ultimecia_junction_description_compiles():
+    """Ultimecia junctions to Griever: Doom's kind - the per-action director, the module, the emitter's and the director's state tables, the master's own state 1 (the caster put above its target)."""
+    lines = compile_program(load_description(80)).splitlines()
+    for line in ['module 80 0x25D4938 0xAA00', 'module_pointer 2 0x157B2E0', 'arena_size 32768', 'code 0x7ABAF0', 'act_state 1 0x7AB890']:
         assert line in lines, line

@@ -1,0 +1,467 @@
+{
+ "format": 1,
+ "effect": 80,
+ "name": "Ultimecia junctions to Griever",
+ "doc": "Ultimecia junctions to Griever (her enemy attack; the act family, MiniMog's kind): the caster put above its target (the master's own state 1), then one emitter per action - the director's four cuts: the junction (the target's model copied, the caster and target hidden, the actor sequences, the junction prim model), the stage wobble, the prim model rising on the caster and its orbiting particles, the wobble out, the monsters hidden meanwhile; the damage at its cue. Its parts are the port's code (FFNx mag080_ultimecia_junction.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7AB540",
+   "setup": "0x7AB560",
+   "root": "0x7AB6F0"
+  },
+  "memory": {
+   "texture_file": "0x25D4938",
+   "packet_cursor": "0x25D493C",
+   "packet_limit": "0x25DAEFC",
+   "arena_a": "0x25DE424",
+   "limit_a": "0x25DD81C",
+   "arena_b": "0x25DE420",
+   "limit_b": "0x25DD818",
+   "arena_top": "0x25DF304",
+   "init_flag_a": "0x25DF300",
+   "init_flag_b": "0x25DCF34",
+   "cam_ptr_a": "0x25DF2F8",
+   "cam_ptr_b": "0x25DAF00",
+   "root_queue": "0x25DAFD0",
+   "root_pool": "0x25DAF08",
+   "particle_pool": "0x25DF00C",
+   "actor_pool": "0x25DF2FC",
+   "particle_next": "0x25DCF30",
+   "actor_next": "0x25DF018",
+   "cursor_c": "0x25DEE58",
+   "cursor_d": "0x25D4940",
+   "count_a": "0x25DF2F0",
+   "count_b": "0x25DF008"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 80,
+  "from": "0x25D4938",
+  "size": "0xAA00",
+  "pointers": [
+   [
+    2,
+    "0x157B2E0"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1580B10",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x157B62C",
+   "size": 664
+  },
+  "sounds.a": {
+   "kind": "sound",
+   "address": "0x157B2E4",
+   "size": 4
+  },
+  "sounds.b": {
+   "kind": "sound",
+   "address": "0x157B2E8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x10680"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ],
+   "states": {
+    "1": "0x7AB890"
+   }
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25DE2B0",
+   "storage": "0x25DE2C0",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25D4AE8",
+   "storage": "0x25D4A10",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "junction",
+   "queue": "0x25DEFF8",
+   "storage": "0x25DEEB8",
+   "size": 320,
+   "count": 1,
+   "keep": true,
+   "doc": "the junction task (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x25DE010",
+   "storage": "0x25DD820",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x25DD808",
+   "storage": "0x25DD208",
+   "size": 384,
+   "count": 4,
+   "keep": true,
+   "doc": "the prim models (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x25DAFE0",
+   "storage": "0x25DAFF0",
+   "size": 160,
+   "count": 50,
+   "keep": true,
+   "doc": "the particles (the port's)"
+  },
+  {
+   "key": "emitters2",
+   "queue": "0x25DCF38",
+   "storage": "0x25DCF48",
+   "size": 88,
+   "count": 8,
+   "keep": true,
+   "doc": "the particle emitter (the port's)"
+  },
+  {
+   "key": "wobble",
+   "queue": "0x25DE2A0",
+   "storage": "0x25DE020",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the stage wobble in and out (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The caster put above its target, then the director's four cuts: the junction (the target's model copy, the actor sequences, the prim models), the stage wobble, the rising prim model and its particles; the damage cue"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The junction task's two sounds"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.a",
+   "part": "director",
+   "label": "Sound A",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.a",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.b",
+   "part": "director",
+   "label": "Sound B",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.b",
+   "unit": "plain"
+  },
+  {
+   "key": "master.lift",
+   "part": "director",
+   "label": "Caster above",
+   "doc": "The caster put this far above its target (the master's state 1)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 1768,
+   "unit": "plain"
+  },
+  {
+   "key": "master.damage",
+   "part": "director",
+   "label": "Damage frame",
+   "doc": "The damage cue from this frame of its cut",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 160,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7AB9A0",
+   "code": "0x7AB9A0",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; sets up the director block and starts the director; the damage at its cue; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABA20"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B4A50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B4A90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B4AB0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B4AD0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x7ABAF0",
+   "code": "0x7ABAF0",
+   "doc": "The director: every tick the cut bookkeeping (each cut spawns its tasks), then its states: the voice, cut 1 (the monsters hidden), frame 0x2D, cut 2, frame 0x76, cut 3, the damage cue, cut 4 (the monsters shown, the voice released), done.",
+   "every_tick": [
+    [
+     "call",
+     "0x7ABBA0"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABBF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABC20"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABC70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABCF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABD10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABD30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABD50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABD70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABD90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABDB0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABDD0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABE40"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7ABE60"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}
