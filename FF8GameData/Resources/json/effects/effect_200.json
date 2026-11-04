@@ -1,0 +1,93 @@
+{
+ "format": 1,
+ "effect": 200,
+ "name": "No Mercy",
+ "doc": "No Mercy (Seifer's limit break): the root and the director - the camera script, his animation set and sequences (the setup turns him to the targets), the flames, sparks and embers, the targets' sequences, the gunblade's trail, the caster ring, the tip flash and shards, the slashes, the spark burst, the frame model and the shock waves, the impact flashes and target bursts, the screen flash and fade, the sounds; the action results. Its tasks are the port's code (FFNx mag200_no_mercy.cpp) run on the program's memory; its texture is exe data (the setup's), its file loader the engine's nullsub.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x6391D0",
+   "root": "0x63E680"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 200,
+  "from": "0x24F7A68",
+  "size": "0x4300"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xE33D30",
+   "size": 4
+  },
+  "sounds.swing": {
+   "kind": "sound",
+   "address": "0xE33D34",
+   "size": 4
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6391D0",
+  "file_loader": "0x0",
+  "root": "0x63E680"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Seifer's No Mercy: the camera script, his animation set and sequences, the flames, sparks and embers, the targets' sequences, the gunblade's trail, the caster ring, the tip flash and shards, the slashes, the spark burst, the frame model and the shock waves, the impact flashes and target bursts, the screen flash and fade, the sounds; the action results"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the director's ticks 6 and 0x23"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "At the director's tick 6",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.swing",
+   "part": "director",
+   "label": "Swing",
+   "doc": "At the director's tick 0x23",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.swing",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The action results at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 173,
+   "default": 141,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

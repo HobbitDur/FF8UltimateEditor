@@ -1,0 +1,108 @@
+{
+ "format": 1,
+ "effect": 199,
+ "name": "Cactuar",
+ "doc": "Cactuar (the GF's 1000 Needles; the timeline family): the master and the 151-tick timeline - the camera script, the summon stream's loads, the creature rising out of the ground, the ground prims and dust, the needle launcher, the needles and their per-target results, the screen flashes, the voice and the sounds. Its tasks are the port's code (FFNx mag199_cactuar.cpp) run on the program's memory (its pools and model data in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5A8730",
+   "setup": "0x5A8750",
+   "root": "0x5AA3A0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 199,
+  "from": "0x2259950",
+  "size": "0xF94"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xCF3A6C",
+   "size": 12
+  },
+  "voice": {
+   "kind": "sound",
+   "address": "0xCF3318",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xCF3558",
+   "size": 4
+  },
+  "sounds.flash": {
+   "kind": "sound",
+   "address": "0xCF355C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5A8750",
+  "file_loader": "0x5A8730",
+  "root": "0x5AA3A0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timeline",
+   "title": "Timeline",
+   "doc": "Cactuar's 1000 Needles: the camera script, the summon stream's loads, the creature rising out of the ground, the ground prims and dust, the needle launcher, the needles and their per-target results, the screen flashes, the voice and the sounds"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the timeline's ticks 15, 53"
+  }
+ ],
+ "params": [
+  {
+   "key": "voice",
+   "part": "timeline",
+   "label": "Voice",
+   "doc": "The voice slot claimed at the timeline's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "timeline",
+   "label": "Start",
+   "doc": "At the timeline's tick 15",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.flash",
+   "part": "timeline",
+   "label": "Flash",
+   "doc": "At the timeline's tick 53 (the flash in)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.flash",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

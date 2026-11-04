@@ -1,0 +1,103 @@
+{
+ "format": 1,
+ "effect": 215,
+ "name": "My Final Heaven",
+ "doc": "My Final Heaven (Zell's Duel finisher): the root and the director - his animation set, the layouts as he walks back, runs and jumps, the rings, the debris, the targets turned, thrown and spun, the crater, the white flash, the camera's moves, the screen flash, the sounds; the damage. Its tasks are the port's code (FFNx mag215_my_final_heaven.cpp) run on the program's memory (its queues' pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x69AB70",
+   "setup": "0x69AB60",
+   "root": "0x69AC00"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 215,
+  "from": "0x2508938",
+  "size": "0x74"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1172B1C",
+   "size": 12
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x1154F48",
+   "size": 4
+  },
+  "sounds.jump": {
+   "kind": "sound",
+   "address": "0x1154F4C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x69AB60",
+  "file_loader": "0x69AB70",
+  "root": "0x69AC00"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Zell's My Final Heaven: his animation set, the layouts as he walks back, runs and jumps, the rings, the debris, the targets turned, thrown and spun, the crater, the white flash, the camera's moves, the screen flash, the sounds; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the director's ticks 5 and 0xA2"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "At the director's tick 5",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.jump",
+   "part": "director",
+   "label": "Jump",
+   "doc": "At the director's tick 0xA2",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.jump",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 281,
+   "default": 264,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

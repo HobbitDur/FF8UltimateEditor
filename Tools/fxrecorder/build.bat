@@ -38,14 +38,18 @@ set ACT=
 set ACTORS=
 set GFC=
 set EDEN=
+set BROTHERS=
 for /f "usebackq delims=" %%f in ("%RSP%") do (
   findstr /m /c:"act_engine.h" %%f >nul 2>nul && set ACT=1
   findstr /m /c:"fx_actors.h" %%f >nul 2>nul && set ACTORS=1
   findstr /m /c:"gfc_engine.h" %%f >nul 2>nul && set GFC=1
   findstr /m /c:"apply_eden_" %%f >nul 2>nul && set EDEN=1
+  findstr /m /c:"apply_brothers" %%f >nul 2>nul && set BROTHERS=1
 )
 rem a cinematic clone borrowing Eden's draw handlers (Hell's Judgement, the final form's death: apply_eden_*) needs Eden's module
 if defined EDEN if exist "%FX%\mag_eden.cpp" echo "%FX%\mag_eden.cpp">>"%RSP%"
+rem (a cinematic clone borrowing the Brothers' handlers: Water's apply_brothers)
+if defined BROTHERS if exist "%FX%\mag_brothers.cpp" findstr /m /c:"mag_brothers.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_brothers.cpp">>"%RSP%"
 rem the modules built on the actor engine (act_engine.h) need it and its actor system compiled in
 if defined ACT if exist "%FX%\act_engine.cpp" echo "%FX%\act_engine.cpp">>"%RSP%"
 if defined ACTORS if exist "%FX%\fx_actors.cpp" echo "%FX%\fx_actors.cpp">>"%RSP%"

@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 216,
+ "name": "Different Beat",
+ "doc": "Different Beat (Zell's Duel finisher): the root and the director - his animation set and moves, the stage captured, the rings, rocks, sparks and embers, the target's chain moved and hit, the two flash envelopes, the camera's moves, the sound; the action result. Its tasks are the port's code (FFNx mag216_different_beat.cpp) run on the program's memory (its queues' pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6959F0",
+   "setup": "0x6959E0",
+   "root": "0x695AB0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 216,
+  "from": "0x2508870",
+  "size": "0xC4"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1154F28",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x113C1A8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6959E0",
+  "file_loader": "0x6959F0",
+  "root": "0x695AB0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Zell's Different Beat: his animation set and moves, the stage captured, the rings, rocks, sparks and embers, the target's chain moved and hit, the two flash envelopes, the camera's moves, the sound; the action result"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

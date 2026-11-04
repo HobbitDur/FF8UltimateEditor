@@ -244,6 +244,11 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    216: ("mag215.tim", 1, "sound 22311280\n"),
+    215: ("mag214.tim", 3, "sounds.start 22311280\nsounds.jump 22311276\ndirector.damage 250\n"),
+    212: ("mag211.tim", 3, "sounds.start 22311280\nsounds.burn 22311276\ndirector.damage 160\n"),
+    200: ("mag199.tim", 3, "sounds.start 22311280\nsounds.swing 22311276\ndirector.damage 120\n"),
+    199: ("mag198.tim", 3, "sounds.start 22311280\nsounds.flash 22311276\n"),
     198: ("mag197.tim", 1, "sound 22311280\n"),
     197: ("mag196.tim", 1, "sound 22311280\n"),
     196: ("mag195.tim", 1, "sound 22311280\n"),
@@ -483,7 +488,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot and Armor Shot and Hyper Shot from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot, Armor Shot, Hyper Shot, Cactuar, No Mercy, Burning Rave and My Final Heaven and Different Beat from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -2127,3 +2132,113 @@ def test_hyper_shot_description_compiles():
     lines = compile_program(load_description(198)).splitlines()
     for line in ['director port -1', 'port 0x5AA3E0 0x5AA3C0 0x5AEC90', 'module 198 0x225A908 0x5B5C']:
         assert line in lines, line
+
+
+def test_cactuar_description_compiles():
+    """Cactuar: a port timeline (Ray-Bomb's kind) - its setup (the model container copied into the magic buffer, the effect frame) and file loader the port's, run on the program's memory."""
+    lines = compile_program(load_description(199)).splitlines()
+    for line in ['director port -1', 'port 0x5A8750 0x5A8730 0x5AA3A0', 'module 199 0x2259950 0xF94']:
+        assert line in lines, line
+
+
+def test_no_mercy_description_compiles():
+    """No Mercy: a port director (Ray-Bomb's kind) - its setup (Seifer turned to the targets) the port's (the file loader is the engine's nullsub, the texture exe data), run on the program's memory."""
+    lines = compile_program(load_description(200)).splitlines()
+    for line in ['director port -1', 'port 0x6391D0 0x0 0x63E680', 'module 200 0x24F7A68 0x4300']:
+        assert line in lines, line
+
+
+def test_burning_rave_description_compiles():
+    """Burning Rave: a port root and director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its queues' pools in the magic buffer)."""
+    lines = compile_program(load_description(212)).splitlines()
+    for line in ['director port -1', 'port 0x6A0D20 0x6A0D30 0x6A0DC0', 'module 212 0x25101F8 0xCC']:
+        assert line in lines, line
+
+
+def test_my_final_heaven_description_compiles():
+    """My Final Heaven: a port root and director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its queues' pools in the magic buffer)."""
+    lines = compile_program(load_description(215)).splitlines()
+    for line in ['director port -1', 'port 0x69AB60 0x69AB70 0x69AC00', 'module 215 0x2508938 0x74']:
+        assert line in lines, line
+
+
+def test_different_beat_description_compiles():
+    """Different Beat: a port root and director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its queues' pools in the magic buffer)."""
+    lines = compile_program(load_description(216)).splitlines()
+    for line in ['director port -1', 'port 0x6959E0 0x6959F0 0x695AB0', 'module 216 0x2508870 0xC4']:
+        assert line in lines, line
+
+
+def test_water_description_compiles():
+    """Water: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(222)).splitlines()
+    for line in ['director port -1', 'port 0xA9B200 0xA9B1D0 0xA9B870 exe', 'module 222 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG221_B.00", "extracted_files/magic/MAG221_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_water_runs_from_its_description(tmp_path):
+    """Water from its description: what the exe's code records; a script file of its own (an edited .00 copy)
+    read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(222), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 222, "original")
+    described, log = record(tmp_path, 222, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG221_B.00").read_bytes())
+    for k in range(0x8000, 0x8040, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "w222.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 w222.00\n")
+    native, _log = record(tmp_path, 222, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 222, "described_params", f"program={program}", f"params={params}",
+                            f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(222))
+    description["effect"], description["name"] = 225, "New water"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_water" in log and untag(new) == original
+
+
+def test_meteor_description_compiles():
+    """Meteor: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(223)).splitlines()
+    for line in ['director port -1', 'port 0xA8F890 0xA8F860 0xA8FF00 exe', 'module 223 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG222_B.00", "extracted_files/magic/MAG222_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_meteor_runs_from_its_description(tmp_path):
+    """Meteor from its description: what the exe's code records; a script file of its own (an edited .00 copy)
+    read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(223), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 223, "original")
+    described, log = record(tmp_path, 223, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG222_B.00").read_bytes())
+    for k in range(0x4000, 0x4040, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "m223.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 m223.00\n")
+    native, _log = record(tmp_path, 223, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 223, "described_params", f"program={program}", f"params={params}",
+                            f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(223))
+    description["effect"], description["name"] = 225, "New meteor"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_meteor" in log and untag(new) == original
+

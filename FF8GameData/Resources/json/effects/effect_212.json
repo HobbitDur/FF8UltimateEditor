@@ -1,0 +1,103 @@
+{
+ "format": 1,
+ "effect": 212,
+ "name": "Burning Rave",
+ "doc": "Burning Rave (Zell's Duel finisher): the root and the director - his animation set and placement, the stage captured, the ground and burning layouts, rocks, sparks and debris, the targets drawn, thrown and spun, his afterimages, the camera's moves, the screen flash, the sounds; the damage. Its tasks are the port's code (FFNx mag212_burning_rave.cpp) run on the program's memory (its queues' pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6A0D30",
+   "setup": "0x6A0D20",
+   "root": "0x6A0DC0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 212,
+  "from": "0x25101F8",
+  "size": "0xCC"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x11AC250",
+   "size": 12
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x1181070",
+   "size": 4
+  },
+  "sounds.burn": {
+   "kind": "sound",
+   "address": "0x1181074",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6A0D20",
+  "file_loader": "0x6A0D30",
+  "root": "0x6A0DC0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Zell's Burning Rave: his animation set and placement, the stage captured, the ground and burning layouts, rocks, sparks and debris, the targets drawn, thrown and spun, his afterimages, the camera's moves, the screen flash, the sounds; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the director's ticks 5 and 0x43"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "At the director's tick 5",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.burn",
+   "part": "director",
+   "label": "Burn",
+   "doc": "At the director's tick 0x43",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.burn",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 181,
+   "default": 174,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

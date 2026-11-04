@@ -2178,3 +2178,51 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`HyperShotParams`): the gun sound. Data: the sound, "mag197.tim".
      - *Tests:* three shots and the closing action recalled (`CYCLE_RECALLS`).
      - *Fujin:* its tab (Shot); no + menu family.
+   - **Cactuar (199)** (FFNx 86fc2aee; the GF's 1000 Needles, the timeline family; a port timeline, Ray-Bomb's
+     kind): the camera script, the summon stream's loads, the creature rising out of the ground, the ground
+     prims and dust, the needle launcher, the needles and their per-target results, the screen flashes, the
+     voice and the sounds (ticks 15, 53).
+     - *Inputs* (`CactuarParams`): the voice, the two sounds. Data: the sounds, "mag198.tim".
+     - *Port:* the spawn helpers `LinkTask` / `LinkFlash` go through own::Fn.
+     - *Fujin:* its tab (Timeline); no + menu family.
+   - **No Mercy (200)** (FFNx b7940ef4; Seifer's limit break; a port director, Ray-Bomb's kind): the camera script,
+     his animation set and sequences (the setup turns him to the targets), the flames, sparks and embers, the
+     targets' sequences, the gunblade's trail, the caster ring, the tip flash and shards, the slashes, the
+     spark burst, the frame model and the shock waves, the impact flashes and target bursts, the screen flash
+     and fade, the sounds (ticks 6, 35); the action results at tick 141.
+     - *Inputs* (`NoMercyParams`): the two sounds, the damage tick. Data: the sounds (the texture is exe data,
+       the file loader the engine's nullsub).
+     - *Port:* the spawn helper `AddMain` goes through own::Fn.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Burning Rave (212)** (FFNx aad96877; Zell's Duel finisher; a port root and director, Ray-Bomb's kind): his
+     animation set and placement, the stage captured, the ground and burning layouts, rocks, sparks and debris,
+     the targets drawn, thrown and spun, his afterimages, the camera's moves, the screen flash, the sounds
+     (ticks 5, 67); the damage at tick 174.
+     - *Inputs* (`BurningRaveParams`): the two sounds, the damage tick. Data: the sounds, "mag211.tim".
+     - *Port:* the rock / sprite spawners take the task as an argument: those spawns go through own::Fn too.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **My Final Heaven (215)** (FFNx a99590fb; Zell's Duel finisher; a port root and director, Ray-Bomb's kind): his
+     animation set, the layouts as he walks back, runs and jumps, the rings, the debris, the targets turned,
+     thrown and spun, the crater, the white flash, the camera's moves, the screen flash, the sounds (ticks 6,
+     163); the damage at tick 264.
+     - *Inputs* (`MyFinalHeavenParams`): the two sounds, the damage tick. Data: the sounds, "mag214.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Different Beat (216)** (FFNx 6dbad04c; Zell's Duel finisher; a port root and director, Ray-Bomb's kind): his
+     animation set and moves, the stage captured, the rings, rocks, sparks and embers, the target's chain moved
+     and hit, the two flash envelopes, the camera's moves, the sound; the action result.
+     - *Inputs* (`DifferentBeatParams`): the sound. Data: the sound, "mag215.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Water (222)** (FFNx 106434cc; the spell; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag221_b.00 / .01) - its bones, prims, sprites and
+     particles, the action results. The program calls the clone's own setup (the engine's shared state block),
+     its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<222>`): the two script files (empty: the game's).
+     - *Lab:* the recorder and the host build mag_brothers.cpp in for a module borrowing its handlers
+       (`apply_brothers`: Water's draw 38), as they do mag_eden.cpp for `apply_eden_*`.
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Meteor (223)** (FFNx 106434cc; the spell; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag222_b.00 / .01) - its bones, prims, sprites and
+     particles, the screen captures and strips, the action results. The program calls the clone's own setup
+     (the engine's shared state block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<223>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
