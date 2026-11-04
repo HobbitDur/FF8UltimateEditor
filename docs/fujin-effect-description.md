@@ -1734,3 +1734,24 @@ Potion's description is the same with its own sequences and sound.
      sound; the damage at the block's tick 60.
      - *Inputs* (`BlizzaraParams`): the sound, the ice block's damage tick. Data: the sound, "mag102.tim".
      - *Fujin:* its tab (Ice block); no + menu family.
+   - **Blizzaga (104)** (FFNx 4e70fa8a; the spell; a port director, Ray-Bomb's kind): every 50 ticks the
+     freeze of the next action on its first target - the target frozen from the bottom up, ribbons and
+     spirals swirling round it, an ice block growing then breaking from the bottom into 320 falling, spinning
+     shards, a ring, a flash model, mist and flakes, the screen flash, the 3D sound; the damage at tick 68.
+     - *Inputs* (`BlizzagaParams`): the sound, the freeze's damage tick. Data: the sound, "mag103.tim".
+     - *Port:* its setup also computes the freeze band (the ice block's lowest vertex, its height + 1/16).
+     - *Fujin:* its tab (Freeze); no + menu family.
+   - **Thundaga (105)** (FFNx c1290fc2; the spell; a port director, Ray-Bomb's kind): every 46 ticks the bolt
+     of the next action on its first target - the lightning's prim-model play, the target flashed white, the
+     screen flash, at frame 28 the screen shattering (the scene rendered into a texture on fourteen shard
+     meshes, thrown and breaking into debris), rings of sparks, flash sprites, the 3D sound; the damage and
+     the bolt's end at frame 64.
+     - *Inputs* (`ThundagaParams`): the sound, the bolt's damage frame. Data: the sound, "mag104.tim".
+     - *Port:* the offscreen render's prims are accessors (a static would keep the game's address in a copy).
+     - *Fujin:* its tab (Bolt); no + menu family.
+   - **Demi (107)** (FFNx 798394e8; the spell; a port director, Ray-Bomb's kind): every 45 ticks the target
+     task of the next action on its first target - motes circling in, two sprite sequences, a screen fade,
+     the target hidden and drawn as a silhouette pulled towards its middle, the vortex's prim-model play
+     with its orbs and sparks, the 3D sound; the status at tick 86.
+     - *Inputs* (`DemiParams`): the sound, the status tick. Data: the sound, "mag106.tim".
+     - *Fujin:* its tab (Target); no + menu family.

@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 105,
+ "name": "Thundaga",
+ "doc": "Thundaga (the spell): the root - every 46 ticks the bolt of the next action on its first target: the lightning's prim-model play, the target flashed white, the screen flash, at frame 28 the screen shattering (the scene rendered into a texture on fourteen shard meshes thrown and breaking into debris), rings of sparks, flash sprites, the sound; the damage. Its tasks are the port's code (FFNx mag105_thundaga.cpp) run on the program's memory (its pools and debris in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6D3DC0",
+   "setup": "0x6D3DB0",
+   "root": "0x6D3E50"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 105,
+  "from": "0x2543CF0",
+  "size": "0x100"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1312680",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x131265C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6D3DB0",
+  "file_loader": "0x6D3DC0",
+  "root": "0x6D3E50"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "bolt",
+   "title": "Bolt",
+   "doc": "One bolt an action on its first target: the lightning's prim-model play, the target flashed white, the screen flash, the screen shattering into shards and debris, the spark rings and flash sprites, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "bolt",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "bolt.damage",
+   "part": "bolt",
+   "label": "Damage frame",
+   "doc": "The damage (and the bolt's end) from this frame of the bolt",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 64,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
