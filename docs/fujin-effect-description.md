@@ -1435,3 +1435,14 @@ Potion's description is the same with its own sequences and sound.
      - *Port:* its camera state is reached through an exe data word (0x1591C40) holding a module address:
        the port moves that word's value with `own::R()`.
      - *Fujin:* its tab (Scanner); no + menu family.
+   - **Griever (69)** (FFNx dc1bf923; Ultimecia's summon of Griever; a port director on the module's own
+     setup, its memory shared - the module's helpers run at their exe addresses on it): its camera track,
+     the 127-tick timeline - the intro prim model at the attacker, the attacker drawn by the module, the
+     two battle stage models broken face by face into flying shards, the rising sparks, the white fade
+     while the attacker sinks, the stage model swap.
+     - *Inputs* (`GrieverParams`): the sound and the voice, the voice release and end ticks, the
+       shattering's growth and cap, the attacker's sinking, the sparks (ticks, a tick, life). Data: the
+       two sounds; no texture file.
+     - *Recorder:* it shatters the battle stage's models: recorded with `stage=142` (Ultimecia's stage,
+       loaded by the exe's own stage code), its cycle test too.
+     - *Fujin:* its tab (Timeline); no + menu family.

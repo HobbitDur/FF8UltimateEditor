@@ -80,6 +80,7 @@
 struct Opt
 {
 	int eff = 0, ticks = 3000, targets = 1, caster = 0, model = 0;
+	int stage = -1;                   // stage=N: the battle stage a0stgNNN.x loaded (its models: an effect may draw them)
 	uint32_t seed = 12345;
 	std::string exe, magic, battle, out, camera, overrides;
 	std::string body[7], weapon[7];   // slotK= / weaponK=: the battle's cast, one file per slot
@@ -791,11 +792,36 @@ static bool load_character(uint32_t e, int slot, int com, const std::string &bod
 	if (w) *(uint32_t *)(w + 8) = *(uint32_t *)(w + 4);
 	return true;
 }
+// the battle stage (loadBattleStageFile 0x506CF0): its file at the model arena's start (the arena top
+// moved past it by its geometry parser, the models loaded after it as in the game), the render groups
+// set up as at the battle's start, its id theirs (BATTLE_STAGE_RENDER_GROUPS 0x1D9898C), then
+// BS_loadCameraAndGeometry 0x50E510: parse the
+// geometry (its four groups' models and animations), upload its textures; no camera, no render task
+static bool stage_command(int command)
+{
+	__try { ((uint32_t (__cdecl *)(int))0x50E510)(command); return true; }
+	__except (filter(GetExceptionInformation())) { return false; }
+}
+static bool load_stage()
+{
+	char name[32];
+	sprintf_s(name, "a0stg%03d.x", O.stage);
+	std::vector<uint8_t> f = readfile(join(O.battle, name));
+	if (f.empty() || f.size() > MODELMEM_SIZE / 2) { printf("missing battle stage %s\n", name); return false; }
+	memcpy(g_modelmem, f.data(), f.size());
+	call0(0x506C50);   // BS_BattleStageIDFixing: the groups' flags, each animation header on its group's data
+	*(uint32_t *)0xB6D07C = (uint32_t)g_modelmem;   // POINTER_TO_CURRENT_ADDR_A0STGXXX_DATA_BIS
+	*(uint8_t *)(0x1D9898C + 4) = (uint8_t)O.stage;
+	if (!stage_command(0) || !stage_command(1)) { printf("stage %d load faulted %08lX at eip %08lX\n", O.stage, g_fault_code, g_fault_eip); return false; }
+	dump_vram_queue();
+	return true;
+}
 static bool load_models()
 {
 	g_modelmem = fixed_alloc(0x32000000, MODELMEM_SIZE + MODELWORK_SIZE);
 	call0(0x508260);   // BS_SetLocation1: command queue table, texture slots 0-5 kept for the party
 	((void (__cdecl *)(uint32_t))0x507050)((uint32_t)g_modelmem);
+	if (O.stage >= 0 && !load_stage()) return false;
 	*(uint32_t *)0x1D98B3C = (uint32_t)g_modelmem + MODELMEM_SIZE;
 	*(uint32_t *)0xB6D080 = (uint32_t)g_modelmem + MODELMEM_SIZE;
 	bool cast = O.cast();
@@ -931,6 +957,7 @@ static bool parse(int argc, char **argv)
 		else if (k == "hostdir") O.hostdir = v;
 		else if (k == "schema") O.schema = v;
 		else if (k == "model") O.model = atoi(v.c_str());
+		else if (k == "stage") O.stage = atoi(v.c_str());
 		else if (k == "ticks") O.ticks = atoi(v.c_str());
 		else if (k == "targets") O.targets = atoi(v.c_str());
 		else if (k == "caster") O.caster = atoi(v.c_str());

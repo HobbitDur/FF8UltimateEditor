@@ -1,0 +1,177 @@
+{
+ "format": 1,
+ "effect": 69,
+ "name": "Griever",
+ "doc": "Griever (Ultimecia's summon, the boss Griever's entrance): its camera track, the 127-tick timeline - the intro prim model at the attacker, the attacker drawn by the module, the two battle models broken face by face into flying shards, the rising sparks, the white fade while the attacker sinks, the battle model swap. The program calls the module's own setup (0x6FE050; its memory is shared: the module's helpers run at their exe addresses on it), its root re-pointed at the program's director; the tasks are the port's code (FFNx mag069_griever.cpp).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x6FE040",
+   "root": "0x6FE0D0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 69,
+  "from": "0x2556628",
+  "size": "0x970",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x14D0A48",
+   "size": 4
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0x14D0740",
+   "size": 4
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6FE050",
+  "file_loader": "0x0",
+  "root": "0x6FE0D0",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timeline",
+   "title": "Timeline",
+   "doc": "Its 127-tick timeline: the intro prim model, the attacker drawn by the module, the two battle models shattered into shards, the sparks, the white fade, the attacker sinking, the battle model swap"
+  }
+ ],
+ "groups": [
+  {
+   "key": "shatter",
+   "label": "Shattering",
+   "doc": "The radius about the attacker under which the faces break into shards: its growth a tick (x 1/50) from tick 73, its cap"
+  },
+  {
+   "key": "sparks",
+   "label": "Sparks",
+   "doc": "Rising round the attacker over the first ticks, a quarter turn apart"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "timeline",
+   "label": "Sound",
+   "doc": "Played at tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.voice",
+   "part": "timeline",
+   "label": "Voice",
+   "doc": "Claimed when the timeline starts",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "timeline.voice_release",
+   "part": "timeline",
+   "label": "Voice release",
+   "doc": "The voice released at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 126,
+   "default": 122,
+   "unit": "plain"
+  },
+  {
+   "key": "timeline.end",
+   "part": "timeline",
+   "label": "End after",
+   "doc": "The effect done after this tick (the model swap at 110)",
+   "type": "i16",
+   "min": 111,
+   "max": 512,
+   "default": 126,
+   "unit": "plain"
+  },
+  {
+   "key": "shatter.speed",
+   "part": "timeline",
+   "label": "Growth",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 28000,
+   "unit": "plain"
+  },
+  {
+   "key": "shatter.reach",
+   "part": "timeline",
+   "label": "Cap",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 6000,
+   "unit": "plain"
+  },
+  {
+   "key": "sink.depth",
+   "part": "timeline",
+   "label": "Sink",
+   "doc": "The attacker sinking this far below -2000 over ticks 94..125",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 1400,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.ticks",
+   "part": "timeline",
+   "label": "Ticks",
+   "doc": "Spawned over these first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 47,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.count",
+   "part": "timeline",
+   "label": "A tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "timeline",
+   "label": "Life",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 255,
+   "default": 18,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    69: (None, 10, "sparks.count 2\nsink.depth 2800\nshatter.speed 14000\nsparks.life 9\n"),
     68: ("mag039-067.tim", 7, "camera.approach 400\ncamera.view 1000\nbrackets.follow 20\nbrackets.grow 1536\n"),
     67: ("mag023-066.tim", 9, "actors.length 30\nmaster.wait 30\nwobble.step 64\nemitter.release 25\n"),
     66: ("mag065.tim", 6, "melt.push 2500\nmaster.damage 40\nflash.flash_in 16\n"),
@@ -334,9 +335,15 @@ CYCLES = {
 }
 
 
+# the battle stage an effect draws (Griever shatters Ultimecia's stage models): the recorder loads it
+CYCLE_STAGES = {69: 142}
+
+
 def cycle_files(effect):
-    return ("extracted_files/FF8_EN.exe", f"extracted_files/magic/{CYCLES[effect][0]}", "extracted_files/battle/d0c000.dat",
-            "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+    return ("extracted_files/FF8_EN.exe", "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+            "extracted_files/battle/c0m009.dat",
+            *([f"extracted_files/magic/{CYCLES[effect][0]}"] if CYCLES[effect][0] else []),
+            *([f"extracted_files/battle/a0stg{CYCLE_STAGES[effect]:03d}.x"] if effect in CYCLE_STAGES else []))
 
 
 def test_float_description_compiles():
@@ -350,23 +357,24 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy and Scan (enemy) from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy) and Griever from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
+    stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
-    original, _log = record(tmp_path, effect, "original")
-    described, log = record(tmp_path, effect, "described", f"program={program}")
+    original, _log = record(tmp_path, effect, "original", *stage)
+    described, log = record(tmp_path, effect, "described", f"program={program}", *stage)
     tasks = len(load_description(effect)["tasks"])
     assert f"{tasks} tasks, {count} params" in log and untag(described) == original and len(original) > 10000
     # (Ray-Bomb hurts the party only: on the monster the recorder casts on, no number; Elvoret's entrance and
-    # Ultimecia's model breaking apart hurt nobody; Draw's sounds are sound ids, BdPlaySy's, which the recorder
-    # does not log)
-    assert effect in (10, 17, 64) or any(line.startswith("N ") for line in original)
+    # Ultimecia's model breaking apart and Griever hurt nobody; Draw's sounds are sound ids, BdPlaySy's, which the
+    # recorder does not log)
+    assert effect in (10, 17, 64, 69) or any(line.startswith("N ") for line in original)
     assert effect == 15 or any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text(values)
-    native, _log = record(tmp_path, effect, "native", "native=1", f"params={params}")
-    described, log = record(tmp_path, effect, "described_params", f"program={program}", f"params={params}")
+    native, _log = record(tmp_path, effect, "native", "native=1", f"params={params}", *stage)
+    described, log = record(tmp_path, effect, "described_params", f"program={program}", f"params={params}", *stage)
     assert f"{values.count(chr(10))} set" in log and described == native and native != original
     description = copy.deepcopy(load_description(effect))
     description["effect"], description["name"] = 225, "New cycle"
@@ -374,7 +382,7 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     for task in description["tasks"]:
         task.pop("function", None)   # (Berserk's sparks: a task of their own, no exe function)
     program = write_program(description, tmp_path / "new.fxprog")
-    new, log = record(tmp_path, 225, "new", f"program={program}")
+    new, log = record(tmp_path, 225, "new", f"program={program}", *stage)
     assert "program: New_cycle" in log and untag(new) == original
 
 
@@ -1237,4 +1245,11 @@ def test_enemy_scan_description_compiles():
     """Scan (enemy): the spell Scan's library reduced to its short sequence, a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its camera state through its exe pointer)."""
     lines = compile_program(load_description(68)).splitlines()
     for line in ['director port -1', 'port 0x7DC1A0 0x7DC180 0x7DC280', 'module 68 0x25FCDD8 0x37DC']:
+        assert line in lines, line
+
+
+def test_griever_description_compiles():
+    """Griever: a port director on the module's own setup (shared memory: its helpers run at their exe addresses), recorded on Ultimecia's stage (142): its two stage models shattered."""
+    lines = compile_program(load_description(69)).splitlines()
+    for line in ['director port -1', 'port 0x6FE050 0x0 0x6FE0D0 exe', 'module 69 0x2556628 0x970']:
         assert line in lines, line
