@@ -721,6 +721,43 @@ def test_elvoret_death_runs_from_its_description(tmp_path):
     assert "program: New_death" in log and untag(new) == original
 
 
+def test_hells_judgement_description_compiles():
+    """Hell's Judgement: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the
+    engine's shared state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(75)).splitlines()
+    for line in ['director port -1', 'port 0xB3E8E0 0xB3E8B0 0xB3EF50 exe', 'module 75 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG074_B.00", "extracted_files/magic/MAG074_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_hells_judgement_runs_from_its_description(tmp_path):
+    """Hell's Judgement from its description: what the exe's code records; a script file of its own (an edited
+    .00 copy) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(75), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 75, "original")
+    described, log = record(tmp_path, 75, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG074_B.00").read_bytes())
+    for k in range(0x8000, 0x8040, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "hj75.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 hj75.00\n")
+    native, _log = record(tmp_path, 75, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 75, "described_params", f"program={program}", f"params={params}",
+                            f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(75))
+    description["effect"], description["name"] = 225, "New judgement"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_judgement" in log and untag(new) == original
+
+
 def test_raldo_throw_description_compiles():
     """Raldo Throw: Doom's kind - the per-action director, the module, the emitter's and the director's state tables."""
     lines = compile_program(load_description(19)).splitlines()

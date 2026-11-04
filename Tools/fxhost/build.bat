@@ -40,8 +40,12 @@ findstr /m /c:"register_mod(" "%FX%\act_engine.h" >nul 2>nul || goto host
 for /f "delims=" %%f in ('findstr /m /c:"FX_LAB_MODULE(register" "%FX%\mag*.cpp" 2^>nul') do echo "%%f">>"%RSP%"
 if not exist "%RSP%" goto host
 set GFC=
+set EDEN=
 for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"gfc_engine.h" %%f >nul 2>nul && set GFC=1
+for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_eden_b" %%f >nul 2>nul && set EDEN=1
 if defined GFC if exist "%FX%\gfc_engine.cpp" echo "%FX%\gfc_engine.cpp">>"%RSP%"
+rem (a cinematic clone borrowing Eden's draw handlers: Hell's Judgement's apply_eden_b)
+if defined EDEN if exist "%FX%\mag_eden.cpp" echo "%FX%\mag_eden.cpp">>"%RSP%"
 set PORTS=/DFF8_FX_LAB @"%RSP%"
 :host
 cl /nologo /std:c++20 /EHa /W3 /O1 /MT /LD /bigobj /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS /I"%FX%" fxhost.cpp %ACTORS% !PORTS! /Foobj\ /FeFujinEffects.dll /link /LARGEADDRESSAWARE

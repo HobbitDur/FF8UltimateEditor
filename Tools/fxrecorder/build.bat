@@ -37,11 +37,15 @@ if not exist "%RSP%" echo "%FX%\mag001_cure.cpp">"%RSP%"
 set ACT=
 set ACTORS=
 set GFC=
+set EDEN=
 for /f "usebackq delims=" %%f in ("%RSP%") do (
   findstr /m /c:"act_engine.h" %%f >nul 2>nul && set ACT=1
   findstr /m /c:"fx_actors.h" %%f >nul 2>nul && set ACTORS=1
   findstr /m /c:"gfc_engine.h" %%f >nul 2>nul && set GFC=1
+  findstr /m /c:"apply_eden_b" %%f >nul 2>nul && set EDEN=1
 )
+rem a cinematic clone borrowing Eden's draw handlers (Hell's Judgement: apply_eden_b) needs Eden's module
+if defined EDEN if exist "%FX%\mag_eden.cpp" echo "%FX%\mag_eden.cpp">>"%RSP%"
 rem the modules built on the actor engine (act_engine.h) need it and its actor system compiled in
 if defined ACT if exist "%FX%\act_engine.cpp" echo "%FX%\act_engine.cpp">>"%RSP%"
 if defined ACTORS if exist "%FX%\fx_actors.cpp" echo "%FX%\fx_actors.cpp">>"%RSP%"

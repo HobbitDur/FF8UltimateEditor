@@ -1492,3 +1492,11 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`LvDeathQParams`): Death's, and the first reaper's wait. Data: the two sounds, the camera
        track, "mag013-073-344.tim".
      - *Fujin:* its tabs (Reaper, Actor systems); no + menu family.
+   - **Hell's Judgement (75)** (FFNx 891f2b7e; Ultimecia's enemy attack; a GF cinematic engine clone,
+     Elvoret's death's description kind): the clone run from its two script files - its bones, prims,
+     sprites and particles, the radial light wave on a mesh (Eden's draw 61) and the shattering mesh (draw
+     66: its polygons flying off).
+     - *Inputs* (`ProgramFiles<75>`): its two script files (MAG074_B.00 / .01; empty: the game's).
+     - *Lab:* the recorder and the host build mag_eden.cpp in when a lab module borrows Eden's draw
+       handlers (`apply_eden_b`).
+     - *Fujin:* its tab (Files); no + menu family.
