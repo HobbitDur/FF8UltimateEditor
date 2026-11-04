@@ -244,6 +244,8 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    275: ("mag125.tim", 1, "sound 22311280\n"),
+    274: ("mag273.tim", 6, "sound_punch 22311280\nsound_booya 22311280\nsound_heel 22311280\nsound_kick 22311280\nsound_dolphin 22311280\nsound_meteor 22311280\n"),
     273: ("mag272.tim", 1, "sound 22311280\n"),
     272: ("mag271.tim", 1, "sound 22311280\n"),
     271: ("mag270.tim", 1, "sound 22311280\n"),
@@ -452,8 +454,10 @@ CYCLE_CASTS = {113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0,
 # what the battle's AnimSeq VM (not run by the recorder) would have written: Renzokuken's stage durations (opcode AB)
 CYCLE_POKES = {141: ["poke=0x1D98214:4,10,9,10,9,14"], 159: ["poke=0x1D98214:4,10,9,10,9,14"], 160: ["poke=0x1D98214:4,10,9,10,9,14"], 161: ["poke=0x1D98214:4,10,9,10,9,14"], 259: ["poke=0x1D98214:5,10,9,10,9,10,14"]}
 # what the battle's Shot window does for each trigger press: the setup called again with the sequence mode (2 a shot,
-# 1 the closing action)
-CYCLE_RECALLS = {188: ["recall=10:2,20:2,30:2,45:1"], 192: ["recall=10:2,20:2,30:2,45:1"], 193: ["recall=10:2,20:2,30:2,45:1"], 194: ["recall=10:2,20:2,30:2,45:1"], 195: ["recall=10:2,20:2,30:2,45:1"], 196: ["recall=10:2,20:2,30:2,45:1"], 197: ["recall=10:2,20:2,30:2,45:1"], 198: ["recall=10:2,20:2,30:2,45:1"]}
+# 1 the closing action); Duel's actions: 2..7 a move, 8 the end
+CYCLE_RECALLS = {188: ["recall=10:2,20:2,30:2,45:1"], 192: ["recall=10:2,20:2,30:2,45:1"], 193: ["recall=10:2,20:2,30:2,45:1"], 194: ["recall=10:2,20:2,30:2,45:1"], 195: ["recall=10:2,20:2,30:2,45:1"], 196: ["recall=10:2,20:2,30:2,45:1"], 197: ["recall=10:2,20:2,30:2,45:1"], 198: ["recall=10:2,20:2,30:2,45:1"], 274: ["recall=5:2,60:3,115:4,170:5,225:6,285:7,375:8"]}
+# the caster's own model and weapon in slot 0 (Duel's Punch Rush reads Zell's bones)
+CYCLE_MODELS = {274: ("d1c003.dat", "d1w008.dat")}
 
 # frames an exe quirk draws differently in a copy, left out of the comparisons (R numbers [from, to)): Siren's
 # splash task picks surface vertices past its table 0x258EC70, in the load-script pool's nodes (their pointers);
@@ -494,7 +498,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot, Armor Shot, Hyper Shot, Cactuar, No Mercy, Burning Rave, My Final Heaven, Different Beat, White Wind (enemy), Renzokuken (6 hits), Shockwave Pulsar (Quistis), LV Up and LV Down and Mad Rush from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot, Armor Shot, Hyper Shot, Cactuar, No Mercy, Burning Rave, My Final Heaven, Different Beat, White Wind (enemy), Renzokuken (6 hits), Shockwave Pulsar (Quistis), LV Up, LV Down, Mad Rush and Duel and Electrocute from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -506,6 +510,8 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
         stage += [f"caster={caster}", f"target={target}", f"slot3={BATTLE / monster}"]
     stage += CYCLE_POKES.get(effect, [])
     stage += CYCLE_RECALLS.get(effect, [])
+    if effect in CYCLE_MODELS:
+        stage += [f"slot0={BATTLE / CYCLE_MODELS[effect][0]}", f"weapon0={BATTLE / CYCLE_MODELS[effect][1]}"]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
     original, _log = record(tmp_path, effect, "original", *stage)
     described, log = record(tmp_path, effect, "described", f"program={program}", *stage)
@@ -2808,4 +2814,18 @@ def test_mad_rush_description_compiles():
     """Mad Rush: a port root (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the magic buffer)."""
     lines = compile_program(load_description(273)).splitlines()
     for line in ['director port -1', 'port 0x68D650 0x68D660 0x68D700', 'module 273 0x25084E8 0x58']:
+        assert line in lines, line
+
+
+def test_duel_description_compiles():
+    """Duel: a port root (Ray-Bomb's kind) - its setup (by the cast's sequence mode: the cast, a move posted) and file loader the port's, run on the program's memory; Zell's model, the six moves and the end recalled like the battle's Duel actions."""
+    lines = compile_program(load_description(274)).splitlines()
+    for line in ['director port -1', 'port 0x6897E0 0x6897F0 0x689990', 'module 274 0x2508410 0xD8']:
+        assert line in lines, line
+
+
+def test_electrocute_description_compiles():
+    """Electrocute: a port root (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and points in the magic buffer)."""
+    lines = compile_program(load_description(275)).splitlines()
+    for line in ['director port -1', 'port 0x687B40 0x687B50 0x687C00', 'module 275 0x2508348 0xC8']:
         assert line in lines, line

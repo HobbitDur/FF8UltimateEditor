@@ -1,0 +1,180 @@
+{
+ "format": 1,
+ "effect": 274,
+ "name": "Duel",
+ "doc": "Duel (Zell's limit break, its six regular moves): the root and the move task (the setup called again for every Duel action: its sequence mode posts the move), his animation set and chains, the afterimages, the move's layouts, sparks, hit flashes and rocks, the Duel pause, the sounds, the action results; the end. Its tasks are the port's code (FFNx mag274_duel.cpp) run on the program's memory (its pools in the module and the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6897F0",
+   "setup": "0x6897E0",
+   "root": "0x689990"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 274,
+  "from": "0x2508410",
+  "size": "0xD8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x110E5D0",
+   "size": 12
+  },
+  "sound_punch": {
+   "kind": "sound",
+   "address": "0x110BE58",
+   "size": 4
+  },
+  "sound_booya": {
+   "kind": "sound",
+   "address": "0x110BE5C",
+   "size": 4
+  },
+  "sound_heel": {
+   "kind": "sound",
+   "address": "0x110BE60",
+   "size": 4
+  },
+  "sound_kick": {
+   "kind": "sound",
+   "address": "0x110BE64",
+   "size": 4
+  },
+  "sound_dolphin": {
+   "kind": "sound",
+   "address": "0x110BE68",
+   "size": 4
+  },
+  "sound_meteor": {
+   "kind": "sound",
+   "address": "0x110BE6C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6897E0",
+  "file_loader": "0x6897F0",
+  "root": "0x689990"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "punch",
+   "title": "Punch Rush",
+   "doc": "Punch Rush: its sound"
+  },
+  {
+   "id": 1,
+   "key": "booya",
+   "title": "Booya",
+   "doc": "Booya: its sound"
+  },
+  {
+   "id": 2,
+   "key": "heel",
+   "title": "Heel Drop",
+   "doc": "Heel Drop: its sound"
+  },
+  {
+   "id": 3,
+   "key": "kick",
+   "title": "Mach Kick",
+   "doc": "Mach Kick: its sound"
+  },
+  {
+   "id": 4,
+   "key": "dolphin",
+   "title": "Dolphin Blow",
+   "doc": "Dolphin Blow: its sound"
+  },
+  {
+   "id": 5,
+   "key": "meteor",
+   "title": "Meteor Strike",
+   "doc": "Meteor Strike: its sound"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound_punch",
+   "part": "punch",
+   "label": "Sound",
+   "doc": "On its tick 8",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound_punch",
+   "unit": "plain"
+  },
+  {
+   "key": "sound_booya",
+   "part": "booya",
+   "label": "Sound",
+   "doc": "On its tick 0xD",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound_booya",
+   "unit": "plain"
+  },
+  {
+   "key": "sound_heel",
+   "part": "heel",
+   "label": "Sound",
+   "doc": "On its tick 0x1E",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound_heel",
+   "unit": "plain"
+  },
+  {
+   "key": "sound_kick",
+   "part": "kick",
+   "label": "Sound",
+   "doc": "On its tick 0x1B",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound_kick",
+   "unit": "plain"
+  },
+  {
+   "key": "sound_dolphin",
+   "part": "dolphin",
+   "label": "Sound",
+   "doc": "On its tick 0x18",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound_dolphin",
+   "unit": "plain"
+  },
+  {
+   "key": "sound_meteor",
+   "part": "meteor",
+   "label": "Sound",
+   "doc": "On its tick 0x2B",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound_meteor",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

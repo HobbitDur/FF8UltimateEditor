@@ -2340,3 +2340,17 @@ Potion's description is the same with its own sequences and sound.
      model at its bone), the dust rising, the sound; each target's action result when its layout ends.
      - *Inputs* (`MadRushParams`): the sound. Data: the sound, "mag272.tim".
      - *Fujin:* its tab (Root); no + menu family.
+   - **Duel (274)** (FFNx 94cba3d7; Zell's limit break, its six regular moves; a port root, Ray-Bomb's kind): the
+     root and the move task, his animation set and chains, the afterimages, the move's layouts, sparks, hit
+     flashes and rocks, the Duel pause, the sounds, the action results; the end.
+     - *Setup:* run again for every Duel action (BattleActionSequence_Tick_Duel 0x50BDC0): the cast's
+       sequence mode (+8) 0 the cast, 2..7 a move (posted to the root node), 8 the end.
+     - *Inputs* (`DuelParams`): the six moves' sounds. Data: the sounds, "mag273.tim".
+     - *Tests:* the cycle test casts with Zell's model (`CYCLE_MODELS`: Punch Rush reads his bones) and
+       recalls the six moves and the end (`CYCLE_RECALLS`).
+     - *Fujin:* its tabs (Punch Rush, Booya, Heel Drop, Mach Kick, Dolphin Blow, Meteor Strike); no + menu family.
+   - **Electrocute (275)** (FFNx fa882258; Quistis' Blue Magic, Electric Discharge adapted; a port root, Ray-Bomb's
+     kind): lightning crawlers over her model, free arcs from her centre, arcs from her bones to the targets with
+     their sparks (a hit target tinted), the glow layouts, the screen flash, the sound; the action result.
+     - *Inputs* (`ElectrocuteParams`): the sound. Data: the sound, "mag125.tim".
+     - *Fujin:* its tab (Main); no + menu family.
