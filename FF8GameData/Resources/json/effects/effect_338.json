@@ -1,0 +1,77 @@
+{
+ "format": 1,
+ "effect": 338,
+ "name": "Moomba",
+ "doc": "Moomba (the GF's Friendship; the timeline family): the master and the 76-tick creature - the screen flash, Moomba, the ring prim model, prim-model tasks and sparks at the target's and Moomba's vertices, the bursts with debris, the sprite sparks, the stream, the voice and the sound; the action result. Its tasks are the port's code (FFNx mag338_moomba.cpp) run on the program's memory (its pools and packet arenas in the magic buffer); its textures are exe data (the setup's), its file loader the engine's nullsub.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x6EBD50",
+   "root": "0x6EBE20"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 338,
+  "from": "0x25561C8",
+  "size": "0x8C",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "voice": {
+   "kind": "sound",
+   "address": "0x13710CC",
+   "size": 4
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x13710C8",
+   "size": 4
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6EBD50",
+  "file_loader": "0x0",
+  "root": "0x6EBE20"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "creature",
+   "title": "Creature",
+   "doc": "Moomba's Friendship: the screen flash, Moomba, the ring prim model, prim-model tasks and sparks at the target's and Moomba's vertices, the bursts with debris, the sprite sparks, the stream, the voice and the sound; the action result"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "voice",
+   "part": "creature",
+   "label": "Voice",
+   "doc": "The voice slot claimed when the creature spawns",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sound",
+   "part": "creature",
+   "label": "Sound",
+   "doc": "At the creature's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

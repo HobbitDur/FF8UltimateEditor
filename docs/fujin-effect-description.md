@@ -2497,3 +2497,24 @@ Potion's description is the same with its own sequences and sound.
      - *Module:* shared (a copy runs on the module's memory): the exe helpers the port calls by their original
        addresses read the module's words.
      - *Fujin:* its tab (Timeline); no + menu family.
+   - **Renzokuken (7 hits) (332)** (FFNx 84f3a5e5; Squall's limit break; a port controller, Ray-Bomb's kind):
+     Squall's animation set and sequence bound (the hits are the sequence's), the gunblade's trail, the
+     sparks, the hits' slashes with their flashes and debris, the two closing rings, the screen flash and his
+     tint, the sound.
+     - *Inputs* (`Renzokuken332Params`): the sound. Data: the sound, "mag140-158-159-258-331-332.tim".
+     - *Tests:* the cycle test pokes seven stage durations (`CYCLE_POKES`); no damage number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken (8 hits) (333)** (FFNx 602b0593; Squall's limit break; a port controller, Ray-Bomb's kind):
+     Squall's animation set and sequence bound (the hits are the sequence's), the gunblade's trail, the
+     sparks, the hits' slashes with their flashes and debris, the two closing rings, the screen flash and his
+     tint, the sound.
+     - *Inputs* (`Renzokuken333Params`): the sound. Data: the sound, "mag140-158-159-258-331-332.tim".
+     - *Tests:* the cycle test pokes eight stage durations (`CYCLE_POKES`); no damage number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Moomba (338)** (FFNx 162c7380; the GF's Friendship, the timeline family; a port timeline, Ray-Bomb's kind): the
+     screen flash, Moomba, the ring prim model, prim-model tasks and sparks at the target's and Moomba's
+     vertices, the bursts with debris, the sprite sparks, the stream, the voice and the sound; the action result.
+     - *Inputs* (`MoombaParams`): the voice, the sound. Data: the sounds (its textures are exe data).
+     - *Module:* shared (a copy runs on the module's memory): the exe helpers the port calls by their original
+       addresses read the module's words.
+     - *Fujin:* its tab (Creature); no + menu family.
