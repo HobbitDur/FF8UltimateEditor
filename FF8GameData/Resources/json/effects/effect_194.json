@@ -1,0 +1,71 @@
+{
+ "format": 1,
+ "effect": 194,
+ "name": "Flame Shot",
+ "doc": "Flame Shot (Irvine's Shot limit break): the root - his animation set and chains, the afterimages of his gun, per shot the muzzle flashes and smoke, the flaming bullet's flight and its fire burst, the action result and the gun sound; the closing action; the setup called again for each trigger press (its sequence mode). Its tasks are the port's code (FFNx mag194_flame_shot.cpp) run on the program's memory (its pools, shot records and ghost slots in the module, its packets in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5B4C40",
+   "setup": "0x5B4C60",
+   "root": "0x5B7080"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 194,
+  "from": "0x2271470",
+  "size": "0x5308",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD12EB4",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xD12E64",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5B4C60",
+  "file_loader": "0x5B4C40",
+  "root": "0x5B7080"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "shot",
+   "title": "Shot",
+   "doc": "Irvine's Flame Shot: his animation set and chains, the afterimages of his gun, per shot the muzzle flashes and smoke, the flaming bullet's flight and its fire burst, the action result and the gun sound; the closing action"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "shot",
+   "label": "Gun",
+   "doc": "At each shot (with its action result)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

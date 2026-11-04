@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 188,
+ "name": "Normal Shot",
+ "doc": "Normal Shot (Irvine's Shot limit break): the root - his animation set and chains, the afterimages of his gun, per shot (the setup called again for each trigger press: its sequence mode) the muzzle flashes, smoke and ground smoke, the impact with its particles, the action result and the gun sound; the closing action. Its tasks are the port's code (FFNx mag188_normal_shot.cpp) run on the program's memory (its pools, shot records and ghost slots in the module, its packets in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5BE320",
+   "setup": "0x5BE340",
+   "root": "0x5BF650"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 188,
+  "from": "0x22B2A38",
+  "size": "0x4BBC"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD1DA54",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xD1DA28",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5BE340",
+  "file_loader": "0x5BE320",
+  "root": "0x5BF650"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "shot",
+   "title": "Shot",
+   "doc": "Irvine's Normal Shot: his animation set and chains, the afterimages of his gun, per shot the muzzle flashes, smoke and ground smoke, the impact with its particles, the action result and the gun sound; the closing action"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "shot",
+   "label": "Gun",
+   "doc": "At each shot (with its action result)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

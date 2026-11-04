@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 198,
+ "name": "Hyper Shot",
+ "doc": "Hyper Shot (Irvine's Shot limit break): the root - his animation set and chains, the afterimages of his gun, per shot the muzzle flashes and smoke, the hyper beam and its blast, the action result and the gun sound; the closing action; the setup called again for each trigger press (its sequence mode). Its tasks are the port's code (FFNx mag198_hyper_shot.cpp) run on the program's memory (its pools, shot records and ghost slots in the module, its packets in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5AA3C0",
+   "setup": "0x5AA3E0",
+   "root": "0x5AEC90"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 198,
+  "from": "0x225A908",
+  "size": "0x5B5C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xCFB33C",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xCFB2FC",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5AA3E0",
+  "file_loader": "0x5AA3C0",
+  "root": "0x5AEC90"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "shot",
+   "title": "Shot",
+   "doc": "Irvine's Hyper Shot: his animation set and chains, the afterimages of his gun, per shot the muzzle flashes and smoke, the hyper beam and its blast, the action result and the gun sound; the closing action"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "shot",
+   "label": "Gun",
+   "doc": "At each shot (with its action result)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

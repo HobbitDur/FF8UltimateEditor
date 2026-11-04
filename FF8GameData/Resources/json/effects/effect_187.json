@@ -1,0 +1,126 @@
+{
+ "format": 1,
+ "effect": 187,
+ "name": "Odin",
+ "doc": "Odin (the GF's Zantetsuken; the timeline family): the master and the 289-tick timeline - the camera script, the summon stream's loads, the grids, debris and intro, the creature with its blade glow, smoke, rings, mist, sparks and slashes, the target slices, the party hidden, the screen flash, the voice and the sounds; the action result. Its tasks are the port's code (FFNx mag187_odin.cpp) run on the program's memory (its pools and model data in the magic buffer); its texture is exe data (the setup's), its file loader the engine's nullsub.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x6472E0",
+   "root": "0x64DD50"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 187,
+  "from": "0x24FD458",
+  "size": "0x14A8",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "voice": {
+   "kind": "sound",
+   "address": "0xE41CE8",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xE41E40",
+   "size": 4
+  },
+  "sounds.sword": {
+   "kind": "sound",
+   "address": "0xE41E44",
+   "size": 4
+  },
+  "sounds.slash": {
+   "kind": "sound",
+   "address": "0xE41E48",
+   "size": 4
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6472E0",
+  "file_loader": "0x0",
+  "root": "0x64DD50"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timeline",
+   "title": "Timeline",
+   "doc": "Odin's Zantetsuken: the camera script, the summon stream's loads, the grids, debris and intro, the creature with its blade glow, smoke, rings, mist, sparks and slashes, the target slices, the party hidden, the screen flash, the voice and the sounds; the action result"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the timeline's ticks 1, 111, 167"
+  }
+ ],
+ "params": [
+  {
+   "key": "voice",
+   "part": "timeline",
+   "label": "Voice",
+   "doc": "The voice slot claimed at the timeline's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "timeline",
+   "label": "Start",
+   "doc": "At the timeline's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.sword",
+   "part": "timeline",
+   "label": "Sword",
+   "doc": "At the timeline's tick 111",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.sword",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.slash",
+   "part": "timeline",
+   "label": "Slash",
+   "doc": "At the timeline's tick 167",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.slash",
+   "unit": "plain"
+  },
+  {
+   "key": "timeline.damage",
+   "part": "timeline",
+   "label": "Damage tick",
+   "doc": "The action result at this tick of the timeline",
+   "type": "i16",
+   "min": 0,
+   "max": 288,
+   "default": 287,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

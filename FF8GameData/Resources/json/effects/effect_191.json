@@ -1,0 +1,158 @@
+{
+ "format": 1,
+ "effect": 191,
+ "name": "Doomtrain",
+ "doc": "Doomtrain (the GF's Runaway Train; the timeline family): the master and the 424-tick timeline - the camera script, the summon stream's loads, the sky, the rails and rig, the train with its smoke, sparks and rain, the debris, the flashes, the voice and the sounds; the action result. Its tasks are the port's code (FFNx mag191_doomtrain.cpp) run on the module's memory (shared: the camera-script interpreter's state lives in it); its texture is exe data (the setup's), its file loader the engine's nullsub.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x63E730",
+   "root": "0x6472C0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 191,
+  "from": "0x24FBD68",
+  "size": "0x16D0",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "voice": {
+   "kind": "sound",
+   "address": "0xE3C774",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xE3C8A8",
+   "size": 4
+  },
+  "sounds.horn": {
+   "kind": "sound",
+   "address": "0xE3C8AC",
+   "size": 4
+  },
+  "sounds.wheels": {
+   "kind": "sound",
+   "address": "0xE3C8B0",
+   "size": 4
+  },
+  "sounds.rush": {
+   "kind": "sound",
+   "address": "0xE3C8B4",
+   "size": 4
+  },
+  "sounds.end": {
+   "kind": "sound",
+   "address": "0xE3C8B8",
+   "size": 4
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x63E730",
+  "file_loader": "0x0",
+  "root": "0x6472C0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timeline",
+   "title": "Timeline",
+   "doc": "Doomtrain's Runaway Train: the camera script, the summon stream's loads, the sky, the rails and rig, the train with its smoke, sparks and rain, the debris, the flashes, the voice and the sounds; the action result"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the timeline's ticks 4, 160, 294, 336, 417"
+  }
+ ],
+ "params": [
+  {
+   "key": "voice",
+   "part": "timeline",
+   "label": "Voice",
+   "doc": "The voice slot claimed at the timeline's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "timeline",
+   "label": "Start",
+   "doc": "At the timeline's tick 4",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.horn",
+   "part": "timeline",
+   "label": "Horn",
+   "doc": "At the timeline's tick 160",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.horn",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.wheels",
+   "part": "timeline",
+   "label": "Wheels",
+   "doc": "At the timeline's tick 294",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.wheels",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.rush",
+   "part": "timeline",
+   "label": "Rush",
+   "doc": "At the timeline's tick 336",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.rush",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.end",
+   "part": "timeline",
+   "label": "End",
+   "doc": "At the timeline's tick 417",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.end",
+   "unit": "plain"
+  },
+  {
+   "key": "timeline.damage",
+   "part": "timeline",
+   "label": "Damage tick",
+   "doc": "The action result at this tick of the timeline",
+   "type": "i16",
+   "min": 0,
+   "max": 423,
+   "default": 420,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

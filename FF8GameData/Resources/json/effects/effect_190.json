@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 190,
+ "name": "Chain Gun",
+ "doc": "Chain Gun (GIM47N's attack): the root and the master - the muzzle flashes, the smoke, the twelve shots (hits on the target with their sparks, misses on the ground with their dust), the sound; the damage. Its tasks are the port's code (FFNx mag190_chain_gun.cpp) run on the program's memory (its pools and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5BB2A0",
+   "setup": "0x5BB2C0",
+   "root": "0x5BC900"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 190,
+  "from": "0x2281B18",
+  "size": "0x1242C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD19574",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xD1956C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5BB2C0",
+  "file_loader": "0x5BB2A0",
+  "root": "0x5BC900"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The muzzle flashes, the smoke, the twelve shots (hits on the target with their sparks, misses on the ground with their dust), the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "At the master's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "master.damage",
+   "part": "master",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the master",
+   "type": "i16",
+   "min": 0,
+   "max": 36,
+   "default": 30,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

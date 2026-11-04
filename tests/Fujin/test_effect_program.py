@@ -244,6 +244,18 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    198: ("mag197.tim", 1, "sound 22311280\n"),
+    197: ("mag196.tim", 1, "sound 22311280\n"),
+    196: ("mag195.tim", 1, "sound 22311280\n"),
+    195: ("mag194.tim", 1, "sound 22311280\n"),
+    194: ("mag193.tim", 1, "sound 22311280\n"),
+    193: ("mag192.tim", 1, "sound 22311280\n"),
+    192: ("mag191.tim", 1, "sound 22311280\n"),
+    191: ("mag190.tim", 7, "sounds.start 22311280\nsounds.end 22311276\ntimeline.damage 400\n"),
+    190: ("mag149.tim", 2, "sound 22311280\nmaster.damage 25\n"),
+    189: ("mag188.tim", 2, "sound 22311280\nmain.result 50\n"),
+    188: ("mag187.tim", 1, "sound 22311280\n"),
+    187: ("mag186.tim", 5, "sounds.start 22311280\nsounds.slash 22311276\ntimeline.damage 270\n"),
     185: ("mag184.tim", 6, "sounds.start 22311280\nsounds.blast 22311276\ntimeline.damage 250\n"),
     184: ("mag153.tim", 2, "sound 22311280\ncontroller.damage 30\n"),
     183: ("mag182.tim", 2, "sound 22311280\ndirector.result 20\n"),
@@ -425,9 +437,12 @@ CYCLE_STAGES = {69: 142, 146: 0}
 # more monsters an effect needs (Biggs and Wedge's first death sweeps its two targets): slot -> file, every target
 CYCLE_MONSTERS = {110: {4: "c0m073.dat"}}
 # a cast of its own (a monster's attack on the party: Geezard's Bad Breath, Cockatrice's Electric Discharge, Gayla's Gastric Juice, Grendel's Breath, Malboro's): caster slot, target slot, slot 3's monster
-CYCLE_CASTS = {113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat"), 139: (3, 0, "c0m099.dat"), 152: (3, 0, "c0m018.dat"), 153: (3, 0, "c0m017.dat"), 154: (3, 0, "c0m017.dat"), 155: (3, 0, "c0m020.dat"), 159: (0, 3, "c0m092.dat"), 161: (0, 3, "c0m091.dat"), 168: (3, 0, "c0m015.dat"), 169: (3, 0, "c0m015.dat"), 176: (3, 0, "c0m046.dat"), 179: (3, 0, "c0m043.dat"), 180: (3, 0, "c0m043.dat")}
+CYCLE_CASTS = {113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat"), 139: (3, 0, "c0m099.dat"), 152: (3, 0, "c0m018.dat"), 153: (3, 0, "c0m017.dat"), 154: (3, 0, "c0m017.dat"), 155: (3, 0, "c0m020.dat"), 159: (0, 3, "c0m092.dat"), 161: (0, 3, "c0m091.dat"), 168: (3, 0, "c0m015.dat"), 169: (3, 0, "c0m015.dat"), 176: (3, 0, "c0m046.dat"), 179: (3, 0, "c0m043.dat"), 180: (3, 0, "c0m043.dat"), 190: (3, 0, "c0m008.dat")}
 # what the battle's AnimSeq VM (not run by the recorder) would have written: Renzokuken's stage durations (opcode AB)
 CYCLE_POKES = {141: ["poke=0x1D98214:4,10,9,10,9,14"], 159: ["poke=0x1D98214:4,10,9,10,9,14"], 160: ["poke=0x1D98214:4,10,9,10,9,14"], 161: ["poke=0x1D98214:4,10,9,10,9,14"]}
+# what the battle's Shot window does for each trigger press: the setup called again with the sequence mode (2 a shot,
+# 1 the closing action)
+CYCLE_RECALLS = {188: ["recall=10:2,20:2,30:2,45:1"], 192: ["recall=10:2,20:2,30:2,45:1"], 193: ["recall=10:2,20:2,30:2,45:1"], 194: ["recall=10:2,20:2,30:2,45:1"], 195: ["recall=10:2,20:2,30:2,45:1"], 196: ["recall=10:2,20:2,30:2,45:1"], 197: ["recall=10:2,20:2,30:2,45:1"], 198: ["recall=10:2,20:2,30:2,45:1"]}
 
 # frames an exe quirk draws differently in a copy, left out of the comparisons (R numbers [from, to)): Siren's
 # splash task picks surface vertices past its table 0x258EC70, in the load-script pool's nodes (their pointers);
@@ -468,7 +483,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend and Ultra Waves (Quistis) and Shiva from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot and Armor Shot and Hyper Shot from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -479,6 +494,7 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
         caster, target, monster = CYCLE_CASTS[effect]
         stage += [f"caster={caster}", f"target={target}", f"slot3={BATTLE / monster}"]
     stage += CYCLE_POKES.get(effect, [])
+    stage += CYCLE_RECALLS.get(effect, [])
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
     original, _log = record(tmp_path, effect, "original", *stage)
     described, log = record(tmp_path, effect, "described", f"program={program}", *stage)
@@ -2026,4 +2042,88 @@ def test_shiva_description_compiles():
     """Shiva: a port timeline (Ray-Bomb's kind) on a shared module - its setup and file loader the port's, the exe's own renderers reading the module's words."""
     lines = compile_program(load_description(185)).splitlines()
     for line in ['director port -1', 'port 0x5C0D50 0x5C0D30 0x5C7F50', 'module 185 0x22BC128 0xFD8']:
+        assert line in lines, line
+
+
+def test_odin_description_compiles():
+    """Odin: a port timeline (Ray-Bomb's kind) on a shared module - its setup the port's (the file loader is the engine's nullsub, the texture exe data), the exe's own renderers reading and writing the module's words."""
+    lines = compile_program(load_description(187)).splitlines()
+    for line in ['director port -1', 'port 0x6472E0 0x0 0x64DD50', 'module 187 0x24FD458 0x14A8']:
+        assert line in lines, line
+
+
+def test_normal_shot_description_compiles():
+    """Normal Shot: a port root (Ray-Bomb's kind) - its setup (by the cast's sequence mode: the opening, a shot, the closing action) and file loader the port's, run on the program's memory; three shots and the closing action recalled like the battle's Shot window."""
+    lines = compile_program(load_description(188)).splitlines()
+    for line in ['director port -1', 'port 0x5BE340 0x5BE320 0x5BF650', 'module 188 0x22B2A38 0x4BBC']:
+        assert line in lines, line
+
+
+def test_wall_description_compiles():
+    """Wall: a port main task (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools, capture packets and packet arenas in the module)."""
+    lines = compile_program(load_description(189)).splitlines()
+    for line in ['director port -1', 'port 0x5BC960 0x5BC940 0x5BE290', 'module 189 0x2293F4C 0x1EAE8']:
+        assert line in lines, line
+
+
+def test_chain_gun_description_compiles():
+    """Chain Gun: a port master (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and packet arenas in the module); cast by GIM47N."""
+    lines = compile_program(load_description(190)).splitlines()
+    for line in ['director port -1', 'port 0x5BB2C0 0x5BB2A0 0x5BC900', 'module 190 0x2281B18 0x1242C']:
+        assert line in lines, line
+
+
+def test_doomtrain_description_compiles():
+    """Doomtrain: a port timeline (Ray-Bomb's kind) on a shared module - its setup the port's (the file loader is the engine's nullsub, the texture exe data), run on the module's memory (the camera-script interpreter's state lives in it)."""
+    lines = compile_program(load_description(191)).splitlines()
+    for line in ['director port -1', 'port 0x63E730 0x0 0x6472C0', 'module 191 0x24FBD68 0x16D0']:
+        assert line in lines, line
+
+
+def test_scatter_shot_description_compiles():
+    """Scatter Shot: a port root (Ray-Bomb's kind) - its setup (by the cast's sequence mode: the opening, a shot, the closing action) and file loader the port's, run on the program's memory; three shots and the closing action recalled like the battle's Shot window."""
+    lines = compile_program(load_description(192)).splitlines()
+    for line in ['director port -1', 'port 0x5B96F0 0x5B96D0 0x5BB1B0', 'module 192 0x227B338 0x67DC']:
+        assert line in lines, line
+
+
+def test_dark_shot_description_compiles():
+    """Dark Shot: a port root (Ray-Bomb's kind) - its setup (by the cast's sequence mode: the opening, a shot, the closing action) and file loader the port's, run on the program's memory; three shots and the closing action recalled like the battle's Shot window."""
+    lines = compile_program(load_description(193)).splitlines()
+    for line in ['director port -1', 'port 0x5B7190 0x5B7170 0x5B95E0', 'module 193 0x2276778 0x4BBC']:
+        assert line in lines, line
+
+
+def test_flame_shot_description_compiles():
+    """Flame Shot: a port root (Ray-Bomb's kind) - its setup (by the cast's sequence mode: the opening, a shot, the closing action) and file loader the port's, run on the program's memory; three shots and the closing action recalled like the battle's Shot window."""
+    lines = compile_program(load_description(194)).splitlines()
+    for line in ['director port -1', 'port 0x5B4C60 0x5B4C40 0x5B7080', 'module 194 0x2271470 0x5308']:
+        assert line in lines, line
+
+
+def test_canister_shot_description_compiles():
+    """Canister Shot: a port root (Ray-Bomb's kind) - its setup (by the cast's sequence mode: the opening, a shot, the closing action) and file loader the port's, run on the program's memory; three shots and the closing action recalled like the battle's Shot window."""
+    lines = compile_program(load_description(195)).splitlines()
+    for line in ['director port -1', 'port 0x5B2A40 0x5B2A20 0x5B4BC0', 'module 195 0x226A970 0x6AFC']:
+        assert line in lines, line
+
+
+def test_quick_shot_description_compiles():
+    """Quick Shot: a port root (Ray-Bomb's kind) - its setup (by the cast's sequence mode: the opening, a shot, the closing action) and file loader the port's, run on the program's memory; three shots and the closing action recalled like the battle's Shot window."""
+    lines = compile_program(load_description(196)).splitlines()
+    for line in ['director port -1', 'port 0x5B1900 0x5B18E0 0x5B29A0', 'module 196 0x2265DB0 0x4BBC']:
+        assert line in lines, line
+
+
+def test_armor_shot_description_compiles():
+    """Armor Shot: a port root (Ray-Bomb's kind) - its setup (by the cast's sequence mode: the opening, a shot, the closing action) and file loader the port's, run on the program's memory; three shots and the closing action recalled like the battle's Shot window."""
+    lines = compile_program(load_description(197)).splitlines()
+    for line in ['director port -1', 'port 0x5AED30 0x5AED10 0x5B17F0', 'module 197 0x2260468 0x5948']:
+        assert line in lines, line
+
+
+def test_hyper_shot_description_compiles():
+    """Hyper Shot: a port root (Ray-Bomb's kind) - its setup (by the cast's sequence mode: the opening, a shot, the closing action) and file loader the port's, run on the program's memory; three shots and the closing action recalled like the battle's Shot window."""
+    lines = compile_program(load_description(198)).splitlines()
+    for line in ['director port -1', 'port 0x5AA3E0 0x5AA3C0 0x5AEC90', 'module 198 0x225A908 0x5B5C']:
         assert line in lines, line

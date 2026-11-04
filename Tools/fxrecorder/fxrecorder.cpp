@@ -98,6 +98,10 @@ struct Opt
 	// poke=ADDR:b,b,..: bytes written after the setup - what the battle's AnimSeq VM (not run here) would have written
 	// (Renzokuken's stage durations, AnimSeq opcode AB: 0x1D98214 = n, then n + 1 frame counts)
 	std::vector<std::pair<uint32_t, std::vector<uint8_t>>> pokes;
+	// recall=T:MODE,..: at the effect's tick T its setup called again, the cast context's sequence mode (+8) = MODE and its
+	// done flag (+9) cleared - what the battle's Shot window does for each trigger press (BattleActionSequence_Tick_Shot
+	// 0x50BEE0: 2 a shot, 1 the closing action)
+	std::vector<std::pair<int, int>> recalls;
 	bool cast() const { for (int k = 0; k < 7; k++) if (!body[k].empty()) return true; return false; }
 };
 static Opt O;
@@ -916,14 +920,28 @@ static void set_camera(int t)
 }
 
 // ---------------------------------------------------------------- run
+static uint32_t g_setup_fn = 0;   // the effect's setup (Magic_GetIDLoad's), called again by recall=
 static bool run_setup()
 {
 	__try
 	{
 		uint32_t fn = 0;
 		((void (__cdecl *)(int, uint32_t *))0x50AF20)(O.eff, &fn); // Magic_GetIDLoad
+		g_setup_fn = fn;
 		*(uint16_t *)0x1D97728 = 0xFFFF;
 		*(uint32_t *)C3_28 = ((uint32_t (__cdecl *)(uint32_t))fn)(0x1D99A78);
+		return true;
+	}
+	__except (filter(GetExceptionInformation())) { return false; }
+}
+// the battle's Shot window: the setup called again (MAGIC_EFFECT_LOGIC_CALLBACK) with the sequence mode, its return ignored
+static bool run_recall(int mode)
+{
+	__try
+	{
+		*(uint8_t *)(0x1D99A78 + 8) = (uint8_t)mode;
+		*(uint8_t *)(0x1D99A78 + 9) = 0;
+		if (g_setup_fn) ((uint32_t (__cdecl *)(uint32_t))g_setup_fn)(0x1D99A78);
 		return true;
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
@@ -982,6 +1000,15 @@ static bool parse(int argc, char **argv)
 			}
 			O.pokes.push_back({ (uint32_t)strtoul(v.substr(0, colon).c_str(), nullptr, 0), bytes });
 		}
+		else if (k == "recall")
+			for (size_t at = 0; at < v.size();)
+			{
+				size_t comma = v.find(',', at);
+				const std::string one = v.substr(at, comma == std::string::npos ? std::string::npos : comma - at);
+				const size_t colon = one.find(':');
+				O.recalls.push_back({ atoi(one.c_str()), colon == std::string::npos ? 2 : atoi(one.c_str() + colon + 1) });
+				at = comma == std::string::npos ? v.size() : comma + 1;
+			}
 		else if (k == "targets") O.targets = atoi(v.c_str());
 		else if (k == "caster") O.caster = atoi(v.c_str());
 		else if (k == "seed") O.seed = (uint32_t)strtoul(v.c_str(), nullptr, 10);
@@ -1399,7 +1426,14 @@ int main(int argc, char **argv)
 		g_rec = true;
 		int r = 0;
 		step_plan();
-		bool ok = run_tick(&r);
+		bool ok = true;
+		for (const auto &rc : O.recalls)
+			if (rc.first == t - cast_ticks && !run_recall(rc.second))
+			{
+				printf("tick %d: recall faulted %08lX at eip %08lX addr %08lX\n", t, g_fault_code, g_fault_eip, g_fault_addr);
+				ok = false;
+			}
+		if (ok) ok = run_tick(&r);
 		if (ok) render_actors();
 		spend_plan();
 		g_rec = false;

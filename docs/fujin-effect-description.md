@@ -2088,3 +2088,93 @@ Potion's description is the same with its own sequences and sound.
        (0x5C26A0, 0x5C3D10, 0x5C7AB0, ...) read the module's words.
      - *Port:* the spawn helper `LinkTask` goes through own::Fn.
      - *Fujin:* its tab (Timeline); no + menu family.
+   - **Odin (187)** (FFNx f1dcacb5; the GF's Zantetsuken, the timeline family; a port timeline, Ray-Bomb's kind):
+     the camera script, the summon stream's loads, the grids, debris and intro, the creature with its blade
+     glow, smoke, rings, mist, sparks and slashes, the target slices, the party hidden, the screen flash, the
+     voice and the sounds (ticks 1, 111, 168); the action result at tick 287.
+     - *Inputs* (`OdinParams`): the voice, the three sounds, the damage tick. Data: the sounds (the texture
+       is exe data, the file loader the engine's nullsub).
+     - *Module:* shared (a copy runs on the module's memory): the exe's own renderers the port calls (the
+       grid's writes the packet cursor itself).
+     - *Port:* the spawn helper `LinkTask` goes through own::Fn.
+     - *Fujin:* its tab (Timeline); no + menu family.
+   - **Normal Shot (188)** (FFNx e7faa922; Irvine's Shot limit break; a port root, Ray-Bomb's kind): his
+     animation set and chains, the afterimages of his gun, per shot the muzzle flashes, smoke and ground smoke,
+     the impact with its particles, the action result and the gun sound; the closing action.
+     - *Setup:* run again for each trigger press of the Shot window (BattleActionSequence_Tick_Shot 0x50BEE0):
+       the cast's sequence mode (+8) 0 the opening, 2 a shot, 1 the closing action.
+     - *Inputs* (`NormalShotParams`): the gun sound. Data: the sound, "mag187.tim".
+     - *Tests:* the recorder's `recall=T:MODE` calls the setup again like the Shot window: the cycle test
+       fires three shots and the closing action (`CYCLE_RECALLS`).
+     - *Fujin:* its tab (Shot); no + menu family.
+   - **Wall (189)** (FFNx a46deb2b; the magic, Selphie's Slot; a port main task, Ray-Bomb's kind): the stage
+     captured, the 24 shards on an ellipse, the wall rising through its plane (the camera shake), the dust and
+     debris, the sound; the action results at tick 65.
+     - *Inputs* (`WallParams`): the sound, the result tick. Data: the sound, "mag188.tim".
+     - *Port:* the spawn helper `AddTask` goes through own::Fn.
+     - *Fujin:* its tab (Main); no + menu family.
+   - **Chain Gun (190)** (FFNx 42580b37; GIM47N's attack; a port master, Ray-Bomb's kind): the muzzle flashes,
+     the smoke, the twelve shots (hits on the target with their sparks, misses on the ground with their
+     dust), the sound; the damage at tick 30.
+     - *Inputs* (`ChainGunParams`): the sound, the damage tick. Data: the sound, "mag149.tim".
+     - *Port:* the spawn helper `AddTask` goes through own::Fn.
+     - *Tests:* the cycle test casts it from GIM47N (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Master); no + menu family.
+   - **Doomtrain (191)** (FFNx 20a41e9e; the GF's Runaway Train, the timeline family; a port timeline, Ray-Bomb's
+     kind): the camera script, the summon stream's loads, the sky, the rails and rig, the train with its
+     smoke, sparks and rain, the debris, the flashes, the voice and the sounds (ticks 4, 160, 294, 336, 417);
+     the action result at tick 420.
+     - *Inputs* (`DoomtrainParams`): the voice, the five sounds, the damage tick. Data: the sounds (the
+       texture is exe data, the file loader the engine's nullsub).
+     - *Module:* shared and not relocated: the camera-script interpreter (MAG_066 0x63E9C0) in this file
+       keeps its state in the module for Shiva, Odin, Cactuar and the other GFs that queue it.
+     - *Fujin:* its tab (Timeline); no + menu family.
+   - **Scatter Shot (192)** (FFNx 496123e2; Irvine's Shot limit break; a port root, Ray-Bomb's kind, as Normal Shot 188):
+     his animation set and chains, the afterimages of his gun, per shot the muzzle flashes, smoke, blast and ground smoke, the impacts (or the misses' rings and dust), the action results and the gun sound; the closing action.
+     - *Setup:* run again for each trigger press of the Shot window (the cast's sequence mode: 0 the opening,
+       2 a shot, 1 the closing action).
+     - *Inputs* (`ScatterShotParams`): the gun sound. Data: the sound, "mag191.tim".
+     - *Tests:* three shots and the closing action recalled (`CYCLE_RECALLS`).
+     - *Fujin:* its tab (Shot); no + menu family.
+   - **Dark Shot (193)** (FFNx d6a8ca38; Irvine's Shot limit break; a port root, Ray-Bomb's kind, as Normal Shot 188):
+     his animation set and chains, the afterimages of his gun, per shot the muzzle flashes and smoke, the dark impact with its particles, the action result and the gun sound; the closing action.
+     - *Setup:* run again for each trigger press of the Shot window (the cast's sequence mode: 0 the opening,
+       2 a shot, 1 the closing action).
+     - *Inputs* (`DarkShotParams`): the gun sound. Data: the sound, "mag192.tim".
+     - *Tests:* three shots and the closing action recalled (`CYCLE_RECALLS`).
+     - *Fujin:* its tab (Shot); no + menu family.
+   - **Flame Shot (194)** (FFNx ca558191; Irvine's Shot limit break; a port root, Ray-Bomb's kind, as Normal Shot 188):
+     his animation set and chains, the afterimages of his gun, per shot the muzzle flashes and smoke, the flaming bullet's flight and its fire burst, the action result and the gun sound; the closing action.
+     - *Setup:* run again for each trigger press of the Shot window (the cast's sequence mode: 0 the opening,
+       2 a shot, 1 the closing action).
+     - *Inputs* (`FlameShotParams`): the gun sound. Data: the sound, "mag193.tim".
+     - *Tests:* three shots and the closing action recalled (`CYCLE_RECALLS`).
+     - *Fujin:* its tab (Shot); no + menu family.
+   - **Canister Shot (195)** (FFNx b9ea2908; Irvine's Shot limit break; a port root, Ray-Bomb's kind, as Normal Shot 188):
+     his animation set and chains, the afterimages of his gun, per shot the muzzle flashes and smoke, the canister's steam, bone smoke and debris, the action result and the gun sound; the closing action.
+     - *Setup:* run again for each trigger press of the Shot window (the cast's sequence mode: 0 the opening,
+       2 a shot, 1 the closing action).
+     - *Inputs* (`CanisterShotParams`): the gun sound. Data: the sound, "mag194.tim".
+     - *Tests:* three shots and the closing action recalled (`CYCLE_RECALLS`).
+     - *Fujin:* its tab (Shot); no + menu family.
+   - **Quick Shot (196)** (FFNx f1412153; Irvine's Shot limit break; a port root, Ray-Bomb's kind, as Normal Shot 188):
+     his animation set and chains, the afterimages of his gun, per shot the muzzle flashes, smoke and ground smoke, the impact with its particles, the action result and the gun sound; the closing action.
+     - *Setup:* run again for each trigger press of the Shot window (the cast's sequence mode: 0 the opening,
+       2 a shot, 1 the closing action).
+     - *Inputs* (`QuickShotParams`): the gun sound. Data: the sound, "mag195.tim".
+     - *Tests:* three shots and the closing action recalled (`CYCLE_RECALLS`).
+     - *Fujin:* its tab (Shot); no + menu family.
+   - **Armor Shot (197)** (FFNx 06c7798b; Irvine's Shot limit break; a port root, Ray-Bomb's kind, as Normal Shot 188):
+     his animation set and chains, the afterimages of his gun, per shot the muzzle flashes and smoke, the piercing arcs and the impact's burst, the action result and the gun sound; the closing action.
+     - *Setup:* run again for each trigger press of the Shot window (the cast's sequence mode: 0 the opening,
+       2 a shot, 1 the closing action).
+     - *Inputs* (`ArmorShotParams`): the gun sound. Data: the sound, "mag196.tim".
+     - *Tests:* three shots and the closing action recalled (`CYCLE_RECALLS`).
+     - *Fujin:* its tab (Shot); no + menu family.
+   - **Hyper Shot (198)** (FFNx c291fd85; Irvine's Shot limit break; a port root, Ray-Bomb's kind, as Normal Shot 188):
+     his animation set and chains, the afterimages of his gun, per shot the muzzle flashes and smoke, the hyper beam and its blast, the action result and the gun sound; the closing action.
+     - *Setup:* run again for each trigger press of the Shot window (the cast's sequence mode: 0 the opening,
+       2 a shot, 1 the closing action).
+     - *Inputs* (`HyperShotParams`): the gun sound. Data: the sound, "mag197.tim".
+     - *Tests:* three shots and the closing action recalled (`CYCLE_RECALLS`).
+     - *Fujin:* its tab (Shot); no + menu family.

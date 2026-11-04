@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 189,
+ "name": "Wall",
+ "doc": "Wall (the magic, Selphie's Slot): the root and the main task - the stage captured, the 24 shards on an ellipse, the wall rising through its plane (the camera shake), the dust and debris, the sound; the action results. Its tasks are the port's code (FFNx mag189_wall.cpp) run on the program's memory (its pools, capture packets and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5BC940",
+   "setup": "0x5BC960",
+   "root": "0x5BE290"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 189,
+  "from": "0x2293F4C",
+  "size": "0x1EAE8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD1B4A8",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xD1B3A4",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5BC960",
+  "file_loader": "0x5BC940",
+  "root": "0x5BE290"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The stage captured, the 24 shards on an ellipse, the wall rising through its plane (the camera shake), the dust and debris, the sound; the action results"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "At the main task's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "main.result",
+   "part": "main",
+   "label": "Result tick",
+   "doc": "The action results at this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 70,
+   "default": 65,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
