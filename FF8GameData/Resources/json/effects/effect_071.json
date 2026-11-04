@@ -1,0 +1,366 @@
+{
+ "format": 1,
+ "effect": 71,
+ "name": "Laser Eye (Quistis)",
+ "doc": "Laser Eye (Quistis' Blue Magic; Counter Laser-Eye's library relocated; the act family, Drain's master): once its children are gone the actor pools and the stage light ramp up, then one emitter per action - the actor system, the caster task (her cast animation bound, the sound, two laser beams from her eyes to the target with their sparks), the master's release, the damage; after the last action a wait, the light ramp down. Its parts are the port's code (FFNx mag071_laser_eye_quistis.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7D6130",
+   "setup": "0x7D6150",
+   "root": "0x7D62A0"
+  },
+  "memory": {
+   "texture_file": "0x25FA408",
+   "packet_cursor": "0x25FA40C",
+   "packet_limit": "0x25FA428",
+   "arena_a": "0x25FCD84",
+   "limit_a": "0x25FC17C",
+   "arena_b": "0x25FCD80",
+   "limit_b": "0x25FC178",
+   "arena_top": "0x25FCDD0",
+   "init_flag_a": "0x25FCDCC",
+   "init_flag_b": "0x25FAAE4",
+   "cam_ptr_a": "0x25FCDA0",
+   "cam_ptr_b": "0x25FA42C",
+   "root_queue": "0x25FA4F8",
+   "root_pool": "0x25FA430",
+   "particle_pool": "0x25FCD8C",
+   "actor_pool": "0x25FCDC8",
+   "particle_next": "0x25FAAE0",
+   "actor_next": "0x25FCD98",
+   "cursor_c": "0x25FCD88",
+   "cursor_d": "0x25FA410",
+   "count_a": "0x25FCD9A",
+   "count_b": "0x25FCD8A"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 71,
+  "from": "0x25FA408",
+  "size": "0x29D0",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1591C30",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x158F534",
+   "size": 340
+  },
+  "caster.sound": {
+   "kind": "sound",
+   "address": "0x158F530",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x6000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared; the stage in task; after the last action its wait, the stage out task; the actor counters cleared every tick",
+   "stage_in": "stage_in",
+   "stage_out": "stage_out",
+   "wait": "$master.wait",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x8340"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25FCC10",
+   "storage": "0x25FCC20",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x25FC970",
+   "storage": "0x25FC180",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "lasers",
+   "queue": "0x25FA508",
+   "storage": "0x25FA518",
+   "size": 148,
+   "count": 10,
+   "keep": true,
+   "doc": "the caster task and the laser beams (the port's)"
+  },
+  {
+   "key": "sparks",
+   "queue": "0x25FAAE8",
+   "storage": "0x25FAAF8",
+   "size": 96,
+   "count": 60,
+   "keep": true,
+   "doc": "the beams' sparks (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x25FCC00",
+   "storage": "0x25FC980",
+   "size": 64,
+   "count": 10
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action: the actor system, the caster task, the master's release, the damage; the master's wait and the stage light"
+  },
+  {
+   "id": 0,
+   "key": "caster",
+   "title": "Caster",
+   "doc": "The caster's cast animation bound, its sound, the two lasers"
+  },
+  {
+   "id": 0,
+   "key": "laser",
+   "title": "Laser",
+   "doc": "A beam from one of the caster's eyes to its target"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "At the emitter's start: Start, Length (ticks), Mode (0: the targets' positions)"
+  },
+  {
+   "key": "light",
+   "label": "Stage light",
+   "doc": "Its ramps up (before the first action) and down (after the wait): Level, Step a tick"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next action at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Damage tick",
+   "doc": "The damage of the action's target from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "master.wait",
+   "part": "emitter",
+   "label": "Wait",
+   "doc": "After the last action, the light ramp down after these ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "emitter",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "emitter",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "light.level",
+   "part": "emitter",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "light.step",
+   "part": "emitter",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "caster.sound",
+   "part": "caster",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@caster.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "caster.sound_tick",
+   "part": "caster",
+   "label": "Sound tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "caster.lasers",
+   "part": "caster",
+   "label": "Lasers tick",
+   "doc": "The two beams from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "laser.appear",
+   "part": "laser",
+   "label": "Appear tick",
+   "doc": "Shown from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "laser.grow",
+   "part": "laser",
+   "label": "Grow",
+   "doc": "Its width up by this a tick (4096: full)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "laser.hold",
+   "part": "laser",
+   "label": "Hold until",
+   "doc": "Held at the eye until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "laser.shrink",
+   "part": "laser",
+   "label": "Shrink",
+   "doc": "At the target, its width down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 2048,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7D65D0",
+   "code": "0x7D65D0",
+   "native": "0x7D65D0",
+   "doc": "One per action: the module's own emitter (the port's task): the actor system, the caster task, the master's release, the damage."
+  },
+  {
+   "key": "stage_in",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x7D64B0",
+   "code": "0x7D64B0",
+   "native": "0x7D64B0",
+   "doc": "The stage light ramp up (the port's task: the four stage light words up a step a tick)."
+  },
+  {
+   "key": "stage_out",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x7DC050",
+   "code": "0x7DC050",
+   "native": "0x7DC050",
+   "doc": "The stage light ramp down (the port's task: from its level down a step a tick to 0)."
+  }
+ ]
+}

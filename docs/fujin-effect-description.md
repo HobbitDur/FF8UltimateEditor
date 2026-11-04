@@ -1454,3 +1454,12 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`PulsarParams`): the voice and the three sounds, the damage, voice release and end ticks.
        Data: the four sounds, "mag069-259.tim".
      - *Fujin:* its tab (Master); no + menu family.
+   - **Laser Eye (Quistis) (71)** (FFNx d4c4e0d1; Quistis' Blue Magic; Counter Laser-Eye's library
+     relocated; the act family with Drain's master, Esuna's description): the actor pools and the light
+     ramp up, one emitter per action - the actor system, the caster task (her cast animation bound, the
+     sound, two laser beams from her eyes to the target with their sparks), the damage; after the last
+     action a wait, the light ramp down.
+     - *Inputs* (`LaserEyeQParams`): the emitter's release and damage ticks, the caster task's sound, its
+       tick and the lasers' tick, the master's wait, the actor system, the beams (appear tick, grow, hold
+       until, shrink), the stage light (level, step). Data: the sound, the camera track, "mag070.tim".
+     - *Fujin:* its tabs (Emitter, Caster, Laser); no + menu family.

@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    71: ("mag070.tim", 15, "caster.lasers 22\nlaser.grow 512\nemitter.result 30\nlight.step 128\n"),
     70: ("mag069-259.tim", 7, "master.damage 200\nmaster.voice_release 240\n"),
     69: (None, 10, "sparks.count 2\nsink.depth 2800\nshatter.speed 14000\nsparks.life 9\n"),
     68: ("mag039-067.tim", 7, "camera.approach 400\ncamera.view 1000\nbrackets.follow 20\nbrackets.grow 1536\n"),
@@ -358,7 +359,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever and Shockwave Pulsar from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar and Laser Eye (Quistis) from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1260,4 +1261,11 @@ def test_shockwave_pulsar_description_compiles():
     """Shockwave Pulsar: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the magic buffer)."""
     lines = compile_program(load_description(70)).splitlines()
     for line in ['director port -1', 'port 0x6DD8D0 0x6DD8E0 0x6DD970', 'module 70 0x2544E78 0xE4']:
+        assert line in lines, line
+
+
+def test_laser_eye_quistis_description_compiles():
+    """Laser Eye (Quistis): Counter Laser-Eye's library relocated (Doom's kind with Drain's master) - its actor pools, the stage light up and down (native tasks) after its wait, its emitter the port's."""
+    lines = compile_program(load_description(71)).splitlines()
+    for line in ['module 71 0x25FA408 0x29D0', 'act_stage 1 2 $2', 'act_pool actor_pool 33600', 'native 0x7D65D0']:
         assert line in lines, line
