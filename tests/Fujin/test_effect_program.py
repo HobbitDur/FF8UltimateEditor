@@ -244,6 +244,13 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    307: ("mag009.tim", 2, "sounds.muzzle 22311280\nsounds.blast 22311276\n"),
+    306: ("mag173.tim", 1, "sound 22311280\n"),
+    305: ("mag149.tim", 2, "sound 22311280\nmaster.damage 25\n"),
+    304: ("mag303.tim", 1, "sound 22311280\n"),
+    300: ("mag130-299.tim", 1, "sound 22311280\n"),
+    299: ("mag283-298.tim", 1, "sound 22311280\n"),
+    297: ("mag296.tim", 1, "sound 22311280\n"),
     291: ("mag290.tim", 6, "sounds.start 22311280\nsounds.drop 22311276\n"),
     289: ("mag288.tim", 1, "sound 22311280\n"),
     288: ("mag287.tim", 1, "sound 22311280\n"),
@@ -455,10 +462,11 @@ CYCLES = {
 # the battle stage an effect draws (Griever shatters Ultimecia's stage models, Tornado redraws its ground): the recorder loads it
 CYCLE_STAGES = {69: 142, 146: 0}
 
-# more monsters an effect needs (Biggs and Wedge's first death sweeps its two targets): slot -> file, every target
-CYCLE_MONSTERS = {110: {4: "c0m073.dat"}}
+# more monsters an effect needs (Biggs and Wedge's first death sweeps its two targets; White Wind (Quistis) records
+# too little on one): slot -> file, every target
+CYCLE_MONSTERS = {110: {4: "c0m073.dat"}, 297: {4: "c0m009.dat"}}
 # a cast of its own (a monster's attack on the party: Geezard's Bad Breath, Cockatrice's Electric Discharge, Gayla's Gastric Juice, Grendel's Breath, Malboro's): caster slot, target slot, slot 3's monster
-CYCLE_CASTS = {113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat"), 139: (3, 0, "c0m099.dat"), 152: (3, 0, "c0m018.dat"), 153: (3, 0, "c0m017.dat"), 154: (3, 0, "c0m017.dat"), 155: (3, 0, "c0m020.dat"), 159: (0, 3, "c0m092.dat"), 161: (0, 3, "c0m091.dat"), 168: (3, 0, "c0m015.dat"), 169: (3, 0, "c0m015.dat"), 176: (3, 0, "c0m046.dat"), 179: (3, 0, "c0m043.dat"), 180: (3, 0, "c0m043.dat"), 190: (3, 0, "c0m008.dat"), 226: (3, 3, "c0m046.dat"), 276: (3, 0, "c0m092.dat"), 277: (3, 0, "c0m058.dat"), 281: (3, 0, "c0m078.dat"), 289: (3, 0, "c0m034.dat")}
+CYCLE_CASTS = {113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat"), 139: (3, 0, "c0m099.dat"), 152: (3, 0, "c0m018.dat"), 153: (3, 0, "c0m017.dat"), 154: (3, 0, "c0m017.dat"), 155: (3, 0, "c0m020.dat"), 159: (0, 3, "c0m092.dat"), 161: (0, 3, "c0m091.dat"), 168: (3, 0, "c0m015.dat"), 169: (3, 0, "c0m015.dat"), 176: (3, 0, "c0m046.dat"), 179: (3, 0, "c0m043.dat"), 180: (3, 0, "c0m043.dat"), 190: (3, 0, "c0m008.dat"), 226: (3, 3, "c0m046.dat"), 276: (3, 0, "c0m092.dat"), 277: (3, 0, "c0m058.dat"), 281: (3, 0, "c0m078.dat"), 289: (3, 0, "c0m034.dat"), 304: (3, 0, "c0m079.dat")}
 # what the battle's AnimSeq VM (not run by the recorder) would have written: Renzokuken's stage durations (opcode AB)
 CYCLE_POKES = {141: ["poke=0x1D98214:4,10,9,10,9,14"], 159: ["poke=0x1D98214:4,10,9,10,9,14"], 160: ["poke=0x1D98214:4,10,9,10,9,14"], 161: ["poke=0x1D98214:4,10,9,10,9,14"], 259: ["poke=0x1D98214:5,10,9,10,9,10,14"]}
 # what the battle's Shot window does for each trigger press: the setup called again with the sequence mode (2 a shot,
@@ -506,7 +514,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot, Armor Shot, Hyper Shot, Cactuar, No Mercy, Burning Rave, My Final Heaven, Different Beat, White Wind (enemy), Renzokuken (6 hits), Shockwave Pulsar (Quistis), LV Up, LV Down, Mad Rush, Duel, Electrocute, X-ATM092 death, Funguar laser, Carbuncle, Full-cure, Shotgun, Rapture and Brrawghh and Pandemona from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot, Armor Shot, Hyper Shot, Cactuar, No Mercy, Burning Rave, My Final Heaven, Different Beat, White Wind (enemy), Renzokuken (6 hits), Shockwave Pulsar (Quistis), LV Up, LV Down, Mad Rush, Duel, Electrocute, X-ATM092 death, Funguar laser, Carbuncle, Full-cure, Shotgun, Rapture, Brrawghh, Pandemona, White Wind (Quistis), Micro Missiles (Quistis), Bad Breath (Quistis), Boomerang Sword, Gatling Gun (Quistis) and Degenerator (Quistis) and Ray-Bomb (Quistis) from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -2892,4 +2900,53 @@ def test_pandemona_description_compiles():
     """Pandemona: a port timeline (Ray-Bomb's kind) on a shared module - its setup the port's (the file loader is the engine's nullsub), the exe's own helpers reading the module's words."""
     lines = compile_program(load_description(291)).splitlines()
     for line in ['director port -1', 'port 0x6ED250 0x0 0x6ED350', 'module 291 0x2556258 0xA0']:
+        assert line in lines, line
+
+
+def test_white_wind_quistis_description_compiles():
+    """White Wind (Quistis): a port root (Ray-Bomb's kind) - its setup (her cast animation bound) and file loader the port's, run on the program's memory (its pools and packet arenas in the magic buffer)."""
+    lines = compile_program(load_description(297)).splitlines()
+    for line in ['director port -1', 'port 0x673000 0x673010 0x6730D0', 'module 297 0x2507908 0x80']:
+        assert line in lines, line
+
+
+def test_micro_missiles_quistis_description_compiles():
+    """Micro Missiles (Quistis): a port root (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and packet arenas in the magic buffer)."""
+    lines = compile_program(load_description(299)).splitlines()
+    for line in ['director port -1', 'port 0x66FCC0 0x66FCD0 0x66FD70', 'module 299 0x2507810 0x6C']:
+        assert line in lines, line
+
+
+def test_bad_breath_quistis_description_compiles():
+    """Bad Breath (Quistis): a port root (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and packet arenas in the magic buffer)."""
+    lines = compile_program(load_description(300)).splitlines()
+    for line in ['director port -1', 'port 0x66EF00 0x66EF10 0x66EFB0', 'module 300 0x2507758 0xB8']:
+        assert line in lines, line
+
+
+def test_boomerang_sword_description_compiles():
+    """Boomerang Sword: a port root (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and packet arenas in the magic buffer)."""
+    lines = compile_program(load_description(304)).splitlines()
+    for line in ['director port -1', 'port 0x669790 0x6697A0 0x669840', 'module 304 0x2507558 0x78']:
+        assert line in lines, line
+
+
+def test_gatling_gun_quistis_description_compiles():
+    """Gatling Gun (Quistis): a port root (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools, particle arrays and packet arenas in the module)."""
+    lines = compile_program(load_description(305)).splitlines()
+    for line in ['director port -1', 'port 0x5A57D0 0x5A57B0 0x5A6BC0', 'module 305 0x2245650 0x12144']:
+        assert line in lines, line
+
+
+def test_degenerator_quistis_description_compiles():
+    """Degenerator (Quistis): a port root (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and particles in the module)."""
+    lines = compile_program(load_description(306)).splitlines()
+    for line in ['director port -1', 'port 0x5A2C90 0x5A2C70 0x5A5760', 'module 306 0x2242590 0x30BC']:
+        assert line in lines, line
+
+
+def test_ray_bomb_quistis_description_compiles():
+    """Ray-Bomb (Quistis): a port root (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and particles in the module)."""
+    lines = compile_program(load_description(307)).splitlines()
+    for line in ['director port -1', 'port 0x5A1170 0x5A1150 0x5A2B00', 'module 307 0x2240EE8 0x16A8']:
         assert line in lines, line

@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 306,
+ "name": "Degenerator (Quistis)",
+ "doc": "Degenerator (Quistis' Blue Magic): the root and the controller - a black vortex swallows the target: the core, pulses, flicker, screen and target rings, the fades, the target pulled in and swallowed, the debris, the texture restore, the sound; the action result. Its tasks are the port's code (FFNx mag306_degenerator_quistis.cpp) run on the program's memory (its pools and particles in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5A2C70",
+   "setup": "0x5A2C90",
+   "root": "0x5A5760"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 306,
+  "from": "0x2242590",
+  "size": "0x30BC"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xCEB2D0",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xCEB284",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5A2C90",
+  "file_loader": "0x5A2C70",
+  "root": "0x5A5760"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "controller",
+   "title": "Controller",
+   "doc": "The black vortex: the core, pulses, flicker, screen and target rings, the fades, the target pulled in and swallowed, the debris, the texture restore, the sound; the action result"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "controller",
+   "label": "Sound",
+   "doc": "At the controller's counter 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

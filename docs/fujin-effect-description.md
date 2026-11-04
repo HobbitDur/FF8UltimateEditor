@@ -2405,3 +2405,41 @@ Potion's description is the same with its own sequences and sound.
      - *Module:* shared (a copy runs on the module's memory): the exe helpers the port calls by their original
        addresses read the module's words.
      - *Fujin:* its tab (Timeline); no + menu family.
+   - **White Wind (Quistis) (297)** (FFNx 4b1a2edd; Quistis' Blue Magic, a copy of the enemy's 226 that binds her
+     cast animation; a port root, Ray-Bomb's kind): the healing wind at the caster and across the party, one
+     sparkle layout per target with its action result, the sound.
+     - *Inputs* (`WhiteWind297Params`): the sound. Data: the sound, "mag296.tim".
+     - *Tests:* cast on two targets (`CYCLE_MONSTERS`: one records too little for the cycle test).
+     - *Fujin:* its tab (Scene); no + menu family.
+   - **Micro Missiles (Quistis) (299)** (FFNx 92980f0e; Quistis' Blue Magic; a port root, Ray-Bomb's kind): her cast
+     animation, six missiles fanned from her to random bones of the target (two miss) with their trails, hits,
+     flashes and sparks, the sound; the action result.
+     - *Inputs* (`MicroMissilesParams`): the launch sound. Data: the sound, "mag283-298.tim".
+     - *Fujin:* its tab (Master); no + menu family.
+   - **Bad Breath (Quistis) (300)** (FFNx 72ffd29d; Quistis' Blue Magic; a port root, Ray-Bomb's kind): her cast
+     animation, the breath meshes from her mouth (following her animation) swept over the enemies, the yellow
+     screen fade, the smoke, one hit task a target, the sound; the action results.
+     - *Inputs* (`BadBreath300Params`): the breath's sound. Data: the sound, "mag130-299.tim".
+     - *Fujin:* its tab (Breath); no + menu family.
+   - **Boomerang Sword (304)** (FFNx 4c826715; the Esthar Soldiers' enemy attack; a port root, Ray-Bomb's kind): the
+     sword thrown from the caster's hand along the targets and back, spinning, with its trail, a hit layout and
+     sparks at each target it passes, the sound; each target's action result.
+     - *Inputs* (`BoomerangSwordParams`): the throw's sound. Data: the sound, "mag303.tim".
+     - *Tests:* cast by an Esthar Soldier (c0m079) on the party (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Main); no + menu family.
+   - **Gatling Gun (Quistis) (305)** (FFNx 87552010; Quistis' Blue Magic, Chain Gun adapted; a port root, Ray-Bomb's
+     kind): her cast animation, the muzzle flashes, the grey smoke, five misses on the line to the target and
+     seven hits on it (with their dust and sparks), the screen flash, the sound; the damage at tick 0x1E.
+     - *Inputs* (`GatlingGunParams`): the sound, the damage tick. Data: the sound, "mag149.tim".
+     - *Fujin:* its tab (Master); no + menu family.
+   - **Degenerator (Quistis) (306)** (FFNx 431a7a57; Quistis' Blue Magic; a port root, Ray-Bomb's kind): a black
+     vortex swallows the target - the core, pulses, flicker, screen and target rings, the fades, the target
+     pulled in and swallowed, the debris, the texture restore, the sound; the action result.
+     - *Inputs* (`DegeneratorParams`): the sound. Data: the sound, "mag173.tim".
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Ray-Bomb (Quistis) (307)** (FFNx 1930289e; Quistis' Blue Magic, Ray-Bomb adapted; a port root, Ray-Bomb's
+     kind): her cast animation, the muzzle at her hand charging, the dust and the flash, the beam to the targets
+     with its sparks, the shockwave rings, puffs and debris, the party thrown up, the texture restore, the
+     sounds; the action results.
+     - *Inputs* (`RayBomb307Params`): the muzzle and blast sounds. Data: the sounds, "mag009.tim".
+     - *Fujin:* its tab (Director); no + menu family.

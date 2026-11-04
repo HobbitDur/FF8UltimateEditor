@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 297,
+ "name": "White Wind (Quistis)",
+ "doc": "White Wind (Quistis' Blue Magic, a copy of the enemy's 226 that binds her cast animation): the root and the scene task - the healing wind at the caster and across the party, one sparkle layout per target with its action result, the sound. Its tasks are the port's code (FFNx mag297_white_wind_quistis.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x673010",
+   "setup": "0x673000",
+   "root": "0x6730D0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 297,
+  "from": "0x2507908",
+  "size": "0x80"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x105BA98",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x105BA94",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x673000",
+  "file_loader": "0x673010",
+  "root": "0x6730D0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "scene",
+   "title": "Scene",
+   "doc": "The healing wind at the caster and across the party, one sparkle layout per target with its result, the sound"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "scene",
+   "label": "Sound",
+   "doc": "At the scene task's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

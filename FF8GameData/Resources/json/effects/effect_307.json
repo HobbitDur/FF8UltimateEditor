@@ -1,0 +1,92 @@
+{
+ "format": 1,
+ "effect": 307,
+ "name": "Ray-Bomb (Quistis)",
+ "doc": "Ray-Bomb (Quistis' Blue Magic, Ray-Bomb adapted): the root and the director - her cast animation, the muzzle at her hand charging, the dust and the flash, the beam to the targets with its sparks, the shockwave rings, puffs and debris, the party thrown up, the texture restore, the sounds; the action results. Its tasks are the port's code (FFNx mag307_ray_bomb_quistis.cpp) run on the program's memory (its pools and particles in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5A1150",
+   "setup": "0x5A1170",
+   "root": "0x5A2B00"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 307,
+  "from": "0x2240EE8",
+  "size": "0x16A8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xCE4158",
+   "size": 12
+  },
+  "sounds.muzzle": {
+   "kind": "sound",
+   "address": "0xCE40CC",
+   "size": 4
+  },
+  "sounds.blast": {
+   "kind": "sound",
+   "address": "0xCE40D0",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5A1170",
+  "file_loader": "0x5A1150",
+  "root": "0x5A2B00"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Her cast animation, the muzzle at her hand charging, the dust and the flash, the beam to the targets with its sparks, the shockwave rings, puffs and debris, the party thrown up, the texture restore, the sounds; the action results"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the muzzle (director tick 0xA); with the shockwave (0x51)"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.muzzle",
+   "part": "director",
+   "label": "Muzzle",
+   "doc": "At the muzzle (director tick 0xA)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.muzzle",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.blast",
+   "part": "director",
+   "label": "Blast",
+   "doc": "With the shockwave (director tick 0x51)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.blast",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

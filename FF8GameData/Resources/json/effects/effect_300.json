@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 300,
+ "name": "Bad Breath (Quistis)",
+ "doc": "Bad Breath (Quistis' Blue Magic): the master and the breath task - her cast animation, the breath meshes from her mouth (following her animation) swept over the enemies, the yellow screen fade, the smoke, one hit task a target, the sound; the action results. Its tasks are the port's code (FFNx mag300_bad_breath_quistis.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x66EF10",
+   "setup": "0x66EF00",
+   "root": "0x66EFB0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 300,
+  "from": "0x2507758",
+  "size": "0xB8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1047110",
+   "size": 16
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x10430F4",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x66EF00",
+  "file_loader": "0x66EF10",
+  "root": "0x66EFB0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "breath",
+   "title": "Breath",
+   "doc": "Her cast animation, the breath meshes from her mouth (it follows her animation) swept over the enemies, the yellow screen fade, the smoke, one hit task a target, the sound; the action results"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "breath",
+   "label": "Sound",
+   "doc": "At counter 10 of the breath task",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

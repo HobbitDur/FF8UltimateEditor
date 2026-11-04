@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 299,
+ "name": "Micro Missiles (Quistis)",
+ "doc": "Micro Missiles (Quistis' Blue Magic): the master and the missile tasks - her cast animation, six missiles fanned from her to random bones of the target (two miss) with their trails, hits, flashes and sparks, the sound; the action result. Its tasks are the port's code (FFNx mag299_micro_missiles_quistis.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x66FCD0",
+   "setup": "0x66FCC0",
+   "root": "0x66FD70"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 299,
+  "from": "0x2507810",
+  "size": "0x6C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x104E320",
+   "size": 16
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x104E2FC",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x66FCC0",
+  "file_loader": "0x66FCD0",
+  "root": "0x66FD70"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "Her cast animation, six missiles fanned from her to random bones of the target (two miss) with their trails, hits, flashes and sparks, the sound; the action result"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "The master's counter 10 (the first missile)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
