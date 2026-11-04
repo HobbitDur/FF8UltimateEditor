@@ -1,0 +1,319 @@
+{
+ "format": 1,
+ "effect": 78,
+ "name": "Mighty Guard",
+ "doc": "Mighty Guard (Iron Giant's and Behemoth's enemy attack; the act family, Drain's master, Shell's scaled particles): once its children are gone the actor pools and the stage darkening in, then one emitter per action target - its sound, the actor system around its target (its particles scaled by the target's height), the master's release, the result (the statuses); after the last target a wait, the darkening out. Its parts are the port's code (FFNx mag078_mighty_guard.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7BE2B0",
+   "setup": "0x7BE2D0",
+   "root": "0x7BE400"
+  },
+  "memory": {
+   "texture_file": "0x25EB530",
+   "packet_cursor": "0x25EB534",
+   "packet_limit": "0x25EB550",
+   "arena_a": "0x25EC4E4",
+   "limit_a": "0x25EB63C",
+   "arena_b": "0x25EC4E0",
+   "limit_b": "0x25EB638",
+   "arena_top": "0x25EC50C",
+   "init_flag_a": "0x25EC508",
+   "init_flag_b": "0x25EB634",
+   "cam_ptr_a": "0x25EC500",
+   "cam_ptr_b": "0x25EB554",
+   "root_queue": "0x25EB620",
+   "root_pool": "0x25EB558",
+   "particle_pool": "0x25EC4EC",
+   "actor_pool": "0x25EC504",
+   "particle_next": "0x25EB630",
+   "actor_next": "0x25EC4F8",
+   "cursor_c": "0x25EC4E8",
+   "cursor_d": "0x25EB538",
+   "count_a": "0x25EC4FA",
+   "count_b": "0x25EC4EA"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its tasks the port's, its parts spawned by them): its memory [from, + size) - in a copy, a block of its own",
+  "effect": 78,
+  "from": "0x25EB530",
+  "size": "0xFE4",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1582054",
+   "size": 16
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1581F98",
+   "size": 188
+  },
+  "emitter.sound": {
+   "kind": "sound",
+   "address": "0x1581F94",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x9000",
+  "release_file": false,
+  "act": {
+   "doc": "Drain's master in the act family's form: once its children are gone the actor pools carved from the arena top and cleared; the stage in task; after the last action its wait, the stage out task; the actor counters cleared every tick",
+   "stage_in": "stage_in",
+   "stage_out": "stage_out",
+   "wait": "$master.wait",
+   "pools": {
+    "particle_pool": "0xEC4",
+    "actor_pool": "0x10680"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25EC370",
+   "storage": "0x25EC380",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "actors",
+   "queue": "0x25EC0D0",
+   "storage": "0x25EB640",
+   "size": 676,
+   "count": 4,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "stage",
+   "queue": "0x25EC360",
+   "storage": "0x25EC0E0",
+   "size": 64,
+   "count": 10
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "emitter",
+   "title": "Emitter",
+   "doc": "One per action target: its sound, the actor system (its particles scaled by the target's height), the master's release, the result; the master's wait and the stage darkening"
+  }
+ ],
+ "groups": [
+  {
+   "key": "actors",
+   "label": "Actor system",
+   "doc": "At the emitter's start: Start, Length (ticks), Mode (0: the targets' positions)"
+  },
+  {
+   "key": "scale",
+   "label": "Particle scale",
+   "doc": "The target's height times this (4096: unit size), clamped"
+  },
+  {
+   "key": "darken",
+   "label": "Stage darkening",
+   "doc": "In (before the first action) and out (after the wait): Level, Step a tick"
+  }
+ ],
+ "params": [
+  {
+   "key": "emitter.sound",
+   "part": "emitter",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@emitter.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.sound_tick",
+   "part": "emitter",
+   "label": "Sound tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.release",
+   "part": "emitter",
+   "label": "Release tick",
+   "doc": "The master may start the next target at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "emitter.result",
+   "part": "emitter",
+   "label": "Result tick",
+   "doc": "The action result (the statuses) from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "master.wait",
+   "part": "emitter",
+   "label": "Wait",
+   "doc": "After the last target, the darkening out after these ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.start",
+   "part": "emitter",
+   "label": "Start",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.length",
+   "part": "emitter",
+   "label": "Length",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "actors.mode",
+   "part": "emitter",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "scale.times",
+   "part": "emitter",
+   "label": "Times",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "scale.min",
+   "part": "emitter",
+   "label": "Min",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "scale.max",
+   "part": "emitter",
+   "label": "Max",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 16384,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.level",
+   "part": "emitter",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step",
+   "part": "emitter",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7BE710",
+   "code": "0x7BE710",
+   "native": "0x7BE710",
+   "doc": "One per action target: the module's own emitter (the port's task): its sound, the actor system, the master's release, the result."
+  },
+  {
+   "key": "stage_in",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x7BE5F0",
+   "code": "0x7BE5F0",
+   "native": "0x7BE5F0",
+   "doc": "The stage darkening in (the port's task: the four stage group words up a step a tick)."
+  },
+  {
+   "key": "stage_out",
+   "pool": "stage",
+   "size": 64,
+   "function": "0x7C4310",
+   "code": "0x7C4310",
+   "native": "0x7C4310",
+   "doc": "The stage darkening out (the port's task: from its level down a step a tick to 0)."
+  }
+ ]
+}

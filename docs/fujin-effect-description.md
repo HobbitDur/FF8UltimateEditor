@@ -1519,3 +1519,12 @@ Potion's description is the same with its own sequences and sound.
      - *Recorder:* every slot entity gets status visual counters (+0x88; updateEntityStatusFlags 0x509D10
        clears the ones a status turns on); the lab build takes mag_eden.cpp for any `apply_eden_*` user.
      - *Fujin:* its tab (Files); no + menu family.
+   - **Mighty Guard (78)** (FFNx 6aad8afe; Iron Giant's and Behemoth's enemy attack; the act family with
+     Drain's master, Esuna's description, Shell's scaled particles): the actor pools, the stage darkening
+     in, one emitter per action target - its sound, the actor system round its target (its particles
+     scaled by the target's height), the result (the statuses); after the last target a wait, the
+     darkening out.
+     - *Inputs* (`MightyGuardParams`): the emitter's sound, its tick, the release and result ticks, the
+       master's wait, the actor system, the particle scale (times the target's height, min, max), the stage
+       darkening (level, step). Data: the sound, the camera track, "mag072-077.tim".
+     - *Fujin:* its tab (Emitter); no + menu family.
