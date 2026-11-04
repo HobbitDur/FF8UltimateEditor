@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 113,
+ "name": "Bad Breath",
+ "doc": "Bad Breath (Geezard's enemy attack): the root - the breath from the caster's mouth: puffs towards a swinging aim point and a spray around the caster's facing, then one target task a party target: the rising cloud, the target redrawn swayed, the cloud layout, the sound; the damage. Its tasks are the port's code (FFNx mag113_bad_breath.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6CAC30",
+   "setup": "0x6CAC20",
+   "root": "0x6CACD0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 113,
+  "from": "0x2521870",
+  "size": "0x70"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12C360C",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x12C1600",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6CAC20",
+  "file_loader": "0x6CAC30",
+  "root": "0x6CACD0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "breath",
+   "title": "Breath",
+   "doc": "The breath from the caster's mouth: puffs towards the swinging aim point and the spray, then a target task a party target: the rising cloud, the target swayed, the cloud layout, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "breath",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "target.damage",
+   "part": "breath",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of a target's task",
+   "type": "i16",
+   "min": 0,
+   "max": 37,
+   "default": 27,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

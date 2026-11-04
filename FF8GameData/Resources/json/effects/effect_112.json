@@ -1,0 +1,92 @@
+{
+ "format": 1,
+ "effect": 112,
+ "name": "Meteor Barret",
+ "doc": "Meteor Barret (Zell's Duel finisher): the root - one director an action on its first target: Zell's run-up (his animation set bound, the camera blob made current), the rising column, sparks, smoke and debris, his fist layout, the jump onto the target and the impact layouts, screen flashes and tiles, Zell faded and put back, the sounds; the damage. Its tasks are the port's code (FFNx mag112_meteor_barret.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6CBBF0",
+   "setup": "0x6CBBE0",
+   "root": "0x6CBCF0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 112,
+  "from": "0x25218E0",
+  "size": "0x90"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12DB750",
+   "size": 12
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x12DB654",
+   "size": 4
+  },
+  "sounds.hit": {
+   "kind": "sound",
+   "address": "0x12DB658",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6CBBE0",
+  "file_loader": "0x6CBBF0",
+  "root": "0x6CBCF0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "One director an action: Zell's run-up, the rising column, sparks, smoke and debris, his fist layout, the jump onto the target and the impact layouts, the screen flashes and tiles, the sounds; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the director's ticks 2 and 0x49"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.hit",
+   "part": "director",
+   "label": "Hit",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.hit",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

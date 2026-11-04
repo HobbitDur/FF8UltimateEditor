@@ -1755,3 +1755,28 @@ Potion's description is the same with its own sequences and sound.
      with its orbs and sparks, the 3D sound; the status at tick 86.
      - *Inputs* (`DemiParams`): the sound, the status tick. Data: the sound, "mag106.tim".
      - *Fujin:* its tab (Target); no + menu family.
+   - **Biggs and Wedge's first death (110)** (FFNx 61dbab10; their death scripts' effect at the Dollet
+     tower; a port director, Ray-Bomb's kind): a storm from above sweeping the targets (Storm Breath's
+     stream turned round), its sparks, debris and rings, the targets hit, pushed and blown away (their
+     reactions and battle texts), then hidden; the wind's sound. No damage.
+     - *Inputs* (`StormParams`): the wind's sound. Data: the sound, "mag010.tim" (Storm Breath's).
+     - *Port:* the sound position is an accessor (a static would keep the game's address in a copy).
+     - *Recorder:* the slot's battle text 0x487750 is stubbed (no message window); the cycle test casts it
+       on two monsters (`CYCLE_MONSTERS`: the sweep needs its second target).
+     - *Fujin:* its tab (Storm); no + menu family.
+   - **Meteor Barret (112)** (FFNx fd8315ff; Zell's Duel finisher; a port director, Ray-Bomb's kind): one
+     director an action on its first target - Zell's run-up (his animation set bound, the camera blob made
+     current), the rising column, sparks, smoke and debris, his fist layout, the jump onto the target and the
+     impact layouts, screen flashes and tiles, Zell faded and put back, the two sounds; the damage at 114
+     (a big target) or 119.
+     - *Inputs* (`MeteorParams`): the two sounds (start, hit). Data: the sounds, "mag111.tim".
+     - *Port:* its setup also measures the column model (its top and height span).
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Bad Breath (113)** (FFNx 9ea92c3b; Geezard's enemy attack; a port director, Ray-Bomb's kind): the
+     breath from the caster's mouth - puffs towards a swinging aim point and a spray around the caster's
+     facing - then one target task a party target: the rising cloud, the target redrawn swayed, the cloud
+     layout, the 3D sound; the damage at the target task's tick 27.
+     - *Inputs* (`BreathParams`): the sound, the targets' damage tick. Data: the sound, "mag112.tim".
+     - *Tests:* the cycle test casts it from Geezard (slot 3) on Squall (`CYCLE_CASTS`; `record` drops its
+       default cast for one given).
+     - *Fujin:* its tab (Breath); no + menu family.

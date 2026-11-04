@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 110,
+ "name": "Biggs and Wedge's first death",
+ "doc": "Biggs and Wedge's first death (their death scripts' effect at the Dollet tower): the root - a storm from above sweeping the targets (Storm Breath's stream turned round), its sparks, debris and rings, the targets hit, pushed and blown away (their reactions and battle texts), then hidden; the wind's sound. No damage. Its tasks are the port's code (FFNx mag110_biggs_wedge_death.cpp) run on the program's memory (its pools and vertex table in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6CE220",
+   "setup": "0x6CE210",
+   "root": "0x6CE2A0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 110,
+  "from": "0x25219C8",
+  "size": "0x9C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12E3370",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x12E336C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6CE210",
+  "file_loader": "0x6CE220",
+  "root": "0x6CE2A0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "storm",
+   "title": "Storm",
+   "doc": "The stream from above sweeping the targets, its sparks, debris and rings, the targets hit, pushed and blown away (their reactions and texts), the wind's sound"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "storm",
+   "label": "Sound",
+   "doc": "The wind",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

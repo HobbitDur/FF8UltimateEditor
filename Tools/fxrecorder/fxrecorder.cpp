@@ -1261,6 +1261,7 @@ int main(int argc, char **argv)
 	patch_jmp(0x501A20, (void *)s_501A20);
 	patch_jmp(0x46CBB0, (void *)s_zero0);   // Music_WavStream_Play: no music stream (Ultimecia's final form)
 	patch_jmp(0x4876F0, (void *)s_zero0);   // printMonsterRelatedText: no battle message window (Ultimecia's final form)
+	patch_jmp(0x487750, (void *)s_zero0);   // the battle text of a slot: no message window (Biggs and Wedge's first death)
 	patch_jmp(0x5088A0, (void *)s_5088A0);
 	patch_jmp(0x505DF0, (void *)s_505DF0);
 	patch_jmp(0x505EB0, (void *)s_505EB0);
