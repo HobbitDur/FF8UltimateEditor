@@ -1,0 +1,439 @@
+{
+ "format": 1,
+ "effect": 86,
+ "name": "Angelo Cannon",
+ "doc": "Angelo Cannon (Rinoa's limit break; the act family): one emitter per action - the director block, the module data block, the load script and the director: Angelo loaded into Rinoa's launcher (her chain transformations, his steps raising dust rings and puffs), the muzzle glow, Angelo fired at the enemies (his dash, its glow, two prim plays), the strike at the monsters' centre (a third prim play), his jump back; the damage at the done flag. Its parts are the port's code (FFNx mag086_angelo_cannon.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x77F230",
+   "setup": "0x77F250",
+   "root": "0x77F3E0"
+  },
+  "memory": {
+   "texture_file": "0x25B4CC8",
+   "packet_cursor": "0x25B4CCC",
+   "packet_limit": "0x25B4DCC",
+   "arena_a": "0x25BB234",
+   "limit_a": "0x25BAE2C",
+   "arena_b": "0x25BB230",
+   "limit_b": "0x25BAE28",
+   "arena_top": "0x25BC21C",
+   "init_flag_a": "0x25BC218",
+   "init_flag_b": "0x25B7080",
+   "cam_ptr_a": "0x25BC1F4",
+   "cam_ptr_b": "0x25B4DD0",
+   "root_queue": "0x25B4EA0",
+   "root_pool": "0x25B4DD8"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 86,
+  "from": "0x25B4CC8",
+  "size": "0x76C8",
+  "pointers": [
+   [
+    2,
+    "0x1561770"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x156C7E0",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1565C90",
+   "size": 544
+  },
+  "sounds.load": {
+   "kind": "sound",
+   "address": "0x1561774",
+   "size": 4
+  },
+  "sounds.fire": {
+   "kind": "sound",
+   "address": "0x1561778",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xE000",
+  "release_file": true
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25BB0C0",
+   "storage": "0x25BB0D0",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25B4DA8",
+   "storage": "0x25B4CD0",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "loads",
+   "queue": "0x25BC1E0",
+   "storage": "0x25BBF00",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "the load script (the port's)"
+  },
+  {
+   "key": "angelo",
+   "queue": "0x25BBEE8",
+   "storage": "0x25BBD88",
+   "size": 352,
+   "count": 1,
+   "keep": true,
+   "doc": "Angelo (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x25B4EB0",
+   "storage": "0x25B4EC0",
+   "size": 144,
+   "count": 60,
+   "keep": true,
+   "doc": "the dust rings and the glows (the port's)"
+  },
+  {
+   "key": "puffs",
+   "queue": "0x25B7088",
+   "storage": "0x25B7098",
+   "size": 152,
+   "count": 60,
+   "keep": true,
+   "doc": "the dust puffs (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x25BAE18",
+   "storage": "0x25B9438",
+   "size": 1104,
+   "count": 6,
+   "keep": true,
+   "doc": "the prim plays (the port's)"
+  },
+  {
+   "key": "spare",
+   "queue": "0x25BB0B0",
+   "storage": "0x25BAE30",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Angelo loaded into Rinoa's launcher (her chains, the dust rings and puffs), the muzzle glow, the dash, the three prim plays, the strike at the monsters' centre; the done flag"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "Angelo loaded, fired"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.load",
+   "part": "director",
+   "label": "Load",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.load",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.fire",
+   "part": "director",
+   "label": "Fire",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.fire",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage frame",
+   "doc": "The done flag (the damage) from this frame of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 50,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x77F5B0",
+   "code": "0x77F5B0",
+   "doc": "One per action (the engine's emitter, its states the port's): the director block, the module data block, the load script and the director; the damage at the done flag; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77F630"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7842F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x784360"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x784380"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7843A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x77FBF0",
+   "code": "0x77FBF0",
+   "doc": "The director: every tick the phase bookkeeping (phase 1: Angelo), then its states: Angelo's TIM, the sync points and cues 1 to 4, the load script step, the done flag at frame 0x32, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x77FCB0"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FD00"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FD50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FD90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FDF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FE10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FE30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FE50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FE70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FE90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FEB0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FED0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FEF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FF10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77FF30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

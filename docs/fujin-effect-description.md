@@ -1591,3 +1591,22 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`TheEndParams`): the two sounds, the damage cue frame. Data: the sounds, the camera track,
        "mag084.tim".
      - *Fujin:* its tab (Director); no + menu family.
+   - **Angelo Cannon (86)** (FFNx e12ed2d9; Rinoa's limit break; the act family without actor pools,
+     Death's description): one emitter per action - the director block, the module data block, the load
+     script and the director: Angelo loaded into Rinoa's launcher (her chain transformations, his steps
+     raising dust rings and puffs), the muzzle glow, Angelo fired at the enemies (his dash, its glow, two prim
+     plays), the strike at the monsters' centre (a third prim play), his jump back; the damage at the done
+     flag.
+     - *Inputs* (`CannonParams`): the two sounds (loaded, fired), the done flag's frame. Data: the sounds,
+       the camera track, "mag085.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Angelo Strike (87)** (FFNx 7cd17211; Rinoa's limit break; the act family, Death's description):
+     one emitter per action - the director block, the module data block, the load script and the director:
+     the camera task, Angelo running at the target, digging in under it (a ground capture of the stage),
+     lifting it, swinging it round over his head and slamming it down (debris, dust, an impact play),
+     jumping back to Rinoa; the damage at the done flag.
+     - *Inputs* (`StrikeParams`): the two sounds (run, slam), the done flag's frame. Data: the sounds,
+       "mag086.tim" (no engine camera animation: its camera task drives the camera).
+     - *Port:* its descriptor names two exe words, the director block's and the camera block's
+       (`pointers` 2 and 3): both moved with the copy.
+     - *Fujin:* its tab (Director); no + menu family.

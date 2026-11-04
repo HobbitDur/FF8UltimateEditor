@@ -1,0 +1,427 @@
+{
+ "format": 1,
+ "effect": 87,
+ "name": "Angelo Strike",
+ "doc": "Angelo Strike (Rinoa's limit break; the act family): one emitter per action - the director block, the module data block, the load script and the director: the camera task, Angelo running at the target, digging in under it (a ground capture of the stage), lifting it, swinging it round over his head and slamming it down (debris, dust, an impact play), jumping back to Rinoa; the damage at the done flag. Its parts are the port's code (FFNx mag087_angelo_strike.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x773850",
+   "setup": "0x773870",
+   "root": "0x773A10"
+  },
+  "memory": {
+   "texture_file": "0x25ACEB0",
+   "packet_cursor": "0x25ACEB4",
+   "packet_limit": "0x25ACFBC",
+   "arena_a": "0x25B394C",
+   "limit_a": "0x25B2AA4",
+   "arena_b": "0x25B3948",
+   "limit_b": "0x25B2AA0",
+   "arena_top": "0x25B4B50",
+   "init_flag_a": "0x25B4B4C",
+   "init_flag_b": "0x25AECD4",
+   "cam_ptr_a": "0x25B4B24",
+   "cam_ptr_b": "0x25ACFC0",
+   "root_queue": "0x25AD090",
+   "root_pool": "0x25ACFC8",
+   "particle_pool": "0x25B4634",
+   "actor_pool": "0x25B4B48",
+   "particle_next": "0x25AECD0",
+   "actor_next": "0x25B4640",
+   "cursor_c": "0x25B4444",
+   "cursor_d": "0x25ACEB8",
+   "count_a": "0x25B4B08",
+   "count_b": "0x25B4630"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 87,
+  "from": "0x25ACEB0",
+  "size": "0x7E18",
+  "pointers": [
+   [
+    2,
+    "0x1557D28"
+   ],
+   [
+    3,
+    "0x155B1E0"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1561764",
+   "size": 12
+  },
+  "sounds.run": {
+   "kind": "sound",
+   "address": "0x1557D2C",
+   "size": 4
+  },
+  "sounds.slam": {
+   "kind": "sound",
+   "address": "0x1557D30",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xA000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x8340"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25B37D8",
+   "storage": "0x25B37E8",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25ACF98",
+   "storage": "0x25ACEC0",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "loads",
+   "queue": "0x25B4B10",
+   "storage": "0x25B4648",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "the load script (the port's)"
+  },
+  {
+   "key": "angelo",
+   "queue": "0x25B4620",
+   "storage": "0x25B44A8",
+   "size": 376,
+   "count": 1,
+   "keep": true,
+   "doc": "Angelo (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x25B3538",
+   "storage": "0x25B2AA8",
+   "size": 676,
+   "count": 4,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x25AD0A0",
+   "storage": "0x25AD0B0",
+   "size": 144,
+   "count": 50,
+   "keep": true,
+   "doc": "the camera, the dust and the debris (the port's)"
+  },
+  {
+   "key": "tasks2",
+   "queue": "0x25AECD8",
+   "storage": "0x25AECE8",
+   "size": 152,
+   "count": 80,
+   "keep": true,
+   "doc": "the puffs and the ground capture (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x25B2A90",
+   "storage": "0x25B1C68",
+   "size": 604,
+   "count": 6,
+   "keep": true,
+   "doc": "the prim plays (the port's)"
+  },
+  {
+   "key": "spare",
+   "queue": "0x25B37C8",
+   "storage": "0x25B3548",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Angelo runs at the target, digs in under it (the ground capture), lifts it, swings it over his head and slams it down (debris, dust, the impact play), jumps back; the camera; the done flag"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "Angelo's run, the slam"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.run",
+   "part": "director",
+   "label": "Run",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.run",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.slam",
+   "part": "director",
+   "label": "Slam",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.slam",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage frame",
+   "doc": "The done flag (the damage) from this frame of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 72,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x773C70",
+   "code": "0x773C70",
+   "doc": "One per action (the engine's emitter, its states the port's): the director block, the module data block, the load script and the director; the damage at the done flag; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x773CF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77F0D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77F110"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77F130"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x77F150"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x774240",
+   "code": "0x774240",
+   "doc": "The director: every tick the phase bookkeeping, then its states: Angelo's TIM, the camera return armed and the camera task, the cues, the done flag at frame 0x48, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x7742E0"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x774330"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x774F70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x774FB0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x775010"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7750A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7750C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7750E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x775100"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x775120"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x775140"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}
