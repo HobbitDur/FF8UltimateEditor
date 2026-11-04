@@ -2354,3 +2354,24 @@ Potion's description is the same with its own sequences and sound.
      their sparks (a hit target tinted), the glow layouts, the screen flash, the sound; the action result.
      - *Inputs* (`ElectrocuteParams`): the sound. Data: the sound, "mag125.tim".
      - *Fujin:* its tab (Main); no + menu family.
+   - **X-ATM092 death (276)** (FFNx 580808fe; its AI's death section; a port root, Ray-Bomb's kind): the machine
+     shaken by sparks and smoke, arcs between its parts, five bursts of its bones into flying debris, the white
+     screen, the sounds; no damage.
+     - *Inputs* (`XAtmDeathParams`): the start sound, the voice slot's sound. Data: the sounds, "mag275.tim".
+     - *Tests:* cast by X-ATM092 (c0m092) on the party (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Funguar laser (277)** (FFNx 13575b41; Funguar's enemy attack, a Beam Laser variant; a port root, Ray-Bomb's
+     kind): from a vertex of the caster's model to each target, the muzzle and aim layouts, the beam, the hit
+     layouts, glows and sparks, the impact layout, the sound; the action results.
+     - *Inputs* (`FunguarLaserParams`): the beam's sound. Data: the sound, "mag276-301.tim".
+     - *Tests:* cast by Funguar (c0m058) on the party (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Beam); no + menu family.
+   - **Carbuncle (278)** (FFNx 4acc68b7; the GF's Ruby Light, the timeline family; a port timeline, Ray-Bomb's kind):
+     the creature, the ruby dome and its floor mirror, the two keyframed stages, the sparkles and shards, one ruby
+     per target (orbit stones, rings, the reflect wall), the camera orbit, the party hidden and the enemies
+     lifted, the voice and the sounds (ticks 1, 0x56, 0x91, 0xD7); each target's action result at its ruby's
+     tick 0x32.
+     - *Inputs* (`CarbuncleParams`): the voice, the four sounds, the damage tick. Data: the sounds, "mag277.tim".
+     - *Module:* shared (a copy runs on the module's memory): the exe helpers the port calls by their original
+       addresses (the prim callback 0x681FD0, DamageTarget 0x683920, ...) read the module's words.
+     - *Fujin:* its tab (Creature); no + menu family.

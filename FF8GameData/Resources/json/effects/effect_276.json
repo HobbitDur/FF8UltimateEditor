@@ -1,0 +1,86 @@
+{
+ "format": 1,
+ "effect": 276,
+ "name": "X-ATM092 death",
+ "doc": "X-ATM092's break-down (its AI's death section): the root, the director and the events - the machine shaken by sparks and smoke, arcs between its parts, five bursts of its bones into flying debris (the bones gone from its model), the white screen, the sounds. Its tasks are the port's code (FFNx mag276_xatm092_death.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x684EF0",
+   "setup": "0x684EE0",
+   "root": "0x684FA0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 276,
+  "from": "0x2508278",
+  "size": "0xD0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x10D9928",
+   "size": 12
+  },
+  "sound_start": {
+   "kind": "sound",
+   "address": "0x10D4C58",
+   "size": 4
+  },
+  "sound_voice": {
+   "kind": "sound",
+   "address": "0x10D4C5C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x684EE0",
+  "file_loader": "0x684EF0",
+  "root": "0x684FA0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The debris polygons, the white screen, the machine drawn without its burst bones, the events (arcs, sparks, smoke, bursts), the sounds"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound_start",
+   "part": "director",
+   "label": "Start",
+   "doc": "The director's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound_start",
+   "unit": "plain"
+  },
+  {
+   "key": "sound_voice",
+   "part": "director",
+   "label": "Voice",
+   "doc": "The voice slot claimed at the start (released on tick 0x8C)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound_voice",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

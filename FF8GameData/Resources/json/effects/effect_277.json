@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 277,
+ "name": "Funguar laser",
+ "doc": "Funguar's laser (a Beam Laser variant): the master and the beam task - from a vertex of the caster's model to each target: the muzzle and aim layouts, the beam, the hit layouts, glows and sparks, the impact layout, the sound; the action results. Its tasks are the port's code (FFNx mag277_funguar_laser.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x683F20",
+   "setup": "0x683F10",
+   "root": "0x683FC0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 277,
+  "from": "0x2508200",
+  "size": "0x78"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x103BBC8",
+   "size": 16
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x10D2E9C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x683F10",
+  "file_loader": "0x683F20",
+  "root": "0x683FC0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "beam",
+   "title": "Beam",
+   "doc": "From a vertex of the caster's model to each target: the muzzle and aim layouts, the beam, the hit layouts, glows and sparks, the impact layout, the sound; the action result at 0x2B"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "beam",
+   "label": "Sound",
+   "doc": "Each beam's counter 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

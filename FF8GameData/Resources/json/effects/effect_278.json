@@ -1,0 +1,152 @@
+{
+ "format": 1,
+ "effect": 278,
+ "name": "Carbuncle",
+ "doc": "Carbuncle (the GF's Ruby Light; the timeline family): the master and the creature's timeline - the creature, the ruby dome and its floor mirror, the two keyframed stages, the sparkles and shards, one ruby per target (orbit stones, rings, the reflect wall), the camera orbit, the party hidden and the enemies lifted, the voice and the sounds; each target's action result. Its tasks are the port's code (FFNx mag278_carbuncle.cpp) run on the program's memory (its pools and model data in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x680C60",
+   "setup": "0x680C50",
+   "root": "0x680DF0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 278,
+  "from": "0x2508110",
+  "size": "0xF0",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x10CB61C",
+   "size": 12
+  },
+  "voice": {
+   "kind": "sound",
+   "address": "0x10C74DC",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x10C74CC",
+   "size": 4
+  },
+  "sounds.rise": {
+   "kind": "sound",
+   "address": "0x10C74D0",
+   "size": 4
+  },
+  "sounds.ruby": {
+   "kind": "sound",
+   "address": "0x10C74D4",
+   "size": 4
+  },
+  "sounds.wall": {
+   "kind": "sound",
+   "address": "0x10C74D8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x680C50",
+  "file_loader": "0x680C60",
+  "root": "0x680DF0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "creature",
+   "title": "Creature",
+   "doc": "Carbuncle's Ruby Light: the creature, the ruby dome and its floor mirror, the two keyframed stages, the sparkles and shards, one ruby per target (orbit stones, rings, the reflect wall), the camera orbit, the party hidden and the enemies lifted, the voice and the sounds; each target's action result"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the creature's ticks 1, 0x56, 0x91, 0xD7"
+  }
+ ],
+ "params": [
+  {
+   "key": "voice",
+   "part": "creature",
+   "label": "Voice",
+   "doc": "The voice slot claimed when the creature spawns",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "creature",
+   "label": "Start",
+   "doc": "At the creature's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.rise",
+   "part": "creature",
+   "label": "Rise",
+   "doc": "At the creature's tick 0x56",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.ruby",
+   "part": "creature",
+   "label": "Ruby",
+   "doc": "At the creature's tick 0x91",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.ruby",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.wall",
+   "part": "creature",
+   "label": "Wall",
+   "doc": "At the creature's tick 0xD7",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.wall",
+   "unit": "plain"
+  },
+  {
+   "key": "ruby.damage",
+   "part": "creature",
+   "label": "Damage tick",
+   "doc": "Each target's action result at this tick of its ruby",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 50,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
