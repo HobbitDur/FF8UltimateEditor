@@ -1900,3 +1900,23 @@ Potion's description is the same with its own sequences and sound.
        (0x1D98214: n, then n + 1 frame counts) the battle's AnimSeq VM computes (opcode AB), which the
        recorder does not run (`CYCLE_POKES`).
      - *Fujin:* its tab (Controller); no + menu family.
+   - **Fira (142)** (FFNx 5370c969; the spell; a port director, Ray-Bomb's kind): one director an action on its
+     target - the fireball projectile and its trail, the flame column, the shock ring, the burst, sparks and
+     embers, the screen flash, the 3D sound; the damage at the director's tick 14.
+     - *Inputs* (`FiraParams`): the sound, the damage tick. Data: the sound, "mag141.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Firaga (143)** (FFNx 23b8de15; the spell; a port director, Ray-Bomb's kind): one director an action on
+     its target - the area flames, the flame swirls, the fireball, the burst and sparks, the screen flash, the
+     3D sound; the damage at the director's tick 48.
+     - *Inputs* (`FiragaParams`): the sound, the damage tick. Data: the sound, "mag142.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Blizzard (144)** (FFNx 3efebe1a; the spell; a port director, Ray-Bomb's kind): one director an action on
+     its target - the crystal rising and slamming (the battle camera shaken), the shards, falling ice, mist
+     puffs and debris, the shockwave, the 3D sound; the damage at the director's tick 37.
+     - *Inputs* (`BlizzardParams`): the sound, the damage tick. Data: the sound, "mag143.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Sleep (145)** (FFNx 51ed0b98; the spell; a port director, Ray-Bomb's kind): one director an action on its
+     target - the main trails, the bubbles with their trails, the particles, the Zzz sprites, the 3D sound;
+     the status at the director's tick 30.
+     - *Inputs* (`SleepParams`): the sound, the status tick. Data: the sound, "mag144.tim".
+     - *Fujin:* its tab (Director); no + menu family.

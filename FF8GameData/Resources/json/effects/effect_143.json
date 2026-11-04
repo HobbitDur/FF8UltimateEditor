@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 143,
+ "name": "Firaga",
+ "doc": "Firaga (the spell): the root and one director an action on its target - the area flames, the flame swirls, the fireball, the burst and sparks, the screen flash, the sound; the damage. Its tasks are the port's code (FFNx mag143_firaga.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x61BFC0",
+   "setup": "0x61BFE0",
+   "root": "0x61CDA0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 143,
+  "from": "0x24BECC8",
+  "size": "0xE78"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDDD8F8",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xDDD8F0",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x61BFE0",
+  "file_loader": "0x61BFC0",
+  "root": "0x61CDA0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "One director an action on its target: the area flames, the flame swirls, the fireball, the burst and sparks, the screen flash, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of an action's director",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 48,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

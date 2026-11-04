@@ -244,6 +244,10 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    145: ("mag144.tim", 2, "sound 22311280\ndirector.status 25\n"),
+    144: ("mag143.tim", 2, "sound 22311280\ndirector.damage 30\n"),
+    143: ("mag142.tim", 2, "sound 22311280\ndirector.damage 40\n"),
+    142: ("mag141.tim", 2, "sound 22311280\ndirector.damage 10\n"),
     141: ("mag140-158-159-258-331-332.tim", 1, "sound 22311280\n"),
     140: ("mag139.tim", 5, "sounds.rise 22311280\ncreature.damage 200\n"),
     139: ("mag138.tim", 1, "sound 22311280\n"),
@@ -439,7 +443,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave and Phoenix and Renzokuken (5 hits) from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga and Blizzard and Sleep from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1794,4 +1798,32 @@ def test_renzokuken_5_description_compiles():
     """Renzokuken (5 hits): a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory; the recorder pokes the stage durations the AnimSeq VM would compute."""
     lines = compile_program(load_description(141)).splitlines()
     for line in ['director port -1', 'port 0x61DE70 0x61DE50 0x61F710', 'module 141 0x24C10B8 0x21B8']:
+        assert line in lines, line
+
+
+def test_fira_description_compiles():
+    """Fira: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory."""
+    lines = compile_program(load_description(142)).splitlines()
+    for line in ['director port -1', 'port 0x61CE10 0x61CDF0 0x61DD90', 'module 142 0x24BFB48 0x1570']:
+        assert line in lines, line
+
+
+def test_firaga_description_compiles():
+    """Firaga: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory."""
+    lines = compile_program(load_description(143)).splitlines()
+    for line in ['director port -1', 'port 0x61BFE0 0x61BFC0 0x61CDA0', 'module 143 0x24BECC8 0xE78']:
+        assert line in lines, line
+
+
+def test_blizzard_description_compiles():
+    """Blizzard: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory."""
+    lines = compile_program(load_description(144)).splitlines()
+    for line in ['director port -1', 'port 0x61ABA0 0x61AB80 0x61BF70', 'module 144 0x24BB960 0x3368']:
+        assert line in lines, line
+
+
+def test_sleep_description_compiles():
+    """Sleep: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its packet arenas in the module)."""
+    lines = compile_program(load_description(145)).splitlines()
+    for line in ['director port -1', 'port 0x6185D0 0x6185B0 0x61AA80', 'module 145 0x24AA630 0x11330']:
         assert line in lines, line
