@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    76: ("mag075.tim", 9, "master.sink 40\nhalo.step 4096\nring.size 2000\n"),
     74: ("mag013-073-344.tim", 12, "reaper.fade_in 512\nstrike.length 30\nreaper.vanish_frame 14\naura.length 40\nreaper.wait 20\n"),
     73: ("mag072-077.tim", 10, "emitter.result 50\nmaster.wait 40\ndarken.step 128\n"),
     72: ("mag054-071.tim", 14, "orb.hold 25\ndarken.level 1024\nsplash.until 24\ndirector.damage 40\nrain.from 16\ndirector.wait 8\n"),
@@ -362,7 +363,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis) and LV?Death (Quistis) from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis) and Ultimecia's final form appears from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1329,4 +1330,11 @@ def test_lvdeath_quistis_description_compiles():
     """LV?Death (Quistis): Death's library relocated (Doom's kind) - the director for each target, the module, the emitter's and the director's state tables."""
     lines = compile_program(load_description(74)).splitlines()
     for line in ['module 74 0x25EC518 0x7A40', 'module_pointer 2 0x1582068', 'per_target', 'release_file', 'arena_size 57344', 'code 0x7C49D0']:
+        assert line in lines, line
+
+
+def test_ultimecia_final_form_spawn_description_compiles():
+    """Ultimecia's final form appears: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory."""
+    lines = compile_program(load_description(76)).splitlines()
+    for line in ['director port -1', 'port 0x61F9A0 0x61F980 0x6225A0', 'module 76 0x24C3270 0x343C']:
         assert line in lines, line

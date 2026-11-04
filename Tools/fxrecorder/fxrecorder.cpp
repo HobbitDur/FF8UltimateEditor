@@ -212,6 +212,9 @@ static int __cdecl s_48D0A0(uint32_t id, uint32_t dst, uint32_t, uint32_t cb) { 
 static int __cdecl s_508480(uint32_t a, uint32_t b) { g_pending.push_back({ 2, a, b, 0 }); return 0; }
 static int __cdecl s_4A29A0(uint32_t, uint32_t b, uint32_t) { return 0x100 + (int)b; }
 static int __cdecl s_508630(uint32_t a, uint32_t b) { *(uint8_t *)b = 0; g_pending.push_back({ 3, a, b, 0 }); return 0; }
+// BS_R0win_QueueVictoryFanfare (0x501A20: its task in the anim-seq queue, which the recorder does not run): no
+// music, its completion byte set the next tick (Ultimecia's final form waits for it)
+static int __cdecl s_501A20(uint32_t a, uint32_t b) { *(uint8_t *)b = 0; g_pending.push_back({ 3, a, b, 0 }); return 0; }
 static uint32_t __cdecl s_5088A0(uint32_t, uint32_t, uint32_t, uint32_t d) { return d; }
 // Battle_QueueVramUpload_Type0_RectData (0x505DF0): recorded at once (model textures, palettes)
 static int __cdecl s_505DF0(const int16_t *rect, const uint16_t *data) { if (rect) dump_rect(g_tick, rect, data); return 0; }
@@ -1250,6 +1253,9 @@ int main(int argc, char **argv)
 	patch_jmp(0x508480, (void *)s_508480);
 	patch_jmp(0x4A29A0, (void *)s_4A29A0);
 	patch_jmp(0x508630, (void *)s_508630);
+	patch_jmp(0x501A20, (void *)s_501A20);
+	patch_jmp(0x46CBB0, (void *)s_zero0);   // Music_WavStream_Play: no music stream (Ultimecia's final form)
+	patch_jmp(0x4876F0, (void *)s_zero0);   // printMonsterRelatedText: no battle message window (Ultimecia's final form)
 	patch_jmp(0x5088A0, (void *)s_5088A0);
 	patch_jmp(0x505DF0, (void *)s_505DF0);
 	patch_jmp(0x505EB0, (void *)s_505EB0);

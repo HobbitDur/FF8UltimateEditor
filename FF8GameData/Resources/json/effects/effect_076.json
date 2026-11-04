@@ -1,0 +1,179 @@
+{
+ "format": 1,
+ "effect": 76,
+ "name": "Ultimecia's final form appears",
+ "doc": "Ultimecia's final form appears (her enemy attack): the intro - the caster hidden high, the screen flash, the fanfare, the battle stage model swap, the music stream - then the master's 0x29A-tick timeline: the camera script, the caster's chains, shown and sinking, the bursts, spins, rises, halo, flashes, battle messages, the screen fade, the hit, the ring, debris and the white feedback; the damage, the camera saved. Its tasks are the port's code (FFNx mag076_ultimecia_final_form_spawn.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x61F980",
+   "setup": "0x61F9A0",
+   "root": "0x6225A0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 76,
+  "from": "0x24C3270",
+  "size": "0x343C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDE4224",
+   "size": 12
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0xDE3FF0",
+   "size": 4
+  },
+  "sounds.hit": {
+   "kind": "sound",
+   "address": "0xDE4148",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x61F9A0",
+  "file_loader": "0x61F980",
+  "root": "0x6225A0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The intro (the caster hidden high, the fanfare, the battle model swap, the music), then the master's 0x29A-tick timeline: the camera script, the chains, the bursts, spins, rises, halo, flashes, messages, the ring, debris and feedback; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The voice claimed at the master's start; the hit at tick 0x1FF"
+  },
+  {
+   "key": "halo",
+   "label": "Halo",
+   "doc": "Spawned at tick 0x96: its scale, its growth"
+  },
+  {
+   "key": "ring",
+   "label": "Ring",
+   "doc": "Spawned at tick 0x206 at the caster's point 0xF1: its spin a tick, its size"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.voice",
+   "part": "master",
+   "label": "Voice",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.hit",
+   "part": "master",
+   "label": "Hit",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "master.sink",
+   "part": "master",
+   "label": "Sink",
+   "doc": "The caster's sinking a tick over ticks 0x5A..0xB3 (back up at 0xB4)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "master.voice_release",
+   "part": "master",
+   "label": "Voice release",
+   "doc": "The voice released at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 665,
+   "default": 662,
+   "unit": "plain"
+  },
+  {
+   "key": "master.end",
+   "part": "master",
+   "label": "End after",
+   "doc": "The flash off, the camera saved, the effect done after this tick",
+   "type": "i16",
+   "min": 605,
+   "max": 1024,
+   "default": 665,
+   "unit": "plain"
+  },
+  {
+   "key": "halo.scale",
+   "part": "master",
+   "label": "Scale",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "halo.step",
+   "part": "master",
+   "label": "Growth",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 6144,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.spin",
+   "part": "master",
+   "label": "Spin",
+   "doc": "",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.size",
+   "part": "master",
+   "label": "Size",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1664,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

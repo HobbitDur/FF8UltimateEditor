@@ -1500,3 +1500,14 @@ Potion's description is the same with its own sequences and sound.
      - *Lab:* the recorder and the host build mag_eden.cpp in when a lab module borrows Eden's draw
        handlers (`apply_eden_b`).
      - *Fujin:* its tab (Files); no + menu family.
+   - **Ultimecia's final form appears (76)** (FFNx e2ec252b; her enemy attack; a port director, Ray-Bomb's
+     kind): the intro - the caster hidden high, the screen flash, the victory fanfare, the battle stage model
+     swap, the music stream - then the master's 0x29A-tick timeline: the camera script, her chains, shown
+     and sinking, the bursts, spins, rises, halo, flashes, battle messages, the screen fade, the hit, the
+     ring, debris and the white feedback; the damage, the camera saved.
+     - *Inputs* (`FinalFormParams`): the voice and the hit sound, her sinking a tick, the voice release and
+       end ticks, the halo (scale, growth), the ring (spin, size). Data: the two sounds, "mag075.tim".
+     - *Recorder:* the victory fanfare (BS_R0win_QueueVictoryFanfare 0x501A20) done the next tick, the
+       music stream (0x46CBB0) and the battle messages (0x4876F0) stubbed: the recorder runs no anim-seq
+       queue, no stream, no message window; the stage model load / swap were stubbed already.
+     - *Fujin:* its tab (Master); no + menu family.
