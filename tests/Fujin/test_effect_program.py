@@ -243,6 +243,10 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    100: ("mag096-097-098-099.tim", 4, "sounds.call 22311280\nsounds.second 22311276\n"),
+    99: ("mag096-097-098-099.tim", 4, "sounds.call 22311280\nsounds.second 22311276\n"),
+    98: ("mag096-097-098-099.tim", 3, "sounds.call 22311280\nsounds.attack 22311276\n"),
+    97: ("mag096-097-098-099.tim", 3, "sounds.call 22311280\nsounds.attack 22311276\n"),
     96: ("mag095.tim", 2, "sounds.moogle 22311280\n"),
     95: ("mag094.tim", 4, "sounds.arrive 22311280\nsounds.song 22311276\n"),
     94: ("mag093.tim", 4, "sounds.revive 22311280\ndirector.damage 90\n"),
@@ -398,7 +402,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren and MiniMog from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor and ChocoBocle from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1536,4 +1540,32 @@ def test_minimog_description_compiles():
     """MiniMog: Doom's kind with the module's own director (the port's task, its draw-mode packet after its states) - the per-action emitter's state table, the module with its actor pools and two exe words; the two sounds."""
     lines = compile_program(load_description(96)).splitlines()
     for line in ['module 96 0x257B740 0x4160', 'module_pointer 2 0x152BB90', 'module_pointer 3 0x152BC00', 'release_file', 'arena_size 4096', 'code 0x7327B0', 'native 0x7327B0']:
+        assert line in lines, line
+
+
+def test_chocofire_description_compiles():
+    """ChocoFire: Doom's kind on the shared Boko port - the per-action director, the module with its actor pools and two exe words; its sounds."""
+    lines = compile_program(load_description(97)).splitlines()
+    for line in ['module 97 0x2575268 0x64D8', 'module_pointer 2 0x152B5B8', 'module_pointer 3 0x152BA30', 'release_file', 'arena_size 4096', 'code 0x72A410']:
+        assert line in lines, line
+
+
+def test_chocoflare_description_compiles():
+    """ChocoFlare: Doom's kind on the shared Boko port - the per-action director, the module with its actor pools and two exe words; its sounds."""
+    lines = compile_program(load_description(98)).splitlines()
+    for line in ['module 98 0x256E358 0x6F10', 'module_pointer 2 0x152AF30', 'module_pointer 3 0x152B3C8', 'release_file', 'arena_size 4096', 'code 0x722210']:
+        assert line in lines, line
+
+
+def test_chocometeor_description_compiles():
+    """ChocoMeteor: Doom's kind on the shared Boko port - the per-action director, the module with its actor pools and two exe words; its sounds."""
+    lines = compile_program(load_description(99)).splitlines()
+    for line in ['module 99 0x2565A30 0x8928', 'module_pointer 2 0x1529FA0', 'module_pointer 3 0x152AC40', 'release_file', 'arena_size 4096', 'code 0x718750']:
+        assert line in lines, line
+
+
+def test_chocobocle_description_compiles():
+    """ChocoBocle: Doom's kind on the shared Boko port - the per-action director, the module with its actor pools and two exe words; its sounds."""
+    lines = compile_program(load_description(100)).splitlines()
+    for line in ['module 100 0x255EAC8 0x6F68', 'module_pointer 2 0x15297F0', 'module_pointer 3 0x1529CD0', 'release_file', 'arena_size 4096', 'code 0x70F370']:
         assert line in lines, line

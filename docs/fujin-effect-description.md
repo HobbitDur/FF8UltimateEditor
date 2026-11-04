@@ -1688,3 +1688,31 @@ Potion's description is the same with its own sequences and sound.
        MiniMog's draws a draw-mode packet after its states (every tick, OT bucket +0x4484).
      - *Port:* its master sets its descriptor (MOD_096) and resets g_reloc.
      - *Fujin:* its tab (Director); no + menu family.
+   - **ChocoFire (97)** (FFNx b0c9a637; Boko's; the act family on the shared Boko port, Death's description):
+     one emitter per action - the load script and the director's phase script: the chocobo running in, its shadow, the prim-model fire plays, the emitter stage; the damage.
+     - *Inputs* (`BokoParams`, one set a summon): the prim play's, the chocobo's call, the fire's sounds. Data: the sounds, "mag096-097-098-099.tim"
+       (no engine camera animation; 2 exe words: pointers 2 and 3).
+     - *Port:* the shared code reads its module's memory through BG(), which moves the module's own addresses
+       with g_reloc; the director word through the engine's G word.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **ChocoFlare (98)** (FFNx b0c9a637; Boko's; the act family on the shared Boko port, Death's description):
+     one emitter per action - the load script and the director's phase script: the chocobo, its shadow, the prim-model flare plays, the camera script; the damage.
+     - *Inputs* (`BokoParams`, one set a summon): the prim play's, the chocobo's call, the flare's sounds. Data: the sounds, "mag096-097-098-099.tim"
+       (no engine camera animation; 2 exe words: pointers 2 and 3).
+     - *Port:* the shared code reads its module's memory through BG(), which moves the module's own addresses
+       with g_reloc; the director word through the engine's G word.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **ChocoMeteor (99)** (FFNx b0c9a637; Boko's; the act family on the shared Boko port, Death's description):
+     one emitter per action - the load script and the director's phase script: the chocobo, its shadow, the meteor with its trails and sparks, the prim-model plays, the camera script; the damage.
+     - *Inputs* (`BokoParams`, one set a summon): the prim play's, the chocobo's call, the meteor's two sounds. Data: the sounds, "mag096-097-098-099.tim"
+       (no engine camera animation; 2 exe words: pointers 2 and 3).
+     - *Port:* the shared code reads its module's memory through BG(), which moves the module's own addresses
+       with g_reloc; the director word through the engine's G word.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **ChocoBocle (100)** (FFNx b0c9a637; Boko's; the act family on the shared Boko port, Death's description):
+     one emitter per action - the load script and the director's phase script: the chocobo and the chicobo, the target's wobble, the prim-model plays, the camera scripts; the damage.
+     - *Inputs* (`BokoParams`, one set a summon): the prim play's, the chocobo's call, the summon's two sounds. Data: the sounds, "mag096-097-098-099.tim"
+       (no engine camera animation; 2 exe words: pointers 2 and 3).
+     - *Port:* the shared code reads its module's memory through BG(), which moves the module's own addresses
+       with g_reloc; the director word through the engine's G word.
+     - *Fujin:* its tab (Director); no + menu family.

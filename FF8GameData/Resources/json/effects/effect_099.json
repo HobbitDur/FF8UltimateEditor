@@ -1,0 +1,569 @@
+{
+ "format": 1,
+ "effect": 99,
+ "name": "ChocoMeteor",
+ "doc": "ChocoMeteor (Boko's; the act family): one emitter per action - the load script and the director's phase script: the chocobo, its shadow, the meteor with its trails and sparks, the prim-model plays, the camera script; the damage. Its parts are the port's code (FFNx mag097_boko.cpp, shared by the four Boko summons) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x717D10",
+   "setup": "0x717D30",
+   "root": "0x717ED0"
+  },
+  "memory": {
+   "texture_file": "0x2565A30",
+   "packet_cursor": "0x2565A34",
+   "packet_limit": "0x2565B3C",
+   "arena_a": "0x256C5F4",
+   "limit_a": "0x256B9EC",
+   "arena_b": "0x256C5F0",
+   "limit_b": "0x256B9E8",
+   "arena_top": "0x256E1E0",
+   "init_flag_a": "0x256E1DC",
+   "init_flag_b": "0x2569334",
+   "cam_ptr_a": "0x256E1D4",
+   "cam_ptr_b": "0x2565B40",
+   "root_queue": "0x2565C10",
+   "root_pool": "0x2565B48",
+   "particle_pool": "0x256D9E4",
+   "actor_pool": "0x256E1D8",
+   "particle_next": "0x2569330",
+   "actor_next": "0x256D9F0",
+   "cursor_c": "0x256D6EC",
+   "cursor_d": "0x2565A38",
+   "count_a": "0x256E1B8",
+   "count_b": "0x256D9E0"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 99,
+  "from": "0x2565A30",
+  "size": "0x8928",
+  "pointers": [
+   [
+    2,
+    "0x1529FA0"
+   ],
+   [
+    3,
+    "0x152AC40"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x152AF14",
+   "size": 24
+  },
+  "sounds.play": {
+   "kind": "sound",
+   "address": "0x1529FA4",
+   "size": 4
+  },
+  "sounds.call": {
+   "kind": "sound",
+   "address": "0x1529FA8",
+   "size": 4
+  },
+  "sounds.attack": {
+   "kind": "sound",
+   "address": "0x1529FAC",
+   "size": 4
+  },
+  "sounds.second": {
+   "kind": "sound",
+   "address": "0x1529FB0",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x1000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x10E0",
+    "actor_pool": "0x10680"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x256C480",
+   "storage": "0x256C490",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x2565B18",
+   "storage": "0x2565A40",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "loads",
+   "queue": "0x256E1C0",
+   "storage": "0x256D9F8",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "the load script (the port's)"
+  },
+  {
+   "key": "creature",
+   "queue": "0x256D9D0",
+   "storage": "0x256D750",
+   "size": 320,
+   "count": 2,
+   "keep": true,
+   "doc": "the chocobo (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x256C1E0",
+   "storage": "0x256B9F0",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "models",
+   "queue": "0x256B9D8",
+   "storage": "0x2569A28",
+   "size": 1352,
+   "count": 6,
+   "keep": true,
+   "doc": "the prim-model plays (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x2565C20",
+   "storage": "0x2565C30",
+   "size": 176,
+   "count": 80,
+   "keep": true,
+   "doc": "the meteor, its trails and sparks, the shadow (the port's)"
+  },
+  {
+   "key": "particles",
+   "queue": "0x2569338",
+   "storage": "0x2569348",
+   "size": 88,
+   "count": 20,
+   "keep": true,
+   "doc": "the particles (the port's)"
+  },
+  {
+   "key": "tint",
+   "queue": "0x256C470",
+   "storage": "0x256C1F0",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the screen tint (the engine's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The director's phase script: the chocobo, its shadow, the meteor with its trails and sparks, the prim-model plays; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The prim play's, the chocobo's call, the summon's own"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.play",
+   "part": "director",
+   "label": "Play",
+   "doc": "The prim-model play's",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.play",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.call",
+   "part": "director",
+   "label": "Call",
+   "doc": "The chocobo's call",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.call",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.attack",
+   "part": "director",
+   "label": "Attack",
+   "doc": "The summon's own",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.attack",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.second",
+   "part": "director",
+   "label": "Second",
+   "doc": "The summon's own second",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.second",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x718130",
+   "code": "0x718130",
+   "doc": "One per action (the engine's emitter, its states the port's): the director data, the asset table, the load script and the director; the damage; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7181B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7216B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x721720"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x721740"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x721760"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x718750",
+   "code": "0x718750",
+   "doc": "The director: every tick the phase bookkeeping (each new phase spawns its tasks), then its 21 states: the voice, the cues, the sounds, the camera, the done flag.",
+   "every_tick": [
+    [
+     "call",
+     "0x718840"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x718890"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71E7A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71E800"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71E890"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F1D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F1F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F220"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F240"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F260"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F280"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F2A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F2D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F4C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F4E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F500"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F520"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F550"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F580"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F5A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F5C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x71F600"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}
