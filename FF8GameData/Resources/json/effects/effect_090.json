@@ -1,0 +1,406 @@
+{
+ "format": 1,
+ "effect": 90,
+ "name": "Tonberry",
+ "doc": "Tonberry (the GF's Chef's Knife; the act family): one emitter per action - the load script and the director's phases: Tonberry walking up (his ring particles and sparks), the knife, the prim-model particles and actors, the entity fades, the camera's keyed moves; the damage. Its parts are the port's code (FFNx mag090_tonberry.cpp) run on the program's memory; its loader loads two more TIMs, uploaded by the setup.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x762320",
+   "setup": "0x762360",
+   "root": "0x7624D0"
+  },
+  "memory": {
+   "texture_file": "0x25A4C20",
+   "packet_cursor": "0x259EEA8",
+   "packet_limit": "0x259EFB4",
+   "arena_a": "0x25A2CF4",
+   "limit_a": "0x25A2B74",
+   "arena_b": "0x25A2CF0",
+   "limit_b": "0x25A2B70",
+   "arena_top": "0x25A4C1C",
+   "init_flag_a": "0x25A4C18",
+   "init_flag_b": "0x25A2118",
+   "cam_ptr_a": "0x25A4C08",
+   "cam_ptr_b": "0x259EFB8",
+   "root_queue": "0x259F088",
+   "root_pool": "0x259EFC0",
+   "tim_1": "0x259EEAC",
+   "tim_2": "0x259EEB0"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 90,
+  "from": "0x259EEA8",
+  "size": "0x5F58",
+  "pointers": [
+   [
+    2,
+    "0x1547168"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x154ECB0",
+   "size": 16
+  },
+  "sounds.walk": {
+   "kind": "sound",
+   "address": "0x1547170",
+   "size": 4
+  },
+  "sounds.knife": {
+   "kind": "sound",
+   "address": "0x154716C",
+   "size": 4
+  },
+  "tim_1_name": {
+   "kind": "name",
+   "address": "0x154ECC0",
+   "size": 16
+  },
+  "tim_2_name": {
+   "kind": "name",
+   "address": "0x154ECD0",
+   "size": 16
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "files": [
+   {
+    "memory": "tim_1",
+    "game_name": "@tim_1_name",
+    "upload": true
+   },
+   {
+    "memory": "tim_2",
+    "game_name": "@tim_2_name",
+    "upload": true
+   }
+  ]
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x6000",
+  "release_file": true
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25A2B80",
+   "storage": "0x25A2B90",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x259EF90",
+   "storage": "0x259EEB8",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "loads",
+   "queue": "0x25A4BF0",
+   "storage": "0x25A3FA8",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "the load script (the port's)"
+  },
+  {
+   "key": "creature",
+   "queue": "0x25A3F90",
+   "storage": "0x25A3E48",
+   "size": 328,
+   "count": 1,
+   "keep": true,
+   "doc": "Tonberry (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x259F098",
+   "storage": "0x259F0A8",
+   "size": 124,
+   "count": 100,
+   "keep": true,
+   "doc": "the rings, sparks, prim-model actors and fades (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x25A2B60",
+   "storage": "0x25A2120",
+   "size": 1312,
+   "count": 2,
+   "keep": true,
+   "doc": "the prim-model particle task (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The load script and the director's phases: Tonberry walking up (its ring particles and sparks), the knife, the prim-model particles and actors, the entity fades, the camera's keyed moves; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the walk's cue, at the knife's stab"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.walk",
+   "part": "director",
+   "label": "Walk",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.walk",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.knife",
+   "part": "director",
+   "label": "Knife",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.knife",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x762690",
+   "code": "0x762690",
+   "doc": "One per action (the engine's emitter, its states the port's): the director data, the load script and the director; the damage; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x762710"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x768370"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7683B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7683D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7683F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x762C60",
+   "code": "0x762C60",
+   "doc": "The director: every tick the phase bookkeeping (each new phase spawns its tasks), then its states: the cues, the sounds, the camera moves, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x762D10"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x762D60"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763B70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763B90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763BD0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763BF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763C50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763C70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763C90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763CC0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763CF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763D20"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x763D40"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -243,6 +243,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    90: ("mag089_0.tim", 2, "sounds.walk 22311276\n"),
     89: (None, 3, "sounds.sky 21569528\n"),
     88: ("mag087.tim", 3, "director.damage 50\n"),
     87: ("mag086.tim", 3, "director.damage 90\n"),
@@ -374,7 +375,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon and Wishing Star from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star and Tonberry from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1462,4 +1463,11 @@ def test_wishing_star_description_compiles():
     """Wishing Star: a port director (Ray-Bomb's kind) - its setup the port's (no file loader: its TIMs are exe data), run on the program's memory."""
     lines = compile_program(load_description(89)).splitlines()
     for line in ['director port -1', 'port 0x6F9CF0 0x0 0x6F9D80', 'module 89 0x2556584 0xA0']:
+        assert line in lines, line
+
+
+def test_tonberry_description_compiles():
+    """Tonberry: Doom's kind without actor pools - the per-action director, the module, the emitter's and the director's state tables; its loader's two more TIMs, uploaded by the setup."""
+    lines = compile_program(load_description(90)).splitlines()
+    for line in ['module 90 0x259EEA8 0x5F58', 'module_pointer 2 0x1547168', 'release_file', 'arena_size 24576', 'code 0x762C60', 'load_file tim_1 22342848 upload', 'load_file tim_2 22342864 upload']:
         assert line in lines, line

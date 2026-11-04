@@ -1627,3 +1627,13 @@ Potion's description is the same with its own sequences and sound.
        per target); the recorder's action has one per target, so no wave hits there (a cycle-test
        exemption from the damage line).
      - *Fujin:* its tab (Director); no + menu family.
+   - **Tonberry (90)** (FFNx 416d5252; the GF's Chef's Knife; the act family without actor pools, Death's
+     description): one emitter per action - the load script and the director's phases: Tonberry walking up
+     (his ring particles and sparks), the knife, the prim-model particles and actors, the entity fades, the
+     camera's keyed moves; the damage.
+     - *Inputs* (`TonberryParams`): the two sounds. Data: the sounds, "mag089_0.tim" and the two more TIMs
+       its loader reads ("mag089_1.tim", "mag089_2.tim").
+     - *Added:* an extra file's `"upload": true` (`load_file <word> <name> upload`): the setup queues its TIM
+       after the texture's, as Tonberry's does.
+     - *Port:* the library's canonical module (its descriptor MOD_090 in act_engine.cpp); its master sets it.
+     - *Fujin:* its tab (Director); no + menu family.

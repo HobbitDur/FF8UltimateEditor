@@ -364,7 +364,8 @@ def compile_program(description, values=None):
     for extra in description["resources"].get("files", []):   # more files its loader loads into memory words (Devour's pictures)
         if extra["memory"] not in {**(copy.get("memory") or {}), **((module or {}).get("memory") or {})}:
             raise DescriptionError(f"resources: the file word {extra['memory']} is not in the copy's memory")
-        lines.append(f"load_file {extra['memory']} {value(extra['game_name'], 'files')}" + (" first" if extra.get("first") else ""))
+        lines.append(f"load_file {extra['memory']} {value(extra['game_name'], 'files')}" + (" first" if extra.get("first") else "")
+                     + (" upload" if extra.get("upload") else ""))   # (its TIM queued by the setup after the texture's)
     camera = description["resources"].get("camera")         # none: the effect starts no camera track
     lines.append(f"camera {value(camera, 'camera') if camera is not None else 0}")
     for pool in description["pools"]:
