@@ -1,0 +1,103 @@
+{
+ "format": 1,
+ "effect": 146,
+ "name": "Tornado",
+ "doc": "Tornado (the spell): the root and one director an action - the crater's pieces and the ground redrawn, the funnel's rings, the sparks, the morph cloud, the targets lifted and the debris bursts, the screen flash and shake, the sounds; the damage. Its tasks are the port's code (FFNx mag146_tornado.cpp) run on the program's memory (its pools and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x614D50",
+   "setup": "0x614D70",
+   "root": "0x618560"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 146,
+  "from": "0x2491BC0",
+  "size": "0x18A70"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDD6798",
+   "size": 12
+  },
+  "sounds.wind": {
+   "kind": "sound",
+   "address": "0xDD6638",
+   "size": 4
+  },
+  "sounds.land": {
+   "kind": "sound",
+   "address": "0xDD663C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x614D70",
+  "file_loader": "0x614D50",
+  "root": "0x618560"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "One director an action: the crater's pieces and the ground redrawn, the funnel's rings, the sparks, the morph cloud, the targets lifted and the debris bursts, the screen flash and shake, the sounds; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The wind, a piece landing"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.wind",
+   "part": "director",
+   "label": "Wind",
+   "doc": "At the director's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.wind",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.land",
+   "part": "director",
+   "label": "Land",
+   "doc": "A piece landing",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.land",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of an action's director",
+   "type": "i16",
+   "min": 0,
+   "max": 87,
+   "default": 82,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -1920,3 +1920,22 @@ Potion's description is the same with its own sequences and sound.
      the status at the director's tick 30.
      - *Inputs* (`SleepParams`): the sound, the status tick. Data: the sound, "mag144.tim".
      - *Fujin:* its tab (Director); no + menu family.
+   - **Tornado (146)** (FFNx 94bf4ba0; the spell; a port director, Ray-Bomb's kind): one director an action -
+     the crater's pieces and the stage ground redrawn, the funnel's rings, the sparks, the morph cloud, the
+     targets lifted and the debris bursts, the screen flash and shake, the sounds; the damage at tick 82.
+     - *Inputs* (`TornadoParams`): the two sounds (wind, a piece landing), the damage tick. Data: the sounds,
+       "mag145.tim".
+     - *Port:* the capture's packets are built at the call (a static would keep the game's addresses); the
+       spawn helper `Add` goes through own::Fn.
+     - *Tests:* the cycle test loads a battle stage (`CYCLE_STAGES`: the ground task redraws its ground).
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Regen (147)** (FFNx 5836825f; the spell; a port director, Ray-Bomb's kind): one director an action on
+     its target - the two envelopes at its feet, the eight leaves with their trails, the sound; the status at
+     tick 28.
+     - *Inputs* (`RegenParams`): the sound, the status tick. Data: the sound, "mag146.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Meltdown (148)** (FFNx 75b9f424; the spell; a port director, Ray-Bomb's kind): one director an action -
+     its frame towards the target, the disc, the two acid particle systems, the caster glow and the white fade,
+     the melting target (its model drawn by the effect), the sound; the damage at tick 80.
+     - *Inputs* (`MeltdownParams`): the sound, the damage tick. Data: the sound, "mag147.tim".
+     - *Fujin:* its tab (Director); no + menu family.

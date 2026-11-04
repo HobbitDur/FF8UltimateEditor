@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 147,
+ "name": "Regen",
+ "doc": "Regen (the spell): the root and one director an action on its target - the two envelopes at its feet, the eight leaves with their trails, the sound; the status. Its tasks are the port's code (FFNx mag147_regen.cpp) run on the program's memory (its packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x614270",
+   "setup": "0x614290",
+   "root": "0x614D10"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 147,
+  "from": "0x2476660",
+  "size": "0x1B55C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDD05E8",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xDD05CC",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x614290",
+  "file_loader": "0x614270",
+  "root": "0x614D10"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "One director an action on its target: the two envelopes at its feet, the eight leaves with their trails, the sound; the status"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.status",
+   "part": "director",
+   "label": "Status tick",
+   "doc": "The status (and the next action's director) at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 28,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
