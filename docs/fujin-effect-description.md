@@ -1471,3 +1471,16 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`AquaQParams`): Aqua Breath's, and the director's wait after the cast animation starts.
        Data: the sound, the camera track, "mag054-071.tim".
      - *Fujin:* its tabs (Director, Water ball, Drops); no + menu family.
+   - **Mighty Guard (Quistis) (73)** (FFNx dfb83d53; Quistis' Blue Magic; Mighty Guard's library without
+     its particle scale; the act family with Drain's master, Esuna's description): the actor pools, the
+     stage darkening in and her cast animation, one emitter per action target - its sound, the actor system
+     round its target, the result (the statuses); after the last target a wait, the darkening out.
+     - *Inputs* (`MightyGuardQParams`): the emitter's sound, its tick, the release and result ticks, the
+       master's wait, the actor system, the stage darkening (level, step). Data: the sound, the camera
+       track, "mag072-077.tim".
+     - *Added:* the act director's `"calls"` (the program's `act_call`): functions its master calls once
+       after the stage in task, their arguments numbers, `@caster` (the caster's entity) or `@name` (a
+       memory word's address: here `bind_block`, the module's 0x20-byte bind block) - here
+       BS_BindEntityModelFromComData 0x5022C0 (the module's animation set onto the caster) and
+       QueueChainTransformation 0x505C00 (her chain 1: the cast animation).
+     - *Fujin:* its tab (Emitter); no + menu family.

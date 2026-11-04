@@ -425,6 +425,15 @@ def compile_program(description, values=None):
             lines.append(f"act_stage {tasks.get(act.get('stage_in'), -1)} {tasks.get(act.get('stage_out'), -1)} "
                          f"{value(act.get('wait', 0), 'director')}")
             lines += [f"act_pool {name} {_number(size)}" for name, size in act.get("pools", {}).items()]
+            for call in act.get("calls", []):   # once, after the stage in task: functions the master calls (Quistis' cast animation)
+                args = [a if isinstance(a, str) and a.startswith("@") else f"0x{_number(a):X}" for a in call.get("args", [])]
+                if len(args) > 3:
+                    raise DescriptionError("director: an act call takes at most 3 arguments")
+                for a in args:
+                    if a.startswith("@") and a != "@caster" and \
+                            a[1:] not in {**(copy.get("memory") or {}), **((module or {}).get("memory") or {})}:
+                        raise DescriptionError(f"director: act call argument {a} names no memory word")
+                lines.append(" ".join([f"act_call 0x{_number(call['call']):X}"] + args))
             lines += [f"act_zero {name}" for name in act.get("zero", [])]
             lines += [f"act_clear {name}" for name in act.get("clear", [])]
             if act.get("part"):   # the parts of its draws: the system's, each definition's from first_part

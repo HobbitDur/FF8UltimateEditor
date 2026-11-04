@@ -151,6 +151,10 @@ namespace fxprog
 		Val act_wait;
 		std::vector<std::pair<std::string, uint32_t>> act_pools;
 		std::vector<std::string> act_zero, act_clear;
+		// after the stage in task, functions its master calls once (act_call: the function, its arguments -
+		// numbers, @caster: the caster's entity, @name: a memory word's address; Quistis' cast animation)
+		struct ActCall { uint32_t fn; std::vector<std::string> args; };
+		std::vector<ActCall> act_calls;
 		int act_part = 0, act_first_part = 0;            // the lab's parts: the actor system's, its definition 0's (k: + k)
 		std::vector<Patch> patches;                     // written by the setup, before anything runs
 		// a port module whose code runs (Doom's kind: its state functions called from the phases, its own tasks
@@ -1674,6 +1678,23 @@ namespace fxprog
 		for (const auto &pool : g.act_pools) fn<void (__cdecl *)(uint32_t, uint32_t)>(0x8DCC00)(var<uint32_t>(Mem(pool.first.c_str())), pool.second);
 		for (const std::string &word : g.act_zero) var<uint16_t>(Mem(word.c_str())) = 0;
 		if (g.act_stage_in >= 0) SpawnTask(g.act_stage_in, r);
+#ifdef FXPROG_ACTORS
+		for (const Program::ActCall &call : g.act_calls)
+		{
+			uint32_t a[3] = {};
+			const size_t count = call.args.size() < 3 ? call.args.size() : 3;
+			for (size_t i = 0; i < count; i++)
+			{
+				const std::string &arg = call.args[i];
+				if (arg == "@caster") a[i] = (uint32_t)Entity(*((uint8_t *)r + 0x2C));   // (the root's caster slot)
+				else a[i] = arg[0] == '@' ? Mem(arg.c_str() + 1) : (uint32_t)strtoul(arg.c_str(), nullptr, 0);
+			}
+			if (count == 0) ff8fx::act::callp(call.fn);
+			else if (count == 1) ff8fx::act::callp(call.fn, a[0]);
+			else if (count == 2) ff8fx::act::callp(call.fn, a[0], a[1]);
+			else ff8fx::act::callp(call.fn, a[0], a[1], a[2]);
+		}
+#endif
 	}
 
 	inline void DirectorPhase(RootNode *r)
@@ -2434,6 +2455,8 @@ namespace fxprog
 				g.act_wait = ParseVal(w[3]);
 			}
 			else if (d == "act_pool" && need(3)) g.act_pools.push_back({ w[1], (uint32_t)strtoul(w[2].c_str(), nullptr, 0) });
+			else if (d == "act_call" && need(2))
+				g.act_calls.push_back({ (uint32_t)strtoul(w[1].c_str(), nullptr, 0), std::vector<std::string>(w.begin() + 2, w.end()) });
 			else if (d == "act_zero" && need(2)) g.act_zero.push_back(w[1]);
 			else if (d == "act_clear" && need(2)) g.act_clear.push_back(w[1]);
 			else if (d == "act_parts" && need(3))
