@@ -42,14 +42,22 @@ if not exist "%RSP%" goto host
 set GFC=
 set EDEN=
 set BROTHERS=
+set BAHAMUT=
+set LEV=
 for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"gfc_engine.h" %%f >nul 2>nul && set GFC=1
 for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_eden_" %%f >nul 2>nul && set EDEN=1
 for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_brothers" %%f >nul 2>nul && set BROTHERS=1
+for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_bahamut" %%f >nul 2>nul && set BAHAMUT=1
+for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_lev_" %%f >nul 2>nul && set LEV=1
 if defined GFC if exist "%FX%\gfc_engine.cpp" echo "%FX%\gfc_engine.cpp">>"%RSP%"
 rem (a cinematic clone borrowing Eden's handlers: Hell's Judgement's, the final form's death's apply_eden_*)
 if defined EDEN if exist "%FX%\mag_eden.cpp" echo "%FX%\mag_eden.cpp">>"%RSP%"
 rem (a cinematic clone borrowing the Brothers' handlers: Water's apply_brothers)
 if defined BROTHERS if exist "%FX%\mag_brothers.cpp" findstr /m /c:"mag_brothers.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_brothers.cpp">>"%RSP%"
+rem (a cinematic clone borrowing Bahamut's: apply_bahamut)
+if defined BAHAMUT if exist "%FX%\mag_bahamut.cpp" findstr /m /c:"mag_bahamut.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_bahamut.cpp">>"%RSP%"
+rem (a cinematic clone borrowing Leviathan's: Earthquake's apply_lev_a)
+if defined LEV if exist "%FX%\mag_leviathan.cpp" findstr /m /c:"mag_leviathan.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_leviathan.cpp">>"%RSP%"
 set PORTS=/DFF8_FX_LAB @"%RSP%"
 :host
 cl /nologo /std:c++20 /EHa /W3 /O1 /MT /LD /bigobj /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS /I"%FX%" fxhost.cpp %ACTORS% !PORTS! /Foobj\ /FeFujinEffects.dll /link /LARGEADDRESSAWARE

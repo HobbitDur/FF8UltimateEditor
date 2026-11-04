@@ -1,0 +1,119 @@
+{
+ "format": 1,
+ "effect": 260,
+ "name": "Shockwave Pulsar (Quistis)",
+ "doc": "Shockwave Pulsar (Quistis' Blue Magic): the root and the master - her animation set and chain, the effect camera, the targets lifted and risen, the rings, sparks and shards, the screen flashes and fade, the sounds; the action results. Its tasks are the port's code (FFNx mag260_shockwave_pulsar_quistis.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6906A0",
+   "setup": "0x690690",
+   "root": "0x690730"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 260,
+  "from": "0x2508610",
+  "size": "0xF0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x112D1A4",
+   "size": 16
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x111CF40",
+   "size": 4
+  },
+  "sounds.pulse": {
+   "kind": "sound",
+   "address": "0x111CF44",
+   "size": 4
+  },
+  "sounds.burst": {
+   "kind": "sound",
+   "address": "0x111CF48",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x690690",
+  "file_loader": "0x6906A0",
+  "root": "0x690730"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "Quistis' Shockwave Pulsar: her animation set and chain, the effect camera, the targets lifted and risen, the rings, sparks and shards, the screen flashes and fade, the sounds; the action results"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the master's ticks 0, 0x50, 0xAA"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "master",
+   "label": "Start",
+   "doc": "At the master's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.pulse",
+   "part": "master",
+   "label": "Pulse",
+   "doc": "At the master's tick 0x50",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.pulse",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.burst",
+   "part": "master",
+   "label": "Burst",
+   "doc": "At the master's tick 0xAA",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "master.damage",
+   "part": "master",
+   "label": "Damage tick",
+   "doc": "The action results at this tick of the master",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 252,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

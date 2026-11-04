@@ -2226,3 +2226,105 @@ Potion's description is the same with its own sequences and sound.
      (the engine's shared state block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
      - *Inputs* (`ProgramFiles<223>`): the two script files (empty: the game's).
      - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **White Wind (enemy) (226)** (FFNx 0b7e7d1f; Adamantoise's attack; a port root and scene task, Ray-Bomb's
+     kind): the healing wind at the caster and across the party, one sparkle layout per target with its
+     result, the sound.
+     - *Inputs* (`WhiteWind226Params`): the sound. Data: the sound, "mag296.tim".
+     - *Tests:* the cycle test casts it from Adamantoise (slot 3) on itself (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Scene); no + menu family.
+   - **Homing Laser (Quistis) (229)** (FFNx 83496e67; Quistis' Blue Magic; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag228_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<229>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Fire Breath (Quistis) (230)** (FFNx 83496e67; Quistis' Blue Magic; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag229_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<230>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Disease Breath (231)** (FFNx 83496e67; Blood Soul's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag230_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<231>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Breath of Death (232)** (FFNx 83496e67; Blood Soul's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag231_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<232>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Earthquake (233)** (FFNx 83496e67; Armadodo's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag232_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<233>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Fart (234)** (FFNx 83496e67; Bite Bug's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag233_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<234>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Breath (235)** (FFNx 83496e67; Blue Dragon's and the Bomb's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag234_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<235>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Ochu Dance (239)** (FFNx 83496e67; Ochu's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag238_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<239>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Ochu Earthquake (240)** (FFNx 83496e67; Ochu's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag239_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<240>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Sand Shake (256)** (FFNx e7e1fde4; Abyss Worm's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag255_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<256>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Mad Cow Special (258)** (FFNx e7e1fde4; Sacred and Minotaur's combo; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag257_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<258>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Desperado (261)** (FFNx e7e1fde4; Laguna's limit break; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag260_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<261>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Blood Pain (262)** (FFNx e7e1fde4; Kiros' limit break; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag261_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<262>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Massive Anchor (263)** (FFNx e7e1fde4; Ward's limit break; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag262_b.00 / .01) - its bones, prims, sprites
+     and particles, the action results. The program calls the clone's own setup (the engine's shared state
+     block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<263>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **Renzokuken (6 hits) (259)** (FFNx 1b50296e; Squall's limit break; a port controller, Ray-Bomb's kind):
+     Squall's animation set and sequence bound (the hits are the sequence's), the gunblade's trail, the
+     sparks, the hits' slashes with their flashes and debris, the closing flash, the screen flash and his
+     tint, the sound.
+     - *Inputs* (`Renzokuken259Params`): the sound. Data: the sound, "mag140-158-159-258-331-332.tim".
+     - *Tests:* the cycle test pokes six stage durations (`CYCLE_POKES`); no damage number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Shockwave Pulsar (Quistis) (260)** (FFNx f93a385d; Quistis' Blue Magic; a port root and master, Ray-Bomb's
+     kind): her animation set and chain, the effect camera, the targets lifted and risen, the rings, sparks and
+     shards, the screen flashes and fade, the sounds (ticks 0, 80, 170); the action results at tick 252.
+     - *Inputs* (`Pulsar260Params`): the three sounds, the damage tick. Data: the sounds, "mag069-259.tim".
+     - *Fujin:* its tab (Master); no + menu family.
