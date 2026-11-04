@@ -1,0 +1,482 @@
+{
+ "format": 1,
+ "effect": 88,
+ "name": "Invincible Moon",
+ "doc": "Invincible Moon (Rinoa's limit break; the act family): one emitter per action - the director block, the module data block and the director: Angelo howling at the moon with Rinoa's double, the moon and its glows rising behind the party, a halo, dust rings, a screen flash, the moon's prim play and an actor system, the camera script; the party made invincible at the done flag. Its parts are the port's code (FFNx mag088_invincible_moon.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7684D0",
+   "setup": "0x7684F0",
+   "root": "0x768690"
+  },
+  "memory": {
+   "texture_file": "0x25A4D98",
+   "packet_cursor": "0x25A4D9C",
+   "packet_limit": "0x25A4EA4",
+   "arena_a": "0x25AB8AC",
+   "limit_a": "0x25AAA04",
+   "arena_b": "0x25AB8A8",
+   "limit_b": "0x25AAA00",
+   "arena_top": "0x25ACD38",
+   "init_flag_a": "0x25ACD34",
+   "init_flag_b": "0x25A6BBC",
+   "cam_ptr_a": "0x25ACD0C",
+   "cam_ptr_b": "0x25A4EA8",
+   "root_queue": "0x25A4F78",
+   "root_pool": "0x25A4EB0",
+   "particle_pool": "0x25AC6DC",
+   "actor_pool": "0x25ACD30",
+   "particle_next": "0x25A6BB8",
+   "actor_next": "0x25AC6E8",
+   "cursor_c": "0x25AC3A4",
+   "cursor_d": "0x25A4DA0",
+   "count_a": "0x25ACCF0",
+   "count_b": "0x25AC6D8"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 88,
+  "from": "0x25A4D98",
+  "size": "0x8118",
+  "pointers": [
+   [
+    2,
+    "0x154ECE0"
+   ],
+   [
+    3,
+    "0x154F918"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1557D18",
+   "size": 12
+  },
+  "sounds.howl": {
+   "kind": "sound",
+   "address": "0x154ECE4",
+   "size": 4
+  },
+  "sounds.rise": {
+   "kind": "sound",
+   "address": "0x154ECE8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xA000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0xB7C0"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25AB738",
+   "storage": "0x25AB748",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25A4E80",
+   "storage": "0x25A4DA8",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "loads",
+   "queue": "0x25ACCF8",
+   "storage": "0x25AC6F0",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "the load script (the port's)"
+  },
+  {
+   "key": "creatures",
+   "queue": "0x25AC6C8",
+   "storage": "0x25AC408",
+   "size": 352,
+   "count": 2,
+   "keep": true,
+   "doc": "Angelo and Rinoa's double (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x25AB498",
+   "storage": "0x25AAA08",
+   "size": 676,
+   "count": 4,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x25A4F88",
+   "storage": "0x25A4F98",
+   "size": 144,
+   "count": 50,
+   "keep": true,
+   "doc": "the camera, the moon, glows and dust (the port's)"
+  },
+  {
+   "key": "tasks2",
+   "queue": "0x25A6BC0",
+   "storage": "0x25A6BD0",
+   "size": 156,
+   "count": 80,
+   "keep": true,
+   "doc": "the halo, rings and flashes (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x25AA9F0",
+   "storage": "0x25A9C90",
+   "size": 1140,
+   "count": 3,
+   "keep": true,
+   "doc": "the prim plays (the port's)"
+  },
+  {
+   "key": "spare",
+   "queue": "0x25AB728",
+   "storage": "0x25AB4A8",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Angelo howls at the moon with Rinoa's double, the moon and its glows rise behind the party, a halo, dust rings, a screen flash, the moon's prim play and an actor system; the camera; the done flag"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "Angelo's howl, the moon rising"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.howl",
+   "part": "director",
+   "label": "Howl",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.howl",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.rise",
+   "part": "director",
+   "label": "Rise",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage frame",
+   "doc": "The done flag (the damage) from this frame of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 35,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7688F0",
+   "code": "0x7688F0",
+   "doc": "One per action (the engine's emitter, its states the port's): the director block, the module data block and the director; the result at the done flag; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x768970"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7736C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x773730"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x773750"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x773770"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x768ED0",
+   "code": "0x768ED0",
+   "doc": "The director: every tick the phase bookkeeping, then its 15 states: the TIMs, the camera, the cues, the done flag at frame 0x23, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x768F90"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x768FE0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769C70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769CF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769D50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769D70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769D90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769E10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769E40"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769ED0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769EF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769F20"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769F80"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769FA0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769FC0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x769FE0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

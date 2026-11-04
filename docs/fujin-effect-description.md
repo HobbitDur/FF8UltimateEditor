@@ -1610,3 +1610,20 @@ Potion's description is the same with its own sequences and sound.
      - *Port:* its descriptor names two exe words, the director block's and the camera block's
        (`pointers` 2 and 3): both moved with the copy.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Invincible Moon (88)** (FFNx af99083b; Rinoa's limit break; the act family, Death's description):
+     one emitter per action - the director block, the module data block and the director: Angelo howling at
+     the moon with Rinoa's double, the moon and its glows rising behind the party, a halo, dust rings, a
+     screen flash, the moon's prim play and an actor system, the camera script; the party made invincible
+     at the done flag.
+     - *Inputs* (`MoonParams`): the two sounds (howl, the moon rising), the done flag's frame. Data: the
+       sounds, "mag087.tim" (no engine camera animation).
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Wishing Star (89)** (FFNx 5021725d; Rinoa's limit break; a port director, Ray-Bomb's kind, no
+     file loader): the director's 0x10F-tick timeline - Rinoa riding Angelo up into a starry sky, the screen
+     shattered and falling, the stars twinkling, Angelo diving through the targets eight times (eight damage
+     waves) under a rain of sparkles, the landing, the white fade; the camera all along.
+     - *Inputs* (`WishingStarParams`): the three sounds. Data: the sounds (its two TIMs are exe data).
+     - *Recorder:* each wave applies `target count / 8` target records (the battle gives the action eight
+       per target); the recorder's action has one per target, so no wave hits there (a cycle-test
+       exemption from the damage line).
+     - *Fujin:* its tab (Director); no + menu family.

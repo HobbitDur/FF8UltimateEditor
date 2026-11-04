@@ -1,0 +1,98 @@
+{
+ "format": 1,
+ "effect": 89,
+ "name": "Wishing Star",
+ "doc": "Wishing Star (Rinoa's limit break): the director's 0x10F-tick timeline - Rinoa riding Angelo up into a starry sky, the screen shattered and falling, the stars twinkling, Angelo diving through the targets eight times (eight damage waves) under a rain of sparkles, the landing, the white fade; the camera all along. Its tasks are the port's code (FFNx mag089_wishing_star.cpp) run on the program's memory (its pools in the magic buffer); no file loader (its TIMs are exe data).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x6F9CF0",
+   "root": "0x6F9D80"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 89,
+  "from": "0x2556584",
+  "size": "0xA0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.rise": {
+   "kind": "sound",
+   "address": "0x14913F0",
+   "size": 4
+  },
+  "sounds.sky": {
+   "kind": "sound",
+   "address": "0x14913F4",
+   "size": 4
+  },
+  "sounds.landing": {
+   "kind": "sound",
+   "address": "0x14913F8",
+   "size": 4
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6F9CF0",
+  "file_loader": "0x0",
+  "root": "0x6F9D80"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its 0x10F-tick timeline: Rinoa and Angelo rising, the screen shattered, the starry sky, eight dives and damage waves under the sparkles, the landing, the white fade; the camera all along"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At ticks 0, 0x32, 0xA2"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.rise",
+   "part": "director",
+   "label": "Rise",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.sky",
+   "part": "director",
+   "label": "Sky",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.sky",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.landing",
+   "part": "director",
+   "label": "Landing",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.landing",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
