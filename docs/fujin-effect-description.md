@@ -1969,3 +1969,58 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`SandStormParams`): the wind sound, the damage tick. Data: the sound, "mag154.tim".
      - *Tests:* the cycle test casts it from Fastitocalon (slot 3) on Squall (`CYCLE_CASTS`).
      - *Fujin:* its tab (Director); no + menu family.
+   - **Renzokuken vs X-ATM092 (159)** (FFNx 5f14c771; Squall's limit break on X-ATM092; a port controller,
+     Ray-Bomb's kind): Squall's and the boss's animation sets and sequences bound (the hits are the sequence's),
+     the gunblade's trail, the sparks, the hits' slashes with their flashes and debris, the four ring kinds, the
+     screen flash and his tint, the sound.
+     - *Inputs* (`Renzokuken159Params`): the sound. Data: the sound, "mag140-158-159-258-331-332.tim".
+     - *Port:* the ring spawner `AddRingAtHit` goes through own::Fn.
+     - *Tests:* the cycle test casts it from Squall on X-ATM092 (slot 3, `CYCLE_CASTS`) with Renzokuken's stage
+       durations poked (`CYCLE_POKES`); no damage number (the hits are the sequence's).
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken (160)** (FFNx 2332af9b; Squall's limit break, the generic version; a port controller, Ray-Bomb's
+     kind): Squall's animation set and sequence bound (the hits are the sequence's), the gunblade's trail, the
+     sparks, the hits' slashes with their flashes and debris, the closing ring, the screen flash and his tint,
+     the sound.
+     - *Inputs* (`RenzokukenParams`): the sound. Data: the sound, "mag140-158-159-258-331-332.tim".
+     - *Tests:* the cycle test pokes Renzokuken's stage durations (`CYCLE_POKES`); no damage number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken vs Elvoret (161)** (FFNx 53a95473; Squall's limit break on Elvoret / Elnoyle; a port controller,
+     Ray-Bomb's kind): Squall's and the boss's animation sets and sequences bound (the hits are the sequence's),
+     the gunblade's trail, the sparks, the hits' slashes with their flashes and debris, the stream and the burst,
+     the closing ring, the screen flash and his tint, the sound.
+     - *Inputs* (`Renzokuken161Params`): the sound. Data: the sound, "mag160.tim".
+     - *Tests:* the cycle test casts it from Squall on Elvoret (slot 3, `CYCLE_CASTS`) with Renzokuken's stage
+       durations poked (`CYCLE_POKES`); no damage number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Fated Circle (162)** (FFNx f2ad1f61; Squall's Renzokuken finisher; a port director, Ray-Bomb's kind):
+     Squall's animation set and sequence bound, the gunblade's trail, the swipe, dust and shock rings, the glow,
+     shards and orbit sparks, the burst, the rain, the morph shell and the dome, the captured stage and the swirl,
+     the circle with its pillars, rings and embers, the spark clouds, the screen flash, the sounds; the action
+     results at tick 150.
+     - *Inputs* (`FatedCircleParams`): the two sounds, the damage tick. Data: the sounds, "mag161.tim".
+     - *Port:* the spawn helper `AddMain` goes through own::Fn.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Rough Divide (163)** (FFNx d36b7818; Squall's Renzokuken finisher; a port director, Ray-Bomb's kind):
+     Squall's animation set and sequence bound (his position moved), the gunblade's trail, the glow, sparkles and
+     hit sparks, the burst, shards, chips and debris, the pillar, the blade, the streaks, the flash, ring, shock,
+     flare and wave, the screen flash, the sound; the action result at tick 65.
+     - *Inputs* (`RoughDivideParams`): the sound, the damage tick. Data: the sound, "mag162.tim".
+     - *Port:* the spawn helper `AddMain` goes through own::Fn.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Blasting Zone (164)** (FFNx 119aab9c; Squall's Renzokuken finisher; a port director, Ray-Bomb's kind):
+     Squall's animation set and sequence bound (the setup turns him to the targets), the flares, orbit sparks,
+     swirl and rings, the pulses, shards and ball, the frame model, the domes, the beam, the rocks and debris, the
+     starfield, the screen flash, the morph and its sparks, the blade glow, the burst sparks, the waves, the smoke,
+     the shake, the sounds (ticks 35 and 164); the action results at tick 307.
+     - *Inputs* (`BlastingZoneParams`): the two sounds (blade raised, blast), the damage tick. Data: the
+       sounds, "mag163.tim".
+     - *Port:* the spawn helper `AddMain` goes through own::Fn.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Lion Heart (165)** (FFNx 84405133; Squall's Renzokuken finisher; a port director, Ray-Bomb's kind):
+     Squall's animation set and sequence bound (the setup turns him to the targets), the hits on the targets with
+     their results (one per hit record), the trails, rocks, flashes, rings and sparks, the final blow, the four
+     sounds (ticks 10, 119, 202, ...).
+     - *Inputs* (`LionHeartParams`): the four sounds. Data: the sounds, "mag164.tim".
+     - *Port:* the spawn helper `AddMain` goes through own::Fn.
+     - *Fujin:* its tab (Director); no + menu family.

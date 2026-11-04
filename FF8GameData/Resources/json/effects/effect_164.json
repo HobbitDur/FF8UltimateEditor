@@ -1,0 +1,103 @@
+{
+ "format": 1,
+ "effect": 164,
+ "name": "Blasting Zone",
+ "doc": "Blasting Zone (Squall's Renzokuken finisher): the root and the director - Squall's animation set and sequence bound (the setup turns him to the targets), the flares, orbit sparks, swirl and rings, the pulses, shards and ball, the frame model, the domes, the beam, the rocks and debris, the starfield, the screen flash, the morph and its sparks, the blade glow, the burst sparks, the waves, the smoke, the shake, the sounds; the action results. Its tasks are the port's code (FFNx mag164_blasting_zone.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5F0240",
+   "setup": "0x5F0260",
+   "root": "0x5F5B10"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 164,
+  "from": "0x23C6950",
+  "size": "0x37CC"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD99DB8",
+   "size": 12
+  },
+  "sounds.raise": {
+   "kind": "sound",
+   "address": "0xD99C10",
+   "size": 4
+  },
+  "sounds.blast": {
+   "kind": "sound",
+   "address": "0xD99C14",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5F0260",
+  "file_loader": "0x5F0240",
+  "root": "0x5F5B10"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Squall's Blasting Zone: his animation set and sequence (facing the targets), the flares, orbit sparks, swirl and rings, the pulses, shards and ball, the frame model, the domes, the beam, the rocks and debris, the starfield, the screen flash, the morph and its sparks, the blade glow, the burst sparks, the waves, the smoke, the shake, the sounds; the action results"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The blade raised, the blast"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.raise",
+   "part": "director",
+   "label": "Raise",
+   "doc": "The blade raised (Squall's sequence 2)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.raise",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.blast",
+   "part": "director",
+   "label": "Blast",
+   "doc": "The blast (the starfield and the screen flash)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.blast",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The action results at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 314,
+   "default": 307,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

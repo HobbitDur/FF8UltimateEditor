@@ -1,0 +1,103 @@
+{
+ "format": 1,
+ "effect": 162,
+ "name": "Fated Circle",
+ "doc": "Fated Circle (Squall's Renzokuken finisher): the master and the director - Squall's animation set and sequence bound, the gunblade's trail, the swipe, dust and shock rings, the glow, shards and orbit sparks, the burst, the rain, the morph shell and the dome, the captured stage and the swirl, the circle with its pillars, rings and embers, the spark clouds, the screen flash, the sounds; the action results. Its tasks are the port's code (FFNx mag162_fated_circle.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5F90D0",
+   "setup": "0x5F90F0",
+   "root": "0x5FD090"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 162,
+  "from": "0x23CE588",
+  "size": "0x2804"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDA8D18",
+   "size": 12
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xDA8C68",
+   "size": 4
+  },
+  "sounds.circle": {
+   "kind": "sound",
+   "address": "0xDA8C6C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5F90F0",
+  "file_loader": "0x5F90D0",
+  "root": "0x5FD090"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Squall's Fated Circle: his animation set and sequence, the gunblade's trail, the swipe, dust and shock rings, the glow, shards and orbit sparks, the burst, the rain, the morph shell and the dome, the captured stage and the swirl, the circle with its pillars, rings and embers, the spark clouds, the screen flash, the sounds; the action results"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the director's ticks 1 and 0x39"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "At the director's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.circle",
+   "part": "director",
+   "label": "Circle",
+   "doc": "At the director's tick 0x39 (the shell and the dome)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.circle",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The action results at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 170,
+   "default": 150,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

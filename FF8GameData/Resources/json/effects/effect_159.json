@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 159,
+ "name": "Renzokuken (vs X-ATM092)",
+ "doc": "Renzokuken on X-ATM092 (Squall's limit break): the master and the controller - Squall's and the boss's animation sets and sequences bound (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes and debris, the four ring kinds, the screen flash and his tint, the sound. Its tasks are the port's code (FFNx mag159_renzokuken_xatm.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x600BA0",
+   "setup": "0x600BC0",
+   "root": "0x602C40"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 159,
+  "from": "0x23D5648",
+  "size": "0x24BC"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDAFBD8",
+   "size": 32
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xEA32CC",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x600BC0",
+  "file_loader": "0x600BA0",
+  "root": "0x602C40"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "controller",
+   "title": "Controller",
+   "doc": "Squall's Renzokuken on X-ATM092: both animation sets and sequences, the gunblade's trail, the sparks, the hits' slashes with their flashes and debris, the four ring kinds, the screen flash and tint, the sound"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "controller",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

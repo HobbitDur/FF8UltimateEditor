@@ -1,0 +1,124 @@
+{
+ "format": 1,
+ "effect": 165,
+ "name": "Lion Heart",
+ "doc": "Lion Heart (Squall's Renzokuken finisher): the root and the director - Squall's animation set and sequence bound (the setup turns him to the targets), the hits on the targets with their results, the trails, rocks, flashes, rings and sparks, the final blow, the sounds. Its tasks are the port's code (FFNx mag165_lion_heart.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5E9450",
+   "setup": "0x5E9470",
+   "root": "0x5F01F0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 165,
+  "from": "0x23C3278",
+  "size": "0x36D8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD88A94",
+   "size": 12
+  },
+  "sounds.a": {
+   "kind": "sound",
+   "address": "0xD886D4",
+   "size": 4
+  },
+  "sounds.b": {
+   "kind": "sound",
+   "address": "0xD886D8",
+   "size": 4
+  },
+  "sounds.c": {
+   "kind": "sound",
+   "address": "0xD886DC",
+   "size": 4
+  },
+  "sounds.d": {
+   "kind": "sound",
+   "address": "0xD886E0",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5E9470",
+  "file_loader": "0x5E9450",
+  "root": "0x5F01F0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Squall's Lion Heart: his animation set and sequence (facing the targets), the hits on the targets with their results, the trails, rocks, flashes, rings and sparks, the final blow, the sounds"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The director's four sounds, in order"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.a",
+   "part": "director",
+   "label": "Sound 1",
+   "doc": "With the rock trio",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.a",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.b",
+   "part": "director",
+   "label": "Sound 2",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.b",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.c",
+   "part": "director",
+   "label": "Sound 3",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.c",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.d",
+   "part": "director",
+   "label": "Sound 4",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.d",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

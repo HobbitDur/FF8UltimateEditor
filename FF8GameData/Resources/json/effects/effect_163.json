@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 163,
+ "name": "Rough Divide",
+ "doc": "Rough Divide (Squall's Renzokuken finisher): the master and the director - Squall's animation set and sequence bound (his position moved), the gunblade's trail, the glow, sparkles and hit sparks, the burst, shards, chips and debris, the pillar, the blade, the streaks, the flash, ring, shock, flare and wave, the screen flash, the sound; the action result. Its tasks are the port's code (FFNx mag163_rough_divide.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5F5B60",
+   "setup": "0x5F5B80",
+   "root": "0x5F9020"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 163,
+  "from": "0x23CA120",
+  "size": "0x4468"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDA00F0",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xDA00A8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5F5B80",
+  "file_loader": "0x5F5B60",
+  "root": "0x5F9020"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Squall's Rough Divide: his animation set and sequence (his position moved), the gunblade's trail, the glow, sparkles and hit sparks, the burst, shards, chips and debris, the pillar, the blade, the streaks, the flash, ring, shock, flare and wave, the screen flash, the sound; the action result"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The action result at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 85,
+   "default": 65,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
