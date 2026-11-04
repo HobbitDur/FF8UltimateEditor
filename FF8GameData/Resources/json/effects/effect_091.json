@@ -1,0 +1,327 @@
+{
+ "format": 1,
+ "effect": 91,
+ "name": "Angelo Rush",
+ "doc": "Angelo Rush (Rinoa's Angelo command; the act family): one emitter per action - the director's phases: Angelo dashing in (his foot rings and dust puffs, the dash play following him), the screen flash and the actor system; the damage. Its parts are the port's code (FFNx mag091_angelo_rush.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x759350",
+   "setup": "0x759370",
+   "root": "0x759510"
+  },
+  "memory": {
+   "texture_file": "0x2598F28",
+   "packet_cursor": "0x2598F2C",
+   "packet_limit": "0x2599034",
+   "arena_a": "0x259DD04",
+   "limit_a": "0x259D644",
+   "arena_b": "0x259DD00",
+   "limit_b": "0x259D640",
+   "arena_top": "0x259EE9C",
+   "init_flag_a": "0x259EE98",
+   "init_flag_b": "0x259BE2C",
+   "cam_ptr_a": "0x259EE90",
+   "cam_ptr_b": "0x2599038",
+   "root_queue": "0x2599108",
+   "root_pool": "0x2599040",
+   "particle_pool": "0x259E8D4",
+   "actor_pool": "0x259EE94",
+   "particle_next": "0x259BE28",
+   "actor_next": "0x259E8E0",
+   "cursor_c": "0x259E708",
+   "cursor_d": "0x2598F30",
+   "count_a": "0x259EE88",
+   "count_b": "0x259E8D0"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 91,
+  "from": "0x2598F28",
+  "size": "0x5F80",
+  "pointers": []
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1547158",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x154328C",
+   "size": 1524
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x15430E4",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0xB7C0"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x259DB90",
+   "storage": "0x259DBA0",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x2599010",
+   "storage": "0x2598F38",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "angelo",
+   "queue": "0x259E8C0",
+   "storage": "0x259E768",
+   "size": 344,
+   "count": 1,
+   "keep": true,
+   "doc": "Angelo (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x259D8F0",
+   "storage": "0x259D648",
+   "size": 676,
+   "count": 1,
+   "keep": true,
+   "doc": "the actor system (the port's)"
+  },
+  {
+   "key": "rings",
+   "queue": "0x2599118",
+   "storage": "0x2599128",
+   "size": 144,
+   "count": 80,
+   "keep": true,
+   "doc": "the foot rings (the port's)"
+  },
+  {
+   "key": "dust",
+   "queue": "0x259BE30",
+   "storage": "0x259BE40",
+   "size": 140,
+   "count": 40,
+   "keep": true,
+   "doc": "the dust puffs (the port's)"
+  },
+  {
+   "key": "dash",
+   "queue": "0x259D630",
+   "storage": "0x259D420",
+   "size": 264,
+   "count": 2,
+   "keep": true,
+   "doc": "the dash play (the port's)"
+  },
+  {
+   "key": "flash",
+   "queue": "0x259DB80",
+   "storage": "0x259D900",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the screen flash (the engine's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Angelo's dash with its dust bursts, the dash play following him, the actor system, the screen flash; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "Angelo's dash",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x759770",
+   "code": "0x759770",
+   "doc": "One per action (the engine's emitter, its states the port's): the director data and the director; the damage; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7597F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7621C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x762200"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x762220"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x762240"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x7598C0",
+   "code": "0x7598C0",
+   "doc": "The director: every tick the phase bookkeeping (each new phase spawns its tasks), then its states: the TIM upload, the cue, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x759930"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x759980"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7599A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7599F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x759A30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x759A50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

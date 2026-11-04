@@ -1637,3 +1637,10 @@ Potion's description is the same with its own sequences and sound.
        after the texture's, as Tonberry's does.
      - *Port:* the library's canonical module (its descriptor MOD_090 in act_engine.cpp); its master sets it.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Angelo Rush (91)** (FFNx 02b560df; Rinoa's Angelo command; the act family, Death's description):
+     one emitter per action - the director's phases: Angelo dashing in (his foot rings and dust puffs, the
+     dash play following his bone), the screen flash and the actor system; the damage.
+     - *Inputs* (`RushParams`): the dash's sound. Data: the sound, "mag090.tim" (Angelo's texture, shared
+       with the Angelo effects) and the engine camera animation.
+     - *Port:* the module's own sequence reader (0x761330) called through `callo`, as the game calls it.
+     - *Fujin:* its tab (Director); no + menu family.
