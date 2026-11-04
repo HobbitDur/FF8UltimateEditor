@@ -1463,3 +1463,11 @@ Potion's description is the same with its own sequences and sound.
        tick and the lasers' tick, the master's wait, the actor system, the beams (appear tick, grow, hold
        until, shrink), the stage light (level, step). Data: the sound, the camera track, "mag070.tim".
      - *Fujin:* its tabs (Emitter, Caster, Laser); no + menu family.
+   - **Aqua Breath (Quistis) (72)** (FFNx 8a32993b; Quistis' Blue Magic; Aqua Breath's library relocated;
+     the act family, Resonance's kind with Drink Magic's orb, Aqua Breath's description): one emitter per
+     action - the director: the stage darkening and her cast animation (the module's animation set bound to
+     her), the sound; phase 1 - the water ball at her bone, the stream of drops, a splash and a rain per
+     target; the damage at its cue.
+     - *Inputs* (`AquaQParams`): Aqua Breath's, and the director's wait after the cast animation starts.
+       Data: the sound, the camera track, "mag054-071.tim".
+     - *Fujin:* its tabs (Director, Water ball, Drops); no + menu family.

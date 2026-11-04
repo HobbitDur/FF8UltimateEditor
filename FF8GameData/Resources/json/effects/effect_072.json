@@ -1,0 +1,463 @@
+{
+ "format": 1,
+ "effect": 72,
+ "name": "Aqua Breath (Quistis)",
+ "doc": "Aqua Breath (Quistis' Blue Magic; Aqua Breath's library relocated; the act family, Resonance's kind with Drink Magic's orb): one emitter per action - the director: the stage darkening and her cast animation, the sound; phase 1 - the water ball at her bone, the stream of drops thrown from it, a splash (the target's hit animation, drops off it) and a rain of drops per target; the damage at its cue. Its parts are the port's code (FFNx mag072_aqua_breath_quistis.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7D1E60",
+   "setup": "0x7D1E80",
+   "root": "0x7D1FD0"
+  },
+  "memory": {
+   "texture_file": "0x25F4F68",
+   "packet_cursor": "0x25F4F6C",
+   "packet_limit": "0x25F506C",
+   "arena_a": "0x25F996C",
+   "limit_a": "0x25F9564",
+   "arena_b": "0x25F9968",
+   "limit_b": "0x25F9560",
+   "arena_top": "0x25FA3FC",
+   "init_flag_a": "0x25FA3F8",
+   "init_flag_b": "0x25F93C8",
+   "cam_ptr_a": "0x25FA3D0",
+   "cam_ptr_b": "0x25F5070",
+   "root_queue": "0x25F5140",
+   "root_pool": "0x25F5078"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 72,
+  "from": "0x25F4F68",
+  "size": "0x5498",
+  "pointers": [
+   [
+    2,
+    "0x1589C28"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x158F520",
+   "size": 16
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x158D7EC",
+   "size": 416
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x1589C2C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xC000",
+  "release_file": false
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25F97F8",
+   "storage": "0x25F9808",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25F5048",
+   "storage": "0x25F4F70",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "tasks",
+   "queue": "0x25F5150",
+   "storage": "0x25F5160",
+   "size": 340,
+   "count": 50,
+   "keep": true,
+   "doc": "the stage darkening, the stream, the splashes, the rain and their drops (the port's)"
+  },
+  {
+   "key": "orb",
+   "queue": "0x25F93D0",
+   "storage": "0x25F93E0",
+   "size": 96,
+   "count": 4,
+   "keep": true,
+   "doc": "the water ball (the port's)"
+  },
+  {
+   "key": "spare",
+   "queue": "0x25F97E8",
+   "storage": "0x25F9568",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its phases: the stage darkening and the caster's cast animation, the sound; phase 1 - the water ball, the stream of drops, a splash and a rain per target; the damage cue"
+  },
+  {
+   "id": 0,
+   "key": "orb",
+   "title": "Water ball",
+   "doc": "At the caster's bone, fading out, held, fading back"
+  },
+  {
+   "id": 0,
+   "key": "drops",
+   "title": "Drops",
+   "doc": "The targets' splash and the rain round them"
+  }
+ ],
+ "groups": [
+  {
+   "key": "darken",
+   "label": "Stage darkening",
+   "doc": "Its level, up a tick, held until its tick, down a tick"
+  }
+ ],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.wait",
+   "part": "director",
+   "label": "Wait",
+   "doc": "Ticks after the cast animation starts before phase 1",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage cue",
+   "doc": "The damage of the targets after this tick of the phase",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.level",
+   "part": "director",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step_in",
+   "part": "director",
+   "label": "Step in",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.hold",
+   "part": "director",
+   "label": "Hold until",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step_out",
+   "part": "director",
+   "label": "Step out",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.fade_out",
+   "part": "orb",
+   "label": "Fade out",
+   "doc": "Its fade a tick (4096: all of it)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.hold",
+   "part": "orb",
+   "label": "Hold",
+   "doc": "Ticks held between the fades",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.fade_in",
+   "part": "orb",
+   "label": "Fade in",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "splash.from",
+   "part": "drops",
+   "label": "Splash from",
+   "doc": "The target's hit animation and its drops from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "splash.until",
+   "part": "drops",
+   "label": "Splash until",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "rain.from",
+   "part": "drops",
+   "label": "Rain from",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "rain.until",
+   "part": "drops",
+   "label": "Rain until",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 28,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7D2180",
+   "code": "0x7D2180",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; sets up the director block (the caster, the party's centre, the facing, the orb's scale) and starts the director; waits for the director's damage cue; then waits, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D2200"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D5FC0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D6030"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D6050"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D6070"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x7D2430",
+   "code": "0x7D2430",
+   "doc": "The director: every tick the phase bookkeeping (phase 1: the water ball, the stream, a splash and a rain per target), then its states: the stage darkening and the caster's cast animation, the cue to phase 1 after its wait, the sound, the damage cue, the cue to phase 2, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x7D24B0"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D2500"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D26C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D2720"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D2770"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D2790"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D27B0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7D27D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}
