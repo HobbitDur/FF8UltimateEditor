@@ -155,6 +155,10 @@ namespace fxprog
 		// numbers, @caster: the caster's entity, @name: a memory word's address; Quistis' cast animation)
 		struct ActCall { uint32_t fn; std::vector<std::string> args; };
 		std::vector<ActCall> act_calls;
+		// after the last action, the module's own master states from its state 6 on (act_tail: Ultimecia's final
+		// form dies - its file load, the fanfare hand-over, the music, the unload waits, its finish), called with
+		// the root as its master calls them: each moves the root's state (+0x29) on itself
+		std::vector<uint32_t> act_tail;
 		int act_part = 0, act_first_part = 0;            // the lab's parts: the actor system's, its definition 0's (k: + k)
 		std::vector<Patch> patches;                     // written by the setup, before anything runs
 		// a port module whose code runs (Doom's kind: its state functions called from the phases, its own tasks
@@ -1699,6 +1703,14 @@ namespace fxprog
 
 	inline void DirectorPhase(RootNode *r)
 	{
+#ifdef FXPROG_ACTORS
+		if (!g_program->act_tail.empty() && r->h.phase >= 6)   // (the module's own master states from its state 6)
+		{
+			const size_t k = (size_t)(r->h.phase - 6);
+			if (k < g_program->act_tail.size()) ff8fx::act::callp(g_program->act_tail[k], (uint32_t)r);
+			return;
+		}
+#endif
 		switch (r->h.phase)
 		{
 		case 0:
@@ -2455,6 +2467,8 @@ namespace fxprog
 				g.act_wait = ParseVal(w[3]);
 			}
 			else if (d == "act_pool" && need(3)) g.act_pools.push_back({ w[1], (uint32_t)strtoul(w[2].c_str(), nullptr, 0) });
+			else if (d == "act_tail" && need(2))
+				for (size_t k = 1; k < w.size(); k++) g.act_tail.push_back((uint32_t)strtoul(w[k].c_str(), nullptr, 0));
 			else if (d == "act_call" && need(2))
 				g.act_calls.push_back({ (uint32_t)strtoul(w[1].c_str(), nullptr, 0), std::vector<std::string>(w.begin() + 2, w.end()) });
 			else if (d == "act_zero" && need(2)) g.act_zero.push_back(w[1]);

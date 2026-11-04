@@ -1,0 +1,476 @@
+{
+ "format": 1,
+ "effect": 79,
+ "name": "Ultimecia's final form dies",
+ "doc": "Ultimecia's final form dies (her enemy attack; the act family, Siren's kind): one emitter per action - the director's three cuts: the caster's model copied and thrown as a ball, debris, flakes and sparks, the light levels, the actor system and three prim-model sequences, the party hidden meanwhile; the damage at its cue. After the last action the master's own tail: battle/MAG078_B.9M0 loaded and handed to the fanfare player, the music volume, the unload waits. Its parts are the port's code (FFNx mag079_ultimecia_final_death.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x7B4BB0",
+   "setup": "0x7B4BD0",
+   "root": "0x7B4D80"
+  },
+  "memory": {
+   "texture_file": "0x25DF338",
+   "packet_cursor": "0x25DF33C",
+   "packet_limit": "0x25E5020",
+   "arena_a": "0x25EA344",
+   "limit_a": "0x25E973C",
+   "arena_b": "0x25EA340",
+   "limit_b": "0x25E9738",
+   "arena_top": "0x25EB3B8",
+   "init_flag_a": "0x25EB3B4",
+   "init_flag_b": "0x25E8954",
+   "cam_ptr_a": "0x25EB3AC",
+   "cam_ptr_b": "0x25E5024",
+   "root_queue": "0x25E50F0",
+   "root_pool": "0x25E5028",
+   "particle_pool": "0x25EAF34",
+   "actor_pool": "0x25EB3B0",
+   "particle_next": "0x25E8950",
+   "actor_next": "0x25EAF40",
+   "cursor_c": "0x25EAD80",
+   "cursor_d": "0x25DF342",
+   "count_a": "0x25EB390",
+   "count_b": "0x25EAF30"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 79,
+  "from": "0x25DF338",
+  "size": "0xC1F8",
+  "pointers": [
+   [
+    2,
+    "0x1580B20"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1581F88",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1581BCC",
+   "size": 804
+  },
+  "sounds.a": {
+   "kind": "sound",
+   "address": "0x1580B24",
+   "size": 4
+  },
+  "sounds.b": {
+   "kind": "sound",
+   "address": "0x1580B28",
+   "size": 4
+  },
+  "sounds.c": {
+   "kind": "sound",
+   "address": "0x1580B2C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x8000",
+  "release_file": false,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x870",
+    "actor_pool": "0x9D80"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ],
+   "tail": [
+    "0x7BE1A0",
+    "0x7BE1F0",
+    "0x7BE220",
+    "0x7BE240",
+    "0x7BE270",
+    "0x7BE280",
+    "0x7BE2A0"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25EA1D0",
+   "storage": "0x25EA1E0",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25DF4F8",
+   "storage": "0x25DF420",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "loads",
+   "queue": "0x25EB398",
+   "storage": "0x25EAF48",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "the load scripts (the port's)"
+  },
+  {
+   "key": "caster",
+   "queue": "0x25EAF20",
+   "storage": "0x25EADE0",
+   "size": 320,
+   "count": 1,
+   "keep": true,
+   "doc": "the caster's model copy thrown as a ball (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x25E9F30",
+   "storage": "0x25E9740",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor system (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x25E5100",
+   "storage": "0x25E5110",
+   "size": 180,
+   "count": 80,
+   "keep": true,
+   "doc": "the sparks, debris and flakes (the port's)"
+  },
+  {
+   "key": "throwers",
+   "queue": "0x25E8958",
+   "storage": "0x25E8968",
+   "size": 88,
+   "count": 8,
+   "keep": true,
+   "doc": "the throwers and the light level tasks (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x25E9728",
+   "storage": "0x25E8C28",
+   "size": 704,
+   "count": 4,
+   "keep": true,
+   "doc": "the prim-model sequences (the port's)"
+  },
+  {
+   "key": "light",
+   "queue": "0x25EA1C0",
+   "storage": "0x25E9F40",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the light fades (the port's)"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its three cuts: the caster's model thrown as a ball, debris, flakes and sparks, the light, the actor system and the prim-model sequences; the damage cue"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The three sounds of the cuts"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.a",
+   "part": "director",
+   "label": "Sound A",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.a",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.b",
+   "part": "director",
+   "label": "Sound B",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.b",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.c",
+   "part": "director",
+   "label": "Sound C",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.c",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage frame",
+   "doc": "The damage cue from this frame of its cut",
+   "type": "i16",
+   "min": 0,
+   "max": 512,
+   "default": 90,
+   "unit": "plain"
+  },
+  {
+   "key": "director.actors",
+   "part": "director",
+   "label": "Actor ticks",
+   "doc": "The actor system's run length",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7B4FF0",
+   "code": "0x7B4FF0",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; sets up the director block and starts the director; the damage at its cue; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B5070"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7BE0C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7BE100"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7BE120"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7BE140"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x7B55B0",
+   "code": "0x7B55B0",
+   "doc": "The director: every tick the cut bookkeeping (each cut spawns its tasks), then its states: the voice and the music fade, cut 1 (the party hidden), the load step, the toggles at frames 0x62 / 0x63, cut 2, the damage cue, cut 3 (the party shown, the voice released), done.",
+   "every_tick": [
+    [
+     "call",
+     "0x7B5650"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B56A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B5710"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B5790"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B57F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B5880"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B58A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B58C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B58E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B5900"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B5970"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7B5990"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ]
+}

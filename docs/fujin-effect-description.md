@@ -1528,3 +1528,21 @@ Potion's description is the same with its own sequences and sound.
        master's wait, the actor system, the particle scale (times the target's height, min, max), the stage
        darkening (level, step). Data: the sound, the camera track, "mag072-077.tim".
      - *Fujin:* its tab (Emitter); no + menu family.
+   - **Ultimecia's final form dies (79)** (FFNx bfb89256; her enemy attack; the act family, Siren's kind,
+     Death's description): one emitter per action - the director's three cuts: the caster's model copied
+     and thrown as a ball, debris, flakes and sparks, the light levels, the actor system and three
+     prim-model sequences, the party hidden meanwhile; the damage at its cue. After the last action the
+     master's own tail: battle/MAG078_B.9M0 loaded and handed to the fanfare player, the music volume, the
+     unload waits.
+     - *Inputs* (`GrieverDeathParams`): the three sounds, the damage cue frame, the actor system's length.
+       Data: the sounds, the camera track, "mag078.tim".
+     - *Added:* the act director's `"tail"` (the program's `act_tail`): after the last action the
+       module's own master states from its state 6 on, called with the root as its master calls them (each
+       moves the root's state +0x29 on itself) - here the file load, the fanfare hand-over, the music, the
+       unload waits and its finish.
+     - *Port:* its file load calls the port's callback in a copy (it sets the copy's load flag); its two
+       sprite draws call the module's own sequence reader 0x7BBFD0.
+     - *Own copy:* not equal to the exe from the debris burst on - a stack residue the original reads
+       (UNINIT 0x7BC782) holds module addresses (the particle queue, task nodes), a copy's differ;
+       Heartbreak's case. The free slot 225 records the exe's.
+     - *Fujin:* its tab (Director); no + menu family.
