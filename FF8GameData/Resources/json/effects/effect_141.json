@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 141,
+ "name": "Renzokuken (5 hits)",
+ "doc": "Renzokuken, 5 hits (Squall's limit break): the master and the controller - Squall's animation set and sequence bound (its hits are the sequence's), the gunblade's trail, the sparks, the five hits' slashes with their flashes and debris, the closing slash, the screen flash and his tint, the sound. Its tasks are the port's code (FFNx mag141_renzokuken_5hits.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x61DE50",
+   "setup": "0x61DE70",
+   "root": "0x61F710"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 141,
+  "from": "0x24C10B8",
+  "size": "0x21B8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDE1728",
+   "size": 32
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xEA7E74",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x61DE70",
+  "file_loader": "0x61DE50",
+  "root": "0x61F710"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "controller",
+   "title": "Controller",
+   "doc": "Squall's Renzokuken: his animation set and sequence, the gunblade's trail, the sparks, the five hits' slashes with their flashes and debris, the closing slash, the screen flash and tint, the sound"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "controller",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

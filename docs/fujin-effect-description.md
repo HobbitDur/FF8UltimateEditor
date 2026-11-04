@@ -1874,3 +1874,29 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`SalivaParams`): the sound, the damage tick. Data: the sound, "mag137.tim".
      - *Tests:* the cycle test casts it from Abyss Worm (slot 3) on Squall (`CYCLE_CASTS`).
      - *Fujin:* its tab (Main); no + menu family.
+   - **Sonic Wave (139)** (FFNx e4437020; Oilboyle's enemy attack; a port director, Ray-Bomb's kind): the
+     wave from the caster's bone point to the targets - its layout, the screen warps, one target task a
+     target tinting it, the sound; the damage at a target layout's end.
+     - *Inputs* (`SonicParams`): the sound. Data: the sound, "mag138.tim".
+     - *Port:* its setup copies the module's data block (0x11D4E90, 0x9080 bytes: the wave mesh read from
+       the copy) into the module memory; the mesh is an accessor (a static would keep the game's copy).
+     - *Tests:* the cycle test casts it from Oilboyle (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Main); no + menu family.
+   - **Phoenix (140)** (FFNx 37c49e90; the GF's Rebirth Flame; the timeline family; a port director, Ray-Bomb's
+     kind): the master and the creature's 255-tick timeline - the fire trail flipbooks and flame meshes,
+     white-out tiles, the Phoenix model and its three prim-model stages, heat haze, the camera's moves, the
+     summon stream's loads, sparks and embers, the sounds; the damage at tick 245, the voice release.
+     - *Inputs* (`PhoenixParams`): the voice, the three sounds (trail, rise, stage), the damage tick. Data:
+       the sounds, "mag139.tim".
+     - *Port:* its setup, file loader (the spark / ember pools at the magic buffer's end) and stream callback
+       (0x6A6360) are ported with raw exe calls; FX_LAB_MODULE makes the effect lab build it.
+     - *Fujin:* its tab (Creature); no + menu family.
+   - **Renzokuken, 5 hits (141)** (FFNx 718fdfc1; Squall's limit break; a port director, Ray-Bomb's kind): the
+     controller - Squall's animation set and sequence bound (the hits are the sequence's), the gunblade's
+     trail, the sparks, the five hits' slashes with their flashes and debris, the closing slash, the screen
+     flash and his tint, the sound.
+     - *Inputs* (`RenzokukenParams`): the sound. Data: the sound, "mag140-158-159-258-331-332.tim".
+     - *Recorder:* `poke=ADDR:b,..` writes bytes after the setup: the cycle test pokes the stage durations
+       (0x1D98214: n, then n + 1 frame counts) the battle's AnimSeq VM computes (opcode AB), which the
+       recorder does not run (`CYCLE_POKES`).
+     - *Fujin:* its tab (Controller); no + menu family.

@@ -1,0 +1,135 @@
+{
+ "format": 1,
+ "effect": 140,
+ "name": "Phoenix",
+ "doc": "Phoenix (the GF's Rebirth Flame; the timeline family): the master and the creature's 255-tick timeline - the fire trail flipbooks and flame meshes, white-out tiles, the Phoenix model and its three prim-model stages, heat haze, the camera's moves, the summon stream's loads, sparks and embers, the sounds; the damage, the voice release. Its tasks are the port's code (FFNx mag140_phoenix.cpp) run on the program's memory (its pools and model data in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6A6310",
+   "setup": "0x6A6300",
+   "root": "0x6A6530"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 140,
+  "from": "0x2517AA0",
+  "size": "0xB0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x11D4E84",
+   "size": 12
+  },
+  "voice": {
+   "kind": "sound",
+   "address": "0x11D0048",
+   "size": 4
+  },
+  "sounds.trail": {
+   "kind": "sound",
+   "address": "0x11D003C",
+   "size": 4
+  },
+  "sounds.rise": {
+   "kind": "sound",
+   "address": "0x11D0040",
+   "size": 4
+  },
+  "sounds.stage": {
+   "kind": "sound",
+   "address": "0x11D0044",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6A6300",
+  "file_loader": "0x6A6310",
+  "root": "0x6A6530"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "creature",
+   "title": "Creature",
+   "doc": "Phoenix's 255-tick timeline: the fire trail flipbooks and flame meshes, white-out tiles, the Phoenix model and its three prim-model stages, heat haze, the camera's moves, streams, sparks and embers, the sounds; the damage, the voice release"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the creature's ticks 0, 0x65, 0xC3"
+  }
+ ],
+ "params": [
+  {
+   "key": "voice",
+   "part": "creature",
+   "label": "Voice",
+   "doc": "The creature's voice slot",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.trail",
+   "part": "creature",
+   "label": "Trail",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.trail",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.rise",
+   "part": "creature",
+   "label": "Rise",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.stage",
+   "part": "creature",
+   "label": "Stage",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.stage",
+   "unit": "plain"
+  },
+  {
+   "key": "creature.damage",
+   "part": "creature",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the creature's timeline",
+   "type": "i16",
+   "min": 0,
+   "max": 254,
+   "default": 245,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

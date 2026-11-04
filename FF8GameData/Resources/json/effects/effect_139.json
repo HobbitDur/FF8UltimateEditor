@@ -1,0 +1,70 @@
+{
+ "format": 1,
+ "effect": 139,
+ "name": "Sonic Wave",
+ "doc": "Sonic Wave (Oilboyle's enemy attack): the master and the main task - the wave from the caster's bone point to the targets: its layout, the screen warps, one target task a target tinting it, the sound; the damage. Its tasks are the port's code (FFNx mag139_sonic_wave.cpp) run on the program's memory (its module copy of the data block; its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6A8840",
+   "setup": "0x6A8830",
+   "root": "0x6A88F0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 139,
+  "from": "0x2517B50",
+  "size": "0x90F8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x11DF4D4",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x11DD338",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6A8830",
+  "file_loader": "0x6A8840",
+  "root": "0x6A88F0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The sonic wave from the caster's bone point to the targets: its layout, the screen warps, the target tasks tinting the targets, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

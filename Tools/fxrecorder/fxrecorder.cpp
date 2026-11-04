@@ -95,6 +95,9 @@ struct Opt
 	std::string params, schema;       // params=<file>: its parameters / schema=<file>: write their table
 	std::string program;              // program=<file>: the effect run from its description (Tools/fxhost)
 	std::string host, hostdir;        // host=<FujinEffects.dll> hostdir=<folder>: it installs <folder>'s programs
+	// poke=ADDR:b,b,..: bytes written after the setup - what the battle's AnimSeq VM (not run here) would have written
+	// (Renzokuken's stage durations, AnimSeq opcode AB: 0x1D98214 = n, then n + 1 frame counts)
+	std::vector<std::pair<uint32_t, std::vector<uint8_t>>> pokes;
 	bool cast() const { for (int k = 0; k < 7; k++) if (!body[k].empty()) return true; return false; }
 };
 static Opt O;
@@ -967,6 +970,18 @@ static bool parse(int argc, char **argv)
 		else if (k == "model") O.model = atoi(v.c_str());
 		else if (k == "stage") O.stage = atoi(v.c_str());
 		else if (k == "ticks") O.ticks = atoi(v.c_str());
+		else if (k == "poke")
+		{
+			const size_t colon = v.find(':');
+			std::vector<uint8_t> bytes;
+			for (size_t at = colon == std::string::npos ? v.size() : colon + 1; at < v.size();)
+			{
+				size_t comma = v.find(',', at);
+				bytes.push_back((uint8_t)strtoul(v.substr(at, comma - at).c_str(), nullptr, 0));
+				at = comma == std::string::npos ? v.size() : comma + 1;
+			}
+			O.pokes.push_back({ (uint32_t)strtoul(v.substr(0, colon).c_str(), nullptr, 0), bytes });
+		}
 		else if (k == "targets") O.targets = atoi(v.c_str());
 		else if (k == "caster") O.caster = atoi(v.c_str());
 		else if (k == "seed") O.seed = (uint32_t)strtoul(v.c_str(), nullptr, 10);
@@ -1370,6 +1385,7 @@ int main(int argc, char **argv)
 	env_reset();
 	if (!run_setup()) { printf("setup faulted %08lX at eip %08lX addr %08lX\n", g_fault_code, g_fault_eip, g_fault_addr); return 1; }
 	printf("effect %d: setup ok\n", O.eff);
+	for (const auto &poke : O.pokes) memcpy((void *)poke.first, poke.second.data(), poke.second.size());
 	std::vector<Pending> keep = g_pending;
 	for (; t < O.ticks; t++)
 	{
