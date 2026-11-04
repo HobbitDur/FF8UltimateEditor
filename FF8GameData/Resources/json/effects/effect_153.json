@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 153,
+ "name": "Sticky Web",
+ "doc": "Sticky Web (Caterchipillar's attack): the root and the master - the silk thread and the web, the two particle flights, the burst at the target, the sound; the damage. Its tasks are the port's code (FFNx mag153_sticky_web.cpp) run on the program's memory (its pools and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x609620",
+   "setup": "0x609640",
+   "root": "0x60AF50"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 153,
+  "from": "0x243A4D8",
+  "size": "0x11998"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDBE364",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xDBE27C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x609640",
+  "file_loader": "0x609620",
+  "root": "0x60AF50"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The silk thread and the web, the two particle flights, the burst at the target, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "At the master's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "master.damage",
+   "part": "master",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the master",
+   "type": "i16",
+   "min": 0,
+   "max": 60,
+   "default": 55,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

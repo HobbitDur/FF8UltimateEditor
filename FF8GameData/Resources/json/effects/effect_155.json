@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 155,
+ "name": "Sand Storm",
+ "doc": "Sand Storm (Fastitocalon's attack): the root and the director - the sand funnel (its waving vertices, its path from the caster to the targets), the two dust pools, the wind sound; the damage. Its tasks are the port's code (FFNx mag155_sand_storm.cpp) run on the program's memory (its pools, funnel vertices and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x606CD0",
+   "setup": "0x606CF0",
+   "root": "0x607BB0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 155,
+  "from": "0x23F07F0",
+  "size": "0x13A48"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDBA900",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xDBA8F8",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x606CF0",
+  "file_loader": "0x606CD0",
+  "root": "0x607BB0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The sand funnel (its waving vertices, its path from the caster to the targets), the two dust pools, the wind sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Wind",
+   "doc": "At the director's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 60,
+   "default": 50,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -1,0 +1,119 @@
+{
+ "format": 1,
+ "effect": 149,
+ "name": "Ultima",
+ "doc": "Ultima (the spell): the root and one director an action - the orbiting sprites, the energy spins, the streaks, the shards, the ring and dome, the dust, the sparks, the core, the casting side faded, the screen flashes and fades, the sounds; the damage. Its tasks are the port's code (FFNx mag149_ultima.cpp) run on the program's memory (its pools and particle arrays in the module, its packets in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x60F670",
+   "setup": "0x60F690",
+   "root": "0x612000"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 149,
+  "from": "0x2461E88",
+  "size": "0x2D20"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDC9C1C",
+   "size": 12
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0xDC9ABC",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xDC9BD0",
+   "size": 4
+  },
+  "sounds.blast": {
+   "kind": "sound",
+   "address": "0xDC9BD4",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x60F690",
+  "file_loader": "0x60F670",
+  "root": "0x612000"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "One director an action: the orbiting sprites, the energy spins, the streaks, the shards, the ring and dome, the dust, the sparks, the core, the casting side faded, the screen flashes and fades, the sounds; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The voice, the start, the blast"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.voice",
+   "part": "director",
+   "label": "Voice",
+   "doc": "The voice slot claimed at the director's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "At the director's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.blast",
+   "part": "director",
+   "label": "Blast",
+   "doc": "At the director's tick 94 (the ring)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.blast",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of an action's director",
+   "type": "i16",
+   "min": 0,
+   "max": 166,
+   "default": 166,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

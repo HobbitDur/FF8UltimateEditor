@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 154,
+ "name": "Ultra Waves",
+ "doc": "Ultra Waves (Caterchipillar's attack): the root and the controller - the four ring emitters around the caster, the screen warp, the sound; the damage. Its tasks are the port's code (FFNx mag154_ultra_waves.cpp) run on the program's memory (its pools, grid and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x607BF0",
+   "setup": "0x607C10",
+   "root": "0x609590"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 154,
+  "from": "0x2404238",
+  "size": "0x362A0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xDBAF30",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xDBAD38",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x607C10",
+  "file_loader": "0x607BF0",
+  "root": "0x609590"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "controller",
+   "title": "Controller",
+   "doc": "The four ring emitters around the caster, the screen warp, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "controller",
+   "label": "Sound",
+   "doc": "At the controller's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "controller.damage",
+   "part": "controller",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the controller",
+   "type": "i16",
+   "min": 0,
+   "max": 40,
+   "default": 36,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

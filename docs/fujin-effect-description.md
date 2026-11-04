@@ -1939,3 +1939,33 @@ Potion's description is the same with its own sequences and sound.
      the melting target (its model drawn by the effect), the sound; the damage at tick 80.
      - *Inputs* (`MeltdownParams`): the sound, the damage tick. Data: the sound, "mag147.tim".
      - *Fujin:* its tab (Director); no + menu family.
+   - **Ultima (149)** (FFNx 8654cd77; the spell; a port director, Ray-Bomb's kind): one director an action -
+     the orbiting sprites, the energy spins, the streaks, the shards, the ring and dome, the dust, the sparks,
+     the morphing core, the casting side faded, the screen flashes and fades, the sounds; the damage at tick 166.
+     - *Inputs* (`UltimaParams`): the three sounds (voice, start, blast), the damage tick. Data: the sounds,
+       "mag148.tim".
+     - *Port:* its part spawner `SpawnPart` goes through own::Fn (an own copy runs the port's parts).
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Ultrasonic Waves (152)** (FFNx 8a3a4b4f; Red Bat's attack; a port controller, Ray-Bomb's kind): the
+     waves, the rings flying to the target, the three bursts at the target, the sound; the damage at tick 35.
+     - *Inputs* (`UltrasonicParams`): the sound, the damage tick. Data: the sound, "mag151.tim".
+     - *Tests:* the cycle test casts it from Red Bat (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Sticky Web (153)** (FFNx f3f19dd7; Caterchipillar's attack; a port master, Ray-Bomb's kind): the silk
+     thread and the web, the two particle flights, the burst at the target, the sound; the damage at tick 55.
+     - *Inputs* (`StickyWebParams`): the sound, the damage tick. Data: the sound, "mag152.tim".
+     - *Port:* the spawn helper `AddTask` goes through own::Fn.
+     - *Tests:* the cycle test casts it from Caterchipillar (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Master); no + menu family.
+   - **Ultra Waves (154)** (FFNx 12e55771; Caterchipillar's attack; a port controller, Ray-Bomb's kind): the
+     four ring emitters around the caster, the screen warp (the stage re-rendered into a captured grid), the
+     sound; the damage at tick 36.
+     - *Inputs* (`UltraWavesParams`): the sound, the damage tick. Data: the sound, "mag153.tim".
+     - *Tests:* the cycle test casts it from Caterchipillar (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Sand Storm (155)** (FFNx a31bf598; Fastitocalon's attack; a port director, Ray-Bomb's kind): the sand
+     funnel (its waving vertices, its path from the caster to the targets), the two dust pools, the wind
+     sound; the damage at tick 50.
+     - *Inputs* (`SandStormParams`): the wind sound, the damage tick. Data: the sound, "mag154.tim".
+     - *Tests:* the cycle test casts it from Fastitocalon (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Director); no + menu family.
