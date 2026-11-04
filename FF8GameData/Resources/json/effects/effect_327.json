@@ -1,0 +1,109 @@
+{
+ "format": 1,
+ "effect": 327,
+ "name": "Gilgamesh",
+ "doc": "Gilgamesh (the GF's Zantetsuken; the timeline family, one module for 327-330): the master and the 328-tick timeline - the camera script, the summon stream's loads, the fade tile, rings, flares, risers, the swords and Gilgamesh, sparks, puffs, spinners, dots and rising rings, the horse, the final pose, the trail, the sword attack (the targets sliced), the screen flash, the voice and the sounds; the action results. Its tasks are the port's code (FFNx mag327_gilgamesh.cpp) run on the program's memory (its pools and model data in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x58D6E0",
+   "setup": "0x58D760",
+   "root": "0x596B70"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 327,
+  "from": "0x21FF2A8",
+  "size": "0x1DD8",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xCD09B0",
+   "size": 16
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xCD0378",
+   "size": 4
+  },
+  "sounds.spin": {
+   "kind": "sound",
+   "address": "0xCD037C",
+   "size": 4
+  },
+  "sounds.horse": {
+   "kind": "sound",
+   "address": "0xCD0380",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x58D760",
+  "file_loader": "0x58D6E0",
+  "root": "0x596B70"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timeline",
+   "title": "Timeline",
+   "doc": "Gilgamesh's Zantetsuken: the camera script, the summon stream's loads, the fade tile, rings, flares, risers, the swords and Gilgamesh, sparks, puffs, spinners, dots and rising rings, the horse, the final pose, the trail, the sword attack (the targets sliced), the screen flash, the voice and the sounds; the action results"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the timeline's ticks 1, 121, 181"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "timeline",
+   "label": "Start",
+   "doc": "At the timeline's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.spin",
+   "part": "timeline",
+   "label": "Spin",
+   "doc": "At the timeline's tick 121",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.spin",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.horse",
+   "part": "timeline",
+   "label": "Horse",
+   "doc": "At the timeline's tick 181",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.horse",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

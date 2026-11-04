@@ -1,0 +1,142 @@
+{
+ "format": 1,
+ "effect": 326,
+ "name": "Odin reverse",
+ "doc": "Odin's Zantetsuken Reverse (Seifer cuts Odin in two; the timeline family, a re-linked copy of Odin's): the master and the 410-tick timeline - the camera script, the summon stream's loads, the grids, debris and intro, the creature with its blade, smoke, rings, mist and sparks, Odin cut in two with the blood bursts, the ghost and its sword, the walls, the fading models and tint, the screen flash, the voice and the sounds; the action result. Its tasks are the port's code (FFNx mag326_odin_reverse.cpp) run on the program's memory (its pools and model data in the magic buffer); its texture is exe data (the setup's), its file loader the engine's nullsub.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x62A7E0",
+   "root": "0x6326B0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 326,
+  "from": "0x24F0BD0",
+  "size": "0x1738",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "voice": {
+   "kind": "sound",
+   "address": "0xE194E4",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xE1964C",
+   "size": 4
+  },
+  "sounds.sword": {
+   "kind": "sound",
+   "address": "0xE19650",
+   "size": 4
+  },
+  "sounds.slash": {
+   "kind": "sound",
+   "address": "0xE19654",
+   "size": 4
+  },
+  "sounds.cut": {
+   "kind": "sound",
+   "address": "0xE19658",
+   "size": 4
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x62A7E0",
+  "file_loader": "0x0",
+  "root": "0x6326B0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timeline",
+   "title": "Timeline",
+   "doc": "Zantetsuken Reverse (Seifer cuts Odin in two): the camera script, the summon stream's loads, the grids, debris and intro, the creature with its blade, smoke, rings, mist and sparks, Odin cut in two with the blood bursts, the ghost and its sword, the walls, the fading models and tint, the screen flash, the voice and the sounds; the action result"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the timeline's ticks 1, 111, 171, 252"
+  }
+ ],
+ "params": [
+  {
+   "key": "voice",
+   "part": "timeline",
+   "label": "Voice",
+   "doc": "The voice slot claimed at the timeline's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "timeline",
+   "label": "Start",
+   "doc": "At the timeline's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.sword",
+   "part": "timeline",
+   "label": "Sword",
+   "doc": "At the timeline's tick 111",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.sword",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.slash",
+   "part": "timeline",
+   "label": "Slash",
+   "doc": "At the timeline's tick 171",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.slash",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.cut",
+   "part": "timeline",
+   "label": "Cut",
+   "doc": "At the timeline's tick 252",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.cut",
+   "unit": "plain"
+  },
+  {
+   "key": "timeline.damage",
+   "part": "timeline",
+   "label": "Damage tick",
+   "doc": "The action result at this tick of the timeline",
+   "type": "i16",
+   "min": 0,
+   "max": 409,
+   "default": 408,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

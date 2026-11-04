@@ -2470,3 +2470,30 @@ Potion's description is the same with its own sequences and sound.
      target melting, the sound; the action result.
      - *Inputs* (`AcidParams`): the sound. Data: the sound, "mag127.tim".
      - *Fujin:* its tab (Target); no + menu family.
+   - **Diablos (325)** (FFNx eec33c9f; the GF's Dark Messenger, the timeline family; a port timeline, Ray-Bomb's kind):
+     the two battle models, the prim-model players and particles (bolts, puffs, rising and burst layouts), the
+     targets squashed, the camera, the streamed loads, the screen flash, the voice and the sounds (ticks 0, 0x5B,
+     0xEE, 0x14D, 0x192, 0x1C8); the action results at tick 499.
+     - *Inputs* (`DiablosParams`): the voice, the six sounds, the damage tick. Data: the sounds, "mag324.tim".
+     - *Module:* shared (a copy runs on the module's memory): the exe helpers the port calls by their original
+       addresses read the module's words.
+     - *Fujin:* its tab (Timeline); no + menu family.
+   - **Odin reverse (326)** (FFNx 89201bd1; Seifer cuts Odin in two, the timeline family, a re-linked copy of Odin's;
+     a port timeline, Ray-Bomb's kind): the camera script, the summon stream's loads, the grids, debris and intro,
+     the creature with its blade, smoke, rings, mist and sparks, Odin cut in two with the blood bursts, the ghost
+     and its sword, the walls, the fading models and tint, the screen flash, the voice and the sounds (ticks 1,
+     111, 171, 252); the action result at tick 408.
+     - *Inputs* (`OdinReverseParams`): the voice, the four sounds, the damage tick. Data: the sounds (its
+       texture is exe data).
+     - *Module:* shared (a copy runs on the module's memory), like Odin's.
+     - *Fujin:* its tab (Timeline); no + menu family.
+   - **Gilgamesh (327)** (FFNx 73f10360; the GF's Zantetsuken, the timeline family, one module for 327-330; a port
+     timeline, Ray-Bomb's kind): the camera script, the summon stream's loads, the fade tile, rings, flares,
+     risers, the swords and Gilgamesh, sparks, puffs, spinners, dots and rising rings, the horse, the final pose,
+     the trail, the sword attack (the targets sliced), the screen flash, the voice and the sounds (ticks 1, 121,
+     181); the action results.
+     - *Inputs* (`GilgameshParams`): the three sounds. Data: the sounds, "mag326-329.tim". (The voice and the
+       attack sound are the variant's table entries.)
+     - *Module:* shared (a copy runs on the module's memory): the exe helpers the port calls by their original
+       addresses read the module's words.
+     - *Fujin:* its tab (Timeline); no + menu family.

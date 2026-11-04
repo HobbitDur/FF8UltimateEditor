@@ -1,0 +1,184 @@
+{
+ "format": 1,
+ "effect": 325,
+ "name": "Diablos",
+ "doc": "Diablos (the GF's Dark Messenger; the timeline family): the master and the 530-tick timeline - the two battle models, the prim-model players and particles (bolts, puffs, rising and burst layouts), the targets squashed, the camera, the streamed loads, the screen flash, the voice and the sounds; the action results. Its tasks are the port's code (FFNx mag325_diablos.cpp) run on the program's memory (its pools and model data in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6541F0",
+   "setup": "0x6541E0",
+   "root": "0x654350"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 325,
+  "from": "0x250517C",
+  "size": "0xB4",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xFE0F78",
+   "size": 12
+  },
+  "voice": {
+   "kind": "sound",
+   "address": "0xFD6658",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xFD6640",
+   "size": 4
+  },
+  "sounds.rise": {
+   "kind": "sound",
+   "address": "0xFD6644",
+   "size": 4
+  },
+  "sounds.gather": {
+   "kind": "sound",
+   "address": "0xFD6648",
+   "size": 4
+  },
+  "sounds.orb": {
+   "kind": "sound",
+   "address": "0xFD664C",
+   "size": 4
+  },
+  "sounds.drop": {
+   "kind": "sound",
+   "address": "0xFD6650",
+   "size": 4
+  },
+  "sounds.burst": {
+   "kind": "sound",
+   "address": "0xFD6654",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6541E0",
+  "file_loader": "0x6541F0",
+  "root": "0x654350"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timeline",
+   "title": "Timeline",
+   "doc": "Diablos' Dark Messenger: the two battle models, the prim-model players and particles (bolts, puffs, rising and burst layouts), the targets squashed, the camera, the streamed loads, the screen flash, the voice and the sounds; the action results"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the timeline's ticks 0, 0x5B, 0xEE, 0x14D, 0x192, 0x1C8"
+  }
+ ],
+ "params": [
+  {
+   "key": "voice",
+   "part": "timeline",
+   "label": "Voice",
+   "doc": "The voice slot claimed when the timeline spawns",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "timeline",
+   "label": "Start",
+   "doc": "At the timeline's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.rise",
+   "part": "timeline",
+   "label": "Rise",
+   "doc": "At the timeline's tick 0x5B",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.gather",
+   "part": "timeline",
+   "label": "Gather",
+   "doc": "At the timeline's tick 0xEE",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.gather",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.orb",
+   "part": "timeline",
+   "label": "Orb",
+   "doc": "At the timeline's tick 0x14D",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.orb",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.drop",
+   "part": "timeline",
+   "label": "Drop",
+   "doc": "At the timeline's tick 0x192",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.drop",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.burst",
+   "part": "timeline",
+   "label": "Burst",
+   "doc": "At the timeline's tick 0x1C8",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "timeline.damage",
+   "part": "timeline",
+   "label": "Damage tick",
+   "doc": "The action results at this tick of the timeline",
+   "type": "i16",
+   "min": 0,
+   "max": 529,
+   "default": 499,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
