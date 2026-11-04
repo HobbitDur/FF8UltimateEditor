@@ -1,0 +1,152 @@
+{
+ "format": 1,
+ "effect": 116,
+ "name": "Quezacotl",
+ "doc": "Quezacotl (the GF's Thunder Storm; the timeline family): the master and the creature's 355-tick timeline - the model materialising, the camera's moves, the summon stream's loads, the lightning bolts, arcs, branches and debris, the screen flash, the sounds and streams; the damage. Its tasks are the port's code (FFNx mag116_quezacotl.cpp) run on the module's memory (shared: the exe's own helpers - the creature's materialise renderers, the bolt spawners - read its words; its pools and model data in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6C3560",
+   "setup": "0x6C3550",
+   "root": "0x6C3760"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 116,
+  "from": "0x25216D8",
+  "size": "0xF8",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12B5774",
+   "size": 12
+  },
+  "voice": {
+   "kind": "sound",
+   "address": "0x12AE500",
+   "size": 4
+  },
+  "sounds.arrive": {
+   "kind": "sound",
+   "address": "0x12AE4F0",
+   "size": 4
+  },
+  "sounds.rise": {
+   "kind": "sound",
+   "address": "0x12AE4F4",
+   "size": 4
+  },
+  "sounds.charge": {
+   "kind": "sound",
+   "address": "0x12AE4F8",
+   "size": 4
+  },
+  "sounds.strike": {
+   "kind": "sound",
+   "address": "0x12AE4FC",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6C3550",
+  "file_loader": "0x6C3560",
+  "root": "0x6C3760"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "creature",
+   "title": "Creature",
+   "doc": "Quezacotl's 355-tick timeline: the model materialising, the camera's moves, the loads, the lightning bolts, arcs, branches and debris, the screen flash, the sounds and streams; the damage"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the creature's ticks 0, 0x41, 0xD1, 0x115"
+  }
+ ],
+ "params": [
+  {
+   "key": "voice",
+   "part": "creature",
+   "label": "Voice",
+   "doc": "The creature's voice slot",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.arrive",
+   "part": "creature",
+   "label": "Arrive",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.arrive",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.rise",
+   "part": "creature",
+   "label": "Rise",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.charge",
+   "part": "creature",
+   "label": "Charge",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.charge",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.strike",
+   "part": "creature",
+   "label": "Strike",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.strike",
+   "unit": "plain"
+  },
+  {
+   "key": "creature.damage",
+   "part": "creature",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the creature's timeline",
+   "type": "i16",
+   "min": 0,
+   "max": 354,
+   "default": 345,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

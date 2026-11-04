@@ -1780,3 +1780,17 @@ Potion's description is the same with its own sequences and sound.
      - *Tests:* the cycle test casts it from Geezard (slot 3) on Squall (`CYCLE_CASTS`; `record` drops its
        default cast for one given).
      - *Fujin:* its tab (Breath); no + menu family.
+   - **Quezacotl (116)** (FFNx c98b1cdb; the GF's Thunder Storm; the timeline family; a port director,
+     Ray-Bomb's kind): the master and the creature's 355-tick timeline - the model materialising, the
+     camera's moves, the summon stream's loads, the lightning bolts, arcs, branches and debris, the screen
+     flash, the sounds and streams; the damage at tick 345.
+     - *Inputs* (`QuezacotlParams`): the voice, the four sounds (arrive, rise, charge, strike), the damage
+       tick. Data: the sounds, "mag115.tim".
+     - *Module:* shared (a copy runs on the module's memory): the exe's own helpers the port calls - the
+       creature's materialise renderers, the target hide / show, the bolt spawners - read its words.
+     - *Port:* its setup, file loader and stream callback (0x6C3580, the loader's completion callback) are
+       ported; FX_LAB_MODULE makes the effect lab build it.
+     - *Exe quirk:* the ribbons read a joint direction the exe never initialises (a stack local, carried
+       by the port): in place in the recorder one quad differs in each of three frames (the cycle test
+       leaves them out); the description and the copies match the exe.
+     - *Fujin:* its tab (Creature); no + menu family.

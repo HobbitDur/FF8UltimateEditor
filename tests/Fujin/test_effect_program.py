@@ -244,6 +244,7 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    116: ("mag115.tim", 6, "sounds.rise 22311280\ncreature.damage 300\n"),
     113: ("mag112.tim", 2, "sound 22311280\ntarget.damage 20\n"),
     112: ("mag111.tim", 2, "sounds.start 22311280\nsounds.hit 22311276\n"),
     110: ("mag010.tim", 1, "sound 22311280\n"),
@@ -382,18 +383,19 @@ CYCLE_MONSTERS = {110: {4: "c0m073.dat"}}
 CYCLE_CASTS = {113: (3, 0, "c0m004.dat")}
 
 # frames an exe quirk draws differently in a copy, left out of the comparisons (R numbers [from, to)): Siren's
-# splash task picks surface vertices past its table 0x258EC70, in the load-script pool's nodes (their pointers)
-CYCLE_QUIRK_FRAMES = {95: (289, 301)}
+# splash task picks surface vertices past its table 0x258EC70, in the load-script pool's nodes (their pointers);
+# Quezacotl's ribbons read a joint direction the exe never initialises (a stack local: its port carries what the
+# game's stack held, the recorder's in place holds another) - one quad in each of three frames
+CYCLE_QUIRK_FRAMES = {95: [(289, 301)], 116: [(111, 112), (145, 146), (284, 285)]}
 
 
 def quirk(effect, lines):
     if effect not in CYCLE_QUIRK_FRAMES:
         return lines
-    lo, hi = CYCLE_QUIRK_FRAMES[effect]
     out, skip = [], False
     for line in lines:
         if line.startswith("R "):
-            skip = lo <= int(line.split()[1]) < hi
+            skip = any(lo <= int(line.split()[1]) < hi for lo, hi in CYCLE_QUIRK_FRAMES[effect])
         if not skip:
             out.append(line)
     return out
@@ -419,7 +421,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death and Meteor Barret and Bad Breath from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret and Bad Breath and Quezacotl from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1654,4 +1656,11 @@ def test_bad_breath_description_compiles():
     """Bad Breath: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the magic buffer)."""
     lines = compile_program(load_description(113)).splitlines()
     for line in ['director port -1', 'port 0x6CAC20 0x6CAC30 0x6CACD0', 'module 113 0x2521870 0x70']:
+        assert line in lines, line
+
+
+def test_quezacotl_description_compiles():
+    """Quezacotl: a port director (Ray-Bomb's kind) on a shared module - its setup, file loader and stream callback the port's, the exe's own helpers reading the module's words."""
+    lines = compile_program(load_description(116)).splitlines()
+    for line in ['director port -1', 'port 0x6C3550 0x6C3560 0x6C3760', 'module 116 0x25216D8 0xF8']:
         assert line in lines, line
