@@ -1846,3 +1846,31 @@ Potion's description is the same with its own sequences and sound.
        functions: the lab patches the originals, the programs' nodes hold the ports' thunks).
      - *Tests:* the cycle test casts it from Malboro (slot 3) on Squall (`CYCLE_CASTS`).
      - *Fujin:* its tab (Target); no + menu family.
+   - **Beam Laser (134)** (FFNx a7fcacdc; Elastoid's enemy attack; a port director, Ray-Bomb's kind): the beam
+     from the caster to the target, its glows, sparks and hits, the sound; the damage at the beam's tick 26.
+     - *Inputs* (`BeamParams`): the sound, the damage tick. Data: the sound, "mag133.tim".
+     - *Tests:* the cycle test casts it from Elastoid (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Beam); no + menu family.
+   - **Reflect Beam (135)** (FFNx e82b0546; Elastoid's enemy attack; a port director, Ray-Bomb's kind): the
+     beam sweeping from the caster, its shots, reflections, bursts, glints and sparks, the sound; the damage
+     at a reflection task's tick 25.
+     - *Inputs* (`ReflectBeamParams`): the sound, the damage tick. Data: the sound, "mag134.tim".
+     - *Tests:* the cycle test casts it from Elastoid (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Sweep); no + menu family.
+   - **Oil Shot (136)** (FFNx 2c5102d3; Oilboyle's enemy attack; a port director, Ray-Bomb's kind): the shot
+     from the caster's mouth - its oil stream, sprays, falling drops and splats, the sound; the damage at the
+     shot's tick 62.
+     - *Inputs* (`OilParams`): the sound, the damage tick. Data: the sound, "mag135.tim".
+     - *Tests:* the cycle test casts it from Oilboyle (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Shot); no + menu family.
+   - **Oil Blast (137)** (FFNx 89924b5e; Oilboyle's enemy attack; a port director, Ray-Bomb's kind): the blast
+     - the oil block on the floor, its chunks and sprays, the sound; the damage at the blast's tick 45.
+     - *Inputs* (`BlastParams`): the sound, the damage tick. Data: the sound, "mag136.tim".
+     - *Tests:* the cycle test casts it from Oilboyle (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Blast); no + menu family.
+   - **Saliva (138)** (FFNx 545cf131; Abyss Worm's enemy attack; a port director, Ray-Bomb's kind): the main
+     task - the saliva spat from the caster's mouth: its mesh, strings, sprays and splats, the sound; the
+     damage at tick 40.
+     - *Inputs* (`SalivaParams`): the sound, the damage tick. Data: the sound, "mag137.tim".
+     - *Tests:* the cycle test casts it from Abyss Worm (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Main); no + menu family.

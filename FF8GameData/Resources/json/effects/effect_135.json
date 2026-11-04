@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 135,
+ "name": "Reflect Beam",
+ "doc": "Reflect Beam (Elastoid's enemy attack): the master and the sweep - the beam sweeping from the caster, its shots, reflections, bursts, glints and sparks, the sound; the damage. Its tasks are the port's code (FFNx mag135_reflect_beam.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6AEEB0",
+   "setup": "0x6AEEA0",
+   "root": "0x6AEF50"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 135,
+  "from": "0x2520DD0",
+  "size": "0x98"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1201EB0",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x1201D88",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6AEEA0",
+  "file_loader": "0x6AEEB0",
+  "root": "0x6AEF50"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "sweep",
+   "title": "Sweep",
+   "doc": "The beam sweeping from the caster, its shots, reflections, bursts, glints and sparks, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "sweep",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "reflect.damage",
+   "part": "sweep",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of a reflection task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 25,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

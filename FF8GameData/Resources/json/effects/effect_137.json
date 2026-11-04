@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 137,
+ "name": "Oil Blast",
+ "doc": "Oil Blast (Oilboyle's enemy attack): the master and the blast - the oil block on the floor, its chunks and sprays, the sound; the damage. Its tasks are the port's code (FFNx mag137_oil_blast.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6AB860",
+   "setup": "0x6AB850",
+   "root": "0x6AB900"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 137,
+  "from": "0x2520CC0",
+  "size": "0x68"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x11F2384",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x11F035C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6AB850",
+  "file_loader": "0x6AB860",
+  "root": "0x6AB900"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "blast",
+   "title": "Blast",
+   "doc": "The oil blast: the block on the floor, its chunks and sprays, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "blast",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "blast.damage",
+   "part": "blast",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the blast",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 134,
+ "name": "Beam Laser",
+ "doc": "Beam Laser (Elastoid's enemy attack): the master and the beam - the beam from the caster to the target, its glows, sparks and hits, the sound; the damage. Its tasks are the port's code (FFNx mag134_beam_laser.cpp) run on the program's memory (its pools in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6B0080",
+   "setup": "0x6B0070",
+   "root": "0x6B0130"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 134,
+  "from": "0x2520E68",
+  "size": "0x80"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x12077A8",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x120767C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6B0070",
+  "file_loader": "0x6B0080",
+  "root": "0x6B0130"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "beam",
+   "title": "Beam",
+   "doc": "The beam from the caster to the target, its glows, sparks and hits, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "beam",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "beam.damage",
+   "part": "beam",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the beam",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 26,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

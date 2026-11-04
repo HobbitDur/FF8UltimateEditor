@@ -244,6 +244,11 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    138: ("mag137.tim", 2, "sound 22311280\nmain.damage 32\n"),
+    137: ("mag136.tim", 2, "sound 22311280\nblast.damage 40\n"),
+    136: ("mag135.tim", 2, "sound 22311280\nshot.damage 50\n"),
+    135: ("mag134.tim", 2, "sound 22311280\nreflect.damage 20\n"),
+    134: ("mag133.tim", 2, "sound 22311280\nbeam.damage 20\n"),
     132: ("mag131.tim", 2, "sound 22311280\ntarget.damage 40\n"),
     131: ("mag130-299.tim", 2, "sound 22311280\ntarget.damage 30\n"),
     130: ("mag129.tim", 2, "sound 22311280\nimpact.damage 5\n"),
@@ -388,7 +393,7 @@ CYCLE_STAGES = {69: 142}
 # more monsters an effect needs (Biggs and Wedge's first death sweeps its two targets): slot -> file, every target
 CYCLE_MONSTERS = {110: {4: "c0m073.dat"}}
 # a cast of its own (a monster's attack on the party: Geezard's Bad Breath, Cockatrice's Electric Discharge, Gayla's Gastric Juice, Grendel's Breath, Malboro's): caster slot, target slot, slot 3's monster
-CYCLE_CASTS = {113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat")}
+CYCLE_CASTS = {113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat")}
 
 # frames an exe quirk draws differently in a copy, left out of the comparisons (R numbers [from, to)): Siren's
 # splash task picks surface vertices past its table 0x258EC70, in the load-script pool's nodes (their pointers);
@@ -429,7 +434,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave and Bad Breath (Malboro) and Dissolving Acid from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot and Oil Blast and Saliva from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1727,4 +1732,39 @@ def test_dissolving_acid_description_compiles():
     """Dissolving Acid: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the magic buffer)."""
     lines = compile_program(load_description(132)).splitlines()
     for line in ['director port -1', 'port 0x6B19F0 0x6B1A00 0x6B1AA0', 'module 132 0x2520F60 0x90']:
+        assert line in lines, line
+
+
+def test_beam_laser_description_compiles():
+    """Beam Laser: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the magic buffer)."""
+    lines = compile_program(load_description(134)).splitlines()
+    for line in ['director port -1', 'port 0x6B0070 0x6B0080 0x6B0130', 'module 134 0x2520E68 0x80']:
+        assert line in lines, line
+
+
+def test_reflect_beam_description_compiles():
+    """Reflect Beam: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the magic buffer)."""
+    lines = compile_program(load_description(135)).splitlines()
+    for line in ['director port -1', 'port 0x6AEEA0 0x6AEEB0 0x6AEF50', 'module 135 0x2520DD0 0x98']:
+        assert line in lines, line
+
+
+def test_oil_shot_description_compiles():
+    """Oil Shot: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the magic buffer)."""
+    lines = compile_program(load_description(136)).splitlines()
+    for line in ['director port -1', 'port 0x6AD1A0 0x6AD1B0 0x6AD250', 'module 136 0x2520D28 0xA8']:
+        assert line in lines, line
+
+
+def test_oil_blast_description_compiles():
+    """Oil Blast: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the magic buffer)."""
+    lines = compile_program(load_description(137)).splitlines()
+    for line in ['director port -1', 'port 0x6AB850 0x6AB860 0x6AB900', 'module 137 0x2520CC0 0x68']:
+        assert line in lines, line
+
+
+def test_saliva_description_compiles():
+    """Saliva: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the magic buffer)."""
+    lines = compile_program(load_description(138)).splitlines()
+    for line in ['director port -1', 'port 0x6A9F10 0x6A9F20 0x6A9FC0', 'module 138 0x2520C48 0x78']:
         assert line in lines, line
