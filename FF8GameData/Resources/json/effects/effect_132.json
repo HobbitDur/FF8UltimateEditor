@@ -29,6 +29,24 @@
    "kind": "sound",
    "address": "0x1214FD0",
    "size": 4
+  },
+  "layouts.splash1": {
+   "kind": "layout",
+   "address": "0x1212F64",
+   "size": 3232,
+   "capacity": 176
+  },
+  "layouts.splash2": {
+   "kind": "layout",
+   "address": "0x1213C04",
+   "size": 3232,
+   "capacity": 176
+  },
+  "layouts.puddle": {
+   "kind": "layout",
+   "address": "0x12148A4",
+   "size": 1400,
+   "capacity": 120
   }
  },
  "resources": {
@@ -74,6 +92,39 @@
    "min": 0,
    "max": 200,
    "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.splash1",
+   "part": "target",
+   "label": "Splash1",
+   "doc": "The prim-model layout splash1 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.splash1",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.splash2",
+   "part": "target",
+   "label": "Splash2",
+   "doc": "The prim-model layout splash2 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.splash2",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.puddle",
+   "part": "target",
+   "label": "Puddle",
+   "doc": "The prim-model layout puddle (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.puddle",
    "unit": "plain"
   }
  ],

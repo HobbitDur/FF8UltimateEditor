@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0x1115964",
    "size": 4
+  },
+  "layouts.main": {
+   "kind": "layout",
+   "address": "0x111122C",
+   "size": 18232,
+   "capacity": 1232
   }
  },
  "resources": {
@@ -63,6 +69,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.main",
+   "part": "root",
+   "label": "Main",
+   "doc": "The prim-model layout main (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.main",
    "unit": "plain"
   }
  ],

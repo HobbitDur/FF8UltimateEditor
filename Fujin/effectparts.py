@@ -663,7 +663,7 @@ def shown_value(field, raw):
     return f"{prefix}{raw * factor:.{decimals}f}{suffix}"
 
 # the field types whose value names something (an exe address, a file): shown as such, never compared
-REFERENCE_TYPES = ("seq", "sound", "file")
+REFERENCE_TYPES = ("seq", "sound", "file", "layout")
 
 
 class FileField(QLineEdit):

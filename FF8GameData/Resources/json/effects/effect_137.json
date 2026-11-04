@@ -29,6 +29,24 @@
    "kind": "sound",
    "address": "0x11F035C",
    "size": 4
+  },
+  "layouts.puddle": {
+   "kind": "layout",
+   "address": "0x11EAE10",
+   "size": 1736,
+   "capacity": 64
+  },
+  "layouts.spout": {
+   "kind": "layout",
+   "address": "0x11EB4D8",
+   "size": 6376,
+   "capacity": 416
+  },
+  "layouts.blast": {
+   "kind": "layout",
+   "address": "0x11ECDC0",
+   "size": 13128,
+   "capacity": 764
   }
  },
  "resources": {
@@ -74,6 +92,39 @@
    "min": 0,
    "max": 200,
    "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.puddle",
+   "part": "blast",
+   "label": "Puddle",
+   "doc": "The prim-model layout puddle (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.puddle",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.spout",
+   "part": "blast",
+   "label": "Spout",
+   "doc": "The prim-model layout spout (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.spout",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.blast",
+   "part": "blast",
+   "label": "Blast",
+   "doc": "The prim-model layout blast (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.blast",
    "unit": "plain"
   }
  ],

@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0x1342EF4",
    "size": 4
+  },
+  "layouts.l0": {
+   "kind": "layout",
+   "address": "0x13433C8",
+   "size": 2152,
+   "capacity": 152
+  },
+  "layouts.l1": {
+   "kind": "layout",
+   "address": "0x1343C30",
+   "size": 14228,
+   "capacity": 1400
   }
  },
  "resources": {
@@ -135,6 +147,28 @@
    "min": 0,
    "max": 400,
    "default": 43,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.l0",
+   "part": "master",
+   "label": "Layout 0",
+   "doc": "The bone scripts' prim-model layout 0 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.l0",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.l1",
+   "part": "master",
+   "label": "Layout 1",
+   "doc": "The bone scripts' prim-model layout 1 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.l1",
    "unit": "plain"
   }
  ],

@@ -34,6 +34,30 @@
    "kind": "sound",
    "address": "0x1181074",
    "size": 4
+  },
+  "layouts.ground": {
+   "kind": "layout",
+   "address": "0x11883AC",
+   "size": 13924,
+   "capacity": 400
+  },
+  "layouts.bone": {
+   "kind": "layout",
+   "address": "0x1187F2C",
+   "size": 1152,
+   "capacity": 68
+  },
+  "layouts.front": {
+   "kind": "layout",
+   "address": "0x1184ACC",
+   "size": 13408,
+   "capacity": 560
+  },
+  "layouts.burn": {
+   "kind": "layout",
+   "address": "0x118BA10",
+   "size": 133104,
+   "capacity": 1156
   }
  },
  "resources": {
@@ -96,6 +120,50 @@
    "min": 0,
    "max": 181,
    "default": 174,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ground",
+   "part": "director",
+   "label": "Ground",
+   "doc": "The prim-model layout ground (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ground",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.bone",
+   "part": "director",
+   "label": "Bone",
+   "doc": "The prim-model layout bone (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.bone",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.front",
+   "part": "director",
+   "label": "Front",
+   "doc": "The prim-model layout front (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.front",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.burn",
+   "part": "director",
+   "label": "Burn",
+   "doc": "The prim-model layout burn (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.burn",
    "unit": "plain"
   }
  ],

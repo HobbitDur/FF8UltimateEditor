@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0x136B970",
    "size": 4
+  },
+  "layout_data.mouth": {
+   "kind": "layout",
+   "address": "0x13693D0",
+   "size": 9632,
+   "capacity": 1184
+  },
+  "layout_data.cone": {
+   "kind": "layout",
+   "address": "0x13686C4",
+   "size": 3340,
+   "capacity": 320
   }
  },
  "resources": {
@@ -421,6 +433,28 @@
    "min": 1,
    "max": 50,
    "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "layout_data.mouth",
+   "part": "timing",
+   "label": "Mouth",
+   "doc": "The prim-model layout mouth (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layout_data.mouth",
+   "unit": "plain"
+  },
+  {
+   "key": "layout_data.cone",
+   "part": "timing",
+   "label": "Cone",
+   "doc": "The prim-model layout cone (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layout_data.cone",
    "unit": "plain"
   }
  ],

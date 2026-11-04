@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0x1354B7C",
    "size": 4
+  },
+  "layouts.debris": {
+   "kind": "layout",
+   "address": "0x1354CE0",
+   "size": 472,
+   "capacity": 64
   }
  },
  "resources": {
@@ -146,6 +152,17 @@
    "min": 1,
    "max": 1024,
    "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.debris",
+   "part": "control",
+   "label": "Debris",
+   "doc": "The prim-model layout debris (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.debris",
    "unit": "plain"
   }
  ],

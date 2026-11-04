@@ -101,6 +101,22 @@ def parse_layout(data):
         raise ValueError("not a prim-model layout (cut short)") from None
 
 
+def state_size(layout):
+    """The bytes of player state the layout needs (Effect_DecodeModelPrimLayout 0x7016B0's walk): the
+    data pointer and the frame, then each object's integrator slots by its track flags. A port decodes a
+    layout into a block of a fixed size (its description's "capacity"): a layout needing more is not
+    played (FFNx's fx_params.h layout() keeps the game's)."""
+    words = 2
+    for obj in layout.objects:
+        tf = obj.track_flags
+        words += 9 if tf & 4 else 6 if tf & 2 else 3 if tf & 1 else 0                  # position
+        words += 9 if tf & 0x20 else 6 if tf & 0x10 else 3 if tf & 8 else 0            # rotation
+        words += 9 if tf & 0x100 else 6 if tf & 0x80 else 3 if tf & 0x40 else 0         # scale
+        words += 6 if tf & 0x800 else 4 if tf & 0x400 else 2 if tf & 0x200 else 0      # colour
+        words += (3 if tf & 0x1000 else 0) + (4 if tf & 0x2000 else 0)                  # channels A, B
+    return 4 * words
+
+
 def encode_layout(layout):
     """The bytes of a PrimLayout (parse_layout's inverse): its models as they are, then the
     header, each object followed by its key tables."""
@@ -116,7 +132,8 @@ def encode_layout(layout):
         for slot, track in enumerate(tracks):
             _channel, _slot, _bit, stride, payload = track.spec
             struct.pack_into("<i", body, start + 8 + 4 * slot, len(body) - start)
-            for frame, values in sorted(track.keys):
+            # (by frame only: keys of one frame keep their order, the player takes the first - Full-cure has some)
+            for frame, values in sorted(track.keys, key=lambda key: key[0]):
                 body += struct.pack("<i", frame) + struct.pack(payload, *values)
             body += struct.pack("<i", -1)
     return bytes(out + body)

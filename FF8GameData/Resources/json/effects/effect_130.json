@@ -29,6 +29,24 @@
    "kind": "sound",
    "address": "0x122380C",
    "size": 4
+  },
+  "layouts.impact": {
+   "kind": "layout",
+   "address": "0x1220990",
+   "size": 1960,
+   "capacity": 168
+  },
+  "layouts.wave": {
+   "kind": "layout",
+   "address": "0x12228A8",
+   "size": 3940,
+   "capacity": 88
+  },
+  "layouts.emitter": {
+   "kind": "layout",
+   "address": "0x1221138",
+   "size": 6000,
+   "capacity": 1196
   }
  },
  "resources": {
@@ -74,6 +92,39 @@
    "min": 1,
    "max": 60,
    "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.impact",
+   "part": "emitter",
+   "label": "Impact",
+   "doc": "The prim-model layout impact (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.impact",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.wave",
+   "part": "emitter",
+   "label": "Wave",
+   "doc": "The prim-model layout wave (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.wave",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.emitter",
+   "part": "emitter",
+   "label": "Emitter",
+   "doc": "The prim-model layout emitter (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.emitter",
    "unit": "plain"
   }
  ],

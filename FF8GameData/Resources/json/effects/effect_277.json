@@ -29,6 +29,30 @@
    "kind": "sound",
    "address": "0x10D2E9C",
    "size": 4
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0x10D2134",
+   "size": 2968,
+   "capacity": 124
+  },
+  "layouts.muzzle": {
+   "kind": "layout",
+   "address": "0x10CE318",
+   "size": 11196,
+   "capacity": 944
+  },
+  "layouts.ray": {
+   "kind": "layout",
+   "address": "0x10D0ED4",
+   "size": 4704,
+   "capacity": 232
+  },
+  "layouts.impact": {
+   "kind": "layout",
+   "address": "0x10CD0AC",
+   "size": 4716,
+   "capacity": 432
   }
  },
  "resources": {
@@ -63,6 +87,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "beam",
+   "label": "Hit",
+   "doc": "The prim-model layout hit (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.muzzle",
+   "part": "beam",
+   "label": "Muzzle",
+   "doc": "The prim-model layout muzzle (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.muzzle",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ray",
+   "part": "beam",
+   "label": "Ray",
+   "doc": "The prim-model layout ray (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ray",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.impact",
+   "part": "beam",
+   "label": "Impact",
+   "doc": "The prim-model layout impact (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.impact",
    "unit": "plain"
   }
  ],

@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0x12C1600",
    "size": 4
+  },
+  "layouts.cloud": {
+   "kind": "layout",
+   "address": "0x12C0244",
+   "size": 3536,
+   "capacity": 236
   }
  },
  "resources": {
@@ -74,6 +80,17 @@
    "min": 0,
    "max": 37,
    "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.cloud",
+   "part": "breath",
+   "label": "Cloud",
+   "doc": "The prim-model layout cloud (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.cloud",
    "unit": "plain"
   }
  ],

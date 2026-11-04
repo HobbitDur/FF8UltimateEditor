@@ -2327,13 +2327,25 @@ namespace fxprog
 	}
 	inline uint32_t ParseNumber(const std::string &token) { return (uint32_t)ParseVal(token).v; }
 
-	// the bytes `hex` as a blob of the program's own data, 16-byte aligned: its address
+	// the bytes `hex` as a blob of the program's own data, 16-byte aligned: its address (a data block a
+	// port's data parameters may point into, until the program is dropped: Release)
 	inline uint32_t AddBlob(Program &g, const std::string &name, size_t size)
 	{
 		g.blobs.emplace_back(size + 16, 0);
 		const uint32_t at = ((uint32_t)g.blobs.back().data() + 15u) & ~15u;
 		g.data[name] = at;
+#ifdef FXP_DATA_BLOCKS
+		ff8fx::fxp::add_data(&g, at, (uint32_t)size);
+#endif
 		return at;
+	}
+	// before a program is deleted: its data blocks no longer valid for the ports' parameters
+	inline void Release(Program &g)
+	{
+#ifdef FXP_DATA_BLOCKS
+		ff8fx::fxp::drop_data(&g);
+#endif
+		(void)g;
 	}
 	inline Step ParseStep(const std::vector<std::string> &w, size_t from, std::string *error)
 	{

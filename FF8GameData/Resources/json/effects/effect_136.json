@@ -29,6 +29,42 @@
    "kind": "sound",
    "address": "0x11F81CC",
    "size": 4
+  },
+  "layouts.splash": {
+   "kind": "layout",
+   "address": "0x11F74FC",
+   "size": 2184,
+   "capacity": 168
+  },
+  "layouts.stream": {
+   "kind": "layout",
+   "address": "0x11F342C",
+   "size": 656,
+   "capacity": 168
+  },
+  "layouts.fall": {
+   "kind": "layout",
+   "address": "0x11F7D84",
+   "size": 344,
+   "capacity": 80
+  },
+  "layouts.mouth": {
+   "kind": "layout",
+   "address": "0x11F40F4",
+   "size": 3368,
+   "capacity": 200
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0x11F5A90",
+   "size": 6764,
+   "capacity": 500
+  },
+  "layouts.pool": {
+   "kind": "layout",
+   "address": "0x11F4E1C",
+   "size": 3188,
+   "capacity": 388
   }
  },
  "resources": {
@@ -74,6 +110,72 @@
    "min": 0,
    "max": 200,
    "default": 62,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.splash",
+   "part": "shot",
+   "label": "Splash",
+   "doc": "The prim-model layout splash (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.splash",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.stream",
+   "part": "shot",
+   "label": "Stream",
+   "doc": "The prim-model layout stream (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.stream",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.fall",
+   "part": "shot",
+   "label": "Fall",
+   "doc": "The prim-model layout fall (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.fall",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.mouth",
+   "part": "shot",
+   "label": "Mouth",
+   "doc": "The prim-model layout mouth (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.mouth",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "shot",
+   "label": "Hit",
+   "doc": "The prim-model layout hit (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.pool",
+   "part": "shot",
+   "label": "Pool",
+   "doc": "The prim-model layout pool (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.pool",
    "unit": "plain"
   }
  ],

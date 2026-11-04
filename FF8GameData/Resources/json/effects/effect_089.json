@@ -33,6 +33,36 @@
    "kind": "sound",
    "address": "0x14913F8",
    "size": 4
+  },
+  "layouts.dive": {
+   "kind": "layout",
+   "address": "0x14A3EB0",
+   "size": 9408,
+   "capacity": 344
+  },
+  "layouts.at_14a6370": {
+   "kind": "layout",
+   "address": "0x14A6370",
+   "size": 656,
+   "capacity": 104
+  },
+  "layouts.at_14a09a0": {
+   "kind": "layout",
+   "address": "0x14A09A0",
+   "size": 13584,
+   "capacity": 112
+  },
+  "layouts.at_14a6600": {
+   "kind": "layout",
+   "address": "0x14A6600",
+   "size": 14832,
+   "capacity": 536
+  },
+  "layouts.at_14a9ff0": {
+   "kind": "layout",
+   "address": "0x14A9FF0",
+   "size": 21612,
+   "capacity": 236
   }
  },
  "resources": {},
@@ -91,6 +121,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sounds.landing",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.dive",
+   "part": "director",
+   "label": "Dive",
+   "doc": "The prim-model layout dive (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.dive",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.at_14a6370",
+   "part": "director",
+   "label": "At 14a6370",
+   "doc": "The prim-model layout at 14a6370 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.at_14a6370",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.at_14a09a0",
+   "part": "director",
+   "label": "At 14a09a0",
+   "doc": "The prim-model layout at 14a09a0 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.at_14a09a0",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.at_14a6600",
+   "part": "director",
+   "label": "At 14a6600",
+   "doc": "The prim-model layout at 14a6600 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.at_14a6600",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.at_14a9ff0",
+   "part": "director",
+   "label": "At 14a9ff0",
+   "doc": "The prim-model layout at 14a9ff0 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.at_14a9ff0",
    "unit": "plain"
   }
  ],

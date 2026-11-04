@@ -189,3 +189,71 @@ def test_an_edited_layout_changes_what_the_effect_draws(tmp_path):
         entry["hex"] = encode_layout(layout).hex()
     redrawn = record("faster")
     assert redrawn != drawn and sum(line.startswith("R ") for line in redrawn) == sum(line.startswith("R ") for line in drawn)
+
+
+def _port_layouts():
+    """(effect, key, entry) of every port effect's layout parameter (its exe data has a capacity)."""
+    from Fujin.effectprogram import described_effects
+    for effect in described_effects():
+        description = load_description(effect)
+        for key, entry in description.get("exe_data", {}).items():
+            if isinstance(entry, dict) and entry.get("kind") == "layout" and "capacity" in entry:
+                yield effect, key, entry
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_every_port_layout_fits_the_block_its_port_decodes_it_into():
+    """Each port effect's layout parameter: a layout in the exe, of its size, whose player state is the
+    block its port decodes it into (FFNx fx_params.h layout(): a layout needing more keeps the game's)."""
+    from FF8GameData.psxgpu.primlayout import state_size
+    exe = EXE.read_bytes()
+    found = list(_port_layouts())
+    assert len(found) >= 139 and len({effect for effect, _key, _entry in found}) >= 50
+    for effect, key, entry in found:
+        at = int(entry["address"], 16) - 0x400000
+        layout = parse_layout(exe[at:at + entry["size"]])
+        assert encode_layout(layout) == exe[at:at + entry["size"]], (effect, key)
+        assert state_size(layout) <= entry["capacity"], (effect, key)
+        assert any(param["key"] == key and param["type"] == "layout" and param["default"] == f"@{key}"
+                   for param in load_description(effect)["params"]), (effect, key)
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag127.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m033.dat")
+def test_a_port_effects_copy_plays_its_own_layout_and_flipbooks(tmp_path):
+    """Gastric Juice's copy (a port effect: FFNx's code runs it) with its own data draws as the exe's; with its
+    layout spinning twice as fast, or its flipbooks dimmed, it draws otherwise, as many primitives."""
+    from Fujin.effectparts import effect_schema
+    from Fujin.recorderbuild import RECORDER
+    if effect_schema(128) is None or not any(f["type"] == "layout" for f in effect_schema(128)["fields"]):
+        pytest.skip("the recorder is not built with FFNx's effect sources that read layouts as parameters")
+    new = new_effect(load_description(128), 224, "New juice", EXE.read_bytes())
+
+    def record(effect, tag, *extra):
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(RECORDER), str(effect), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m033.dat'}", "caster=3", "target=0", *extra],
+                             cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return [line.split(" ", 2)[2] if line.startswith("P ") else line for line in out.read_text().splitlines()
+                if line.startswith(("P ", "R "))]
+
+    original = record(128, "original")
+    assert record(224, "own", f"program={write_program(new, tmp_path / 'own.fxprog')}") == original
+    data = new["data"]
+    layout = parse_layout(bytes.fromhex(data["layout"]["hex"]))
+    for obj in layout.objects:
+        for track in obj.tracks:
+            if (track.channel, track.slot) == ("rotation", "velocity"):
+                track.keys[:] = [(frame, tuple(2 * v for v in values)) for frame, values in track.keys]
+    data["layout"]["hex"] = encode_layout(layout).hex()
+    spun = record(224, "spun", f"program={write_program(new, tmp_path / 'spun.fxprog')}")
+    assert spun != original and len(spun) == len(original)
+    for key in ("seqs.spray", "seqs.drip", "seqs.splash"):
+        sequence = parse_sequence(bytes.fromhex(data[key]["hex"]), 0, 0)
+        for frame in sequence.frames:
+            frame.pieces[:] = [dataclasses.replace(piece, intensity=0x10) for piece in frame.pieces]
+        data[key]["hex"] = encode_sequence(sequence).hex()
+    dimmed = record(224, "dimmed", f"program={write_program(new, tmp_path / 'dimmed.fxprog')}")
+    assert dimmed != spun and len(dimmed) == len(original)

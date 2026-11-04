@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0x13249DC",
    "size": 4
+  },
+  "layouts.grab": {
+   "kind": "layout",
+   "address": "0x1321BEC",
+   "size": 11476,
+   "capacity": 688
   }
  },
  "resources": {
@@ -74,6 +80,17 @@
    "min": 0,
    "max": 4096,
    "default": 2200,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.grab",
+   "part": "grab",
+   "label": "Grab",
+   "doc": "The prim-model layout grab (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.grab",
    "unit": "plain"
   }
  ],

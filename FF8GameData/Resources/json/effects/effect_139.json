@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0x11DD338",
    "size": 4
+  },
+  "layouts.target": {
+   "kind": "layout",
+   "address": "0x11D8BF0",
+   "size": 8064,
+   "capacity": 632
+  },
+  "layouts.main": {
+   "kind": "layout",
+   "address": "0x11DAB70",
+   "size": 9900,
+   "capacity": 1196
   }
  },
  "resources": {
@@ -63,6 +75,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.target",
+   "part": "main",
+   "label": "Target",
+   "doc": "The prim-model layout target (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.target",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.main",
+   "part": "main",
+   "label": "Main",
+   "doc": "The prim-model layout main (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.main",
    "unit": "plain"
   }
  ],

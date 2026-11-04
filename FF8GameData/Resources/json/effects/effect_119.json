@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0x1287C34",
    "size": 4
+  },
+  "layouts.clock": {
+   "kind": "layout",
+   "address": "0x127DB5C",
+   "size": 37544,
+   "capacity": 1256
   }
  },
  "resources": {
@@ -74,6 +80,17 @@
    "min": 0,
    "max": 69,
    "default": 53,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.clock",
+   "part": "target",
+   "label": "Clock",
+   "doc": "The prim-model layout clock (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.clock",
    "unit": "plain"
   }
  ],

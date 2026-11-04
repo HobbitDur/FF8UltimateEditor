@@ -34,6 +34,72 @@
    "kind": "sound",
    "address": "0x1154F4C",
    "size": 4
+  },
+  "layouts.ring": {
+   "kind": "layout",
+   "address": "0x115C4C8",
+   "size": 1344,
+   "capacity": 64
+  },
+  "layouts.anchor": {
+   "kind": "layout",
+   "address": "0x11550A8",
+   "size": 22632,
+   "capacity": 880
+  },
+  "layouts.back": {
+   "kind": "layout",
+   "address": "0x1168A5C",
+   "size": 3560,
+   "capacity": 176
+  },
+  "layouts.run": {
+   "kind": "layout",
+   "address": "0x1160BB0",
+   "size": 6704,
+   "capacity": 392
+  },
+  "layouts.screen": {
+   "kind": "layout",
+   "address": "0x11625E0",
+   "size": 19036,
+   "capacity": 148
+  },
+  "layouts.far": {
+   "kind": "layout",
+   "address": "0x1169844",
+   "size": 5320,
+   "capacity": 340
+  },
+  "layouts.jump": {
+   "kind": "layout",
+   "address": "0x116703C",
+   "size": 6688,
+   "capacity": 188
+  },
+  "layouts.jump_bone": {
+   "kind": "layout",
+   "address": "0x115DCCC",
+   "size": 12004,
+   "capacity": 636
+  },
+  "layouts.target_ring": {
+   "kind": "layout",
+   "address": "0x115CA08",
+   "size": 4804,
+   "capacity": 352
+  },
+  "layouts.crater": {
+   "kind": "layout",
+   "address": "0x116AD0C",
+   "size": 9376,
+   "capacity": 340
+  },
+  "layouts.bone": {
+   "kind": "layout",
+   "address": "0x115A910",
+   "size": 7096,
+   "capacity": 436
   }
  },
  "resources": {
@@ -96,6 +162,127 @@
    "min": 0,
    "max": 281,
    "default": 264,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ring",
+   "part": "director",
+   "label": "Ring",
+   "doc": "The prim-model layout ring (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.anchor",
+   "part": "director",
+   "label": "Anchor",
+   "doc": "The prim-model layout anchor (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.anchor",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.back",
+   "part": "director",
+   "label": "Back",
+   "doc": "The prim-model layout back (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.back",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.run",
+   "part": "director",
+   "label": "Run",
+   "doc": "The prim-model layout run (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.run",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.screen",
+   "part": "director",
+   "label": "Screen",
+   "doc": "The prim-model layout screen (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.screen",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.far",
+   "part": "director",
+   "label": "Far",
+   "doc": "The prim-model layout far (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.far",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.jump",
+   "part": "director",
+   "label": "Jump",
+   "doc": "The prim-model layout jump (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.jump",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.jump_bone",
+   "part": "director",
+   "label": "Jump bone",
+   "doc": "The prim-model layout jump bone (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.jump_bone",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.target_ring",
+   "part": "director",
+   "label": "Target ring",
+   "doc": "The prim-model layout target ring (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.target_ring",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.crater",
+   "part": "director",
+   "label": "Crater",
+   "doc": "The prim-model layout crater (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.crater",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.bone",
+   "part": "director",
+   "label": "Bone",
+   "doc": "The prim-model layout bone (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.bone",
    "unit": "plain"
   }
  ],

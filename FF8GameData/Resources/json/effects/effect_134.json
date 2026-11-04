@@ -29,6 +29,36 @@
    "kind": "sound",
    "address": "0x120767C",
    "size": 4
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0x1207150",
+   "size": 1324,
+   "capacity": 88
+  },
+  "layouts.charge": {
+   "kind": "layout",
+   "address": "0x12038DC",
+   "size": 1832,
+   "capacity": 88
+  },
+  "layouts.muzzle": {
+   "kind": "layout",
+   "address": "0x1205270",
+   "size": 4992,
+   "capacity": 544
+  },
+  "layouts.ray": {
+   "kind": "layout",
+   "address": "0x12065F0",
+   "size": 2912,
+   "capacity": 164
+  },
+  "layouts.impact": {
+   "kind": "layout",
+   "address": "0x1204004",
+   "size": 4716,
+   "capacity": 432
   }
  },
  "resources": {
@@ -74,6 +104,61 @@
    "min": 0,
    "max": 200,
    "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "beam",
+   "label": "Hit",
+   "doc": "The prim-model layout hit (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.charge",
+   "part": "beam",
+   "label": "Charge",
+   "doc": "The prim-model layout charge (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.charge",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.muzzle",
+   "part": "beam",
+   "label": "Muzzle",
+   "doc": "The prim-model layout muzzle (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.muzzle",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ray",
+   "part": "beam",
+   "label": "Ray",
+   "doc": "The prim-model layout ray (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ray",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.impact",
+   "part": "beam",
+   "label": "Impact",
+   "doc": "The prim-model layout impact (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.impact",
    "unit": "plain"
   }
  ],

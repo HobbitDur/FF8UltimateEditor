@@ -29,6 +29,27 @@
    "kind": "sound",
    "address": "0x12337B8",
    "size": 4
+  },
+  "layout": {
+   "kind": "layout",
+   "address": "0x12320B4",
+   "size": 4472,
+   "capacity": 584
+  },
+  "seqs.spray": {
+   "kind": "seq",
+   "address": "0x1233538",
+   "size": 248
+  },
+  "seqs.drip": {
+   "kind": "seq",
+   "address": "0x123322C",
+   "size": 352
+  },
+  "seqs.splash": {
+   "kind": "seq",
+   "address": "0x123338C",
+   "size": 428
   }
  },
  "resources": {
@@ -74,6 +95,50 @@
    "min": 0,
    "max": 200,
    "default": 53,
+   "unit": "plain"
+  },
+  {
+   "key": "layout",
+   "part": "target",
+   "label": "Layout",
+   "doc": "The prim-model layout played at the target (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layout",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spray",
+   "part": "target",
+   "label": "Spray",
+   "doc": "The spray's flipbook (9 frames played)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spray",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.drip",
+   "part": "target",
+   "label": "Drip",
+   "doc": "The drips' flipbook (13 frames played)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.drip",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splash",
+   "part": "target",
+   "label": "Splash",
+   "doc": "The splashes' flipbook (16 frames played)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splash",
    "unit": "plain"
   }
  ],

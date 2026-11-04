@@ -10,7 +10,9 @@ when it was made: docs/fujin-effect-description.md), each entry edited by kind:
 - pointers: a table of other entries (Hypnotize's ring and target layouts), each picked by key;
 - layout: a prim-model layout's animation (FF8GameData.psxgpu.primlayout): its length, its objects
   (model, flags) and each object's tracks (position, rotation, scale, colour, fade, vertex-frame
-  blend: value / velocity / acceleration) and their keys; its models kept as they are;
+  blend: value / velocity / acceleration) and their keys; its models kept as they are. A port's
+  layout has a capacity (the state block its code decodes it into): more objects or tracks than it
+  holds are not applied;
 - camera: what it holds, read-only (the Camera tab edits it: its effect_NNN.bcam replaces it in the
   game).
 
@@ -25,7 +27,7 @@ from PyQt6.QtWidgets import (QComboBox, QFormLayout, QHBoxLayout, QHeaderView, Q
                              QListWidgetItem, QPushButton, QScrollArea, QSpinBox, QSplitter, QStackedWidget,
                              QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
-from FF8GameData.psxgpu.primlayout import TRACKS, Track, encode_layout, parse_layout
+from FF8GameData.psxgpu.primlayout import TRACKS, Track, encode_layout, parse_layout, state_size
 from FF8GameData.psxgpu.spritesequence import SpriteFrame, encode_sequence, parse_sequence
 
 NO_DATA = ("No data of its own: only a new effect made with the exe open has some (Description, New effect). "
@@ -283,6 +285,7 @@ class LayoutEditor(QWidget):
     def __init__(self):
         super().__init__()
         self.layout_data = None
+        self.capacity = None                            # a port's state block for it (bytes), or None
         self.frames_spin = QSpinBox()
         self.frames_spin.setRange(1, 10000)
         self.frames_spin.valueChanged.connect(self._frames_changed)
@@ -362,6 +365,13 @@ class LayoutEditor(QWidget):
 
     def data(self):
         return encode_layout(self.layout_data) if self.layout_data is not None else None
+
+    def too_big(self):
+        """What is wrong when the layout needs more player state than its port holds (else "")."""
+        if self.layout_data is None or self.capacity is None or state_size(self.layout_data) <= self.capacity:
+            return ""
+        return (f"It needs {state_size(self.layout_data)} bytes of player state, its effect's code holds "
+                f"{self.capacity}: fewer objects or tracks.")
 
     def _object(self):
         row = self.objects.currentRow()
@@ -635,6 +645,7 @@ class EffectDataView(QWidget):
         if kind == "seq":
             self.sequence.load(data)
         elif kind == "layout":
+            self.layout_editor.capacity = entry.get("capacity")
             self.layout_editor.load(data)
         elif kind == "sound":
             self.sound.blockSignals(True)
@@ -714,6 +725,9 @@ class EffectDataView(QWidget):
 
     def apply(self):
         if self.entry() is None:
+            return False
+        if self.entry().get("kind") == "layout" and self.layout_editor.too_big():
+            self.layout_editor.error.setText(self.layout_editor.too_big())
             return False
         entry = self.edited_entry()
         self.apply_button.setEnabled(False)

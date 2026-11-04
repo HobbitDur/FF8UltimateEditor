@@ -1147,7 +1147,7 @@ static int lab_schema()
 		const std::string game = text ? json_text((const char *)m->defaults + d.offset) : std::to_string(field_value(m->defaults, d));
 		fprintf(f, "%s\n  {\"part\": %s, \"key\": %s, \"label\": %s, \"doc\": %s, \"type\": %s, \"min\": %d, \"max\": %d, \"default\": %s, \"unit\": \"%s\"}",
 		        i ? "," : "", json_text(d.part).c_str(), json_text(d.key).c_str(), json_text(d.label).c_str(), json_text(d.doc).c_str(),
-		        d.type == ff8fx::fxp::I16 ? "\"i16\"" : d.type == ff8fx::fxp::U8 ? "\"u8\"" : d.type == ff8fx::fxp::Seq ? "\"seq\"" : (int)d.type == 4 ? "\"sound\"" : text ? "\"file\"" : "\"i32\"",
+		        d.type == ff8fx::fxp::I16 ? "\"i16\"" : d.type == ff8fx::fxp::U8 ? "\"u8\"" : d.type == ff8fx::fxp::Seq ? "\"seq\"" : (int)d.type == 4 ? "\"sound\"" : text ? "\"file\"" : (int)d.type == 6 ? "\"layout\"" : "\"i32\"",
 		        d.min, d.max, game.c_str(), field_unit(d));
 	}
 	fprintf(f, "],\n \"groups\": [");

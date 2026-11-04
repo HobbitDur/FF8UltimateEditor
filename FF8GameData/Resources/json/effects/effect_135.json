@@ -29,6 +29,30 @@
    "kind": "sound",
    "address": "0x1201D88",
    "size": 4
+  },
+  "layouts.reflect": {
+   "kind": "layout",
+   "address": "0x120031C",
+   "size": 4904,
+   "capacity": 784
+  },
+  "layouts.shot": {
+   "kind": "layout",
+   "address": "0x11FBF48",
+   "size": 7004,
+   "capacity": 504
+  },
+  "layouts.shot_hit": {
+   "kind": "layout",
+   "address": "0x1201644",
+   "size": 1860,
+   "capacity": 88
+  },
+  "layouts.sweep": {
+   "kind": "layout",
+   "address": "0x11FDAA4",
+   "size": 10360,
+   "capacity": 696
   }
  },
  "resources": {
@@ -74,6 +98,50 @@
    "min": 0,
    "max": 200,
    "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.reflect",
+   "part": "sweep",
+   "label": "Reflect",
+   "doc": "The prim-model layout reflect (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.reflect",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.shot",
+   "part": "sweep",
+   "label": "Shot",
+   "doc": "The prim-model layout shot (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.shot",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.shot_hit",
+   "part": "sweep",
+   "label": "Shot hit",
+   "doc": "The prim-model layout shot hit (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.shot_hit",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.sweep",
+   "part": "sweep",
+   "label": "Sweep",
+   "doc": "The prim-model layout sweep (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.sweep",
    "unit": "plain"
   }
  ],

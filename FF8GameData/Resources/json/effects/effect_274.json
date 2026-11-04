@@ -54,6 +54,66 @@
    "kind": "sound",
    "address": "0x110BE6C",
    "size": 4
+  },
+  "layouts.punch": {
+   "kind": "layout",
+   "address": "0x10EA030",
+   "size": 10148,
+   "capacity": 332
+  },
+  "layouts.punch_b": {
+   "kind": "layout",
+   "address": "0x10EC7D4",
+   "size": 3884,
+   "capacity": 100
+  },
+  "layouts.booya": {
+   "kind": "layout",
+   "address": "0x10ED700",
+   "size": 14840,
+   "capacity": 1480
+  },
+  "layouts.heel": {
+   "kind": "layout",
+   "address": "0x10F3808",
+   "size": 13272,
+   "capacity": 864
+  },
+  "layouts.heel_b": {
+   "kind": "layout",
+   "address": "0x10F6BE0",
+   "size": 2000,
+   "capacity": 100
+  },
+  "layouts.kick": {
+   "kind": "layout",
+   "address": "0x10F10F8",
+   "size": 10000,
+   "capacity": 572
+  },
+  "layouts.dolphin": {
+   "kind": "layout",
+   "address": "0x10FE310",
+   "size": 13948,
+   "capacity": 224
+  },
+  "layouts.dolphin_b": {
+   "kind": "layout",
+   "address": "0x110198C",
+   "size": 42188,
+   "capacity": 904
+  },
+  "layouts.meteor": {
+   "kind": "layout",
+   "address": "0x10F73B0",
+   "size": 5700,
+   "capacity": 296
+  },
+  "layouts.meteor_b": {
+   "kind": "layout",
+   "address": "0x10F89F4",
+   "size": 22812,
+   "capacity": 2532
   }
  },
  "resources": {
@@ -173,6 +233,116 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound_meteor",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.punch",
+   "part": "punch",
+   "label": "Punch",
+   "doc": "The prim-model layout punch (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.punch",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.punch_b",
+   "part": "punch",
+   "label": "Punch b",
+   "doc": "The prim-model layout punch b (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.punch_b",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.booya",
+   "part": "punch",
+   "label": "Booya",
+   "doc": "The prim-model layout booya (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.booya",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.heel",
+   "part": "punch",
+   "label": "Heel",
+   "doc": "The prim-model layout heel (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.heel",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.heel_b",
+   "part": "punch",
+   "label": "Heel b",
+   "doc": "The prim-model layout heel b (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.heel_b",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.kick",
+   "part": "punch",
+   "label": "Kick",
+   "doc": "The prim-model layout kick (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.kick",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.dolphin",
+   "part": "punch",
+   "label": "Dolphin",
+   "doc": "The prim-model layout dolphin (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.dolphin",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.dolphin_b",
+   "part": "punch",
+   "label": "Dolphin b",
+   "doc": "The prim-model layout dolphin b (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.dolphin_b",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.meteor",
+   "part": "punch",
+   "label": "Meteor",
+   "doc": "The prim-model layout meteor (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.meteor",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.meteor_b",
+   "part": "punch",
+   "label": "Meteor b",
+   "doc": "The prim-model layout meteor b (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.meteor_b",
    "unit": "plain"
   }
  ],

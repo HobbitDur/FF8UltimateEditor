@@ -34,6 +34,12 @@
    "kind": "sound",
    "address": "0x10D4C5C",
    "size": 4
+  },
+  "layouts.prim_model": {
+   "kind": "layout",
+   "address": "0x10D3364",
+   "size": 5908,
+   "capacity": 292
   }
  },
  "resources": {
@@ -79,6 +85,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound_voice",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.prim_model",
+   "part": "director",
+   "label": "Prim model",
+   "doc": "The prim-model layout prim model (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.prim_model",
    "unit": "plain"
   }
  ],

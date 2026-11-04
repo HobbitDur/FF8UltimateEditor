@@ -29,6 +29,24 @@
    "kind": "sound",
    "address": "0x104E2FC",
    "size": 4
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0x104B63C",
+   "size": 4820,
+   "capacity": 160
+  },
+  "layouts.miss": {
+   "kind": "layout",
+   "address": "0x104C910",
+   "size": 5720,
+   "capacity": 276
+  },
+  "layouts.missile": {
+   "kind": "layout",
+   "address": "0x10490A8",
+   "size": 9620,
+   "capacity": 2008
   }
  },
  "resources": {
@@ -63,6 +81,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "master",
+   "label": "Hit",
+   "doc": "The prim-model layout hit (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.miss",
+   "part": "master",
+   "label": "Miss",
+   "doc": "The prim-model layout miss (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.miss",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.missile",
+   "part": "master",
+   "label": "Missile",
+   "doc": "The prim-model layout missile (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.missile",
    "unit": "plain"
   }
  ],

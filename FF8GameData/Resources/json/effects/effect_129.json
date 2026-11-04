@@ -29,6 +29,30 @@
    "kind": "sound",
    "address": "0x12292F4",
    "size": 4
+  },
+  "layouts.mouth2": {
+   "kind": "layout",
+   "address": "0x1226098",
+   "size": 2036,
+   "capacity": 104
+  },
+  "layouts.target": {
+   "kind": "layout",
+   "address": "0x1225468",
+   "size": 3120,
+   "capacity": 272
+  },
+  "layouts.mouth1": {
+   "kind": "layout",
+   "address": "0x12239B8",
+   "size": 6832,
+   "capacity": 264
+  },
+  "layouts.mouth3": {
+   "kind": "layout",
+   "address": "0x122688C",
+   "size": 2640,
+   "capacity": 392
   }
  },
  "resources": {
@@ -74,6 +98,50 @@
    "min": 0,
    "max": 100,
    "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.mouth2",
+   "part": "main",
+   "label": "Mouth2",
+   "doc": "The prim-model layout mouth2 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.mouth2",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.target",
+   "part": "main",
+   "label": "Target",
+   "doc": "The prim-model layout target (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.target",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.mouth1",
+   "part": "main",
+   "label": "Mouth1",
+   "doc": "The prim-model layout mouth1 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.mouth1",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.mouth3",
+   "part": "main",
+   "label": "Mouth3",
+   "doc": "The prim-model layout mouth3 (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.mouth3",
    "unit": "plain"
   }
  ],

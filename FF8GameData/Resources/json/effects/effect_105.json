@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0x131265C",
    "size": 4
+  },
+  "layouts.bolt": {
+   "kind": "layout",
+   "address": "0x13009C0",
+   "size": 56220,
+   "capacity": 2152
   }
  },
  "resources": {
@@ -74,6 +80,17 @@
    "min": 0,
    "max": 200,
    "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.bolt",
+   "part": "bolt",
+   "label": "Bolt",
+   "doc": "The prim-model layout bolt (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.bolt",
    "unit": "plain"
   }
  ],

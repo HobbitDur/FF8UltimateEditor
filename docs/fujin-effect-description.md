@@ -329,6 +329,22 @@ Potion's description is the same with its own sequences and sound.
      - Checked: Cure's and Hypnotize's copies with their own data draw exactly what the originals
        draw and play the same sounds. Only the recorded addresses of sequences and sound blocks
        differ. No exe address is left in their programs.
+     - **Port effects** (director `port`) read their data through their parameters too, so a new
+       effect made from one plays its own copy:
+       - FFNx's `fx_params.h` has the field types `Seq`, `Sound` and `Layout` (a prim-model
+         layout: the shared prim player's keyframed models). The port reads each one through
+         `fxp::sequence`, `fxp::sound` or `fxp::layout(value, game, capacity)`; a value that is
+         not one in the exe image or in a registered data block falls back to the game's.
+       - The program host registers every `data` blob it allocates as a data block
+         (`fxp::add_data`) and drops them with its program (`Release`).
+       - A layout is decoded into a block of the port's of a fixed size. Its exe data entry
+         says it (`capacity`, bytes). `fxp::layout` keeps the game's layout when the edited one
+         needs more player state (`primlayout.state_size`), and the Data tab refuses to apply
+         one that does.
+       - 50 port effects have their layouts as parameters (139 layouts; Gastric Juice its
+         flipbooks too).
+       - Checked: each one's own copy draws as the exe, and with its layouts' scale and spin
+         changed, draws otherwise.
    - **Part by part** (`Fujin/effecttemplates.py`): a free slot shows **Create a new effect
      here**, which makes an empty effect. Choreography's **+** tab (always the last tab) adds
      parts; right-clicking a part's tab removes it, with the parts that need it.

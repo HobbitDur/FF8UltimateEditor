@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0x10430F4",
    "size": 4
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0x1042304",
+   "size": 3196,
+   "capacity": 296
   }
  },
  "resources": {
@@ -63,6 +69,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "breath",
+   "label": "Hit",
+   "doc": "The prim-model layout hit (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
    "unit": "plain"
   }
  ],

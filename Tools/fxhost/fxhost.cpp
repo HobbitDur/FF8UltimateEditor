@@ -122,11 +122,13 @@ namespace
 			if (!error.empty() || program->effect != slot + 1)
 			{
 				Log("effect_%03d.fxprog: %s", slot + 1, error.empty() ? "it is the program of another effect" : error.c_str());
+				fxprog::Release(*program);
 				delete program;
 				continue;
 			}
 			fxprog::Detach(*program);
 			program->director_fn = DIRECTORS[slot];
+			if (g_slots[slot]) fxprog::Release(*g_slots[slot]);
 			delete g_slots[slot];
 			g_slots[slot] = program;
 			WriteSlot(TEXTURE_LOAD, slot, FILE_LOADERS[slot]);

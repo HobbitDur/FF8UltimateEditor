@@ -34,6 +34,54 @@
    "kind": "sound",
    "address": "0x12DB658",
    "size": 4
+  },
+  "layouts.target": {
+   "kind": "layout",
+   "address": "0x12D19F4",
+   "size": 11408,
+   "capacity": 268
+  },
+  "layouts.billboard": {
+   "kind": "layout",
+   "address": "0x12D4684",
+   "size": 18084,
+   "capacity": 896
+  },
+  "layouts.impact_a": {
+   "kind": "layout",
+   "address": "0x12D8D28",
+   "size": 4248,
+   "capacity": 224
+  },
+  "layouts.impact_b": {
+   "kind": "layout",
+   "address": "0x12D9DC0",
+   "size": 4584,
+   "capacity": 208
+  },
+  "layouts.ground": {
+   "kind": "layout",
+   "address": "0x12C7420",
+   "size": 3072,
+   "capacity": 192
+  },
+  "layouts.hand_a": {
+   "kind": "layout",
+   "address": "0x12C8020",
+   "size": 10132,
+   "capacity": 272
+  },
+  "layouts.hand_b": {
+   "kind": "layout",
+   "address": "0x12CA7B4",
+   "size": 3160,
+   "capacity": 824
+  },
+  "layouts.fist": {
+   "kind": "layout",
+   "address": "0x12CB40C",
+   "size": 26088,
+   "capacity": 848
   }
  },
  "resources": {
@@ -85,6 +133,94 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sounds.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.target",
+   "part": "director",
+   "label": "Target",
+   "doc": "The prim-model layout target (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.target",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.billboard",
+   "part": "director",
+   "label": "Billboard",
+   "doc": "The prim-model layout billboard (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.billboard",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.impact_a",
+   "part": "director",
+   "label": "Impact a",
+   "doc": "The prim-model layout impact a (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.impact_a",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.impact_b",
+   "part": "director",
+   "label": "Impact b",
+   "doc": "The prim-model layout impact b (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.impact_b",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ground",
+   "part": "director",
+   "label": "Ground",
+   "doc": "The prim-model layout ground (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ground",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hand_a",
+   "part": "director",
+   "label": "Hand a",
+   "doc": "The prim-model layout hand a (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hand_a",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hand_b",
+   "part": "director",
+   "label": "Hand b",
+   "doc": "The prim-model layout hand b (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hand_b",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.fist",
+   "part": "director",
+   "label": "Fist",
+   "doc": "The prim-model layout fist (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.fist",
    "unit": "plain"
   }
  ],

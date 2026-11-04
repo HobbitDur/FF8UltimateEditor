@@ -44,6 +44,36 @@
    "kind": "sound",
    "address": "0x1324ED4",
    "size": 4
+  },
+  "layouts.ring": {
+   "kind": "layout",
+   "address": "0x1324FF0",
+   "size": 2712,
+   "capacity": 216
+  },
+  "layouts.centre": {
+   "kind": "layout",
+   "address": "0x1332540",
+   "size": 10268,
+   "capacity": 536
+  },
+  "layouts.wave": {
+   "kind": "layout",
+   "address": "0x1327D28",
+   "size": 43032,
+   "capacity": 4352
+  },
+  "layouts.lift": {
+   "kind": "layout",
+   "address": "0x1326C68",
+   "size": 4288,
+   "capacity": 188
+  },
+  "layouts.rise": {
+   "kind": "layout",
+   "address": "0x1325A88",
+   "size": 4576,
+   "capacity": 256
   }
  },
  "resources": {
@@ -150,6 +180,61 @@
    "min": 215,
    "max": 1024,
    "default": 262,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ring",
+   "part": "master",
+   "label": "Ring",
+   "doc": "The prim-model layout ring (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.centre",
+   "part": "master",
+   "label": "Centre",
+   "doc": "The prim-model layout centre (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.centre",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.wave",
+   "part": "master",
+   "label": "Wave",
+   "doc": "The prim-model layout wave (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.wave",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.lift",
+   "part": "master",
+   "label": "Lift",
+   "doc": "The prim-model layout lift (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.lift",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.rise",
+   "part": "master",
+   "label": "Rise",
+   "doc": "The prim-model layout rise (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.rise",
    "unit": "plain"
   }
  ],

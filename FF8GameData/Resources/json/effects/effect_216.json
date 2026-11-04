@@ -29,6 +29,48 @@
    "kind": "sound",
    "address": "0x113C1A8",
    "size": 4
+  },
+  "layouts.ring": {
+   "kind": "layout",
+   "address": "0x115049C",
+   "size": 3628,
+   "capacity": 236
+  },
+  "layouts.rise": {
+   "kind": "layout",
+   "address": "0x1140C5C",
+   "size": 2024,
+   "capacity": 64
+  },
+  "layouts.fly": {
+   "kind": "layout",
+   "address": "0x11431D4",
+   "size": 21244,
+   "capacity": 1156
+  },
+  "layouts.drop": {
+   "kind": "layout",
+   "address": "0x11484D0",
+   "size": 8716,
+   "capacity": 352
+  },
+  "layouts.impact": {
+   "kind": "layout",
+   "address": "0x1141444",
+   "size": 7568,
+   "capacity": 168
+  },
+  "layouts.crater": {
+   "kind": "layout",
+   "address": "0x114A6DC",
+   "size": 24000,
+   "capacity": 1668
+  },
+  "layouts.pillar": {
+   "kind": "layout",
+   "address": "0x11512C8",
+   "size": 10344,
+   "capacity": 236
   }
  },
  "resources": {
@@ -63,6 +105,83 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ring",
+   "part": "director",
+   "label": "Ring",
+   "doc": "The prim-model layout ring (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.rise",
+   "part": "director",
+   "label": "Rise",
+   "doc": "The prim-model layout rise (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.fly",
+   "part": "director",
+   "label": "Fly",
+   "doc": "The prim-model layout fly (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.fly",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.drop",
+   "part": "director",
+   "label": "Drop",
+   "doc": "The prim-model layout drop (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.drop",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.impact",
+   "part": "director",
+   "label": "Impact",
+   "doc": "The prim-model layout impact (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.impact",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.crater",
+   "part": "director",
+   "label": "Crater",
+   "doc": "The prim-model layout crater (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.crater",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.pillar",
+   "part": "director",
+   "label": "Pillar",
+   "doc": "The prim-model layout pillar (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.pillar",
    "unit": "plain"
   }
  ],
