@@ -243,6 +243,8 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    68: ("mag039-067.tim", 7, "camera.approach 400\ncamera.view 1000\nbrackets.follow 20\nbrackets.grow 1536\n"),
+    67: ("mag023-066.tim", 9, "actors.length 30\nmaster.wait 30\nwobble.step 64\nemitter.release 25\n"),
     66: ("mag065.tim", 6, "melt.push 2500\nmaster.damage 40\nflash.flash_in 16\n"),
     65: ("mag064.tim", 9, "master.sink 200\nmaster.damage 500\nmaster.away 5000\n"),
     64: ("mag063.tim", 7, "flashes.b 30\nmaster.sound_tick 20\nmaster.end 180\n"),
@@ -348,7 +350,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor and Griever's death from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy and Scan (enemy) from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     program = write_program(load_description(effect), tmp_path / "effect.fxprog")
@@ -1221,4 +1223,18 @@ def test_griever_death_description_compiles():
     """Griever's death: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory."""
     lines = compile_program(load_description(66)).splitlines()
     for line in ['director port -1', 'port 0x622610 0x6225F0 0x627DF0', 'module 66 0x24C66B0 0x2B20']:
+        assert line in lines, line
+
+
+def test_remedy_description_compiles():
+    """Remedy: Esuna's kind (its module a relocated copy of Esuna's) - its actor pools, the stage wobble in and out (native tasks) after its wait."""
+    lines = compile_program(load_description(67)).splitlines()
+    for line in ['module 67 0x26005D0 0xD48', 'act_stage 1 2 $3', 'act_pool actor_pool 67200', 'native 0x7DEE60']:
+        assert line in lines, line
+
+
+def test_enemy_scan_description_compiles():
+    """Scan (enemy): the spell Scan's library reduced to its short sequence, a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its camera state through its exe pointer)."""
+    lines = compile_program(load_description(68)).splitlines()
+    for line in ['director port -1', 'port 0x7DC1A0 0x7DC180 0x7DC280', 'module 68 0x25FCDD8 0x37DC']:
         assert line in lines, line

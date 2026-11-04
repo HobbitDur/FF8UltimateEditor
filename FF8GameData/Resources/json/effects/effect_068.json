@@ -1,0 +1,147 @@
+{
+ "format": 1,
+ "effect": 68,
+ "name": "Scan (enemy)",
+ "doc": "Scan (Tri-Point's enemy attack): the spell's library reduced to its short sequence - one emitter per action: its sound, the reticle closing on the target with its brackets and ring, the camera circling the target, the spinner, the stat board and the scan text until closed, the camera back; the result. Its tasks are the port's code (FFNx mag068_scan.cpp) run on the program's memory (its camera state too, through its exe pointer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x7DC180",
+   "setup": "0x7DC1A0",
+   "root": "0x7DC280"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 68,
+  "from": "0x25FCDD8",
+  "size": "0x37DC"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1595744",
+   "size": 16
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0x1594994",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x7DC1A0",
+  "file_loader": "0x7DC180",
+  "root": "0x7DC280"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "scanner",
+   "title": "Scanner",
+   "doc": "One emitter per action: its sound, the reticle and its brackets, the camera circling the target, the spinner, the stat board and its text"
+  }
+ ],
+ "groups": [
+  {
+   "key": "camera",
+   "label": "Camera",
+   "doc": "Its blend a tick (4096: all of it): to the target, to the close view, to the next action's target; the projection there"
+  },
+  {
+   "key": "brackets",
+   "label": "Brackets",
+   "doc": "The four sliding brackets on the reticle"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "scanner",
+   "label": "Sound",
+   "doc": "Played at the emitter's first tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "camera.approach",
+   "part": "scanner",
+   "label": "To the target",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.view",
+   "part": "scanner",
+   "label": "To the view",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 682,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.back",
+   "part": "scanner",
+   "label": "To the next",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.proj",
+   "part": "scanner",
+   "label": "Projection",
+   "doc": "The projection distance of the view",
+   "type": "i16",
+   "min": 128,
+   "max": 4096,
+   "default": 576,
+   "unit": "plain"
+  },
+  {
+   "key": "brackets.follow",
+   "part": "scanner",
+   "label": "Follow",
+   "doc": "Ticks on the reticle before they slide out",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "brackets.grow",
+   "part": "scanner",
+   "label": "Grow",
+   "doc": "Their growth a tick when sliding out (4096: their size)",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 1024,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

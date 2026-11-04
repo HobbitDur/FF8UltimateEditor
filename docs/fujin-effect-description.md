@@ -1420,3 +1420,18 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`GDeathParams`): the damage, voice release and end ticks, the shards' push, the
        screen flash's ticks. Data: "mag065.tim".
      - *Fujin:* its tab (Master); no + menu family.
+   - **Remedy (67)** (FFNx 63f1dd44; the battle items Remedy and Remedy+; a relocated copy of Esuna's
+     module, Esuna's description): the actor pools and the stage wobble in, one emitter per action - its
+     sound, the actor system round its target, the result (the status cure); after the last action a
+     wait, the stage wobble out.
+     - *Inputs* (`RemedyParams`): Esuna's. Data: the sound, the camera track, "mag023-066.tim".
+     - *Fujin:* its tabs (Emitter, Stage wobble); no + menu family.
+   - **Scan (enemy) (68)** (FFNx bf469dc7; Tri-Point's enemy attack; the spell Scan's library reduced to
+     its short sequence; a port director, Ray-Bomb's kind): one emitter per action - its sound, the reticle
+     closing on the target with its brackets and ring, the camera circling the target, the spinner, the stat
+     board and the scan text until closed, the camera back; the result.
+     - *Inputs* (`ScanParams`): the sound, the camera's blend steps and projection, the brackets' follow
+       ticks and growth (no scan bars in this copy). Data: the sound, "mag039-067.tim".
+     - *Port:* its camera state is reached through an exe data word (0x1591C40) holding a module address:
+       the port moves that word's value with `own::R()`.
+     - *Fujin:* its tab (Scanner); no + menu family.
