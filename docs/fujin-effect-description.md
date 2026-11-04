@@ -2024,3 +2024,67 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`LionHeartParams`): the four sounds. Data: the sounds, "mag164.tim".
      - *Port:* the spawn helper `AddMain` goes through own::Fn.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Sleeping Gas (168)** (FFNx f686ea6a; Grat's attack; a port director, Ray-Bomb's kind): the gas clouds
+     waving towards the targets, the target and caster sparkles, the screen flash, the sound; the damage at
+     tick 60.
+     - *Inputs* (`SleepingGasParams`): the sound, the damage tick. Data: the sound, "mag167.tim".
+     - *Tests:* the cycle test casts it from Grat (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Gastric Juice (Grat) (169)** (FFNx fe9aafd1; Grat's attack; a port director, Ray-Bomb's kind): the five
+     juice streams with their blobs, mesh, drips and puddle, the splash, the tinted target, the sound; the
+     damage at tick 35.
+     - *Inputs* (`GastricJuice169Params`): the sound, the damage tick. Data: the sound, "mag168.tim".
+     - *Tests:* the cycle test casts it from Grat (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Holy (175)** (FFNx 834e6a7f; the spell; a port director, Ray-Bomb's kind): one director an action - the
+     screen shattered into flying triangles (the stage captured), the side faded, the sparkles, orbits and
+     motes, the rings and waves, the light pillars, the beam, the disks, the flash, the screen flash, the
+     sound; the damage at tick 106.
+     - *Inputs* (`HolyParams`): the sound, the damage tick. Data: the sound, "mag174.tim".
+     - *Port:* the spawn helper `AddTask` goes through own::Fn.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Sand Storm (Adamantoise) (176)** (FFNx 97c8102f; Adamantoise's attack; a port director, Ray-Bomb's kind):
+     the two sand funnels walking to the targets, the sand emitters, the targets lifted and landing (their
+     results), the sounds (the wind at tick 14, a target landing).
+     - *Inputs* (`SandStorm176Params`): the two sounds. Data: the sounds, "mag175.tim".
+     - *Port:* the spawn helper `Add` goes through own::Fn; the camera animation is `CAMERA_ANIM` (the file's
+       `CAMERA` is the camera matrix).
+     - *Tests:* the cycle test casts it from Adamantoise (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Bomb glow (179)** (FFNx 2b330fe5; the Bomb's attacks 82 / 83; a port director, Ray-Bomb's kind): the
+     Bomb's glow (its model redrawn with a scrolling additive overlay in a cycling colour), the fuse sparks,
+     the sound; the damage at tick 35.
+     - *Inputs* (`BombGlowParams`): the sound, the damage tick. Data: the sound, "mag178.tim".
+     - *Tests:* the cycle test casts it from the Bomb (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Suicide (180)** (FFNx acedc023; the Bomb's self-destruct; a port director, Ray-Bomb's kind): the fuse
+     sparks, the Bomb's glow then gone, the explosion, the rings, the sparks, the smoke, the sound; the damage
+     at tick 38.
+     - *Inputs* (`SuicideParams`): the sound, the damage tick. Data: the sound, "mag179.tim".
+     - *Tests:* the cycle test casts it from the Bomb (slot 3) on Squall (`CYCLE_CASTS`).
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Card (182)** (FFNx ebb0d3e5; the command; a port director, Ray-Bomb's kind): the sparkles, the two rings,
+     the shards, the screen flash, the sound; carded (target record +3 bit 2 clear: DirectorB, the recorder's
+     case): the target fading, the card spinning out of it, the twelve small cards with their trails; the
+     action result (tick 35 / 64).
+     - *Inputs* (`CardParams`): both directors' sounds and result ticks. Data: the sounds, "mag181.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Defend (183)** (FFNx db038840; the command; a port director, Ray-Bomb's kind): the two shields in front of
+     the caster (the large one shrinking onto him, the small one flickering), the sound; the action result at
+     tick 30.
+     - *Inputs* (`DefendParams`): the sound, the result tick. Data: the sound, "mag182.tim".
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Ultra Waves (Quistis) (184)** (FFNx 9aa8e351; Quistis' Blue Magic, a copy of 154; a port controller,
+     Ray-Bomb's kind): Quistis' casting animation, the four ring emitters around her, the screen warp, the
+     sound (tick 6); the damage at tick 41.
+     - *Inputs* (`UltraWaves184Params`): the sound, the damage tick. Data: the sound, "mag153.tim".
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Shiva (185)** (FFNx f99f4d86; the GF's Diamond Dust, the timeline family; a port timeline, Ray-Bomb's kind):
+     the camera script, the summon stream's loads, the rings, the ground shatter, the mount, the creature with
+     its glows, snow, halo and blizzard, the ice block and the dust, the screen flash, the voice and the sounds
+     (ticks 1, 101, 147, 249); the action result at tick 265.
+     - *Inputs* (`ShivaParams`): the voice, the four sounds, the damage tick. Data: the sounds, "mag184.tim".
+     - *Module:* shared (a copy runs on the module's memory): the exe's own renderers the port calls
+       (0x5C26A0, 0x5C3D10, 0x5C7AB0, ...) read the module's words.
+     - *Port:* the spawn helper `LinkTask` goes through own::Fn.
+     - *Fujin:* its tab (Timeline); no + menu family.

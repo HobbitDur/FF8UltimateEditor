@@ -1,0 +1,152 @@
+{
+ "format": 1,
+ "effect": 185,
+ "name": "Shiva",
+ "doc": "Shiva (the GF's Diamond Dust; the timeline family): the master and the 276-tick timeline - the camera script, the summon stream's loads, the rings, the ground shatter, the mount, the creature with its glows, snow, halo and blizzard, the ice block and the dust, the screen flash, the voice and the sounds; the action result. Its tasks are the port's code (FFNx mag185_shiva.cpp) run on the program's memory (its pools and model data in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5C0D30",
+   "setup": "0x5C0D50",
+   "root": "0x5C7F50"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 185,
+  "from": "0x22BC128",
+  "size": "0xFD8",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD32744",
+   "size": 12
+  },
+  "voice": {
+   "kind": "sound",
+   "address": "0xD32344",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xD32488",
+   "size": 4
+  },
+  "sounds.rise": {
+   "kind": "sound",
+   "address": "0xD3248C",
+   "size": 4
+  },
+  "sounds.stream": {
+   "kind": "sound",
+   "address": "0xD32490",
+   "size": 4
+  },
+  "sounds.blast": {
+   "kind": "sound",
+   "address": "0xD32494",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5C0D50",
+  "file_loader": "0x5C0D30",
+  "root": "0x5C7F50"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timeline",
+   "title": "Timeline",
+   "doc": "Shiva's Diamond Dust: the camera script, the summon stream's loads, the rings, the ground shatter, the mount, the creature with its glows, snow, halo and blizzard, the ice block and the dust, the screen flash, the voice and the sounds; the action result"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the timeline's ticks 1, 101, 147, 249"
+  }
+ ],
+ "params": [
+  {
+   "key": "voice",
+   "part": "timeline",
+   "label": "Voice",
+   "doc": "The voice slot claimed at the timeline's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "timeline",
+   "label": "Start",
+   "doc": "At the timeline's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.rise",
+   "part": "timeline",
+   "label": "Rise",
+   "doc": "At the timeline's tick 101",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.stream",
+   "part": "timeline",
+   "label": "Stream",
+   "doc": "At the timeline's tick 147",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.stream",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.blast",
+   "part": "timeline",
+   "label": "Blast",
+   "doc": "At the timeline's tick 249",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.blast",
+   "unit": "plain"
+  },
+  {
+   "key": "timeline.damage",
+   "part": "timeline",
+   "label": "Damage tick",
+   "doc": "The action result at this tick of the timeline",
+   "type": "i16",
+   "min": 0,
+   "max": 274,
+   "default": 265,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

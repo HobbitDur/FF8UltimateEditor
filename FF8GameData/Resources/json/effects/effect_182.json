@@ -1,0 +1,114 @@
+{
+ "format": 1,
+ "effect": 182,
+ "name": "Card",
+ "doc": "Card (the command): the root and the director - the sparkles, the two rings, the shards, the screen flash, the sound; carded (target record +3 bit 2 clear): the target fading, the card spinning out of it, the twelve small cards with their trails; the action result. Its tasks are the port's code (FFNx mag182_card.cpp) run on the program's memory (its pools in the module, its packets in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5C9FC0",
+   "setup": "0x5C9FE0",
+   "root": "0x5CB4E0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 182,
+  "from": "0x2304220",
+  "size": "0x23B4"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD3D3E4",
+   "size": 12
+  },
+  "sounds.short_": {
+   "kind": "sound",
+   "address": "0xD3D38C",
+   "size": 4
+  },
+  "sounds.card": {
+   "kind": "sound",
+   "address": "0xD3D388",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5C9FE0",
+  "file_loader": "0x5C9FC0",
+  "root": "0x5CB4E0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The sparkles, the two rings, the shards, the screen flash, the sound; carded: the target fading, the card spinning out of it, the twelve small cards with their trails; the action result"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "At the director's tick 1: no card / carded"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.short_",
+   "part": "director",
+   "label": "Sound (no card)",
+   "doc": "DirectorA's, at its tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.short_",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.card",
+   "part": "director",
+   "label": "Sound (carded)",
+   "doc": "DirectorB's, at its tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.card",
+   "unit": "plain"
+  },
+  {
+   "key": "director.result_short",
+   "part": "director",
+   "label": "Result tick (no card)",
+   "doc": "DirectorA's action result at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 40,
+   "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "director.result_card",
+   "part": "director",
+   "label": "Result tick (carded)",
+   "doc": "DirectorB's action result at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 65,
+   "default": 64,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

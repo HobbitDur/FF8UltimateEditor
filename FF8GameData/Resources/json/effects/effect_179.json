@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 179,
+ "name": "Bomb glow",
+ "doc": "Bomb glow (the Bomb's attacks 82 / 83): the root and the director - the Bomb's glow (its model redrawn with a scrolling additive overlay in a cycling colour), the fuse sparks, the sound; the damage. Its tasks are the port's code (FFNx mag179_bomb_glow.cpp) run on the program's memory (its pools and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5CDF20",
+   "setup": "0x5CDF40",
+   "root": "0x5CED70"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 179,
+  "from": "0x2309558",
+  "size": "0x117B8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD44990",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xD44968",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5CDF40",
+  "file_loader": "0x5CDF20",
+  "root": "0x5CED70"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The Bomb's glow (its model redrawn with a scrolling additive overlay in a cycling colour), the fuse sparks, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's tick 1 (3D, at the caster)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 40,
+   "default": 35,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 183,
+ "name": "Defend",
+ "doc": "Defend (the command): the root and the director - the two shields in front of the caster (the large one shrinking onto him, the small one flickering), the sound; the action result. Its tasks are the port's code (FFNx mag183_defend.cpp) run on the program's memory (its pools and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5C9A30",
+   "setup": "0x5C9A50",
+   "root": "0x5C9F80"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 183,
+  "from": "0x22F33C8",
+  "size": "0x10E58"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD39364",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xD39304",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5C9A50",
+  "file_loader": "0x5C9A30",
+  "root": "0x5C9F80"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The two shields in front of the caster (the large one shrinking onto him, the small one flickering), the sound; the action result"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's tick 1 (3D, at the caster)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.result",
+   "part": "director",
+   "label": "Result tick",
+   "doc": "The action result at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 35,
+   "default": 30,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

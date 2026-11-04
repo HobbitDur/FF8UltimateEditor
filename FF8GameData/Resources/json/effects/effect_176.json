@@ -1,0 +1,92 @@
+{
+ "format": 1,
+ "effect": 176,
+ "name": "Sand Storm (Adamantoise)",
+ "doc": "Sand Storm (Adamantoise's attack): the root and the director - the two sand funnels walking to the targets, the sand emitters, the targets lifted and landing (their results), the sounds. Its tasks are the port's code (FFNx mag176_sand_storm_adamantoise.cpp) run on the program's memory (its pools, funnel packets and rings in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5D00D0",
+   "setup": "0x5D00F0",
+   "root": "0x5D1A60"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 176,
+  "from": "0x2368580",
+  "size": "0xBFF4"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD45178",
+   "size": 12
+  },
+  "sounds.wind": {
+   "kind": "sound",
+   "address": "0xD4514C",
+   "size": 4
+  },
+  "sounds.land": {
+   "kind": "sound",
+   "address": "0xD45150",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5D00F0",
+  "file_loader": "0x5D00D0",
+  "root": "0x5D1A60"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The two sand funnels walking to the targets, the sand emitters, the targets lifted and landing (their results), the sounds"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The wind, a target landing"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.wind",
+   "part": "director",
+   "label": "Wind",
+   "doc": "At the director's tick 14",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.wind",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.land",
+   "part": "director",
+   "label": "Land",
+   "doc": "A target landing (its result)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.land",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -244,6 +244,16 @@ def test_silence_description_compiles():
 # the effects whose director starts one task per action every n ticks (and Fire's, one director per
 # action, each starting the next one's): texture, parameters set, values
 CYCLES = {
+    185: ("mag184.tim", 6, "sounds.start 22311280\nsounds.blast 22311276\ntimeline.damage 250\n"),
+    184: ("mag153.tim", 2, "sound 22311280\ncontroller.damage 30\n"),
+    183: ("mag182.tim", 2, "sound 22311280\ndirector.result 20\n"),
+    182: ("mag181.tim", 4, "sounds.short_ 22311280\nsounds.card 22311276\ndirector.result_short 30\ndirector.result_card 50\n"),
+    180: ("mag179.tim", 2, "sound 22311280\ndirector.damage 30\n"),
+    179: ("mag178.tim", 2, "sound 22311280\ndirector.damage 30\n"),
+    176: ("mag175.tim", 2, "sounds.wind 22311280\nsounds.land 22311276\n"),
+    175: ("mag174.tim", 2, "sound 22311280\ndirector.damage 90\n"),
+    169: ("mag168.tim", 2, "sound 22311280\ndirector.damage 30\n"),
+    168: ("mag167.tim", 2, "sound 22311280\ndirector.damage 50\n"),
     165: ("mag164.tim", 4, "sounds.a 22311280\nsounds.d 22311276\n"),
     164: ("mag163.tim", 3, "sounds.raise 22311280\nsounds.blast 22311276\ndirector.damage 280\n"),
     163: ("mag162.tim", 2, "sound 22311280\ndirector.damage 50\n"),
@@ -415,7 +425,7 @@ CYCLE_STAGES = {69: 142, 146: 0}
 # more monsters an effect needs (Biggs and Wedge's first death sweeps its two targets): slot -> file, every target
 CYCLE_MONSTERS = {110: {4: "c0m073.dat"}}
 # a cast of its own (a monster's attack on the party: Geezard's Bad Breath, Cockatrice's Electric Discharge, Gayla's Gastric Juice, Grendel's Breath, Malboro's): caster slot, target slot, slot 3's monster
-CYCLE_CASTS = {113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat"), 139: (3, 0, "c0m099.dat"), 152: (3, 0, "c0m018.dat"), 153: (3, 0, "c0m017.dat"), 154: (3, 0, "c0m017.dat"), 155: (3, 0, "c0m020.dat"), 159: (0, 3, "c0m092.dat"), 161: (0, 3, "c0m091.dat")}
+CYCLE_CASTS = {113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat"), 139: (3, 0, "c0m099.dat"), 152: (3, 0, "c0m018.dat"), 153: (3, 0, "c0m017.dat"), 154: (3, 0, "c0m017.dat"), 155: (3, 0, "c0m020.dat"), 159: (0, 3, "c0m092.dat"), 161: (0, 3, "c0m091.dat"), 168: (3, 0, "c0m015.dat"), 169: (3, 0, "c0m015.dat"), 176: (3, 0, "c0m046.dat"), 179: (3, 0, "c0m043.dat"), 180: (3, 0, "c0m043.dat")}
 # what the battle's AnimSeq VM (not run by the recorder) would have written: Renzokuken's stage durations (opcode AB)
 CYCLE_POKES = {141: ["poke=0x1D98214:4,10,9,10,9,14"], 159: ["poke=0x1D98214:4,10,9,10,9,14"], 160: ["poke=0x1D98214:4,10,9,10,9,14"], 161: ["poke=0x1D98214:4,10,9,10,9,14"]}
 
@@ -458,7 +468,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide and Blasting Zone and Lion Heart from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend and Ultra Waves (Quistis) and Shiva from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -1946,4 +1956,74 @@ def test_lion_heart_description_compiles():
     """Lion Heart: a port director (Ray-Bomb's kind) - its setup (Squall turned to the targets) and file loader the port's, run on the program's memory."""
     lines = compile_program(load_description(165)).splitlines()
     for line in ['director port -1', 'port 0x5E9470 0x5E9450 0x5F01F0', 'module 165 0x23C3278 0x36D8']:
+        assert line in lines, line
+
+
+def test_sleeping_gas_description_compiles():
+    """Sleeping Gas: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and cloud buffers in the module, its packets in the magic buffer); cast by Grat."""
+    lines = compile_program(load_description(168)).splitlines()
+    for line in ['director port -1', 'port 0x5E1750 0x5E1730 0x5E29A0', 'module 168 0x23B3C10 0x9740']:
+        assert line in lines, line
+
+
+def test_gastric_juice_grat_description_compiles():
+    """Gastric Juice (Grat): a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and mesh buffers in the module, its packets in the magic buffer); cast by Grat."""
+    lines = compile_program(load_description(169)).splitlines()
+    for line in ['director port -1', 'port 0x5DEE60 0x5DEE40 0x5E16E0', 'module 169 0x23B1370 0x28A0']:
+        assert line in lines, line
+
+
+def test_holy_description_compiles():
+    """Holy: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools, grid and triangles in the module, its packets in the magic buffer)."""
+    lines = compile_program(load_description(175)).splitlines()
+    for line in ['director port -1', 'port 0x5D1AD0 0x5D1AB0 0x5D44C0', 'module 175 0x2374578 0x1FC90']:
+        assert line in lines, line
+
+
+def test_sand_storm_adamantoise_description_compiles():
+    """Sand Storm (Adamantoise): a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools, funnel packets and rings in the module); cast by Adamantoise."""
+    lines = compile_program(load_description(176)).splitlines()
+    for line in ['director port -1', 'port 0x5D00F0 0x5D00D0 0x5D1A60', 'module 176 0x2368580 0xBFF4']:
+        assert line in lines, line
+
+
+def test_bomb_glow_description_compiles():
+    """Bomb glow: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and packet arenas in the module); cast by the Bomb."""
+    lines = compile_program(load_description(179)).splitlines()
+    for line in ['director port -1', 'port 0x5CDF40 0x5CDF20 0x5CED70', 'module 179 0x2309558 0x117B8']:
+        assert line in lines, line
+
+
+def test_suicide_description_compiles():
+    """Suicide: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools in the module, its packets in the magic buffer); cast by the Bomb."""
+    lines = compile_program(load_description(180)).splitlines()
+    for line in ['director port -1', 'port 0x5CC840 0x5CC820 0x5CDED0', 'module 180 0x2307D98 0x17BC']:
+        assert line in lines, line
+
+
+def test_card_description_compiles():
+    """Card: a port director (Ray-Bomb's kind) - its setup (the director by the target record's bit) and file loader the port's, run on the program's memory (its pools in the module, its packets in the magic buffer)."""
+    lines = compile_program(load_description(182)).splitlines()
+    for line in ['director port -1', 'port 0x5C9FE0 0x5C9FC0 0x5CB4E0', 'module 182 0x2304220 0x23B4']:
+        assert line in lines, line
+
+
+def test_defend_description_compiles():
+    """Defend: a port director (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools and packet arenas in the module)."""
+    lines = compile_program(load_description(183)).splitlines()
+    for line in ['director port -1', 'port 0x5C9A50 0x5C9A30 0x5C9F80', 'module 183 0x22F33C8 0x10E58']:
+        assert line in lines, line
+
+
+def test_ultra_waves_quistis_description_compiles():
+    """Ultra Waves (Quistis): a port controller (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its pools, grid and packet arenas in the module)."""
+    lines = compile_program(load_description(184)).splitlines()
+    for line in ['director port -1', 'port 0x5C7FC0 0x5C7FA0 0x5C99A0', 'module 184 0x22BD108 0x362C0']:
+        assert line in lines, line
+
+
+def test_shiva_description_compiles():
+    """Shiva: a port timeline (Ray-Bomb's kind) on a shared module - its setup and file loader the port's, the exe's own renderers reading the module's words."""
+    lines = compile_program(load_description(185)).splitlines()
+    for line in ['director port -1', 'port 0x5C0D50 0x5C0D30 0x5C7F50', 'module 185 0x22BC128 0xFD8']:
         assert line in lines, line

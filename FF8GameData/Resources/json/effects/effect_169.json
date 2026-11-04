@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "effect": 169,
+ "name": "Gastric Juice (Grat)",
+ "doc": "Gastric Juice (Grat's attack): the root and the director - the five juice streams with their blobs, mesh, drips and puddle, the splash, the tinted target, the sound; the damage. Its tasks are the port's code (FFNx mag169_gastric_juice.cpp) run on the program's memory (its pools and mesh buffers in the module, its packets in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5DEE40",
+   "setup": "0x5DEE60",
+   "root": "0x5E16E0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 169,
+  "from": "0x23B1370",
+  "size": "0x28A0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0xD6BC64",
+   "size": 12
+  },
+  "sound": {
+   "kind": "sound",
+   "address": "0xD6BC1C",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5DEE60",
+  "file_loader": "0x5DEE40",
+  "root": "0x5E16E0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The five juice streams with their blobs, mesh, drips and puddle, the splash, the tinted target, the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 35,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
