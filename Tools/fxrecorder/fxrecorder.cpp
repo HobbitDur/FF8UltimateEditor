@@ -835,6 +835,11 @@ static bool load_models()
 	for (int slot = 0; slot < 7; slot++)
 	{
 		uint32_t e = 0x1D972C0 + 0x9C * slot;
+		// every slot's status visual counters (+0x88: a byte per status; updateEntityStatusFlags 0x509D10 clears
+		// the ones turned on - Ultimecia's final form death sets a status on every slot)
+		static uint8_t counters[7][64];
+		memset(counters[slot], 0, sizeof(counters[slot]));
+		*(uint32_t *)(e + 0x88) = (uint32_t)counters[slot];
 		if (cast)
 		{
 			if (O.body[slot].empty()) continue;

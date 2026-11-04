@@ -42,9 +42,9 @@ if not exist "%RSP%" goto host
 set GFC=
 set EDEN=
 for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"gfc_engine.h" %%f >nul 2>nul && set GFC=1
-for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_eden_b" %%f >nul 2>nul && set EDEN=1
+for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_eden_" %%f >nul 2>nul && set EDEN=1
 if defined GFC if exist "%FX%\gfc_engine.cpp" echo "%FX%\gfc_engine.cpp">>"%RSP%"
-rem (a cinematic clone borrowing Eden's draw handlers: Hell's Judgement's apply_eden_b)
+rem (a cinematic clone borrowing Eden's handlers: Hell's Judgement's, the final form's death's apply_eden_*)
 if defined EDEN if exist "%FX%\mag_eden.cpp" echo "%FX%\mag_eden.cpp">>"%RSP%"
 set PORTS=/DFF8_FX_LAB @"%RSP%"
 :host

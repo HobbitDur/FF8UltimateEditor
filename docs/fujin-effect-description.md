@@ -1511,3 +1511,11 @@ Potion's description is the same with its own sequences and sound.
        music stream (0x46CBB0) and the battle messages (0x4876F0) stubbed: the recorder runs no anim-seq
        queue, no stream, no message window; the stage model load / swap were stubbed already.
      - *Fujin:* its tab (Master); no + menu family.
+   - **Ultimecia's final form death (77)** (FFNx b8035c21; her enemy attack; a GF cinematic engine clone,
+     Elvoret's death's description kind): the clone run from its two script files (and mag076_b.02, loaded
+     by its VM) - her final form disintegrating polygon by polygon (draw 22), Eden's handlers it borrows,
+     the battle states it sets on the slot entities.
+     - *Inputs* (`ProgramFiles<77>`): its two script files (MAG076_B.00 / .01; empty: the game's).
+     - *Recorder:* every slot entity gets status visual counters (+0x88; updateEntityStatusFlags 0x509D10
+       clears the ones a status turns on); the lab build takes mag_eden.cpp for any `apply_eden_*` user.
+     - *Fujin:* its tab (Files); no + menu family.
