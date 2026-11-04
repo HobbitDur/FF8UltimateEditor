@@ -1678,3 +1678,13 @@ Potion's description is the same with its own sequences and sound.
        are its own, so a few far splash sprites (sequences 0x15331D0 / 0x1533328 / 0x15334A0) land elsewhere
        (the description and slot 225 from frame 290, slot 224 from frame 236); nothing else differs.
      - *Fujin:* its tab (Director); no + menu family.
+   - **MiniMog (96)** (FFNx 988d5df9; the GF's Moogle Dance; the act family, Death's description): one
+     emitter per action - the load script and the director's phase script: MiniMog dancing (his texture
+     animation), the prim-model sparkles, the particle actors, the screen and entity fades, the music
+     volume; the heal.
+     - *Inputs* (`MiniMogParams`): the two sounds (the first cue, MiniMog appearing). Data: the sounds,
+       "mag095.tim" (no engine camera animation; 2 exe words: pointers 2 and 3).
+     - *Added:* a director's `"native"` (gen_act): the module's own director task runs as the port's code -
+       MiniMog's draws a draw-mode packet after its states (every tick, OT bucket +0x4484).
+     - *Port:* its master sets its descriptor (MOD_096) and resets g_reloc.
+     - *Fujin:* its tab (Director); no + menu family.

@@ -1,0 +1,290 @@
+{
+ "format": 1,
+ "effect": 96,
+ "name": "MiniMog",
+ "doc": "MiniMog (the GF's Moogle Dance; the act family): one emitter per action - the load script and the director's phase script: MiniMog dancing (his texture animation), the prim-model sparkles, the particle actors, the screen and entity fades, the music volume; the heal. Its parts are the port's code (FFNx mag096_minimog.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x731DC0",
+   "setup": "0x731DE0",
+   "root": "0x731F70"
+  },
+  "memory": {
+   "texture_file": "0x257B740",
+   "packet_cursor": "0x257B744",
+   "packet_limit": "0x257B84C",
+   "arena_a": "0x257E3DC",
+   "limit_a": "0x257DA64",
+   "arena_b": "0x257E3D8",
+   "limit_b": "0x257DA60",
+   "arena_top": "0x257F728",
+   "init_flag_a": "0x257F724",
+   "init_flag_b": "0x257CF24",
+   "cam_ptr_a": "0x257F71C",
+   "cam_ptr_b": "0x257B850",
+   "root_queue": "0x257B920",
+   "root_pool": "0x257B858",
+   "particle_pool": "0x257F68C",
+   "actor_pool": "0x257F720",
+   "particle_next": "0x257CF20",
+   "actor_next": "0x257F698",
+   "cursor_c": "0x257F4D4",
+   "cursor_d": "0x257B748",
+   "count_a": "0x257F704",
+   "count_b": "0x257F688"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 96,
+  "from": "0x257B740",
+  "size": "0x4160",
+  "pointers": [
+   [
+    2,
+    "0x152BB90"
+   ],
+   [
+    3,
+    "0x152BC00"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1533000",
+   "size": 12
+  },
+  "sounds.cue": {
+   "kind": "sound",
+   "address": "0x152BB94",
+   "size": 4
+  },
+  "sounds.moogle": {
+   "kind": "sound",
+   "address": "0x152BB98",
+   "size": 4
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x1000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x10E0",
+    "actor_pool": "0x10680"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x257E268",
+   "storage": "0x257E278",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x257B828",
+   "storage": "0x257B750",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "loads",
+   "queue": "0x257F708",
+   "storage": "0x257F6A0",
+   "size": 48,
+   "count": 2,
+   "keep": true,
+   "doc": "the load script (the port's)"
+  },
+  {
+   "key": "creature",
+   "queue": "0x257F678",
+   "storage": "0x257F538",
+   "size": 320,
+   "count": 1,
+   "keep": true,
+   "doc": "MiniMog (the port's)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x257E258",
+   "storage": "0x257DA68",
+   "size": 676,
+   "count": 3,
+   "keep": true,
+   "doc": "the actor systems (the port's)"
+  },
+  {
+   "key": "models",
+   "queue": "0x257DA50",
+   "storage": "0x257D018",
+   "size": 1308,
+   "count": 2,
+   "keep": true,
+   "doc": "the prim-model sparkles (the port's)"
+  },
+  {
+   "key": "tasks",
+   "queue": "0x257B930",
+   "storage": "0x257B940",
+   "size": 112,
+   "count": 50,
+   "keep": true,
+   "doc": "the fades and the music volume (the port's)"
+  },
+  {
+   "key": "spare",
+   "queue": "0x257CF28",
+   "storage": "0x257CF38",
+   "size": 112,
+   "count": 2,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The director's phase script: MiniMog dancing (his texture animation), the prim-model sparkles, the particle actors, the screen and entity fades, the music volume; the heal"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The director's first cue, MiniMog appearing"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.cue",
+   "part": "director",
+   "label": "Cue",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.cue",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.moogle",
+   "part": "director",
+   "label": "MiniMog",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.moogle",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x7321D0",
+   "code": "0x7321D0",
+   "doc": "One per action (the engine's emitter, its states the port's): the load script and the director; the heal; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x732250"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x739BF0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x739C60"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x739C80"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x739CA0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x7327B0",
+   "code": "0x7327B0",
+   "native": "0x7327B0",
+   "doc": "The module's own director (the port's task): every tick the phase bookkeeping (phase 2 spawns MiniMog, the sparkles and the particle actors), its 15 states (the cues, the sounds, the fades, the voice, the done flag), then its draw-mode packet."
+  }
+ ]
+}
