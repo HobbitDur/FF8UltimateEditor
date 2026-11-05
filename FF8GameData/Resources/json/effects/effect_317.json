@@ -35,6 +35,24 @@
    "address": "0x1000224",
    "size": 4472,
    "capacity": 584
+  },
+  "seqs.spray": {
+   "kind": "seq",
+   "address": "0x10016A8",
+   "size": 248,
+   "frames": 9
+  },
+  "seqs.drip": {
+   "kind": "seq",
+   "address": "0x100139C",
+   "size": 352,
+   "frames": 13
+  },
+  "seqs.splash": {
+   "kind": "seq",
+   "address": "0x10014FC",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -80,6 +98,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.main",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spray",
+   "part": "target",
+   "label": "Spray",
+   "doc": "The sprite sequence spray (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spray",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.drip",
+   "part": "target",
+   "label": "Drip",
+   "doc": "The sprite sequence drip (a flipbook of 13 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.drip",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splash",
+   "part": "target",
+   "label": "Splash",
+   "doc": "The sprite sequence splash (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splash",
    "unit": "plain"
   }
  ],

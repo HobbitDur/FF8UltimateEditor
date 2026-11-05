@@ -41,6 +41,30 @@
    "address": "0x13686C4",
    "size": 3340,
    "capacity": 320
+  },
+  "seqs.puff": {
+   "kind": "seq",
+   "address": "0x1368580",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x1368200",
+   "size": 352,
+   "frames": 13
+  },
+  "seqs.mist": {
+   "kind": "seq",
+   "address": "0x136843C",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.hit": {
+   "kind": "seq",
+   "address": "0x1368360",
+   "size": 220,
+   "frames": 8
   }
  },
  "resources": {
@@ -455,6 +479,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layout_data.cone",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.puff",
+   "part": "timing",
+   "label": "Puff",
+   "doc": "The sprite sequence puff (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.puff",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "timing",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 13 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mist",
+   "part": "timing",
+   "label": "Mist",
+   "doc": "The sprite sequence mist (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mist",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.hit",
+   "part": "timing",
+   "label": "Hit",
+   "doc": "The sprite sequence hit (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.hit",
    "unit": "plain"
   }
  ],

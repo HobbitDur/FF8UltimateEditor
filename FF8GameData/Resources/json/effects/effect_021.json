@@ -29,6 +29,30 @@
    "kind": "sound",
    "address": "0x16269D8",
    "size": 4
+  },
+  "seqs.sprite": {
+   "kind": "seq",
+   "address": "0x1626B3C",
+   "size": 220,
+   "frames": 8
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x1626C18",
+   "size": 176,
+   "frames": 10
+  },
+  "seqs.glow": {
+   "kind": "seq",
+   "address": "0x1626CC8",
+   "size": 40,
+   "frames": 1
+  },
+  "seqs.mote": {
+   "kind": "seq",
+   "address": "0x16269DC",
+   "size": 352,
+   "frames": 13
   }
  },
  "resources": {
@@ -185,6 +209,50 @@
    "min": 0,
    "max": 4096,
    "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sprite",
+   "part": "emitter",
+   "label": "Sprite",
+   "doc": "The sprite sequence sprite (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sprite",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "emitter",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.glow",
+   "part": "emitter",
+   "label": "Glow",
+   "doc": "The sprite sequence glow (a flipbook of 1 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mote",
+   "part": "emitter",
+   "label": "Mote",
+   "doc": "The sprite sequence mote (a flipbook of 13 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mote",
    "unit": "plain"
   }
  ],

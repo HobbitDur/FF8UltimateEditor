@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0x12E336C",
    "size": 4
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x12E3130",
+   "size": 352,
+   "frames": 13
+  },
+  "seqs.hit": {
+   "kind": "seq",
+   "address": "0x12E3290",
+   "size": 220,
+   "frames": 8
   }
  },
  "resources": {
@@ -63,6 +75,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "storm",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 13 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.hit",
+   "part": "storm",
+   "label": "Hit",
+   "doc": "The sprite sequence hit (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.hit",
    "unit": "plain"
   }
  ],

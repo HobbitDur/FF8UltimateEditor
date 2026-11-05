@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0x131E750",
    "size": 4
+  },
+  "seqs.ice": {
+   "kind": "seq",
+   "address": "0x13197E4",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -74,6 +80,17 @@
    "min": 0,
    "max": 70,
    "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ice",
+   "part": "block",
+   "label": "Ice",
+   "doc": "The sprite sequence ice (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ice",
    "unit": "plain"
   }
  ],

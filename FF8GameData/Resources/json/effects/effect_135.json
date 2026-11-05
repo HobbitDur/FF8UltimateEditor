@@ -53,6 +53,24 @@
    "address": "0x11FDAA4",
    "size": 10360,
    "capacity": 696
+  },
+  "seqs.burst": {
+   "kind": "seq",
+   "address": "0x11FA3C0",
+   "size": 448,
+   "frames": 16
+  },
+  "seqs.glint": {
+   "kind": "seq",
+   "address": "0x11FA208",
+   "size": 196,
+   "frames": 7
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x11FA2CC",
+   "size": 244,
+   "frames": 9
   }
  },
  "resources": {
@@ -142,6 +160,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.sweep",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.burst",
+   "part": "sweep",
+   "label": "Burst",
+   "doc": "The sprite sequence burst (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.glint",
+   "part": "sweep",
+   "label": "Glint",
+   "doc": "The sprite sequence glint (a flipbook of 7 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.glint",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sweep",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
    "unit": "plain"
   }
  ],

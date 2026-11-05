@@ -42,6 +42,54 @@
    "kind": "sound",
    "address": "0x1610798",
    "size": 4
+  },
+  "seqs.glow": {
+   "kind": "seq",
+   "address": "0x1610948",
+   "size": 116,
+   "frames": 4
+  },
+  "seqs.swirl": {
+   "kind": "seq",
+   "address": "0x16109BC",
+   "size": 84,
+   "frames": 2
+  },
+  "seqs.swirl_end": {
+   "kind": "seq",
+   "address": "0x1610A10",
+   "size": 196,
+   "frames": 7
+  },
+  "seqs.mote": {
+   "kind": "seq",
+   "address": "0x1610AD4",
+   "size": 300,
+   "frames": 11
+  },
+  "seqs.sparkle_a": {
+   "kind": "seq",
+   "address": "0x161079C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.sparkle_a2": {
+   "kind": "seq",
+   "address": "0x1610DAC",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.sparkle_b": {
+   "kind": "seq",
+   "address": "0x1610C00",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.sparkle_b2": {
+   "kind": "seq",
+   "address": "0x1610F58",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -209,6 +257,94 @@
    "min": 0,
    "max": 4096,
    "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.glow",
+   "part": "emitter",
+   "label": "Glow",
+   "doc": "The sprite sequence glow (a flipbook of 4 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.swirl",
+   "part": "emitter",
+   "label": "Swirl",
+   "doc": "The sprite sequence swirl (a flipbook of 2 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.swirl",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.swirl_end",
+   "part": "emitter",
+   "label": "Swirl end",
+   "doc": "The sprite sequence swirl end (a flipbook of 7 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.swirl_end",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mote",
+   "part": "emitter",
+   "label": "Mote",
+   "doc": "The sprite sequence mote (a flipbook of 11 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mote",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparkle_a",
+   "part": "emitter",
+   "label": "Sparkle a",
+   "doc": "The sprite sequence sparkle a (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparkle_a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparkle_a2",
+   "part": "emitter",
+   "label": "Sparkle a2",
+   "doc": "The sprite sequence sparkle a2 (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparkle_a2",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparkle_b",
+   "part": "emitter",
+   "label": "Sparkle b",
+   "doc": "The sprite sequence sparkle b (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparkle_b",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparkle_b2",
+   "part": "emitter",
+   "label": "Sparkle b2",
+   "doc": "The sprite sequence sparkle b2 (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparkle_b2",
    "unit": "plain"
   }
  ],

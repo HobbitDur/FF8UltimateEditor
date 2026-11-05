@@ -291,9 +291,10 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   its objects, their tracks and keys; its models stay as they are). The camera is shown read-only
   (the Camera tab edits it). Apply records the effect again; Save writes the
   data in its program. A new effect made from an effect FFNx's code runs (a port: Gastric Juice,
-  Thundaga, Duel and 47 more) has its prim-model layouts here too, and its code plays them. Such a
-  layout is decoded into a block of a fixed size: Apply refuses one that needs more (more
-  objects or tracks than the game's).
+  Thundaga, Duel and 47 more) has its prim-model layouts and its flipbooks here too, and its code
+  plays them. Such a layout is decoded into a block of a fixed size: Apply refuses one that needs
+  more (more objects or tracks than the game's). Such a flipbook keeps at least the frames its
+  code plays.
   Cure's Overlay hides the target while the ring climbs and redraws it itself, twice per
   polygon: flat with its own texture (what the preview shows - the target as it is), and, where
   it faces the ring and falls in the projected window, gouraud with Cure's light texture

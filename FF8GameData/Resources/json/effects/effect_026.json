@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0x160F6C8",
    "size": 4
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x160F7A8",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.dust": {
+   "kind": "seq",
+   "address": "0x160F6CC",
+   "size": 220,
+   "frames": 8
   }
  },
  "resources": {
@@ -196,6 +208,28 @@
    "min": 0,
    "max": 4096,
    "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "emitter",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust",
+   "part": "emitter",
+   "label": "Dust",
+   "doc": "The sprite sequence dust (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust",
    "unit": "plain"
   }
  ],

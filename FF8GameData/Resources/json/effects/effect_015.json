@@ -53,6 +53,12 @@
    "kind": "camera",
    "address": "0x162AD54",
    "size": 1996
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x162B730",
+   "size": 288,
+   "frames": 6
   }
  },
  "resources": {
@@ -228,6 +234,17 @@
    "min": 0,
    "max": 32767,
    "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "emitter",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 6 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
    "unit": "plain"
   }
  ],

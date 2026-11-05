@@ -35,6 +35,12 @@
    "address": "0x121BB58",
    "size": 3196,
    "capacity": 296
+  },
+  "seqs.bubble": {
+   "kind": "seq",
+   "address": "0x1219078",
+   "size": 480,
+   "frames": 18
   }
  },
  "resources": {
@@ -91,6 +97,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.target",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.bubble",
+   "part": "emitter",
+   "label": "Bubble",
+   "doc": "The sprite sequence bubble (a flipbook of 18 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.bubble",
    "unit": "plain"
   }
  ],

@@ -29,6 +29,72 @@
    "kind": "sound",
    "address": "0x1321BD8",
    "size": 4
+  },
+  "seqs.strike": {
+   "kind": "seq",
+   "address": "0x131E878",
+   "size": 580,
+   "frames": 8
+  },
+  "seqs.upper_a": {
+   "kind": "seq",
+   "address": "0x131EABC",
+   "size": 500,
+   "frames": 8
+  },
+  "seqs.upper_b": {
+   "kind": "seq",
+   "address": "0x131ECB0",
+   "size": 540,
+   "frames": 8
+  },
+  "seqs.core": {
+   "kind": "seq",
+   "address": "0x131F0E8",
+   "size": 348,
+   "frames": 9
+  },
+  "seqs.arc": {
+   "kind": "seq",
+   "address": "0x131FF74",
+   "size": 348,
+   "frames": 9
+  },
+  "seqs.arc_low": {
+   "kind": "seq",
+   "address": "0x131EECC",
+   "size": 540,
+   "frames": 8
+  },
+  "seqs.glow": {
+   "kind": "seq",
+   "address": "0x131F458",
+   "size": 348,
+   "frames": 9
+  },
+  "seqs.smoke": {
+   "kind": "seq",
+   "address": "0x131F5B4",
+   "size": 348,
+   "frames": 9
+  },
+  "seqs.fade": {
+   "kind": "seq",
+   "address": "0x131FA68",
+   "size": 1292,
+   "frames": 10
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x131F244",
+   "size": 532,
+   "frames": 20
+  },
+  "seqs.flash_sprite": {
+   "kind": "seq",
+   "address": "0x131E760",
+   "size": 280,
+   "frames": 8
   }
  },
  "resources": {
@@ -74,6 +140,127 @@
    "min": 0,
    "max": 30,
    "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.strike",
+   "part": "bolt",
+   "label": "Strike",
+   "doc": "The sprite sequence strike (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.strike",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.upper_a",
+   "part": "bolt",
+   "label": "Upper a",
+   "doc": "The sprite sequence upper a (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.upper_a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.upper_b",
+   "part": "bolt",
+   "label": "Upper b",
+   "doc": "The sprite sequence upper b (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.upper_b",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.core",
+   "part": "bolt",
+   "label": "Core",
+   "doc": "The sprite sequence core (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.core",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.arc",
+   "part": "bolt",
+   "label": "Arc",
+   "doc": "The sprite sequence arc (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.arc",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.arc_low",
+   "part": "bolt",
+   "label": "Arc low",
+   "doc": "The sprite sequence arc low (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.arc_low",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.glow",
+   "part": "bolt",
+   "label": "Glow",
+   "doc": "The sprite sequence glow (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.smoke",
+   "part": "bolt",
+   "label": "Smoke",
+   "doc": "The sprite sequence smoke (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.fade",
+   "part": "bolt",
+   "label": "Fade",
+   "doc": "The sprite sequence fade (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.fade",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "bolt",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 20 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flash_sprite",
+   "part": "bolt",
+   "label": "Flash sprite",
+   "doc": "The sprite sequence flash sprite (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flash_sprite",
    "unit": "plain"
   }
  ],

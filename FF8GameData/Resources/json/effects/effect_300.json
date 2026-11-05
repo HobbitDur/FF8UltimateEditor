@@ -35,6 +35,12 @@
    "address": "0x1042304",
    "size": 3196,
    "capacity": 296
+  },
+  "seqs.smoke": {
+   "kind": "seq",
+   "address": "0x103F824",
+   "size": 480,
+   "frames": 18
   }
  },
  "resources": {
@@ -80,6 +86,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.smoke",
+   "part": "breath",
+   "label": "Smoke",
+   "doc": "The sprite sequence smoke (a flipbook of 18 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.smoke",
    "unit": "plain"
   }
  ],

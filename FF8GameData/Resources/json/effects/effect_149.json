@@ -39,6 +39,12 @@
    "kind": "sound",
    "address": "0xDC9BD4",
    "size": 4
+  },
+  "seqs.dust": {
+   "kind": "seq",
+   "address": "0xDC312C",
+   "size": 528,
+   "frames": 16
   }
  },
  "resources": {
@@ -112,6 +118,17 @@
    "min": 0,
    "max": 166,
    "default": 166,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust",
+   "part": "director",
+   "label": "Dust",
+   "doc": "The sprite sequence dust (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust",
    "unit": "plain"
   }
  ],

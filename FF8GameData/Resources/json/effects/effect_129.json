@@ -53,6 +53,12 @@
    "address": "0x122688C",
    "size": 2640,
    "capacity": 392
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x12238C0",
+   "size": 248,
+   "frames": 9
   }
  },
  "resources": {
@@ -142,6 +148,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.mouth3",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "main",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
    "unit": "plain"
   }
  ],

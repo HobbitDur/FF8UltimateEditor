@@ -42,6 +42,36 @@
    "kind": "sound",
    "address": "0x15E6388",
    "size": 4
+  },
+  "seqs.rise_a": {
+   "kind": "seq",
+   "address": "0x15E638C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.rise_b": {
+   "kind": "seq",
+   "address": "0x15E6538",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.revive": {
+   "kind": "seq",
+   "address": "0x15E6890",
+   "size": 92,
+   "frames": 3
+  },
+  "seqs.ring": {
+   "kind": "seq",
+   "address": "0x15E66E4",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.fall": {
+   "kind": "seq",
+   "address": "0x15E68EC",
+   "size": 272,
+   "frames": 10
   }
  },
  "resources": {
@@ -217,6 +247,61 @@
    "min": -4096,
    "max": 4096,
    "default": 38,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.rise_a",
+   "part": "emitter",
+   "label": "Rise a",
+   "doc": "The sprite sequence rise a (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.rise_a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.rise_b",
+   "part": "emitter",
+   "label": "Rise b",
+   "doc": "The sprite sequence rise b (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.rise_b",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.revive",
+   "part": "emitter",
+   "label": "Revive",
+   "doc": "The sprite sequence revive (a flipbook of 3 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.revive",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ring",
+   "part": "emitter",
+   "label": "Ring",
+   "doc": "The sprite sequence ring (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.fall",
+   "part": "emitter",
+   "label": "Fall",
+   "doc": "The sprite sequence fall (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.fall",
    "unit": "plain"
   }
  ],

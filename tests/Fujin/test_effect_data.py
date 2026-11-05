@@ -258,3 +258,23 @@ def test_a_port_effects_copy_plays_its_own_layout_and_flipbooks(tmp_path):
         data[key]["hex"] = encode_sequence(sequence).hex()
     dimmed = record(224, "dimmed", f"program={write_program(new, tmp_path / 'dimmed.fxprog')}")
     assert dimmed != spun and len(dimmed) == len(spun)
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_every_port_flipbook_is_a_sequence_its_code_plays_whole():
+    """Each port effect's flipbook parameter: a sprite sequence in the exe, of its size, with the frames its code
+    plays (FFNx fx_params.h sequence(): one with fewer frames keeps the game's); a copy keeps that minimum."""
+    from Fujin.effectprogram import described_effects, own_data
+    exe = EXE.read_bytes()
+    found = [(effect, key, entry) for effect in described_effects()
+             for key, entry in load_description(effect).get("exe_data", {}).items()
+             if isinstance(entry, dict) and entry.get("kind") == "seq" and "frames" in entry]
+    assert len(found) >= 140 and len({effect for effect, _key, _entry in found}) >= 56
+    for effect, key, entry in found:
+        address = int(entry["address"], 16)
+        sequence = parse_sequence(exe, address - 0x400000, address)
+        assert sequence is not None and sequence.size == entry["size"], (effect, key)
+        assert len(sequence.frames) == entry["frames"], (effect, key)
+        assert any(param["key"] == key and param["type"] == "seq" and param["default"] == f"@{key}"
+                   for param in load_description(effect)["params"]), (effect, key)
+    assert own_data(load_description(found[0][0]), exe)[found[0][1]]["frames"] == found[0][2]["frames"]

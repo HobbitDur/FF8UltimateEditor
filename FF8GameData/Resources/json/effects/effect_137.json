@@ -47,6 +47,12 @@
    "address": "0x11ECDC0",
    "size": 13128,
    "capacity": 764
+  },
+  "seqs.spray": {
+   "kind": "seq",
+   "address": "0x11E91A0",
+   "size": 344,
+   "frames": 12
   }
  },
  "resources": {
@@ -125,6 +131,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.blast",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spray",
+   "part": "blast",
+   "label": "Spray",
+   "doc": "The sprite sequence spray (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spray",
    "unit": "plain"
   }
  ],

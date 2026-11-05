@@ -29,6 +29,30 @@
    "kind": "sound",
    "address": "0x16309F8",
    "size": 4
+  },
+  "seqs.mist": {
+   "kind": "seq",
+   "address": "0x16309FC",
+   "size": 636,
+   "frames": 24
+  },
+  "seqs.mist_b": {
+   "kind": "seq",
+   "address": "0x1630E94",
+   "size": 64,
+   "frames": 2
+  },
+  "seqs.puff_c": {
+   "kind": "seq",
+   "address": "0x1630C78",
+   "size": 268,
+   "frames": 9
+  },
+  "seqs.puff_d": {
+   "kind": "seq",
+   "address": "0x1630D84",
+   "size": 272,
+   "frames": 10
   }
  },
  "resources": {
@@ -168,6 +192,50 @@
    "min": 0,
    "max": 200,
    "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mist",
+   "part": "emitter",
+   "label": "Mist",
+   "doc": "The sprite sequence mist (a flipbook of 24 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mist",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mist_b",
+   "part": "emitter",
+   "label": "Mist b",
+   "doc": "The sprite sequence mist b (a flipbook of 2 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mist_b",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.puff_c",
+   "part": "emitter",
+   "label": "Puff c",
+   "doc": "The sprite sequence puff c (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.puff_c",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.puff_d",
+   "part": "emitter",
+   "label": "Puff d",
+   "doc": "The sprite sequence puff d (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.puff_d",
    "unit": "plain"
   }
  ],

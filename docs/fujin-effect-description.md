@@ -341,10 +341,12 @@ Potion's description is the same with its own sequences and sound.
          says it (`capacity`, bytes). `fxp::layout` keeps the game's layout when the edited one
          needs more player state (`primlayout.state_size`), and the Data tab refuses to apply
          one that does.
-       - 50 port effects have their layouts as parameters (139 layouts; Gastric Juice its
-         flipbooks too).
-       - Checked: each one's own copy draws as the exe, and with its layouts' scale and spin
-         changed, draws otherwise.
+       - A port's flipbook plays a fixed number of frames (its code counts them). Its exe data
+         entry says it (`frames`); `fxp::sequence` keeps the game's flipbook when the edited one
+         has fewer, and the Data tab does not remove a frame below it.
+       - 50 port effects have their layouts as parameters (139 layouts), 56 their flipbooks.
+       - Checked: each one's own copy draws as the exe, and with its layouts' scale and spin or
+         its flipbooks' intensity changed, draws otherwise.
    - **Part by part** (`Fujin/effecttemplates.py`): a free slot shows **Create a new effect
      here**, which makes an empty effect. Choreography's **+** tab (always the last tab) adds
      parts; right-clicking a part's tab removes it, with the parts that need it.

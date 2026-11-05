@@ -39,17 +39,20 @@
   "seqs.spray": {
    "kind": "seq",
    "address": "0x1233538",
-   "size": 248
+   "size": 248,
+   "frames": 9
   },
   "seqs.drip": {
    "kind": "seq",
    "address": "0x123322C",
-   "size": 352
+   "size": 352,
+   "frames": 13
   },
   "seqs.splash": {
    "kind": "seq",
    "address": "0x123338C",
-   "size": 428
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {

@@ -29,6 +29,30 @@
    "kind": "sound",
    "address": "0xDBEC50",
    "size": 4
+  },
+  "seqs.wave": {
+   "kind": "seq",
+   "address": "0xDBE5CC",
+   "size": 544,
+   "frames": 12
+  },
+  "seqs.burst_a": {
+   "kind": "seq",
+   "address": "0xDBE420",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.burst_b": {
+   "kind": "seq",
+   "address": "0xDBE814",
+   "size": 240,
+   "frames": 8
+  },
+  "seqs.burst_c": {
+   "kind": "seq",
+   "address": "0xDBE904",
+   "size": 220,
+   "frames": 8
   }
  },
  "resources": {
@@ -74,6 +98,50 @@
    "min": 0,
    "max": 40,
    "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.wave",
+   "part": "controller",
+   "label": "Wave",
+   "doc": "The sprite sequence wave (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.wave",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.burst_a",
+   "part": "controller",
+   "label": "Burst a",
+   "doc": "The sprite sequence burst a (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.burst_a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.burst_b",
+   "part": "controller",
+   "label": "Burst b",
+   "doc": "The sprite sequence burst b (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.burst_b",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.burst_c",
+   "part": "controller",
+   "label": "Burst c",
+   "doc": "The sprite sequence burst c (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.burst_c",
    "unit": "plain"
   }
  ],

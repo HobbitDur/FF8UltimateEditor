@@ -3,7 +3,8 @@ when it was made: docs/fujin-effect-description.md), each entry edited by kind:
 
 - seq: a sprite sequence (FF8GameData.psxgpu.spritesequence): its palette-row parameters, its
   frames and each frame's pieces (texels, size, palette, page flags, place, angle, scale,
-  intensity, GPU code), the frames drawn from the last recording's video memory;
+  intensity, GPU code), the frames drawn from the last recording's video memory. A port's sequence
+  keeps at least the frames its code plays;
 - sound: the world sound id its block holds (what the game plays: the Sound tab's archive entry);
 - table: int16 values (Hypnotize's ring points: x, y, z, bone);
 - name: a file name (the effect's texture file);
@@ -61,6 +62,7 @@ class SequenceEditor(QWidget):
         super().__init__()
         self.vram = vram or (lambda: None)
         self.sequence = None
+        self.min_frames = None                          # a port's: the frames its code plays, or None
         self.parameters = []
         params = QHBoxLayout()
         params.addWidget(QLabel("Palette-row parameters:"))
@@ -196,6 +198,9 @@ class SequenceEditor(QWidget):
     def remove_frame(self):
         row = self.frames.currentRow()
         if self.sequence is None or row < 0 or len(self.sequence.frames) <= 1:
+            return
+        if self.min_frames is not None and len(self.sequence.frames) <= self.min_frames:
+            self.error.setText(f"Its effect's code plays {self.min_frames} frames: it keeps at least as many.")
             return
         del self.sequence.frames[row]
         self._fill_frames(row)
@@ -643,6 +648,7 @@ class EffectDataView(QWidget):
         self.title.setText(f"<b>{self.key}</b> ({kind}){origin}")
         data = entry_bytes(entry)
         if kind == "seq":
+            self.sequence.min_frames = entry.get("frames")
             self.sequence.load(data)
         elif kind == "layout":
             self.layout_editor.capacity = entry.get("capacity")

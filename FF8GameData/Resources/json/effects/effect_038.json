@@ -28,6 +28,18 @@
    "kind": "sound",
    "address": "0x1642D6C",
    "size": 4
+  },
+  "seqs.dust": {
+   "kind": "seq",
+   "address": "0x164335C",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.chip": {
+   "kind": "seq",
+   "address": "0x1643218",
+   "size": 324,
+   "frames": 12
   }
  },
  "resources": {},
@@ -223,6 +235,28 @@
    "min": 0,
    "max": 400,
    "default": 96,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust",
+   "part": "sequence",
+   "label": "Dust",
+   "doc": "The sprite sequence dust (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.chip",
+   "part": "sequence",
+   "label": "Chip",
+   "doc": "The sprite sequence chip (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.chip",
    "unit": "plain"
   }
  ],

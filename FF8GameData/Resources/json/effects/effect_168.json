@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0xD6F77C",
    "size": 4
+  },
+  "seqs.sparkle": {
+   "kind": "seq",
+   "address": "0xD6BDE8",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -74,6 +80,17 @@
    "min": 0,
    "max": 70,
    "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparkle",
+   "part": "director",
+   "label": "Sparkle",
+   "doc": "The sprite sequence sparkle (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparkle",
    "unit": "plain"
   }
  ],

@@ -47,6 +47,18 @@
    "address": "0x11E21CC",
    "size": 3672,
    "capacity": 280
+  },
+  "seqs.spray": {
+   "kind": "seq",
+   "address": "0x11DF4E0",
+   "size": 292,
+   "frames": 10
+  },
+  "seqs.splat": {
+   "kind": "seq",
+   "address": "0x11DF604",
+   "size": 352,
+   "frames": 13
   }
  },
  "resources": {
@@ -125,6 +137,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.c",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spray",
+   "part": "main",
+   "label": "Spray",
+   "doc": "The sprite sequence spray (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spray",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splat",
+   "part": "main",
+   "label": "Splat",
+   "doc": "The sprite sequence splat (a flipbook of 13 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splat",
    "unit": "plain"
   }
  ],

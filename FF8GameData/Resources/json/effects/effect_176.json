@@ -34,6 +34,12 @@
    "kind": "sound",
    "address": "0xD45150",
    "size": 4
+  },
+  "seqs.sand": {
+   "kind": "seq",
+   "address": "0xD44FA0",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -85,6 +91,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sounds.land",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sand",
+   "part": "director",
+   "label": "Sand",
+   "doc": "The sprite sequence sand (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sand",
    "unit": "plain"
   }
  ],

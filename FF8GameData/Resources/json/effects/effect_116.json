@@ -50,6 +50,12 @@
    "kind": "sound",
    "address": "0x12AE4FC",
    "size": 4
+  },
+  "seqs.impact_flash": {
+   "kind": "seq",
+   "address": "0x12AE400",
+   "size": 240,
+   "frames": 8
   }
  },
  "resources": {
@@ -145,6 +151,17 @@
    "min": 0,
    "max": 354,
    "default": 345,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.impact_flash",
+   "part": "creature",
+   "label": "Impact flash",
+   "doc": "The sprite sequence impact flash (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.impact_flash",
    "unit": "plain"
   }
  ],

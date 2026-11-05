@@ -47,6 +47,30 @@
    "address": "0x12148A4",
    "size": 1400,
    "capacity": 120
+  },
+  "seqs.splash1": {
+   "kind": "seq",
+   "address": "0x1212E6C",
+   "size": 248,
+   "frames": 9
+  },
+  "seqs.splash2": {
+   "kind": "seq",
+   "address": "0x1212C4C",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.stream": {
+   "kind": "seq",
+   "address": "0x1212D90",
+   "size": 220,
+   "frames": 8
+  },
+  "seqs.drop": {
+   "kind": "seq",
+   "address": "0x1212B70",
+   "size": 220,
+   "frames": 8
   }
  },
  "resources": {
@@ -125,6 +149,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.puddle",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splash1",
+   "part": "target",
+   "label": "Splash1",
+   "doc": "The sprite sequence splash1 (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splash1",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splash2",
+   "part": "target",
+   "label": "Splash2",
+   "doc": "The sprite sequence splash2 (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splash2",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.stream",
+   "part": "target",
+   "label": "Stream",
+   "doc": "The sprite sequence stream (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.stream",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.drop",
+   "part": "target",
+   "label": "Drop",
+   "doc": "The sprite sequence drop (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.drop",
    "unit": "plain"
   }
  ],

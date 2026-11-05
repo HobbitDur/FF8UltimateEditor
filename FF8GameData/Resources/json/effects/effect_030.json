@@ -58,6 +58,12 @@
    "kind": "sound",
    "address": "0x160D3E8",
    "size": 4
+  },
+  "seqs.at_160de10": {
+   "kind": "seq",
+   "address": "0x160DE10",
+   "size": 196,
+   "frames": 7
   }
  },
  "resources": {
@@ -303,6 +309,17 @@
    "min": 1,
    "max": 4096,
    "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_160de10",
+   "part": "emitter",
+   "label": "Flipbook 160DE10",
+   "doc": "The sprite sequence at 0x160DE10 (a flipbook of 7 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_160de10",
    "unit": "plain"
   }
  ],

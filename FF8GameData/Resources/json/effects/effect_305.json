@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0xCEDF28",
    "size": 4
+  },
+  "seqs.smoke": {
+   "kind": "seq",
+   "address": "0xCED358",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -74,6 +80,17 @@
    "min": 0,
    "max": 36,
    "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.smoke",
+   "part": "master",
+   "label": "Smoke",
+   "doc": "The sprite sequence smoke (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.smoke",
    "unit": "plain"
   }
  ],

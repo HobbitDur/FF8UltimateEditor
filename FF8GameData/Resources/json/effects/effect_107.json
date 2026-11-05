@@ -35,6 +35,42 @@
    "address": "0x12EC9D4",
    "size": 26260,
    "capacity": 632
+  },
+  "seqs.spark_a": {
+   "kind": "seq",
+   "address": "0x12EC414",
+   "size": 352,
+   "frames": 13
+  },
+  "seqs.spark_b": {
+   "kind": "seq",
+   "address": "0x12EC574",
+   "size": 352,
+   "frames": 13
+  },
+  "seqs.mote": {
+   "kind": "seq",
+   "address": "0x12EC7CC",
+   "size": 300,
+   "frames": 11
+  },
+  "seqs.orb": {
+   "kind": "seq",
+   "address": "0x12EC6D4",
+   "size": 248,
+   "frames": 9
+  },
+  "seqs.burst": {
+   "kind": "seq",
+   "address": "0x12EC358",
+   "size": 188,
+   "frames": 6
+  },
+  "seqs.ring": {
+   "kind": "seq",
+   "address": "0x12EC8F8",
+   "size": 220,
+   "frames": 8
   }
  },
  "resources": {
@@ -91,6 +127,72 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.vortex",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark_a",
+   "part": "target",
+   "label": "Spark a",
+   "doc": "The sprite sequence spark a (a flipbook of 13 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark_a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark_b",
+   "part": "target",
+   "label": "Spark b",
+   "doc": "The sprite sequence spark b (a flipbook of 13 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark_b",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mote",
+   "part": "target",
+   "label": "Mote",
+   "doc": "The sprite sequence mote (a flipbook of 11 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mote",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.orb",
+   "part": "target",
+   "label": "Orb",
+   "doc": "The sprite sequence orb (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.orb",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.burst",
+   "part": "target",
+   "label": "Burst",
+   "doc": "The sprite sequence burst (a flipbook of 6 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ring",
+   "part": "target",
+   "label": "Ring",
+   "doc": "The sprite sequence ring (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ring",
    "unit": "plain"
   }
  ],

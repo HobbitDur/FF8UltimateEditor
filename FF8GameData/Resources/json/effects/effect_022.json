@@ -29,6 +29,36 @@
    "kind": "sound",
    "address": "0x16146E4",
    "size": 4
+  },
+  "seqs.splash_a": {
+   "kind": "seq",
+   "address": "0x1614F74",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.splash_b": {
+   "kind": "seq",
+   "address": "0x1615120",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.droplet": {
+   "kind": "seq",
+   "address": "0x16156F8",
+   "size": 352,
+   "frames": 13
+  },
+  "seqs.mist_a": {
+   "kind": "seq",
+   "address": "0x1615858",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.mist_b": {
+   "kind": "seq",
+   "address": "0x16155B4",
+   "size": 324,
+   "frames": 12
   }
  },
  "resources": {
@@ -157,6 +187,61 @@
    "min": -2048,
    "max": 2048,
    "default": -64,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splash_a",
+   "part": "emitter",
+   "label": "Splash a",
+   "doc": "The sprite sequence splash a (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splash_a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splash_b",
+   "part": "emitter",
+   "label": "Splash b",
+   "doc": "The sprite sequence splash b (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splash_b",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.droplet",
+   "part": "emitter",
+   "label": "Droplet",
+   "doc": "The sprite sequence droplet (a flipbook of 13 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.droplet",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mist_a",
+   "part": "emitter",
+   "label": "Mist a",
+   "doc": "The sprite sequence mist a (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mist_a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mist_b",
+   "part": "emitter",
+   "label": "Mist b",
+   "doc": "The sprite sequence mist b (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mist_b",
    "unit": "plain"
   }
  ],

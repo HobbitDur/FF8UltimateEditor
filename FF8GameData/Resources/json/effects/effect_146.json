@@ -34,6 +34,12 @@
    "kind": "sound",
    "address": "0xDD663C",
    "size": 4
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xDD0980",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -96,6 +102,17 @@
    "min": 0,
    "max": 87,
    "default": 82,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "director",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
    "unit": "plain"
   }
  ],

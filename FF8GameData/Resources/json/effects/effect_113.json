@@ -35,6 +35,24 @@
    "address": "0x12C0244",
    "size": 3536,
    "capacity": 236
+  },
+  "seqs.stream": {
+   "kind": "seq",
+   "address": "0x12C118C",
+   "size": 652,
+   "frames": 20
+  },
+  "seqs.rise": {
+   "kind": "seq",
+   "address": "0x12C1014",
+   "size": 376,
+   "frames": 14
+  },
+  "seqs.spray": {
+   "kind": "seq",
+   "address": "0x12C1418",
+   "size": 376,
+   "frames": 14
   }
  },
  "resources": {
@@ -91,6 +109,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.cloud",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.stream",
+   "part": "breath",
+   "label": "Stream",
+   "doc": "The sprite sequence stream (a flipbook of 20 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.stream",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.rise",
+   "part": "breath",
+   "label": "Rise",
+   "doc": "The sprite sequence rise (a flipbook of 14 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spray",
+   "part": "breath",
+   "label": "Spray",
+   "doc": "The sprite sequence spray (a flipbook of 14 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spray",
    "unit": "plain"
   }
  ],
