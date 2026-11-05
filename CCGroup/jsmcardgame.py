@@ -511,8 +511,9 @@ class JsmCardGameFile:
 
     def __names_matched_to_reference(self, entities, generic):
         """Name a modded script from the vanilla one: each entity takes the name of the vanilla
-        entity whose scripts look the most alike (greedy, best similarity first), and each of its
-        scripts the name of the most similar vanilla script of that entity."""
+        entity whose scripts look the most alike (greedy, best similarity first), and its scripts the
+        names of that entity's scripts in order when it has as many, else each the name of the most
+        similar vanilla script of that entity."""
         from difflib import SequenceMatcher
         reference = self.name_reference
         reference_bodies = reference.entity_script_bodies()
@@ -569,6 +570,11 @@ class JsmCardGameFile:
             if not names or names[0] is None:
                 continue
             entity_name = names[0][0]
+            if len(own_bodies[own_index]) == len(names):
+                # Same methods: named in order, even one whose entry now points at new code (a
+                # card game given to the NPC: its talk entry runs an appended script)
+                generic[own_index] = [(entity_name, name[1]) for name in names]
+                continue
             group = [(entity_name, "init")]
             used = set()
             for own_script in own_bodies[own_index][1:]:

@@ -110,3 +110,21 @@ def test_mismatched_sym_is_not_used(folders):
                                 str(vanilla / "mapdata" / "bg" / "bgmon_4" / "bgmon_4.jsm"),
                                 str(vanilla / "mapdata" / "bg" / "bgmon_4" / "bgmon_4.sym")))
     assert [(player.entity_name, player.script_name) for player in named.players] == [("joker", "talk")] * 3
+
+
+def test_card_game_given_on_the_card_button_keeps_the_talk_name(folders, tmp_path):
+    """Named from the vanilla reference, an NPC whose talk entry now runs an appended card game script
+    (looking nothing like its vanilla talk) still has a script called "talk": same methods, same order."""
+    from CCGroup import jsmnpc
+    vanilla, _ = folders
+    hall_path = vanilla / "mapdata" / "bg" / "bghall_1"
+    jsm_file = JsmCardGameFile(str(hall_path / "bghall_1.jsm"), str(hall_path / "bghall_1.sym"))
+    seito5 = next(npc for npc in jsmnpc.list_npcs(jsm_file) if npc.entity_name == "seito5")
+    jsmnpc.add_card_game(jsm_file, seito5, 900, 901, placement=jsmnpc.PLACEMENT_CARD_BUTTON, turn=False)
+    modded_path = tmp_path / "bghall_1.jsm"
+    jsm_file.save(str(modded_path))
+    named = JsmCardGameFile(str(modded_path), str(vanilla / "mapdata" / "bg" / "bgmon_4" / "bgmon_4.sym"),
+                            name_reference=JsmCardGameFile(str(hall_path / "bghall_1.jsm"),
+                                                           str(hall_path / "bghall_1.sym")))
+    assert not named.names_from_sym
+    assert ("seito5", "talk") in [(player.entity_name, player.script_name) for player in named.players]
