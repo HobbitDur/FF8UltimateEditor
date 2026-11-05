@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0xDED5F0",
-   "size": 12
-  },
   "sound.muzzle": {
    "kind": "sound",
    "address": "0xDED524",
@@ -76,11 +71,91 @@
    "address": "0xDEC964",
    "size": 1704,
    "vertices": 55
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xDED5F0",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xDEA5C8",
+   "size": 624
+  },
+  "tables.dust_offset": {
+   "kind": "table",
+   "address": "0xDED590",
+   "size": 48,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ]
+  },
+  "tables.dust_dir": {
+   "kind": "table",
+   "address": "0xDED5C0",
+   "size": 48,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ]
+  },
+  "tables.puff_x": {
+   "kind": "table",
+   "address": "0xDED530",
+   "size": 20,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "x",
+    "pad"
+   ]
+  },
+  "tables.puff_z": {
+   "kind": "table",
+   "address": "0xDED558",
+   "size": 20,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "z",
+    "pad"
+   ]
+  },
+  "tables.debris_x": {
+   "kind": "table",
+   "address": "0xDED544",
+   "size": 20,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "x",
+    "pad"
+   ]
+  },
+  "tables.debris_z": {
+   "kind": "table",
+   "address": "0xDED56C",
+   "size": 20,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "z",
+    "pad"
+   ]
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -656,6 +731,94 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "timing",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "timing",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.dust_offset",
+   "part": "timing",
+   "label": "Dust offsets",
+   "doc": "Where each dust puff starts from the impact (x, y, z) (48 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.dust_offset",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.dust_dir",
+   "part": "timing",
+   "label": "Dust directions",
+   "doc": "Each dust puff's direction (x, y, z) (48 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.dust_dir",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.puff_x",
+   "part": "timing",
+   "label": "Puff x offsets",
+   "doc": "Each puff's x offset (+ a random 0..0x31F, - 0x190) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.puff_x",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.puff_z",
+   "part": "timing",
+   "label": "Puff z offsets",
+   "doc": "Each puff's z offset (+ a random, - 0x12C) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.puff_z",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.debris_x",
+   "part": "timing",
+   "label": "Debris x offsets",
+   "doc": "Each debris' x offset (+ a random, - 0x708) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.debris_x",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.debris_z",
+   "part": "timing",
+   "label": "Debris z offsets",
+   "doc": "Each debris' z offset (+ a random, - 0x708) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.debris_z",
    "unit": "plain"
   }
  ],

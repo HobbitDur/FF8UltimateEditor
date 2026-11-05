@@ -90,9 +90,11 @@ def test_the_data_tab_edits_a_new_effects_data(qapp):
     view.name.setText("mag001.tim")
     view._edited()
     assert view.apply() and bytes.fromhex(fujin.descriptions[224]["data"]["texture_name"]["hex"]) == b"mag001.tim\0\0"
-    # the camera: read-only here
+    # the camera: its keyframes and script in the shared track editor, given back as they are
     view.select("camera")
-    assert view.pages.currentWidget() is view.summary and "Camera tab" in view.summary.text()
+    page = view.camera_page
+    assert view.pages.currentWidget() is page and page.track is not None and page.editor.track is page.track
+    assert view.edited_entry() == view.entry()
     # Hypnotize's copy: its ring points (a table) and its tables of layouts
     fujin.select_effect(225)
     view.select("ring_points")
@@ -384,3 +386,157 @@ def test_a_port_effects_copy_draws_its_own_models(tmp_path):
     smaller = record(224, "smaller", f"program={write_program(new, tmp_path / 'smaller.fxprog')}")
     frames = lambda lines: sum(line.startswith("R ") for line in lines)
     assert smaller != original and frames(smaller) == frames(original)
+
+
+def _port_entries(kinds):
+    """(effect, key, entry) of the port effects' exe data parameters of these kinds."""
+    from Fujin.effectprogram import described_effects
+    for effect in described_effects():
+        description = load_description(effect)
+        params = {param["key"] for param in description.get("params", [])}
+        for key, entry in description.get("exe_data", {}).items():
+            if isinstance(entry, dict) and entry.get("kind") in kinds and key in params:
+                yield effect, key, entry
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_port_resources_are_parameters_of_their_kind():
+    """The B ports' texture file names, camera tracks, TIMs and animation sets (fx_params.h name / camera / tim /
+    anim_set): each a parameter of its kind on its exe data, the exe's bytes reading as one; an animation set keeps
+    the bytes after it the game may read (its tail)."""
+    from FF8GameData.dat.cameratrack import HEADER
+    from Fujin.effectdataview import anim_set_sections
+    exe = EXE.read_bytes()
+    found = {}
+    for effect, key, entry in _port_entries(("name", "camera", "tim", "anim_set")):
+        found.setdefault(entry["kind"], set()).add(effect)
+        param = next(p for p in load_description(effect)["params"] if p["key"] == key)
+        assert param["type"] == entry["kind"] and param["default"] == f"@{key}", (effect, key)
+        start = int(entry["address"], 16) - 0x400000
+        data = exe[start:start + entry["size"]]
+        if entry["kind"] == "name":
+            assert data.split(b"\0")[0].isascii() and b"\0" in data, (effect, key)
+        elif entry["kind"] == "camera":
+            _count, script, keyframes, size = HEADER.unpack_from(data)
+            assert script == 8 and 8 < keyframes < size == len(data), (effect, key)
+        elif entry["kind"] == "tim":
+            assert struct.unpack_from("<I", data)[0] == 0x10, (effect, key)
+        else:
+            assert entry["tail"] == 4096 and len(anim_set_sections(data[:-entry["tail"]])) == entry["count"], (effect, key)
+    assert len(found["name"]) >= 100 and len(found["camera"]) >= 80 and len(found["tim"]) >= 8
+    assert len(found["anim_set"]) >= 40
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_port_tables_and_morph_sets_read_in_their_format():
+    """The B ports' small tables (colours, fades, counts, offsets) and morphs' vertex sets (fx_params.h data /
+    vertices): whole rows of their format; a vertex set's {size, count} header matches its length."""
+    exe = EXE.read_bytes()
+    tables = list(_port_entries(("table",)))
+    assert len(tables) >= 90 and len({effect for effect, _key, _entry in tables}) >= 50
+    for effect, key, entry in tables:
+        size = struct.calcsize(entry.get("format", "h"))
+        assert (entry["size"] - entry.get("skip", 0)) % (size * entry["columns"]) == 0, (effect, key)
+        if entry.get("skip") == 8:
+            start = int(entry["address"], 16) - 0x400000
+            length, count = struct.unpack_from("<2I", exe, start)
+            assert length == entry["size"] == 8 + 8 * count and count == entry["count"], (effect, key)
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_the_data_tab_edits_a_ports_resources_and_tables(qapp, tmp_path, monkeypatch):
+    """A port's copy in the Data tab: its TIM in Fujin's TIM card (a .tim of the game's kind imported, one without
+    the game's palette refused), its animation set (a set of another count refused, the bytes after it kept), its
+    colour table (bytes), its morph's vertex set (its size and count kept) and its camera track in the shared
+    track editor."""
+    from PyQt6.QtWidgets import QFileDialog
+    from Fujin.cameraeffectmanager import CameraEffectManager
+    from Fujin.effectdataview import EffectDataView
+    from FF8GameData.gamedata import GameData
+    exe = EXE.read_bytes()
+    view = EffectDataView(camera_tools=CameraEffectManager(GameData(str(ROOT / "FF8GameData"))))
+    new = new_effect(load_description(89), 300, "New wishing star", exe)
+    view.show_data(new)
+    view.select("res.tim_a")
+    tim = bytes.fromhex(new["data"]["res.tim_a"]["hex"])
+    assert view.pages.currentWidget() is view.tim_page and view.tim_page.card is not None
+    other = bytearray(tim)
+    other[-1] ^= 0xFF
+    (tmp_path / "a.tim").write_bytes(bytes(other))
+    flipped = bytearray(tim)
+    flipped[4] ^= 8                                     # (the palette flag: not the game's kind)
+    (tmp_path / "b.tim").write_bytes(bytes(flipped))
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *_a, **_k: (str(tmp_path / "b.tim"), ""))
+    view.tim_page.import_tim()
+    assert "palette" in view.tim_page.error.text() and view.edited_entry()["hex"] == tim.hex()
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *_a, **_k: (str(tmp_path / "a.tim"), ""))
+    view.tim_page.import_tim()
+    assert view.edited_entry()["hex"] == bytes(other).hex() and view.apply()
+    view.select("res.anim")
+    data = bytes.fromhex(new["data"]["res.anim"]["hex"])
+    (tmp_path / "two.anim").write_bytes(struct.pack("<4I", 2, 16, 16, 16))
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *_a, **_k: (str(tmp_path / "two.anim"), ""))
+    view.anim_page.import_set()
+    assert "Not imported" in view.anim_page.info.text() and view.anim_page.data() == data
+    tail = new["data"]["res.anim"]["tail"]
+    (tmp_path / "three.anim").write_bytes(data[:-tail])
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *_a, **_k: (str(tmp_path / "three.anim"), ""))
+    view.anim_page.import_set()
+    assert view.anim_page.data() == data                # the same set: its tail kept
+    new = new_effect(load_description(66), 301, "New griever death", exe)
+    view.show_data(new)
+    view.select("tables.spark_colours")
+    assert view.table.format == "B" and view.table.columnCount() == 4 and view.table.rowCount() == 18
+    view.table.item(0, 0).setText("255")
+    assert bytes.fromhex(view.edited_entry()["hex"])[0] == 255
+    view.table.item(0, 1).setText("256")                # (a byte: refused)
+    assert bytes.fromhex(view.edited_entry()["hex"])[1] == bytes.fromhex(new["data"]["tables.spark_colours"]["hex"])[1]
+    new = new_effect(load_description(21), 302, "New triple", exe)
+    view.show_data(new)
+    view.select("morphs.from")
+    head = bytes.fromhex(new["data"]["morphs.from"]["hex"])[:8]
+    assert view.table.rowCount() == 80
+    view.table.item(0, 0).setText("7")
+    edited = bytes.fromhex(view.edited_entry()["hex"])
+    assert edited[:8] == head and struct.unpack_from("<h", edited, 8)[0] == 7 and len(edited) == 648
+    view.select("res.camera")
+    assert view.camera_page.track is not None and view.edited_entry()["hex"] == new["data"]["res.camera"]["hex"]
+
+
+@pytest.mark.ff8data(*FILES)
+def test_a_port_effects_copy_plays_its_own_camera_and_morph(tmp_path):
+    """Triple's copy (a port effect) starts its own camera track (the recorder's K line: its size and checksum) and
+    blends its own morph's vertex sets: as the exe's, it records as the exe; with Cure's camera track and its morph
+    sets halved, otherwise."""
+    from Fujin.effectparts import effect_schema
+    from Fujin.recorderbuild import RECORDER
+    schema = effect_schema(21)
+    if schema is None or not any(f["type"] == "camera" for f in schema["fields"]):
+        pytest.skip("the recorder is not built with FFNx's effect sources that read cameras as parameters")
+    exe = EXE.read_bytes()
+    new = new_effect(load_description(21), 224, "New triple", exe)
+
+    def record(effect, tag, *extra):
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(RECORDER), str(effect), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m009.dat'}", "caster=0", "target=3", *extra],
+                             cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return [line.split(" ", 2)[2] if line.startswith("P ") else line for line in out.read_text().splitlines()
+                if line.startswith(("P ", "R ", "K "))]
+
+    original = record(21, "original")
+    assert any(line.startswith("K ") for line in original)
+    assert record(224, "own", f"program={write_program(new, tmp_path / 'own.fxprog')}") == original
+    cure = load_description(1)["exe_data"]["camera"]
+    start = int(cure["address"], 16) - 0x400000
+    new["data"]["res.camera"]["hex"] = exe[start:start + cure["size"]].hex()
+    for key in ("morphs.from", "morphs.to"):
+        data = bytes.fromhex(new["data"][key]["hex"])
+        values = struct.unpack_from(f"<{(len(data) - 8) // 2}h", data, 8)
+        new["data"][key]["hex"] = (data[:8] + struct.pack(f"<{len(values)}h", *(v // 2 for v in values))).hex()
+    edited = record(224, "edited", f"program={write_program(new, tmp_path / 'edited.fxprog')}")
+    cameras = lambda lines: [line for line in lines if line.startswith("K ")]
+    others = lambda lines: [line for line in lines if not line.startswith("K ")]
+    assert cameras(edited) != cameras(original) and others(edited) != others(original)

@@ -290,11 +290,13 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   Play), a table of values, a file name, a table of layouts, and a layout's animation (its length,
   its objects, their tracks and keys; its models stay as they are), and a prim model (a mesh: its vertices
   and primitives - kind, vertices, colours, texture corners - in a preview the mouse turns, scaled or moved
-  as a whole). The camera is shown read-only
-  (the Camera tab edits it). Apply records the effect again; Save writes the
+  as a whole), the camera track (its keyframes and script, in the Camera tab's track editor; a .bcam
+  imported or exported), a TIM (its picture and palette through PNG files) and an animation set (its
+  sections, imported or exported). Apply records the effect again; Save writes the
   data in its program. A new effect made from an effect FFNx's code runs (a port: Gastric Juice,
-  Thundaga, Duel and more) has its prim-model layouts, its flipbooks and its prim models here too, and its code
-  plays them. Such a layout is decoded into a block of a fixed size: Apply refuses one that needs
+  Thundaga, Duel and more) has its prim-model layouts, its flipbooks, its prim models, its texture
+  file name, its camera track, its TIMs, its animation set, its small tables (colours, fades, counts,
+  offsets) and its morphs' vertex sets here too, and its code plays them. Such a layout is decoded into a block of a fixed size: Apply refuses one that needs
   more (more objects or tracks than the game's). Such a flipbook keeps at least the frames its
   code plays, such a model its vertices (they move; they are not added or removed).
   Cure's Overlay hides the target while the ring climbs and redraws it itself, twice per

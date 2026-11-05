@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x1047110",
-   "size": 16
-  },
   "sound": {
    "kind": "sound",
    "address": "0x121C978",
@@ -53,11 +48,47 @@
    "address": "0x121A6D8",
    "size": 5248,
    "vertices": 165
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x1047110",
+   "size": 16
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x121C7D4",
+   "size": 420
+  },
+  "tables.colours": {
+   "kind": "table",
+   "address": "0x121C97C",
+   "size": 16,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
+  },
+  "tables.tint": {
+   "kind": "table",
+   "address": "0x121C98C",
+   "size": 4,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -142,6 +173,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@model_data.model_2",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "emitter",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "emitter",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.colours",
+   "part": "emitter",
+   "label": "Colours",
+   "doc": "The colours it blends through (16 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.colours",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.tint",
+   "part": "emitter",
+   "label": "Tint colour",
+   "doc": "The colour the targets are tinted toward (4 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.tint",
    "unit": "plain"
   }
  ],

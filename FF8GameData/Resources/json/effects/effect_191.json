@@ -133,6 +133,11 @@
    "address": "0xE3BD64",
    "size": 1552,
    "vertices": 63
+  },
+  "res.tim_doomtrain": {
+   "kind": "tim",
+   "address": "0xF78384",
+   "size": 184608
   }
  },
  "resources": {},
@@ -389,6 +394,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.at_e3bd64",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim_doomtrain",
+   "part": "timeline",
+   "label": "TIM image doomtrain",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim_doomtrain",
    "unit": "plain"
   }
  ],

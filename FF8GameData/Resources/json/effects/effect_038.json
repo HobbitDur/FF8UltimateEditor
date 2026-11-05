@@ -46,6 +46,30 @@
    "address": "0x16434A0",
    "size": 428,
    "frames": 16
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1642D70",
+   "size": 1192
+  },
+  "res.tim": {
+   "kind": "tim",
+   "address": "0x18295EC",
+   "size": 167968
+  },
+  "tables.shake_a": {
+   "kind": "table",
+   "address": "0x164364C",
+   "size": 44,
+   "format": "h",
+   "columns": 11
+  },
+  "tables.shake_b": {
+   "kind": "table",
+   "address": "0x1643678",
+   "size": 32,
+   "format": "h",
+   "columns": 8
   }
  },
  "resources": {},
@@ -274,6 +298,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.rock",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "sequence",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim",
+   "part": "sequence",
+   "label": "TIM image",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.shake_a",
+   "part": "sequence",
+   "label": "Shake a",
+   "doc": "The camera shake by tick while the ground rises (44 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.shake_a",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.shake_b",
+   "part": "sequence",
+   "label": "Shake b",
+   "doc": "The camera shake cycle (16 ticks) (32 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.shake_b",
    "unit": "plain"
   }
  ],

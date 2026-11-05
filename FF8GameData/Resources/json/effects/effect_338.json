@@ -59,6 +59,21 @@
    "address": "0x1371640",
    "size": 5800,
    "vertices": 144
+  },
+  "res.tim_body": {
+   "kind": "tim",
+   "address": "0x1376698",
+   "size": 16928
+  },
+  "res.tim_atlas1": {
+   "kind": "tim",
+   "address": "0x137A8B8",
+   "size": 135200
+  },
+  "res.tim_atlas2": {
+   "kind": "tim",
+   "address": "0x139B8D8",
+   "size": 16928
   }
  },
  "resources": {},
@@ -155,6 +170,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim_body",
+   "part": "creature",
+   "label": "TIM image body",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim_body",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim_atlas1",
+   "part": "creature",
+   "label": "TIM image atlas1",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim_atlas1",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim_atlas2",
+   "part": "creature",
+   "label": "TIM image atlas2",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim_atlas2",
    "unit": "plain"
   }
  ],

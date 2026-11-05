@@ -127,6 +127,16 @@
    "address": "0x13AE0F8",
    "size": 2760,
    "vertices": 100
+  },
+  "res.tim_a": {
+   "kind": "tim",
+   "address": "0x13BBBEC",
+   "size": 202272
+  },
+  "res.tim_b": {
+   "kind": "tim",
+   "address": "0x13ED20C",
+   "size": 8736
   }
  },
  "resources": {},
@@ -361,6 +371,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.at_13ae0f8",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim_a",
+   "part": "timeline",
+   "label": "TIM image a",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim_a",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim_b",
+   "part": "timeline",
+   "label": "TIM image b",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim_b",
    "unit": "plain"
   }
  ],

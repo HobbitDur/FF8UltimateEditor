@@ -118,6 +118,31 @@
    "address": "0xE3260C",
    "size": 688,
    "vertices": 27
+  },
+  "res.tim_nomercy": {
+   "kind": "tim",
+   "address": "0xF57D60",
+   "size": 132640
+  },
+  "res.anim": {
+   "kind": "anim_set",
+   "address": "0xE2B518",
+   "size": 13864,
+   "count": 3,
+   "tail": 4096
+  },
+  "tables.shard_colours": {
+   "kind": "table",
+   "address": "0xE33D50",
+   "size": 32,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
   }
  },
  "resources": {},
@@ -341,6 +366,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.wavetrail",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim_nomercy",
+   "part": "director",
+   "label": "TIM image nomercy",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim_nomercy",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim",
+   "part": "director",
+   "label": "Animation set",
+   "doc": "The animation set it binds to its caster: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.shard_colours",
+   "part": "director",
+   "label": "Shard colours",
+   "doc": "its colour words (red, green, blue, the GPU code byte), picked in turn (32 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.shard_colours",
    "unit": "plain"
   }
  ],

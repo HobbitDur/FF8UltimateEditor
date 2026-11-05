@@ -74,6 +74,13 @@
    "address": "0x1582074",
    "size": 272,
    "vertices": 9
+  },
+  "res.anim": {
+   "kind": "anim_set",
+   "address": "0x15863B0",
+   "size": 11124,
+   "count": 3,
+   "tail": 4096
   }
  },
  "resources": {
@@ -335,6 +342,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.at_1582074",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim",
+   "part": "reaper",
+   "label": "Animation set",
+   "doc": "The animation set it binds to its caster: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim",
    "unit": "plain"
   }
  ],

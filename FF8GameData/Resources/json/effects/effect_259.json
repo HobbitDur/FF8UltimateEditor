@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0xCF0720",
-   "size": 32
-  },
   "sound": {
    "kind": "sound",
    "address": "0xE91520",
@@ -71,11 +66,35 @@
    "address": "0xCEF130",
    "size": 5432,
    "vertices": 130
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xCF0720",
+   "size": 32
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xE916BC",
+   "size": 3984
+  },
+  "res.anim": {
+   "kind": "anim_set",
+   "address": "0xE9264C",
+   "size": 12996,
+   "count": 3,
+   "tail": 4096
+  },
+  "tables.hit_lead": {
+   "kind": "table",
+   "address": "0xCF06E0",
+   "size": 64,
+   "format": "i",
+   "columns": 4
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -182,6 +201,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.final",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "controller",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "controller",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim",
+   "part": "controller",
+   "label": "Animation set",
+   "doc": "The animation set it binds to its caster: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.hit_lead",
+   "part": "controller",
+   "label": "Hit leads",
+   "doc": "Each hit's lead (how far ahead of its slash) (64 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.hit_lead",
    "unit": "plain"
   }
  ],

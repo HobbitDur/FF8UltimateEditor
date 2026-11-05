@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x12E3370",
-   "size": 12
-  },
   "sound": {
    "kind": "sound",
    "address": "0x12E336C",
@@ -59,11 +54,16 @@
    "address": "0x12E2BD8",
    "size": 872,
    "vertices": 32
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x12E3370",
+   "size": 12
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -148,6 +148,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "storm",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
    "unit": "plain"
   }
  ],

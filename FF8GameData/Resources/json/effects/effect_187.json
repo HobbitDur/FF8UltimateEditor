@@ -99,6 +99,11 @@
    "address": "0xE41B28",
    "size": 448,
    "vertices": 16
+  },
+  "res.tim_enviro": {
+   "kind": "tim",
+   "address": "0xFAD4A8",
+   "size": 168224
   }
  },
  "resources": {},
@@ -289,6 +294,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.at_e41b28",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim_enviro",
+   "part": "timeline",
+   "label": "TIM image enviro",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim_enviro",
    "unit": "plain"
   }
  ],

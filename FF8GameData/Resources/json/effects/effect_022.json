@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x16269CC",
-   "size": 12
-  },
   "emitter.sound": {
    "kind": "sound",
    "address": "0x16146E4",
@@ -95,11 +90,49 @@
    "address": "0x161F750",
    "size": 16440,
    "vertices": 258
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x16269CC",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1626014",
+   "size": 2328
+  },
+  "tables.count_bubbles": {
+   "kind": "table",
+   "address": "0x162694C",
+   "size": 32,
+   "format": "B",
+   "columns": 8
+  },
+  "tables.count_splashes": {
+   "kind": "table",
+   "address": "0x162696C",
+   "size": 32,
+   "format": "B",
+   "columns": 8
+  },
+  "tables.count_mist_a": {
+   "kind": "table",
+   "address": "0x162698C",
+   "size": 32,
+   "format": "B",
+   "columns": 8
+  },
+  "tables.count_mist_b": {
+   "kind": "table",
+   "address": "0x16269AC",
+   "size": 32,
+   "format": "B",
+   "columns": 8
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -344,6 +377,72 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.blob_boil",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "emitter",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "emitter",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.count_bubbles",
+   "part": "emitter",
+   "label": "Bubbles a tick",
+   "doc": "How many bubbles spawn at each tick (32 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.count_bubbles",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.count_splashes",
+   "part": "emitter",
+   "label": "Splashes a tick",
+   "doc": "How many splashes spawn at each tick (32 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.count_splashes",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.count_mist_a",
+   "part": "emitter",
+   "label": "Mist a, a tick",
+   "doc": "How many puffs of the first mist spawn at each tick (to tick 24) (32 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.count_mist_a",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.count_mist_b",
+   "part": "emitter",
+   "label": "Mist b, a tick",
+   "doc": "How many puffs of the second mist spawn at each tick (to tick 20) (32 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.count_mist_b",
    "unit": "plain"
   }
  ],

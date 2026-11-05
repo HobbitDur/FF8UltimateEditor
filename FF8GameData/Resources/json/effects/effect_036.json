@@ -58,6 +58,13 @@
    "kind": "sound",
    "address": "0x15D97F8",
    "size": 4
+  },
+  "tables.shake_table": {
+   "kind": "table",
+   "address": "0x15D97E0",
+   "size": 12,
+   "format": "H",
+   "columns": 6
   }
  },
  "resources": {
@@ -227,6 +234,17 @@
    "min": 0,
    "max": 4,
    "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.shake_table",
+   "part": "emitter",
+   "label": "Shake",
+   "doc": "The screen shake by tick (12 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.shake_table",
    "unit": "plain"
   }
  ],

@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x15D18EC",
-   "size": 16
-  },
   "sound": {
    "kind": "sound",
    "address": "0x15D0B3C",
@@ -95,11 +90,76 @@
    "address": "0x15CF674",
    "size": 136,
    "vertices": 6
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x15D18EC",
+   "size": 16
+  },
+  "morphs.small_from": {
+   "kind": "table",
+   "address": "0x15CFAB4",
+   "size": 392,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 48
+  },
+  "morphs.small_to": {
+   "kind": "table",
+   "address": "0x15CFC3C",
+   "size": 392,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 48
+  },
+  "morphs.big_from": {
+   "kind": "table",
+   "address": "0x15CFDC4",
+   "size": 1288,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 160
+  },
+  "morphs.big_to": {
+   "kind": "table",
+   "address": "0x15D02CC",
+   "size": 1288,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 160
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -354,6 +414,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.at_15cf674",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "scanner",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "morphs.small_from",
+   "part": "scanner",
+   "label": "Small morph from",
+   "doc": "The vertices the small scan model blends from (48 vertices x, y, z after its size and count: an edited one keeps the count)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@morphs.small_from",
+   "unit": "plain"
+  },
+  {
+   "key": "morphs.small_to",
+   "part": "scanner",
+   "label": "Small morph to",
+   "doc": "The vertices the small scan model blends to (48 vertices x, y, z after its size and count: an edited one keeps the count)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@morphs.small_to",
+   "unit": "plain"
+  },
+  {
+   "key": "morphs.big_from",
+   "part": "scanner",
+   "label": "Big morph from",
+   "doc": "The vertices the big scan model blends from (160 vertices x, y, z after its size and count: an edited one keeps the count)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@morphs.big_from",
+   "unit": "plain"
+  },
+  {
+   "key": "morphs.big_to",
+   "part": "scanner",
+   "label": "Big morph to",
+   "doc": "The vertices the big scan model blends to (160 vertices x, y, z after its size and count: an edited one keeps the count)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@morphs.big_to",
    "unit": "plain"
   }
  ],

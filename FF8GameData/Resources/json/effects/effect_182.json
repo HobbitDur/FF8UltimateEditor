@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0xD3D3E4",
-   "size": 12
-  },
   "sounds.short_": {
    "kind": "sound",
    "address": "0xD3D38C",
@@ -58,11 +53,39 @@
    "address": "0xD3AE78",
    "size": 1376,
    "vertices": 35
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xD3D3E4",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xD39FD8",
+   "size": 3048
+  },
+  "res.camera_2": {
+   "kind": "camera",
+   "address": "0xD39370",
+   "size": 3176
+  },
+  "tables.spark_colours": {
+   "kind": "table",
+   "address": "0xD3D3C4",
+   "size": 32,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -175,6 +198,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.card",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera_2",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera_2",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.spark_colours",
+   "part": "director",
+   "label": "Spark colours",
+   "doc": "its colour words (red, green, blue, the GPU code byte), picked in turn (32 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.spark_colours",
    "unit": "plain"
   }
  ],

@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x10244D8",
-   "size": 12
-  },
   "sound": {
    "kind": "sound",
    "address": "0x10244D4",
@@ -47,11 +42,16 @@
    "address": "0x102421C",
    "size": 696,
    "vertices": 28
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x10244D8",
+   "size": 12
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -114,6 +114,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@model_data.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "play",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
    "unit": "plain"
   }
  ],

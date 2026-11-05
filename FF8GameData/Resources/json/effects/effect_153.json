@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0xDBE364",
-   "size": 12
-  },
   "sound": {
    "kind": "sound",
    "address": "0xDBE27C",
@@ -47,11 +42,21 @@
    "address": "0xDBDBF4",
    "size": 1672,
    "vertices": 60
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xDBE364",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xDBAF3C",
+   "size": 596
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -125,6 +130,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "master",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "master",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
    "unit": "plain"
   }
  ],

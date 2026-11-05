@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0xD592F0",
-   "size": 12
-  },
   "sound": {
    "kind": "sound",
    "address": "0xD59180",
@@ -89,11 +84,37 @@
    "address": "0xD527F8",
    "size": 1504,
    "vertices": 63
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xD592F0",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xD45188",
+   "size": 3364
+  },
+  "res.tim": {
+   "kind": "tim",
+   "address": "0xD45EAC",
+   "size": 50208
+  },
+  "tables.pillar_delays": {
+   "kind": "table",
+   "address": "0xD59188",
+   "size": 72,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "delay",
+    "pad"
+   ]
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -244,6 +265,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim",
+   "part": "director",
+   "label": "TIM image",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.pillar_delays",
+   "part": "director",
+   "label": "Pillar delays",
+   "doc": "Each pillar's delay (x 3 ticks) (72 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.pillar_delays",
    "unit": "plain"
   }
  ],

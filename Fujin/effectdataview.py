@@ -6,7 +6,9 @@ when it was made: docs/fujin-effect-description.md), each entry edited by kind:
   intensity, GPU code), the frames drawn from the last recording's video memory. A port's sequence
   keeps at least the frames its code plays;
 - sound: the world sound id its block holds (what the game plays: the Sound tab's archive entry);
-- table: int16 values (Hypnotize's ring points: x, y, z, bone);
+- table: numbers, `columns` a row (Hypnotize's ring points: x, y, z, bone; a port's colours, curves, a
+  morph's vertex sets): int16 unless its entry says another "format" (struct: b B h H i I), "skip" header
+  bytes kept as they are (a vertex set's size and count), "labels" its columns; its length is kept;
 - name: a file name (the effect's texture file);
 - pointers: a table of other entries (Hypnotize's ring and target layouts), each picked by key;
 - layout: a prim-model layout's animation (FF8GameData.psxgpu.primlayout): its length, its objects
@@ -17,17 +19,24 @@ when it was made: docs/fujin-effect-description.md), each entry edited by kind:
 - model: a prim model (FF8GameData.psxgpu.primmodel, Fujin.modeleditor): its vertices and primitives
   (kind, vertices, colours, texture corners), drawn in a preview, scaled or moved as a whole. A
   model keeps its vertices (its code reads them by number; same_size: its primitives too);
-- camera: what it holds, read-only (the Camera tab edits it: its effect_NNN.bcam replaces it in the
-  game).
+- camera: a camera track (FF8GameData.dat.cameratrack): its keyframes and its script, in the editor the
+  Camera tab and Alexander share (Common.cameratrackeditor); a .bcam imported or exported. A new effect's
+  own track may change size (its offsets are its own). Without the camera tools: what it holds;
+- tim: a TIM image (Fujin.texturepictureview's card): its picture and palette through PNG files, where
+  it loads in video memory; a .tim imported (with a palette when the game's has one) or exported;
+- anim_set: an animation set bound to the caster ({count, offsets, end}: body animations, sequence
+  scripts, weapon animations): its sections; a set of the game's count imported, or exported. The bytes
+  after it ("tail": the game reads past a set's end) are kept.
 
 Apply writes the entry back (changed(key, entry)): the previews record again, Save writes it in
 the program.
 """
 import dataclasses
+import os
 import struct
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (QComboBox, QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
+from PyQt6.QtWidgets import (QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
                              QListWidgetItem, QPushButton, QScrollArea, QSpinBox, QSplitter, QStackedWidget,
                              QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
@@ -231,32 +240,44 @@ class SequenceEditor(QWidget):
         self.edited.emit()
 
 
+TABLE_RANGES = {"b": (-0x80, 0x7F), "B": (0, 0xFF), "h": (-0x8000, 0x7FFF), "H": (0, 0xFFFF),
+                "i": (-0x80000000, 0x7FFFFFFF), "I": (0, 0xFFFFFFFF)}
+
+
 class TableEditor(QTableWidget):
-    """int16 values, `columns` a row."""
+    """Numbers of one format (struct: int16 by default), `columns` a row, after `skip` header bytes kept as they
+    are (and whatever is left past the last whole number); `labels` the columns' titles."""
     edited = pyqtSignal()
 
     def __init__(self):
         super().__init__(0, 4)
         self.itemChanged.connect(self._changed)
         self.values = []
+        self.format, self.head, self.rest = "h", b"", b""
 
-    def load(self, data, columns=4):
-        self.values = list(struct.unpack(f"<{len(data) // 2}h", data[:len(data) // 2 * 2]))
+    def load(self, data, columns=4, format="h", skip=0, labels=None):
+        self.format = format if format in TABLE_RANGES else "h"
+        size = struct.calcsize(self.format)
+        count = max(0, len(data) - skip) // size
+        self.head, self.rest = data[:skip], data[skip + count * size:]
+        self.values = list(struct.unpack_from(f"<{count}{self.format}", data, skip))
         self.blockSignals(True)
         self.setColumnCount(columns)
+        self.setHorizontalHeaderLabels(list(labels or [str(c + 1) for c in range(columns)])[:columns])
         self.setRowCount((len(self.values) + columns - 1) // columns)
         for index, value in enumerate(self.values):
             self.setItem(index // columns, index % columns, QTableWidgetItem(str(value)))
         self.blockSignals(False)
 
     def data(self):
-        return struct.pack(f"<{len(self.values)}h", *self.values)
+        return self.head + struct.pack(f"<{len(self.values)}{self.format}", *self.values) + self.rest
 
     def _changed(self, item):
         index = item.row() * self.columnCount() + item.column()
         try:
             value = int(item.text(), 0)
-            if not -0x8000 <= value <= 0x7FFF:
+            low, high = TABLE_RANGES[self.format]
+            if not low <= value <= high:
                 raise ValueError
             self.values[index] = value
             self.edited.emit()
@@ -264,6 +285,246 @@ class TableEditor(QTableWidget):
             self.blockSignals(True)
             item.setText(str(self.values[index]) if index < len(self.values) else "")
             self.blockSignals(False)
+
+
+class _Bytes:
+    """A TIM card's document (Fujin.texturepictureview.TimTexture): the bytes edited in place."""
+    def __init__(self, data, edited):
+        self.data, self.original, self._edited = bytearray(data), bytes(data), edited
+
+    def patch_bytes(self, offset, raw):
+        self.data[offset:offset + len(raw)] = raw
+        self._edited()
+
+
+def _file_folder(registry, key):
+    return registry.last_folder(key) if registry is not None else ""
+
+
+class TimPage(QWidget):
+    """A TIM entry: Fujin's TIM card (picture, palette, PNG import / export, video memory place), a .tim
+    imported (a palette when the game's has one: fx_params.h tim() keeps the game's otherwise) or exported."""
+    edited = pyqtSignal()
+
+    def __init__(self, registry=None):
+        super().__init__()
+        self.registry, self.bytes, self.card = registry, None, None
+        self.import_button = QPushButton("Import .tim…")
+        self.import_button.clicked.connect(self.import_tim)
+        self.export_button = QPushButton("Export .tim…")
+        self.export_button.clicked.connect(self.export_tim)
+        self.error = QLabel()
+        self.error.setWordWrap(True)
+        self.error.setStyleSheet("color: #c77800")
+        row = QHBoxLayout()
+        row.addWidget(self.import_button)
+        row.addWidget(self.export_button)
+        row.addWidget(self.error, 1)
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(row)
+        layout.addWidget(self.scroll, 1)
+
+    def load(self, data):
+        from Fujin.texturepictureview import TimTexture, _TimCard
+        self.bytes = _Bytes(data, self._card_edited)
+        self.error.clear()
+        try:
+            self.card = _TimCard(TimTexture(self.bytes, 0), "TIM", 0, self.registry)
+            self.card.changed.connect(self.edited)
+            self.scroll.setWidget(self.card)
+        except Exception as error:   # (not a TIM this card reads: its bytes kept)
+            self.card = None
+            self.scroll.setWidget(QLabel(f"A TIM of {len(data)} bytes: {error}"))
+
+    def _card_edited(self):
+        self.edited.emit()
+
+    def data(self):
+        return bytes(self.bytes.data) if self.bytes is not None else None
+
+    def import_tim(self):
+        path, _filter = QFileDialog.getOpenFileName(self, "Import a TIM", _file_folder(self.registry, "Fujin data TIM"),
+                                                    "TIM (*.tim);;All files (*)")
+        if not path:
+            return
+        data = open(path, "rb").read()
+        old = self.data() or b""
+        if len(data) < 8 or struct.unpack_from("<I", data)[0] != 0x10:
+            self.error.setText("Not a TIM (its id is not 0x10).")
+            return
+        if len(old) >= 8 and (struct.unpack_from("<I", data, 4)[0] & 8) != (struct.unpack_from("<I", old, 4)[0] & 8):
+            self.error.setText("The game's TIM " + ("has" if struct.unpack_from("<I", old, 4)[0] & 8 else "has no")
+                               + " palette: this one must too (its code uploads it as such).")
+            return
+        if self.registry is not None:
+            self.registry.remember_folder("Fujin data TIM", os.path.dirname(path))
+        self.load(data)
+        self.edited.emit()
+
+    def export_tim(self):
+        if self.data() is None:
+            return
+        path, _filter = QFileDialog.getSaveFileName(self, "Export the TIM", _file_folder(self.registry, "Fujin data TIM"),
+                                                    "TIM (*.tim)")
+        if path:
+            open(path, "wb").write(self.data())
+
+
+class CameraPage(QWidget):
+    """A camera track entry: its keyframes and script in the shared track editor (Common.cameratrackeditor;
+    `tools` a CameraScriptTools: Fujin's camera manager), a .bcam imported or exported. A new effect's own
+    track may change size."""
+    edited = pyqtSignal()
+
+    def __init__(self, tools=None, registry=None):
+        super().__init__()
+        self.tools, self.registry, self.track = tools, registry, None
+        self.raw = b""
+        self.import_button = QPushButton("Import .bcam…")
+        self.import_button.clicked.connect(self.import_bcam)
+        self.export_button = QPushButton("Export .bcam…")
+        self.export_button.clicked.connect(self.export_bcam)
+        self.info = QLabel()
+        self.info.setWordWrap(True)
+        row = QHBoxLayout()
+        row.addWidget(self.import_button)
+        row.addWidget(self.export_button)
+        row.addWidget(self.info, 1)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(row)
+        self.editor = None
+        if tools is not None:
+            from Common.cameratrackeditor import CameraTrackEditor
+            self.editor = CameraTrackEditor(tools, room_name="effect's own data",
+                                            growth_note="a new effect's own track may grow: its offsets are its own")
+            self.editor.keyframes_changed.connect(self.edited)
+            self.editor.track_changed.connect(self.edited)
+            layout.addWidget(self.editor, 1)
+        else:
+            layout.addStretch(1)
+
+    def load(self, data):
+        self.raw, self.track = bytes(data), None
+        if self.tools is not None:
+            from FF8GameData.dat.cameratrack import CameraTrack
+            try:
+                self.track = CameraTrack.from_bytes(self.tools.vm, self.raw)
+            except ValueError as error:
+                self.info.setText(f"Not a camera track this editor reads ({error}): its bytes are kept.")
+        if self.editor is not None:
+            self.editor.set_track(self.track)
+        if self.track is not None or self.tools is None:
+            self.info.setText(f"A camera track: {len(self.raw)} bytes."
+                              + ("" if self.tools is not None else " Open the exe (Camera tab) to edit it here."))
+
+    def data(self):
+        return self.track.to_bytes() if self.track is not None else self.raw
+
+    def import_bcam(self):
+        path, _filter = QFileDialog.getOpenFileName(self, "Import a camera track", _file_folder(self.registry, "Fujin data camera"),
+                                                    "Camera track (*.bcam);;All files (*)")
+        if not path:
+            return
+        data = open(path, "rb").read()
+        if len(data) < 8 or struct.unpack_from("<H", data, 2)[0] != 8 or struct.unpack_from("<H", data, 6)[0] != len(data):
+            self.info.setText("Not a camera track (its header: script at 8, its size the file's).")
+            return
+        if self.registry is not None:
+            self.registry.remember_folder("Fujin data camera", os.path.dirname(path))
+        self.load(data)
+        self.edited.emit()
+
+    def export_bcam(self):
+        path, _filter = QFileDialog.getSaveFileName(self, "Export the camera track", _file_folder(self.registry, "Fujin data camera"),
+                                                    "Camera track (*.bcam)")
+        if path:
+            open(path, "wb").write(self.data())
+
+
+def anim_set_sections(data):
+    """[(name, start, end)] of an animation set's sections ({count, offsets[count], end}), or None."""
+    if len(data) < 8:
+        return None
+    count = struct.unpack_from("<I", data)[0]
+    if not 1 <= count <= 8 or len(data) < 4 * (count + 2):
+        return None
+    offsets = struct.unpack_from(f"<{count + 1}I", data, 4)
+    if offsets[0] < 4 * (count + 2) or list(offsets) != sorted(offsets) or offsets[-1] > len(data):
+        return None
+    names = ("body animations", "sequence scripts", "weapon animations")
+    return [(names[k] if k < len(names) else f"section {k}", offsets[k], offsets[k + 1]) for k in range(count)]
+
+
+class AnimSetPage(QWidget):
+    """An animation set entry: its sections, a set of the game's count imported (the bytes after the set -
+    its entry's "tail": the game reads past a set's end - kept) or the set exported."""
+    edited = pyqtSignal()
+
+    def __init__(self, registry=None):
+        super().__init__()
+        self.registry, self.raw, self.tail = registry, b"", 0
+        self.info = QLabel()
+        self.info.setWordWrap(True)
+        self.info.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.import_button = QPushButton("Import a set…")
+        self.import_button.clicked.connect(self.import_set)
+        self.export_button = QPushButton("Export the set…")
+        self.export_button.clicked.connect(self.export_set)
+        row = QHBoxLayout()
+        row.addWidget(self.import_button)
+        row.addWidget(self.export_button)
+        row.addStretch(1)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(row)
+        layout.addWidget(self.info, 1)
+
+    def load(self, data, tail=0):
+        self.raw, self.tail = bytes(data), tail
+        self._describe()
+
+    def _describe(self, note=""):
+        sections = anim_set_sections(self.raw[:len(self.raw) - self.tail])
+        if sections is None:
+            self.info.setText(f"{len(self.raw)} bytes that do not read as an animation set." + note)
+            return
+        lines = [f"An animation set of {len(sections)} sections ({len(self.raw) - self.tail} bytes"
+                 + (f", then the {self.tail} bytes after it the game may read, kept" if self.tail else "") + "):"]
+        for name, start, end in sections:
+            count = struct.unpack_from("<I", self.raw, start)[0] if end - start >= 4 else 0
+            lines.append(f"- {name}: {end - start} bytes" + (f", {count} entries" if count < 256 else ""))
+        self.info.setText("\n".join(lines) + note)
+
+    def data(self):
+        return self.raw
+
+    def import_set(self):
+        path, _filter = QFileDialog.getOpenFileName(self, "Import an animation set", _file_folder(self.registry, "Fujin data anim"),
+                                                    "Animation set (*.anim *.bin);;All files (*)")
+        if not path:
+            return
+        data = open(path, "rb").read()
+        sections = anim_set_sections(data)
+        game = anim_set_sections(self.raw[:len(self.raw) - self.tail])
+        if sections is None or (game is not None and len(sections) != len(game)):
+            self._describe(f"\n\nNot imported: not a set of {len(game or ())} sections.")
+            return
+        if self.registry is not None:
+            self.registry.remember_folder("Fujin data anim", os.path.dirname(path))
+        end = struct.unpack_from("<I", data, 4 * (len(sections) + 1))[0]
+        self.raw = data[:end] + self.raw[len(self.raw) - self.tail:] if self.tail else data[:end]
+        self._describe()
+        self.edited.emit()
+
+    def export_set(self):
+        path, _filter = QFileDialog.getSaveFileName(self, "Export the animation set", _file_folder(self.registry, "Fujin data anim"),
+                                                    "Animation set (*.anim)")
+        if path:
+            open(path, "wb").write(self.raw[:len(self.raw) - self.tail])
 
 
 # a key's columns by channel: (title, kind) - fixed: a 16.16 number shown as a decimal (5 places
@@ -541,7 +802,9 @@ class EffectDataView(QWidget):
     """changed(key, entry): an entry edited and applied."""
     changed = pyqtSignal(str, dict)
 
-    def __init__(self, vram=None, play_sound=None):
+    def __init__(self, vram=None, play_sound=None, camera_tools=None, registry=None):
+        """camera_tools: a CameraScriptTools (Fujin's camera manager) for the camera page; registry: the
+        file registry (the import / export folders)."""
         super().__init__()
         self.play_sound = play_sound
         self.description, self.key = None, None
@@ -579,6 +842,11 @@ class EffectDataView(QWidget):
         QFormLayout(name_page).addRow("File name", self.name)
         self.pointers_page = QWidget()
         self.pointers = QFormLayout(self.pointers_page)
+        self.camera_page = CameraPage(camera_tools, registry)
+        self.tim_page = TimPage(registry)
+        self.anim_page = AnimSetPage(registry)
+        for page in (self.camera_page, self.tim_page, self.anim_page):
+            page.edited.connect(self._edited)
         self.summary = QLabel()
         self.summary.setWordWrap(True)
         self.summary.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -587,6 +855,7 @@ class EffectDataView(QWidget):
         for kind, page in (("seq", self.sequence), ("layout", self.layout_editor), ("model", self.model_editor),
                            ("sound", sound_page),
                            ("table", self.table), ("name", name_page), ("pointers", self.pointers_page),
+                           ("camera", self.camera_page), ("tim", self.tim_page), ("anim_set", self.anim_page),
                            ("summary", self.summary)):
             self.pages_by_kind[kind] = self.pages.addWidget(page)
         self.sequence.edited.connect(self._edited)
@@ -670,7 +939,13 @@ class EffectDataView(QWidget):
             self.sound.blockSignals(False)
             self._show_archive()
         elif kind == "table":
-            self.table.load(data, entry.get("columns", 4))
+            self.table.load(data, entry.get("columns", 4), entry.get("format", "h"), entry.get("skip", 0), entry.get("labels"))
+        elif kind == "camera":
+            self.camera_page.load(data)
+        elif kind == "tim":
+            self.tim_page.load(data)
+        elif kind == "anim_set":
+            self.anim_page.load(data, entry.get("tail", 0))
         elif kind == "name":
             self.name.setText(data.split(b"\0", 1)[0].decode("ascii", "replace"))
         elif kind == "pointers":
@@ -733,6 +1008,10 @@ class EffectDataView(QWidget):
             entry["hex"] = (struct.pack("<I", self.sound.value()) + entry_bytes(entry)[4:]).hex()
         elif kind == "table":
             entry["hex"] = self.table.data().hex()
+        elif kind in ("camera", "tim", "anim_set"):
+            data = {"camera": self.camera_page, "tim": self.tim_page, "anim_set": self.anim_page}[kind].data()
+            if data is not None:
+                entry["hex"] = data.hex()
         elif kind == "name":
             entry = name_entry(entry, self.name.text())
         elif kind == "pointers":

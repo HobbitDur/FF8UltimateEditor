@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x10E298C",
-   "size": 12
-  },
   "sound": {
    "kind": "sound",
    "address": "0x10DC2D0",
@@ -47,11 +42,41 @@
    "address": "0x10D9934",
    "size": 340,
    "frames": 8
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x10E298C",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x10DC0E8",
+   "size": 488
+  },
+  "res.anim": {
+   "kind": "anim_set",
+   "address": "0x10DA574",
+   "size": 11124,
+   "count": 3,
+   "tail": 4096
+  },
+  "tables.tint_colour": {
+   "kind": "table",
+   "address": "0x10DC2D8",
+   "size": 4,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -114,6 +139,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim",
+   "part": "main",
+   "label": "Animation set",
+   "doc": "The animation set it binds to its caster: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.tint_colour",
+   "part": "main",
+   "label": "Tint colour",
+   "doc": "The colour the targets are tinted toward (4 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.tint_colour",
    "unit": "plain"
   }
  ],

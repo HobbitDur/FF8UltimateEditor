@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x12DB750",
-   "size": 12
-  },
   "sounds.start": {
    "kind": "sound",
    "address": "0x12DB654",
@@ -106,11 +101,23 @@
    "address": "0x12C5928",
    "size": 6408,
    "vertices": 208
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x12DB750",
+   "size": 12
+  },
+  "res.anim": {
+   "kind": "anim_set",
+   "address": "0x12C3618",
+   "size": 12344,
+   "count": 2,
+   "tail": 4096
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -289,6 +296,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@model_data.column",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim",
+   "part": "director",
+   "label": "Animation set",
+   "doc": "The animation set it binds to its caster: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim",
    "unit": "plain"
   }
  ],

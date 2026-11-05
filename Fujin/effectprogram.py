@@ -594,8 +594,10 @@ def own_data(description, exe):
         if not 0 <= start <= len(exe) - entry["size"]:
             raise DescriptionError(f"exe data {key}: 0x{address:X} is not in this exe")
         data[key] = {"kind": entry["kind"], "from": entry["address"], "hex": exe[start:start + entry["size"]].hex()}
-        for limit in ("capacity", "frames", "vertices", "same_size"):   # (a port's layout: the state block it is decoded into; a port's
-            if limit in entry:                 # sequence: the frames its code plays; its model: the vertices its code reads, same_size)
+        for limit in ("capacity", "frames", "vertices", "same_size", "count", "tail", "format", "columns", "skip", "labels"):
+            # (a port's layout: the state block it is decoded into; its sequence: the frames its code plays; its model:
+            # the vertices its code reads, same_size; a table's format; an animation set's count, the bytes after it kept)
+            if limit in entry:
                 data[key][limit] = entry[limit]
     return data
 

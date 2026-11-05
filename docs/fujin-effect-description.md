@@ -332,9 +332,14 @@ Potion's description is the same with its own sequences and sound.
      - **Port effects** (director `port`) read their data through their parameters too, so a new
        effect made from one plays its own copy:
        - FFNx's `fx_params.h` has the field types `Seq`, `Sound`, `Layout` (a prim-model
-         layout: the shared prim player's keyframed models) and `Model` (a prim model: a mesh
-         `Effect_RenderPrimModel` draws, `FF8GameData/psxgpu/primmodel.py`). The port reads each one
-         through `fxp::sequence`, `fxp::sound`, `fxp::layout(value, game, capacity)` or `fxp::model`; a value that is
+         layout: the shared prim player's keyframed models), `Model` (a prim model: a mesh
+         `Effect_RenderPrimModel` draws, `FF8GameData/psxgpu/primmodel.py`), `Name` (the texture
+         file its loader reads), `Camera` (the camera track its setup plays), `Tim` (an exe TIM it
+         uploads as it is), `AnimSet` (the animation set it binds to its caster,
+         `BattleEntity_BindExternalAnimSet` 0x5022C0) and `Data` (a small table: colours, fades,
+         counts, offsets, a morph's vertex set). The port reads each one through `fxp::sequence`,
+         `fxp::sound`, `fxp::layout(value, game, capacity)`, `fxp::model`, `fxp::name`, `fxp::camera`,
+         `fxp::tim`, `fxp::anim_set`, `fxp::data(value, game, size)` or `fxp::vertices`; a value that is
          not one in the exe image or in a registered data block falls back to the game's.
        - The program host registers every `data` blob it allocates as a data block
          (`fxp::add_data`) and drops them with its program (`Release`).
@@ -350,11 +355,28 @@ Potion's description is the same with its own sequences and sound.
          `fxp::model` keeps the game's model when the edited one has another, and the Data tab
          moves vertices but does not add or remove them. A model its code copies whole into a block
          of its size (Sonic Wave, Gravija) is `same_size`: it keeps its primitives and its size too.
-         A morph's source models (`MORPH_*`), and models the game's own code prepares (Phoenix's
-         flames), stay code.
-       - 50 port effects have their layouts as parameters (139 layouts), 137 their flipbooks (373), 114 their prim models (426).
-       - Checked: each one's own copy draws as the exe, and with its layouts' scale and spin or
-         its flipbooks' intensity or its models' size changed, draws otherwise.
+         Models the game's own code prepares (Phoenix's flames) stay code.
+       - A morph's vertex sets (Triple, Scan, Blizzaga: `{size, count, vertices}`, the code reads the
+         count from the set and writes as many) keep the game's count (`fxp::vertices`; their entry's
+         `count`); raw ones (Tornado, Fated Circle, Blasting Zone) keep their length (`fxp::data`). A
+         morph that starts from its model's own vertices follows the model parameter.
+       - A table's entry says how the Data tab shows it: `format` (struct: `b B h H i I`), `columns`,
+         `labels`, `skip` (header bytes kept). The port reads its `size` bytes (`fxp::data`): an edited
+         one keeps the game's length. A table the game reads past (Sonic Wave's colours run into its
+         texture name) carries those bytes too.
+       - A camera track's offsets are its own: a copy's may change size (`fxp::camera` checks its
+         header). A TIM keeps the game's palette kind (`fxp::tim`). An animation set keeps the game's
+         section count (`fxp::anim_set`) and carries the 4096 bytes after it in the exe (`tail`): a
+         set's sequence scripts may pick animations past its sections, and a 2-section set's weapon
+         animations are read past its end.
+       - 50 port effects have their layouts as parameters (139 layouts), 138 their flipbooks (374), 114
+         their prim models (426), 109 their texture file names, 84 their camera tracks (85), 11 their TIMs
+         (15), 43 their animation sets, 50 their small tables (81) and 7 their morphs' vertex sets (16).
+         Act-family ports (Esuna, Doom...) already play the description's camera and texture name.
+       - Checked: each one's own copy records as the exe; with its layouts' scale and spin, its
+         flipbooks' intensity, its models' size, another camera track (the recorder's `K` line), another
+         texture file, a TIM's pixels, another animation set, a morph's vertices or a table changed, it
+         records otherwise (a few are not seen in the recorder's cast: camera shakes, some offsets).
    - **Part by part** (`Fujin/effecttemplates.py`): a free slot shows **Create a new effect
      here**, which makes an empty effect. Choreography's **+** tab (always the last tab) adds
      parts; right-clicking a part's tab removes it, with the parts that need it.
@@ -393,7 +415,13 @@ Potion's description is the same with its own sequences and sound.
        `encode_sequence`: 301 of the exe's 326 sequences come out byte for byte; the rest have
        gaps or shared frames in the exe but parse back the same.
      - `sound`: the world sound id, its audio.dat entry and Play.
-     - `table`: int16 values, 4 a row (Hypnotize's ring points).
+     - `table`: numbers, `columns` a row, int16 unless its `format` says another (a port's colour
+       words: bytes, 4 a row), its `skip` header kept (a vertex set's size and count); its length kept.
+     - `camera`: the camera track in the editor the Camera tab and Alexander share
+       (`Common/cameratrackeditor.py`: keyframes and script); a `.bcam` imported or exported.
+     - `tim`: the TIM in the Textures tab's card (picture and palette through PNG files, its VRAM
+       place); a `.tim` with the game's palette kind imported, or exported.
+     - `anim_set`: its sections; a set of the game's section count imported (its tail kept) or exported.
      - `name`: the file name.
      - `pointers`: each entry picked among the data keys (Hypnotize's ring and target layouts).
      - `layout`: a prim-model layout's animation (`FF8GameData/psxgpu/primlayout.py`).

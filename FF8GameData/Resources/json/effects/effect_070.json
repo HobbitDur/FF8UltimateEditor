@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x112D1A4",
-   "size": 16
-  },
   "sounds.voice": {
    "kind": "sound",
    "address": "0x1324DAC",
@@ -92,11 +87,16 @@
    "address": "0x1324ED8",
    "size": 280,
    "vertices": 12
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x112D1A4",
+   "size": 16
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -286,6 +286,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@model_data.shard",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "master",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
    "unit": "plain"
   }
  ],

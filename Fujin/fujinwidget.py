@@ -169,7 +169,8 @@ class FujinWidget(QWidget):
         self.description_view.reset_requested.connect(self._description_reset)
         self.choreography.addTab(self.description_view, "Description")
         # a new effect's own data (sequences, sounds, tables...), edited by kind
-        self.data_view = EffectDataView(vram=self._data_vram, play_sound=self._play_archive)
+        self.data_view = EffectDataView(vram=self._data_vram, play_sound=self._play_archive,
+                                       camera_tools=self.camera_editor.manager, registry=self.file_registry)
         self.data_view.changed.connect(self._data_changed)
         self.choreography.addTab(self.data_view, "Data")
         # an effect built part by part: + adds (or removes) a part (Fujin.effecttemplates)

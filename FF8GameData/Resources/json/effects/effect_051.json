@@ -90,6 +90,27 @@
    "address": "0x15AA588",
    "size": 428,
    "frames": 16
+  },
+  "tables.rings": {
+   "kind": "table",
+   "address": "0x15ACCB4",
+   "size": 60,
+   "format": "h",
+   "columns": 10
+  },
+  "tables.sparkles": {
+   "kind": "table",
+   "address": "0x15ACCF0",
+   "size": 60,
+   "format": "h",
+   "columns": 10
+  },
+  "tables.particles": {
+   "kind": "table",
+   "address": "0x15ACD2C",
+   "size": 60,
+   "format": "h",
+   "columns": 10
   }
  },
  "resources": {
@@ -345,6 +366,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.sparkle_b2",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.rings",
+   "part": "emitter",
+   "label": "Rings a tick",
+   "doc": "How many rings spawn at each tick (60 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.rings",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.sparkles",
+   "part": "emitter",
+   "label": "Sparkles a tick",
+   "doc": "How many sparkles spawn at each tick (60 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.sparkles",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.particles",
+   "part": "emitter",
+   "label": "Particles a tick",
+   "doc": "How many particles spawn at each tick (60 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.particles",
    "unit": "plain"
   }
  ],

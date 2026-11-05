@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0xDEA5B8",
-   "size": 12
-  },
   "seqs.at_de43e8": {
    "kind": "seq",
    "address": "0xDE43E8",
@@ -96,11 +91,55 @@
    "address": "0xDE87FC",
    "size": 2256,
    "vertices": 73
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xDEA5B8",
+   "size": 12
+  },
+  "tables.spark_colours": {
+   "kind": "table",
+   "address": "0xDEA3DC",
+   "size": 72,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
+  },
+  "tables.glow_colours": {
+   "kind": "table",
+   "address": "0xDEA424",
+   "size": 48,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
+  },
+  "tables.rain_colours": {
+   "kind": "table",
+   "address": "0xDEA454",
+   "size": 48,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -323,6 +362,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.at_de87fc",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "master",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.spark_colours",
+   "part": "master",
+   "label": "Spark colours",
+   "doc": "its colour words (red, green, blue, the GPU code byte), picked in turn (72 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.spark_colours",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.glow_colours",
+   "part": "master",
+   "label": "Glow colours",
+   "doc": "its colour words (red, green, blue, the GPU code byte), picked in turn (48 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.glow_colours",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.rain_colours",
+   "part": "master",
+   "label": "Rain colours",
+   "doc": "its colour words (red, green, blue, the GPU code byte), picked in turn (48 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.rain_colours",
    "unit": "plain"
   }
  ],

@@ -79,6 +79,13 @@
    "address": "0x158A4BC",
    "size": 10600,
    "vertices": 312
+  },
+  "res.anim": {
+   "kind": "anim_set",
+   "address": "0x158D9AC",
+   "size": 11124,
+   "count": 3,
+   "tail": 4096
   }
  },
  "resources": {
@@ -360,6 +367,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.orb",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim",
+   "part": "director",
+   "label": "Animation set",
+   "doc": "The animation set it binds to its caster: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim",
    "unit": "plain"
   }
  ],

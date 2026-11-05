@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0xCFB33C",
-   "size": 12
-  },
   "sound": {
    "kind": "sound",
    "address": "0xCFB2FC",
@@ -77,11 +72,36 @@
    "address": "0xCFAE64",
    "size": 1176,
    "vertices": 43
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xCFB33C",
+   "size": 12
+  },
+  "res.anim": {
+   "kind": "anim_set",
+   "address": "0xCF3A78",
+   "size": 13260,
+   "count": 3,
+   "tail": 4096
+  },
+  "tables.ghost_colours": {
+   "kind": "table",
+   "address": "0xCFB328",
+   "size": 20,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -199,6 +219,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.ground_ring",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "shot",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim",
+   "part": "shot",
+   "label": "Animation set",
+   "doc": "The animation set it binds to its caster: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.ghost_colours",
+   "part": "shot",
+   "label": "Ghost colours",
+   "doc": "The caster's tint words in turn (its ghosts) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.ghost_colours",
    "unit": "plain"
   }
  ],

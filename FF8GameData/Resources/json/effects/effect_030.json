@@ -82,6 +82,19 @@
    "address": "0x160DC50",
    "size": 168,
    "vertices": 6
+  },
+  "tables.spark_table": {
+   "kind": "table",
+   "address": "0x160DED8",
+   "size": 152,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "base",
+    "spread",
+    "count",
+    "pad"
+   ]
   }
  },
  "resources": {
@@ -371,6 +384,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.at_160dc50",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.spark_table",
+   "part": "emitter",
+   "label": "Sparks a tick",
+   "doc": "The laser's sparks at each tick 0..18: base, random spread, count (152 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.spark_table",
    "unit": "plain"
   }
  ],

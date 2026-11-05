@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0xDD6798",
-   "size": 12
-  },
   "sounds.wind": {
    "kind": "sound",
    "address": "0xDD6638",
@@ -46,11 +41,40 @@
    "address": "0xDD5564",
    "size": 4308,
    "vertices": 142
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xDD6798",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xDD05F8",
+   "size": 904
+  },
+  "morphs.model": {
+   "kind": "model",
+   "address": "0xDD0B2C",
+   "size": 3304,
+   "vertices": 120
+  },
+  "morphs.target": {
+   "kind": "table",
+   "address": "0xDD181C",
+   "size": 960,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ]
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -130,6 +154,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.crater",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "morphs.model",
+   "part": "director",
+   "label": "Cloud model",
+   "doc": "The cloud's prim model (120 vertices: its vertices are where the morph starts; an edited one keeps them by number)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@morphs.model",
+   "unit": "plain"
+  },
+  {
+   "key": "morphs.target",
+   "part": "director",
+   "label": "Cloud morph to",
+   "doc": "The vertices the cloud blends to over 12 ticks (120 vertices x, y, z, pad: an edited one keeps the count)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@morphs.target",
    "unit": "plain"
   }
  ],

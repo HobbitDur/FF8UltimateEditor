@@ -82,6 +82,26 @@
    "address": "0x158FDA0",
    "size": 168,
    "vertices": 6
+  },
+  "res.anim": {
+   "kind": "anim_set",
+   "address": "0x1590024",
+   "size": 11124,
+   "count": 3,
+   "tail": 4096
+  },
+  "tables.spark_table": {
+   "kind": "table",
+   "address": "0x1591B98",
+   "size": 152,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "base",
+    "spread",
+    "count",
+    "pad"
+   ]
   }
  },
  "resources": {
@@ -399,6 +419,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.at_158fda0",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim",
+   "part": "emitter",
+   "label": "Animation set",
+   "doc": "The animation set it binds to its caster: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.spark_table",
+   "part": "emitter",
+   "label": "Sparks a tick",
+   "doc": "The laser's sparks at each tick 0..18: base, random spread, count (152 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.spark_table",
    "unit": "plain"
   }
  ],

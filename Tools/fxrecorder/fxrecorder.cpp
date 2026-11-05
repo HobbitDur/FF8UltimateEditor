@@ -21,6 +21,8 @@
 //   B t x y w h u v               a VRAM-to-VRAM copy
 //   N t slot amount flags hit    an action result the effect gave a target (its number then shows)
 //   S t address word              a sound it played (its sound block in memory, the world sound id in it)
+//   K t size checksum             a camera track it started (Battle_PlayCameraAnimation 0x5099A0, not played
+//                                 here): its size (header +6) and an FNV-1a checksum of its bytes
 //   M t value name                a value the port measured then (FX_NOTE, effect lab builds)
 //   Q t part sequence frame [x y] a sprite the tick drew: its sprite sequence (address, hex) and
 //                                 frame, the effect part drawing it (FF8GameData/psxgpu/spritesequence.py),
@@ -320,6 +322,19 @@ static int __cdecl s_results(uint32_t targets, uint32_t count)
 }
 // the sound block and the world sound id it holds (what BdPlaySE reads: an effect's own data has no exe address)
 static int __cdecl s_sound(uint32_t sound, uint32_t, uint32_t) { if (g_rec) g_events.push_back({ 'S', sound, *(const uint32_t *)sound, 0, 0 }); return 0; }
+// a camera track started (its bytes, not its address: a new effect's own copy has another), written with the
+// next tick (its setup starts it before the first)
+static std::vector<BattleEvent> g_cameras;
+static int __cdecl s_camera(uint32_t track)
+{
+	if (IsBadReadPtr((void *)track, 8)) return 0;
+	const uint32_t size = *(const uint16_t *)(track + 6);
+	uint32_t hash = 2166136261u;
+	if (!IsBadReadPtr((void *)track, size))
+		for (uint32_t k = 0; k < size; k++) hash = (hash ^ *(const uint8_t *)(track + k)) * 16777619u;
+	g_cameras.push_back({ 'K', size, hash, 0, 0 });
+	return 0;
+}
 #define INS_WRAP(ADDR, ...) unpatch(ADDR); ((void (__cdecl *)(__VA_ARGS__))ADDR)
 static void __cdecl s_45C740(uint32_t a, uint32_t b, uint32_t c) { INS_WRAP(0x45C740, uint32_t, uint32_t, uint32_t)(a, b, c); repatch(0x45C740); note_ins(0x45C740, a, b); }
 static void __cdecl s_45C7A0(uint32_t a, uint32_t b) { INS_WRAP(0x45C7A0, uint32_t, uint32_t)(a, b); repatch(0x45C7A0); note_ins(0x45C7A0, a, b); }
@@ -471,6 +486,8 @@ static void write_tick(int t)
 		if (e.kind == 'N') fprintf(g_out, "N %d %u %u %u %u\n", t, e.a, e.b, e.c, e.d);
 		else fprintf(g_out, "S %d %X %X\n", t, e.a, e.b);
 	for (const auto &n : g_notes) fprintf(g_out, "M %d %d %s\n", t, n.second, n.first.c_str());
+	for (const BattleEvent &e : g_cameras) fprintf(g_out, "K %d %u %X\n", t, e.a, e.b);
+	g_cameras.clear();
 }
 
 // ---------------------------------------------------------------- battle memory
@@ -1101,8 +1118,16 @@ static int32_t field_value(const void *base, const ff8fx::fxp::Field &f)
 	const uint8_t *at = (const uint8_t *)base + f.offset;
 	return f.type == ff8fx::fxp::I16 ? *(const int16_t *)at : f.type == ff8fx::fxp::U8 ? *at : *(const int32_t *)at;
 }
+// a field's type as the schema names it (older sources have only the first ones: their number)
+static const char *field_type(const ff8fx::fxp::Field &d, bool text)
+{
+	static const char *const NAMES[] = { "\"i16\"", "\"u8\"", "\"i32\"", "\"seq\"", "\"sound\"", "\"file\"", "\"layout\"", "\"model\"",
+	                                     "\"data\"", "\"camera\"", "\"tim\"", "\"name\"", "\"anim_set\"" };
+	return text ? NAMES[5] : (int)d.type < (int)(sizeof(NAMES) / sizeof(*NAMES)) ? NAMES[(int)d.type] : NAMES[2];
+}
 // how an editor shows a field (fx_params.h Unit; older sources have none: plain)
-template<class F> static const char *field_unit(const F &f)
+template<class F>
+static const char *field_unit(const F &f)
 {
 	if constexpr (requires { f.unit; })
 		return f.unit == 1 ? "angle" : f.unit == 2 ? "scale" : "plain";
@@ -1147,7 +1172,7 @@ static int lab_schema()
 		const std::string game = text ? json_text((const char *)m->defaults + d.offset) : std::to_string(field_value(m->defaults, d));
 		fprintf(f, "%s\n  {\"part\": %s, \"key\": %s, \"label\": %s, \"doc\": %s, \"type\": %s, \"min\": %d, \"max\": %d, \"default\": %s, \"unit\": \"%s\"}",
 		        i ? "," : "", json_text(d.part).c_str(), json_text(d.key).c_str(), json_text(d.label).c_str(), json_text(d.doc).c_str(),
-		        d.type == ff8fx::fxp::I16 ? "\"i16\"" : d.type == ff8fx::fxp::U8 ? "\"u8\"" : d.type == ff8fx::fxp::Seq ? "\"seq\"" : (int)d.type == 4 ? "\"sound\"" : text ? "\"file\"" : (int)d.type == 6 ? "\"layout\"" : (int)d.type == 7 ? "\"model\"" : "\"i32\"",
+		        field_type(d, text),
 		        d.min, d.max, game.c_str(), field_unit(d));
 	}
 	fprintf(f, "],\n \"groups\": [");
@@ -1288,13 +1313,14 @@ int main(int argc, char **argv)
 	patch_jmp(0x45C740, (void *)s_45C740); patch_jmp(0x45C7A0, (void *)s_45C7A0);
 	patch_jmp(0x45C870, (void *)s_45C870); patch_jmp(0x45C8E0, (void *)s_45C8E0);
 	patch_sprites(std::make_integer_sequence<int, sizeof(SPRITE_INITS) / sizeof(SPRITE_INITS[0])>());
-	uint32_t zero1[] = { 0x46B3A0, 0x46B3E0, 0x47E3C0, 0x4A2940, 0x4A2900, 0x4A8480, 0x501E40, 0x501F30, 0x504270, 0x5099A0, 0x403D99 };
+	uint32_t zero1[] = { 0x46B3A0, 0x46B3E0, 0x47E3C0, 0x4A2940, 0x4A2900, 0x4A8480, 0x501E40, 0x501F30, 0x504270, 0x403D99 };
 	for (uint32_t a : zero1) patch_jmp(a, (void *)s_zero1);
 	uint32_t zero2[] = { 0x46B450, 0x505C00, 0x505CE0, 0x46BD40, 0x512AA0, 0x512AC0 };
 	for (uint32_t a : zero2) patch_jmp(a, (void *)s_zero2);
 	uint32_t zero3[] = { 0x5018C0, 0x501460, 0x46BBC0, 0x47CF50 };
 	for (uint32_t a : zero3) patch_jmp(a, (void *)s_zero3);
 	patch_jmp(0x506690, (void *)s_result); patch_jmp(0x506BA0, (void *)s_results);
+	patch_jmp(0x5099A0, (void *)s_camera);
 	patch_jmp(0x501330, (void *)s_sound); patch_jmp(0x5013A0, (void *)s_sound);
 	patch_jmp(0x50A730, (void *)s_zero0);
 	patch_jmp(0x46BB40, (void *)s_46BB40);

@@ -82,6 +82,20 @@
    "address": "0x15F944C",
    "size": 404,
    "frames": 15
+  },
+  "tables.flight_t": {
+   "kind": "table",
+   "address": "0x160D3B4",
+   "size": 20,
+   "format": "H",
+   "columns": 10
+  },
+  "tables.arc_height": {
+   "kind": "table",
+   "address": "0x160D3C8",
+   "size": 20,
+   "format": "H",
+   "columns": 10
   }
  },
  "resources": {
@@ -353,6 +367,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_15f944c",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.flight_t",
+   "part": "emitter",
+   "label": "Flight steps",
+   "doc": "Each arrow's flight step (16-bit) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.flight_t",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.arc_height",
+   "part": "emitter",
+   "label": "Arc heights",
+   "doc": "Each arrow's arc height (taken from its y) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.arc_height",
    "unit": "plain"
   }
  ],

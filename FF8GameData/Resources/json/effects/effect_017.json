@@ -40,6 +40,16 @@
    "address": "0x14D71EC",
    "size": 352,
    "frames": 13
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x14D8BAC",
+   "size": 660
+  },
+  "res.tim": {
+   "kind": "tim",
+   "address": "0x14D8F58",
+   "size": 137248
   }
  },
  "resources": {},
@@ -164,6 +174,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.particle",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "entrance",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim",
+   "part": "entrance",
+   "label": "TIM image",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim",
    "unit": "plain"
   }
  ],

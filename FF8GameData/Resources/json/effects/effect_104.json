@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x13197D8",
-   "size": 12
-  },
   "sound": {
    "kind": "sound",
    "address": "0x13197A8",
@@ -53,11 +48,51 @@
    "address": "0x1318490",
    "size": 1768,
    "vertices": 72
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x13197D8",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1318B78",
+   "size": 3120
+  },
+  "morphs.from": {
+   "kind": "table",
+   "address": "0x1314C40",
+   "size": 1424,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 177
+  },
+  "morphs.to": {
+   "kind": "table",
+   "address": "0x13151D0",
+   "size": 1424,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 177
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -142,6 +177,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "freeze",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "freeze",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "morphs.from",
+   "part": "freeze",
+   "label": "Growth from",
+   "doc": "The vertices the ice block's growth blends from (177 vertices x, y, z after its size and count: an edited one keeps the count)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@morphs.from",
+   "unit": "plain"
+  },
+  {
+   "key": "morphs.to",
+   "part": "freeze",
+   "label": "Growth to",
+   "doc": "The vertices the ice block's growth blends to (177 vertices x, y, z after its size and count: an edited one keeps the count)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@morphs.to",
    "unit": "plain"
   }
  ],

@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x161078C",
-   "size": 12
-  },
   "emitter.sound": {
    "kind": "sound",
    "address": "0x160F6C8",
@@ -59,11 +54,23 @@
    "address": "0x160FF3C",
    "size": 1008,
    "vertices": 33
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x161078C",
+   "size": 12
+  },
+  "tables.fade_table": {
+   "kind": "table",
+   "address": "0x161075C",
+   "size": 24,
+   "format": "h",
+   "columns": 6
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -281,6 +288,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.wave_b",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "emitter",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.fade_table",
+   "part": "emitter",
+   "label": "Fade",
+   "doc": "The fade by tick (4096 = full) (24 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.fade_table",
    "unit": "plain"
   }
  ],

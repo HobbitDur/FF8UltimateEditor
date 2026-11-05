@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x1634B70",
-   "size": 12
-  },
   "emitter.sound": {
    "kind": "sound",
    "address": "0x16309F8",
@@ -71,11 +66,34 @@
    "address": "0x1630ED4",
    "size": 5800,
    "vertices": 144
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x1634B70",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1634A4C",
+   "size": 208
+  },
+  "tables.stream_vectors": {
+   "kind": "table",
+   "address": "0x1634B20",
+   "size": 80,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ]
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -287,6 +305,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.ring_table",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "emitter",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "emitter",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.stream_vectors",
+   "part": "emitter",
+   "label": "Stream vectors",
+   "doc": "Each mist stream variant's direction (x, y, z) (80 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.stream_vectors",
    "unit": "plain"
   }
  ],

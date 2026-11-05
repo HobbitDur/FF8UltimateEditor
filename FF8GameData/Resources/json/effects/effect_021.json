@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x1629C44",
-   "size": 12
-  },
   "emitter.sound": {
    "kind": "sound",
    "address": "0x16269D8",
@@ -89,11 +84,65 @@
    "address": "0x1626CF0",
    "size": 528,
    "vertices": 17
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x1629C44",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1629288",
+   "size": 2444
+  },
+  "morphs.from": {
+   "kind": "table",
+   "address": "0x16276E8",
+   "size": 648,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 80
+  },
+  "morphs.to": {
+   "kind": "table",
+   "address": "0x1629000",
+   "size": 648,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 80
+  },
+  "tables.fade_table_a": {
+   "kind": "table",
+   "address": "0x1629C2C",
+   "size": 24,
+   "format": "h",
+   "columns": 6
+  },
+  "tables.fade_table_b": {
+   "kind": "table",
+   "address": "0x1629C14",
+   "size": 24,
+   "format": "h",
+   "columns": 6
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -355,6 +404,72 @@
    "min": 0,
    "max": 2147483647,
    "default": "@models.rune",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "emitter",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "emitter",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "morphs.from",
+   "part": "emitter",
+   "label": "Morph from",
+   "doc": "The vertices the morph model blends from (80 vertices x, y, z after its size and count: an edited one keeps the count)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@morphs.from",
+   "unit": "plain"
+  },
+  {
+   "key": "morphs.to",
+   "part": "emitter",
+   "label": "Morph to",
+   "doc": "The vertices the morph model blends to (80 vertices x, y, z after its size and count: an edited one keeps the count)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@morphs.to",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.fade_table_a",
+   "part": "emitter",
+   "label": "Fade a",
+   "doc": "The runes' first fade by step (4096 = full) (24 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.fade_table_a",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.fade_table_b",
+   "part": "emitter",
+   "label": "Fade b",
+   "doc": "The runes' second fade by step (4096 = full) (24 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.fade_table_b",
    "unit": "plain"
   }
  ],

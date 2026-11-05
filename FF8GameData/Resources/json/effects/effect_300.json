@@ -20,11 +20,6 @@
  },
  "exe_data": {
   "doc": "The exe data the effect uses (@key in its values).",
-  "texture_name": {
-   "kind": "name",
-   "address": "0x1047110",
-   "size": 16
-  },
   "sound": {
    "kind": "sound",
    "address": "0x10430F4",
@@ -53,11 +48,41 @@
    "address": "0x1040E84",
    "size": 5248,
    "vertices": 165
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x1047110",
+   "size": 16
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1042F80",
+   "size": 372
+  },
+  "res.anim": {
+   "kind": "anim_set",
+   "address": "0x103DCB0",
+   "size": 11124,
+   "count": 3,
+   "tail": 4096
+  },
+  "tables.colours": {
+   "kind": "table",
+   "address": "0x10430F8",
+   "size": 16,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
   }
  },
  "resources": {
   "texture": {
-   "game_name": "@texture_name"
+   "game_name": "@res.texture_name"
   }
  },
  "director": {
@@ -131,6 +156,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@model_data.model_2",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "breath",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "breath",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim",
+   "part": "breath",
+   "label": "Animation set",
+   "doc": "The animation set it binds to its caster: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.colours",
+   "part": "breath",
+   "label": "Colours",
+   "doc": "The colours it blends through (16 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.colours",
    "unit": "plain"
   }
  ],
