@@ -102,6 +102,15 @@ def roll_opponent_hand(level_mask: int, rare_chance: int, rare_candidates, rng: 
     return hand
 
 
+def deals_rare_cards(deck_id: int):
+    """BuildOpponentDeck only looks for rare cards when the Deck ID is not 0: with 0 the rare chance is
+    never used (any other Deck ID may hold rare cards later, e.g. one the player loses to the NPC)."""
+    return deck_id != LOCATION_NO_RARE
+
+
+RARE_CHANCE_UNUSED_TEXT = "not used: Deck ID 0 never deals rare cards"
+
+
 def is_reserved_location(location: int):
     """Locations the game gives a meaning: no rare, Queen, rare card starting owners, player."""
     return location in (LOCATION_NO_RARE, LOCATION_QUEEN, LOCATION_PLAYER) or starting_rare_card(location) is not None

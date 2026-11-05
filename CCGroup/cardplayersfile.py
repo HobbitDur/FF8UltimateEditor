@@ -145,28 +145,57 @@ class _Vanilla:
         return self.files[jsm_file.vanilla_path]
 
 
-def export_players(manager, compare_with_vanilla: bool):
-    """The file content for every card player of the manager's maps. compare_with_vanilla (the
-    vanilla reference is open under the edited folder): flag each player changed / added."""
-    vanilla = _Vanilla(manager) if compare_with_vanilla else None
-    players = []
-    for jsm_file in manager.jsm_files:
-        msd_file = manager.msd(jsm_file)
-        vanilla_records = {}
-        vanilla_entities = set()
-        if vanilla is not None:
-            vanilla_file, vanilla_msd = vanilla.file(jsm_file)
+class VanillaComparer:
+    """Which card players differ from the vanilla reference (values, clock, variant literals, texts),
+    as the file's "changed" says. The vanilla maps are read once, on demand."""
+
+    def __init__(self, manager):
+        self.manager = manager
+        self.vanilla = _Vanilla(manager)
+        self.records = {}  # jsm_file.vanilla_path -> ({(entity, script, index): record}, {entity})
+
+    def vanilla_records(self, jsm_file):
+        """({(entity, script, index): vanilla record}, entities playing cards in vanilla)."""
+        key = jsm_file.vanilla_path
+        if key not in self.records:
+            records, entities = {}, set()
+            vanilla_file, vanilla_msd = self.vanilla.file(jsm_file)
             if vanilla_file is not None:
                 for vanilla_player in vanilla_file.players:
                     record = player_record(vanilla_file, vanilla_player, vanilla_msd)
-                    vanilla_records[(record["entity"], record["script"], record["index"])] = record
-                    vanilla_entities.add(vanilla_player.entity_name)
+                    records[(record["entity"], record["script"], record["index"])] = record
+                    entities.add(vanilla_player.entity_name)
+            self.records[key] = (records, entities)
+        return self.records[key]
+
+    def record_changed(self, jsm_file, record):
+        original = self.vanilla_records(jsm_file)[0].get((record["entity"], record["script"], record["index"]))
+        return original is None or any(record[key] != original[key] for key in COMPARED_KEYS)
+
+    def is_changed(self, jsm_file, player):
+        """Whether the player differs from vanilla now (unsaved edits included). A map read from
+        vanilla only differs through edits not saved yet."""
+        if not jsm_file.modified_path and not player.is_modified() and not self.manager.has_unsaved_changes(jsm_file):
+            return False
+        return self.record_changed(jsm_file, player_record(jsm_file, player, self.manager.msd(jsm_file)))
+
+    def is_added(self, jsm_file, player):
+        """A card game the vanilla NPC does not have."""
+        return player.entity_name not in self.vanilla_records(jsm_file)[1]
+
+
+def export_players(manager, compare_with_vanilla: bool):
+    """The file content for every card player of the manager's maps. compare_with_vanilla (the
+    vanilla reference is open under the edited folder): flag each player changed / added."""
+    comparer = VanillaComparer(manager) if compare_with_vanilla else None
+    players = []
+    for jsm_file in manager.jsm_files:
+        msd_file = manager.msd(jsm_file)
         for player in jsm_file.players:
             record = player_record(jsm_file, player, msd_file)
-            if vanilla is not None:
-                original = vanilla_records.get((record["entity"], record["script"], record["index"]))
-                record["changed"] = original is None or any(record[key] != original[key] for key in COMPARED_KEYS)
-                if player.entity_name not in vanilla_entities:
+            if comparer is not None:
+                record["changed"] = comparer.record_changed(jsm_file, record)
+                if comparer.is_added(jsm_file, player):
                     record["added"] = _added_card_game(jsm_file, player)
             players.append(record)
     return {"format": FORMAT_NAME, "version": FORMAT_VERSION, "players": players}

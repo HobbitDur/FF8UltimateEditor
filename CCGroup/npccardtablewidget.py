@@ -20,6 +20,7 @@ from CCGroup import cardlocation
 
 TEST_MAP_PREFIX = "test"
 MODIFIED_COLOR = QColor(255, 170, 60)
+UNUSED_COLOR = QColor(150, 150, 150)  # a value the game ignores (rare chance with Deck ID 0)
 
 # (header, params shown in the column (to flag modified cells), tooltip)
 COLUMNS = [
@@ -41,6 +42,7 @@ COLUMNS = [
     ("Modified", [], "Changed since the file was loaded (saved with the header's Save)"),
 ]
 CLOCK_COLUMN = [header for header, _, _ in COLUMNS].index("Clock")
+RARE_CHANCE_COLUMN = [header for header, _, _ in COLUMNS].index("Rare %")
 
 
 class NumericItem(QTableWidgetItem):
@@ -327,12 +329,18 @@ class NpcCardTableWidget(QWidget):
         values[0].setToolTip(jsm_file.jsm_path)
         bold = QFont()
         bold.setBold(True)
+        deck_param = params[PARAM_DECK_ID]
+        rare_chance_unused = deck_param.is_literal() and not cardlocation.deals_rare_cards(deck_param.value)
         for column, item in enumerate(values):
             if player.is_modified():
                 item.setFont(bold)
             if any(params[index].is_modified() for index in COLUMNS[column][1]) or (
                     column == CLOCK_COLUMN and player.is_clock_modified()):
                 item.setForeground(QBrush(MODIFIED_COLOR))
+            elif column == RARE_CHANCE_COLUMN and rare_chance_unused:
+                item.setForeground(QBrush(UNUSED_COLOR))
+                unused_text = cardlocation.RARE_CHANCE_UNUSED_TEXT
+                item.setToolTip(unused_text[0].upper() + unused_text[1:])
             self.table.setItem(row, column, item)
 
     def __player_at(self, row):

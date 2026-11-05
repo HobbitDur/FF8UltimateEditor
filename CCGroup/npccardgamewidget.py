@@ -287,6 +287,28 @@ class SpinParamRow(CardGameParamRow):
         return editor_layout
 
 
+class RareChanceParamRow(SpinParamRow):
+    """Rare card chance: greyed, with a note, while the Deck ID is 0 (the game then never looks for
+    rare cards, so the chance does nothing)."""
+
+    def __init__(self, param: CardGameParam):
+        SpinParamRow.__init__(self, param, "Rare card chance", TOOLTIP_RARE_CHANCE, 0, 100, suffix=" %")
+        self.unused_label = QLabel(cardlocation.RARE_CHANCE_UNUSED_TEXT)
+        self.unused_label.setStyleSheet(f"color: {NO_CARD_GAME_COLOR.name()}")
+        self.unused_label.setVisible(False)
+
+    def layout(self):
+        editor_layout = SpinParamRow.layout(self)
+        editor_layout.addWidget(self.unused_label)
+        return editor_layout
+
+    def set_unused(self, unused: bool):
+        self.unused_label.setVisible(unused)
+        self.label.setEnabled(not unused)
+        self.set_editors_enabled(not unused and self.param.is_editable()
+                                 and not (self.variable_checkbox is not None and self.variable_checkbox.isChecked()))
+
+
 class DeckIdParamRow(SpinParamRow):
     """Deck ID: the spinbox plus a picker of the meaningful locations (no rare, Queen, the 33
     rare-card starting owners, the player) and a line saying what the current value means."""
@@ -964,8 +986,7 @@ class CardPlayerWidget(QWidget):
                           variable_option=("Current region rule",
                                            [(VAR_CURRENT_REGION_TRADE_RULE, "")],
                                            TOOLTIP_REGION_TRADE_RULE)),
-            SpinParamRow(player.params[PARAM_RARE_CHANCE], "Rare card chance", TOOLTIP_RARE_CHANCE,
-                         0, 100, suffix=" %"),
+            RareChanceParamRow(player.params[PARAM_RARE_CHANCE]),
             AiSearchParamRow(player.params[PARAM_AI_SEARCH]),
             ComboParamRow(player.params[PARAM_AI_STRATEGY], "AI strategy", TOOLTIP_AI_STRATEGY,
                           AI_STRATEGY_NAMES, kept_bits_mask=~0x07 & 0xFFFFFF),
@@ -1006,6 +1027,9 @@ class CardPlayerWidget(QWidget):
         return f"Set by the script (var {variable})", [(variable, "")], TOOLTIP_SCRIPT_LEVELS
 
     def __refresh_previews(self):
+        deck_param = self.player.params[PARAM_DECK_ID]
+        self.rows[PARAM_RARE_CHANCE].set_unused(deck_param.is_literal()
+                                                and not cardlocation.deals_rare_cards(deck_param.value))
         self.rare_cards_group.refresh(self.player)
         self.deck_preview_group.refresh(self.player)
 
@@ -1065,6 +1089,7 @@ class NpcCardGameWidget(QWidget):
         self.manager = CardGameFolderManager(game_data)
         self.working_folder = ""    # the field folder Save writes to
         self.reference_folder = ""  # the vanilla field folder (read-only)
+        self.__comparer = None  # cardplayersfile.VanillaComparer while the vanilla reference is open
         self.settings = settings
 
         self.__main_layout = QVBoxLayout()
@@ -1342,6 +1367,9 @@ class NpcCardGameWidget(QWidget):
             source = "Every map is read from vanilla (never written to)."
         else:
             return ""
+        if self.reference_folder:
+            source += (f' <span style="color:{MODIFIED_FOLDER_COLOR.name()}"><b>Blue card player</b></span>: differs'
+                       f' from vanilla (changed or added).')
         return (f"{source} <b>* Bold map</b>: unsaved changes."
                 f' <span style="color:{NO_CARD_MASTER_COLOR.name()}">{NO_CARD_MASTER_TEXT}</span>: a card game added'
                 f" there uses the region rules directly (no Queen of Cards rule spreading)."
@@ -1413,7 +1441,24 @@ class NpcCardGameWidget(QWidget):
         item = self.__player_items.get(id(player))
         if item is not None:
             item.setText(0, self.player_label(player))
+            self.__refresh_player_item(item, player)
             self.__refresh_map_item(item.parent())
+
+    def __refresh_player_item(self, item, player: CardGamePlayer):
+        """Card player row colour: blue when it differs from vanilla (the mod changes its card game, or
+        gives it one), so what a mod touches inside a blue map shows at a glance."""
+        jsm_file = item.parent().data(0, MAP_ROLE) if item.parent() is not None else None
+        if self.__comparer is None or jsm_file is None:
+            return
+        if self.__comparer.is_added(jsm_file, player):
+            item.setForeground(0, QBrush(MODIFIED_FOLDER_COLOR))
+            item.setToolTip(0, "Card game added: this NPC does not play cards in vanilla.")
+        elif self.__comparer.is_changed(jsm_file, player):
+            item.setForeground(0, QBrush(MODIFIED_FOLDER_COLOR))
+            item.setToolTip(0, "Differs from vanilla (card values, clock or texts).")
+        else:
+            item.setData(0, Qt.ItemDataRole.ForegroundRole, None)
+            item.setToolTip(0, "")
 
     def __refresh_map_item(self, map_item):
         """Map row text: name, card players, [mod] when read from the folder you edit, bold + '*'
@@ -1432,6 +1477,7 @@ class NpcCardGameWidget(QWidget):
         self.__tree.clear()
         self.__player_items = {}
         self.__show_editor(None)
+        self.__comparer = cardplayersfile.VanillaComparer(self.manager) if self.reference_folder else None
         show_all = self.__show_all_checkbox.isChecked()
         files = self.manager.all_files if show_all else self.manager.jsm_files
         for jsm_file in files:
@@ -1456,6 +1502,7 @@ class NpcCardGameWidget(QWidget):
                 player_item.setData(0, Qt.ItemDataRole.UserRole, player)
                 self.__player_items[id(player)] = player_item
                 map_item.addChild(player_item)
+                self.__refresh_player_item(player_item, player)
             for npc in npcs_without_cards:
                 main = "  - main character" if npc.is_main_character else ""
                 npc_item = QTreeWidgetItem([f"{npc.entity_name}  (talk){main}", ADD_CARD_GAME_TEXT])

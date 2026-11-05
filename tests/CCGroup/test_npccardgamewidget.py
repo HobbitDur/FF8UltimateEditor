@@ -5,6 +5,7 @@ import shutil
 import sys
 
 import pytest
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication
 
 from CCGroup.jsmcardgame import PARAM_DECK_ID, PARAM_LEVEL_MASK
@@ -87,6 +88,28 @@ def test_deck_id_picker_has_no_duplicate_entry(npc_tab):
     texts = [deck_row.picker.itemText(index) for index in range(deck_row.picker.count())]
     assert deck_row.picker.currentText() == "0 - No rare cards"
     assert sum(text.lower().startswith("0 - no rare") for text in texts) == 1
+
+
+def test_rare_chance_greyed_while_the_deck_id_is_0(npc_tab):
+    """Deck ID 0: the game never looks for rare cards, so the rare chance does nothing (greyed, with a
+    note, in the editor and the table) - any other Deck ID may hold rare cards later."""
+    from CCGroup.jsmcardgame import PARAM_RARE_CHANCE
+    from CCGroup.npccardtablewidget import RARE_CHANCE_COLUMN, UNUSED_COLOR
+    seito6 = players_by_name(npc_tab)["seito6"]
+    npc_tab.select_player(seito6)
+    deck_row, rare_row = current_editor(npc_tab).rows[0], current_editor(npc_tab).rows[PARAM_RARE_CHANCE]
+    assert rare_row.spinbox.isEnabled() and rare_row.unused_label.isHidden()  # Deck ID 31: a pocket
+    deck_row.spinbox.setValue(0)
+    assert not rare_row.spinbox.isEnabled() and not rare_row.label.isEnabled()
+    assert not rare_row.unused_label.isHidden()
+    table = npc_tab.table_widget
+    table.refresh()
+    row = next(row for row in range(table.table.rowCount())
+               if table.table.item(row, 0).data(Qt.ItemDataRole.UserRole) is seito6)
+    cell = table.table.item(row, RARE_CHANCE_COLUMN)
+    assert "Deck ID 0" in cell.toolTip()
+    deck_row.spinbox.setValue(213)
+    assert rare_row.spinbox.isEnabled() and rare_row.unused_label.isHidden()
 
 
 def test_cronos_options_show_the_turn_clock_and_save_it(npc_tab, tmp_path):

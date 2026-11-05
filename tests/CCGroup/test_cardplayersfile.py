@@ -128,6 +128,44 @@ def test_not_a_card_players_file_is_refused(tmp_path):
         cardplayersfile.read_file(str(path))
 
 
+def test_card_players_that_differ_from_vanilla_are_blue(npc_tab, tmp_path):
+    """Inside a mod's map, the card players the mod changes are blue too, and an edit made in the
+    editor turns its player blue (or back) right away."""
+    from PyQt6.QtWidgets import QTreeWidget
+    from CCGroup.jsmcardgame import JsmCardGameFile
+    from CCGroup.npccardgamewidget import MODIFIED_FOLDER_COLOR
+    vanilla = make_vanilla(tmp_path / "vanilla")
+    hall = pathlib.Path(vanilla) / "mapdata" / "bg" / "bghall_1"
+    mod = tmp_path / "mod" / "field"
+    (mod / "mapdata" / "bg" / "bghall_1").mkdir(parents=True)
+    modded = JsmCardGameFile(str(hall / "bghall_1.jsm"), str(hall / "bghall_1.sym"))
+    next(p for p in modded.players if p.entity_name == "seito6").params[PARAM_RARE_CHANCE].set_literal(99)
+    modded.save(str(mod / "mapdata" / "bg" / "bghall_1" / "bghall_1.jsm"))
+    npc_tab.set_working_folder(str(mod))
+    npc_tab.set_reference_folder(vanilla)
+    tree = npc_tab.findChild(QTreeWidget)
+
+    def is_blue(entity):
+        hall_item = next(tree.topLevelItem(i) for i in range(tree.topLevelItemCount())
+                         if "bghall_1" in tree.topLevelItem(i).text(0))
+        item = next(hall_item.child(i) for i in range(hall_item.childCount())
+                    if hall_item.child(i).text(0).startswith(entity + " "))
+        return item.foreground(0).color() == MODIFIED_FOLDER_COLOR
+
+    assert is_blue("seito6") and not is_blue("seito7")
+    seito7 = player(npc_tab, "bghall_1", "seito7")
+    original = seito7.params[PARAM_RARE_CHANCE].value
+    seito7.params[PARAM_RARE_CHANCE].set_literal(original + 1)
+    npc_tab._NpcCardGameWidget__player_changed(seito7)
+    assert is_blue("seito7")
+    seito7.params[PARAM_RARE_CHANCE].set_literal(original)
+    npc_tab._NpcCardGameWidget__player_changed(seito7)
+    assert not is_blue("seito7")
+    npc_tab.add_card_game(file_of(npc_tab, "bghall_1"), npc(npc_tab, "bghall_1", "seito5"), "Q\nYes\nNo",
+                          "N", placement=jsmnpc.PLACEMENT_CARD_BUTTON)
+    assert is_blue("seito5")
+
+
 def test_tree_marks_follow_the_open_folders(npc_tab, tmp_path):
     from PyQt6.QtWidgets import QLabel, QTreeWidget
     from CCGroup.npccardgamewidget import NO_CARD_MASTER_TEXT, MODIFIED_FOLDER_COLOR
