@@ -8,7 +8,7 @@ import pytest
 
 from CCGroup import jsmnpc
 from CCGroup.jsmcardgame import (CardGameFolderManager, PARAM_GAME_RULES, PARAM_TRADE_RULES,
-                                 OPCODE_PSHM_B)
+                                 OPCODE_PSHM_B, OPCODE_PSHI_L)
 from FF8GameData.field.msdfile import MsdFile
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
@@ -189,6 +189,41 @@ def test_add_after_the_npc_talk(manager):
     assert roles[-2:] == [jsmnpc.ROLE_QUESTION, jsmnpc.ROLE_NOT_ENOUGH] and jsmnpc.ROLE_DIALOGUE in roles
     seito6 = next(player for player in jsm_file.players if player.entity_name == "seito6")
     assert seito6.params[PARAM_RARE_CHANCE].value == 99 and seito6.clock() == (90, 3)
+
+
+def test_add_on_the_card_button(manager):
+    """The vanilla card players' way: the talk entry points at an appended script that plays cards when
+    the card button started it (I[0] == 1) and otherwise jumps into the untouched original talk."""
+    jsm_file = map_file(manager, "bghall_1")
+    seito5 = npc(manager, "bghall_1", "seito5")
+    start, end = jsmnpc.talk_bounds(jsm_file, seito5)
+    talk_code = jsm_file.instructions()[start:end]
+    player = manager.add_card_game(jsm_file, seito5, "Cards?\nYes\nNo", "Need 5 cards.",
+                                   placement=jsmnpc.PLACEMENT_CARD_BUTTON)
+    instructions = jsm_file.instructions()
+    assert instructions[start:end] == talk_code  # its own talk untouched, in place
+    block_start, block_end = jsmnpc.talk_bounds(jsm_file, seito5)
+    assert block_start >= end
+    block = instructions[block_start:block_end]
+    assert [opcode for opcode, _ in block[:6]] == [jsmnpc.OPCODE_LBL, OPCODE_PSHI_L, jsmnpc.OPCODE_PSHN_L,
+                                                  jsmnpc.OPCODE_CAL, jsmnpc.OPCODE_JPF, jsmnpc.OPCODE_UCOFF]
+    assert block[1][1] == 0 and block[2][1] == jsmnpc.CARD_BUTTON_TEMP
+    other_button = block_start + 4 + block[4][1]  # where the talk button goes...
+    assert instructions[other_button][0] == jsmnpc.OPCODE_JMP
+    assert other_button + instructions[other_button][1] == start + 1  # ...its own talk, after its LBL
+    assert instructions[other_button - 1][0] == jsmnpc.OPCODE_RET  # the card game ends on its own
+    assert jsmnpc.OPCODE_PCTURN in [opcode for opcode, _ in block]
+    assert block_start < (player.cardgame_file_offset - jsm_file.offset_script) // 4 < block_end
+    roles = [use.role for use in jsmnpc.player_messages(jsm_file, player)]
+    assert roles == [jsmnpc.ROLE_QUESTION, jsmnpc.ROLE_NOT_ENOUGH]
+
+
+def test_card_button_without_turning(manager):
+    jsm_file = map_file(manager, "bghall_1")
+    seito5 = npc(manager, "bghall_1", "seito5")
+    manager.add_card_game(jsm_file, seito5, "Q\nYes\nNo", "N", placement=jsmnpc.PLACEMENT_CARD_BUTTON, turn=False)
+    start, end = jsmnpc.talk_bounds(jsm_file, seito5)
+    assert jsmnpc.OPCODE_PCTURN not in [opcode for opcode, _ in jsm_file.instructions()[start:end]]
 
 
 def test_after_talk_refused_when_the_talk_leaves_the_field(manager):

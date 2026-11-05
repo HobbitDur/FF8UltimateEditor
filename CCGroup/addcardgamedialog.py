@@ -3,7 +3,7 @@ Dialog of the NPC tab's "+ Add card game": the texts and options of a card game 
 that has none (see jsmnpc.add_card_game).
 """
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, QLabel, QComboBox, QPlainTextEdit,
-                             QDialogButtonBox, QSpinBox)
+                             QDialogButtonBox, QSpinBox, QCheckBox)
 
 from CCGroup import cardlocation, jsmnpc
 
@@ -16,11 +16,10 @@ TOOLTIP_TEXTS = ("One line per window line. For the question, the 2nd and 3rd li
 
 class AddCardGameDialog(QDialog):
     def __init__(self, parent, map_name: str, entity_name: str, has_card_master: bool, region_calls: str,
-                 region_guess: int, free_deck_id=None, deck_id_users=None, after_talk_problem: str = "",
-                 empty_talk: bool = False):
+                 region_guess: int, free_deck_id=None, deck_id_users=None, after_talk_problem: str = ""):
         """free_deck_id: preset Deck ID (unused by anyone); deck_id_users(deck_id) -> list of what
         already uses a Deck ID, for the live note. after_talk_problem: why the question cannot go after
-        the NPC's talk (jsmnpc.after_talk_problem, "" = it can); empty_talk: its talk does nothing."""
+        the NPC's talk (jsmnpc.after_talk_problem, "" = it can)."""
         QDialog.__init__(self, parent)
         self.setWindowTitle(f"Add a card game to {entity_name} ({map_name})")
         layout = QVBoxLayout()
@@ -66,18 +65,19 @@ class AddCardGameDialog(QDialog):
 
         # (placement, on_no) per choice
         self.placement_combobox = QComboBox()
+        self.placement_combobox.addItem("On the card button (like the vanilla card players)",
+                                        (jsmnpc.PLACEMENT_CARD_BUTTON, jsmnpc.ON_NO_NOTHING))
         if not after_talk_problem:
             self.placement_combobox.addItem("After the NPC's own talk",
                                             (jsmnpc.PLACEMENT_AFTER_TALK, jsmnpc.ON_NO_NOTHING))
-        self.placement_combobox.addItem("Instead of its talk (No = nothing, like the vanilla card players)",
+        self.placement_combobox.addItem("Instead of its talk (No = nothing)",
                                         (jsmnpc.PLACEMENT_REPLACE, jsmnpc.ON_NO_NOTHING))
         self.placement_combobox.addItem("Before its talk (No = its original talk)",
                                         (jsmnpc.PLACEMENT_REPLACE, jsmnpc.ON_NO_ORIGINAL))
-        if empty_talk:  # nothing to keep: the vanilla card players' way
-            self.placement_combobox.setCurrentIndex(self.placement_combobox.count() - 2)
         self.placement_combobox.setToolTip(
-            "After the NPC's own talk: everything it did stays (lines, animations, the state its other\n"
-            "scripts follow), then it asks. The safe choice for an NPC that does more than one line.\n"
+            "On the card button: challenging the NPC with the card button asks the question, talking\n"
+            "to it runs its own talk untouched (lines, animations, the state its other scripts follow).\n"
+            "After the NPC's own talk: every talk ends with the question.\n"
             "Instead of / Before its talk: its talk entry runs the card game first; on Yes its own talk\n"
             "is skipped, which can leave an NPC whose talk drives its animations stuck or misplaced.")
         form.addRow("Card question:", self.placement_combobox)
@@ -85,6 +85,15 @@ class AddCardGameDialog(QDialog):
             problem_label = QLabel(f"Not after its talk: {after_talk_problem}.")
             problem_label.setWordWrap(True)
             form.addRow("", problem_label)
+        self.turn_checkbox = QCheckBox("Turn to the player before asking")
+        self.turn_checkbox.setChecked(True)
+        self.turn_checkbox.setToolTip(
+            "What the vanilla card players do. Untick it for an NPC in a pose its own talk changes first\n"
+            "(e.g. lying under a car): turned without it, its model ends up facing the wrong way.\n"
+            "After its talk, only an NPC whose talk does nothing turns.")
+        self.placement_combobox.currentIndexChanged.connect(self.__placement_changed)
+        self.__placement_changed()
+        form.addRow("", self.turn_checkbox)
 
         self.question_edit = QPlainTextEdit(jsmnpc.DEFAULT_QUESTION)
         self.question_edit.setToolTip(TOOLTIP_TEXTS)
@@ -130,6 +139,12 @@ class AddCardGameDialog(QDialog):
 
     def on_no(self):
         return self.placement_combobox.currentData()[1]
+
+    def __placement_changed(self):
+        self.turn_checkbox.setEnabled(self.placement() != jsmnpc.PLACEMENT_AFTER_TALK)
+
+    def turn(self):
+        return self.turn_checkbox.isChecked()
 
     def question_text(self):
         return self.question_edit.toPlainText()

@@ -2,7 +2,11 @@
 NPCs of a field script: which ones play cards, the texts of their card game, and giving a card
 game to one that has none.
 
-A vanilla card NPC's talk script (e.g. seito6 in bghall_1) is always the same recipe:
+The talk script runs for both talk buttons: the card button (Square) also sets I[0] = 1 at its LBL
+(FF8_EN.exe: field_check_talk_interaction stores 2 for it, the VM turns it into the entity's flag 0x20,
+SCRIPT_LBL sets I[0] = 1 from it and SCRIPT_RET clears it). A vanilla card NPC's talk script (e.g.
+seito6 in bghall_1) is the same recipe, nearly always behind "if I[0] == 1" with its usual lines on the
+other button:
 
     UCOFF; PCTURN                          the NPC turns to the player
     REQEW cardgamemaster.<region>_maeshori0   copy the region's rules into vars 292/293
@@ -14,9 +18,10 @@ A vanilla card NPC's talk script (e.g. seito6 in bghall_1) is always the same re
     var 292 = 0; UCON; RET
 
 Adding a card game appends that recipe at the end of the script data and points the NPC's talk
-entry at it (append-only: no existing byte moves, so no other script or jump can break), or - after
-the NPC's talk - inserts it, without its LBL/RET/turn, right before the final RET of the NPC's own talk
-script (jsmedit re-aims every jump and entry), so the talk keeps what it does. In the
+entry at it (append-only: no existing byte moves, so no other script or jump can break) - on the card
+button, it jumps into the untouched original talk for the other one - or, after the NPC's talk,
+inserts it without its LBL/RET/turn right before the final RET of the NPC's own talk script (jsmedit
+re-aims every jump and entry), so the talk keeps what it does. In the
 maps that have the cardgamemaster entity (every map with a vanilla card player), its two calls are
 copied from an existing card player of the same map. In the other maps the rules are read straight
 from the region's savemap variables (272 + region / 280 + region): same rules, but without the
@@ -60,12 +65,15 @@ DEFAULT_CARD_GAME = [0, 0, 0, 0, 0, 0, 0b11]  # Deck ID 0, rules/trade replaced 
 ON_NO_NOTHING = "nothing"
 ON_NO_ORIGINAL = "original"
 
-# Where the card question goes. PLACEMENT_REPLACE: the NPC's talk entry points at an appended card game
-# talk (on_no: what "No" does). PLACEMENT_AFTER_TALK: the NPC's own talk runs as before and asks right
-# before its final RET - its animations, story lines and state variables are kept (an NPC's talk is often
-# tied to its other scripts, e.g. the bcgate_1 mechanic gets up from under the car in it).
+# Where the card question goes. PLACEMENT_CARD_BUTTON: the vanilla card players' way - the card button
+# asks it, the talk button runs the NPC's own talk untouched. PLACEMENT_REPLACE: the NPC's talk entry
+# points at an appended card game talk (on_no: what "No" does). PLACEMENT_AFTER_TALK: the NPC's own talk
+# runs as before and asks right before its final RET. Skipping an NPC's own talk is not always harmless:
+# it is often tied to its other scripts (the bcgate_1 mechanic gets up from under the car in it).
+PLACEMENT_CARD_BUTTON = "card_button"
 PLACEMENT_REPLACE = "replace"
 PLACEMENT_AFTER_TALK = "after_talk"
+CARD_BUTTON_TEMP = 1  # I[0] at the talk's LBL when the card button started it
 
 OPCODE_HALT = 0x1C
 # A talk that may leave the field before its final RET: the question would open on the way out
@@ -298,14 +306,16 @@ def _add_end(code: _Code, calls):
 
 
 def build_card_game_block(label: int, question_id: int, not_enough_id: int, card_game: list, calls=None,
-                          region: int = 0, original_talk_index: int = None, block_start: int = 0):
+                          region: int = 0, original_talk_index: int = None, block_start: int = 0, turn: bool = True):
     """Instructions (bytes) of an added card game talk script. card_game = the 7 CARDGAME values
     (the rules / trade ones are replaced by the region's). original_talk_index = where the
-    player's "No" jumps (the original talk code, after its LBL), None = end silently."""
+    player's "No" jumps (the original talk code, after its LBL), None = end silently. turn: face the
+    player first."""
     code = _Code()
     code.add(OPCODE_LBL, label)
     code.add(OPCODE_UCOFF)
-    _add_turn(code)
+    if turn:
+        _add_turn(code)
     (jump_no,) = _add_match(code, question_id, not_enough_id, card_game, calls, region)
     _add_end(code, calls)
     code.add(OPCODE_RET, 8)
@@ -316,6 +326,29 @@ def build_card_game_block(label: int, question_id: int, not_enough_id: int, card
     else:
         jump = code.add(OPCODE_JMP)
         code.words[jump] = encode(OPCODE_JMP, original_talk_index - (block_start + jump))
+    return code.to_bytes()
+
+
+def build_card_button_block(label: int, question_id: int, not_enough_id: int, card_game: list, calls=None,
+                            region: int = 0, original_talk_index: int = 0, block_start: int = 0, turn: bool = True):
+    """Instructions (bytes) of an added talk script that plays cards on the card button (I[0] == 1, set
+    by its LBL) and otherwise jumps to original_talk_index (the original talk code, after its LBL)."""
+    code = _Code()
+    code.add(OPCODE_LBL, label)
+    code.add(OPCODE_PSHI_L, 0)
+    code.add(OPCODE_PSHN_L, CARD_BUTTON_TEMP)
+    code.add(OPCODE_CAL, CAL_EQ)
+    jump_talk = code.add(OPCODE_JPF)
+    code.add(OPCODE_UCOFF)
+    if turn:
+        _add_turn(code)
+    (jump_no,) = _add_match(code, question_id, not_enough_id, card_game, calls, region)
+    code.patch_jump(jump_no, code.here())
+    _add_end(code, calls)
+    code.add(OPCODE_RET, 8)
+    code.patch_jump(jump_talk, code.here())
+    jump = code.add(OPCODE_JMP)
+    code.words[jump] = encode(OPCODE_JMP, original_talk_index - (block_start + jump))
     return code.to_bytes()
 
 
@@ -389,8 +422,11 @@ def after_talk_problem(jsm_file: JsmCardGameFile, npc: NpcEntity):
 
 
 def add_card_game(jsm_file: JsmCardGameFile, npc: NpcEntity, question_id: int, not_enough_id: int,
-                  region: int = 0, on_no: str = ON_NO_NOTHING, card_game=None, placement: str = PLACEMENT_REPLACE):
-    """Give an NPC a card game (see the module doc and PLACEMENT_*). Returns its new player."""
+                  region: int = 0, on_no: str = ON_NO_NOTHING, card_game=None, placement: str = PLACEMENT_REPLACE,
+                  turn: bool = True):
+    """Give an NPC a card game (see the module doc and PLACEMENT_*). turn: it faces the player before
+    asking (card button / replace; after its talk, only a talk that does nothing turns). Returns its
+    new player."""
     if npc.plays_cards():
         raise ValueError(f"{npc.entity_name} already plays cards")
     sharing = nb_entities_sharing_talk(jsm_file, npc)
@@ -413,8 +449,13 @@ def add_card_game(jsm_file: JsmCardGameFile, npc: NpcEntity, question_id: int, n
     (talk_value,) = struct.unpack_from("<H", data, talk_entry)
     original_talk_start = talk_value & 0x7FFF
     block_start = (len(data) - offset_script) // 4
-    block = build_card_game_block(npc.talk_script, question_id, not_enough_id, card_game, calls, region,
-                                  original_talk_start + 1 if on_no == ON_NO_ORIGINAL else None, block_start)
+    if placement == PLACEMENT_CARD_BUTTON:
+        block = build_card_button_block(npc.talk_script, question_id, not_enough_id, card_game, calls, region,
+                                        original_talk_start + 1, block_start, turn)
+    else:
+        block = build_card_game_block(npc.talk_script, question_id, not_enough_id, card_game, calls, region,
+                                      original_talk_start + 1 if on_no == ON_NO_ORIGINAL else None, block_start,
+                                      turn)
     new_eof = block_start + len(block) // 4
     if new_eof > 0x7FFF:
         raise ValueError("The script data would exceed the 128 KB the entry table can address")

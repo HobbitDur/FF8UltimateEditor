@@ -202,6 +202,29 @@ def test_a_card_game_put_after_the_npc_talk_is_read_back_and_applied(npc_tab, ga
     other.deleteLater()
 
 
+@pytest.mark.parametrize("turn", [True, False])
+def test_a_card_game_on_the_card_button_is_read_back_and_applied(npc_tab, game_data, qapp, tmp_path, turn):
+    npc_tab.set_reference_folder(make_vanilla(tmp_path / "vanilla"))
+    mod = tmp_path / "mod" / "field"
+    mod.mkdir(parents=True)
+    npc_tab.set_working_folder(str(mod))
+    npc_tab.add_card_game(file_of(npc_tab, "bghall_1"), npc(npc_tab, "bghall_1", "seito5"), "Cards?\nYes\nNo",
+                          "Need 5.", placement=jsmnpc.PLACEMENT_CARD_BUTTON, turn=turn)
+    path = tmp_path / "button.cardplayers.json"
+    npc_tab.export_card_players(str(path))
+    records = {r["entity"]: r for r in json.loads(path.read_text(encoding="utf-8"))["players"]}
+    assert records["seito5"]["added"] == {"region": 0, "on_no": jsmnpc.ON_NO_NOTHING,
+                                          "placement": jsmnpc.PLACEMENT_CARD_BUTTON, "turn": turn}
+
+    from CCGroup.npccardgamewidget import NpcCardGameWidget
+    other = NpcCardGameWidget(game_data=game_data)
+    other.set_reference_folder(make_vanilla(tmp_path / "other"))
+    report = other.apply_card_players(str(path))
+    assert report.added == ["bghall_1 seito5"] and not report.problems and not report.not_found
+    assert bytes(file_of(other, "bghall_1").output_data()) == bytes(file_of(npc_tab, "bghall_1").output_data())
+    other.deleteLater()
+
+
 def test_card_texts_only_leave_the_npc_lines_alone(npc_tab, game_data, qapp, tmp_path):
     """A file listing only a player's card texts (no Dialogue) sets those and keeps the NPC's own lines,
     e.g. a card game put after the NPC's talk."""

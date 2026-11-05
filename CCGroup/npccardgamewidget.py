@@ -1462,7 +1462,7 @@ class NpcCardGameWidget(QWidget):
                 npc_item.setData(0, NPC_ROLE, (jsm_file, npc))
                 npc_item.setForeground(0, QBrush(NO_CARD_GAME_COLOR))
                 npc_item.setForeground(1, QBrush(ADD_BUTTON_COLOR))
-                npc_item.setToolTip(1, "Give this NPC a card game (talk to it -> 'Will you play cards with me?')")
+                npc_item.setToolTip(1, "Give this NPC a card game (challenge it with the card button -> 'Will you play cards with me?')")
                 map_item.addChild(npc_item)
             self.__tree.addTopLevelItem(map_item)
         self.__tree.expandAll()
@@ -1479,17 +1479,17 @@ class NpcCardGameWidget(QWidget):
         dialog = AddCardGameDialog(self, jsm_file.map_name, npc.entity_name, jsm_npc.has_card_master(jsm_file),
                                    calls["region"] if calls else "", self.manager.region_guess(jsm_file),
                                    self.manager.free_deck_id(), self.manager.deck_id_users,
-                                   jsm_npc.after_talk_problem(jsm_file, npc), jsm_npc.is_empty_talk(jsm_file, npc))
+                                   jsm_npc.after_talk_problem(jsm_file, npc))
         if dialog.exec() != AddCardGameDialog.DialogCode.Accepted:
             return
         self.add_card_game(jsm_file, npc, dialog.question_text(), dialog.not_enough_text(), dialog.region(),
-                           dialog.on_no(), dialog.deck_id(), dialog.placement())
+                           dialog.on_no(), dialog.deck_id(), dialog.placement(), dialog.turn())
 
     def add_card_game(self, jsm_file, npc, question_text, not_enough_text, region=0, on_no=jsm_npc.ON_NO_NOTHING,
-                      deck_id=None, placement=jsm_npc.PLACEMENT_REPLACE):
+                      deck_id=None, placement=jsm_npc.PLACEMENT_REPLACE, turn=True):
         try:
             player = self.manager.add_card_game(jsm_file, npc, question_text, not_enough_text, region, on_no,
-                                                deck_id, placement)
+                                                deck_id, placement, turn)
         except (ValueError, OSError) as error:
             QMessageBox.warning(self, "CC Group", f"Could not add a card game to {npc.entity_name}:\n{error}")
             return None

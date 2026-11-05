@@ -9,21 +9,25 @@ readable file - to keep (it diffs well in git), to share, or to apply onto anoth
                   "clock": [0, 0], "variant_literals": [],
                   "texts": [{"role": "Question", "text": "..."}, ...],
                   "changed": true,
-                  "added": {"region": 0, "on_no": "nothing", "placement": "after_talk"}}]}
+                  "added": {"region": 0, "on_no": "nothing", "placement": "card_button", "turn": true}}]}
 
 A player is found again by its map folder, entity, script and its position among that script's
 CARDGAME calls ("index"). Each of the 7 values is a literal (a number), a savemap variable
 ({"var", "push"}) or anything else ({"opcode", "value"}: kept as the target has it). With the vanilla
 reference open, "changed" says whether the player differs from vanilla, and "added" marks a card game
 the vanilla NPC does not have: applying the file gives that NPC the card game first ("placement":
-"after_talk" = asked at the end of the NPC's own talk, "replace" or missing = a talk of its own).
+"card_button" = on the card button, its own talk on the other one, "after_talk" = asked at the end of
+the NPC's own talk, "replace" or missing = a talk of its own; "turn": false = it does not face the
+player, missing = it does).
 """
 import json
 import os
 
 from CCGroup import jsmnpc
 from CCGroup.jsmcardgame import (JsmCardGameFile, NB_CARDGAME_PARAMS, OPCODE_PSHM_B, OPCODE_PSHM_W, OPCODE_PSHM_L,
-                                 OPCODE_PSHSM_B, OPCODE_PSHSM_W, OPCODE_PSHSM_L, PARAM_DECK_ID, PARAM_GAME_RULES)
+                                 OPCODE_PSHSM_B, OPCODE_PSHSM_W, OPCODE_PSHSM_L, OPCODE_PSHI_L, PARAM_DECK_ID,
+                                 PARAM_GAME_RULES)
+from CCGroup.jsmvariant import CAL_EQ
 
 FORMAT_NAME = "FF8UltimateEditor CCGroup card players"
 FORMAT_VERSION = 1
@@ -33,9 +37,11 @@ PUSH_NAMES = {OPCODE_PSHM_B: "PSHM_B", OPCODE_PSHM_W: "PSHM_W", OPCODE_PSHM_L: "
               OPCODE_PSHSM_B: "PSHSM_B", OPCODE_PSHSM_W: "PSHSM_W", OPCODE_PSHSM_L: "PSHSM_L"}
 PUSH_OPCODES = {name: opcode for opcode, name in PUSH_NAMES.items()}
 COMPARED_KEYS = PARAM_KEYS + ["clock", "variant_literals", "texts"]
-# First opcodes of a card game talk of its own (jsmnpc.build_card_game_block)
-RECIPE_START = [jsmnpc.OPCODE_LBL, jsmnpc.OPCODE_UCOFF, jsmnpc.OPCODE_PSHN_L, jsmnpc.OPCODE_PSHN_L,
-                jsmnpc.OPCODE_PCTURN]
+# Start of a card game talk on the card button (jsmnpc.build_card_button_block)
+CARD_BUTTON_START = [(jsmnpc.OPCODE_LBL, None), (OPCODE_PSHI_L, 0), (jsmnpc.OPCODE_PSHN_L, jsmnpc.CARD_BUTTON_TEMP),
+                     (jsmnpc.OPCODE_CAL, CAL_EQ), (jsmnpc.OPCODE_JPF, None), (jsmnpc.OPCODE_UCOFF, None)]
+# What a card game talk of its own does between its UCOFF and its question: turn, card master call
+RECIPE_PREAMBLE = {jsmnpc.OPCODE_PSHN_L, jsmnpc.OPCODE_PCTURN} | jsmnpc.REQ_OPCODES
 
 
 def map_key(jsm_file):
@@ -75,10 +81,22 @@ def player_record(jsm_file, player, msd_file):
     return record
 
 
+def _recipe_turns(instructions, ucoff_index):
+    """Whether the code from a UCOFF up to the first question is a card game talk's preamble, and if
+    it turns the NPC: (is a preamble, turns)."""
+    for opcode, _ in instructions[ucoff_index + 1:]:
+        if opcode == jsmnpc.OPCODE_AASK:
+            return True, any(opcode == jsmnpc.OPCODE_PCTURN for opcode, _ in instructions[ucoff_index + 1:])
+        if opcode not in RECIPE_PREAMBLE:
+            return False, False
+    return False, False
+
+
 def _added_card_game(jsm_file, player):
-    """How the card game was given to the NPC (jsmnpc.add_card_game's region, placement and 'on no'
-    choice), read back from its code: a talk of its own starts with the vanilla card players' recipe
-    (LBL, UCOFF, turn to the player), a question put after the NPC's talk sits in the NPC's own code."""
+    """How the card game was given to the NPC (jsmnpc.add_card_game's region, placement, 'on no' and
+    turn choices), read back from its code: a talk of its own starts with the card button test or
+    straight with the vanilla card players' recipe (LBL, UCOFF, [turn], question), a question put after
+    the NPC's talk sits in the NPC's own code."""
     rules = player.params[PARAM_GAME_RULES]
     if rules.opcode == OPCODE_PSHM_B and jsmnpc.VAR_REGION_RULES <= rules.value < jsmnpc.VAR_REGION_RULES + 8:
         region = rules.value - jsmnpc.VAR_REGION_RULES
@@ -87,12 +105,21 @@ def _added_card_game(jsm_file, player):
         region = jsmnpc.REGIONS.index(calls["region"]) if calls and calls["region"] in jsmnpc.REGIONS else 0
     cardgame_index = (player.cardgame_file_offset - jsm_file.offset_script) // 4
     start, end = jsmnpc.script_bounds(jsm_file, cardgame_index)
-    instructions = jsm_file.instructions()
-    if [opcode for opcode, _ in instructions[start:start + len(RECIPE_START)]] != RECIPE_START:
+    instructions = jsm_file.instructions()[start:cardgame_index]
+    head = instructions[:len(CARD_BUTTON_START)]
+    if len(head) == len(CARD_BUTTON_START) and all(
+            opcode == want_opcode and want_param in (None, param)
+            for (opcode, param), (want_opcode, want_param) in zip(head, CARD_BUTTON_START)):
+        _, turn = _recipe_turns(instructions, len(CARD_BUTTON_START) - 1)
+        return {"region": region, "on_no": jsmnpc.ON_NO_NOTHING, "placement": jsmnpc.PLACEMENT_CARD_BUTTON,
+                "turn": turn}
+    is_recipe, turn = _recipe_turns(instructions, 1)
+    if not (len(instructions) > 1 and instructions[0][0] == jsmnpc.OPCODE_LBL
+            and instructions[1][0] == jsmnpc.OPCODE_UCOFF and is_recipe):
         return {"region": region, "on_no": jsmnpc.ON_NO_NOTHING, "placement": jsmnpc.PLACEMENT_AFTER_TALK}
-    last_opcode = instructions[end - 1][0]
+    last_opcode = jsm_file.instructions()[end - 1][0]
     on_no = jsmnpc.ON_NO_ORIGINAL if last_opcode == jsmnpc.OPCODE_JMP else jsmnpc.ON_NO_NOTHING
-    return {"region": region, "on_no": on_no, "placement": jsmnpc.PLACEMENT_REPLACE}
+    return {"region": region, "on_no": on_no, "placement": jsmnpc.PLACEMENT_REPLACE, "turn": turn}
 
 
 class _Vanilla:
@@ -279,7 +306,7 @@ def _add_card_game(manager, jsm_file, record, report, label):
         player = manager.add_card_game(jsm_file, npc, texts.get(jsmnpc.ROLE_QUESTION, jsmnpc.DEFAULT_QUESTION),
                                        texts.get(jsmnpc.ROLE_NOT_ENOUGH, jsmnpc.DEFAULT_NOT_ENOUGH_CARDS),
                                        added.get("region", 0), added.get("on_no", jsmnpc.ON_NO_NOTHING), deck_id,
-                                       added.get("placement", jsmnpc.PLACEMENT_REPLACE))
+                                       added.get("placement", jsmnpc.PLACEMENT_REPLACE), added.get("turn", True))
     except (ValueError, OSError) as error:
         report.not_found.append(f"{label}: the card game could not be added ({error})")
         return None

@@ -838,7 +838,7 @@ class CardGameFolderManager:
         return None
 
     def add_card_game(self, jsm_file, npc, question_text: str, not_enough_text: str, region: int = 0,
-                      on_no: str = "nothing", deck_id: int = None, placement: str = "replace"):
+                      on_no: str = "nothing", deck_id: int = None, placement: str = "replace", turn: bool = True):
         """Give an NPC a card game (see jsmnpc.add_card_game); its two texts are appended to the map's
         .msd. deck_id None = a free one (free_deck_id). Returns the new CardGamePlayer."""
         from CCGroup import jsmnpc
@@ -853,7 +853,7 @@ class CardGameFolderManager:
         not_enough_id = msd_file.add_text(not_enough_text)
         try:
             player = jsmnpc.add_card_game(jsm_file, npc, question_id, not_enough_id, region, on_no, card_game,
-                                          placement)
+                                          placement, turn)
         except Exception:
             del msd_file.messages[question_id:]
             raise
