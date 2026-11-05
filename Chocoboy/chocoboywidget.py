@@ -74,9 +74,8 @@ class ChocoboyWidget(QWidget):
         self.wm2field_binding = FileBinding("wm2field.tbl", file_registry,
                                             load_callback=self.load_field_entrances,
                                             read_only=True)
-        # "maplist" is a bare generic name with no extension, so leaving it out of the folder
-        # scan (which is what a wildcard filter does) keeps it from turning up in every other
-        # tool's "Open folder" - it is opened on purpose instead.
+        # "maplist" is a bare generic name with no extension, opened on purpose from Import
+        # complementary.
         self.maplist_binding = FileBinding("maplist", file_registry,
                                            load_callback=self.load_field_names,
                                            file_filter="maplist;;*", read_only=True)

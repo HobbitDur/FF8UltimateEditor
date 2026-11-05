@@ -400,9 +400,6 @@ class FujinWidget(QWidget):
                 "<p style='color:gray'>From the kernel.bin entries whose attack animation is this effect "
                 "(in brackets: the entry's index in its kernel section).</p>")
 
-    def load_folder(self, folder):
-        self.mag_editor.load_folder(folder)
-
     def import_paths(self, paths):
         """Open effect files with a progress bar (Cancel stops before the next file). The registry
         batches the opens: views refresh once at the end instead of after every file."""

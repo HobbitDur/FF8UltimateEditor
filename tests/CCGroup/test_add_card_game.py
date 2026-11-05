@@ -95,6 +95,19 @@ def test_add_in_a_map_with_a_card_master(manager):
         (jsmnpc.ROLE_QUESTION, "Cards?\nYes\nNo"), (jsmnpc.ROLE_NOT_ENOUGH, "Need 5 cards.")]
 
 
+def test_adding_keeps_the_unsaved_edits_of_the_map(manager):
+    """Adding re-reads the map's code: an edit not saved yet on another player of the map stays."""
+    from CCGroup.jsmcardgame import PARAM_RARE_CHANCE
+    jsm_file = map_file(manager, "bghall_1")
+    seito6 = next(player for player in jsm_file.players if player.entity_name == "seito6")
+    seito6.params[PARAM_RARE_CHANCE].set_literal(99)
+    seito6.set_clock(90, 3)
+    manager.add_card_game(jsm_file, npc(manager, "bghall_1", "seito5"), "Cards?\nYes\nNo", "Need 5 cards.")
+    seito6 = next(player for player in jsm_file.players if player.entity_name == "seito6")
+    assert seito6.params[PARAM_RARE_CHANCE].value == 99 and seito6.params[PARAM_RARE_CHANCE].original_value == 80
+    assert seito6.clock() == (90, 3) and seito6.is_modified()
+
+
 def test_add_in_a_map_without_card_master_uses_the_region_rules(manager):
     jsm_file = map_file(manager, "bggate_2")
     assert not jsmnpc.has_card_master(jsm_file)

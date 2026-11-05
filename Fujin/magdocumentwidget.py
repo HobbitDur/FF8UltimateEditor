@@ -1,6 +1,5 @@
 import os
 import json
-import re
 
 from PyQt6.QtCore import Qt, QSignalBlocker, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon, QColor, QFont
@@ -86,8 +85,8 @@ class MagDocumentWidget(QWidget):
             binding.file_closed.connect(lambda _path, g=gf: self._close_companion(g))
             self.companion_bindings[gf] = binding
         # Streamed parts have independent editors and also feed the GF preview.
-        # Like every file here they come through the shared registry, so "Open folder" on the game
-        # data folder brings the whole set at once.
+        # Like every file here they come through the shared registry: selecting the whole magic
+        # folder in Import > Effect files brings the whole set at once.
         self.parts = {}             # gf -> {part number: MagContainer} (packed parts: objects)
         self.part_data = {}         # gf -> {part number: bytes} (every part: VRAM pages too)
         self.part_bindings = {}
@@ -98,8 +97,8 @@ class MagDocumentWidget(QWidget):
                 binding.file_closed.connect(lambda _path, g=gf, k=number: self._close_part(g, k))
                 self.part_bindings[(gf, number)] = binding
 
-        # Content, not the suffix, decides which editors are available. Fixed names let the
-        # shared Open-folder scan find the full vanilla corpus; imports can add mod names too.
+        # Content, not the suffix, decides which editors are available. Fixed names cover the full
+        # vanilla corpus; imports can add mod names too (open_paths).
         self.generic_bindings = {}
         known = {b.file_name.lower() for b in self.file_bindings()}
         with open(RESOURCES_JSON_FOLDER / "mag_file_catalog.json", encoding="utf-8") as f:
@@ -114,7 +113,7 @@ class MagDocumentWidget(QWidget):
         self.gf_selector.completer().setFilterMode(Qt.MatchFlag.MatchContains)
         self.gf_selector.setToolTip("Choose any loaded MAG file or streamed part")
         self.gf_selector.activated.connect(lambda _i: self._show_gf(self.gf_selector.currentData()))
-        self.file_label = QLabel("Import MAG files, or Open folder on extracted game data. "
+        self.file_label = QLabel("Import MAG files (select the whole magic folder, Ctrl+A, for every one). "
                                 "The format is detected from the contents; each section has a read-only tab.")
         self.file_label.setWordWrap(True)
         top = QHBoxLayout()
@@ -150,6 +149,11 @@ class MagDocumentWidget(QWidget):
         if not paths:
             return
         self._registry.remember_folder(key, os.path.dirname(paths[0]))
+        self.open_paths(paths)
+
+    def open_paths(self, paths):
+        """Open MAG family files by name; a name absent from the vanilla catalog (added by a mod)
+        gets a binding of its own."""
         by_name = {binding.file_name.lower(): binding for binding in self.file_bindings()}
         for path in paths:
             binding = by_name.get(os.path.basename(path).lower())
@@ -168,26 +172,6 @@ class MagDocumentWidget(QWidget):
         if hasattr(self, "section_tabs"):
             self.file_bindings_changed.emit()
         return binding
-
-    def load_folder(self, folder):
-        """Also discover mod-added MAG names which are absent from the vanilla catalog."""
-        by_name = {b.file_name.lower(): b for b in self.file_bindings()}
-        seen = set()
-        for root, _dirs, names in os.walk(folder):
-            for name in sorted(names, key=str.lower):
-                if not re.match(r"^(mag|ma8).+\.[^.]+$", name, re.IGNORECASE):
-                    continue
-                if name.lower() in seen:
-                    continue
-                seen.add(name.lower())
-                binding = by_name.get(name.lower())
-                if binding is None:
-                    binding = self._add_generic_binding(name)
-                    by_name[name.lower()] = binding
-                path = os.path.join(root, name)
-                if not binding.is_loaded or os.path.normcase(os.path.abspath(binding.current_path)) != os.path.normcase(os.path.abspath(path)):
-                    binding.open_path(path)
-        self.file_bindings_changed.emit()
 
     def file_bindings(self):
         return (list(self.bindings.values()) + list(self.companion_bindings.values())
@@ -318,7 +302,7 @@ class MagDocumentWidget(QWidget):
         self.scene_wire_check.toggled.connect(self._scene_option_changed)
         self.texture_check = QCheckBox("Textures")
         self.texture_check.setToolTip("Sample the VRAM the script has built at this tick (needs the .01 and the "
-                                      "streamed parts: Open folder on the game data folder)")
+                                      "streamed parts: Import > Effect files, Ctrl+A in the magic folder)")
         self.texture_check.setChecked(True)
         self.texture_check.toggled.connect(self._scene_option_changed)
         frame_button = QPushButton("Frame all")
@@ -500,7 +484,8 @@ class MagDocumentWidget(QWidget):
         missing = self._missing_files()
         if missing:
             item = QTreeWidgetItem([f"{len(missing)} file(s) not loaded", "",
-                                    "Open folder on the game data folder loads them: " + ", ".join(missing)])
+                                    "Import > Effect files (Ctrl+A in the magic folder) loads them: "
+                                    + ", ".join(missing)])
             item.setToolTip(2, item.text(2))
             item.setForeground(0, QColor(220, 60, 60))
             self.resource_tree.addTopLevelItem(item)
@@ -616,7 +601,7 @@ class MagDocumentWidget(QWidget):
         if self._defer(gf, None):
             return
         self._refresh_gf_selector()
-        # Open folder brings all seven GFs: show the first, the others wait in the GF selector
+        # A whole magic folder brings all seven GFs: show the first, the others wait in the GF selector
         if self.current_gf in ("", gf):
             self._show_gf(gf)
         self.file_bindings_changed.emit()
@@ -1162,7 +1147,7 @@ class MagDocumentWidget(QWidget):
         self.file_bindings_changed.emit()
 
     def _schedule_refresh(self, gf):
-        """Open folder delivers dozens of parts one by one: rebuild the scene once, afterwards."""
+        """A whole-folder import delivers dozens of parts one by one: rebuild the scene once, afterwards."""
         if gf == self.current_gf and self.manager is not None and not self._refresh_pending:
             self._refresh_pending = True
             QTimer.singleShot(0, self._refresh_resources_and_scene)

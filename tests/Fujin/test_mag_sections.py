@@ -124,7 +124,7 @@ def test_widget_sections_are_read_only_and_edits_keep_other_files(tmp_path):
     registry = FileRegistry()
     widget = MagDocumentWidget(file_registry=registry)
     install_dirty_tracking(widget)
-    widget.load_folder(str(tmp_path))
+    widget.open_paths(sorted(str(path) for path in tmp_path.iterdir()))
     QApplication.processEvents()
     assert len(widget.managers) == 2
     assert widget.manager.document.format == "PlayStation TIM"
@@ -278,7 +278,7 @@ def test_new_mod_binding_reopens_a_closed_tool(tmp_path):
     view = install_closed_file_view(widget)
     first = tmp_path/"MAG900_B.00"
     first.write_bytes(_tim())
-    widget.load_folder(str(tmp_path))
+    widget.open_paths(sorted(str(path) for path in tmp_path.iterdir()))
     registry.close_file(first.name)
     QApplication.processEvents()
     assert view.is_blank
@@ -304,7 +304,7 @@ def test_failed_save_keeps_unsaved_bytes_and_dirty_marker(tmp_path, monkeypatch)
     install_dirty_tracking(widget)
     path = tmp_path/"MAG900_B.00"
     path.write_bytes(_tim())
-    widget.load_folder(str(tmp_path))
+    widget.open_paths(sorted(str(path) for path in tmp_path.iterdir()))
     widget.manager.patch_bytes(len(widget.manager.data)-1, b"\x01")
     widget._mark_dirty()
     stack = QStackedWidget()

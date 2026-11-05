@@ -5,8 +5,9 @@ Top: the field background (rebuilt from the map's .mim/.map) with the NPC's init
 (its first SET3/SET) projected through the field camera (.ca). Bottom: the NPC's 3D model, the
 chara.one entry its SETMODEL picks, in the Seed/Ifrit 3D viewer.
 
-Every file comes from the map's folder in the modified field folder when it has it, else from
-the vanilla one (JsmCardGameFile.asset_path).
+Every file comes from the map's folder in the folder you edit when it has it, else from the
+vanilla reference (JsmCardGameFile.asset_path). A file no opened folder has is not an error: the
+view says which one is missing and what to open (missing_text).
 """
 import os
 
@@ -76,38 +77,49 @@ class BackgroundView(QWidget):
                 painter.drawText(text_position, self.marker_text)
         if self.message:
             painter.setPen(QPen(QColor(255, 255, 255), 1))
-            painter.drawText(rect.adjusted(4, 4, -4, -4), Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft,
-                             self.message)
+            painter.drawText(rect.adjusted(4, 4, -4, -4), Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft
+                             | Qt.TextFlag.TextWordWrap, self.message)
 
 
 class FieldScene:
     """Background picture, camera and walkmesh of one map (built once, then cached). Each file is
-    taken from the modified folder when it has it, else from vanilla (jsm_file.asset_path)."""
+    taken from the modified folder when it has it, else from vanilla (jsm_file.asset_path).
+    missing(file names, what they are for) words what to do when the opened folders lack them."""
 
-    def __init__(self, jsm_file):
+    def __init__(self, jsm_file, missing):
         self.pixmap = None
         self.origin = (0, 0)
         self.camera = None
         self.walkmesh = None
         self.error = ""
+        self.camera_error = ""
         map_name = jsm_file.map_name
-        try:
-            with open(jsm_file.asset_path(map_name + ".mim"), "rb") as mim_file, \
-                    open(jsm_file.asset_path(map_name + ".map"), "rb") as map_file:
-                image, self.origin = render_background(mim_file.read(), map_file.read())
-            self.pixmap = QPixmap.fromImage(ImageQt(image).copy())
-        except (OSError, ValueError) as error:
-            self.error = f"No background: {error}"
-        try:
-            with open(jsm_file.asset_path(map_name + ".ca"), "rb") as ca_file:
-                self.camera = FieldCamera(ca_file.read())
-        except (OSError, ValueError, IndexError):
-            self.camera = None
+        background = [map_name + ".mim", map_name + ".map"]
+        absent = [name for name in background if not jsm_file.asset_path(name)]
+        if absent:
+            self.error = missing(absent, "the background")
+        else:
+            try:
+                with open(jsm_file.asset_path(background[0]), "rb") as mim_file, \
+                        open(jsm_file.asset_path(background[1]), "rb") as map_file:
+                    image, self.origin = render_background(mim_file.read(), map_file.read())
+                self.pixmap = QPixmap.fromImage(ImageQt(image).copy())
+            except (OSError, ValueError) as error:
+                self.error = f"The background could not be read from {map_name}.mim/.map: {error}"
+        camera_path = jsm_file.asset_path(map_name + ".ca")
+        if not camera_path:
+            self.camera_error = missing([map_name + ".ca"], "the NPC position")
+        else:
+            try:
+                with open(camera_path, "rb") as ca_file:
+                    self.camera = FieldCamera(ca_file.read())
+            except (OSError, ValueError, IndexError) as error:
+                self.camera_error = f"The camera ({map_name}.ca) could not be read: {error}"
         try:
             with open(jsm_file.asset_path(map_name + ".id"), "rb") as id_file:
                 self.walkmesh = Walkmesh(id_file.read())
         except (OSError, ValueError, IndexError):
-            self.walkmesh = None
+            self.walkmesh = None  # the position then stands at height 0
 
     def picture_position(self, position):
         """Picture pixel of an entity position (x, y, z or None, triangle), or None."""
@@ -139,6 +151,8 @@ class NpcFieldView(QWidget):
         self.viewer_3d = None
         self.__chara_one_path = None
         self.main_chr_folders = []
+        self.reference_open = False  # the vanilla reference is among the folders read
+        self.overlay_open = False    # ... under the folder you edit
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -173,17 +187,30 @@ class NpcFieldView(QWidget):
     def scene(self, jsm_file):
         key = (jsm_file.map_name, tuple(jsm_file.asset_folders))
         if key not in self.__scenes:
-            self.__scenes[key] = FieldScene(jsm_file)
+            self.__scenes[key] = FieldScene(jsm_file, self.missing_text)
         return self.__scenes[key]
 
-    def set_field_folders(self, vanilla_folder: str, modified_folder: str = ""):
+    def set_field_folders(self, vanilla_folder: str, modified_folder: str = "", reference_open: bool = False):
         """The opened field folders: scenes are rebuilt on demand, and main characters (whose
         chara.one entry points to field/model/main_chr/d0xx.mch) are read from their
-        model/main_chr subfolder - the modified folder's first, then vanilla's."""
+        model/main_chr subfolder - the modified folder's first, then vanilla's. reference_open:
+        vanilla_folder is the vanilla reference (else it is the folder you edit, opened alone)."""
         self.__scenes = {}
         self.__chara_one_path = None
+        self.reference_open = reference_open
+        self.overlay_open = bool(modified_folder)
         self.main_chr_folders = [os.path.join(folder, "model", "main_chr")
                                  for folder in (modified_folder, vanilla_folder) if folder]
+
+    def missing_text(self, names, needed_for):
+        """What to do when no opened folder has these files of a map."""
+        files = " / ".join(names)
+        if not self.reference_open:
+            return (f"No {needed_for}: {files} is not in the folder you edit (a mod's field folder holds only the"
+                    f" files it changes). Open the vanilla field folder (Import complementary) to show it.")
+        where = "the vanilla field folder" + (" nor in the folder you edit" if self.overlay_open else "")
+        return (f"No {needed_for}: {files} is not in {where}. Is the vanilla folder a complete extraction"
+                f" of field.fs (Deling)?")
 
     def clear(self):
         self.background_view.set_picture(None, message="Select a card player.")
@@ -204,8 +231,10 @@ class NpcFieldView(QWidget):
             message = scene.error
         elif position is None:
             message = "Initial position computed at runtime"
+        elif scene.camera is None:
+            message = scene.camera_error
         elif marker is None:
-            message = "No camera (.ca): position not shown"
+            message = "Position outside the camera view: not shown"
         else:
             message = f"{jsm_file.map_name}: initial position ({position[0]}, {position[1]})"
         self.background_view.set_picture(scene.pixmap, marker, player.entity_name, message)
@@ -218,8 +247,7 @@ class NpcFieldView(QWidget):
             self.__model_failed(f"{player.entity_name} has no SETMODEL: no model to show.")
             return
         if not chara_one_path:
-            self.__model_failed(f"No chara.one for {jsm_file.map_name} (neither in the modified nor the vanilla"
-                                f" folder).")
+            self.__model_failed(self.missing_text(["chara.one"], f"model for {player.entity_name}"))
             return
         viewer = self.__ensure_viewer()
         try:
@@ -231,9 +259,12 @@ class NpcFieldView(QWidget):
                 mch_name = entries[model_index].mch_file_name
                 folder = next((folder for folder in self.main_chr_folders
                                if os.path.isfile(os.path.join(folder, mch_name))), None)
-                if folder is not None:
-                    import pathlib
-                    self.seed_manager.main_chr_folder = pathlib.Path(folder)
+                if folder is None:  # a main character met as an NPC: its model is in model\main_chr
+                    self.__model_failed(self.missing_text([f"model\\main_chr\\{mch_name}"],
+                                                          f"model for {player.entity_name} (a main character)"))
+                    return
+                import pathlib
+                self.seed_manager.main_chr_folder = pathlib.Path(folder)
             entries = self.seed_manager.chara_one.entries
             if model_index >= len(entries):
                 self.__model_failed(f"SETMODEL {model_index}: the chara.one only has {len(entries)} models.")

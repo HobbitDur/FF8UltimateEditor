@@ -431,17 +431,6 @@ class AlexanderWidget(QWidget):
         if path:
             self.file_registry.remember_folder(SCENE_OUT, os.path.dirname(path))
 
-    def load_folder(self, folder):
-        """The header's Open folder: its battle stages, and the models the Camera preview draws
-        (scene.out is found by the shared folder scan)."""
-        stages = []
-        for root, _folders, names in os.walk(folder):
-            stages += [os.path.join(root, name) for name in names
-                       if name.lower().startswith("a0stg") and name.lower().endswith(".x")]
-        if stages:
-            self.open_files(sorted(stages))
-        self.battle_files.load_folder(folder)
-
     # ------------------------------------------------------------------ helpers
 
     def _hide_animation_controls(self):

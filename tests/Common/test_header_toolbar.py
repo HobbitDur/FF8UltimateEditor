@@ -167,55 +167,50 @@ def test_reload_re_reads_only_the_active_tools_files(main_window):
         tb._on_tool_changed()
 
 
-def test_accepted_file_names_are_the_concrete_ones(main_window):
-    accepted = main_window.file_registry.accepted_file_names()
-    # every tool's exact file name is offered to the Open-folder scan...
-    assert {"price.bin", "mngrp.bin", "mmag.bin", "kernel.bin", "mitem.bin"} <= accepted
-    # ...but wildcard bindings (Ifrit's *.dat) are not, since a scan can't pick one file.
-    assert "battle model (.dat)" not in accepted
+def test_header_has_no_open_folder_button(main_window):
+    """A folder is opened from a tool's own Import line (CCGroup, Seed), never by a global scan."""
+    tb = main_window._file_toolbar
+    assert not hasattr(tb, "open_folder_button") and not hasattr(tb, "_open_folder")
+    assert not hasattr(main_window.file_registry, "accepted_file_names")
 
 
-def test_scan_folder_finds_recognized_files_recursively(tmp_path):
-    from Common.filetoolbarwidget import FileToolbarWidget
-    (tmp_path / "price.bin").write_bytes(b"x")
-    sub = tmp_path / "menu"
-    sub.mkdir()
-    (sub / "MITEM.BIN").write_bytes(b"x")        # matched case-insensitively
-    (sub / "notes.txt").write_bytes(b"x")        # not a name any tool reads -> ignored
-    found = FileToolbarWidget.scan_folder(str(tmp_path), {"price.bin", "mitem.bin"})
-    assert set(found) == {"price.bin", "mitem.bin"}
-    assert found["mitem.bin"].endswith(os.path.join("menu", "MITEM.BIN"))
-
-
-@pytest.mark.ff8data("extracted_files/menu/price.bin", "extracted_files/menu/mitem.bin")
-def test_open_folder_loads_the_files_it_finds(main_window):
-    """The end of the Open-folder flow: opening each scanned file loads its tool."""
-    from Common.filetoolbarwidget import FileToolbarWidget
-    reg = main_window.file_registry
-    # Limit to two light tools so the test stays cheap (Siren/price.bin, Kadowaki/mitem.bin).
-    found = FileToolbarWidget.scan_folder("extracted_files", {"price.bin", "mitem.bin"})
-    assert set(found) == {"price.bin", "mitem.bin"}
-    for file_name, path in found.items():
-        reg.open_file(file_name, path)
-    assert main_window._siren_widget.price_binding.is_loaded
-    assert main_window._kadowaki_widget.mitem_binding.is_loaded
-    assert main_window._siren_widget.editor_container.isEnabled()
+def _import_entry(entries, start):
+    return next(callback for label, callback in entries if label.startswith(start))
 
 
 @pytest.mark.ff8data("extracted_files")
-def test_open_folder_hands_the_field_folder_to_the_npc_tab(main_window, monkeypatch):
-    """A folder-based tool (CCGroup's NPC card players tab) loads the whole field folder via the
-    shared Open-folder button (which calls its load_folder), not a per-file binding."""
-    from PyQt6.QtWidgets import QFileDialog
+def test_ccgroup_imports_its_field_folders_from_either_tab(main_window, monkeypatch):
+    """CCGroup's Import offers the exe AND the field folder you edit from either tab (picking one
+    opens its tab); Import complementary offers the vanilla reference."""
+    from PyQt6.QtWidgets import QFileDialog, QMessageBox
+    tb = main_window._file_toolbar
     cc = main_window._ccgroup_widget
+    npc = cc.npc_card_game_widget
     main_window.tool_stack.setCurrentWidget(cc)
-    cc.tab_widget.setCurrentIndex(1)  # NPC card players tab
-    assert not hasattr(cc.npc_card_game_widget, "_NpcCardGameWidget__folder_button")
+    cc.tab_widget.setCurrentIndex(0)  # Card values tab: the field folder is offered all the same
+    tb._on_tool_changed()
+    labels = [label for label, _callback in tb._import_entries()]
+    assert labels[0].startswith("FF8 exe") and labels[1].startswith(npc.EDITED_TITLE)
+    assert tb.import_complementary_button.isEnabled()
 
-    monkeypatch.setattr(QFileDialog, "getExistingDirectory",
-                        lambda *args, **kwargs: "extracted_files/field")
-    main_window._file_toolbar._open_folder()   # no named files there -> no summary dialog pops
-    assert cc.npc_card_game_widget.manager.nb_players() > 0
+    warnings = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda _parent, title, text, *a: warnings.append(text))
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory", lambda *a, **k: "extracted_files/field")
+    _import_entry(tb._import_entries(), npc.EDITED_TITLE)()
+    assert cc.tab_widget.currentWidget() is npc
+    assert npc.working_folder.endswith("field") and npc.manager.nb_players() > 0
+    assert main_window.file_registry.get_path(cc.NPC_REGISTRY_NAME) == npc.working_folder
+
+    # The same folder as the vanilla reference: refused, with a popup saying why
+    cc.complementary_entries()[0][1]()
+    assert npc.reference_folder == "" and "already open as the folder you edit" in warnings[-1]
+
+    # A folder inside the field folder: refused before anything is read, naming the right one
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory", lambda *a, **k: "extracted_files/field/mapdata/bg")
+    cc.open_reference_folder()
+    assert "Pick the field folder" in warnings[-1] and npc.reference_folder == ""
+    npc.close_folder()
+    assert main_window.file_registry.get_path(cc.NPC_REGISTRY_NAME) == ""
 
 
 @pytest.mark.ff8data("extracted_files")
@@ -232,7 +227,7 @@ def test_shared_save_drives_the_npc_multi_file_save(main_window, monkeypatch):
     tb._on_tool_changed()
     assert not hasattr(npc, "_NpcCardGameWidget__save_button")  # moved to the shared toolbar
 
-    cc.load_folder("extracted_files/field")
+    cc.load_working_folder("extracted_files/field")
     tb._refresh()
     assert cc.can_save_folder() and tb.save_button.isEnabled()  # players loaded -> Save enabled
 
@@ -315,11 +310,13 @@ def test_minimog_main_and_complementary_bindings_share_with_zone(main_window):
 @pytest.mark.ff8data("extracted_files")
 def test_seed_drives_two_view_inputs_and_a_main_chr_folder(main_window, monkeypatch):
     """Seed has two main bindings (chara.one, edited/saved; a standalone .mch, view-only) and a
-    third input - the main_chr folder - set through the shared Open-folder button's load_folder
-    hook, the same mechanism CCGroup's NPC tab uses."""
-    from PyQt6.QtWidgets import QMessageBox
+    third Import line - a whole field folder (every chara.one, and model\\main_chr), checked
+    before use, the same as CCGroup's NPC tab."""
+    from PyQt6.QtWidgets import QFileDialog, QMessageBox
     monkeypatch.setattr(QMessageBox, "critical", lambda *a, **k: None)
     monkeypatch.setattr(QMessageBox, "information", lambda *a, **k: None)
+    warnings = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda _parent, title, text, *a: warnings.append(text))
     tb = main_window._file_toolbar
     seed = main_window._seed_widget
     main_window.tool_stack.setCurrentWidget(seed)
@@ -351,14 +348,19 @@ def test_seed_drives_two_view_inputs_and_a_main_chr_folder(main_window, monkeypa
     assert seed.seed_manager.main_chr_folder is not None   # auto-detected from the chara.one path
     assert tb.save_button.isEnabled()
 
-    # The shared Open-folder button's load_folder hook overrides the main_chr folder.
-    import os
-    alt_folder = os.path.abspath("extracted_files/field/model/main_chr")
+    # Import > Field folder: a folder inside the field folder is refused with a popup...
+    labels = [label for label, _callback in tb._import_entries()]
+    assert labels[:2] == ["chara.one", "field character model (.mch)"] and labels[2].startswith("Field folder")
     seed.seed_manager.main_chr_folder = None
-    folder_loader = getattr(tb.tool_stack.currentWidget(), "load_folder", None)
-    assert callable(folder_loader)
-    folder_loader(alt_folder)
-    assert str(seed.seed_manager.main_chr_folder) == alt_folder
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory", lambda *a, **k: "extracted_files/field/model")
+    seed.open_field_folder()
+    assert "No 'mapdata' folder" in warnings[-1] and seed.seed_manager.main_chr_folder is None
+    # ...the field folder itself lists every field and sets its model\main_chr.
+    monkeypatch.setattr(QFileDialog, "getExistingDirectory", lambda *a, **k: "extracted_files/field")
+    seed.open_field_folder()
+    assert seed.field_list.count() > 800
+    assert os.path.abspath(str(seed.seed_manager.main_chr_folder)) == \
+        os.path.abspath("extracted_files/field/model/main_chr")
 
     # Save writes straight back to the loaded chara.one path (no Save-As dialog).
     saved = []
@@ -458,8 +460,8 @@ def test_alexander_save_falls_back_to_a_dialog_without_a_known_stage_path(main_w
 
 @pytest.mark.ff8data("extracted_files")
 def test_hook_based_tools_register_a_summary_entry_in_opened_files(main_window, monkeypatch):
-    """Alexander/Seed/CCGroup's NPC tab load files through a hook (open_files/load_folder), not a
-    FileBinding, so nothing put them in the registry before - they were invisible in the Opened
+    """Alexander/Seed/CCGroup's NPC tab load files through a hook (open_files, a field folder), not
+    a FileBinding, so nothing put them in the registry before - they were invisible in the Opened
     files panel. Each now registers one summary entry (not one per file - could be dozens)."""
     from PyQt6.QtWidgets import QFileDialog, QMessageBox
     monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
@@ -484,7 +486,7 @@ def test_hook_based_tools_register_a_summary_entry_in_opened_files(main_window, 
     assert registry.paths["Alexander battle stage(s)"] == "2 stages: a0stg000.x, a0stg001.x"
 
     # Seed: the main_chr folder appears even via auto-detection (the common path), not only when
-    # the user manually overrides it with the Open-folder button.
+    # a whole field folder is opened.
     seed = main_window._seed_widget
     main_window.tool_stack.setCurrentWidget(seed)
     tb._on_tool_changed()
@@ -496,18 +498,18 @@ def test_hook_based_tools_register_a_summary_entry_in_opened_files(main_window, 
                                         "bc" / "bccent12" / "chara.one"))
     assert "main_chr" in registry.paths["Seed main_chr folder"]
 
-    # CCGroup NPC tab: 170 .jsm scripts -> one entry, not 170.
+    # CCGroup NPC tab: ~880 .jsm scripts -> one entry, the field folder itself.
     cc = main_window._ccgroup_widget
     main_window.tool_stack.setCurrentWidget(cc)
     tb._on_tool_changed()
-    cc.tab_widget.setCurrentIndex(1)
-    cc.load_folder(str(PROJECT_ROOT / "extracted_files" / "field"))
-    assert "scripts in" in registry.paths["CCGroup NPC scripts"]
+    field = str(PROJECT_ROOT / "extracted_files" / "field")
+    cc.load_working_folder(field)
+    assert registry.paths[cc.NPC_REGISTRY_NAME] == field
 
     # The panel itself reflects every one of these summary entries.
     panel = main_window._opened_files_panel
     panel._refresh()
-    for key in ("Alexander battle stage(s)", "Seed main_chr folder", "CCGroup NPC scripts"):
+    for key in ("Alexander battle stage(s)", "Seed main_chr folder", cc.NPC_REGISTRY_NAME):
         assert any(key in panel.file_list.item(i).text() for i in range(panel.file_list.count()))
 
 
@@ -969,36 +971,28 @@ def test_removing_a_fixed_file_clears_the_tool_and_disables_save(main_window, mo
     assert siren.closed_file_view.is_blank and not tb.save_button.isEnabled()
 
 
-def test_open_folder_progress_never_pops_back_up(qapp):
-    """A folder with no file a tool reads left the 'Opening the folder's files' bar at 0 / 1: Qt's
-    show-after-delay timer then popped it up, stuck, after the folder-based tool had finished."""
+def test_progress_never_pops_back_up(qapp):
+    """A bar closed before it reached its maximum (left at 0 / 1): Qt's show-after-delay timer used
+    to pop it up, stuck, after the work had finished."""
     from PyQt6.QtTest import QTest
     from PyQt6.QtWidgets import QProgressDialog, QWidget
     from Common.filetoolbarwidget import FileToolbarWidget
     parent = QWidget()
-    progress = FileToolbarWidget.open_progress(parent, 0, "Opening the folder's files")
+    progress = FileToolbarWidget.open_progress(parent, 0, "Opening files")
     FileToolbarWidget.close_progress(progress)
     QTest.qWait(800)   # past open_progress's 500 ms delay
     assert not [w for w in parent.findChildren(QProgressDialog) if w.isVisible()]
 
 
-def test_folder_tool_gets_a_progress_reporter_only_if_it_takes_one(qapp):
-    from PyQt6.QtWidgets import QWidget
+def test_run_with_progress_hands_a_reporter_and_closes_its_bar(qapp):
+    from PyQt6.QtTest import QTest
+    from PyQt6.QtWidgets import QProgressDialog, QWidget
     from Common.filetoolbarwidget import FileToolbarWidget
     parent = QWidget()
-    calls = []
-
-    def with_progress(folder, progress=None):
-        calls.append((folder, progress("step", 1, 2)))
-
-    def without_progress(folder):
-        calls.append((folder, None))
-
-    for loader in (with_progress, without_progress):
-        progress = FileToolbarWidget.open_progress(parent, 0, "Opening the folder's files")
-        FileToolbarWidget._load_tool_folder(loader, "some/field", progress)
-        FileToolbarWidget.close_progress(progress)
-    assert calls == [("some/field", True), ("some/field", None)]   # True: not canceled
+    result = FileToolbarWidget.run_with_progress(parent, "Seed", "Looking...", lambda report: report("step", 1, 2))
+    assert result is True   # what work returned: the reporter's "not canceled"
+    QTest.qWait(800)
+    assert not [w for w in parent.findChildren(QProgressDialog) if w.isVisible()]
 
 
 def test_header_shrinks_back_when_the_opened_files_list_collapses(main_window, qapp):

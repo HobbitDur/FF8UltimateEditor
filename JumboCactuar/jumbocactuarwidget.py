@@ -386,11 +386,6 @@ class JumboCactuarWidget(QWidget):
         (several at once, added to the ones already opened)."""
         return self.battle_files.entries()
 
-    def load_folder(self, folder):
-        """The header's Open folder: every battle stage, monster, character and weapon found in it
-        (and below; the first one of each name)."""
-        self.battle_files.load_folder(folder)
-
     def auto_import_sources(self):
         """The header's Auto-upload: scene.out and the battle files opened last time."""
         return [AutoImportSource.for_binding(self.binding, self.file_registry.last_folder(FILE_NAME)),

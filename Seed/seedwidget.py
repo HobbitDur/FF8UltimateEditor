@@ -7,7 +7,9 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel,
 
 from Common.filebinding import FileBinding
 from Common.autoimport import AutoImportSource
+from Common.fieldfolder import NEEDS_MODELS, check_field_folder, pick_field_folder
 from Common.fileregistry import FileRegistry
+from Common.filetoolbarwidget import FileToolbarWidget
 from Ifrit.Ifrit3D.ifrit3dwidget import Ifrit3DWidget
 from Seed.seedbatchexport import export_fields_to_gltf
 from Seed.seedmanager import SeedManager
@@ -19,6 +21,8 @@ class SeedWidget(QWidget):
 
     # The main_chr folder's entry in the Opened files panel.
     MAIN_CHR_REGISTRY_NAME = "Seed main_chr folder"
+    # The field folder last opened (FileRegistry.last_folder key), which Auto-upload reopens.
+    FIELD_FOLDER_KEY = "Seed field folder"
 
     def __init__(self, icon_path='Resources', settings=None, file_registry=None):
         super().__init__()
@@ -34,9 +38,9 @@ class SeedWidget(QWidget):
 
         # Files, driven by the shared header toolbar. chara.one is the edited/saved file; the
         # standalone field character model is a second, view-only main file (no save - only
-        # chara.one is ever written back). The main_chr folder (the main characters' models,
-        # auto-detected from chara.one's path when possible) is set from the header's Open-folder
-        # button, the same load_folder() hook CCGroup's NPC tab uses.
+        # chara.one is ever written back). The third Import line opens a whole field folder (every
+        # field's chara.one, and its model\main_chr - the main characters' models, else
+        # auto-detected from chara.one's path), like CCGroup's NPC tab.
         self.chara_one_binding = FileBinding(
             "chara.one", file_registry, load_callback=self.load_chara_one,
             save_callback=self._save_chara_one, file_filter="chara.one;;*.one")
@@ -50,8 +54,8 @@ class SeedWidget(QWidget):
         # --- Model list + 3D viewer ---
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Left: the fields of an opened folder (every chara.one in it, from the header's Open-folder
-        # button; hidden until one is opened) above the models of the selected chara.one.
+        # Left: the fields of an opened field folder (every chara.one in it; hidden until one is
+        # opened) above the models of the selected chara.one.
         left_panel = QSplitter(Qt.Orientation.Vertical)
         self.field_panel, self.field_list, self.field_search = self._make_list_panel("Fields")
         self.field_list.currentRowChanged.connect(self._on_field_selected)
@@ -136,6 +140,11 @@ class SeedWidget(QWidget):
         field character model (view-only - only chara.one is ever written back)."""
         return [self.chara_one_binding, self.mch_binding]
 
+    def import_entries(self):
+        return [(self.chara_one_binding.file_name, lambda: self.chara_one_binding.open_remembered(self)),
+                (self.mch_binding.file_name, lambda: self.mch_binding.open_remembered(self)),
+                ("Field folder (every field's chara.one, and the main characters' models)", self.open_field_folder)]
+
     def auto_import_bindings(self):
         # The standalone .mch is reopened only when picked by hand (auto_import_sources): its
         # folder is main_chr, where a folder scan finds every d0xx.mch and can't choose one.
@@ -145,23 +154,41 @@ class SeedWidget(QWidget):
         mch = AutoImportSource.for_binding(self.mch_binding)
         mch.selection_only = True
         sources = [mch]
-        key = type(self).__name__
-        folder = self.file_registry.last_folder(key)
-        if not folder and self.settings:
-            folder = self.settings.value("seed/main_chr_folder", "", type=str)
+        folder = self.file_registry.last_folder(self.FIELD_FOLDER_KEY)
+        if not folder:  # remembered by the header's former Open-folder button (maybe main_chr)
+            folder = self.file_registry.last_folder(type(self).__name__)
+            if not check_field_folder(folder, NEEDS_MODELS).ok:
+                folder = ""
         if folder:
-            sources.append(AutoImportSource(key, ("chara.one", "*.mch"), lambda _paths: self.load_folder(folder),
+            sources.append(AutoImportSource(self.FIELD_FOLDER_KEY, ("chara.one",),
+                                            lambda _paths: self._reopen_field_folder(folder),
                                             folder=folder, recursive=True))
         return sources
 
-    def load_folder(self, folder_path, progress=None):
-        """The header's Open-folder button. Every chara.one inside the folder (e.g. the 'field'
-        folder: one per field room) is listed under Fields; selecting one opens it. The main_chr
-        folder (the d0xx.mch main character models) is found inside it too - or is the picked
-        folder itself when it holds .mch files, which still sets it by hand.
+    def _reopen_field_folder(self, folder):
+        check = check_field_folder(folder, NEEDS_MODELS)
+        if not check.ok:
+            raise ValueError(check.error)
+        self.load_field_folder(check.root)
 
-        progress(text) - from the header toolbar - shows how the scan goes, and returns False
-        once it is stopped: the fields found until then are listed."""
+    def open_field_folder(self):
+        """Import > Field folder: pick the game's (or a mod's) 'field' folder, checked first."""
+        check = pick_field_folder(self, "Seed", "Field folder: the 'field' folder holding mapdata",
+                                  self.file_registry.last_folder(self.FIELD_FOLDER_KEY), needs=NEEDS_MODELS,
+                                  remember=lambda folder: self.file_registry.remember_folder(self.FIELD_FOLDER_KEY,
+                                                                                             folder))
+        if check is None:
+            return
+        FileToolbarWidget.run_with_progress(self, "Seed", "Looking for fields...",
+                                            lambda report: self.load_field_folder(check.root, progress=report))
+
+    def load_field_folder(self, folder_path, progress=None):
+        """A checked field folder (Common.fieldfolder): every chara.one inside it (one per field
+        room) is listed under Fields; selecting one opens it. Its model\\main_chr (the d0xx.mch main
+        character models) is used too, when it has one.
+
+        progress(text) shows how the scan goes, and returns False once it is stopped: the fields
+        found until then are listed."""
         report = progress or (lambda _text: True)
         main_chr = SeedManager.find_main_chr_folder_in(folder_path)
         if main_chr is not None:
@@ -240,7 +267,7 @@ class SeedWidget(QWidget):
             QMessageBox.critical(self, "Seed", f"Could not read {file_path}:\n{e}")
             return
         if self.seed_manager.main_chr_folder:
-            # Usually auto-detected here (not through the explicit Open-folder override below),
+            # Usually auto-detected here (not through Import > Field folder),
             # so this is where it needs to be reflected in Opened files for the common case too.
             folder = str(self.seed_manager.main_chr_folder)
             if self.settings:

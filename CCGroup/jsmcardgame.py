@@ -265,10 +265,15 @@ class JsmCardGameFile:
         self.reanalyze()
 
     def reanalyze(self):
-        """(Re)build the card players, names and variants from self.data (after code was added). Clock
-        edits not saved yet stay on the calls at the same place (code is only ever appended)."""
+        """(Re)build the card players, names and variants from self.data (after code was added). Edits
+        not saved yet - values, clocks, variant literals - stay on the calls at the same place (code is
+        only ever appended)."""
         pending_clocks = {player.cardgame_file_offset: (player.clock(), player.original_clock)
                           for player in getattr(self, "players", [])}
+        pending_params = {param.file_offset: (param.opcode, param.value, param.original_opcode, param.original_value)
+                          for player in getattr(self, "players", []) for param in player.params}
+        pending_literals = {offset: (literal.value, literal.original_value)
+                            for offset, literal in getattr(self, "script_literals", {}).items()}
         self.__instructions_cache = None
         self.players = []
         self.card_moves = []  # SETCARD calls with literal arguments
@@ -282,6 +287,13 @@ class JsmCardGameFile:
             if player.cardgame_file_offset in pending_clocks:
                 (player.clock_seconds, player.clock_increment), player.original_clock = \
                     pending_clocks[player.cardgame_file_offset]
+            for param in player.params:
+                if param.file_offset in pending_params:
+                    param.opcode, param.value, param.original_opcode, param.original_value = \
+                        pending_params[param.file_offset]
+        for offset, literal in self.script_literals.items():
+            if offset in pending_literals:
+                literal.value, literal.original_value = pending_literals[offset]
 
     def __analyze(self):
         if len(self.data) < 8:
@@ -845,6 +857,12 @@ class CardGameFolderManager:
             self.jsm_files.append(jsm_file)
             self.jsm_files.sort(key=lambda file: file.rel_path)
         return player
+
+    def has_unsaved_changes(self, jsm_file):
+        """Whether a map has edits not saved yet: its script, or its dialogues (only when already
+        read - an unread .msd has no edit)."""
+        msd_file = self.__msd_files.get(os.path.dirname(jsm_file.rel_path))
+        return jsm_file.is_modified() or (msd_file is not None and msd_file.is_modified())
 
     def has_modifications(self):
         return any(jsm_file.is_modified() for jsm_file in self.all_files or self.jsm_files) or any(

@@ -20,7 +20,7 @@ import random
 from collections import Counter
 
 from PIL.ImageQt import ImageQt
-from PyQt6.QtCore import Qt, QSettings
+from PyQt6.QtCore import Qt, QSettings, pyqtSignal
 from PyQt6.QtGui import QPixmap, QBrush, QColor
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea,
                              QLabel, QComboBox, QCheckBox, QPushButton, QFileDialog,
@@ -28,10 +28,13 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSc
                              QTreeWidget, QTreeWidgetItem, QTabWidget, QHeaderView, QPlainTextEdit)
 
 from CCGroup import cardlocation
+from CCGroup import cardplayersfile
 from CCGroup import jsmnpc as jsm_npc
 from CCGroup.addcardgamedialog import AddCardGameDialog
 from CCGroup.npccardtablewidget import NpcCardTableWidget
 from CCGroup.npcfieldview import NpcFieldView
+from Common.fieldfolder import MAPDATA, VANILLA_MIN_MAPS, check_field_folder
+from Common.fileregistry import busy_cursor
 from CCGroup.jsmcardgame import (CardGameFolderManager, OPCODE_PSHN_L, CardGamePlayer, CardGameParam,
                                  GAME_RULE_BITS, TRADE_RULE_NAMES, AI_STRATEGY_NAMES,
                                  AI_SEARCH_DEPTH_NAMES, AI_SEARCH_NO_GUESS_BIT,
@@ -438,12 +441,28 @@ class AiSearchParamRow(CardGameParamRow):
 
 
 CARD_THUMBNAIL_SIZE = 48
-MODIFIED_FOLDER_COLOR = QColor(40, 110, 210)  # maps read from the modified folder
-NO_CARD_MASTER_COLOR = QColor(215, 120, 0)  # maps without a cardgamemaster entity
+MODIFIED_FOLDER_COLOR = QColor(40, 110, 210)  # maps read from the folder you edit (with vanilla open)
+NO_CARD_MASTER_COLOR = QColor(215, 120, 0)  # the note on maps without a cardgamemaster entity
+NO_CARD_MASTER_TEXT = "no card master"
+TOOLTIP_NO_CARD_MASTER = ("No card master in this map: a card game added here uses the region rules directly,\n"
+                          "without the Queen of Cards rule spreading.")
+DEFAULT_EXPORT_NAME = "card_players.cardplayers.json"
+TOOLTIP_EXPORT = (
+    "<b>Export card players</b> (*.cardplayers.json)<br/>"
+    "Every card player of the opened folders in one readable file: its 7 values, Cronos clock, variant<br/>"
+    "conditions and texts, unsaved edits included. Keep it (it diffs well in git), share it, or apply it<br/>"
+    "onto another field folder. With the vanilla reference open, each player is also marked as changed<br/>"
+    "from vanilla or not, and the card games given to an NPC are marked as added.")
+TOOLTIP_APPLY = (
+    "<b>Apply card players file</b><br/>"
+    "Set every card player of the file on the opened folders (found by map, NPC and script), and give the<br/>"
+    "card games marked as added to their NPC. Nothing is written: review, then Save. A report lists what<br/>"
+    "changed and what could not be applied (map or NPC missing, script changed by a mod...).")
 NO_CARD_GAME_COLOR = QColor(150, 150, 150)  # NPCs that do not play cards
 ADD_BUTTON_COLOR = QColor(40, 150, 60)
 ADD_CARD_GAME_TEXT = "+ Add card game"
 NPC_ROLE = Qt.ItemDataRole.UserRole + 1  # tree item data of an NPC without a card game: (jsm_file, NpcEntity)
+MAP_ROLE = Qt.ItemDataRole.UserRole + 2  # tree item data of a map row: its JsmCardGameFile
 
 
 class CardImages:
@@ -594,7 +613,11 @@ class TextsGroup(QGroupBox):
         self.editors = {}  # message id -> QPlainTextEdit
         msd_file = manager.msd(jsm_file)
         if msd_file is None:
-            layout.addWidget(QLabel(f"No {jsm_file.map_name}.msd found: the texts cannot be shown."), 0, 0, 1, 2)
+            label = QLabel(f"No {jsm_file.map_name}.msd in the opened folders: the texts cannot be shown. A mod's field"
+                           f" folder holds only the files it changes: open the vanilla field folder (Import"
+                           f" complementary) to read them from it.")
+            label.setWordWrap(True)
+            layout.addWidget(label, 0, 0, 1, 2)
             return
         uses_in_file = Counter()
         instructions = jsm_file.instructions()
@@ -1000,20 +1023,34 @@ class CardPlayerWidget(QWidget):
 class NpcCardGameWidget(QWidget):
     """The 'NPC card players' tab.
 
-    Left: a filterable map/NPC tree of every card player found in the loaded folder.
-    Right: the parameter editor of the selected player (built on demand - a full game
-    dump contains hundreds of players, so only one editor exists at a time)."""
+    Two field folders, opened from the header in any order (see CCGroupWidget):
+    - the edited one (Import): what Save writes to - a mod's field folder holding only the maps it
+      changes, or a whole copy of the game's;
+    - the vanilla reference (Import complementary, read-only): the whole game, so every NPC is
+      listed and a map is read from the edited folder only when it has it.
 
-    NO_FOLDER_TEXT = ("Use the header's Open-folder button on your vanilla 'field' folder (.jsm/.sym "
-                      "scripts, e.g. extracted with Deling) to list the NPC card players.")
-    NO_MODIFIED_FOLDER_TEXT = "none - saves are written in place, into the vanilla folder"
-    TOOLTIP_MODIFIED_FOLDER = (
-        "<b>Modified field folder</b> (e.g. a mod's ...\\FieldRework\\field)<br/>"
-        "Holds only the maps the mod changes, at the same paths as the vanilla folder. A map is read<br/>"
-        "from it when it has it (the mod's own changes are kept), else from vanilla.<br/><br/>"
-        "<b>Save</b> writes only into this folder, and only the maps whose script differs from vanilla<br/>"
-        "(a map edited back to vanilla is not written, and you are offered to delete it from the folder).<br/>"
-        "The vanilla folder is never written to.")
+    Left: a filterable map/NPC tree of every card player found. Right: the parameter editor of the
+    selected player (built on demand - a full game dump contains hundreds of players, so only one
+    editor exists at a time)."""
+
+    folders_changed = pyqtSignal()  # the edited or the reference folder was set, changed or closed
+
+    EDITED_TITLE = "Field folder you edit"
+    REFERENCE_TITLE = "Vanilla field folder (reference)"
+    NO_EDITED_TEXT = "none - Import > " + EDITED_TITLE
+    NO_REFERENCE_TEXT = "none - Import complementary > " + REFERENCE_TITLE
+    NO_FOLDER_TEXT = ("Open a field folder from the header: Import > " + EDITED_TITLE + " (a mod's field folder,"
+                      " or a whole extracted one), and Import complementary > " + REFERENCE_TITLE + ".")
+    TOOLTIP_FOLDERS = (
+        "<b>Field folder you edit</b> (Import, e.g. a mod's ...\\FieldRework\\field)<br/>"
+        "What Save writes to. A mod's folder holds only the maps it changes, at the same paths as<br/>"
+        "vanilla: a map is read from it when it has it (the mod's own changes are kept), else from vanilla.<br/><br/>"
+        "<b>Vanilla field folder</b> (Import complementary, read-only)<br/>"
+        "The whole game's field folder: every NPC is listed from it, and with it Save writes only the<br/>"
+        "maps whose script differs from vanilla (a map edited back to vanilla is not written, and you<br/>"
+        "are offered to delete it from the edited folder). It is never written to.<br/><br/>"
+        "Only the vanilla folder open: Save asks where to create the mod's field folder.<br/>"
+        "Only the edited folder open: Save writes the edited maps in place.")
 
     def __init__(self, icon_path='Resources', settings: QSettings = None, game_data=None):
         QWidget.__init__(self)
@@ -1026,47 +1063,49 @@ class NpcCardGameWidget(QWidget):
         self.game_data = game_data
         self.__player_items = {}  # id(player) -> its tree item
         self.manager = CardGameFolderManager(game_data)
-        self.folder_loaded = ""
+        self.working_folder = ""    # the field folder Save writes to
+        self.reference_folder = ""  # the vanilla field folder (read-only)
         self.settings = settings
 
         self.__main_layout = QVBoxLayout()
         self.setLayout(self.__main_layout)
 
-        # Opening the folder and saving the patched .jsm files both run from the shared header
-        # toolbar (Open-folder -> load_folder, Save -> save_folder); this tab keeps only its list.
+        # Opening the folders and saving the patched .jsm files all run from the shared header
+        # toolbar (see CCGroupWidget.import_entries / save_folder); this tab keeps only its list.
         self.__info_label = QLabel(self.NO_FOLDER_TEXT)
+        self.__info_label.setWordWrap(True)
         self.cronos_options_checkbox = QCheckBox("Cronos options")
         self.cronos_options_checkbox.setToolTip(TOOLTIP_CRONOS_OPTIONS)
         if settings is not None:
             self.cronos_options_checkbox.setChecked(settings.value("ccgroup/cronos_options", False, type=bool))
         self.cronos_options_checkbox.toggled.connect(self.__cronos_options_toggled)
 
-        self.__layout_top = QHBoxLayout()
-        self.__layout_top.addWidget(self.cronos_options_checkbox)
-        self.__layout_top.addWidget(self.__info_label)
-        self.__layout_top.addStretch(1)
-        self.__main_layout.addLayout(self.__layout_top)
+        # Where the card players come from and where Save writes, at a glance
+        self.__sources_label = QLabel()
+        self.__sources_label.setToolTip(self.TOOLTIP_FOLDERS)
+        self.__sources_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        sources_layout = QVBoxLayout()
+        sources_layout.setSpacing(2)
+        sources_layout.addWidget(self.__sources_label)
+        sources_layout.addWidget(self.__info_label)
 
-        # Second layer: a modified field folder on top of vanilla (opened after it, saved into)
-        self.modified_folder = ""
-        self.__modified_label = QLabel(self.NO_MODIFIED_FOLDER_TEXT)
-        self.__modified_label.setToolTip(self.TOOLTIP_MODIFIED_FOLDER)
-        self.__modified_button = QPushButton("Open modified folder...")
-        self.__modified_button.setToolTip(self.TOOLTIP_MODIFIED_FOLDER)
-        self.__modified_button.setEnabled(False)
-        self.__modified_button.clicked.connect(self.__pick_modified_folder)
-        self.__remove_modified_button = QPushButton("Remove")
-        self.__remove_modified_button.setToolTip("Stop using the modified folder (back to vanilla only).")
-        self.__remove_modified_button.setVisible(False)
-        self.__remove_modified_button.clicked.connect(self.close_modified_folder)
-        modified_layout = QHBoxLayout()
-        modified_title = QLabel("<b>Modified field folder:</b>")
-        modified_title.setToolTip(self.TOOLTIP_MODIFIED_FOLDER)
-        modified_layout.addWidget(self.__modified_button)  # first, so it is not missed
-        modified_layout.addWidget(modified_title)
-        modified_layout.addWidget(self.__modified_label, 1)
-        modified_layout.addWidget(self.__remove_modified_button)
-        self.__main_layout.addLayout(modified_layout)
+        # The card players file: every card player in one readable file, to keep or apply elsewhere
+        self.export_button = QPushButton("Export card players...")
+        self.export_button.setToolTip(TOOLTIP_EXPORT)
+        self.export_button.clicked.connect(self.export_card_players)
+        self.apply_button = QPushButton("Apply card players file...")
+        self.apply_button.setToolTip(TOOLTIP_APPLY)
+        self.apply_button.clicked.connect(self.apply_card_players)
+        file_layout = QVBoxLayout()
+        file_layout.setSpacing(2)
+        file_layout.addWidget(self.export_button)
+        file_layout.addWidget(self.apply_button)
+
+        self.__layout_top = QHBoxLayout()
+        self.__layout_top.addLayout(file_layout)
+        self.__layout_top.addWidget(self.cronos_options_checkbox, 0, Qt.AlignmentFlag.AlignTop)
+        self.__layout_top.addLayout(sources_layout, 1)
+        self.__main_layout.addLayout(self.__layout_top)
 
         # Left pane: filter + tree of maps/players
         self.__filter_edit = QLineEdit()
@@ -1086,11 +1125,9 @@ class NpcCardGameWidget(QWidget):
         self.__tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.__tree.currentItemChanged.connect(self.__selection_changed)
         self.__tree.itemClicked.connect(self.__item_clicked)
-        legend = QLabel(f'<span style="color:{NO_CARD_MASTER_COLOR.name()}">Orange map</span>: no card master - a card'
-                        f' game added there uses the region rules directly (no Queen of Cards rule spreading).'
-                        f' <span style="color:{MODIFIED_FOLDER_COLOR.name()}">Blue map</span>: read from the modified'
-                        f' folder. Grey: NPC without a card game.')
-        legend.setWordWrap(True)
+        self.__legend = QLabel()  # follows which folders are open (see __update_labels)
+        self.__legend.setWordWrap(True)
+        legend = self.__legend
         left_widget = QWidget()
         left_layout = QVBoxLayout()
         left_layout.setContentsMargins(0, 0, 0, 0)
@@ -1127,32 +1164,38 @@ class NpcCardGameWidget(QWidget):
         self.view_tabs.addTab(self.table_widget, "Table (bulk edit)")
         self.view_tabs.currentChanged.connect(self.__view_changed)
         self.__main_layout.addWidget(self.view_tabs, 1)
+        self.__update_labels()
 
-    def load_folder(self, folder_path: str):
-        """The vanilla field folder (the header's Open-folder button). A modified folder already
-        opened stays on top of it."""
-        if not self.__confirm_discard():
-            return
-        self.folder_loaded = folder_path
-        if self.settings is not None:
-            self.settings.setValue("ccgroup/npc_last_folder", folder_path)
-        self.__reload()
+    @staticmethod
+    def __same_folder(first: str, second: str):
+        return bool(first and second) and \
+            os.path.normcase(os.path.abspath(first)) == os.path.normcase(os.path.abspath(second))
 
-    def load_modified_folder(self, folder_path: str):
-        """Put a modified field folder on top of the vanilla one (see TOOLTIP_MODIFIED_FOLDER)."""
-        if not self.folder_loaded:
-            QMessageBox.information(self, "CC Group", "Open the vanilla field folder first (header's"
-                                                      " Open-folder button), then the modified one.")
-            return
-        if os.path.normcase(os.path.abspath(folder_path)) == os.path.normcase(os.path.abspath(self.folder_loaded)):
-            QMessageBox.warning(self, "CC Group", "The modified folder must be another folder than the vanilla one.")
-            return
+    def set_working_folder(self, folder_path: str):
+        """The field folder you edit (see the class doc). A checked field folder (Common.fieldfolder).
+        Returns whether it is now used."""
+        if self.__same_folder(folder_path, self.reference_folder):
+            QMessageBox.warning(self, "CC Group", f"This folder is already open as the vanilla reference:\n"
+                                                  f"{folder_path}\n\nThe folder you edit must be another one.")
+            return False
         if not self.__confirm_discard():
-            return
-        self.modified_folder = folder_path
-        if self.settings is not None:
-            self.settings.setValue("ccgroup/npc_modified_folder", folder_path)
+            return False
+        self.working_folder = folder_path
         self.__reload()
+        return True
+
+    def set_reference_folder(self, folder_path: str):
+        """The vanilla field folder, read-only (see the class doc). A checked complete field folder
+        (Common.fieldfolder). Returns whether it is now used."""
+        if self.__same_folder(folder_path, self.working_folder):
+            QMessageBox.warning(self, "CC Group", f"This folder is already open as the folder you edit:\n"
+                                                  f"{folder_path}\n\nThe vanilla reference must be another one.")
+            return False
+        if not self.__confirm_discard():
+            return False
+        self.reference_folder = folder_path
+        self.__reload()
+        return True
 
     def __cronos_options_toggled(self, checked: bool):
         if self.settings is not None:
@@ -1165,19 +1208,6 @@ class NpcCardGameWidget(QWidget):
         if player is not None:
             self.__show_editor(player)
 
-    def close_modified_folder(self):
-        if not self.modified_folder or not self.__confirm_discard():
-            return
-        self.modified_folder = ""
-        self.__reload()
-
-    def __pick_modified_folder(self):
-        start = self.settings.value("ccgroup/npc_modified_folder", "") if self.settings is not None else ""
-        folder = QFileDialog.getExistingDirectory(
-            self, "Modified field folder (the mod's 'field' folder, holding only the changed maps)", start)
-        if folder:
-            self.load_modified_folder(folder)
-
     def __confirm_discard(self):
         """Reloading drops unsaved edits: ask first when there are some."""
         if not self.manager.has_modifications():
@@ -1186,41 +1216,152 @@ class NpcCardGameWidget(QWidget):
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         return answer == QMessageBox.StandardButton.Yes
 
+    def __base_and_overlay(self):
+        """The manager's (vanilla, modified) pair: the reference under the edited folder when both
+        are open, else the one folder open alone (edited in place, or browsed until Save)."""
+        if self.reference_folder:
+            return self.reference_folder, self.working_folder
+        return self.working_folder, ""
+
     def __reload(self):
-        self.manager.load_folder(self.folder_loaded, self.modified_folder)
-        self.field_view.set_field_folders(self.folder_loaded, self.modified_folder)
+        base, overlay = self.__base_and_overlay()
+        if base:
+            with busy_cursor():  # ~880 scripts for a whole game: a couple of seconds
+                self.manager.load_folder(base, overlay)
+        else:
+            self.manager = CardGameFolderManager(self.game_data)
+        self.field_view.set_field_folders(base, overlay, reference_open=bool(self.reference_folder))
         self.__rebuild_tree()
         self.table_widget.set_manager(self.manager)
-        self.__modified_button.setEnabled(bool(self.folder_loaded))
-        self.__remove_modified_button.setVisible(bool(self.modified_folder))
         self.__update_labels()
+        self.folders_changed.emit()
 
     def __update_labels(self):
+        edited = self.working_folder or f"<i>{self.NO_EDITED_TEXT}</i>"
+        reference = self.reference_folder or f"<i>{self.NO_REFERENCE_TEXT}</i>"
+        self.__sources_label.setText(f"<b>{self.EDITED_TITLE}:</b> {edited}<br/>"
+                                     f"<b>{self.REFERENCE_TITLE}:</b> {reference}")
+        self.__legend.setText(self.__legend_text())
+        players_loaded = self.manager.nb_players() > 0
+        self.export_button.setEnabled(players_loaded)
+        self.apply_button.setEnabled(players_loaded)
         nb_players = self.manager.nb_players()
-        if not self.folder_loaded:
+        if not self.working_folder and not self.reference_folder:
             self.__info_label.setText(self.NO_FOLDER_TEXT)
-        elif nb_players == 0:
-            self.__info_label.setText(f"No card player found in {self.folder_loaded}")
+            return
+        text = (f"{nb_players} card player(s) in {len(self.manager.jsm_files)} map(s)" if nb_players
+                else "No card player found")
+        if self.working_folder and self.reference_folder:
+            text += (f" ({self.manager.nb_from_modified_folder()} map(s) read from the folder you edit). Save writes"
+                     f" only into the folder you edit, only the maps that differ from vanilla.")
+        elif self.reference_folder:
+            text += ". Save asks where to create the mod's field folder: vanilla is never written to."
         else:
-            self.__info_label.setText(f"{nb_players} card player(s) in {len(self.manager.jsm_files)} map(s)"
-                                      f" - vanilla: {self.folder_loaded}")
-        if self.modified_folder:
-            self.__modified_label.setText(f"{self.modified_folder} ({self.manager.nb_from_modified_folder()}"
-                                          f" card-player map(s) read from it; Save writes here only)")
+            text += ". Save writes the edited maps in place."
+            if len(self.manager.all_files) < VANILLA_MIN_MAPS:
+                text += (f" <span style='color:{NO_CARD_MASTER_COLOR.name()}'>Only {len(self.manager.all_files)}"
+                         f" map(s) here: also open the vanilla field folder (Import complementary) to list every"
+                         f" NPC of the game.</span>")
+        self.__info_label.setText(text)
+
+    def __file_dialog_folder(self):
+        folder = self.settings.value("ccgroup/cardplayers_folder", "", type=str) if self.settings is not None else ""
+        return folder or os.path.dirname(self.working_folder or self.reference_folder)
+
+    def __remember_file_folder(self, path):
+        if self.settings is not None:
+            self.settings.setValue("ccgroup/cardplayers_folder", os.path.dirname(path))
+
+    def export_card_players(self, path: str = ""):
+        """Write every card player to a card players file (asks where when no path is given)."""
+        if not path:
+            path = QFileDialog.getSaveFileName(
+                self, "Export every card player", os.path.join(self.__file_dialog_folder(), DEFAULT_EXPORT_NAME),
+                cardplayersfile.FILE_FILTER)[0]
+            if not path:
+                return None
+            if not path.lower().endswith(".json"):
+                path += ".cardplayers.json"
+        self.__remember_file_folder(path)
+        compare = bool(self.working_folder and self.reference_folder)
+        with busy_cursor():
+            content = cardplayersfile.export_players(self.manager, compare)
+        try:
+            cardplayersfile.write_file(path, content)
+        except OSError as error:
+            QMessageBox.warning(self, "CC Group", f"Could not write {path}:\n{error}")
+            return None
+        players = content["players"]
+        text = f"{len(players)} card player(s) exported to:\n{path}"
+        if compare:
+            changed = sum(1 for record in players if record.get("changed"))
+            added = sum(1 for record in players if "added" in record)
+            text += f"\n\n{changed} differ from vanilla, {added} of them added to an NPC."
         else:
-            self.__modified_label.setText(self.NO_MODIFIED_FOLDER_TEXT)
+            text += ("\n\nOpen both the folder you edit and the vanilla reference to also mark what differs from"
+                     " vanilla and which card games were added (then applying the file adds them).")
+        QMessageBox.information(self, "CC Group", text)
+        return content
+
+    def apply_card_players(self, path: str = ""):
+        """Apply a card players file onto the opened folders, as unsaved edits (Save writes them)."""
+        if not path:
+            path = QFileDialog.getOpenFileName(self, "Apply a card players file", self.__file_dialog_folder(),
+                                               cardplayersfile.FILE_FILTER)[0]
+            if not path:
+                return None
+        self.__remember_file_folder(path)
+        try:
+            content = cardplayersfile.read_file(path)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "CC Group", f"Could not apply {path}:\n{error}")
+            return None
+        with busy_cursor():
+            report = cardplayersfile.apply_players(self.manager, content)
+        self.__rebuild_tree_keeping_selection()
+        lines = [f"{len(report.changed)} card player(s) changed, {len(report.added)} card game(s) added to an NPC,"
+                 f" {report.unchanged} already as in the file."]
+        for title, items in (("Changed", report.changed), ("Added", report.added),
+                             ("Not applied", report.not_found), ("Partly applied", report.problems)):
+            if items:
+                lines.append(f"\n{title}:\n" + "\n".join(f"  - {item}" for item in items[:20])
+                             + (f"\n  ... and {len(items) - 20} more" if len(items) > 20 else ""))
+        if report.changed or report.added:
+            lines.append("\nNothing is written yet: review the changes (bold maps), then Save.")
+        QMessageBox.information(self, "CC Group", "\n".join(lines))
+        return report
+
+    def __legend_text(self):
+        """What the tree's marks mean, for the folders open now."""
+        if self.working_folder and self.reference_folder:
+            source = (f'<span style="color:{MODIFIED_FOLDER_COLOR.name()}"><b>Blue map</b> [mod]</span>: read from the'
+                      f' folder you edit (the mod changes it); the others come from vanilla.')
+        elif self.working_folder:
+            source = "Every map is read from the folder you edit."
+        elif self.reference_folder:
+            source = "Every map is read from vanilla (never written to)."
+        else:
+            return ""
+        return (f"{source} <b>* Bold map</b>: unsaved changes."
+                f' <span style="color:{NO_CARD_MASTER_COLOR.name()}">{NO_CARD_MASTER_TEXT}</span>: a card game added'
+                f" there uses the region rules directly (no Queen of Cards rule spreading)."
+                f' <span style="color:{NO_CARD_GAME_COLOR.name()}">Grey</span>: NPC without a card game.')
+
+    def close_working_folder(self):
+        """Stop using the folder you edit (unsaved patches dropped); the reference stays open."""
+        self.working_folder = ""
+        self.__reload()
+
+    def close_reference_folder(self):
+        """Stop using the vanilla reference (unsaved patches dropped); the edited folder stays open."""
+        self.reference_folder = ""
+        self.__reload()
 
     def close_folder(self):
-        """Forget the loaded folders and their card players (unsaved patches included)."""
-        self.folder_loaded = ""
-        self.modified_folder = ""
-        self.manager = CardGameFolderManager(self.game_data)
-        self.field_view.set_field_folders("", "")
-        self.__rebuild_tree()
-        self.table_widget.set_manager(self.manager)
-        self.__modified_button.setEnabled(False)
-        self.__remove_modified_button.setVisible(False)
-        self.__update_labels()
+        """Forget both folders and their card players (unsaved patches included)."""
+        self.working_folder = ""
+        self.reference_folder = ""
+        self.__reload()
 
     def player_label(self, player: CardGamePlayer):
         """Tree text of a card player: its names, plus the rare card that starts at its Deck ID."""
@@ -1272,6 +1413,20 @@ class NpcCardGameWidget(QWidget):
         item = self.__player_items.get(id(player))
         if item is not None:
             item.setText(0, self.player_label(player))
+            self.__refresh_map_item(item.parent())
+
+    def __refresh_map_item(self, map_item):
+        """Map row text: name, card players, [mod] when read from the folder you edit, bold + '*'
+        while it has unsaved changes."""
+        jsm_file = map_item.data(0, MAP_ROLE) if map_item is not None else None
+        if jsm_file is None:
+            return
+        unsaved = self.manager.has_unsaved_changes(jsm_file)
+        source = "  [mod]" if jsm_file.modified_path else ""
+        map_item.setText(0, f"{'* ' if unsaved else ''}{jsm_file.map_name}  ({len(jsm_file.players)}){source}")
+        font = map_item.font(0)
+        font.setBold(unsaved)
+        map_item.setFont(0, font)
 
     def __rebuild_tree(self):
         self.__tree.clear()
@@ -1284,15 +1439,17 @@ class NpcCardGameWidget(QWidget):
                 if show_all else []
             if not jsm_file.players and not npcs_without_cards:
                 continue
-            source = "  [modified]" if jsm_file.modified_path else ""
-            map_item = QTreeWidgetItem([f"{jsm_file.map_name}  ({len(jsm_file.players)}){source}", ""])
+            map_item = QTreeWidgetItem(["", ""])
+            map_item.setData(0, MAP_ROLE, jsm_file)
+            self.__refresh_map_item(map_item)
             tooltip = jsm_file.jsm_path
-            if not jsm_npc.has_card_master(jsm_file):
-                map_item.setForeground(0, QBrush(NO_CARD_MASTER_COLOR))
-                tooltip += ("\nNo card master in this map: a card game added here uses the region rules"
-                            " directly, without the Queen of Cards rule spreading.")
-            elif jsm_file.modified_path:
+            if jsm_file.modified_path and self.reference_folder:
                 map_item.setForeground(0, QBrush(MODIFIED_FOLDER_COLOR))
+                tooltip += "\nRead from the folder you edit (the mod changes this map), not from vanilla."
+            if not jsm_npc.has_card_master(jsm_file):
+                map_item.setText(1, NO_CARD_MASTER_TEXT)
+                map_item.setForeground(1, QBrush(NO_CARD_MASTER_COLOR))
+                map_item.setToolTip(1, TOOLTIP_NO_CARD_MASTER)
             map_item.setToolTip(0, tooltip)
             for player in jsm_file.players:
                 player_item = QTreeWidgetItem([self.player_label(player), ""])
@@ -1406,12 +1563,70 @@ class NpcCardGameWidget(QWidget):
             self.__editor_scroll.setWidget(editor_widget)
 
     def save_folder(self):
-        """Save the patched maps (the shared header Save button calls this): in place without a
-        modified folder, else into the modified folder, only the maps that differ from vanilla."""
+        """Save the patched maps (the shared header Save button calls this): into the folder you
+        edit - with the vanilla reference, only the maps that differ from vanilla; alone, in place.
+        With only the vanilla reference open, first ask where to create the mod's field folder."""
+        if not self.working_folder:
+            if self.reference_folder and self.manager.has_modifications():
+                self.__save_into_new_folder()
+            else:
+                QMessageBox.information(self, "CC Group", "No modification to save.")
+            return
+        self.__save_report()
+
+    def __save_into_new_folder(self):
+        """Only vanilla is open: pick (or create) the mod's field folder, write the patched maps
+        there, then keep it open as the folder you edit."""
+        folder = QFileDialog.getExistingDirectory(
+            self, "Save into: pick or create the mod's 'field' folder (vanilla is never written to)",
+            os.path.dirname(self.reference_folder))
+        if not folder:
+            return
+        problem = self.__new_folder_problem(folder)
+        if problem:
+            QMessageBox.warning(self, "CC Group - cannot save there", problem)
+            return
+        if not os.path.isdir(os.path.join(folder, MAPDATA)) and os.listdir(folder):
+            answer = QMessageBox.question(
+                self, "CC Group", f"This folder is not empty and holds no 'mapdata' folder:\n{folder}\n\n"
+                                  f"Save creates mapdata\\<area>\\<map>\\ in it, as a mod's field folder. Continue?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if answer != QMessageBox.StandardButton.Yes:
+                return
+        self.working_folder = folder
+        self.manager.modified_folder = folder  # write there; the reload below then reads it back
+        self.__save_report()
+        self.__reload()
+
+    def __new_folder_problem(self, folder: str):
+        """Why the patched maps can't be written into this new folder ("" when they can)."""
+        if self.__same_folder(folder, self.reference_folder) or \
+                os.path.normcase(os.path.abspath(folder)).startswith(
+                    os.path.normcase(os.path.abspath(self.reference_folder)) + os.sep):
+            return "This is the vanilla reference (or a folder inside it): vanilla is never written to."
+        if os.path.isdir(os.path.join(folder, "field", MAPDATA)):
+            return f"This folder holds a 'field' folder: pick that one instead:\n{os.path.join(folder, 'field')}"
+        if not os.path.isdir(os.path.join(folder, MAPDATA)):
+            return ""
+        check = check_field_folder(folder)
+        if check.misplaced or (not check.ok and check.maps):
+            return check.error
+        # An existing mod folder: writing a map it already has would lose the mod's own changes.
+        edited = [jsm_file.rel_path for jsm_file in self.manager.all_files or self.manager.jsm_files
+                  if jsm_file.is_modified()]
+        clashes = [rel_path for rel_path in edited if os.path.isfile(os.path.join(folder, rel_path))]
+        if clashes:
+            listed = "\n".join(f"    {rel_path}" for rel_path in clashes[:5])
+            return (f"This mod folder already has its own version of map(s) you edited:\n{listed}\n\n"
+                    f"Saving would replace them and lose the mod's own changes. Open it with Import > "
+                    f"{self.EDITED_TITLE} first (its changes are kept, yours are made on top), or pick another folder.")
+        return ""
+
+    def __save_report(self):
         report = self.manager.save_all_report()
         lines = []
         if report.written:
-            target = self.modified_folder or "in place"
+            target = self.working_folder if self.reference_folder else "in place"
             lines.append(f"{len(report.written)} map(s) saved ({target}):")
             lines += [f"  - {jsm_file.rel_path}" for jsm_file in report.written[:30]]
             if len(report.written) > 30:
@@ -1422,14 +1637,14 @@ class NpcCardGameWidget(QWidget):
         if report.identical_to_vanilla:
             names = "\n".join(f"  - {jsm_file.rel_path}" for jsm_file in report.identical_to_vanilla)
             answer = QMessageBox.question(
-                self, "CC Group", f"These maps of the modified folder are now identical to vanilla:\n{names}\n\n"
-                                  f"Delete them from the modified folder (the game then uses vanilla)?",
+                self, "CC Group", f"These maps of the folder you edit are now identical to vanilla:\n{names}\n\n"
+                                  f"Delete them from the folder you edit (the game then uses vanilla)?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             if answer == QMessageBox.StandardButton.Yes:
                 for jsm_file in report.identical_to_vanilla:
                     self.manager.delete_from_modified_folder(jsm_file)
                 lines.append(f"{len(report.identical_to_vanilla)} map(s) identical to vanilla removed from the"
-                             f" modified folder.")
+                             f" folder you edit.")
         if not lines:
             lines.append("No modification to save.")
         if report.written or report.identical_to_vanilla or report.written_texts:

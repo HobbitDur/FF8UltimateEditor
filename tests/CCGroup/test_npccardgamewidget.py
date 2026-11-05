@@ -29,7 +29,7 @@ def npc_tab(qapp, tmp_path):
     shutil.copy(BGHALL_DIR / "bghall_1.sym", tmp_path / "bghall_1.sym")
     settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
     widget = NpcCardGameWidget(settings=settings)
-    widget.load_folder(str(tmp_path))
+    widget.set_working_folder(str(tmp_path))
     yield widget
     widget.close_folder()
     widget.deleteLater()

@@ -111,8 +111,8 @@ class ShumiTranslator(QWidget):
         # Every FF8 text file this tool reads, as FileBindings. They are NOT offered one-by-one in
         # the header - Import is a single multi-select dialog (see open_files). They exist so that
         # importing one still publishes it to the registry for the other tools that share it
-        # (kernel.bin/FF8 exe with SolomonRing/Cid, mngrp.bin with Shiva/Zone...), and so each is
-        # found by the global Open-folder scan. None has a save_callback: Save is centralized
+        # (kernel.bin/FF8 exe with SolomonRing/Cid, mngrp.bin with Shiva/Zone...). None has a
+        # save_callback: Save is centralized
         # (save_folder) on the active tab. c0m*.dat has no binding (no fixed name; several files
         # collapse into one battle-text tab).
         self.kernel_binding = FileBinding("kernel.bin", file_registry,

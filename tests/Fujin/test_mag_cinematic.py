@@ -199,15 +199,20 @@ def test_widget_playback_follows_edits():
 
 
 @needs_files
-def test_open_folder_brings_every_gf_file():
-    """The shared Open-folder scan finds the .00, .01 and every streamed part, and the scene uses them."""
+def test_magic_folder_brings_every_gf_file():
+    """The magic folder holds the .00, .01 and every streamed part (Import > Effect files, Ctrl+A),
+    and the scene uses them."""
+    import os
     from Common.fileregistry import FileRegistry
-    from Common.filetoolbarwidget import FileToolbarWidget
     from Fujin.magdocumentwidget import MagDocumentWidget
     registry = FileRegistry()
     widget = MagDocumentWidget(file_registry=registry)
-    folder = PROJECT_ROOT / "extracted_files"
-    found = FileToolbarWidget.scan_folder(str(folder), {b.file_name for b in widget.file_bindings()})
+    wanted = {b.file_name.lower(): b.file_name for b in widget.file_bindings()}
+    found = {}
+    for root, _dirs, names in os.walk(PROJECT_ROOT / "extracted_files"):
+        for name in names:
+            if name.lower() in wanted:
+                found.setdefault(wanted[name.lower()], os.path.join(root, name))
     assert len(found) == 790  # all MAG families, including the original 169 GF parts
     for name in ("MAG200_B.00", "MAG200_B.01") + tuple(n for n in found if n.startswith("mag200_b.")):
         registry.open_file(name, found[name])

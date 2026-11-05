@@ -38,7 +38,7 @@ class FileBinding(QObject):
         self._closed = False  # removed from the opened files: saves nothing until opened again
         if load_callback is not None:
             self.file_opened.connect(load_callback)
-        registry.bindings.append(self)  # so "Open folder" knows every file the tools accept
+        registry.bindings.append(self)  # every file the tools accept (see Shiva's kernel sharing)
         registry.route(self)            # this file's changes and closes come here (and only those)
 
     @property
@@ -72,6 +72,14 @@ class FileBinding(QObject):
             directory=default_dir or self.current_path or os.getcwd())[0]
         if path:
             self.open_path(path)
+        return path
+
+    def open_remembered(self, parent):
+        """open_dialog starting in the folder this FF8 file was last opened from (remembered per
+        file name, so shared by every tool opening it); a pick updates that memory."""
+        path = self.open_dialog(parent, default_dir=self.registry.last_folder(self.file_name))
+        if path:
+            self.registry.remember_folder(self.file_name, os.path.dirname(path))
         return path
 
     def open_path(self, path):

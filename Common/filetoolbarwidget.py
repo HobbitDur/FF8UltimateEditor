@@ -1,4 +1,3 @@
-import inspect
 import os
 import time
 
@@ -72,12 +71,6 @@ class FileToolbarWidget(QWidget):
             "Reload this tool's files from disk (re-read them after an external change)")
         self.reload_button.clicked.connect(self._reload)
 
-        self.open_folder_button = self._icon_button(
-            icon_path, 'open_folder.svg',
-            "Open a folder: every file a tool can read, found anywhere inside it, is opened at once "
-            "(pick the 'field' folder to load the .jsm/.sym card players)")
-        self.open_folder_button.clicked.connect(self._open_folder)
-
         # Text compress / uncompress: only for tools that carry compressible game text (kernel,
         # ShumiTranslator...). Hidden for every other tool (see _refresh).
         self.compress_button = self._icon_button(
@@ -98,7 +91,6 @@ class FileToolbarWidget(QWidget):
         layout.addWidget(self.auto_upload_button)
         layout.addWidget(self.save_button)
         layout.addWidget(self.reload_button)
-        layout.addWidget(self.open_folder_button)
         layout.addWidget(self.compress_button)
         layout.addWidget(self.uncompress_button)
         self.setLayout(layout)
@@ -160,18 +152,15 @@ class FileToolbarWidget(QWidget):
         return entries
 
     def _folder_scan_key(self):
-        """Key for the Open-folder button's remembered folder. A scan isn't one file type, so it is
-        remembered per tool (e.g. CCGroup's 'field' folder, Seed's main_chr)."""
+        """Key for a whole-set import's remembered folder (see _auto_import_sources): not one file
+        type, so it is remembered per tool."""
         return type(self.tool_stack.currentWidget()).__name__
 
     def _open_binding(self, binding):
         """Open one binding's file, starting in the folder that file (by its FF8 name) was last
         opened from - so it re-opens there next time, and that memory is shared by every tool that
-        opens the same file. On a pick, store the file's folder for next time / next session."""
-        key = binding.file_name
-        path = binding.open_dialog(self, default_dir=self.registry.last_folder(key))
-        if path:
-            self.registry.remember_folder(key, os.path.dirname(path))
+        opens the same file."""
+        binding.open_remembered(self)
 
     def _import_main(self):
         entries = self._import_entries()
@@ -368,59 +357,24 @@ class FileToolbarWidget(QWidget):
         if callable(getattr(active, "uncompress_text", None)):
             active.uncompress_text()
 
-    def _open_folder(self):
-        """Pick a folder and open every file a tool can read that is found in it or its subfolders.
-
-        A folder-based tool (e.g. the NPC card players tab, which reads a whole 'field' folder of
-        .jsm/.sym scripts) is handed the folder through its load_folder(folder) method and reports
-        its own result."""
-        key = self._folder_scan_key()
-        folder = QFileDialog.getExistingDirectory(
-            self, "Open a folder — its files are loaded into the tools "
-                  "(pick the 'field' folder for the .jsm/.sym card players)",
-            self.registry.last_folder(key))
-        if not folder:
-            return
-        self.registry.remember_folder(key, folder)
-        found = self.scan_folder(folder, self.registry.accepted_file_names())
-        opened, problems = [], []
-        folder_loader = getattr(self.tool_stack.currentWidget(), "load_folder", None)
-        loaded_folder = callable(folder_loader)
-        progress = self.open_progress(self, len(found), "Opening the folder's files")
-        canceled = False
+    @classmethod
+    def run_with_progress(cls, parent, title, text, work):
+        """Run a long load that blocks the UI (a whole field folder...) under a modal busy bar,
+        shown only past half a second. work(report) is given a reporter for its own steps:
+        report(text, done=0, total=0) shows text on the bar (total 0: a busy bar) and returns False
+        once Cancel is pressed. Updates are throttled, so it can be called on every step.
+        Returns what work returns."""
+        progress = cls.open_progress(parent, 0, title)
         try:
-            with self.registry.batch():   # the views refresh once, after the last file
-                for index, (file_name, path) in enumerate(found.items()):
-                    if progress.wasCanceled():
-                        canceled = True
-                        break
-                    progress.setLabelText(f"Opening {os.path.basename(path)} ({index + 1} / {len(found)})")
-                    progress.setValue(index)
-                    try:
-                        self.registry.open_file(file_name, path)  # -> every tool bound to it loads it
-                        opened.append(file_name)
-                    except Exception as error:  # a matching name but unreadable content: keep going
-                        problems.append(f"{file_name}: {error}")
-                # Folder-based tools load the whole folder themselves and show their own result.
-                if loaded_folder and not canceled:
-                    self._load_tool_folder(folder_loader, folder, progress)
+            return cls._run_on_progress(progress, text, work)
         finally:
-            self.close_progress(progress)
-        if loaded_folder:
-            self._refresh()  # a folder-based tool may now have something to Save
-        # Only pop the generic summary when the active tool won't report the outcome itself.
-        if opened or problems or not loaded_folder:
-            self._report_open_folder(folder, opened, problems)
+            cls.close_progress(progress)
 
     @staticmethod
-    def _load_tool_folder(folder_loader, folder, progress):
-        """Hand the folder to a folder-based tool, keeping the same progress dialog up. A tool
-        whose load_folder takes a ``progress`` argument is given a reporter for its own steps:
-        progress(text, done=0, total=0) shows text on the bar (total 0: a busy bar) and returns
-        False once Cancel is pressed. Updates are throttled, so it can be called on every step."""
+    def _run_on_progress(progress, text, work):
         progress.setRange(0, 0)
         progress.setValue(0)
-        progress.setLabelText(f"Loading {os.path.basename(folder) or folder}...")
+        progress.setLabelText(text)
         started = last_update = time.monotonic()
 
         def report(text, done=0, total=0):
@@ -436,11 +390,8 @@ class FileToolbarWidget(QWidget):
                 QApplication.processEvents()   # the tool blocks the UI: repaint the bar
             return not progress.wasCanceled()
 
-        with ignoring_marks():   # the tool filling its widgets from the folder is not an edit
-            if "progress" in inspect.signature(folder_loader).parameters:
-                folder_loader(folder, progress=report)
-            else:
-                folder_loader(folder)
+        with ignoring_marks():   # the tool filling its widgets from what it loads is not an edit
+            return work(report)
 
     @staticmethod
     def close_progress(progress):
@@ -463,32 +414,6 @@ class FileToolbarWidget(QWidget):
         progress.setMinimumDuration(500)
         progress.setValue(0)
         return progress
-
-    @staticmethod
-    def scan_folder(folder, accepted_names):
-        """Walk folder and its subfolders; return {file_name: first path found} for every accepted
-        FF8 file name present (matched case-insensitively)."""
-        wanted = {name.lower(): name for name in accepted_names}
-        found = {}
-        for root, _dirs, files in os.walk(folder):
-            for file in files:
-                name = wanted.get(file.lower())
-                if name and name not in found:
-                    found[name] = os.path.join(root, file)
-        return found
-
-    def _report_open_folder(self, folder, opened, problems):
-        lines = [f"Opened {len(opened)} file(s) from:\n{folder}"]
-        if opened:
-            listed = sorted(opened)
-            shown = listed[:40]  # a game data folder opens hundreds of files: keep the box readable
-            more = f"\n  ... and {len(listed) - len(shown)} more" if len(listed) > len(shown) else ""
-            lines.append("\n" + "\n".join(f"  • {name}" for name in shown) + more)
-        else:
-            lines.append("\nNo file a tool can read was found here or in its subfolders.")
-        if problems:
-            lines.append("\nCould not open:\n" + "\n".join(f"  • {p}" for p in problems))
-        QMessageBox.information(self, "Open folder", "\n".join(lines))
 
     # -- enabled/visible state ------------------------------------------------------
     def _on_tool_changed(self, _index=None):

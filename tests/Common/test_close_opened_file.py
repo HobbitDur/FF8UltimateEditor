@@ -81,11 +81,11 @@ def test_ccgroup_npc_scripts_close(qapp):
     registry = FileRegistry()
     cc = CCGroupWidget(file_registry=registry)
     cc.tab_widget.setCurrentIndex(1)
-    cc.load_folder(str(PROJECT_ROOT / "extracted_files" / "field"))
+    cc.load_working_folder(str(PROJECT_ROOT / "extracted_files" / "field"))
     assert cc.npc_card_game_widget.manager.nb_players() > 0
     registry.close_file(cc.NPC_REGISTRY_NAME)
     assert cc.npc_card_game_widget.manager.nb_players() == 0
-    assert cc.npc_card_game_widget.folder_loaded == ""
+    assert cc.npc_card_game_widget.working_folder == ""
     assert not cc.can_save_folder()
 
 

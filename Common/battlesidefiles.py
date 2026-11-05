@@ -1,7 +1,7 @@
 """The battle files a tool's BattleScenePreview draws, opened as side files (only read, never edited).
 
-A host (JumboCactuar, Alexander) offers them in the header's Import read-only menu (entries()),
-Open folder (load_folder) and Auto-upload (auto_import_source); they are listed under one summary
+A host (JumboCactuar, Alexander) offers them in the header's Import read-only menu (entries())
+and Auto-upload (auto_import_source); they are listed under one summary
 entry of the Opened files panel (`registry_key`) and closing it there forgets them. The preview
 finds them by name (path) and stands the party among the opened characters and weapons.
 """
@@ -58,16 +58,6 @@ class BattleSideFiles:
         if file_paths:
             self.file_registry.remember_folder(folder_key, os.path.dirname(file_paths[0]))
             self.add(file_paths)
-
-    def load_folder(self, folder):
-        """Every battle file found in the folder (and below; the first one of each name)."""
-        found = {}
-        for root, _folders, names in os.walk(folder):
-            for name in names:
-                if self._matches(name.lower()):
-                    found.setdefault(name.lower(), os.path.join(root, name))
-        if found:
-            self.add(list(found.values()))
 
     def auto_import_source(self):
         """The header's Auto-upload: the battle files opened last time."""

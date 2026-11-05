@@ -10,14 +10,19 @@ from CCGroup.cardwidget import CardWidget
 from CCGroup.npccardgamewidget import NpcCardGameWidget
 from Common.filebinding import FileBinding
 from Common.autoimport import AutoImportSource
+from Common.fieldfolder import check_field_folder, pick_field_folder
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 
 
 class CCGroupWidget(QWidget):
     file_bindings_changed = pyqtSignal()  # the active tab changed
-    # The one summary entry the NPC tab's .jsm scripts have in the Opened files panel.
-    NPC_REGISTRY_NAME = "CCGroup NPC scripts"
+    # The Opened files entries of the NPC tab's two field folders.
+    NPC_REGISTRY_NAME = "CCGroup field folder (edited)"
+    NPC_REFERENCE_REGISTRY_NAME = "CCGroup vanilla field folder (reference)"
+    # Their remembered folders (FileRegistry.last_folder keys), which Auto-upload reopens too.
+    EDITED_FOLDER_KEY = "CCGroup field folder"
+    REFERENCE_FOLDER_KEY = "CCGroup vanilla field folder"
     CARD_DATA_SIZE = 8
     GENERAL_OFFSET = 0x400000
     LANG_LIST = ["en", "fr"]
@@ -47,7 +52,9 @@ class CCGroupWidget(QWidget):
         self.game_data.load_card_data()
         self.npc_card_game_widget = NpcCardGameWidget(icon_path=icon_path, settings=settings,
                                                       game_data=self.game_data)
+        self.npc_card_game_widget.folders_changed.connect(self.__sync_opened_folders)
         self.tab_widget.addTab(self.npc_card_game_widget, "NPC card players")
+        self.__migrate_folder_settings()
         self.tab_widget.currentChanged.connect(self.__tab_changed)
         self.tab_widget.setCurrentIndex(self.settings.value("ccgroup/current_tab", defaultValue=0, type=int))
         self.scroll_area.setWidgetResizable(True)
@@ -59,7 +66,7 @@ class CCGroupWidget(QWidget):
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'icon.ico')))
 
         # The FF8 exe holds the card values; the .hext export is its "save". Both run from the
-        # shared header toolbar (Import / Save), which acts on this tab only (see file_bindings).
+        # shared header toolbar (Import, from either tab; Save acts on this tab only - see file_bindings).
         self.exe_binding = FileBinding("FF8 exe", file_registry, load_callback=self.load_file,
                                        save_callback=self.__save_file, file_filter="*.exe")
         self.__save_dialog = QFileDialog()
@@ -114,40 +121,112 @@ class CCGroupWidget(QWidget):
         self.exe_binding.load_opened_file()  # another tool may have opened the exe already
 
     def file_bindings(self):
-        """The Card values tab edits the FF8 exe through the shared toolbar; the NPC tab is
-        folder-based (see load_folder), so it offers no single-file binding here."""
+        """What Save and Reload act on: the FF8 exe on the Card values tab. The NPC tab saves its
+        field folder through save_folder."""
         if self.tab_widget.currentIndex() == 0:
             return [self.exe_binding]
         return []
 
-    def auto_import_sources(self):
-        if self.tab_widget.currentWidget() is not self.npc_card_game_widget:
-            return []
-        key = type(self).__name__
-        folder = (self.file_registry.last_folder(key)
-                  or self.settings.value("ccgroup/npc_last_folder", "", type=str))
-        return [AutoImportSource(key, ("*.jsm",), lambda _paths: self.load_folder(folder),
-                                 folder=folder, recursive=True)] if folder else []
+    def import_entries(self):
+        """Import, the same from either tab (each opens its tab): the FF8 exe for the card values, or
+        the field folder you edit for the NPC card players - a folder, since they are read from
+        every map of the game at once."""
+        return [("FF8 exe (card values)", self.open_exe),
+                (f"{NpcCardGameWidget.EDITED_TITLE} (NPC card players)", self.open_working_folder)]
 
-    def load_folder(self, folder_path):
-        """The header's Open-folder button: on the NPC tab, load every .jsm/.sym card player found
-        in the picked field folder. The Card values tab has nothing to load from a folder."""
-        active = self.tab_widget.currentWidget()
-        loader = getattr(active, "load_folder", None)
-        if callable(loader):
-            loader(folder_path)
-            if active is self.npc_card_game_widget:
-                # Dozens of .jsm files can come out of one field folder - one summary entry in
-                # Opened files instead of one per script (see FileRegistry.summarize_paths).
-                jsm_paths = [f.jsm_path for f in self.npc_card_game_widget.manager.jsm_files]
-                self.file_registry.open_file(
-                    self.NPC_REGISTRY_NAME, FileRegistry.summarize_paths(jsm_paths, "script"))
+    def complementary_entries(self):
+        return [(f"{NpcCardGameWidget.REFERENCE_TITLE} (NPC card players, read-only)",
+                 self.open_reference_folder)]
+
+    def open_exe(self):
+        if self.exe_binding.open_remembered(self):
+            self.tab_widget.setCurrentIndex(0)
+
+    def open_working_folder(self):
+        check = pick_field_folder(self, "CC Group", f"{NpcCardGameWidget.EDITED_TITLE}: the 'field' folder"
+                                  f" holding mapdata (a mod's, or a whole extracted one)",
+                                  self.file_registry.last_folder(self.EDITED_FOLDER_KEY),
+                                  remember=lambda folder: self.file_registry.remember_folder(self.EDITED_FOLDER_KEY,
+                                                                                             folder))
+        if check is not None:
+            self.load_working_folder(check.root)
+
+    def open_reference_folder(self):
+        check = pick_field_folder(self, "CC Group", f"{NpcCardGameWidget.REFERENCE_TITLE}: the whole game's"
+                                  f" 'field' folder holding mapdata", self.file_registry.last_folder(
+                                      self.REFERENCE_FOLDER_KEY), complete=True,
+                                  remember=lambda folder: self.file_registry.remember_folder(
+                                      self.REFERENCE_FOLDER_KEY, folder))
+        if check is not None:
+            self.load_reference_folder(check.root)
+
+    def load_working_folder(self, folder):
+        """Use a checked field folder (Common.fieldfolder) as the one the NPC tab edits."""
+        self.tab_widget.setCurrentWidget(self.npc_card_game_widget)
+        if self.npc_card_game_widget.set_working_folder(folder):
+            self.file_registry.remember_folder(self.EDITED_FOLDER_KEY, folder)
+
+    def load_reference_folder(self, folder):
+        """Use a checked complete field folder (Common.fieldfolder) as the NPC tab's vanilla reference."""
+        self.tab_widget.setCurrentWidget(self.npc_card_game_widget)
+        if self.npc_card_game_widget.set_reference_folder(folder):
+            self.file_registry.remember_folder(self.REFERENCE_FOLDER_KEY, folder)
+
+    def auto_import_bindings(self):
+        return [self.exe_binding]  # from either tab, like Import
+
+    def auto_import_sources(self):
+        """Auto-upload also reopens the two field folders last opened (checked again: a folder
+        moved or changed since is reported, not loaded)."""
+        sources = []
+        for key, loader, complete in ((self.REFERENCE_FOLDER_KEY, self.load_reference_folder, True),
+                                      (self.EDITED_FOLDER_KEY, self.load_working_folder, False)):
+            folder = self.file_registry.last_folder(key)
+            if folder:
+                sources.append(AutoImportSource(
+                    key, ("*.jsm",), lambda _paths, f=folder, load=loader, c=complete: self.__reopen(f, load, c),
+                    folder=folder, recursive=True))
+        return sources
+
+    @staticmethod
+    def __reopen(folder, loader, complete):
+        check = check_field_folder(folder, complete=complete)
+        if not check.ok:
+            raise ValueError(check.error)
+        loader(check.root)
+
+    def __migrate_folder_settings(self):
+        """Folders remembered by versions that opened the field folder with the header's former
+        Open-folder button: vanilla first (ccgroup/npc_last_folder), then a modified folder on top."""
+        if self.file_registry.last_folder(self.EDITED_FOLDER_KEY) or \
+                self.file_registry.last_folder(self.REFERENCE_FOLDER_KEY):
+            return
+        vanilla = self.settings.value("ccgroup/npc_last_folder", "", type=str)
+        modified = self.settings.value("ccgroup/npc_modified_folder", "", type=str)
+        if vanilla and modified:
+            self.file_registry.remember_folder(self.REFERENCE_FOLDER_KEY, vanilla)
+            self.file_registry.remember_folder(self.EDITED_FOLDER_KEY, modified)
+        elif vanilla:
+            self.file_registry.remember_folder(self.EDITED_FOLDER_KEY, vanilla)
+
+    def __sync_opened_folders(self):
+        """One Opened files entry per field folder the NPC tab uses."""
+        npc = self.npc_card_game_widget
+        for name, folder in ((self.NPC_REGISTRY_NAME, npc.working_folder),
+                             (self.NPC_REFERENCE_REGISTRY_NAME, npc.reference_folder)):
+            if folder and self.file_registry.get_path(name) != folder:
+                self.file_registry.open_file(name, folder)
+            elif not folder and self.file_registry.get_path(name):
+                self.file_registry.close_file(name)
+        self.file_bindings_changed.emit()  # Save may now have something to do
 
     def _on_registry_file_closed(self, file_name, _path):
-        """The NPC scripts were removed from the Opened files panel: unload the NPC tab."""
-        if file_name == self.NPC_REGISTRY_NAME:
-            self.npc_card_game_widget.close_folder()
-            self.file_bindings_changed.emit()
+        """A field folder was removed from the Opened files panel: stop using it."""
+        npc = self.npc_card_game_widget
+        if file_name == self.NPC_REGISTRY_NAME and npc.working_folder:
+            npc.close_working_folder()
+        elif file_name == self.NPC_REFERENCE_REGISTRY_NAME and npc.reference_folder:
+            npc.close_reference_folder()
 
     def save_folder(self):
         """The header's Save button, multi-file side: on the NPC tab, save the patched .jsm files."""

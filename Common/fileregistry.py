@@ -139,13 +139,6 @@ class FileRegistry(QObject):
             return self._pending_settings[key]
         return self.settings.value(key, "", type=str)
 
-    def accepted_file_names(self):
-        """The concrete FF8 file names every tool can open (for the "Open folder" scan).
-
-        Bindings whose filter is a wildcard (e.g. Ifrit's *.dat, CCGroup's *.exe) match no single
-        name, so they are left out - a folder scan can't pick one file among many."""
-        return {binding.file_name for binding in self.bindings if "*" not in binding.file_filter}
-
     @property
     def batching(self):
         """True while many files are being opened at once (see batch())."""

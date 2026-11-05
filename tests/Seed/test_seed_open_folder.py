@@ -1,4 +1,4 @@
-"""Seed's Open-folder button: picking the 'field' folder lists every chara.one as a field and finds
+"""Seed's Import > Field folder: the 'field' folder lists every chara.one as a field and finds
 main_chr inside it (it used to take the picked folder AS main_chr, breaking main characters)."""
 import os
 import pathlib
@@ -77,7 +77,7 @@ def test_widget_open_field_folder_lists_all_fields():
     _app = QApplication.instance() or QApplication([])
     widget = SeedWidget()
     widget.viewer_3d.load_file = lambda: None  # no GL headless
-    widget.load_folder(str(FIELD))
+    widget.load_field_folder(str(FIELD))
     assert widget.field_list.count() >= 800
     assert widget.seed_manager.main_chr_folder == MAIN_CHR
     assert widget.seed_manager.chara_one is not None  # first field opened
