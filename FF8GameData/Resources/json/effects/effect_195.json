@@ -29,6 +29,36 @@
    "kind": "sound",
    "address": "0xD0BD30",
    "size": 4
+  },
+  "seqs.smoke": {
+   "kind": "seq",
+   "address": "0xD099F0",
+   "size": 196,
+   "frames": 7
+  },
+  "seqs.impact": {
+   "kind": "seq",
+   "address": "0xD09E0C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.impact_smoke": {
+   "kind": "seq",
+   "address": "0xD097CC",
+   "size": 548,
+   "frames": 16
+  },
+  "seqs.steam": {
+   "kind": "seq",
+   "address": "0xD09AB4",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.bone_smoke": {
+   "kind": "seq",
+   "address": "0xD09C60",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -63,6 +93,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.smoke",
+   "part": "shot",
+   "label": "Smoke",
+   "doc": "The sprite sequence smoke (a flipbook of 7 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.impact",
+   "part": "shot",
+   "label": "Impact",
+   "doc": "The sprite sequence impact (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.impact",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.impact_smoke",
+   "part": "shot",
+   "label": "Impact smoke",
+   "doc": "The sprite sequence impact smoke (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.impact_smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.steam",
+   "part": "shot",
+   "label": "Steam",
+   "doc": "The sprite sequence steam (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.steam",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.bone_smoke",
+   "part": "shot",
+   "label": "Bone smoke",
+   "doc": "The sprite sequence bone smoke (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.bone_smoke",
    "unit": "plain"
   }
  ],

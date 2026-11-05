@@ -30,6 +30,30 @@
    "kind": "sound",
    "address": "0xD12E64",
    "size": 4
+  },
+  "seqs.smoke": {
+   "kind": "seq",
+   "address": "0xD0DB5C",
+   "size": 216,
+   "frames": 7
+  },
+  "seqs.ground_smoke": {
+   "kind": "seq",
+   "address": "0xD0DC34",
+   "size": 116,
+   "frames": 4
+  },
+  "seqs.head": {
+   "kind": "seq",
+   "address": "0xD0DCA8",
+   "size": 60,
+   "frames": 1
+  },
+  "seqs.flame": {
+   "kind": "seq",
+   "address": "0xD0D938",
+   "size": 548,
+   "frames": 16
   }
  },
  "resources": {
@@ -64,6 +88,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.smoke",
+   "part": "shot",
+   "label": "Smoke",
+   "doc": "The sprite sequence smoke (a flipbook of 7 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ground_smoke",
+   "part": "shot",
+   "label": "Ground smoke",
+   "doc": "The sprite sequence ground smoke (a flipbook of 4 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ground_smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.head",
+   "part": "shot",
+   "label": "Head",
+   "doc": "The sprite sequence head (a flipbook of 1 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.head",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flame",
+   "part": "shot",
+   "label": "Flame",
+   "doc": "The sprite sequence flame (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flame",
    "unit": "plain"
   }
  ],

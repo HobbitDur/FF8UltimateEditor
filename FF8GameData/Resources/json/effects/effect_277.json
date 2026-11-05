@@ -59,6 +59,12 @@
    "address": "0x10CB838",
    "size": 428,
    "frames": 16
+  },
+  "seqs.glow": {
+   "kind": "seq",
+   "address": "0x10CB628",
+   "size": 528,
+   "frames": 16
   }
  },
  "resources": {
@@ -148,6 +154,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.glow",
+   "part": "beam",
+   "label": "Glow",
+   "doc": "The sprite sequence glow (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.glow",
    "unit": "plain"
   }
  ],

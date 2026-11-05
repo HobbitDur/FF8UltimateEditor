@@ -3,9 +3,10 @@
 Every billboard / sprite an effect draws goes through InitEffectSequenceFromData (0x571C80, cloned
 into most effect modules) and EffectSprite_EmitFramePrims (its +0x140): the caller names a
 sequence and a frame, the emitter draws that frame's pieces as textured quads around the sprite's
-position. About 330 sequences lie in the exe's data (file offset = address - 0x400000):
+position. About 735 sequences lie in the exe's data (file offset = address - 0x400000):
 
-    +0  u32  0x00010524 (the signature, 24 05 01 00)
+    +0  u8[4] 24 05, then 01 00 for most, 00 00 or 01 06..0C for about 160 more (the tool's header:
+         the game never reads these 4 bytes, the Init starts at +8)
     +4  u8[4] default palette-row parameters (a piece's flags >> 12 picks one; a caller may override)
     +8  u16  frame count
     +10 u16[frames] frame offsets from the sequence's start, then 0xFFFF
@@ -24,7 +25,12 @@ import struct
 from dataclasses import dataclass, field
 
 IMAGE_BASE = 0x400000
-SIGNATURE = bytes((0x24, 0x05, 0x01, 0x00))
+SIGNATURE = bytes((0x24, 0x05, 0x01, 0x00))   # the most common header
+
+
+def is_header(head):
+    """Whether 4 bytes are a sprite sequence's header: 24 05, then 00 or 01, then a byte below 0x10."""
+    return len(head) == 4 and head[0] == 0x24 and head[1] == 0x05 and head[2] <= 1 and head[3] < 0x10
 PIECE_SIZE = 20
 MAX_FRAMES = 1024
 MAX_PIECES = 256
@@ -97,7 +103,8 @@ class SpriteSequence:
     address: int                        # in FF8_EN.exe's memory (0x400000-based)
     parameters: tuple = (0, 0, 0, 0)
     frames: list = field(default_factory=list)
-    size: int = 0                       # bytes, from the signature to the last frame's end
+    size: int = 0                       # bytes, from the header to the last frame's end
+    header: bytes = SIGNATURE           # its first 4 bytes, kept as they were (never read by the game)
 
     def pieces(self):
         """Every distinct piece of the sequence."""
@@ -107,14 +114,15 @@ class SpriteSequence:
 def parse_sequence(data, offset, address=None):
     """The SpriteSequence at file offset `offset` of an exe image, or None when the bytes there are
     not one."""
-    if data[offset:offset + 4] != SIGNATURE or offset + 12 > len(data):
+    if not is_header(bytes(data[offset:offset + 4])) or offset + 12 > len(data):
         return None
     parameters = tuple(data[offset + 4:offset + 8])
     count = struct.unpack_from("<H", data, offset + 8)[0]
     if not 0 < count <= MAX_FRAMES or offset + 10 + 2 * count > len(data):
         return None
     offsets = struct.unpack_from(f"<{count}H", data, offset + 10)
-    sequence = SpriteSequence(address if address is not None else offset + IMAGE_BASE, parameters)
+    sequence = SpriteSequence(address if address is not None else offset + IMAGE_BASE, parameters,
+                              header=bytes(data[offset:offset + 4]))
     end = 10 + 2 * count
     for frame_offset in offsets:
         if frame_offset < 10 + 2 * count or offset + frame_offset + 4 > len(data):
@@ -140,7 +148,9 @@ def parse_sequence(data, offset, address=None):
 def find_sequences(data):
     """{address: SpriteSequence} of every sprite sequence in an exe image (FF8_EN.exe's bytes)."""
     found = {}
-    for match in re.finditer(re.escape(SIGNATURE), data):
+    for match in re.finditer(rb"\x24\x05[\x00\x01][\x00-\x0f]", data):
+        if match.start() & 3:           # the exe's sequences are word aligned
+            continue
         sequence = parse_sequence(data, match.start())
         if sequence is not None:
             found[sequence.address] = sequence
@@ -184,6 +194,6 @@ def encode_sequence(sequence):
         for p in frame.pieces:
             body += struct.pack("<BBBBBBHhhhHhh", p.width, p.intensity, p.height, p.gpu_code, p.u, p.v, p.clut, p.x,
                                 p.y, p.angle, p.flags, p.scale_x, p.scale_y)
-    out = bytearray(SIGNATURE + bytes(sequence.parameters) + struct.pack(f"<H{count}H", count, *offsets) + b"\xff\xff")
+    out = bytearray(bytes(sequence.header) + bytes(sequence.parameters) + struct.pack(f"<H{count}H", count, *offsets) + b"\xff\xff")
     out += bytes(head - len(out))
     return bytes(out + body)

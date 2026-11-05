@@ -39,6 +39,24 @@
    "kind": "sound",
    "address": "0xCD58C0",
    "size": 4
+  },
+  "seqs.drop": {
+   "kind": "seq",
+   "address": "0xCD2C44",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.bubble": {
+   "kind": "seq",
+   "address": "0xCD2DF0",
+   "size": 376,
+   "frames": 14
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xCD2F68",
+   "size": 560,
+   "frames": 21
   }
  },
  "resources": {
@@ -101,6 +119,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sounds.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.drop",
+   "part": "master",
+   "label": "Drop",
+   "doc": "The sprite sequence drop (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.drop",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.bubble",
+   "part": "master",
+   "label": "Bubble",
+   "doc": "The sprite sequence bubble (a flipbook of 14 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.bubble",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "master",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 21 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
    "unit": "plain"
   }
  ],

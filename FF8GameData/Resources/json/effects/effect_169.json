@@ -29,6 +29,24 @@
    "kind": "sound",
    "address": "0xD6BC1C",
    "size": 4
+  },
+  "seqs.blob": {
+   "kind": "seq",
+   "address": "0xD6A544",
+   "size": 220,
+   "frames": 8
+  },
+  "seqs.drip": {
+   "kind": "seq",
+   "address": "0xD6A718",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.splash": {
+   "kind": "seq",
+   "address": "0xD6A620",
+   "size": 248,
+   "frames": 9
   }
  },
  "resources": {
@@ -74,6 +92,39 @@
    "min": 0,
    "max": 50,
    "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.blob",
+   "part": "director",
+   "label": "Blob",
+   "doc": "The sprite sequence blob (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.blob",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.drip",
+   "part": "director",
+   "label": "Drip",
+   "doc": "The sprite sequence drip (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.drip",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splash",
+   "part": "director",
+   "label": "Splash",
+   "doc": "The sprite sequence splash (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splash",
    "unit": "plain"
   }
  ],

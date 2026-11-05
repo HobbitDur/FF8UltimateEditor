@@ -269,7 +269,7 @@ def test_every_port_flipbook_is_a_sequence_its_code_plays_whole():
     found = [(effect, key, entry) for effect in described_effects()
              for key, entry in load_description(effect).get("exe_data", {}).items()
              if isinstance(entry, dict) and entry.get("kind") == "seq" and "frames" in entry]
-    assert len(found) >= 140 and len({effect for effect, _key, _entry in found}) >= 56
+    assert len(found) >= 373 and len({effect for effect, _key, _entry in found}) >= 137
     for effect, key, entry in found:
         address = int(entry["address"], 16)
         sequence = parse_sequence(exe, address - 0x400000, address)

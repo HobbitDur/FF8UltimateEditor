@@ -58,6 +58,18 @@
    "address": "0x118BA10",
    "size": 133104,
    "capacity": 1156
+  },
+  "seqs.ember": {
+   "kind": "seq",
+   "address": "0x1182534",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.flame": {
+   "kind": "seq",
+   "address": "0x11823C8",
+   "size": 364,
+   "frames": 12
   }
  },
  "resources": {
@@ -164,6 +176,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.burn",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ember",
+   "part": "director",
+   "label": "Ember",
+   "doc": "The sprite sequence ember (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ember",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flame",
+   "part": "director",
+   "label": "Flame",
+   "doc": "The sprite sequence flame (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flame",
    "unit": "plain"
   }
  ],

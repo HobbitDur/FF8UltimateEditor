@@ -29,6 +29,24 @@
    "kind": "sound",
    "address": "0xCFB2FC",
    "size": 4
+  },
+  "seqs.bone_smoke": {
+   "kind": "seq",
+   "address": "0xCF6054",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xCF6200",
+   "size": 404,
+   "frames": 15
+  },
+  "seqs.smoke": {
+   "kind": "seq",
+   "address": "0xCF5E44",
+   "size": 528,
+   "frames": 16
   }
  },
  "resources": {
@@ -63,6 +81,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.bone_smoke",
+   "part": "shot",
+   "label": "Bone smoke",
+   "doc": "The sprite sequence bone smoke (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.bone_smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "shot",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 15 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.smoke",
+   "part": "shot",
+   "label": "Smoke",
+   "doc": "The sprite sequence smoke (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.smoke",
    "unit": "plain"
   }
  ],

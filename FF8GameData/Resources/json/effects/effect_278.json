@@ -62,6 +62,18 @@
    "address": "0x10BD170",
    "size": 396,
    "frames": 14
+  },
+  "seqs.at_10bd044": {
+   "kind": "seq",
+   "address": "0x10BD044",
+   "size": 300,
+   "frames": 11
+  },
+  "seqs.at_10bce98": {
+   "kind": "seq",
+   "address": "0x10BCE98",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -179,6 +191,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_10bd170",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_10bd044",
+   "part": "creature",
+   "label": "Flipbook 10BD044",
+   "doc": "The sprite sequence at 0x10BD044 (a flipbook of 11 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_10bd044",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_10bce98",
+   "part": "creature",
+   "label": "Flipbook 10BCE98",
+   "doc": "The sprite sequence at 0x10BCE98 (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_10bce98",
    "unit": "plain"
   }
  ],

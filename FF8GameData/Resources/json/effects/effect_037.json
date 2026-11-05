@@ -64,6 +64,18 @@
    "address": "0x15D9504",
    "size": 288,
    "frames": 6
+  },
+  "seqs.streak": {
+   "kind": "seq",
+   "address": "0x15D9624",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.ribbon": {
+   "kind": "seq",
+   "address": "0x15D92F4",
+   "size": 528,
+   "frames": 6
   }
  },
  "resources": {
@@ -380,6 +392,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.streak",
+   "part": "emitter",
+   "label": "Streak",
+   "doc": "The sprite sequence streak (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.streak",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ribbon",
+   "part": "emitter",
+   "label": "Ribbon",
+   "doc": "The sprite sequence ribbon (a flipbook of 6 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ribbon",
    "unit": "plain"
   }
  ],

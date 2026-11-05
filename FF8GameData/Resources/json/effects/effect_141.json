@@ -29,6 +29,24 @@
    "kind": "sound",
    "address": "0xEA7E74",
    "size": 4
+  },
+  "seqs.flash": {
+   "kind": "seq",
+   "address": "0xDDF4A0",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.debris": {
+   "kind": "seq",
+   "address": "0xDDF770",
+   "size": 320,
+   "frames": 11
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xDDF64C",
+   "size": 292,
+   "frames": 10
   }
  },
  "resources": {
@@ -63,6 +81,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flash",
+   "part": "controller",
+   "label": "Flash",
+   "doc": "The sprite sequence flash (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.debris",
+   "part": "controller",
+   "label": "Debris",
+   "doc": "The sprite sequence debris (a flipbook of 11 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "controller",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
    "unit": "plain"
   }
  ],

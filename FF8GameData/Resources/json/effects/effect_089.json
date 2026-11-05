@@ -63,6 +63,24 @@
    "address": "0x14A9FF0",
    "size": 21612,
    "capacity": 236
+  },
+  "seqs.sparkle": {
+   "kind": "seq",
+   "address": "0x14A07F4",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.flash": {
+   "kind": "seq",
+   "address": "0x14A0538",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x14A067C",
+   "size": 376,
+   "frames": 14
   }
  },
  "resources": {},
@@ -176,6 +194,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.at_14a9ff0",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparkle",
+   "part": "director",
+   "label": "Sparkle",
+   "doc": "The sprite sequence sparkle (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparkle",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flash",
+   "part": "director",
+   "label": "Flash",
+   "doc": "The sprite sequence flash (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "director",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 14 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
    "unit": "plain"
   }
  ],

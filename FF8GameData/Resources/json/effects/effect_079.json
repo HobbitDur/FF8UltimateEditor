@@ -73,6 +73,24 @@
    "kind": "sound",
    "address": "0x1580B2C",
    "size": 4
+  },
+  "seqs.at_1580e54": {
+   "kind": "seq",
+   "address": "0x1580E54",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.at_1580b30": {
+   "kind": "seq",
+   "address": "0x1580B30",
+   "size": 584,
+   "frames": 22
+  },
+  "seqs.at_1580d78": {
+   "kind": "seq",
+   "address": "0x1580D78",
+   "size": 220,
+   "frames": 8
   }
  },
  "resources": {
@@ -261,6 +279,39 @@
    "min": 0,
    "max": 200,
    "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_1580e54",
+   "part": "director",
+   "label": "Flipbook 1580E54",
+   "doc": "The sprite sequence at 0x1580E54 (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_1580e54",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_1580b30",
+   "part": "director",
+   "label": "Flipbook 1580B30",
+   "doc": "The sprite sequence at 0x1580B30 (a flipbook of 22 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_1580b30",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_1580d78",
+   "part": "director",
+   "label": "Flipbook 1580D78",
+   "doc": "The sprite sequence at 0x1580D78 (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_1580d78",
    "unit": "plain"
   }
  ],

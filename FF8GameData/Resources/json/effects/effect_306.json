@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0xCEB284",
    "size": 4
+  },
+  "seqs.flicker": {
+   "kind": "seq",
+   "address": "0xCE60C0",
+   "size": 60,
+   "frames": 1
+  },
+  "seqs.debris": {
+   "kind": "seq",
+   "address": "0xCE62A8",
+   "size": 404,
+   "frames": 15
   }
  },
  "resources": {
@@ -63,6 +75,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flicker",
+   "part": "controller",
+   "label": "Flicker",
+   "doc": "The sprite sequence flicker (a flipbook of 1 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flicker",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.debris",
+   "part": "controller",
+   "label": "Debris",
+   "doc": "The sprite sequence debris (a flipbook of 15 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.debris",
    "unit": "plain"
   }
  ],

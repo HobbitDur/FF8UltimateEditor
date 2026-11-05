@@ -34,6 +34,30 @@
    "kind": "sound",
    "address": "0xCE40D0",
    "size": 4
+  },
+  "seqs.dust": {
+   "kind": "seq",
+   "address": "0xCE1760",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.puff": {
+   "kind": "seq",
+   "address": "0xCE158C",
+   "size": 40,
+   "frames": 1
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xCE15B4",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.charge": {
+   "kind": "seq",
+   "address": "0xCE13E0",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -85,6 +109,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sounds.blast",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust",
+   "part": "director",
+   "label": "Dust",
+   "doc": "The sprite sequence dust (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.puff",
+   "part": "director",
+   "label": "Puff",
+   "doc": "The sprite sequence puff (a flipbook of 1 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.puff",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "director",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.charge",
+   "part": "director",
+   "label": "Charge",
+   "doc": "The sprite sequence charge (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.charge",
    "unit": "plain"
   }
  ],

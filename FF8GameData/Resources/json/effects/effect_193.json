@@ -29,6 +29,36 @@
    "kind": "sound",
    "address": "0xD155B0",
    "size": 4
+  },
+  "seqs.ground_smoke": {
+   "kind": "seq",
+   "address": "0xD145E4",
+   "size": 116,
+   "frames": 4
+  },
+  "seqs.smoke2": {
+   "kind": "seq",
+   "address": "0xD1450C",
+   "size": 216,
+   "frames": 7
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xD149B0",
+   "size": 248,
+   "frames": 9
+  },
+  "seqs.target_spark": {
+   "kind": "seq",
+   "address": "0xD14658",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.smoke": {
+   "kind": "seq",
+   "address": "0xD14430",
+   "size": 220,
+   "frames": 8
   }
  },
  "resources": {
@@ -63,6 +93,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ground_smoke",
+   "part": "shot",
+   "label": "Ground smoke",
+   "doc": "The sprite sequence ground smoke (a flipbook of 4 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ground_smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.smoke2",
+   "part": "shot",
+   "label": "Smoke2",
+   "doc": "The sprite sequence smoke2 (a flipbook of 7 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.smoke2",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "shot",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.target_spark",
+   "part": "shot",
+   "label": "Target spark",
+   "doc": "The sprite sequence target spark (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.target_spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.smoke",
+   "part": "shot",
+   "label": "Smoke",
+   "doc": "The sprite sequence smoke (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.smoke",
    "unit": "plain"
   }
  ],

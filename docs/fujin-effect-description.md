@@ -344,7 +344,7 @@ Potion's description is the same with its own sequences and sound.
        - A port's flipbook plays a fixed number of frames (its code counts them). Its exe data
          entry says it (`frames`); `fxp::sequence` keeps the game's flipbook when the edited one
          has fewer, and the Data tab does not remove a frame below it.
-       - 50 port effects have their layouts as parameters (139 layouts), 56 their flipbooks.
+       - 50 port effects have their layouts as parameters (139 layouts), 137 their flipbooks (373).
        - Checked: each one's own copy draws as the exe, and with its layouts' scale and spin or
          its flipbooks' intensity changed, draws otherwise.
    - **Part by part** (`Fujin/effecttemplates.py`): a free slot shows **Create a new effect

@@ -75,6 +75,12 @@
    "address": "0x15C646C",
    "size": 376,
    "frames": 14
+  },
+  "seqs.dust": {
+   "kind": "seq",
+   "address": "0x15C62C0",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -354,6 +360,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_15c646c",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust",
+   "part": "emitter",
+   "label": "Dust",
+   "doc": "The sprite sequence dust (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust",
    "unit": "plain"
   }
  ],

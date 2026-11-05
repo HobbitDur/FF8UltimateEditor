@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0xDBA8F8",
    "size": 4
+  },
+  "seqs.dust_a": {
+   "kind": "seq",
+   "address": "0xDB7E94",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.dust_b": {
+   "kind": "seq",
+   "address": "0xDB8040",
+   "size": 272,
+   "frames": 10
   }
  },
  "resources": {
@@ -74,6 +86,28 @@
    "min": 0,
    "max": 60,
    "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust_a",
+   "part": "director",
+   "label": "Dust a",
+   "doc": "The sprite sequence dust a (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust_a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust_b",
+   "part": "director",
+   "label": "Dust b",
+   "doc": "The sprite sequence dust b (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust_b",
    "unit": "plain"
   }
  ],

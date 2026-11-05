@@ -24,6 +24,36 @@
    "kind": "name",
    "address": "0xDEA5B8",
    "size": 12
+  },
+  "seqs.at_de43e8": {
+   "kind": "seq",
+   "address": "0xDE43E8",
+   "size": 488,
+   "frames": 16
+  },
+  "seqs.at_de4910": {
+   "kind": "seq",
+   "address": "0xDE4910",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.at_de423c": {
+   "kind": "seq",
+   "address": "0xDE423C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.at_de45d0": {
+   "kind": "seq",
+   "address": "0xDE45D0",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.at_de477c": {
+   "kind": "seq",
+   "address": "0xDE477C",
+   "size": 404,
+   "frames": 15
   }
  },
  "resources": {
@@ -119,6 +149,61 @@
    "min": 33,
    "max": 816,
    "default": 641,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_de43e8",
+   "part": "master",
+   "label": "Flipbook DE43E8",
+   "doc": "The sprite sequence at 0xDE43E8 (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_de43e8",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_de4910",
+   "part": "master",
+   "label": "Flipbook DE4910",
+   "doc": "The sprite sequence at 0xDE4910 (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_de4910",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_de423c",
+   "part": "master",
+   "label": "Flipbook DE423C",
+   "doc": "The sprite sequence at 0xDE423C (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_de423c",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_de45d0",
+   "part": "master",
+   "label": "Flipbook DE45D0",
+   "doc": "The sprite sequence at 0xDE45D0 (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_de45d0",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_de477c",
+   "part": "master",
+   "label": "Flipbook DE477C",
+   "doc": "The sprite sequence at 0xDE477C (a flipbook of 15 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_de477c",
    "unit": "plain"
   }
  ],

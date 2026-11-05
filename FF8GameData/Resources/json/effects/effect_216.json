@@ -71,6 +71,18 @@
    "address": "0x11512C8",
    "size": 10344,
    "capacity": 236
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x113C1AC",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.ember": {
+   "kind": "seq",
+   "address": "0x113C2F0",
+   "size": 220,
+   "frames": 8
   }
  },
  "resources": {
@@ -182,6 +194,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.pillar",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "director",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ember",
+   "part": "director",
+   "label": "Ember",
+   "doc": "The sprite sequence ember (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ember",
    "unit": "plain"
   }
  ],

@@ -68,6 +68,36 @@
    "kind": "sound",
    "address": "0x153301C",
    "size": 4
+  },
+  "seqs.at_15331d0": {
+   "kind": "seq",
+   "address": "0x15331D0",
+   "size": 344,
+   "frames": 12
+  },
+  "seqs.at_1533328": {
+   "kind": "seq",
+   "address": "0x1533328",
+   "size": 376,
+   "frames": 14
+  },
+  "seqs.at_15334a0": {
+   "kind": "seq",
+   "address": "0x15334A0",
+   "size": 300,
+   "frames": 11
+  },
+  "seqs.at_1533024": {
+   "kind": "seq",
+   "address": "0x1533024",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.at_15335cc": {
+   "kind": "seq",
+   "address": "0x15335CC",
+   "size": 248,
+   "frames": 9
   }
  },
  "resources": {
@@ -235,6 +265,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sounds.song",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_15331d0",
+   "part": "director",
+   "label": "Flipbook 15331D0",
+   "doc": "The sprite sequence at 0x15331D0 (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_15331d0",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_1533328",
+   "part": "director",
+   "label": "Flipbook 1533328",
+   "doc": "The sprite sequence at 0x1533328 (a flipbook of 14 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_1533328",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_15334a0",
+   "part": "director",
+   "label": "Flipbook 15334A0",
+   "doc": "The sprite sequence at 0x15334A0 (a flipbook of 11 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_15334a0",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_1533024",
+   "part": "director",
+   "label": "Flipbook 1533024",
+   "doc": "The sprite sequence at 0x1533024 (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_1533024",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_15335cc",
+   "part": "director",
+   "label": "Flipbook 15335CC",
+   "doc": "The sprite sequence at 0x15335CC (a flipbook of 9 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_15335cc",
    "unit": "plain"
   }
  ],

@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0xDD05CC",
    "size": 4
+  },
+  "seqs.leaf": {
+   "kind": "seq",
+   "address": "0xDCEFD0",
+   "size": 292,
+   "frames": 10
   }
  },
  "resources": {
@@ -74,6 +80,17 @@
    "min": 0,
    "max": 100,
    "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.leaf",
+   "part": "director",
+   "label": "Leaf",
+   "doc": "The sprite sequence leaf (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.leaf",
    "unit": "plain"
   }
  ],

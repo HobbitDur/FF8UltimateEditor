@@ -54,6 +54,12 @@
    "kind": "sound",
    "address": "0x133AB80",
    "size": 4
+  },
+  "seqs.sprite": {
+   "kind": "seq",
+   "address": "0x1334F0C",
+   "size": 240,
+   "frames": 8
   }
  },
  "resources": {
@@ -182,6 +188,17 @@
    "min": 0,
    "max": 551,
    "default": 548,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sprite",
+   "part": "master",
+   "label": "Sprite",
+   "doc": "The sprite sequence sprite (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sprite",
    "unit": "plain"
   }
  ],

@@ -160,7 +160,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   life - width and height tick by tick, its centre and tip colours under them (Cure: 20 glints,
   each drawn 16 ticks; a test checks both against the glint primitives the recording draws).
   Beside it, the **Sprite sequences** tab: the flipbooks the part draws its sprites
-  from. They are data of FF8_EN.exe (about 330, signature `24 05 01 00`, file offset = address -
+  from. They are data of FF8_EN.exe (about 735, header `24 05` then `01 00` for most - the game never reads those 4 bytes -, file offset = address -
   0x400000: frame count, frame offsets, then per frame its pieces, 20 bytes each - texels u, v,
   size, palette, page, intensity, GPU code, place in the sprite, angle, scale -
   `FF8GameData/psxgpu/spritesequence.py`); the recorder hooks `InitEffectSequenceFromData`

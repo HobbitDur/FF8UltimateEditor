@@ -35,6 +35,12 @@
    "address": "0x101CEB8",
    "size": 15976,
    "capacity": 756
+  },
+  "seqs.particle": {
+   "kind": "seq",
+   "address": "0x101AF28",
+   "size": 448,
+   "frames": 50
   }
  },
  "resources": {
@@ -80,6 +86,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.main",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.particle",
+   "part": "main",
+   "label": "Particle",
+   "doc": "The sprite sequence particle (a flipbook of 50 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.particle",
    "unit": "plain"
   }
  ],

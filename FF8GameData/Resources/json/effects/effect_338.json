@@ -29,6 +29,24 @@
    "kind": "sound",
    "address": "0x13710C8",
    "size": 4
+  },
+  "seqs.spark_flash": {
+   "kind": "seq",
+   "address": "0x1371464",
+   "size": 476,
+   "frames": 7
+  },
+  "seqs.spark_fly": {
+   "kind": "seq",
+   "address": "0x13711FC",
+   "size": 272,
+   "frames": 10
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x137130C",
+   "size": 344,
+   "frames": 12
   }
  },
  "resources": {},
@@ -70,6 +88,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark_flash",
+   "part": "creature",
+   "label": "Spark flash",
+   "doc": "The sprite sequence spark flash (a flipbook of 7 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark_flash",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark_fly",
+   "part": "creature",
+   "label": "Spark fly",
+   "doc": "The sprite sequence spark fly (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark_fly",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "creature",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
    "unit": "plain"
   }
  ],

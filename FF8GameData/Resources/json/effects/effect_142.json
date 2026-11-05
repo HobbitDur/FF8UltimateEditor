@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0xDDF44C",
    "size": 4
+  },
+  "seqs.ember": {
+   "kind": "seq",
+   "address": "0xDDE100",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.shock_ring": {
+   "kind": "seq",
+   "address": "0xDDE0D8",
+   "size": 40,
+   "frames": 1
   }
  },
  "resources": {
@@ -74,6 +86,28 @@
    "min": 0,
    "max": 100,
    "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ember",
+   "part": "director",
+   "label": "Ember",
+   "doc": "The sprite sequence ember (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ember",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.shock_ring",
+   "part": "director",
+   "label": "Shock ring",
+   "doc": "The sprite sequence shock ring (a flipbook of 1 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.shock_ring",
    "unit": "plain"
   }
  ],

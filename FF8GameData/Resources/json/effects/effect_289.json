@@ -41,6 +41,24 @@
    "address": "0x1070804",
    "size": 5636,
    "capacity": 388
+  },
+  "seqs.drip": {
+   "kind": "seq",
+   "address": "0x106EC38",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.splat": {
+   "kind": "seq",
+   "address": "0x106E9B0",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.spit": {
+   "kind": "seq",
+   "address": "0x106EAF4",
+   "size": 324,
+   "frames": 12
   }
  },
  "resources": {
@@ -97,6 +115,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.target",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.drip",
+   "part": "main",
+   "label": "Drip",
+   "doc": "The sprite sequence drip (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.drip",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splat",
+   "part": "main",
+   "label": "Splat",
+   "doc": "The sprite sequence splat (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splat",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spit",
+   "part": "main",
+   "label": "Spit",
+   "doc": "The sprite sequence spit (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spit",
    "unit": "plain"
   }
  ],

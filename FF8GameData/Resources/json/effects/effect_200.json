@@ -28,6 +28,42 @@
    "kind": "sound",
    "address": "0xE33D34",
    "size": 4
+  },
+  "seqs.flame": {
+   "kind": "seq",
+   "address": "0xE3382C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.flame_glow": {
+   "kind": "seq",
+   "address": "0xE339D8",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.ember": {
+   "kind": "seq",
+   "address": "0xE33B84",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.sparkburst": {
+   "kind": "seq",
+   "address": "0xE2DB40",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.tspark": {
+   "kind": "seq",
+   "address": "0xE2DC84",
+   "size": 488,
+   "frames": 16
+  },
+  "seqs.tburst": {
+   "kind": "seq",
+   "address": "0xE2DFE4",
+   "size": 376,
+   "frames": 14
   }
  },
  "resources": {},
@@ -86,6 +122,72 @@
    "min": 0,
    "max": 173,
    "default": 141,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flame",
+   "part": "director",
+   "label": "Flame",
+   "doc": "The sprite sequence flame (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flame",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flame_glow",
+   "part": "director",
+   "label": "Flame glow",
+   "doc": "The sprite sequence flame glow (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flame_glow",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ember",
+   "part": "director",
+   "label": "Ember",
+   "doc": "The sprite sequence ember (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ember",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparkburst",
+   "part": "director",
+   "label": "Sparkburst",
+   "doc": "The sprite sequence sparkburst (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparkburst",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.tspark",
+   "part": "director",
+   "label": "Tspark",
+   "doc": "The sprite sequence tspark (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.tspark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.tburst",
+   "part": "director",
+   "label": "Tburst",
+   "doc": "The sprite sequence tburst (a flipbook of 14 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.tburst",
    "unit": "plain"
   }
  ],

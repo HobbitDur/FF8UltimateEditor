@@ -35,6 +35,18 @@
    "address": "0xD1899C",
    "size": 428,
    "frames": 16
+  },
+  "seqs.flash": {
+   "kind": "seq",
+   "address": "0xD187A0",
+   "size": 508,
+   "frames": 16
+  },
+  "seqs.sparks": {
+   "kind": "seq",
+   "address": "0xD18B48",
+   "size": 404,
+   "frames": 15
   }
  },
  "resources": {
@@ -91,6 +103,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flash",
+   "part": "master",
+   "label": "Flash",
+   "doc": "The sprite sequence flash (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparks",
+   "part": "master",
+   "label": "Sparks",
+   "doc": "The sprite sequence sparks (a flipbook of 15 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparks",
    "unit": "plain"
   }
  ],

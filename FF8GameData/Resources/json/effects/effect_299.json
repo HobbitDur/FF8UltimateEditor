@@ -47,6 +47,24 @@
    "address": "0x10490A8",
    "size": 9620,
    "capacity": 2008
+  },
+  "seqs.trail": {
+   "kind": "seq",
+   "address": "0x1048DD8",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.flash": {
+   "kind": "seq",
+   "address": "0x1048F1C",
+   "size": 396,
+   "frames": 14
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x1048C94",
+   "size": 324,
+   "frames": 12
   }
  },
  "resources": {
@@ -114,6 +132,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.missile",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.trail",
+   "part": "master",
+   "label": "Trail",
+   "doc": "The sprite sequence trail (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.trail",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flash",
+   "part": "master",
+   "label": "Flash",
+   "doc": "The sprite sequence flash (a flipbook of 14 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "master",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
    "unit": "plain"
   }
  ],

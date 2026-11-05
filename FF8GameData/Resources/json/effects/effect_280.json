@@ -35,6 +35,12 @@
    "address": "0x10A7A64",
    "size": 13704,
    "capacity": 2244
+  },
+  "seqs.sequence": {
+   "kind": "seq",
+   "address": "0x10A7974",
+   "size": 240,
+   "frames": 8
   }
  },
  "resources": {
@@ -80,6 +86,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.main",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sequence",
+   "part": "control",
+   "label": "Sequence",
+   "doc": "The sprite sequence sequence (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sequence",
    "unit": "plain"
   }
  ],

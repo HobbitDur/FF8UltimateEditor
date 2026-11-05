@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0xDCE74C",
    "size": 4
+  },
+  "seqs.acid_a": {
+   "kind": "seq",
+   "address": "0xDCABEC",
+   "size": 456,
+   "frames": 17
+  },
+  "seqs.acid_b": {
+   "kind": "seq",
+   "address": "0xDCAA24",
+   "size": 456,
+   "frames": 17
   }
  },
  "resources": {
@@ -74,6 +86,28 @@
    "min": 0,
    "max": 84,
    "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.acid_a",
+   "part": "director",
+   "label": "Acid a",
+   "doc": "The sprite sequence acid a (a flipbook of 17 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.acid_a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.acid_b",
+   "part": "director",
+   "label": "Acid b",
+   "doc": "The sprite sequence acid b (a flipbook of 17 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.acid_b",
    "unit": "plain"
   }
  ],

@@ -50,6 +50,36 @@
    "kind": "sound",
    "address": "0xD32494",
    "size": 4
+  },
+  "seqs.at_d209f4": {
+   "kind": "seq",
+   "address": "0xD209F4",
+   "size": 220,
+   "frames": 8
+  },
+  "seqs.at_d20c7c": {
+   "kind": "seq",
+   "address": "0xD20C7C",
+   "size": 404,
+   "frames": 15
+  },
+  "seqs.at_d20ad0": {
+   "kind": "seq",
+   "address": "0xD20AD0",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.at_d208b0": {
+   "kind": "seq",
+   "address": "0xD208B0",
+   "size": 324,
+   "frames": 5
+  },
+  "seqs.at_d20e10": {
+   "kind": "seq",
+   "address": "0xD20E10",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -145,6 +175,61 @@
    "min": 0,
    "max": 274,
    "default": 265,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_d209f4",
+   "part": "timeline",
+   "label": "Flipbook D209F4",
+   "doc": "The sprite sequence at 0xD209F4 (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_d209f4",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_d20c7c",
+   "part": "timeline",
+   "label": "Flipbook D20C7C",
+   "doc": "The sprite sequence at 0xD20C7C (a flipbook of 15 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_d20c7c",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_d20ad0",
+   "part": "timeline",
+   "label": "Flipbook D20AD0",
+   "doc": "The sprite sequence at 0xD20AD0 (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_d20ad0",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_d208b0",
+   "part": "timeline",
+   "label": "Flipbook D208B0",
+   "doc": "The sprite sequence at 0xD208B0 (a flipbook of 5 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_d208b0",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_d20e10",
+   "part": "timeline",
+   "label": "Flipbook D20E10",
+   "doc": "The sprite sequence at 0xD20E10 (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_d20e10",
    "unit": "plain"
   }
  ],

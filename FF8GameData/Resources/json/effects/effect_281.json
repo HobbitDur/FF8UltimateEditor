@@ -41,6 +41,18 @@
    "address": "0x10A4D40",
    "size": 10980,
    "capacity": 524
+  },
+  "seqs.muzzle_spark": {
+   "kind": "seq",
+   "address": "0x10A3140",
+   "size": 240,
+   "frames": 8
+  },
+  "seqs.hit_spark": {
+   "kind": "seq",
+   "address": "0x10A3030",
+   "size": 272,
+   "frames": 10
   }
  },
  "resources": {
@@ -97,6 +109,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.muzzle",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.muzzle_spark",
+   "part": "main",
+   "label": "Muzzle spark",
+   "doc": "The sprite sequence muzzle spark (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.muzzle_spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.hit_spark",
+   "part": "main",
+   "label": "Hit spark",
+   "doc": "The sprite sequence hit spark (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.hit_spark",
    "unit": "plain"
   }
  ],

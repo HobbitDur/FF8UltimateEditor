@@ -114,6 +114,12 @@
    "address": "0x10F89F4",
    "size": 22812,
    "capacity": 2532
+  },
+  "seqs.flash": {
+   "kind": "seq",
+   "address": "0x10E7868",
+   "size": 240,
+   "frames": 8
   }
  },
  "resources": {
@@ -343,6 +349,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.meteor_b",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flash",
+   "part": "punch",
+   "label": "Flash",
+   "doc": "The sprite sequence flash (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flash",
    "unit": "plain"
   }
  ],

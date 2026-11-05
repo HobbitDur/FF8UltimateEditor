@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0xDD9A38",
    "size": 4
+  },
+  "seqs.ice": {
+   "kind": "seq",
+   "address": "0xDD83E4",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.mist": {
+   "kind": "seq",
+   "address": "0xDD82F0",
+   "size": 244,
+   "frames": 5
   }
  },
  "resources": {
@@ -74,6 +86,28 @@
    "min": 0,
    "max": 100,
    "default": 37,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ice",
+   "part": "director",
+   "label": "Ice",
+   "doc": "The sprite sequence ice (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ice",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mist",
+   "part": "director",
+   "label": "Mist",
+   "doc": "The sprite sequence mist (a flipbook of 5 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mist",
    "unit": "plain"
   }
  ],

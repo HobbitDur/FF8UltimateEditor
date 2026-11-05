@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0xDD7904",
    "size": 4
+  },
+  "seqs.particle": {
+   "kind": "seq",
+   "address": "0xDD6FF0",
+   "size": 292,
+   "frames": 10
+  },
+  "seqs.zzz": {
+   "kind": "seq",
+   "address": "0xDD7114",
+   "size": 428,
+   "frames": 16
   }
  },
  "resources": {
@@ -74,6 +86,28 @@
    "min": 0,
    "max": 100,
    "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.particle",
+   "part": "director",
+   "label": "Particle",
+   "doc": "The sprite sequence particle (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.particle",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.zzz",
+   "part": "director",
+   "label": "Zzz",
+   "doc": "The sprite sequence zzz (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.zzz",
    "unit": "plain"
   }
  ],

@@ -47,6 +47,12 @@
    "address": "0xD522CC",
    "size": 168,
    "frames": 6
+  },
+  "seqs.sparkle": {
+   "kind": "seq",
+   "address": "0xD524C4",
+   "size": 820,
+   "frames": 31
   }
  },
  "resources": {
@@ -125,6 +131,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.beam",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparkle",
+   "part": "director",
+   "label": "Sparkle",
+   "doc": "The sprite sequence sparkle (a flipbook of 31 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparkle",
    "unit": "plain"
   }
  ],

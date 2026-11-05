@@ -59,6 +59,18 @@
    "address": "0x16155B4",
    "size": 324,
    "frames": 12
+  },
+  "seqs.bubble_a": {
+   "kind": "seq",
+   "address": "0x16152CC",
+   "size": 372,
+   "frames": 13
+  },
+  "seqs.bubble_b": {
+   "kind": "seq",
+   "address": "0x1615440",
+   "size": 372,
+   "frames": 13
   }
  },
  "resources": {
@@ -242,6 +254,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.mist_b",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.bubble_a",
+   "part": "emitter",
+   "label": "Bubble a",
+   "doc": "The sprite sequence bubble a (a flipbook of 13 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.bubble_a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.bubble_b",
+   "part": "emitter",
+   "label": "Bubble b",
+   "doc": "The sprite sequence bubble b (a flipbook of 13 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.bubble_b",
    "unit": "plain"
   }
  ],

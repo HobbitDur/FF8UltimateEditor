@@ -60,6 +60,12 @@
    "kind": "sound",
    "address": "0x1561778",
    "size": 4
+  },
+  "seqs.at_156177c": {
+   "kind": "seq",
+   "address": "0x156177C",
+   "size": 324,
+   "frames": 12
   }
  },
  "resources": {
@@ -191,6 +197,17 @@
    "min": 0,
    "max": 512,
    "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_156177c",
+   "part": "director",
+   "label": "Flipbook 156177C",
+   "doc": "The sprite sequence at 0x156177C (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_156177c",
    "unit": "plain"
   }
  ],
