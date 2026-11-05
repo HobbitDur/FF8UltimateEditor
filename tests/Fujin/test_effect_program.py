@@ -1001,7 +1001,7 @@ def test_raldo_throw_runs_from_its_description(tmp_path):
     program = write_program(load_description(19), tmp_path / "effect.fxprog")
     original, _log = record_raldo(19, "original")
     described, log = record_raldo(19, "described", f"program={program}")
-    assert "2 tasks, 18 params" in log and untag(described) == original and len(original) > 50000
+    assert "2 tasks, 20 params" in log and untag(described) == original and len(original) > 50000
     assert any(line.startswith("N ") for line in original) and any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text("toss.speed 300" + chr(10) + "raldo.radius 600" + chr(10) + "debris.take 5" + chr(10) + "ball.start 20" + chr(10))
@@ -1046,7 +1046,7 @@ def test_norg_pod_opening_runs_from_its_description(tmp_path):
     program = write_program(load_description(20), tmp_path / "effect.fxprog")
     original, _log = record_pod(20, "original")
     described, log = record_pod(20, "described", f"program={program}")
-    assert "3 tasks, 16 params" in log and untag(described) == original and len(original) > 30000
+    assert "3 tasks, 17 params" in log and untag(described) == original and len(original) > 30000
     assert any(line.startswith("N ") for line in original) and any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text(chr(10).join(["lid.gravity 60", "light.level 2048", "master.wait 25", "debris.frames 10",
@@ -1104,7 +1104,7 @@ def test_psycho_blast_runs_from_its_description(tmp_path):
     program = write_program(load_description(23), tmp_path / "effect.fxprog")
     original, _log = record_norg(23, "original")
     described, log = record_norg(23, "described", f"program={program}")
-    assert "2 tasks, 12 params" in log and untag(described) == original and len(original) > 30000
+    assert "2 tasks, 13 params" in log and untag(described) == original and len(original) > 30000
     assert any(line.startswith("N ") for line in original) and any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text(chr(10).join(["orb.speed 800", "orb.appear 30", "debris.first 4", "actors.length 30"]) + chr(10))
@@ -1313,7 +1313,7 @@ def test_shoot_runs_from_its_description(tmp_path):
     program = write_program(load_description(42), tmp_path / "effect.fxprog")
     original, _log = record_wendigo(42, "original")
     described, log = record_wendigo(42, "described", f"program={program}")
-    assert "1 tasks, 17 params" in log and untag(described) == original and len(original) > 100000
+    assert "1 tasks, 18 params" in log and untag(described) == original and len(original) > 100000
     assert sum(line.startswith("S ") for line in original) == 2
     params = tmp_path / "params.txt"
     params.write_text(chr(10).join(["ball.morph 256", "ball.gravity 64", "ball.shot 2000", "emitter.sound 25",
