@@ -161,3 +161,40 @@ def test_added_npcs_get_their_own_deck_id(manager):
     chosen = manager.add_card_game(map_file(manager, "bghall_1"), npc(manager, "bghall_1", "seito5"), "Q", "N",
                                    deck_id=31)
     assert chosen.params[PARAM_DECK_ID].value == 31  # an explicit Deck ID is kept (shared with seito6)
+
+
+def test_add_after_the_npc_talk(manager):
+    """The question goes right before the final RET of the NPC's own talk: the talk entry and its code
+    stay, every way through it then asks, and the unsaved edits of the map follow the moved code."""
+    from CCGroup.jsmcardgame import PARAM_RARE_CHANCE
+    jsm_file = map_file(manager, "bghall_1")
+    seito5 = npc(manager, "bghall_1", "seito5")
+    assert jsmnpc.after_talk_problem(jsm_file, seito5) == "" and not jsmnpc.is_empty_talk(jsm_file, seito5)
+    start, end = jsmnpc.talk_bounds(jsm_file, seito5)
+    talk_code = jsm_file.instructions()[start:end]
+    seito6 = next(player for player in jsm_file.players if player.entity_name == "seito6")
+    seito6.params[PARAM_RARE_CHANCE].set_literal(99)
+    seito6.set_clock(90, 3)
+    player = manager.add_card_game(jsm_file, seito5, "Cards?\nYes\nNo", "Need 5 cards.",
+                                   placement=jsmnpc.PLACEMENT_AFTER_TALK)
+    assert jsmnpc.talk_bounds(jsm_file, seito5)[0] == start  # same talk entry
+    instructions = jsm_file.instructions()
+    new_end = jsmnpc.talk_bounds(jsm_file, seito5)[1]
+    assert instructions[start:end - 1] == talk_code[:-1]  # its own code untouched...
+    assert instructions[new_end - 1] == talk_code[-1] and instructions[new_end - 2][0] == jsmnpc.OPCODE_UCON
+    assert start < (player.cardgame_file_offset - jsm_file.offset_script) // 4 < new_end  # ...then the question
+    assert jsmnpc.OPCODE_PCTURN not in [opcode for opcode, _ in instructions[end - 1:new_end]]  # no extra turn
+    assert player.params[PARAM_GAME_RULES].value == 292
+    roles = [use.role for use in jsmnpc.player_messages(jsm_file, player)]
+    assert roles[-2:] == [jsmnpc.ROLE_QUESTION, jsmnpc.ROLE_NOT_ENOUGH] and jsmnpc.ROLE_DIALOGUE in roles
+    seito6 = next(player for player in jsm_file.players if player.entity_name == "seito6")
+    assert seito6.params[PARAM_RARE_CHANCE].value == 99 and seito6.clock() == (90, 3)
+
+
+def test_after_talk_refused_when_the_talk_leaves_the_field(manager):
+    jsm_file = map_file(manager, "bggate_2")
+    jimin = npc(manager, "bggate_2", "jimin01")
+    assert "leave the field" in jsmnpc.after_talk_problem(jsm_file, jimin)
+    with pytest.raises(ValueError):
+        manager.add_card_game(jsm_file, jimin, "Q\nYes\nNo", "N", placement=jsmnpc.PLACEMENT_AFTER_TALK)
+    assert not manager.msd(jsm_file).is_modified()  # its two texts are taken back

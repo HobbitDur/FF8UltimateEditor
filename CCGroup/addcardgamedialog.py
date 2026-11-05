@@ -16,9 +16,11 @@ TOOLTIP_TEXTS = ("One line per window line. For the question, the 2nd and 3rd li
 
 class AddCardGameDialog(QDialog):
     def __init__(self, parent, map_name: str, entity_name: str, has_card_master: bool, region_calls: str,
-                 region_guess: int, free_deck_id=None, deck_id_users=None):
+                 region_guess: int, free_deck_id=None, deck_id_users=None, after_talk_problem: str = "",
+                 empty_talk: bool = False):
         """free_deck_id: preset Deck ID (unused by anyone); deck_id_users(deck_id) -> list of what
-        already uses a Deck ID, for the live note."""
+        already uses a Deck ID, for the live note. after_talk_problem: why the question cannot go after
+        the NPC's talk (jsmnpc.after_talk_problem, "" = it can); empty_talk: its talk does nothing."""
         QDialog.__init__(self, parent)
         self.setWindowTitle(f"Add a card game to {entity_name} ({map_name})")
         layout = QVBoxLayout()
@@ -62,13 +64,27 @@ class AddCardGameDialog(QDialog):
         form.addRow("Deck ID:", deck_row)
         self.__deck_id_changed(self.deck_id_spinbox.value())
 
-        self.on_no_combobox = QComboBox()
-        self.on_no_combobox.addItem("Nothing (like the vanilla card players)", jsmnpc.ON_NO_NOTHING)
-        self.on_no_combobox.addItem("The NPC's original dialogue", jsmnpc.ON_NO_ORIGINAL)
-        self.on_no_combobox.setToolTip(
-            "Vanilla card players say nothing when you decline. 'Original dialogue' keeps what the\n"
-            "NPC said before (useful when it has story lines or gives something).")
-        form.addRow("When the player says No:", self.on_no_combobox)
+        # (placement, on_no) per choice
+        self.placement_combobox = QComboBox()
+        if not after_talk_problem:
+            self.placement_combobox.addItem("After the NPC's own talk",
+                                            (jsmnpc.PLACEMENT_AFTER_TALK, jsmnpc.ON_NO_NOTHING))
+        self.placement_combobox.addItem("Instead of its talk (No = nothing, like the vanilla card players)",
+                                        (jsmnpc.PLACEMENT_REPLACE, jsmnpc.ON_NO_NOTHING))
+        self.placement_combobox.addItem("Before its talk (No = its original talk)",
+                                        (jsmnpc.PLACEMENT_REPLACE, jsmnpc.ON_NO_ORIGINAL))
+        if empty_talk:  # nothing to keep: the vanilla card players' way
+            self.placement_combobox.setCurrentIndex(self.placement_combobox.count() - 2)
+        self.placement_combobox.setToolTip(
+            "After the NPC's own talk: everything it did stays (lines, animations, the state its other\n"
+            "scripts follow), then it asks. The safe choice for an NPC that does more than one line.\n"
+            "Instead of / Before its talk: its talk entry runs the card game first; on Yes its own talk\n"
+            "is skipped, which can leave an NPC whose talk drives its animations stuck or misplaced.")
+        form.addRow("Card question:", self.placement_combobox)
+        if after_talk_problem:
+            problem_label = QLabel(f"Not after its talk: {after_talk_problem}.")
+            problem_label.setWordWrap(True)
+            form.addRow("", problem_label)
 
         self.question_edit = QPlainTextEdit(jsmnpc.DEFAULT_QUESTION)
         self.question_edit.setToolTip(TOOLTIP_TEXTS)
@@ -109,8 +125,11 @@ class AddCardGameDialog(QDialog):
     def region(self):
         return self.region_combobox.currentIndex()
 
+    def placement(self):
+        return self.placement_combobox.currentData()[0]
+
     def on_no(self):
-        return self.on_no_combobox.currentData()
+        return self.placement_combobox.currentData()[1]
 
     def question_text(self):
         return self.question_edit.toPlainText()

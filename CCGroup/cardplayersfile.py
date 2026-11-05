@@ -9,13 +9,14 @@ readable file - to keep (it diffs well in git), to share, or to apply onto anoth
                   "clock": [0, 0], "variant_literals": [],
                   "texts": [{"role": "Question", "text": "..."}, ...],
                   "changed": true,
-                  "added": {"region": 0, "on_no": "nothing"}}]}
+                  "added": {"region": 0, "on_no": "nothing", "placement": "after_talk"}}]}
 
 A player is found again by its map folder, entity, script and its position among that script's
 CARDGAME calls ("index"). Each of the 7 values is a literal (a number), a savemap variable
 ({"var", "push"}) or anything else ({"opcode", "value"}: kept as the target has it). With the vanilla
 reference open, "changed" says whether the player differs from vanilla, and "added" marks a card game
-the vanilla NPC does not have: applying the file gives that NPC the card game first.
+the vanilla NPC does not have: applying the file gives that NPC the card game first ("placement":
+"after_talk" = asked at the end of the NPC's own talk, "replace" or missing = a talk of its own).
 """
 import json
 import os
@@ -32,6 +33,9 @@ PUSH_NAMES = {OPCODE_PSHM_B: "PSHM_B", OPCODE_PSHM_W: "PSHM_W", OPCODE_PSHM_L: "
               OPCODE_PSHSM_B: "PSHSM_B", OPCODE_PSHSM_W: "PSHSM_W", OPCODE_PSHSM_L: "PSHSM_L"}
 PUSH_OPCODES = {name: opcode for opcode, name in PUSH_NAMES.items()}
 COMPARED_KEYS = PARAM_KEYS + ["clock", "variant_literals", "texts"]
+# First opcodes of a card game talk of its own (jsmnpc.build_card_game_block)
+RECIPE_START = [jsmnpc.OPCODE_LBL, jsmnpc.OPCODE_UCOFF, jsmnpc.OPCODE_PSHN_L, jsmnpc.OPCODE_PSHN_L,
+                jsmnpc.OPCODE_PCTURN]
 
 
 def map_key(jsm_file):
@@ -72,8 +76,9 @@ def player_record(jsm_file, player, msd_file):
 
 
 def _added_card_game(jsm_file, player):
-    """How the card game was given to the NPC (jsmnpc.add_card_game's region and 'on no' choice),
-    read back from the code it appended."""
+    """How the card game was given to the NPC (jsmnpc.add_card_game's region, placement and 'on no'
+    choice), read back from its code: a talk of its own starts with the vanilla card players' recipe
+    (LBL, UCOFF, turn to the player), a question put after the NPC's talk sits in the NPC's own code."""
     rules = player.params[PARAM_GAME_RULES]
     if rules.opcode == OPCODE_PSHM_B and jsmnpc.VAR_REGION_RULES <= rules.value < jsmnpc.VAR_REGION_RULES + 8:
         region = rules.value - jsmnpc.VAR_REGION_RULES
@@ -81,10 +86,13 @@ def _added_card_game(jsm_file, player):
         calls = jsmnpc.card_master_calls(jsm_file)
         region = jsmnpc.REGIONS.index(calls["region"]) if calls and calls["region"] in jsmnpc.REGIONS else 0
     cardgame_index = (player.cardgame_file_offset - jsm_file.offset_script) // 4
-    _start, end = jsmnpc.script_bounds(jsm_file, cardgame_index)
-    last_opcode = jsm_file.instructions()[end - 1][0]
+    start, end = jsmnpc.script_bounds(jsm_file, cardgame_index)
+    instructions = jsm_file.instructions()
+    if [opcode for opcode, _ in instructions[start:start + len(RECIPE_START)]] != RECIPE_START:
+        return {"region": region, "on_no": jsmnpc.ON_NO_NOTHING, "placement": jsmnpc.PLACEMENT_AFTER_TALK}
+    last_opcode = instructions[end - 1][0]
     on_no = jsmnpc.ON_NO_ORIGINAL if last_opcode == jsmnpc.OPCODE_JMP else jsmnpc.ON_NO_NOTHING
-    return {"region": region, "on_no": on_no}
+    return {"region": region, "on_no": on_no, "placement": jsmnpc.PLACEMENT_REPLACE}
 
 
 class _Vanilla:
@@ -266,7 +274,8 @@ def _add_card_game(manager, jsm_file, record, report, label):
     try:
         player = manager.add_card_game(jsm_file, npc, texts.get(jsmnpc.ROLE_QUESTION, jsmnpc.DEFAULT_QUESTION),
                                        texts.get(jsmnpc.ROLE_NOT_ENOUGH, jsmnpc.DEFAULT_NOT_ENOUGH_CARDS),
-                                       added.get("region", 0), added.get("on_no", jsmnpc.ON_NO_NOTHING), deck_id)
+                                       added.get("region", 0), added.get("on_no", jsmnpc.ON_NO_NOTHING), deck_id,
+                                       added.get("placement", jsmnpc.PLACEMENT_REPLACE))
     except (ValueError, OSError) as error:
         report.not_found.append(f"{label}: the card game could not be added ({error})")
         return None

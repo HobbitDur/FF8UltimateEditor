@@ -1478,17 +1478,18 @@ class NpcCardGameWidget(QWidget):
         calls = jsm_npc.card_master_calls(jsm_file) if jsm_npc.has_card_master(jsm_file) else None
         dialog = AddCardGameDialog(self, jsm_file.map_name, npc.entity_name, jsm_npc.has_card_master(jsm_file),
                                    calls["region"] if calls else "", self.manager.region_guess(jsm_file),
-                                   self.manager.free_deck_id(), self.manager.deck_id_users)
+                                   self.manager.free_deck_id(), self.manager.deck_id_users,
+                                   jsm_npc.after_talk_problem(jsm_file, npc), jsm_npc.is_empty_talk(jsm_file, npc))
         if dialog.exec() != AddCardGameDialog.DialogCode.Accepted:
             return
         self.add_card_game(jsm_file, npc, dialog.question_text(), dialog.not_enough_text(), dialog.region(),
-                           dialog.on_no(), dialog.deck_id())
+                           dialog.on_no(), dialog.deck_id(), dialog.placement())
 
     def add_card_game(self, jsm_file, npc, question_text, not_enough_text, region=0, on_no=jsm_npc.ON_NO_NOTHING,
-                      deck_id=None):
+                      deck_id=None, placement=jsm_npc.PLACEMENT_REPLACE):
         try:
             player = self.manager.add_card_game(jsm_file, npc, question_text, not_enough_text, region, on_no,
-                                                deck_id)
+                                                deck_id, placement)
         except (ValueError, OSError) as error:
             QMessageBox.warning(self, "CC Group", f"Could not add a card game to {npc.entity_name}:\n{error}")
             return None

@@ -179,3 +179,24 @@ def test_a_refused_pick_is_remembered(qapp, tmp_path, monkeypatch):
     remembered = []
     assert pick_field_folder(None, "CC Group", "pick", remember=remembered.append) is None
     assert remembered == [str(picked)]   # the next dialog opens there, to pick its parent
+
+
+def test_a_card_game_put_after_the_npc_talk_is_read_back_and_applied(npc_tab, game_data, qapp, tmp_path):
+    npc_tab.set_reference_folder(make_vanilla(tmp_path / "vanilla"))
+    mod = tmp_path / "mod" / "field"
+    mod.mkdir(parents=True)
+    npc_tab.set_working_folder(str(mod))
+    npc_tab.add_card_game(file_of(npc_tab, "bghall_1"), npc(npc_tab, "bghall_1", "seito5"), "Cards?\nYes\nNo",
+                          "Need 5.", placement=jsmnpc.PLACEMENT_AFTER_TALK)
+    path = tmp_path / "after.cardplayers.json"
+    npc_tab.export_card_players(str(path))
+    records = {r["entity"]: r for r in json.loads(path.read_text(encoding="utf-8"))["players"]}
+    assert records["seito5"]["added"]["placement"] == jsmnpc.PLACEMENT_AFTER_TALK
+
+    from CCGroup.npccardgamewidget import NpcCardGameWidget
+    other = NpcCardGameWidget(game_data=game_data)
+    other.set_reference_folder(make_vanilla(tmp_path / "other"))
+    report = other.apply_card_players(str(path))
+    assert report.added == ["bghall_1 seito5"] and not report.problems and not report.not_found
+    assert bytes(file_of(other, "bghall_1").output_data()) == bytes(file_of(npc_tab, "bghall_1").output_data())
+    other.deleteLater()

@@ -264,15 +264,19 @@ class JsmCardGameFile:
         self.structure_modified = False  # code added (e.g. a card game given to an NPC): save the file
         self.reanalyze()
 
-    def reanalyze(self):
+    def reanalyze(self, moved_from: int = None, moved_by: int = 0):
         """(Re)build the card players, names and variants from self.data (after code was added). Edits
-        not saved yet - values, clocks, variant literals - stay on the calls at the same place (code is
-        only ever appended)."""
-        pending_clocks = {player.cardgame_file_offset: (player.clock(), player.original_clock)
+        not saved yet - values, clocks, variant literals - stay on the calls they were on: code appended
+        moves nothing, code inserted moves every file offset >= moved_from by moved_by bytes."""
+        def moved(offset):
+            return offset + moved_by if moved_from is not None and offset >= moved_from else offset
+
+        pending_clocks = {moved(player.cardgame_file_offset): (player.clock(), player.original_clock)
                           for player in getattr(self, "players", [])}
-        pending_params = {param.file_offset: (param.opcode, param.value, param.original_opcode, param.original_value)
+        pending_params = {moved(param.file_offset):
+                          (param.opcode, param.value, param.original_opcode, param.original_value)
                           for player in getattr(self, "players", []) for param in player.params}
-        pending_literals = {offset: (literal.value, literal.original_value)
+        pending_literals = {moved(offset): (literal.value, literal.original_value)
                             for offset, literal in getattr(self, "script_literals", {}).items()}
         self.__instructions_cache = None
         self.players = []
@@ -834,7 +838,7 @@ class CardGameFolderManager:
         return None
 
     def add_card_game(self, jsm_file, npc, question_text: str, not_enough_text: str, region: int = 0,
-                      on_no: str = "nothing", deck_id: int = None):
+                      on_no: str = "nothing", deck_id: int = None, placement: str = "replace"):
         """Give an NPC a card game (see jsmnpc.add_card_game); its two texts are appended to the map's
         .msd. deck_id None = a free one (free_deck_id). Returns the new CardGamePlayer."""
         from CCGroup import jsmnpc
@@ -848,9 +852,10 @@ class CardGameFolderManager:
         question_id = msd_file.add_text(question_text)
         not_enough_id = msd_file.add_text(not_enough_text)
         try:
-            player = jsmnpc.add_card_game(jsm_file, npc, question_id, not_enough_id, region, on_no, card_game)
+            player = jsmnpc.add_card_game(jsm_file, npc, question_id, not_enough_id, region, on_no, card_game,
+                                          placement)
         except Exception:
-            del msd_file.messages[not_enough_id:]
+            del msd_file.messages[question_id:]
             raise
         self.__npcs.pop(id(jsm_file), None)
         if jsm_file not in self.jsm_files:

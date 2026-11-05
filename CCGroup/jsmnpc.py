@@ -14,7 +14,9 @@ A vanilla card NPC's talk script (e.g. seito6 in bghall_1) is always the same re
     var 292 = 0; UCON; RET
 
 Adding a card game appends that recipe at the end of the script data and points the NPC's talk
-entry at it (append-only: no existing byte moves, so no other script or jump can break). In the
+entry at it (append-only: no existing byte moves, so no other script or jump can break), or - after
+the NPC's talk - inserts it, without its LBL/RET/turn, right before the final RET of the NPC's own talk
+script (jsmedit re-aims every jump and entry), so the talk keeps what it does. In the
 maps that have the cardgamemaster entity (every map with a vanilla card player), its two calls are
 copied from an existing card player of the same map. In the other maps the rules are read straight
 from the region's savemap variables (272 + region / 280 + region): same rules, but without the
@@ -25,6 +27,7 @@ from collections import Counter
 
 from CCGroup.jsmcardgame import (JsmCardGameFile, CardGamePlayer, OPCODE_PSHN_L, OPCODE_PSHI_L, OPCODE_PSHM_B,
                                  OPCODE_POPM_B, OPCODE_CAL, CARDGAME_DWORD)
+from CCGroup import jsmedit
 from CCGroup.jsmvariant import decode_instructions, CAL_EQ, CAL_LS
 
 REGIONS = ["bal", "gal", "tra", "cen", "dol", "fsh", "spa", "est"]
@@ -56,6 +59,18 @@ DEFAULT_CARD_GAME = [0, 0, 0, 0, 0, 0, 0b11]  # Deck ID 0, rules/trade replaced 
 
 ON_NO_NOTHING = "nothing"
 ON_NO_ORIGINAL = "original"
+
+# Where the card question goes. PLACEMENT_REPLACE: the NPC's talk entry points at an appended card game
+# talk (on_no: what "No" does). PLACEMENT_AFTER_TALK: the NPC's own talk runs as before and asks right
+# before its final RET - its animations, story lines and state variables are kept (an NPC's talk is often
+# tied to its other scripts, e.g. the bcgate_1 mechanic gets up from under the car in it).
+PLACEMENT_REPLACE = "replace"
+PLACEMENT_AFTER_TALK = "after_talk"
+
+OPCODE_HALT = 0x1C
+# A talk that may leave the field before its final RET: the question would open on the way out
+LEAVING_OPCODES = {0x29: "MAPJUMP", 0x2A: "MAPJUMP3", 0x38: "DISCJUMP", 0x69: "BATTLE", 0xAD: "GAMEOVER",
+                   0x10D: "WORLDMAPJUMP"}
 
 ROLE_QUESTION = "Question"
 ROLE_NOT_ENOUGH = "Not enough cards"
@@ -209,76 +224,114 @@ def player_messages(jsm_file: JsmCardGameFile, player: CardGamePlayer):
     return uses
 
 
+class _Code:
+    """Instructions being assembled (4-byte words), with forward jumps patched once their target is known."""
+
+    def __init__(self):
+        self.words = []
+
+    def add(self, opcode, param=0):
+        self.words.append(encode(opcode, param))
+        return len(self.words) - 1
+
+    def add_raw(self, raw: bytes):
+        for offset in range(0, len(raw), 4):
+            self.words.append(raw[offset:offset + 4])
+
+    def patch_jump(self, index, target):
+        opcode = struct.unpack("<I", self.words[index])[0] >> 24
+        self.words[index] = encode(opcode, target - index)
+
+    def here(self):
+        return len(self.words)
+
+    def to_bytes(self):
+        return b"".join(self.words)
+
+
+def _add_turn(code: _Code):
+    code.add(OPCODE_PSHN_L, 0)
+    code.add(OPCODE_PSHN_L, 12)
+    code.add(OPCODE_PCTURN)
+
+
+def _add_match(code: _Code, question_id: int, not_enough_id: int, card_game: list, calls, region: int):
+    """From the card master's rules call to the end of the match; returns the jumps that go to what
+    comes after (the player said No, or the match is over)."""
+    if calls is not None:
+        code.add_raw(calls["maeshori"])
+    for value in (0, question_id, 1, 2, 1, 2, MESSAGE_X, MESSAGE_Y):  # channel, message, options 1-2, default 1, cancel 2
+        code.add(OPCODE_PSHN_L, value)
+    code.add(OPCODE_AASK)
+    code.add(OPCODE_PSHI_L, 0)
+    code.add(OPCODE_PSHN_L, 0)
+    code.add(OPCODE_CAL, CAL_EQ)
+    jump_no = code.add(OPCODE_JPF)
+    for param_index, value in enumerate(card_game):
+        if param_index == 1:  # game rules
+            code.add(OPCODE_PSHM_B, VAR_CURRENT_RULES if calls is not None else VAR_REGION_RULES + region)
+        elif param_index == 2:  # trade rule
+            code.add(OPCODE_PSHM_B, VAR_CURRENT_RULES + 1 if calls is not None else VAR_REGION_TRADE + region)
+        else:
+            code.add(OPCODE_PSHN_L, value)
+    code.words.append(struct.pack("<I", CARDGAME_DWORD))
+    code.add(OPCODE_PSHI_L, 0)
+    code.add(OPCODE_PSHN_L, 5)
+    code.add(OPCODE_CAL, CAL_LS)
+    jump_played = code.add(OPCODE_JPF)
+    for value in (0, not_enough_id, MESSAGE_X, MESSAGE_Y):
+        code.add(OPCODE_PSHN_L, value)
+    code.add(OPCODE_AMESW)
+    jump_cleanup = code.add(OPCODE_JMP)
+    code.patch_jump(jump_played, code.here())
+    if calls is not None:
+        code.add_raw(calls["shori"])
+    code.patch_jump(jump_cleanup, code.here())
+    return [jump_no]
+
+
+def _add_end(code: _Code, calls):
+    if calls is not None:
+        code.add(OPCODE_PSHN_L, 0)
+        code.add(OPCODE_POPM_B, VAR_CURRENT_RULES)
+    code.add(OPCODE_UCON)
+
+
 def build_card_game_block(label: int, question_id: int, not_enough_id: int, card_game: list, calls=None,
                           region: int = 0, original_talk_index: int = None, block_start: int = 0):
     """Instructions (bytes) of an added card game talk script. card_game = the 7 CARDGAME values
     (the rules / trade ones are replaced by the region's). original_talk_index = where the
     player's "No" jumps (the original talk code, after its LBL), None = end silently."""
-    code = []
-
-    def add(opcode, param=0):
-        code.append(encode(opcode, param))
-        return len(code) - 1
-
-    def add_raw(raw: bytes):
-        for offset in range(0, len(raw), 4):
-            code.append(raw[offset:offset + 4])
-
-    def patch_jump(index, target):
-        opcode = struct.unpack("<I", code[index])[0] >> 24
-        code[index] = encode(opcode, target - index)
-
-    add(OPCODE_LBL, label)
-    add(OPCODE_UCOFF)
-    add(OPCODE_PSHN_L, 0)
-    add(OPCODE_PSHN_L, 12)
-    add(OPCODE_PCTURN)
-    if calls is not None:
-        add_raw(calls["maeshori"])
-    for value in (0, question_id, 1, 2, 1, 2, MESSAGE_X, MESSAGE_Y):  # channel, message, options 1-2, default 1, cancel 2
-        add(OPCODE_PSHN_L, value)
-    add(OPCODE_AASK)
-    add(OPCODE_PSHI_L, 0)
-    add(OPCODE_PSHN_L, 0)
-    add(OPCODE_CAL, CAL_EQ)
-    jump_no = add(OPCODE_JPF)
-    for param_index, value in enumerate(card_game):
-        if param_index == 1:  # game rules
-            add(OPCODE_PSHM_B, VAR_CURRENT_RULES if calls is not None else VAR_REGION_RULES + region)
-        elif param_index == 2:  # trade rule
-            add(OPCODE_PSHM_B, VAR_CURRENT_RULES + 1 if calls is not None else VAR_REGION_TRADE + region)
-        else:
-            add(OPCODE_PSHN_L, value)
-    code.append(struct.pack("<I", CARDGAME_DWORD))
-    add(OPCODE_PSHI_L, 0)
-    add(OPCODE_PSHN_L, 5)
-    add(OPCODE_CAL, CAL_LS)
-    jump_played = add(OPCODE_JPF)
-    for value in (0, not_enough_id, MESSAGE_X, MESSAGE_Y):
-        add(OPCODE_PSHN_L, value)
-    add(OPCODE_AMESW)
-    jump_cleanup = add(OPCODE_JMP)
-    patch_jump(jump_played, len(code))
-    if calls is not None:
-        add_raw(calls["shori"])
-    patch_jump(jump_cleanup, len(code))
-
-    def add_end():
-        if calls is not None:
-            add(OPCODE_PSHN_L, 0)
-            add(OPCODE_POPM_B, VAR_CURRENT_RULES)
-        add(OPCODE_UCON)
-
-    add_end()
-    add(OPCODE_RET, 8)
-    patch_jump(jump_no, len(code))
-    add_end()
+    code = _Code()
+    code.add(OPCODE_LBL, label)
+    code.add(OPCODE_UCOFF)
+    _add_turn(code)
+    (jump_no,) = _add_match(code, question_id, not_enough_id, card_game, calls, region)
+    _add_end(code, calls)
+    code.add(OPCODE_RET, 8)
+    code.patch_jump(jump_no, code.here())
+    _add_end(code, calls)
     if original_talk_index is None:
-        add(OPCODE_RET, 8)
+        code.add(OPCODE_RET, 8)
     else:
-        jump = add(OPCODE_JMP)
-        code[jump] = encode(OPCODE_JMP, original_talk_index - (block_start + jump))
-    return b"".join(code)
+        jump = code.add(OPCODE_JMP)
+        code.words[jump] = encode(OPCODE_JMP, original_talk_index - (block_start + jump))
+    return code.to_bytes()
+
+
+def build_after_talk_block(question_id: int, not_enough_id: int, card_game: list, calls=None, region: int = 0,
+                           turn: bool = False):
+    """Instructions (bytes) inserted right before the final RET of an NPC's talk script: the card
+    question once the NPC's own talk is over, in the same control-off window as the vanilla card
+    players. turn: face the player first (only for a talk that does nothing else)."""
+    code = _Code()
+    code.add(OPCODE_UCOFF)
+    if turn:
+        _add_turn(code)
+    (jump_no,) = _add_match(code, question_id, not_enough_id, card_game, calls, region)
+    code.patch_jump(jump_no, code.here())
+    _add_end(code, calls)
+    return code.to_bytes()
 
 
 def end_entry_index(jsm_file: JsmCardGameFile):
@@ -290,15 +343,65 @@ def end_entry_index(jsm_file: JsmCardGameFile):
                for index in range(nb_entity))
 
 
+def talk_bounds(jsm_file: JsmCardGameFile, npc: NpcEntity):
+    """(start, end) instruction indexes of the NPC's talk script, as its entry points now."""
+    offset_section1 = struct.unpack_from("<H", jsm_file.data, 4)[0]
+    start = struct.unpack_from("<H", jsm_file.data, offset_section1 + npc.talk_script * 2)[0] & 0x7FFF
+    return script_bounds(jsm_file, start)
+
+
+def nb_entities_sharing_talk(jsm_file: JsmCardGameFile, npc: NpcEntity):
+    """How many entities run this NPC's talk script (some maps point several entities at one set of
+    scripts)."""
+    nb_entity = sum(jsm_file.data[0:4])
+    count = 0
+    for index in range(nb_entity):
+        entry = struct.unpack_from("<H", jsm_file.data, 8 + 2 * index)[0]
+        first = entry >> 7
+        count += first <= npc.talk_script <= first + (entry & 0x7F)
+    return count
+
+
+def is_empty_talk(jsm_file: JsmCardGameFile, npc: NpcEntity):
+    """A talk script that does nothing (LBL, RET)."""
+    start, end = talk_bounds(jsm_file, npc)
+    return all(opcode in (OPCODE_LBL, OPCODE_RET) for opcode, _ in jsm_file.instructions()[start:end])
+
+
+def after_talk_problem(jsm_file: JsmCardGameFile, npc: NpcEntity):
+    """Why the card question cannot be asked at the end of this NPC's own talk ("" = it can). Every way
+    through the talk must end at one final RET, with the control given back by the talk itself."""
+    start, end = talk_bounds(jsm_file, npc)
+    opcodes = [opcode for opcode, _ in jsm_file.instructions()[start:end]]
+    returns = [index for index, opcode in enumerate(opcodes) if opcode == OPCODE_RET]
+    if not returns or returns[-1] != len(opcodes) - 1:
+        return "its talk script does not end with RET"
+    if len(returns) > 1:
+        return "its talk script has several exits (RET)"
+    leaving = sorted({LEAVING_OPCODES[opcode] for opcode in opcodes if opcode in LEAVING_OPCODES})
+    if leaving:
+        return f"its talk can leave the field ({', '.join(leaving)})"
+    if OPCODE_HALT in opcodes:
+        return "its talk script can stop (HALT)"
+    if OPCODE_UCOFF in opcodes and OPCODE_UCON not in opcodes:
+        return "its talk takes the control away and another script gives it back"
+    return ""
+
+
 def add_card_game(jsm_file: JsmCardGameFile, npc: NpcEntity, question_id: int, not_enough_id: int,
-                  region: int = 0, on_no: str = ON_NO_NOTHING, card_game=None):
-    """Give an NPC a card game (append-only patch, see the module doc). Returns its new player."""
+                  region: int = 0, on_no: str = ON_NO_NOTHING, card_game=None, placement: str = PLACEMENT_REPLACE):
+    """Give an NPC a card game (see the module doc and PLACEMENT_*). Returns its new player."""
     if npc.plays_cards():
         raise ValueError(f"{npc.entity_name} already plays cards")
+    sharing = nb_entities_sharing_talk(jsm_file, npc)
+    if sharing > 1:
+        raise ValueError(f"{npc.entity_name}'s scripts are shared by {sharing} entities: they would all play cards")
     calls = card_master_calls(jsm_file) if has_card_master(jsm_file) else None
     if has_card_master(jsm_file) and calls is None:
         raise ValueError("This map has a cardgamemaster but no card player to copy its calls from")
     card_game = list(card_game or DEFAULT_CARD_GAME)
+    if placement == PLACEMENT_AFTER_TALK:
+        return _add_after_talk(jsm_file, npc, question_id, not_enough_id, region, card_game, calls)
     data = jsm_file.data
     offset_section1, offset_script = struct.unpack_from("<HH", data, 4)
     eof_entry = offset_section1 + end_entry_index(jsm_file) * 2
@@ -320,6 +423,26 @@ def add_card_game(jsm_file: JsmCardGameFile, npc: NpcEntity, question_id: int, n
     struct.pack_into("<H", data, eof_entry, (eof_value & 0x8000) | new_eof)
     jsm_file.reanalyze()
     jsm_file.structure_modified = True
+    # found by place, not by name: maps without a matching .sym can give several entities one name
     return next(player for player in jsm_file.players
-                if player.entity_name == npc.entity_name
-                and (player.cardgame_file_offset - offset_script) // 4 >= block_start)
+                if (player.cardgame_file_offset - offset_script) // 4 >= block_start)
+
+
+def _add_after_talk(jsm_file, npc, question_id, not_enough_id, region, card_game, calls):
+    problem = after_talk_problem(jsm_file, npc)
+    if problem:
+        raise ValueError(f"The question cannot go after {npc.entity_name}'s talk: {problem}")
+    _start, end = talk_bounds(jsm_file, npc)
+    final_return = end - 1
+    block = build_after_talk_block(question_id, not_enough_id, card_game, calls, region,
+                                   turn=is_empty_talk(jsm_file, npc))
+    words = [struct.unpack_from("<I", block, offset)[0] for offset in range(0, len(block), 4)]
+    # Every jump to the final RET now lands on the question (jsmedit: inserted code belongs to the
+    # instruction it is put before), so each way through the talk asks it.
+    data = jsmedit.insert_instructions(bytes(jsm_file.data), final_return, words)
+    insert_offset = jsm_file.offset_script + final_return * 4
+    jsm_file.data = bytearray(data)
+    jsm_file.reanalyze(moved_from=insert_offset, moved_by=len(block))
+    jsm_file.structure_modified = True
+    return next(player for player in jsm_file.players
+                if insert_offset <= player.cardgame_file_offset < insert_offset + len(block))
