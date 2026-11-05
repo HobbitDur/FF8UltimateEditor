@@ -24,44 +24,59 @@ class ToolDownloader:
             self.update_one_tool(tool_name, download_update_func, canary)
 
     def update_one_tool(self, tool_name: str, download_update_func: types.MethodType = None, canary=False):
+        """Install the tool's latest release asset. Returns False when nothing was downloaded: a
+        tool marked "only_when_new" (VincentTim, updated with every Tool update) whose installed
+        asset (RELEASE.txt, written by every install) is already the latest one."""
         if "source" in self.json_data['ExternalTools'][tool_name]:
             return self.update_source_tool(tool_name, download_update_func, canary)
+        entry = self.json_data['ExternalTools'][tool_name]
+        install_path = entry.get("install_path", tool_name)
+        dd_url = self.__get_github_url_file(entry, "assets_url", canary)
+        json_file = self.__download_file(dd_url, headers={'content-type': 'application/json'})[0].json()
+        asset = self._tool_asset(json_file, entry.get("asset_name", []))
+        release = f"{asset['id']}\n{asset['name']}\n{asset['updated_at']}\n"
+        release_file = os.path.join(install_path, "RELEASE.txt")
+        if entry.get("only_when_new") and os.path.isfile(release_file):
+            with open(release_file, encoding="utf-8") as f:
+                if f.read() == release:
+                    print(f"{tool_name} is up to date ({asset['name']})")
+                    return False
         os.makedirs(self.FOLDER_DOWNLOAD, exist_ok=True)
-        dd_url = self.__get_github_url_file(self.json_data['ExternalTools'][tool_name], "assets_url", canary)
-        json_file = self.__download_file(dd_url, download_update_func, headers={'content-type': 'application/json'})[0].json()
-        asset_link = ""
-        if len(json_file) == 1: # If only 1 asset available
-            asset_link = json_file[0]['browser_download_url']
-        else:
-            for i, json_asset in enumerate(json_file):
-                for asset_name in self.json_data['ExternalTools'][tool_name]["asset_name"]:
-                    if asset_name == json_asset['name']:
-                        asset_link = json_file[i]['browser_download_url']
-                        break
-                if asset_link != "":
-                    break
-        if asset_link == "":
-            asset_link = json_file[0]['browser_download_url']
-        dd_file_name = self.__download_file(asset_link, download_update_func, write_file=True)[1]
-        if "install_path" in self.json_data["ExternalTools"][tool_name]:
-            install_path = self.json_data["ExternalTools"][tool_name]["install_path"]
-        else:
-            install_path = tool_name
+        try:
+            dd_file_name = self.__download_file(asset['browser_download_url'], download_update_func, write_file=True)[1]
+            self._unzip_tool(dd_file_name, install_path, entry.get("ignore_first_folder", False))
+        finally:
+            shutil.rmtree(self.FOLDER_DOWNLOAD, ignore_errors=True)
+        with open(release_file, "w", encoding="utf-8") as f:
+            f.write(release)
+        return True
 
-        if "ignore_first_folder" in self.json_data["ExternalTools"][tool_name]:
-            ignore_first_folder = self.json_data["ExternalTools"][tool_name]["ignore_first_folder"]
-        else:
-            ignore_first_folder = False
-        self._unzip_tool(dd_file_name, install_path, ignore_first_folder)
-        shutil.rmtree(self.FOLDER_DOWNLOAD)
+    @staticmethod
+    def _tool_asset(assets: list, asset_names: list) -> dict:
+        """The release asset to install: the only one, else the first of the release's assets
+        named in "asset_name", else the first one."""
+        if len(assets) == 1:
+            return assets[0]
+        for asset in assets:
+            if asset['name'] in asset_names:
+                return asset
+        return assets[0]
 
     def update_source_tool(self, tool_name: str, download_update_func: types.MethodType = None, canary=False):
         """A tool taken as source code, not a release asset: one folder of a GitHub repository
         ("source_folder") at the channel's "source" - "branch:<name>" (that branch's latest
         commit) or "release" (the source of the latest release, or pre-release for canary) - into
         "install_path", replacing what was there; SOURCE.txt says where it came from. FFNx's
-        effect sources (FFNxEffects): built into Fujin's effect recorder (Tools/fxrecorder)."""
+        effect sources (FFNxEffects): built into Fujin's effect recorder (Tools/fxrecorder).
+        GitHub sends these archives without their size: the progress counts on the size of the
+        previous download (SOURCE.txt's last line), else on "expected_size"."""
         entry = self.json_data['ExternalTools'][tool_name]
+        expected_size = entry.get("expected_size")
+        try:
+            with open(os.path.join(entry["install_path"], "SOURCE.txt"), encoding="utf-8") as info:
+                expected_size = int(info.read().splitlines()[4])
+        except (OSError, IndexError, ValueError):
+            pass
         source = entry["source"]["canary" if canary else "stable"]
         if source.startswith("branch:"):
             ref = source.split(":", 1)[1]
@@ -71,9 +86,12 @@ class ToolDownloader:
             link = self.__get_github_url_file(entry, "zipball_url", canary)
         os.makedirs(self.FOLDER_DOWNLOAD, exist_ok=True)
         try:
-            file_name = self.__download_file(link, download_update_func, write_file=True, file_name=f"{tool_name}.zip")[1]
+            file_name = self.__download_file(link, download_update_func, write_file=True, file_name=f"{tool_name}.zip",
+                                             expected_length=expected_size)[1]
             install_path, folder = entry["install_path"], entry["source_folder"].strip("/") + "/"
-            with ZipFile(os.path.join(self.FOLDER_DOWNLOAD, file_name)) as archive:
+            archive_path = os.path.join(self.FOLDER_DOWNLOAD, file_name)
+            archive_size = os.path.getsize(archive_path)
+            with ZipFile(archive_path) as archive:
                 members = [name for name in archive.namelist() if name.split("/", 1)[-1].startswith(folder)
                            and not name.endswith("/")]
                 if not members:
@@ -88,7 +106,7 @@ class ToolDownloader:
                         shutil.copyfileobj(source_file, out)
                 commit = archive.comment.decode("ascii", "replace").strip()     # GitHub: the commit
             with open(os.path.join(install_path, "SOURCE.txt"), "w", encoding="utf-8") as info:
-                info.write(f"{entry['link']}\n{ref}\n{commit}\n{folder}\n")
+                info.write(f"{entry['link']}\n{ref}\n{commit}\n{folder}\n{archive_size}\n")
         finally:
             shutil.rmtree(self.FOLDER_DOWNLOAD, ignore_errors=True)
 
@@ -119,8 +137,10 @@ class ToolDownloader:
         raise RuntimeError("This release has no FF8UltimateEditor build for " + ("Linux" if linux else "Windows"))
 
 
-    def __download_file(self, link, download_update_func: types.MethodType = None, headers={}, write_file=False, file_name=None, dest_path=FOLDER_DOWNLOAD) -> (
-            requests.models.Response, str):
+    def __download_file(self, link, download_update_func: types.MethodType = None, headers={}, write_file=False, file_name=None, dest_path=FOLDER_DOWNLOAD,
+                        expected_length=None) -> (requests.models.Response, str):
+        """expected_length: the size to show the progress against when the answer has no
+        content-length (it grows with the download if the file turns out bigger)."""
         print("Downloading with link: {}".format(link))
         if write_file:
             stream = True
@@ -145,10 +165,13 @@ class ToolDownloader:
 
         if write_file:
             total_length = request_return.headers.get('content-length')
-            if total_length is None:  # no content length header
-                total_length = -1
-            else:
+            estimated = total_length is None and bool(expected_length)
+            if total_length is not None:
                 total_length = int(total_length)
+            elif estimated:
+                total_length = int(expected_length)
+            else:  # no content length header
+                total_length = -1
             dl = 0
             if download_update_func:
                 download_update_func(dl, total_length)
@@ -156,8 +179,12 @@ class ToolDownloader:
             for data in request_return.iter_content(chunk_size=4096):
                 dl += len(data)
                 full_data.extend(data)
+                if estimated:
+                    total_length = max(total_length, dl + 1)  # full only once the download is over
                 if download_update_func:
                     download_update_func(dl, total_length)
+            if estimated and download_update_func:
+                download_update_func(dl, dl)
             with open(os.path.join(dest_path, file_name), "wb") as file:
                 file.write(full_data)
 

@@ -48,14 +48,16 @@
 	  "ignore_first_folder":"True"
 	},
 	"VincentTim":  {
-	  "link":        "https://github.com/myst6re/vincent-tim",
-	  "install_path":"ExternalTools/VincentTim"
+	  "link":         "https://github.com/myst6re/vincent-tim",
+	  "install_path": "ExternalTools/VincentTim",
+	  "only_when_new":true
 	},
 	"FFNxEffects": {
 	  "link":         "https://github.com/HobbitDur/FFNx",
 	  "install_path": "ExternalTools/FFNx/fx",
 	  "source":       {"stable": "branch:VanillaDecompiledStructRework", "canary": "branch:VanillaDecompiledStructRework"},
-	  "source_folder":"src/ff8/battle/fx"
+	  "source_folder":"src/ff8/battle/fx",
+	  "expected_size":8700000
 	}
   },
   "7zip":         {

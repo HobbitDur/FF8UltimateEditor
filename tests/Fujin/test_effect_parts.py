@@ -469,7 +469,8 @@ def test_updater_takes_one_source_folder(tmp_path, monkeypatch):
     monkeypatch.setattr(toolupdate.ToolDownloader, "FOLDER_DOWNLOAD", str(tmp_path / "download"))
     links = []
 
-    def download(self, link, func=None, headers={}, write_file=False, file_name=None, dest_path=None):
+    def download(self, link, func=None, headers={}, write_file=False, file_name=None, dest_path=None,
+                 expected_length=None):
         links.append(link)
         (tmp_path / "download").mkdir(exist_ok=True)
         (tmp_path / "download" / file_name).write_bytes(archive.read_bytes())
