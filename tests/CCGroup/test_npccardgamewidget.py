@@ -90,6 +90,22 @@ def test_deck_id_picker_has_no_duplicate_entry(npc_tab):
     assert sum(text.lower().startswith("0 - no rare") for text in texts) == 1
 
 
+def test_deck_id_picker_gives_a_free_pocket(npc_tab):
+    """'Free pocket' sets the next Deck ID that no card player uses and the game does not reserve: the
+    way to take a starting rare card away from an NPC without Deck ID 0 swallowing the cards lost to it."""
+    from CCGroup import cardlocation
+    from CCGroup.npccardgamewidget import FREE_POCKET
+    seito6 = players_by_name(npc_tab)["seito6"]
+    npc_tab.select_player(seito6)
+    deck_row = current_editor(npc_tab).rows[0]
+    deck_row.spinbox.setValue(0)
+    free = npc_tab.manager.free_deck_id()
+    assert free is not None and not cardlocation.is_reserved_location(free)
+    deck_row._DeckIdParamRow__picked(deck_row.picker_values.index(FREE_POCKET))
+    assert seito6.params[PARAM_DECK_ID].value == free
+    assert npc_tab.manager.deck_id_users(free) == ["bghall_1 seito6"]
+
+
 def test_rare_chance_greyed_while_the_deck_id_is_0(npc_tab):
     """Deck ID 0: the game never looks for rare cards, so the rare chance does nothing (greyed, with a
     note, in the editor and the table) - any other Deck ID may hold rare cards later."""

@@ -52,7 +52,9 @@ TOOLTIP_DECK_ID = (
     "The cards you pick for the match are moved to this Deck ID and come back only if you keep<br/>"
     "or win them: a rare card you lose stays here, and every NPC sharing this Deck ID can play it.<br/><br/>"
     "<b>0</b> = no rare cards, <b>1</b> = Queen of Cards, <b>200-232</b> = starting owner of rare card<br/>"
-    "Deck ID - 123 (e.g. 213 = Leviathan, Joker's card), <b>240</b> = the player's own cards.")
+    "Deck ID - 123 (e.g. 213 = Leviathan, Joker's card), <b>240</b> = the player's own cards.<br/>"
+    "0 also swallows a rare card lost to the NPC (no card player ever deals from 0): to only take a<br/>"
+    "starting rare card away, pick <b>Free pocket</b>, an unused Deck ID of its own.")
 
 TOOLTIP_GAME_RULES = (
     "<b>Game rules</b> (bitfield)<br/>"
@@ -309,11 +311,15 @@ class RareChanceParamRow(SpinParamRow):
                                  and not (self.variable_checkbox is not None and self.variable_checkbox.isChecked()))
 
 
-class DeckIdParamRow(SpinParamRow):
-    """Deck ID: the spinbox plus a picker of the meaningful locations (no rare, Queen, the 33
-    rare-card starting owners, the player) and a line saying what the current value means."""
+FREE_POCKET = "free pocket"  # Deck ID picker entry: the next Deck ID nobody uses
 
-    def __init__(self, param: CardGameParam, card_names: list):
+
+class DeckIdParamRow(SpinParamRow):
+    """Deck ID: the spinbox plus a picker of the meaningful locations (no rare, Queen, a free pocket,
+    the 33 rare-card starting owners, the player) and a line saying what the current value means.
+    free_deck_id() -> the next unused, unreserved Deck ID (None: all taken)."""
+
+    def __init__(self, param: CardGameParam, card_names: list, free_deck_id=None):
         SpinParamRow.__init__(self, param, "Deck ID", TOOLTIP_DECK_ID, 0, 255)
         self.card_names = card_names
         self.picker = QComboBox()
@@ -321,6 +327,10 @@ class DeckIdParamRow(SpinParamRow):
         self.picker.wheelEvent = lambda event: None
         self.picker_values = [None, cardlocation.LOCATION_NO_RARE, cardlocation.LOCATION_QUEEN]
         self.picker.addItems(["", "0 - No rare cards", "1 - Queen of Cards"])
+        self.free_deck_id = free_deck_id
+        if free_deck_id is not None:
+            self.picker_values.append(FREE_POCKET)
+            self.picker.addItem("Free pocket - the next Deck ID nobody uses")
         for card_id in range(cardlocation.RARE_CARD_FIRST_ID, cardlocation.RARE_CARD_LAST_ID + 1):
             location = cardlocation.starting_location(card_id)
             self.picker_values.append(location)
@@ -341,8 +351,15 @@ class DeckIdParamRow(SpinParamRow):
         return editor_layout
 
     def __picked(self, index: int):
-        if self.picker_values[index] is not None:
-            self.spinbox.setValue(self.picker_values[index])
+        value = self.picker_values[index]
+        if value == FREE_POCKET:
+            value = self.free_deck_id()
+            if value is None:
+                QMessageBox.information(self.picker, "CC Group", "Every Deck ID is already used.")
+                self.__sync_picker()
+                return
+        if value is not None:
+            self.spinbox.setValue(value)
 
     def __sync_picker(self):
         # Item 0 describes a value that is not in the list; a listed value shows its own item instead
@@ -700,7 +717,10 @@ class RareCardsGroup(QGroupBox):
             return
         deck_id = deck_param.value
         if deck_id == cardlocation.LOCATION_NO_RARE:
-            self.__layout.addWidget(QLabel("Deck ID 0: this NPC never plays rare cards."))
+            self.__layout.addWidget(wrapped_label("Deck ID 0: this NPC never plays rare cards, and a rare card the"
+                                                  " player loses to it goes to location 0, where no card player"
+                                                  " ever deals from. To only take a starting rare card away, give"
+                                                  " it a free pocket (Deck ID picker)."))
             return
         if deck_id == cardlocation.LOCATION_PLAYER:
             self.__layout.addWidget(wrapped_label("Deck ID 240 is the player's own collection: the rare cards the"
@@ -975,7 +995,7 @@ class CardPlayerWidget(QWidget):
         main_layout.addWidget(params_group)
 
         self.rows = [
-            DeckIdParamRow(player.params[PARAM_DECK_ID], card_images.names),
+            DeckIdParamRow(player.params[PARAM_DECK_ID], card_images.names, manager.free_deck_id),
             BitmaskParamRow(player.params[PARAM_GAME_RULES], "Game rules", TOOLTIP_GAME_RULES,
                             GAME_RULE_BITS,
                             variable_option=("Current region rules",
