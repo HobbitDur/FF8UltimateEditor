@@ -19,7 +19,7 @@ import tempfile
 
 from PyQt6.QtCore import QEvent, QPoint, QPointF, QRectF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF
-from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea,
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSpinBox,
                              QSizePolicy, QSlider, QSplitter, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
@@ -695,6 +695,26 @@ class FileField(QLineEdit):
         pass
 
 
+class AddressField(QSpinBox):
+    """A parameter that names data at an exe address (a prim model, a camera track, a table...): the address in hex, typed in hex."""
+
+    def __init__(self):
+        super().__init__()
+        self.setDisplayIntegerBase(16)
+        self.setPrefix("0x")
+        self.setKeyboardTracking(False)
+        self.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
+
+    def textFromValue(self, value):
+        return f"{value:X}"
+
+    def limits(self):
+        return self.minimum(), self.maximum()
+
+    def hint(self, _text):
+        pass
+
+
 class FieldSpin(QWidget):
     """A field's value: a narrow box in the field's unit (fx_params.h Unit: degrees for an angle,
     x for a size; the raw value greyed beside it) - the QSpinBox calls a part tab makes, in raw
@@ -842,7 +862,8 @@ class PartTab(QWidget):
             sequence = field.get("type") in REFERENCE_TYPES        # an address, a file: no compare
             spin = (SequenceField(runner, self.part_names) if field.get("type") == "seq" else
                     SoundField(runner, sounds) if field.get("type") == "sound" else
-                    FileField(field) if field.get("type") == "file" else FieldSpin(field))
+                    FileField(field) if field.get("type") == "file" else
+                    AddressField() if sequence else FieldSpin(field))
             spin.setRange(field["min"], field["max"])
             spin.setValue(values.get(field["key"], field["default"]))
             game = (field["default"] or "its own" if field.get("type") == "file" else

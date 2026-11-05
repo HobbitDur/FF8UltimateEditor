@@ -646,5 +646,8 @@ def test_part_tab_shows_what_cant_be_edited(qapp):
     field = tab.not_editable_rows[rows[0]["key"]]
     assert not field.isEnabled() and rows[0]["address"] in field.text() and "Not editable" in field.toolTip()
     assert not set(tab.not_editable_rows) & set(tab.spins)
+    camera = tab.spins["res.camera"]
+    camera_address = load_description(38)["exe_data"]["res.camera"]["address"]
+    assert camera.text() == camera_address and camera.value() == int(camera_address, 16)
     fujin.data_view.select(rows[0]["key"])
     assert rows[0]["address"].removeprefix("0x") in fujin.data_view.fixed_bytes.toPlainText()
