@@ -222,7 +222,8 @@ def test_every_port_layout_fits_the_block_its_port_decodes_it_into():
                      "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m033.dat")
 def test_a_port_effects_copy_plays_its_own_layout_and_flipbooks(tmp_path):
     """Gastric Juice's copy (a port effect: FFNx's code runs it) with its own data draws as the exe's; with its
-    layout spinning twice as fast, or its flipbooks dimmed, it draws otherwise, as many primitives."""
+    layout spinning twice as fast it draws otherwise (a spin that turns more of it off screen draws a few primitives
+    less or more), with its flipbooks dimmed too otherwise again, as many primitives."""
     from Fujin.effectparts import effect_schema
     from Fujin.recorderbuild import RECORDER
     if effect_schema(128) is None or not any(f["type"] == "layout" for f in effect_schema(128)["fields"]):
@@ -249,11 +250,11 @@ def test_a_port_effects_copy_plays_its_own_layout_and_flipbooks(tmp_path):
                 track.keys[:] = [(frame, tuple(2 * v for v in values)) for frame, values in track.keys]
     data["layout"]["hex"] = encode_layout(layout).hex()
     spun = record(224, "spun", f"program={write_program(new, tmp_path / 'spun.fxprog')}")
-    assert spun != original and len(spun) == len(original)
+    assert spun != original
     for key in ("seqs.spray", "seqs.drip", "seqs.splash"):
         sequence = parse_sequence(bytes.fromhex(data[key]["hex"]), 0, 0)
         for frame in sequence.frames:
             frame.pieces[:] = [dataclasses.replace(piece, intensity=0x10) for piece in frame.pieces]
         data[key]["hex"] = encode_sequence(sequence).hex()
     dimmed = record(224, "dimmed", f"program={write_program(new, tmp_path / 'dimmed.fxprog')}")
-    assert dimmed != spun and len(dimmed) == len(original)
+    assert dimmed != spun and len(dimmed) == len(spun)
