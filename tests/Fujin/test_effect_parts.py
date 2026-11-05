@@ -615,10 +615,13 @@ def test_potion_shares_cures_parameters_but_keeps_its_own(tmp_path):
     params = tmp_path / "params.txt"
     params.write_text("ring.radius.num 4\nring.radius.max 2048\n")
     assert effect(50, "wide", "native=1", f"params={params}") != potion_native
-    # another sprite sequence for the sparkles: drawn instead; a value that is no sequence: the game's
-    params.write_text(f"sparkle.seq {0x15AD610}\n")
+    # another sprite sequence for the motes (the sparkles', 27 frames for their 17): drawn instead; one with fewer
+    # frames than the code plays (the motes' for the sparkles), or a value that is no sequence: the game's
+    params.write_text(f"mote.seq {0x15AD7EC}\n")
     swapped = effect(50, "swapped", "native=1", f"params={params}")
     drawn = lambda lines: {(int(l.split()[2]), int(l.split()[3], 16)) for l in lines if l.startswith("Q ")}
-    assert (4, 0x15AD610) in drawn(swapped) and (4, 0x15AD7EC) not in drawn(swapped)
+    assert (5, 0x15AD7EC) in drawn(swapped) and (5, 0x15AD610) not in drawn(swapped)
+    params.write_text(f"sparkle.seq {0x15AD610}\n")
+    assert effect(50, "short", "native=1", f"params={params}") == potion_native
     params.write_text("sparkle.seq 12345\n")
     assert effect(50, "bad", "native=1", f"params={params}") == potion_native
