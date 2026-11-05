@@ -1212,7 +1212,7 @@ class FujinWidget(QWidget):
         drawing = frozenset(part["id"] for part in schema["parts"] if part["id"])
         names = {0: "The target"} | {part["id"]: part["title"] for part in schema["parts"] if part["id"]}
         # what its code reads at a fixed place of the exe: under the part that previews the whole effect
-        whole = next((part for part in schema["parts"] if not part["id"]), schema["parts"][0])
+        whole = next((part for part in schema["parts"] if not part["id"]), next(iter(schema["parts"]), None))
         fixed = (self.description(effect) or {}).get("not_editable", [])
         for part in schema["parts"]:
             fields = [field for field in schema["fields"] if field["part"] == part["key"]]
