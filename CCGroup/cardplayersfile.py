@@ -196,13 +196,17 @@ def _apply_param(param, value):
 
 
 def _apply_texts(jsm_file, player, msd_file, texts, problems, label):
-    """Set the script's texts in order; False when nothing could be compared."""
+    """Set the script's texts in order; False when nothing could be compared. A file without any
+    Dialogue text (only the card game's own texts) is matched to the script's other texts only, so
+    the NPC's own lines - e.g. a talk with the question put after it - stay as the map has them."""
     if not texts:
         return False
     if msd_file is None:
         problems.append(f"{label}: no {jsm_file.map_name}.msd, texts not applied")
         return False
     uses = [use for use in jsmnpc.player_messages(jsm_file, player) if 0 <= use.message_id < len(msd_file)]
+    if all(text["role"] != jsmnpc.ROLE_DIALOGUE for text in texts):
+        uses = [use for use in uses if use.role != jsmnpc.ROLE_DIALOGUE]
     if [use.role for use in uses] != [text["role"] for text in texts]:
         problems.append(f"{label}: its script shows other texts than in the file ({len(uses)} vs {len(texts)}),"
                         f" texts not applied")

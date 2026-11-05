@@ -200,3 +200,25 @@ def test_a_card_game_put_after_the_npc_talk_is_read_back_and_applied(npc_tab, ga
     assert report.added == ["bghall_1 seito5"] and not report.problems and not report.not_found
     assert bytes(file_of(other, "bghall_1").output_data()) == bytes(file_of(npc_tab, "bghall_1").output_data())
     other.deleteLater()
+
+
+def test_card_texts_only_leave_the_npc_lines_alone(npc_tab, game_data, qapp, tmp_path):
+    """A file listing only a player's card texts (no Dialogue) sets those and keeps the NPC's own lines,
+    e.g. a card game put after the NPC's talk."""
+    npc_tab.set_reference_folder(make_vanilla(tmp_path / "vanilla"))
+    hall = file_of(npc_tab, "bghall_1")
+    seito5 = npc_tab.add_card_game(hall, npc(npc_tab, "bghall_1", "seito5"), "Q\nYes\nNo", "N",
+                                   placement=jsmnpc.PLACEMENT_AFTER_TALK)
+    msd = npc_tab.manager.msd(hall)
+    lines = {use.message_id: msd.text(use.message_id) for use in jsmnpc.player_messages(hall, seito5)
+             if use.role == jsmnpc.ROLE_DIALOGUE}
+    assert lines  # seito5 says something before its card question
+    record = cardplayersfile.player_record(hall, seito5, msd)
+    record["texts"] = [{"role": jsmnpc.ROLE_QUESTION, "text": "Cards?\nYes\nNo"},
+                       {"role": jsmnpc.ROLE_NOT_ENOUGH, "text": "Need 5."}]
+    report = cardplayersfile.apply_players(npc_tab.manager, {"players": [record]})
+    assert not report.problems and report.changed == ["bghall_1 seito5"]
+    texts = [(use.role, msd.text(use.message_id)) for use in jsmnpc.player_messages(hall, seito5)
+             if use.role != jsmnpc.ROLE_DIALOGUE]
+    assert texts == [(jsmnpc.ROLE_QUESTION, "Cards?\nYes\nNo"), (jsmnpc.ROLE_NOT_ENOUGH, "Need 5.")]
+    assert {message_id: msd.text(message_id) for message_id in lines} == lines
