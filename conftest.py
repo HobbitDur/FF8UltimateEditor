@@ -63,6 +63,21 @@ def _isolate_qsettings():
     QtCore.QSettings = IsolatedQSettings
 
 
+@pytest.fixture(autouse=True)
+def _ifrit_3d_options_at_their_defaults():
+    """Every test starts with Ifrit3D's remembered view options at their coded defaults.
+
+    The throwaway settings are the whole run's (see _isolate_qsettings), and the 3D view remembers its
+    toggles there (ifrit/3d/: battle view, "apply to all following frames", show skeleton...): one test
+    switching one on or off would leave it so for every later test of its worker - the battle view's
+    setup panel widening the pane past test_file_list_splitter_width's floor, a drag test finding
+    "apply to all following frames" off. A test that checks a choice is remembered does it within itself.
+    """
+    from PyQt6.QtCore import QSettings
+    QSettings("FF8UltimateEditor", "FF8UltimateEditor").remove("ifrit/3d")
+    yield
+
+
 def pytest_configure(config):
     config.addinivalue_line(
         "markers",
