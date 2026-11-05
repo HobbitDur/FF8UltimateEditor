@@ -598,3 +598,33 @@ def test_the_data_tab_shows_not_editable_rows(qapp):
     blind.show_data(doom)
     blind.select(row["key"])
     assert "FF8_EN.exe" in blind.fixed_bytes.toPlainText()
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag140-158-159-258-331-332.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m092.dat")
+def test_renzokuken_plays_its_own_sequence(tmp_path):
+    """Renzokuken vs X-ATM092: its length is what Squall's sequence computes (opcode AB): the game's sequence code run by the
+    recorder (sequences=1) plays it whole, the models still drawn, where without it the effect ends at once."""
+    from Fujin.effectprogram import binds_its_animations
+    from Fujin.recorderbuild import RECORDER
+    assert binds_its_animations(159) and binds_its_animations(188) and not binds_its_animations(1)
+    assert binds_its_animations(300, "param res.anim_sets anim_set 1 1") and not binds_its_animations(300, "param a i16 1 1")
+
+    def record(tag, *extra):
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(RECORDER), "159", f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m092.dat'}", "caster=0", "target=3", *extra],
+                             cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        ticks = []
+        for line in out.read_text().splitlines():
+            if line.startswith("R "):
+                ticks.append(0)
+            elif line.startswith("P "):
+                ticks[-1] += 1
+        return ticks
+
+    assert len(record("plain")) == 3
+    ticks = record("sequences", "sequences=1")
+    assert len(ticks) > 100 and min(ticks) > 300

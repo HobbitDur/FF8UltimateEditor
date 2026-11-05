@@ -285,6 +285,10 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   A part comes with the parts it needs: "Sparkles (with Emitter, Ring)" adds all three. Each part
   adds its tab (before +, which stays the last tab) at the game's values. Right-clicking a part's tab removes it, with the parts that need it. Cure's parts all together are Cure exactly, whatever order they
   were added in.
+  **Sequences**: the recorder runs the game's sequence code on the actors (`sequences=1`, Fujin always passes it): a sequence an
+  effect starts plays each tick (`AnimSeq_UpdateEntityPerFrame` 0x504290). Renzokuken's length comes from it (opcode `AB`), and an
+  effect that binds its own animation set (limit breaks, Blue Magic) plays that and not the Magic cast. A slot with no model takes no sequence.
+  An effect with no part tagged shows everything in its part tab: preview, images and flipbooks, its target's model included.
   **Data** (Choreography): a new effect made with the exe open has its own data, copied from the
   exe. This tab edits it by kind: a sprite sequence's frames and pieces, a sound's world id (with
   Play), a table of values, a file name, a table of layouts, and a layout's animation (its length,

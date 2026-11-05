@@ -880,7 +880,8 @@ class PartTab(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(form_widget)
-        part_ids = {part["id"]} if part["id"] else set(effect_parts)      # 0: draws nothing, the whole effect
+        # 0: draws nothing, the whole effect (no part tagged: all it drew is untagged, with the target's model)
+        part_ids = {part["id"]} if part["id"] else set(effect_parts) or {TARGET_PART}
         # a result's number is a heal when the part gives HP (Cure's emitter: Heal tick)
         heals = any(f["key"].endswith("heal_tick") for f in fields)
         self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers, part_names=self.part_names,

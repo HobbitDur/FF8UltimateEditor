@@ -100,6 +100,9 @@ struct Opt
 	// poke=ADDR:b,b,..: bytes written after the setup - what the battle's AnimSeq VM (not run here) would have written
 	// (Renzokuken's stage durations, AnimSeq opcode AB: 0x1D98214 = n, then n + 1 frame counts)
 	std::vector<std::pair<uint32_t, std::vector<uint8_t>>> pokes;
+	// sequences=1: the battle's AnimSeq VM runs: a sequence the effect starts (0x505C00) plays on its actor each tick, as the
+	// entity task does (AnimSeq_UpdateEntityPerFrame 0x504290): its animations, its opcodes (Renzokuken's AB)
+	bool sequences = false;
 	// recall=T:MODE,..: at the effect's tick T its setup called again, the cast context's sequence mode (+8) = MODE and its
 	// done flag (+9) cleared - what the battle's Shot window does for each trigger press (BattleActionSequence_Tick_Shot
 	// 0x50BEE0: 2 a shot, 1 the closing action)
@@ -572,9 +575,45 @@ static uint32_t weapon_header(uint32_t e) { return *(uint32_t *)(e + 0x78); }
 // 0x502AB0: BattleEntity_ComputeViewBounds 0x5086F0 + BS_RenderBattleEntity 0x502D40) unless the entity
 // is hidden - an effect that redraws its target (Cure's overlay) hides it for that time. Each
 // actor plays its animation (idleK, or the caster's cast plan) in a loop, body and weapon in
+// an actor's next tick: a sequence it was given runs (the VM advances its animation), else its animation goes on and loops
+// a sequence started (0x505BC0, doesSeqExist 0x505850): as the game, but a slot of the fake battle that holds no model has none
+static void __cdecl s_505BC0(uint32_t e, uint32_t seq)
+{
+	if (*(uint8_t *)(e + 4) == 0x8F) return;
+	const uint32_t state = *(uint32_t *)(e + 0x74), data = *(uint32_t *)(e + 0x64);
+	const uint32_t section = data ? *(uint32_t *)(data + 0xC) : 0;
+	if (!state || !section) return;
+	const int index = (int)(seq & 0xFF);
+	if (index > *(int16_t *)section || !*((uint16_t *)section + index))
+	{
+		*(uint8_t *)(state + 0x2C) |= 0x40;
+		return;
+	}
+	*(uint8_t *)state = (uint8_t)seq;
+	*(uint8_t *)(state + 3) = 0;
+	*(uint16_t *)(state + 0x2E) = 0;
+	*(uint16_t *)(state + 0x2C) = 1;
+	*(uint8_t *)(state + 0x2A) = 0;
+}
+static bool runs_sequence(uint32_t e)
+{
+	const uint32_t state = *(uint32_t *)(e + 0x74);
+	return O.sequences && state && (*(uint16_t *)(state + 0x2C) || *(uint8_t *)state);
+}
+static void advance_animation(uint32_t e)
+{
+	if (runs_sequence(e))
+	{
+		((int (__cdecl *)(uint32_t))0x504290)(e);
+		return;
+	}
+	if (((int (__cdecl *)(uint32_t))0x5094F0)(e) == 1)                    // READ_ANIMATION_RETURN_ANIMATION_COMPLETE
+		((int (__cdecl *)(uint32_t, int))0x509520)(e, *(uint8_t *)(e + 0x6C));   // anim_cmd.current_animation_id (BYTE)
+}
+
 // lockstep, one frame per tick as the battle does: the tick's frame is drawn, then the animation
 // advances (AdvanceAnimationBy1AndCheckCompletion 0x5094F0; at its end Battle_QueueAnimation
-// 0x509520 starts it again) - no sequence VM. The draw composes the bone matrices in place, so they
+// 0x509520 starts it again) - no sequence VM unless sequences=1 (advance_animation). The draw composes the bone matrices in place, so they
 // are rebuilt from the pose first (BattleModel_RebuildBodyAndWeaponMatrices 0x508F60), with the
 // weapon's attach transform (pre_pre_linkedToAnimationSequence 0x502CEA)
 static bool render_actor(uint32_t e)
@@ -591,8 +630,7 @@ static bool render_actor(uint32_t e)
 		}
 		((int (__cdecl *)(uint32_t))0x5086F0)(e);
 		((int (__cdecl *)(uint32_t))0x502D40)(e);
-		if (((int (__cdecl *)(uint32_t))0x5094F0)(e) == 1)                    // READ_ANIMATION_RETURN_ANIMATION_COMPLETE
-			((int (__cdecl *)(uint32_t, int))0x509520)(e, *(uint8_t *)(e + 0x6C));   // anim_cmd.current_animation_id (BYTE)
+		advance_animation(e);
 		return true;
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
@@ -621,19 +659,22 @@ static bool advance_actor(uint32_t e)
 			*(int32_t *)(w + 60) = *(int16_t *)(w + 30);
 			*(int32_t *)(w + 64) = *(int16_t *)(w + 32);
 		}
-		if (((int (__cdecl *)(uint32_t))0x5094F0)(e) == 1)
-			((int (__cdecl *)(uint32_t, int))0x509520)(e, *(uint8_t *)(e + 0x6C));
+		advance_animation(e);
 		return true;
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
 }
 static void render_actors()
 {
-	if (!g_actors) return;
 	for (int k = 0; k < 7; k++)
 	{
-		if (!g_drawn_slot[k] || (g_actors == 2 && !(g_target_mask & (1 << k)))) continue;
+		if (!g_drawn_slot[k]) continue;
 		uint32_t e = 0x1D972C0 + 0x9C * k;
+		if (!g_actors || (g_actors == 2 && !(g_target_mask & (1 << k))))
+		{
+			if (runs_sequence(e)) advance_actor(e);      // not drawn, its sequence still runs (Renzokuken's length is its AB)
+			continue;
+		}
 		uint8_t flags = *(uint8_t *)e;
 		uint16_t combat = *(uint16_t *)(e + 2);
 		bool drawn = (flags & 0x02) && !(flags & 0x04) && !(combat & (0x04 | 0x80));
@@ -1004,6 +1045,7 @@ static bool parse(int argc, char **argv)
 		else if (k == "schema") O.schema = v;
 		else if (k == "model") O.model = atoi(v.c_str());
 		else if (k == "stage") O.stage = atoi(v.c_str());
+		else if (k == "sequences") O.sequences = atoi(v.c_str()) != 0;
 		else if (k == "ticks") O.ticks = atoi(v.c_str());
 		else if (k == "poke")
 		{
@@ -1316,7 +1358,8 @@ int main(int argc, char **argv)
 	uint32_t zero1[] = { 0x46B3A0, 0x46B3E0, 0x47E3C0, 0x4A2940, 0x4A2900, 0x4A8480, 0x501E40, 0x501F30, 0x504270, 0x403D99 };
 	for (uint32_t a : zero1) patch_jmp(a, (void *)s_zero1);
 	uint32_t zero2[] = { 0x46B450, 0x505C00, 0x505CE0, 0x46BD40, 0x512AA0, 0x512AC0 };
-	for (uint32_t a : zero2) patch_jmp(a, (void *)s_zero2);
+	for (uint32_t a : zero2) if (!O.sequences || (a != 0x505C00 && a != 0x505CE0)) patch_jmp(a, (void *)s_zero2);
+	if (O.sequences) patch_jmp(0x505BC0, (void *)s_505BC0);
 	uint32_t zero3[] = { 0x5018C0, 0x501460, 0x46BBC0, 0x47CF50 };
 	for (uint32_t a : zero3) patch_jmp(a, (void *)s_zero3);
 	patch_jmp(0x506690, (void *)s_result); patch_jmp(0x506BA0, (void *)s_results);

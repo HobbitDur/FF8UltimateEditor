@@ -635,6 +635,17 @@ def new_effect(description, effect_id, name, exe=None):
     return new
 
 
+def binds_its_animations(effect_id, program=None):
+    """Whether an effect (or the program of a new one) binds its own animation set to its caster: its sequence, started by its
+    code, is what the caster plays (Renzokuken, Shot, Blue Magic...), not the Magic cast."""
+    if program:
+        return " anim_set " in program
+    if effect_id not in described_effects():
+        return False
+    entries = _entries(load_description(effect_id).get("exe_data")).values()
+    return any(entry.get("kind") == "anim_set" for entry in entries)
+
+
 def description_schema(description):
     """A description's parameter table in the shape of the recorder's schema (Choreography's part
     tabs): its parts, fields (numbers as numbers: a description keeps sequences and sounds as "0x..."

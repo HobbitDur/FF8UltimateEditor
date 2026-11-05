@@ -138,7 +138,8 @@ class PartImages(QWidget):
             self.note.setText("Images: this part draws no textured primitive (plain colours only).")
         else:
             self.note.setText("Images this part takes its pieces from, as they are in video memory: " + LEGEND)
-            target = {(s.x, s.y, s.depth, s.clut) for s in texture_sheets(recording, {0})}
+            # (an effect with no parts tagged: part 0 is itself too, the target's not told apart)
+            target = {(s.x, s.y, s.depth, s.clut) for s in texture_sheets(recording, {0})} if 0 not in self.part_ids else set()
             vram = recording.vram_at(len(recording.ticks) - 1)
             for sheet in sheets:
                 pieces = len(sheet.all_pieces())

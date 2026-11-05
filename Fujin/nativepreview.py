@@ -26,6 +26,9 @@ tick as the battle does. An actor whose file is not imported is left out (the st
 file the effect asks for and was not imported too. Once an effect is recorded, edits and Undo /
 Redo refresh it.
 
+The game's sequence code runs too (sequences=1): a sequence an effect starts plays on its actor each tick (Renzokuken's slashes and
+its length, which its sequence's opcode AB computes). An effect that binds its own animation set plays that, not the Magic cast.
+
 Exact: what is drawn, where, its colours, blending and timing (the game's code ran).
 Approximated: the fake battle (actors stand at fixed places), the camera player is Fujin's
 (floating point), and an effect that reads the real battle state may differ.
@@ -48,6 +51,7 @@ from PyQt6.QtWidgets import (QComboBox, QGroupBox, QHBoxLayout, QLabel, QPushBut
                              QSizePolicy, QSlider, QVBoxLayout, QWidget)
 
 from Common.filebinding import FileBinding
+from Fujin.effectprogram import binds_its_animations
 from Fujin.recorderbuild import RECORDER, recorder_build    # built from source at startup, never in git
 from FF8GameData.psxgpu.fxdump import load_recording
 from FF8GameData.psxgpu.gpu import GAME_WINDOW
@@ -565,11 +569,13 @@ class NativePreviewView(QWidget):
         # what each actor plays (worked out from its dat's sequences, FF8GameData.dat.actoranimplan):
         # its idle loop, and the caster's cast before and while the effect runs, seen wide
         args += [f"idle{slot}={animation}" for slot, animation in sorted(cast.idle.items()) if slot in cast.slots]
-        if cast.cast_before and cast.actors:
+        args.append("sequences=1")           # the game's sequence code runs on the actors
+        own_sequence = binds_its_animations(self.effect_id, cast.program)
+        if cast.cast_before and cast.actors and not own_sequence:
             args.append("castplan=" + _plan_text(cast.cast_before))
             eye, target = cast.cast_camera or (INITIAL_EYE, INITIAL_TARGET)
             args.append("castcam=" + ",".join(str(int(round(v))) for v in (*eye, *target)))
-        if cast.cast_during and cast.actors:
+        if cast.cast_during and cast.actors and not own_sequence:
             args.append("castafter=" + _plan_text(cast.cast_during))
         self._not_imported = cast.not_imported
         self.camera_used = False
