@@ -71,6 +71,26 @@ def test_fujin_fits_1080p_in_every_tab(window):
                 assert window.minimumSizeHint().height() <= 1001, (effect, fujin.tabs.tabText(index), page)
 
 
+@pytest.mark.ff8data("extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m092.dat")
+def test_fujin_fits_1080p_with_the_camera_preview_built(window):
+    # the models imported build the Camera tab's 3D view: its settings stand beside it (stacked, 1433 px)
+    from pathlib import Path
+    battle = Path(__file__).resolve().parents[2] / "extracted_files/battle"
+    fujin = next(window.tool_stack.widget(i) for i in range(window.tool_stack.count())
+                 if type(window.tool_stack.widget(i)).__name__ == "FujinWidget")
+    window.tool_stack.setCurrentWidget(fujin)
+    fujin.camera_editor.preview.add_models([str(battle / name) for name in ("d0c000.dat", "d0w000.dat", "c0m092.dat")])
+    fujin.select_effect(159)
+    for turn in range(2):   # (the 3D view is built once a tab shows it: then every tab again)
+        for index in range(fujin.tabs.count()):
+            fujin.tabs.setCurrentIndex(index)
+            window.resize(1920, 1001)
+            settle()
+            assert window.minimumSizeHint().height() <= 1001, (turn, fujin.tabs.tabText(index))
+        assert fujin.camera_editor.preview.panel is not None
+
+
 def test_hidden_tools_stop_contributing(window):
     window.resize(1920, 1001)
     window.tool_stack.setCurrentWidget(window._cid_widget)

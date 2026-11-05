@@ -24,7 +24,7 @@ from types import SimpleNamespace
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLabel,
                              QComboBox, QSpinBox, QPushButton, QFileDialog, QMessageBox, QApplication,
-                             QSizePolicy)
+                             QSizePolicy, QSplitter)
 
 from Common.collapsiblesection import CollapsibleSection
 from Common.filebinding import FileBinding
@@ -175,12 +175,26 @@ class CameraEffectPreview(QWidget):
         self.settings_section.remember(settings, SETTINGS_STATE_KEY)
         self.inputs_section.remember(settings, INPUTS_STATE_KEY)
 
-        self._layout = QVBoxLayout(self)
+        # the settings, the result line and Play beside the 3D view, not above it: stacked, the column
+        # needed more than a 1080p screen once the 3D view was built
+        controls = QWidget()
+        controls_layout = QVBoxLayout(controls)
+        controls_layout.setContentsMargins(0, 0, 0, 0)
+        controls_layout.addWidget(self.settings_section)
+        controls_layout.addWidget(self.result_label)
+        controls_layout.addWidget(self.play_button, 0, Qt.AlignmentFlag.AlignLeft)
+        controls_layout.addStretch(1)
+        self.view_side = QWidget()
+        self._layout = QVBoxLayout(self.view_side)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.addWidget(self.settings_section)
-        self._layout.addWidget(self.result_label)
-        self._layout.addWidget(self.play_button, 0, Qt.AlignmentFlag.AlignLeft)
         self._layout.addWidget(self.placeholder, 1)
+        self.splitter = QSplitter()
+        self.splitter.addWidget(controls)
+        self.splitter.addWidget(self.view_side)
+        self.splitter.setStretchFactor(1, 1)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.splitter)
         defaults = CameraScriptInputs()
         self._updating = True
         self.opening_spin.setValue(defaults.opening)
