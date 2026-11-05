@@ -169,5 +169,28 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.frames",
+   "label": "Frames",
+   "doc": "4 wave frames of 0x650 bytes (same layout, no triangles)",
+   "address": "0x11D72B0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.bone_entry",
+   "label": "Bone entry",
+   "doc": "X, y, z, bone 3",
+   "address": "0x11DD340",
+   "size": 392
+  },
+  {
+   "key": "not_editable.wave_table",
+   "label": "Wave table",
+   "doc": "0x1000 x s16 (also the 0x400-entry length table)",
+   "address": "0x11DD4C8",
+   "size": 4096
+  }
+ ]
 }

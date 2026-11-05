@@ -523,5 +523,49 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.1581ef0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1581EF0",
+   "size": 40
+  },
+  {
+   "key": "not_editable.1581f18",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x1581F18",
+   "size": 112
+  },
+  {
+   "key": "not_editable.1762e40",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1762E40",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.176a958",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x176A958",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.176c45c",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x176C45C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.176e064",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0x176E064",
+   "size": 256
+  }
  ]
 }

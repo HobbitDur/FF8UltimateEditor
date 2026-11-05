@@ -203,5 +203,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.mouth",
+   "label": "Mouth",
+   "doc": "(0x50C, 0, 0x223), bone 9",
+   "address": "0x1043108",
+   "size": 8
+  },
+  {
+   "key": "not_editable.swirl_table",
+   "label": "Swirl table",
+   "doc": "0x1000 x (s16, s16)",
+   "address": "0x1043110",
+   "size": 4096
+  }
+ ]
 }

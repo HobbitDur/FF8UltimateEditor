@@ -446,5 +446,49 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.palette_tim",
+   "label": "Palette TIM",
+   "doc": "Acid CLUT (uploaded every tick)",
+   "address": "0x16146E8",
+   "size": 2176
+  },
+  {
+   "key": "not_editable.palettes",
+   "label": "Palettes",
+   "doc": "3 source palette TIMs",
+   "address": "0x1614F68",
+   "size": 12
+  },
+  {
+   "key": "not_editable.pool_keys",
+   "label": "Pool keys",
+   "doc": "Pool key shapes 0..6",
+   "address": "0x16189CC",
+   "size": 28
+  },
+  {
+   "key": "not_editable.key_blob_a",
+   "label": "Key blob a",
+   "doc": "A table its code reads",
+   "address": "0x16189E8",
+   "size": 3744
+  },
+  {
+   "key": "not_editable.key_blob_b",
+   "label": "Key blob b",
+   "doc": "A table its code reads",
+   "address": "0x161E8B0",
+   "size": 3744
+  },
+  {
+   "key": "not_editable.flash_script",
+   "label": "Flash script",
+   "doc": "A table its code reads",
+   "address": "0x162693C",
+   "size": 16
+  }
+ ]
 }

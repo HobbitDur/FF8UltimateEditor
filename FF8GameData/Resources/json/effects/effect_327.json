@@ -513,5 +513,112 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.cd03aa",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xCD03AA",
+   "size": 62
+  },
+  {
+   "key": "not_editable.cd03e8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xCD03E8",
+   "size": 2
+  },
+  {
+   "key": "not_editable.cd03ea",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xCD03EA",
+   "size": 62
+  },
+  {
+   "key": "not_editable.cd0428",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xCD0428",
+   "size": 66
+  },
+  {
+   "key": "not_editable.cd046a",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xCD046A",
+   "size": 22
+  },
+  {
+   "key": "not_editable.cd0480",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xCD0480",
+   "size": 2
+  },
+  {
+   "key": "not_editable.cd0482",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xCD0482",
+   "size": 14
+  },
+  {
+   "key": "not_editable.cd0490",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xCD0490",
+   "size": 16
+  },
+  {
+   "key": "not_editable.cd04a0",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xCD04A0",
+   "size": 16
+  },
+  {
+   "key": "not_editable.cd04b0",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xCD04B0",
+   "size": 1200
+  },
+  {
+   "key": "not_editable.cd0960",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0xCD0960",
+   "size": 16
+  },
+  {
+   "key": "not_editable.cd0970",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xCD0970",
+   "size": 32
+  },
+  {
+   "key": "not_editable.cd0990",
+   "label": "Table",
+   "doc": "The variant's sword attack",
+   "address": "0xCD0990",
+   "size": 16
+  },
+  {
+   "key": "not_editable.cd09a0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xCD09A0",
+   "size": 16
+  },
+  {
+   "key": "not_editable.streams",
+   "label": "Streams",
+   "doc": "4 blocks its code picks from",
+   "address": "0xE84BE0",
+   "size": 4096
+  }
+ ]
 }

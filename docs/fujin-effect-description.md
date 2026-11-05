@@ -318,6 +318,12 @@ Potion's description is the same with its own sequences and sound.
          two layout tables (`pointers`), the sound, the name, the camera.
        - Sizes come from the formats: a sequence's last frame, a camera track's header. Layouts
          come from the module's contiguous data; each checked against the next item's address.
+     - `not_editable` lists what its code still reads at a fixed place of the exe, with no parameter
+       (math tables, actor data, flash scripts, tables of addresses, in-code camera chains...):
+       `{key, label, doc, address, size}`, size = up to the next address its code names (at most 4096).
+       The program ignores it and a new effect's copy keeps it (its code reads the game's). Fujin shows
+       each one as a greyed row: under the part that previews the whole effect, and in the Data tab with
+       its bytes.
      - `new_effect(..., exe)` copies them into `data`: bytes as `hex`, tables as `pointers` to
        other keys, `from` = where each came from. The program carries `data` / `data_pointers`
        lines, and the runtime allocates them and resolves `@key`. A program file is then

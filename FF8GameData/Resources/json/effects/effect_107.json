@@ -223,5 +223,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.pull_weights",
+   "label": "Pull weights",
+   "doc": "U16 [32][128]: weight by distance, per step",
+   "address": "0x12F3978",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.pull_distance",
+   "label": "Pull distance",
+   "doc": "U8 [128][128]: distance of (|dy|, |dx|)",
+   "address": "0x12F5978",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.mote_matrix",
+   "label": "Mote matrix",
+   "doc": "Translation rewritten per mote (exe data)",
+   "address": "0x12F9978",
+   "size": 32
+  },
+  {
+   "key": "not_editable.part_flags",
+   "label": "Part flags",
+   "doc": "Per-object flags of the vortex layout",
+   "address": "0x12F9998",
+   "size": 48
+  }
+ ]
 }

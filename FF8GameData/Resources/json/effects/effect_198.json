@@ -255,5 +255,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.dir_back",
+   "label": "Dir back",
+   "doc": "(0, 0, -0x1000)",
+   "address": "0xCFB308",
+   "size": 16
+  },
+  {
+   "key": "not_editable.dir_front",
+   "label": "Dir front",
+   "doc": "(0, 0, 0x1000)",
+   "address": "0xCFB318",
+   "size": 16
+  }
+ ]
 }

@@ -155,5 +155,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.clip_table",
+   "label": "Clip table",
+   "doc": "7 x 8 vertex-slot indices of the clipper",
+   "address": "0xDBE284",
+   "size": 224
+  }
+ ]
 }

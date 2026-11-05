@@ -161,5 +161,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.muzzle",
+   "label": "Muzzle",
+   "doc": "Offset (-388, -2563, -1896), bone 23",
+   "address": "0x10A7960",
+   "size": 8
+  }
+ ]
 }

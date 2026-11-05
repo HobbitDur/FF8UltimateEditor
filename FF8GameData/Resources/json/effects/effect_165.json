@@ -577,5 +577,42 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.ref_back",
+   "label": "Ref back",
+   "doc": "(0, 0, -0x1000): the models' reference direction",
+   "address": "0xD886E8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.ref_right",
+   "label": "Ref right",
+   "doc": "(0x1000, 0, 0): Streak's",
+   "address": "0xD886F8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.ref_up",
+   "label": "Ref up",
+   "doc": "(0, -0x1000, 0): FinalShards'",
+   "address": "0xD88708",
+   "size": 16
+  },
+  {
+   "key": "not_editable.clip_slots",
+   "label": "Clip slots",
+   "doc": "7 x 8 vertex slots of the clipped triangle's cases",
+   "address": "0xD88850",
+   "size": 224
+  },
+  {
+   "key": "not_editable.camera_script",
+   "label": "Camera script",
+   "doc": "A camera track its code plays",
+   "address": "0xD88930",
+   "size": 356
+  }
+ ]
 }

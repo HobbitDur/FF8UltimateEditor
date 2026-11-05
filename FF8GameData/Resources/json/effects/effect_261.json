@@ -62,5 +62,112 @@
    "default": ""
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.1858bd8",
+   "label": "Data",
+   "doc": "Draw_table - 0x420",
+   "address": "0x1858BD8",
+   "size": 524
+  },
+  {
+   "key": "not_editable.1858e0c",
+   "label": "Data",
+   "doc": "MAG_261 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x1858E0C",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1858e54",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x1858E54",
+   "size": 240
+  },
+  {
+   "key": "not_editable.1858f44",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x1858F44",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1858f58",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x1858F58",
+   "size": 44
+  },
+  {
+   "key": "not_editable.1858f84",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x1858F84",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1858f98",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x1858F98",
+   "size": 96
+  },
+  {
+   "key": "not_editable.1858ff8",
+   "label": "Data",
+   "doc": "MAG_261 DrawHandlerTable",
+   "address": "0x1858FF8",
+   "size": 362
+  },
+  {
+   "key": "not_editable.1859162",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1859162",
+   "size": 26
+  },
+  {
+   "key": "not_editable.185917c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185917C",
+   "size": 2
+  },
+  {
+   "key": "not_editable.185917e",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185917E",
+   "size": 14
+  },
+  {
+   "key": "not_editable.185918c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185918C",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1859194",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1859194",
+   "size": 8
+  },
+  {
+   "key": "not_editable.185919c",
+   "label": "Data",
+   "doc": "MAG_261 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x185919C",
+   "size": 1312
+  },
+  {
+   "key": "not_editable.comdata",
+   "label": "Comdata",
+   "doc": "The module's animation set (VM 0x0AB)",
+   "address": "0x187C20C",
+   "size": 256
+  }
+ ]
 }

@@ -185,5 +185,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.depth_vec",
+   "label": "Depth vec",
+   "doc": "3 x int16: the layout B depth probe",
+   "address": "0x1078978",
+   "size": 8
+  }
+ ]
 }

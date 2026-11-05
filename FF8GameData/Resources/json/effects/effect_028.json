@@ -287,5 +287,21 @@
    "native": "0x882FC0",
    "doc": "The stage wobble out (the port's task: from its level down a step a tick to 0)."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.flash_script",
+   "label": "Flash script",
+   "doc": "Screen flash colour script",
+   "address": "0x160E0A0",
+   "size": 12
+  },
+  {
+   "key": "not_editable.actor_data",
+   "label": "Actor data",
+   "doc": "The actor system's data (exe data, relocated once by 0x87EA20)",
+   "address": "0x17D5F4C",
+   "size": 256
+  }
  ]
 }

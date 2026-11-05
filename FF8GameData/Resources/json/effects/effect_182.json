@@ -245,5 +245,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.shard_models",
+   "label": "Shard models",
+   "doc": "12 model pointers",
+   "address": "0xD3D394",
+   "size": 48
+  }
+ ]
 }

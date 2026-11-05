@@ -206,5 +206,56 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.branch_verts",
+   "label": "Branch verts",
+   "doc": "Branch vertices: size, count, vertices (w rewritten)",
+   "address": "0x1228F04",
+   "size": 712
+  },
+  {
+   "key": "not_editable.arc_strips_target",
+   "label": "Arc strips target",
+   "doc": "3 x 8 bytes",
+   "address": "0x12292F8",
+   "size": 32
+  },
+  {
+   "key": "not_editable.arc_strips_caster",
+   "label": "Arc strips caster",
+   "doc": "4 x 8 bytes",
+   "address": "0x1229318",
+   "size": 32
+  },
+  {
+   "key": "not_editable.branch_script",
+   "label": "Branch script",
+   "doc": "[0] = entries, [1 + i] = offsets",
+   "address": "0x1229A28",
+   "size": 1280
+  },
+  {
+   "key": "not_editable.dist_table",
+   "label": "Distances table",
+   "doc": "[|dy|][|dx|] -> length, 128 x 128",
+   "address": "0x1229F28",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.sqrt_table",
+   "label": "Square roots table",
+   "doc": "A table its code reads",
+   "address": "0x122DEA8",
+   "size": 512
+  },
+  {
+   "key": "not_editable.swirl_table",
+   "label": "Swirl table",
+   "doc": "0x1000 x (s16, s16)",
+   "address": "0x122E0A8",
+   "size": 4096
+  }
+ ]
 }

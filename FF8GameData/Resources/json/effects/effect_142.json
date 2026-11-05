@@ -189,5 +189,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.trail_table",
+   "label": "Trail table",
+   "doc": "[frame] header +0x18 of a trail puff",
+   "address": "0xDDF454",
+   "size": 64
+  }
+ ]
 }

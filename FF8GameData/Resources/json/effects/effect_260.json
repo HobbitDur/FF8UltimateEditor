@@ -280,5 +280,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.objs_a",
+   "label": "Object flags a",
+   "doc": "Object type strings ('1' = module renderer)",
+   "address": "0x112D190",
+   "size": 20
+  },
+  {
+   "key": "not_editable.objs_wave",
+   "label": "Object flags wave",
+   "doc": "Data its code reads",
+   "address": "0x112D1B4",
+   "size": 256
+  }
+ ]
 }

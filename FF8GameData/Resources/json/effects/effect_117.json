@@ -155,5 +155,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.unused",
+   "label": "Unused",
+   "doc": "1 blocks its code picks from",
+   "address": "0x1000100",
+   "size": 4096
+  }
+ ]
 }

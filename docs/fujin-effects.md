@@ -296,7 +296,9 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   data in its program. A new effect made from an effect FFNx's code runs (a port: Gastric Juice,
   Thundaga, Duel and more) has its prim-model layouts, its flipbooks, its prim models, its texture
   file name, its camera track, its TIMs, its animation set, its small tables (colours, fades, counts,
-  offsets) and its morphs' vertex sets here too, and its code plays them. Such a layout is decoded into a block of a fixed size: Apply refuses one that needs
+  offsets) and its morphs' vertex sets here too, and its code plays them. What its code still reads at a fixed
+  place of the exe is listed too: greyed rows marked not editable, here with their bytes (read-only) and
+  under the part that previews the whole effect (the Not editable fold). Such a layout is decoded into a block of a fixed size: Apply refuses one that needs
   more (more objects or tracks than the game's). Such a flipbook keeps at least the frames its
   code plays, such a model its vertices (they move; they are not added or removed).
   Cure's Overlay hides the target while the ring climbs and redraws it itself, twice per

@@ -274,5 +274,28 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.drop_dirs",
+   "label": "Drop dirs",
+   "doc": "3 x 16 bytes (x, y, z, pad dwords)",
+   "address": "0xCD58E0",
+   "size": 48
+  },
+  {
+   "key": "not_editable.tint_caster",
+   "label": "Tint caster",
+   "doc": "12 colours",
+   "address": "0xCD5910",
+   "size": 48
+  },
+  {
+   "key": "not_editable.tint_next",
+   "label": "Tint next",
+   "doc": "24 colours",
+   "address": "0xCD5940",
+   "size": 96
+  }
+ ]
 }

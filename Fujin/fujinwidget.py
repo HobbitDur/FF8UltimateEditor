@@ -170,7 +170,8 @@ class FujinWidget(QWidget):
         self.choreography.addTab(self.description_view, "Description")
         # a new effect's own data (sequences, sounds, tables...), edited by kind
         self.data_view = EffectDataView(vram=self._data_vram, play_sound=self._play_archive,
-                                       camera_tools=self.camera_editor.manager, registry=self.file_registry)
+                                       camera_tools=self.camera_editor.manager, registry=self.file_registry,
+                                       exe=self._exe_bytes)
         self.data_view.changed.connect(self._data_changed)
         self.choreography.addTab(self.data_view, "Data")
         # an effect built part by part: + adds (or removes) a part (Fujin.effecttemplates)
@@ -890,7 +891,7 @@ class FujinWidget(QWidget):
         effect = self.current_effect
         kind = "new" if self.is_new_effect(effect) else "edited" if effect in self.descriptions else "shipped"
         self.description_view.show_description(effect, self.description(effect) if effect is not None else None, kind)
-        self.data_view.show_data(self.descriptions.get(effect))
+        self.data_view.show_data(self.description(effect) if effect is not None else None)
         built = "template_parts" in self.descriptions.get(effect, {})
         self.choreography.setTabVisible(self.choreography.indexOf(self.plus_tab), built)
         info = self.catalog.info(effect) if effect is not None else {}
@@ -1210,13 +1211,16 @@ class FujinWidget(QWidget):
         values = self.effect_params.get(effect, {})
         drawing = frozenset(part["id"] for part in schema["parts"] if part["id"])
         names = {0: "The target"} | {part["id"]: part["title"] for part in schema["parts"] if part["id"]}
+        # what its code reads at a fixed place of the exe: under the part that previews the whole effect
+        whole = next((part for part in schema["parts"] if not part["id"]), schema["parts"][0])
+        fixed = (self.description(effect) or {}).get("not_editable", [])
         for part in schema["parts"]:
             fields = [field for field in schema["fields"] if field["part"] == part["key"]]
             # Cure's ring spawns the other parts: their windows count its ticks
             ring = next((p for p in schema["parts"] if p["key"] == "ring"), None)
             spawner = (ring["id"], ring["title"]) if ring and part is not ring and part["id"] else None
             tab = PartTab(part, fields, values, self.lab, gl_renderer, drawing, self._locate_texture, names,
-                          schema.get("groups", []), self.sound_panel, spawner)
+                          schema.get("groups", []), self.sound_panel, spawner, fixed if part is whole else ())
             tab.value_changed.connect(self._param_changed)
             tab.preview.reference_toggled.connect(self._part_reference)
             self.part_tabs.append(tab)

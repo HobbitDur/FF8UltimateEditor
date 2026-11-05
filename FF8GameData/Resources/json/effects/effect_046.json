@@ -420,5 +420,42 @@
    "native": "0x836420",
    "doc": "The stage wobble out (the port's task: from its level down a step a tick to 0)."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.color_table_a",
+   "label": "Color table a",
+   "doc": "Their colour frames (17 each)",
+   "address": "0x15BCD10",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.color_table_b",
+   "label": "Color table b",
+   "doc": "Their colour frames (17 each)",
+   "address": "0x15C0D14",
+   "size": 68
+  },
+  {
+   "key": "not_editable.actor_data",
+   "label": "Actor data",
+   "doc": "The actor system's data",
+   "address": "0x15C3398",
+   "size": 260
+  },
+  {
+   "key": "not_editable.burst_table",
+   "label": "Burst table",
+   "doc": "Breath puffs per burst (s16, 0-terminated)",
+   "address": "0x15C353C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.fade_table",
+   "label": "Fade table",
+   "doc": "Sigh fade by fade tick (s16)",
+   "address": "0x15C3550",
+   "size": 32
+  }
  ]
 }

@@ -28,6 +28,9 @@ when it was made: docs/fujin-effect-description.md), each entry edited by kind:
   scripts, weapon animations): its sections; a set of the game's count imported, or exported. The bytes
   after it ("tail": the game reads past a set's end) are kept.
 
+The description's "not_editable" rows (data its code reads at a fixed place of the exe) are listed after
+them in grey, their bytes shown read-only.
+
 Apply writes the entry back (changed(key, entry)): the previews record again, Save writes it in
 the program.
 """
@@ -36,12 +39,14 @@ import os
 import struct
 
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFontDatabase
 from PyQt6.QtWidgets import (QComboBox, QFileDialog, QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
-                             QListWidgetItem, QPushButton, QScrollArea, QSpinBox, QSplitter, QStackedWidget,
+                             QListWidgetItem, QPlainTextEdit, QPushButton, QScrollArea, QSpinBox, QSplitter, QStackedWidget,
                              QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
 from FF8GameData.psxgpu.primlayout import TRACKS, Track, encode_layout, parse_layout, state_size
 from FF8GameData.psxgpu.spritesequence import SpriteFrame, encode_sequence, parse_sequence
+from Fujin.effectprogram import IMAGE_BASE
 from Fujin.modeleditor import ModelEditor
 
 NO_DATA = ("No data of its own: only a new effect made with the exe open has some (Description, New effect). "
@@ -56,6 +61,16 @@ PIECE_COLUMNS = (("Width", "width", 0, 255), ("Height", "height", 0, 255), ("U",
 
 def entries(description):
     return {key: entry for key, entry in (description.get("data") or {}).items() if isinstance(entry, dict)}
+
+
+def not_editable(description):
+    """The description's data its code reads at a fixed place of the exe, by key."""
+    return {entry["key"]: entry for entry in (description or {}).get("not_editable", [])}
+
+
+def hex_dump(address, data):
+    """`data` as 16 bytes a line, each line's exe address first."""
+    return "\n".join(f"{address + at:08X}  {data[at:at + 16].hex(' ')}" for at in range(0, len(data), 16))
 
 
 def entry_bytes(entry):
@@ -802,11 +817,13 @@ class EffectDataView(QWidget):
     """changed(key, entry): an entry edited and applied."""
     changed = pyqtSignal(str, dict)
 
-    def __init__(self, vram=None, play_sound=None, camera_tools=None, registry=None):
+    def __init__(self, vram=None, play_sound=None, camera_tools=None, registry=None, exe=None):
         """camera_tools: a CameraScriptTools (Fujin's camera manager) for the camera page; registry: the
-        file registry (the import / export folders)."""
+        file registry (the import / export folders); exe: gives FF8_EN.exe's bytes, or None (what the
+        not editable rows show)."""
         super().__init__()
         self.play_sound = play_sound
+        self.exe = exe
         self.description, self.key = None, None
         self.note = QLabel()
         self.note.setWordWrap(True)
@@ -850,13 +867,22 @@ class EffectDataView(QWidget):
         self.summary = QLabel()
         self.summary.setWordWrap(True)
         self.summary.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.fixed_doc = QLabel()
+        self.fixed_doc.setWordWrap(True)
+        self.fixed_bytes = QPlainTextEdit()
+        self.fixed_bytes.setReadOnly(True)
+        self.fixed_bytes.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
+        fixed_page = QWidget()
+        fixed_layout = QVBoxLayout(fixed_page)
+        fixed_layout.addWidget(self.fixed_doc)
+        fixed_layout.addWidget(self.fixed_bytes, 1)
         self.pages = QStackedWidget()
         self.pages_by_kind = {}
         for kind, page in (("seq", self.sequence), ("layout", self.layout_editor), ("model", self.model_editor),
                            ("sound", sound_page),
                            ("table", self.table), ("name", name_page), ("pointers", self.pointers_page),
                            ("camera", self.camera_page), ("tim", self.tim_page), ("anim_set", self.anim_page),
-                           ("summary", self.summary)):
+                           ("summary", self.summary), ("not_editable", fixed_page)):
             self.pages_by_kind[kind] = self.pages.addWidget(page)
         self.sequence.edited.connect(self._edited)
         self.table.edited.connect(self._edited)
@@ -884,9 +910,11 @@ class EffectDataView(QWidget):
         self.description = description
         keep = self.key
         data = entries(description) if description else {}
-        self.note.setText(NO_DATA if not data else
-                          "The effect's own data: Apply writes an entry back; the previews record again and Save writes "
-                          "it in the effect's program.")
+        fixed = not_editable(description)
+        self.note.setText((NO_DATA if not data else
+                           "The effect's own data: Apply writes an entry back; the previews record again and Save writes "
+                           "it in the effect's program.") +
+                          (" The rows in grey are not editable: its code reads them at a fixed place of the exe." if fixed else ""))
         self.list.blockSignals(True)
         self.list.clear()
         for key, entry in data.items():
@@ -894,11 +922,17 @@ class EffectDataView(QWidget):
             item = QListWidgetItem(f"{key} ({entry.get('kind', '?')}{size})")
             item.setData(Qt.ItemDataRole.UserRole, key)
             self.list.addItem(item)
+        for key, entry in fixed.items():
+            item = QListWidgetItem(f"{entry['label']} (not editable)")
+            item.setData(Qt.ItemDataRole.UserRole, key)
+            item.setForeground(self.palette().placeholderText())
+            item.setToolTip(f"{entry['doc']}\nAt {entry['address']} in the exe")
+            self.list.addItem(item)
         self.list.blockSignals(False)
-        keys = list(data)
+        keys = [*data, *fixed]
         self.list.setCurrentRow(keys.index(keep) if keep in keys else 0 if keys else -1)
         self._show_entry(self.list.currentRow())
-        self.list.setEnabled(bool(data))
+        self.list.setEnabled(bool(keys))
 
     def select(self, key):
         for row in range(self.list.count()):
@@ -914,6 +948,10 @@ class EffectDataView(QWidget):
         self.key = item.data(Qt.ItemDataRole.UserRole) if item else None
         entry = self.entry()
         self.apply_button.setEnabled(False)
+        fixed = not_editable(self.description).get(self.key)
+        if fixed is not None:
+            self._show_not_editable(fixed)
+            return
         if entry is None:
             self.title.clear()
             self.summary.clear()
@@ -953,6 +991,17 @@ class EffectDataView(QWidget):
         else:
             self.summary.setText(self._summary(kind, data))
         self.pages.setCurrentIndex(self.pages_by_kind.get(kind if kind in self.pages_by_kind else "summary"))
+
+    def _show_not_editable(self, entry):
+        """A row its code reads at a fixed place: what it is, and the bytes there up to the next data it names."""
+        self.title.setText(f"<b>{entry['label']}</b> (not editable) - at {entry['address']} in the exe")
+        self.fixed_doc.setText(f"{entry['doc']}. Its code reads it at this place of the exe, not through a parameter: "
+                               "a new effect's copy reads the game's too.")
+        exe, address = self.exe() if self.exe is not None else None, int(entry["address"], 16)
+        at = address - IMAGE_BASE
+        self.fixed_bytes.setPlainText(hex_dump(address, exe[at:at + entry["size"]]) if exe else
+                                      "Open FF8_EN.exe to see its bytes.")
+        self.pages.setCurrentIndex(self.pages_by_kind["not_editable"])
 
     def _fill_pointers(self, entry):
         while self.pointers.rowCount():

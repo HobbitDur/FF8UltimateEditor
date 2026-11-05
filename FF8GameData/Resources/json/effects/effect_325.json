@@ -231,5 +231,70 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.fd8584",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xFD8584",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.draw_sel",
+   "label": "Draw sel",
+   "doc": "\"1000000100000\"",
+   "address": "0xFE0F84",
+   "size": 16
+  },
+  {
+   "key": "not_editable.scroll_sel",
+   "label": "Scroll sel",
+   "doc": "\"0010000000000\"",
+   "address": "0xFE0F94",
+   "size": 16
+  },
+  {
+   "key": "not_editable.draw_sel_fe0fa4",
+   "label": "Draw sel",
+   "doc": "\"01000\"",
+   "address": "0xFE0FA4",
+   "size": 8
+  },
+  {
+   "key": "not_editable.scroll_sel_fe0fac",
+   "label": "Scroll sel",
+   "doc": "\"00000\"",
+   "address": "0xFE0FAC",
+   "size": 8
+  },
+  {
+   "key": "not_editable.draw_sel_fe0fb4",
+   "label": "Draw sel",
+   "doc": "\"0\"",
+   "address": "0xFE0FB4",
+   "size": 4
+  },
+  {
+   "key": "not_editable.draw_sel_fe0fb8",
+   "label": "Draw sel",
+   "doc": "\"0010\"",
+   "address": "0xFE0FB8",
+   "size": 8
+  },
+  {
+   "key": "not_editable.scroll_sel_fe0fc0",
+   "label": "Scroll sel",
+   "doc": "\"0000\"",
+   "address": "0xFE0FC0",
+   "size": 8
+  },
+  {
+   "key": "not_editable.draw_sel_fe0fc8",
+   "label": "Draw sel",
+   "doc": "\"1\"",
+   "address": "0xFE0FC8",
+   "size": 256
+  }
+ ]
 }

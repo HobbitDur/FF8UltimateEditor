@@ -822,5 +822,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.table_debris_model",
+   "label": "Table debris model",
+   "doc": "2 prim models",
+   "address": "0xDED580",
+   "size": 16
+  }
+ ]
 }

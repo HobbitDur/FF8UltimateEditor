@@ -206,5 +206,98 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.136bb30",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x136BB30",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.camera_anim",
+   "label": "Camera anim",
+   "doc": "(exe data)",
+   "address": "0x1370900",
+   "size": 1992
+  },
+  {
+   "key": "not_editable.1372e60",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1372E60",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.137420c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x137420C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.13755b8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x13755B8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.1376658",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1376658",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1376660",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1376660",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1376668",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1376668",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1376670",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1376670",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1376678",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1376678",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1376680",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1376680",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1376688",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1376688",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1376690",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1376690",
+   "size": 8
+  }
+ ]
 }

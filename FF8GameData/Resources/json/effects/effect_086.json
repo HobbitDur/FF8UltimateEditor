@@ -521,5 +521,49 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.1565eb0",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x1565EB0",
+   "size": 68
+  },
+  {
+   "key": "not_editable.1565ef4",
+   "label": "Model animations",
+   "doc": "The animation set its code binds to a model",
+   "address": "0x1565EF4",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.1706398",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1706398",
+   "size": 2344
+  },
+  {
+   "key": "not_editable.1706cc0",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1706CC0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.1709404",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1709404",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.170cdcc",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0x170CDCC",
+   "size": 256
+  }
  ]
 }

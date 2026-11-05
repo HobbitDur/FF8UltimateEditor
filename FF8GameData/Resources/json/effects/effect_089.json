@@ -382,5 +382,98 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.14913fc",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x14913FC",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.14af460",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x14AF460",
+   "size": 8
+  },
+  {
+   "key": "not_editable.14af468",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x14AF468",
+   "size": 8
+  },
+  {
+   "key": "not_editable.14af470",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x14AF470",
+   "size": 8
+  },
+  {
+   "key": "not_editable.14af478",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x14AF478",
+   "size": 8
+  },
+  {
+   "key": "not_editable.14af480",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x14AF480",
+   "size": 16
+  },
+  {
+   "key": "not_editable.star_groups",
+   "label": "Star groups",
+   "doc": "8 x 16: colour, colour 2, angle steps (+8), angles (+0xC)",
+   "address": "0x14AF490",
+   "size": 80
+  },
+  {
+   "key": "not_editable.sqrt_table",
+   "label": "Square roots table",
+   "doc": "SquareRoot0 table (index 0x40..0xFF)",
+   "address": "0x14AF4E0",
+   "size": 48
+  },
+  {
+   "key": "not_editable.part_kinds",
+   "label": "Part kinds",
+   "doc": "Particle model kinds, 16 bytes: model, far colour, sprite at death, steps",
+   "address": "0x14AF510",
+   "size": 8
+  },
+  {
+   "key": "not_editable.14af518",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x14AF518",
+   "size": 4
+  },
+  {
+   "key": "not_editable.14af51c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x14AF51C",
+   "size": 2
+  },
+  {
+   "key": "not_editable.14af51e",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x14AF51E",
+   "size": 450
+  },
+  {
+   "key": "not_editable.capture_models",
+   "label": "Capture models",
+   "doc": "4 x (OT index, mode) of the stage models in the capture",
+   "address": "0x14AF6E0",
+   "size": 32
+  }
+ ]
 }

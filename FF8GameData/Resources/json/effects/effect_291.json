@@ -396,5 +396,112 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.13a0790",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x13A0790",
+   "size": 8
+  },
+  {
+   "key": "not_editable.13a0798",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x13A0798",
+   "size": 480
+  },
+  {
+   "key": "not_editable.a0",
+   "label": "A0",
+   "doc": "1 blocks its code picks from",
+   "address": "0x13A4280",
+   "size": 3336
+  },
+  {
+   "key": "not_editable.a1",
+   "label": "A1",
+   "doc": "1 blocks its code picks from",
+   "address": "0x13A5EF0",
+   "size": 1560
+  },
+  {
+   "key": "not_editable.a2",
+   "label": "A2",
+   "doc": "1 blocks its code picks from",
+   "address": "0x13A7BF0",
+   "size": 2328
+  },
+  {
+   "key": "not_editable.13aff48",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x13AFF48",
+   "size": 3412
+  },
+  {
+   "key": "not_editable.13b0c9c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x13B0C9C",
+   "size": 2832
+  },
+  {
+   "key": "not_editable.13b17ac",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x13B17AC",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.13b7bb8",
+   "label": "Table",
+   "doc": "4096 (sin, cos) pairs",
+   "address": "0x13B7BB8",
+   "size": 2
+  },
+  {
+   "key": "not_editable.13b7bba",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x13B7BBA",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.13bbbe4",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x13BBBE4",
+   "size": 4
+  },
+  {
+   "key": "not_editable.13ef42c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x13EF42C",
+   "size": 4
+  },
+  {
+   "key": "not_editable.13ef430",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x13EF430",
+   "size": 8
+  },
+  {
+   "key": "not_editable.13ef438",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x13EF438",
+   "size": 8
+  },
+  {
+   "key": "not_editable.13ef440",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x13EF440",
+   "size": 256
+  }
+ ]
 }

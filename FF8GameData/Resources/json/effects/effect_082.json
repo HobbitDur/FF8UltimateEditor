@@ -334,5 +334,21 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.157b0e8",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x157B0E8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.1741028",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1741028",
+   "size": 256
+  }
  ]
 }

@@ -313,5 +313,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.flash_script",
+   "label": "Flash script",
+   "doc": "The colour script of a screen flash",
+   "address": "0x1610774",
+   "size": 24
+  }
+ ]
 }

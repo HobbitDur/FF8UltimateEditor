@@ -393,5 +393,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.shard_mesh",
+   "label": "Shard mesh",
+   "doc": "14 blocks its code picks from",
+   "address": "0x130E86C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.bolt_quad_parts",
+   "label": "Bolt quad parts",
+   "doc": "[object] != 0: UV-scrolled quads",
+   "address": "0x1312660",
+   "size": 32
+  }
+ ]
 }

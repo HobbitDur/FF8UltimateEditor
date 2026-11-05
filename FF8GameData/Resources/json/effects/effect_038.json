@@ -345,5 +345,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.wall_depth",
+   "label": "Wall depth",
+   "doc": "S16 per crack-wall step",
+   "address": "0x164253C",
+   "size": 28
+  },
+  {
+   "key": "not_editable.step_shade",
+   "label": "Step shade",
+   "doc": "U8 grey level per crack step",
+   "address": "0x1642558",
+   "size": 16
+  },
+  {
+   "key": "not_editable.zone_map",
+   "label": "Zone map",
+   "doc": "16 x 32 bytes: zone of a ground cell",
+   "address": "0x1642568",
+   "size": 1024
+  },
+  {
+   "key": "not_editable.zone_map_b",
+   "label": "Zone map b",
+   "doc": "16 x 32 bytes: crack delay of a ground cell",
+   "address": "0x1642968",
+   "size": 1024
+  }
+ ]
 }

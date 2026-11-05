@@ -390,5 +390,28 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.153d59c",
+   "label": "Model animations",
+   "doc": "The animation set its code binds to a model",
+   "address": "0x153D59C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.16c0db8",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x16C0DB8",
+   "size": 1296
+  },
+  {
+   "key": "not_editable.16c12c8",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0x16C12C8",
+   "size": 4096
+  }
  ]
 }

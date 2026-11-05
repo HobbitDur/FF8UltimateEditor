@@ -912,5 +912,91 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.1636c08",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1636C08",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1636c10",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x1636C10",
+   "size": 34
+  },
+  {
+   "key": "not_editable.1636c32",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1636C32",
+   "size": 2
+  },
+  {
+   "key": "not_editable.1636c34",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1636C34",
+   "size": 12
+  },
+  {
+   "key": "not_editable.1636c40",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1636C40",
+   "size": 2
+  },
+  {
+   "key": "not_editable.1636c42",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1636C42",
+   "size": 54
+  },
+  {
+   "key": "not_editable.1636c78",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x1636C78",
+   "size": 112
+  },
+  {
+   "key": "not_editable.1636ce8",
+   "label": "Model animations",
+   "doc": "The animation set its code binds to a model",
+   "address": "0x1636CE8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.163acb4",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x163ACB4",
+   "size": 16
+  },
+  {
+   "key": "not_editable.1818b78",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1818B78",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.181cfac",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0x181CFAC",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.18253cc",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0x18253CC",
+   "size": 256
+  }
  ]
 }

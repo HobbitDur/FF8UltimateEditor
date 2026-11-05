@@ -199,5 +199,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.sound_voice",
+   "label": "Sound voice",
+   "doc": "A sound its code plays",
+   "address": "0x14D8E48",
+   "size": 272
+  },
+  {
+   "key": "not_editable.part_flags",
+   "label": "Part flags",
+   "doc": "Per-object flags of the layout",
+   "address": "0x14FA778",
+   "size": 256
+  }
+ ]
 }

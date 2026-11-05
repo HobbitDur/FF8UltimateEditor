@@ -443,5 +443,49 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.camera_data",
+   "label": "Camera data",
+   "doc": "The move camera animations (+[0x110BE74] & 0xFFFF)",
+   "address": "0x110BE70",
+   "size": 4
+  },
+  {
+   "key": "not_editable.110be74",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x110BE74",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.bend_table",
+   "label": "Bend table",
+   "doc": "A table its code reads",
+   "address": "0x110D3B0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.spark_table",
+   "label": "Spark table",
+   "doc": "8 bytes: sequence, frames, ?, scale",
+   "address": "0x110E3B8",
+   "size": 40
+  },
+  {
+   "key": "not_editable.length_table",
+   "label": "Length table",
+   "doc": "Move length by mode",
+   "address": "0x110E3E0",
+   "size": 16
+  },
+  {
+   "key": "not_editable.throw_table",
+   "label": "Throw table",
+   "doc": "Meteor Strike: the target's path (4 words a tick)",
+   "address": "0x110E3F0",
+   "size": 480
+  }
+ ]
 }

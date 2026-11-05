@@ -189,5 +189,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.mesh_b",
+   "label": "Mesh b",
+   "doc": "73 vertices of 8 bytes each",
+   "address": "0xD6B2EC",
+   "size": 584
+  },
+  {
+   "key": "not_editable.drip_counts",
+   "label": "Drip counts",
+   "doc": "Droplets per tick 0..11",
+   "address": "0xD6BC24",
+   "size": 64
+  }
+ ]
 }

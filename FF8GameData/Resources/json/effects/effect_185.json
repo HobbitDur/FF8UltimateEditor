@@ -437,5 +437,63 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.a",
+   "label": "A",
+   "doc": "A table its code reads",
+   "address": "0xD20FC4",
+   "size": 1536
+  },
+  {
+   "key": "not_editable.d3244c",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xD3244C",
+   "size": 60
+  },
+  {
+   "key": "not_editable.d324ac",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xD324AC",
+   "size": 4
+  },
+  {
+   "key": "not_editable.d324b0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xD324B0",
+   "size": 72
+  },
+  {
+   "key": "not_editable.d324f8",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xD324F8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.d32508",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xD32508",
+   "size": 252
+  },
+  {
+   "key": "not_editable.d32604",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0xD32604",
+   "size": 320
+  },
+  {
+   "key": "not_editable.e9ad20",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xE9AD20",
+   "size": 256
+  }
+ ]
 }

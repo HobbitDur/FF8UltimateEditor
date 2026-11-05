@@ -326,5 +326,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.streak_ref",
+   "label": "Streak ref",
+   "doc": "4 x int32: reference direction of the streak's width",
+   "address": "0xDA00B0",
+   "size": 16
+  },
+  {
+   "key": "not_editable.glow_ref",
+   "label": "Glow ref",
+   "doc": "A table its code reads",
+   "address": "0xDA00C0",
+   "size": 16
+  },
+  {
+   "key": "not_editable.shard_ref",
+   "label": "Shard ref",
+   "doc": "A table its code reads",
+   "address": "0xDA00D0",
+   "size": 16
+  },
+  {
+   "key": "not_editable.blade_ref",
+   "label": "Blade ref",
+   "doc": "A table its code reads",
+   "address": "0xDA00E0",
+   "size": 16
+  }
+ ]
 }

@@ -295,5 +295,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.core_shape1",
+   "label": "Core shape1",
+   "doc": "Morph shape 1 (same 8-byte vertices)",
+   "address": "0xDC7B94",
+   "size": 960
+  },
+  {
+   "key": "not_editable.ring_fades",
+   "label": "Ring fades",
+   "doc": "16 fades, frame & 15",
+   "address": "0xDC9BDC",
+   "size": 64
+  }
+ ]
 }

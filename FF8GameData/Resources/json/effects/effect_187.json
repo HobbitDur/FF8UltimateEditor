@@ -308,5 +308,77 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.e3fd70",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xE3FD70",
+   "size": 1008
+  },
+  {
+   "key": "not_editable.e41e5c",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE41E5C",
+   "size": 48
+  },
+  {
+   "key": "not_editable.e41e98",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE41E98",
+   "size": 8
+  },
+  {
+   "key": "not_editable.e41ea0",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0xE41EA0",
+   "size": 8
+  },
+  {
+   "key": "not_editable.e41ea8",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE41EA8",
+   "size": 80
+  },
+  {
+   "key": "not_editable.e41ef8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xE41EF8",
+   "size": 24
+  },
+  {
+   "key": "not_editable.e41f10",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xE41F10",
+   "size": 24
+  },
+  {
+   "key": "not_editable.e41f28",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0xE41F28",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.fa54a4",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xFA54A4",
+   "size": 4
+  },
+  {
+   "key": "not_editable.fa54a8",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xFA54A8",
+   "size": 4096
+  }
+ ]
 }

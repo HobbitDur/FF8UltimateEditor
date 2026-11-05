@@ -497,5 +497,91 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.d9f938",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xD9F938",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.157b8c4",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x157B8C4",
+   "size": 420
+  },
+  {
+   "key": "not_editable.157ba68",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x157BA68",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.157fa68",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x157FA68",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.bolt_base",
+   "label": "Bolt base",
+   "doc": "Pointer to the bolt buffers (segments +0, chains +0x3000)",
+   "address": "0x1580A6C",
+   "size": 4
+  },
+  {
+   "key": "not_editable.1580a70",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1580A70",
+   "size": 160
+  },
+  {
+   "key": "not_editable.1749c64",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1749C64",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.174f0bc",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x174F0BC",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.1750660",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1750660",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.1754b2c",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1754B2C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.1757b2c",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1757B2C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.175aae0",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0x175AAE0",
+   "size": 256
+  }
  ]
 }

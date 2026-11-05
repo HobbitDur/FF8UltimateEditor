@@ -297,5 +297,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.muzzle_ref",
+   "label": "Muzzle ref",
+   "doc": "(0, 0, -0x1000)",
+   "address": "0xD12E70",
+   "size": 16
+  }
+ ]
 }

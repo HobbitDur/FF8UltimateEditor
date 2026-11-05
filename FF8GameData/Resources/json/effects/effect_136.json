@@ -257,5 +257,42 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.f0f0f0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xF0F0F0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.scale_z",
+   "label": "Scale z",
+   "doc": "Exe matrix, its m[2][2] (0x11F81E0) rewritten",
+   "address": "0x11F81D0",
+   "size": 16
+  },
+  {
+   "key": "not_editable.11f81e0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x11F81E0",
+   "size": 16
+  },
+  {
+   "key": "not_editable.mouth",
+   "label": "Mouth",
+   "doc": "Caster bone point (x, y, z, bone 27)",
+   "address": "0x11F81F0",
+   "size": 8
+  },
+  {
+   "key": "not_editable.wobble",
+   "label": "Wobble",
+   "doc": "0x801 x s32, by vertex w / 2",
+   "address": "0x11F81F8",
+   "size": 4096
+  }
+ ]
 }

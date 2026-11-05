@@ -240,5 +240,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.shot_bones",
+   "label": "Shot bones",
+   "doc": "3 caster bones (29, 30, 32)",
+   "address": "0x1201EA8",
+   "size": 8
+  }
+ ]
 }

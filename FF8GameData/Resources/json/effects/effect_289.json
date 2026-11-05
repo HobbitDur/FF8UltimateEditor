@@ -212,5 +212,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.point",
+   "label": "Point",
+   "doc": "Caster bone point (x, y, z, bone 9)",
+   "address": "0x1072640",
+   "size": 8
+  },
+  {
+   "key": "not_editable.wave",
+   "label": "Wave",
+   "doc": "0x1001 x s16, by vertex w and w / 2",
+   "address": "0x1072648",
+   "size": 4096
+  }
+ ]
 }

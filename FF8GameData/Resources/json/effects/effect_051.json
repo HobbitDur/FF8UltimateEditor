@@ -412,5 +412,21 @@
    "native": "0x81C9E0",
    "doc": "One per action: the module's own emitter (the port's task): its sound, the glow, the aura players, the spawners, the light, the target overlay, the particle emitter, the heal."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.layout_ring",
+   "label": "Layout ring",
+   "doc": "Data its code reads",
+   "address": "0x15AAF7C",
+   "size": 724
+  },
+  {
+   "key": "not_editable.layout_aura",
+   "label": "Layout aura",
+   "doc": "Data its code reads",
+   "address": "0x15AB250",
+   "size": 4096
+  }
  ]
 }

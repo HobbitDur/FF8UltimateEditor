@@ -188,5 +188,84 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.cf3564",
+   "label": "Table",
+   "doc": "G_BattleVertexWorkspace",
+   "address": "0xCF3564",
+   "size": 4
+  },
+  {
+   "key": "not_editable.cf3568",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xCF3568",
+   "size": 16
+  },
+  {
+   "key": "not_editable.cf3578",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xCF3578",
+   "size": 16
+  },
+  {
+   "key": "not_editable.needle_fade_in",
+   "label": "Needle fade in",
+   "doc": "A table its code reads",
+   "address": "0xCF3594",
+   "size": 16
+  },
+  {
+   "key": "not_editable.needle_fade_out",
+   "label": "Needle fade out",
+   "doc": "A table its code reads",
+   "address": "0xCF35A4",
+   "size": 24
+  },
+  {
+   "key": "not_editable.cf35bc",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0xCF35BC",
+   "size": 172
+  },
+  {
+   "key": "not_editable.cf3668",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xCF3668",
+   "size": 1024
+  },
+  {
+   "key": "not_editable.cf3a68",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xCF3A68",
+   "size": 4
+  },
+  {
+   "key": "not_editable.e94910",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xE94910",
+   "size": 4
+  },
+  {
+   "key": "not_editable.e94914",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xE94914",
+   "size": 4
+  },
+  {
+   "key": "not_editable.model_container",
+   "label": "Model container",
+   "doc": "A table its code reads",
+   "address": "0xE94918",
+   "size": 4096
+  }
+ ]
 }

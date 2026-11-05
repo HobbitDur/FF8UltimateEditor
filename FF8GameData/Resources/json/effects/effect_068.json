@@ -394,5 +394,119 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.models",
+   "label": "Models",
+   "doc": "7 blocks its code picks from",
+   "address": "0x1593554",
+   "size": 952
+  },
+  {
+   "key": "not_editable.15953f8",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x15953F8",
+   "size": 36
+  },
+  {
+   "key": "not_editable.159541c",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x159541C",
+   "size": 36
+  },
+  {
+   "key": "not_editable.1595440",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1595440",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1595488",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1595488",
+   "size": 72
+  },
+  {
+   "key": "not_editable.15954d0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x15954D0",
+   "size": 80
+  },
+  {
+   "key": "not_editable.1595520",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1595520",
+   "size": 80
+  },
+  {
+   "key": "not_editable.1595570",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1595570",
+   "size": 48
+  },
+  {
+   "key": "not_editable.15955a0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x15955A0",
+   "size": 48
+  },
+  {
+   "key": "not_editable.15955d0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x15955D0",
+   "size": 48
+  },
+  {
+   "key": "not_editable.1595600",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1595600",
+   "size": 48
+  },
+  {
+   "key": "not_editable.1595630",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1595630",
+   "size": 48
+  },
+  {
+   "key": "not_editable.1595660",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1595660",
+   "size": 48
+  },
+  {
+   "key": "not_editable.1595690",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1595690",
+   "size": 48
+  },
+  {
+   "key": "not_editable.15956c0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x15956C0",
+   "size": 48
+  },
+  {
+   "key": "not_editable.reticle_path",
+   "label": "Reticle path",
+   "doc": "(x, y) per tick, 0x7FFF ends",
+   "address": "0x15956F0",
+   "size": 84
+  }
+ ]
 }

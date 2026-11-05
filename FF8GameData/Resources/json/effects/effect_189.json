@@ -172,5 +172,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.clip_table",
+   "label": "Clip table",
+   "doc": "7 x 8 vertex-slot indices of the clipper",
+   "address": "0xD1B3AC",
+   "size": 228
+  },
+  {
+   "key": "not_editable.pkt_alt_viewport",
+   "label": "Pkt alt viewport",
+   "doc": "Static (exe data)",
+   "address": "0xD1B490",
+   "size": 24
+  }
+ ]
 }

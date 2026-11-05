@@ -487,5 +487,56 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.158233c",
+   "label": "Model animations",
+   "doc": "The animation set its code binds to a model",
+   "address": "0x158233C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.1586308",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1586308",
+   "size": 32
+  },
+  {
+   "key": "not_editable.1586328",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1586328",
+   "size": 32
+  },
+  {
+   "key": "not_editable.1586348",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1586348",
+   "size": 32
+  },
+  {
+   "key": "not_editable.1586368",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1586368",
+   "size": 32
+  },
+  {
+   "key": "not_editable.1778f3c",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0x1778F3C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.178135c",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0x178135C",
+   "size": 256
+  }
  ]
 }

@@ -172,5 +172,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.dist_table",
+   "label": "Distances table",
+   "doc": "[|dy|][|dx|] -> length, 128 x 128",
+   "address": "0x12337BC",
+   "size": 256
+  }
+ ]
 }

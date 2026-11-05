@@ -417,5 +417,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.136340c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x136340C",
+   "size": 400
+  },
+  {
+   "key": "not_editable.136359c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x136359C",
+   "size": 400
+  },
+  {
+   "key": "not_editable.1363cfc",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1363CFC",
+   "size": 400
+  },
+  {
+   "key": "not_editable.1363e8c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1363E8C",
+   "size": 400
+  }
+ ]
 }

@@ -223,5 +223,28 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.stream_table",
+   "label": "Stream table",
+   "doc": "5 x 16: point, bone / vector, flag",
+   "address": "0x1214FE8",
+   "size": 80
+  },
+  {
+   "key": "not_editable.dist_table",
+   "label": "Distances table",
+   "doc": "[|dy|][|dx|] -> length, 128 x 128",
+   "address": "0x1215038",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.weights",
+   "label": "Weights",
+   "doc": "Head weight by phase / 256",
+   "address": "0x1219038",
+   "size": 52
+  }
+ ]
 }

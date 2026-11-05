@@ -308,5 +308,14 @@
    "native": "0x7E4D90",
    "doc": "One per action: the module's own emitter (the port's task): the cast task, the master's release, the result."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.sound_table",
+   "label": "Sound table",
+   "doc": "9 sound descriptors by outcome (target record word +6)",
+   "address": "0x15962B4",
+   "size": 36
+  }
  ]
 }

@@ -179,5 +179,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.bones_caster",
+   "label": "Bones caster",
+   "doc": "5 effect bones",
+   "address": "0x1242284",
+   "size": 8
+  },
+  {
+   "key": "not_editable.crawl_scripts",
+   "label": "Crawl scripts",
+   "doc": "[0] = count, [1 + i] = script offset (words)",
+   "address": "0x124228C",
+   "size": 1920
+  },
+  {
+   "key": "not_editable.len_table",
+   "label": "Len table",
+   "doc": "128 x 128 |(dx, dy)|",
+   "address": "0x1242A0C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.blend_table",
+   "label": "Blend table",
+   "doc": "Point velocity blend by t / 2",
+   "address": "0x1246A0C",
+   "size": 256
+  }
+ ]
 }

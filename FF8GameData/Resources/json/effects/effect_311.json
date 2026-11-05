@@ -145,5 +145,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.len_table",
+   "label": "Len table",
+   "doc": "0x400 x s16",
+   "address": "0x10211C8",
+   "size": 4096
+  }
+ ]
 }

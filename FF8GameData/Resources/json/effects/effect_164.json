@@ -574,5 +574,28 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.glow_ref",
+   "label": "Glow ref",
+   "doc": "Reference direction of the blade glow",
+   "address": "0xD99C50",
+   "size": 16
+  },
+  {
+   "key": "not_editable.frame_ref_dir",
+   "label": "Frame ref dir",
+   "doc": "A table its code reads",
+   "address": "0xD99C60",
+   "size": 16
+  },
+  {
+   "key": "not_editable.camera_script",
+   "label": "Camera script",
+   "doc": "A camera track its code plays",
+   "address": "0xD99C70",
+   "size": 328
+  }
+ ]
 }

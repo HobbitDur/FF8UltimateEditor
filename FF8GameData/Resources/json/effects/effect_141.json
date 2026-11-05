@@ -248,5 +248,28 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.spark_frames",
+   "label": "Spark frames",
+   "doc": "A table its code reads",
+   "address": "0xDE1684",
+   "size": 100
+  },
+  {
+   "key": "not_editable.slash_ref",
+   "label": "Slash ref",
+   "doc": "Reference direction of the slash model",
+   "address": "0xDE16E8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.sparkle_depth",
+   "label": "Sparkle depth",
+   "doc": "A table its code reads",
+   "address": "0xEA7FF0",
+   "size": 16
+  }
+ ]
 }

@@ -384,5 +384,35 @@
    "native": "0x83F020",
    "doc": "One per action: the module's own emitter (the port's task): the kick sound, the ball's prim models, the actor system and the ball spawner, the master's release, the damage."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.15c8048",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x15C8048",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.actor_data",
+   "label": "Actor data",
+   "doc": "The actor system's data (exe data, relocated once by 0x83F9F0)",
+   "address": "0x15C9DE0",
+   "size": 260
+  },
+  {
+   "key": "not_editable.kick_script",
+   "label": "Kick script",
+   "doc": "Per ball tick 0..76, 14-byte records {y radius, z angle, prim start, prim z angle, kick scale, kick z angle, flipbook}",
+   "address": "0x15CA118",
+   "size": 1080
+  },
+  {
+   "key": "not_editable.pass_script",
+   "label": "Pass script",
+   "doc": "The passes, 10-byte records {op, duration, -, y, kicker}",
+   "address": "0x15CA550",
+   "size": 72
+  }
  ]
 }

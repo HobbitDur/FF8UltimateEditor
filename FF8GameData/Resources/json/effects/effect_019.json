@@ -544,5 +544,21 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.162a470",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x162A470",
+   "size": 8
+  },
+  {
+   "key": "not_editable.ball_data",
+   "label": "Ball data",
+   "doc": "The ball actor system's data (exe data)",
+   "address": "0x17F37BC",
+   "size": 256
+  }
  ]
 }

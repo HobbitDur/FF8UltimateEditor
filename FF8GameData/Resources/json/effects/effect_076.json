@@ -305,5 +305,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.up",
+   "label": "Up",
+   "doc": "Reference direction of the pool particles",
+   "address": "0xDE4150",
+   "size": 16
+  },
+  {
+   "key": "not_editable.camera_script",
+   "label": "Camera script",
+   "doc": "A camera track its code plays",
+   "address": "0xDE4160",
+   "size": 196
+  },
+  {
+   "key": "not_editable.wav_name",
+   "label": "Wav name",
+   "doc": "Directory string, 10 name bytes",
+   "address": "0xDE4230",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.fanfare",
+   "label": "Fanfare",
+   "doc": "Data its code reads",
+   "address": "0xEAA7EC",
+   "size": 256
+  }
+ ]
 }

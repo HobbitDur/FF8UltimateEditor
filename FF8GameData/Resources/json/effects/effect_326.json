@@ -409,5 +409,126 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.e15668",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xE15668",
+   "size": 1704
+  },
+  {
+   "key": "not_editable.e18cf8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xE18CF8",
+   "size": 2028
+  },
+  {
+   "key": "not_editable.e1965c",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xE1965C",
+   "size": 4
+  },
+  {
+   "key": "not_editable.e19660",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xE19660",
+   "size": 8
+  },
+  {
+   "key": "not_editable.e19674",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE19674",
+   "size": 48
+  },
+  {
+   "key": "not_editable.e196b0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE196B0",
+   "size": 8
+  },
+  {
+   "key": "not_editable.e196b8",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0xE196B8",
+   "size": 8
+  },
+  {
+   "key": "not_editable.e196c0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE196C0",
+   "size": 80
+  },
+  {
+   "key": "not_editable.e19710",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xE19710",
+   "size": 24
+  },
+  {
+   "key": "not_editable.e19728",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE19728",
+   "size": 8
+  },
+  {
+   "key": "not_editable.e19730",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE19730",
+   "size": 16
+  },
+  {
+   "key": "not_editable.e19740",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xE19740",
+   "size": 80
+  },
+  {
+   "key": "not_editable.e19790",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE19790",
+   "size": 32
+  },
+  {
+   "key": "not_editable.e197b0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE197B0",
+   "size": 32
+  },
+  {
+   "key": "not_editable.e197d0",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0xE197D0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.eecc2c",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xEECC2C",
+   "size": 4
+  },
+  {
+   "key": "not_editable.eecc30",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xEECC30",
+   "size": 4096
+  }
+ ]
 }

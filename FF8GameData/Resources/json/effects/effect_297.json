@@ -144,5 +144,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.com_anim",
+   "label": "Com anim",
+   "doc": "Data its code reads",
+   "address": "0x1056888",
+   "size": 4096
+  }
+ ]
 }

@@ -718,5 +718,112 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.15336c4",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x15336C4",
+   "size": 396
+  },
+  {
+   "key": "not_editable.1533850",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1533850",
+   "size": 384
+  },
+  {
+   "key": "not_editable.15339d8",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x15339D8",
+   "size": 600
+  },
+  {
+   "key": "not_editable.1533c30",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1533C30",
+   "size": 16
+  },
+  {
+   "key": "not_editable.1533c40",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1533C40",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1533c88",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1533C88",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1533cd0",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1533CD0",
+   "size": 144
+  },
+  {
+   "key": "not_editable.1533d60",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1533D60",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1533da8",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1533DA8",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1533df0",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1533DF0",
+   "size": 24
+  },
+  {
+   "key": "not_editable.1533e08",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1533E08",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1533e10",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x1533E10",
+   "size": 96
+  },
+  {
+   "key": "not_editable.16a3fb0",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0x16A3FB0",
+   "size": 316
+  },
+  {
+   "key": "not_editable.16a40ec",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x16A40EC",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.16a5380",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x16A5380",
+   "size": 256
+  }
  ]
 }

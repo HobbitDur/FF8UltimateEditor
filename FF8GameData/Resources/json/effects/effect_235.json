@@ -62,5 +62,105 @@
    "default": ""
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.1866f60",
+   "label": "Data",
+   "doc": "Draw_table - 0x318",
+   "address": "0x1866F60",
+   "size": 260
+  },
+  {
+   "key": "not_editable.186708c",
+   "label": "Data",
+   "doc": "BoneHandlerTable",
+   "address": "0x186708C",
+   "size": 72
+  },
+  {
+   "key": "not_editable.18670d4",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x18670D4",
+   "size": 240
+  },
+  {
+   "key": "not_editable.18671c4",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x18671C4",
+   "size": 20
+  },
+  {
+   "key": "not_editable.18671d8",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x18671D8",
+   "size": 44
+  },
+  {
+   "key": "not_editable.1867204",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x1867204",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1867218",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x1867218",
+   "size": 96
+  },
+  {
+   "key": "not_editable.1867278",
+   "label": "Data",
+   "doc": "DrawHandlerTable",
+   "address": "0x1867278",
+   "size": 362
+  },
+  {
+   "key": "not_editable.18673e2",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18673E2",
+   "size": 26
+  },
+  {
+   "key": "not_editable.18673fc",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18673FC",
+   "size": 2
+  },
+  {
+   "key": "not_editable.18673fe",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18673FE",
+   "size": 14
+  },
+  {
+   "key": "not_editable.186740c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186740C",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1867414",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1867414",
+   "size": 8
+  },
+  {
+   "key": "not_editable.186741c",
+   "label": "Data",
+   "doc": "VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x186741C",
+   "size": 1312
+  }
+ ]
 }

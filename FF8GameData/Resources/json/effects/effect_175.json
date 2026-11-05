@@ -312,5 +312,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.beam_sprites",
+   "label": "Beam sprites",
+   "doc": "8 x (word frame, word size, word distance, word)",
+   "address": "0xD591D0",
+   "size": 64
+  },
+  {
+   "key": "not_editable.wave_textures",
+   "label": "Wave textures",
+   "doc": "16 dwords",
+   "address": "0xD59210",
+   "size": 64
+  },
+  {
+   "key": "not_editable.stage_buckets",
+   "label": "Stage buckets",
+   "doc": "4 x (dword OT index, dword mode)",
+   "address": "0xD59250",
+   "size": 112
+  },
+  {
+   "key": "not_editable.stage_env_restore",
+   "label": "Stage env restore",
+   "doc": "2 x 0x18: draw environment of each buffer",
+   "address": "0xD592C0",
+   "size": 48
+  }
+ ]
 }

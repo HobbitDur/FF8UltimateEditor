@@ -412,5 +412,14 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.17f7f1c",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x17F7F1C",
+   "size": 256
+  }
  ]
 }

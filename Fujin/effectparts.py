@@ -820,11 +820,12 @@ class PartTab(QWidget):
     frames its sequence plays. The values edited together (a group: FFNx fx_params.h Group, one
     sub-structure - Cure's ring radius: times, divided by, at most) share a box; a group's "?",
     or an ungrouped field's, records the effect with other values and shows what draws
-    differently (part_names: {part id: title})."""
+    differently (part_names: {part id: title}). not_editable: the description's data its code reads at a
+    fixed place of the exe, shown as rows that can't be changed."""
     value_changed = pyqtSignal(str, int)      # key, new value
 
     def __init__(self, part, fields, values, runner, renderer, effect_parts=frozenset(), locate=None,
-                 part_names=None, groups=(), sounds=None, spawner=None):
+                 part_names=None, groups=(), sounds=None, spawner=None, not_editable=()):
         super().__init__()
         self.part, self.fields, self.runner = part, fields, runner
         self.spawner = spawner                          # (part id, title) whose ticks its windows count
@@ -872,6 +873,9 @@ class PartTab(QWidget):
         form_layout.addWidget(doc)
         form_layout.addLayout(form)
         form_layout.addWidget(reset)
+        self.not_editable_rows = {}
+        if not_editable:
+            form_layout.addWidget(Collapsible("Not editable", self._not_editable_box(not_editable)))
         form_layout.addStretch(1)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -937,6 +941,28 @@ class PartTab(QWidget):
         probe.setEnabled(enabled)
         probe.clicked.connect(lambda _checked: self.probe(key))
         return probe
+
+    def _not_editable_box(self, entries):
+        """The rows of what its code reads at a fixed place of the exe: each one's place and length, greyed."""
+        box = QWidget()
+        doc = QLabel("Its code reads these at a fixed place of the exe, not through a parameter. The Data tab shows "
+                     "their bytes.")
+        doc.setWordWrap(True)
+        doc.setStyleSheet("color: gray;")
+        rows = QFormLayout()
+        for entry in entries:
+            value = QLineEdit(f"{entry['address']}, {entry['size']} bytes")
+            value.setEnabled(False)
+            value.setToolTip(f"{entry['doc']}\nNot editable: its code reads it at {entry['address']} in the exe")
+            label = QLabel(entry["label"])
+            label.setToolTip(value.toolTip())
+            rows.addRow(label, value)
+            self.not_editable_rows[entry["key"]] = value
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(doc)
+        layout.addLayout(rows)
+        return box
 
     def _group_box(self, group, form):
         """A group's box in the form: its doc and "?" on top, its fields under (their form)."""

@@ -138,5 +138,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.axis_model",
+   "label": "Axis model",
+   "doc": "Model direction (unit vector)",
+   "address": "0xD6F788",
+   "size": 16
+  }
+ ]
 }

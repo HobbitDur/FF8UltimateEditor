@@ -62,5 +62,105 @@
    "default": ""
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.186be34",
+   "label": "Data",
+   "doc": "Draw_table - 0x33C",
+   "address": "0x186BE34",
+   "size": 296
+  },
+  {
+   "key": "not_editable.186bf84",
+   "label": "Data",
+   "doc": "GF_223Meteor_BoneHandlerTable",
+   "address": "0x186BF84",
+   "size": 72
+  },
+  {
+   "key": "not_editable.186bfcc",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x186BFCC",
+   "size": 240
+  },
+  {
+   "key": "not_editable.186c0bc",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x186C0BC",
+   "size": 20
+  },
+  {
+   "key": "not_editable.186c0d0",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x186C0D0",
+   "size": 44
+  },
+  {
+   "key": "not_editable.186c0fc",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x186C0FC",
+   "size": 20
+  },
+  {
+   "key": "not_editable.186c110",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x186C110",
+   "size": 96
+  },
+  {
+   "key": "not_editable.186c170",
+   "label": "Data",
+   "doc": "GF_223Meteor_DrawHandlerTable",
+   "address": "0x186C170",
+   "size": 362
+  },
+  {
+   "key": "not_editable.186c2da",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186C2DA",
+   "size": 26
+  },
+  {
+   "key": "not_editable.186c2f4",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186C2F4",
+   "size": 2
+  },
+  {
+   "key": "not_editable.186c2f6",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186C2F6",
+   "size": 14
+  },
+  {
+   "key": "not_editable.186c304",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186C304",
+   "size": 8
+  },
+  {
+   "key": "not_editable.186c30c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186C30C",
+   "size": 8
+  },
+  {
+   "key": "not_editable.186c314",
+   "label": "Data",
+   "doc": "GF_223Meteor_VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x186C314",
+   "size": 1312
+  }
+ ]
 }

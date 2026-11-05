@@ -165,5 +165,84 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.11b537c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x11B537C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.11c6c54",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x11C6C54",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.11c8fdc",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x11C8FDC",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.11ccba0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x11CCBA0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.11cef60",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x11CEF60",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.11d0160",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x11D0160",
+   "size": 4
+  },
+  {
+   "key": "not_editable.flames",
+   "label": "Flames",
+   "doc": "3 blocks its code picks from",
+   "address": "0x11D04B4",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.11d04bc",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x11D04BC",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.11d259c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x11D259C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.11d3780",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x11D3780",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.11d4b1c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x11D4B1C",
+   "size": 872
+  }
+ ]
 }

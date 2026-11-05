@@ -470,5 +470,147 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.1547454",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x1547454",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1547468",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x1547468",
+   "size": 20
+  },
+  {
+   "key": "not_editable.154747c",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x154747C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1547490",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x1547490",
+   "size": 20
+  },
+  {
+   "key": "not_editable.15474a4",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x15474A4",
+   "size": 20
+  },
+  {
+   "key": "not_editable.15474b8",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x15474B8",
+   "size": 88
+  },
+  {
+   "key": "not_editable.1547514",
+   "label": "Model animations",
+   "doc": "The animation set its code binds to a model",
+   "address": "0x1547514",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.154e9d8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x154E9D8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.154e9e8",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x154E9E8",
+   "size": 216
+  },
+  {
+   "key": "not_editable.154eac0",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x154EAC0",
+   "size": 144
+  },
+  {
+   "key": "not_editable.154eb50",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x154EB50",
+   "size": 72
+  },
+  {
+   "key": "not_editable.154eb98",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x154EB98",
+   "size": 72
+  },
+  {
+   "key": "not_editable.154ebe0",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x154EBE0",
+   "size": 72
+  },
+  {
+   "key": "not_editable.154ec28",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x154EC28",
+   "size": 72
+  },
+  {
+   "key": "not_editable.154ec70",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x154EC70",
+   "size": 32
+  },
+  {
+   "key": "not_editable.154ec90",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x154EC90",
+   "size": 32
+  },
+  {
+   "key": "not_editable.16d7cd0",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0x16D7CD0",
+   "size": 280
+  },
+  {
+   "key": "not_editable.16d7de8",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0x16D7DE8",
+   "size": 4
+  },
+  {
+   "key": "not_editable.16d7dec",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x16D7DEC",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.16f0f40",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x16F0F40",
+   "size": 256
+  }
  ]
 }

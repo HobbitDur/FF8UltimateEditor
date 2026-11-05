@@ -220,5 +220,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.swirl_table",
+   "label": "Swirl table",
+   "doc": "0x1000 x (s16, s16)",
+   "address": "0x121C990",
+   "size": 256
+  }
+ ]
 }

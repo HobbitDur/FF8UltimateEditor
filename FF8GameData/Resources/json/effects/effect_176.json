@@ -132,5 +132,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.funnel_matrix",
+   "label": "Funnel matrix",
+   "doc": "Its translation 0xD4516C = the funnel position",
+   "address": "0xD45158",
+   "size": 32
+  }
+ ]
 }

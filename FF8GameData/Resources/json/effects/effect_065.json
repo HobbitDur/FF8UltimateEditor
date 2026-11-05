@@ -281,5 +281,147 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.sound_voice",
+   "label": "Sound voice",
+   "doc": "A sound its code plays",
+   "address": "0x1334D70",
+   "size": 412
+  },
+  {
+   "key": "not_editable.entity_scale",
+   "label": "Entity scale",
+   "doc": "Entity +0x30 while pulled",
+   "address": "0x133AB88",
+   "size": 16
+  },
+  {
+   "key": "not_editable.objs0",
+   "label": "Objs0",
+   "doc": "\"0000000000000000\"",
+   "address": "0x133AB98",
+   "size": 24
+  },
+  {
+   "key": "not_editable.bone_r",
+   "label": "Bone r",
+   "doc": "Caster bone offsets (x, y, z, bone)",
+   "address": "0x133ABB0",
+   "size": 8
+  },
+  {
+   "key": "not_editable.bone_l",
+   "label": "Bone l",
+   "doc": "A table its code reads",
+   "address": "0x133ABB8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.stars",
+   "label": "Stars",
+   "doc": "8 x 16 bytes: colour, twinkle, uv scroll (x, y), speed",
+   "address": "0x133ABC8",
+   "size": 120
+  },
+  {
+   "key": "not_editable.133ac40",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133AC40",
+   "size": 8
+  },
+  {
+   "key": "not_editable.133ac48",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133AC48",
+   "size": 4
+  },
+  {
+   "key": "not_editable.133ac4c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133AC4C",
+   "size": 2
+  },
+  {
+   "key": "not_editable.133ac4e",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133AC4E",
+   "size": 6
+  },
+  {
+   "key": "not_editable.133ac54",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133AC54",
+   "size": 20
+  },
+  {
+   "key": "not_editable.133ac68",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133AC68",
+   "size": 20
+  },
+  {
+   "key": "not_editable.133ac7c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133AC7C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.133ac90",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133AC90",
+   "size": 36
+  },
+  {
+   "key": "not_editable.133acb4",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133ACB4",
+   "size": 36
+  },
+  {
+   "key": "not_editable.133acd8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133ACD8",
+   "size": 36
+  },
+  {
+   "key": "not_editable.133acfc",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x133ACFC",
+   "size": 36
+  },
+  {
+   "key": "not_editable.dist_table",
+   "label": "Distances table",
+   "doc": "128 x 128 bytes: length of (x, y)",
+   "address": "0x133AD20",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.sincos",
+   "label": "Sine table",
+   "doc": "4096 x (sin, cos) words",
+   "address": "0x133ED20",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.objs23",
+   "label": "Objs23",
+   "doc": "\"2300000000000000\"",
+   "address": "0x1342D2C",
+   "size": 256
+  }
+ ]
 }

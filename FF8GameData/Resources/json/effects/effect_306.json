@@ -230,5 +230,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.vortex_colours",
+   "label": "Vortex colours",
+   "doc": "12 colours, counter % 12",
+   "address": "0xCEB2A0",
+   "size": 48
+  }
+ ]
 }

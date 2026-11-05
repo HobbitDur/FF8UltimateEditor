@@ -507,5 +507,42 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.15b8230",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x15B8230",
+   "size": 96
+  },
+  {
+   "key": "not_editable.17b97a4",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x17B97A4",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.17bb134",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x17BB134",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.17bdf6c",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x17BDF6C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.17c0da4",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x17C0DA4",
+   "size": 256
+  }
  ]
 }

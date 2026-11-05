@@ -315,5 +315,14 @@
    "native": "0x7C4310",
    "doc": "The stage darkening out (the port's task: from its level down a step a tick to 0)."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.actor_data",
+   "label": "Actor data",
+   "doc": "The actor data (exe data, relocated once)",
+   "address": "0x176E194",
+   "size": 256
+  }
  ]
 }

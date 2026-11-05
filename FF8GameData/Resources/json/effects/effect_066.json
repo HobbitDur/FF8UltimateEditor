@@ -409,5 +409,77 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.dea20c",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xDEA20C",
+   "size": 312
+  },
+  {
+   "key": "not_editable.dea344",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xDEA344",
+   "size": 4
+  },
+  {
+   "key": "not_editable.dea348",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xDEA348",
+   "size": 4
+  },
+  {
+   "key": "not_editable.dea34c",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xDEA34C",
+   "size": 4
+  },
+  {
+   "key": "not_editable.dea350",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xDEA350",
+   "size": 4
+  },
+  {
+   "key": "not_editable.dea354",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xDEA354",
+   "size": 4
+  },
+  {
+   "key": "not_editable.dea358",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xDEA358",
+   "size": 8
+  },
+  {
+   "key": "not_editable.spawn_bones",
+   "label": "Spawn bones",
+   "doc": "29 caster bones",
+   "address": "0xDEA360",
+   "size": 116
+  },
+  {
+   "key": "not_editable.dea484",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0xDEA484",
+   "size": 308
+  },
+  {
+   "key": "not_editable.ecc40c",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0xECC40C",
+   "size": 4096
+  }
+ ]
 }

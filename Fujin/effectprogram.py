@@ -47,6 +47,8 @@ texture file name, its camera track) is named by "@key": in the exe ("exe_data":
 size, kind) or in the program itself ("data": key: its bytes as "hex", or "pointers": a table of
 other keys' addresses). A new effect made with the exe at hand copies its exe data into "data":
 its program no longer reads the exe's.
+What its code still reads at a fixed place of the exe, with no parameter, is listed in "not_editable"
+({key, label, doc, address, size}): shown to the user, not part of the program.
 """
 import json
 from pathlib import Path

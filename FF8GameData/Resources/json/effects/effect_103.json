@@ -172,5 +172,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.model_block_uv",
+   "label": "Model block UV",
+   "doc": "0x465 dwords",
+   "address": "0x131C86C",
+   "size": 4096
+  }
+ ]
 }

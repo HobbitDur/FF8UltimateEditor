@@ -239,5 +239,14 @@
    "native": "0x839C60",
    "doc": "One per action: the module's own emitter (the port's task): its sound, the actor system, the master's release, the damage of its target."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.actor_data",
+   "label": "Actor data",
+   "doc": "The actor system's data (exe data, relocated once by 0x83A5F0)",
+   "address": "0x15C6080",
+   "size": 260
+  }
  ]
 }

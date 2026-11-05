@@ -378,5 +378,49 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.1538b38",
+   "label": "Model animations",
+   "doc": "The animation set its code binds to a model",
+   "address": "0x1538B38",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.16b62b8",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x16B62B8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.16b8480",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x16B8480",
+   "size": 1296
+  },
+  {
+   "key": "not_editable.16b8990",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0x16B8990",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.16c0db0",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0x16C0DB0",
+   "size": 4
+  },
+  {
+   "key": "not_editable.16c0db4",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0x16C0DB4",
+   "size": 256
+  }
  ]
 }

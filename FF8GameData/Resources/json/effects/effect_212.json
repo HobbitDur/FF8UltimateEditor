@@ -315,5 +315,63 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.kind_bone",
+   "label": "Kind bone",
+   "doc": "A table its code reads",
+   "address": "0xFE0FB4",
+   "size": 12
+  },
+  {
+   "key": "not_editable.kind_front",
+   "label": "Kind front",
+   "doc": "A table its code reads",
+   "address": "0xFE0FC0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.kind_ground",
+   "label": "Kind ground",
+   "doc": "A table its code reads",
+   "address": "0x1154F40",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.piece_table",
+   "label": "Piece table",
+   "doc": "32 vertex indices per object",
+   "address": "0x11AC200",
+   "size": 64
+  },
+  {
+   "key": "not_editable.fist_a",
+   "label": "Fist a",
+   "doc": "Offset + bone",
+   "address": "0x11AC240",
+   "size": 8
+  },
+  {
+   "key": "not_editable.fist_b",
+   "label": "Fist b",
+   "doc": "Offset + bone",
+   "address": "0x11AC248",
+   "size": 8
+  },
+  {
+   "key": "not_editable.kind_burn",
+   "label": "Kind burn",
+   "doc": "A table its code reads",
+   "address": "0x11AC25C",
+   "size": 12
+  },
+  {
+   "key": "not_editable.kind_burn_b",
+   "label": "Kind burn b",
+   "doc": "A table its code reads",
+   "address": "0x11AC268",
+   "size": 256
+  }
+ ]
 }

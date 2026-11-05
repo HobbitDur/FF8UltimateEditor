@@ -540,3 +540,61 @@ def test_a_port_effects_copy_plays_its_own_camera_and_morph(tmp_path):
     cameras = lambda lines: [line for line in lines if line.startswith("K ")]
     others = lambda lines: [line for line in lines if not line.startswith("K ")]
     assert cameras(edited) != cameras(original) and others(edited) != others(original)
+
+
+def _described():
+    from Fujin.effectprogram import described_effects
+    return [(effect, load_description(effect)) for effect in described_effects()]
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_what_code_reads_at_a_fixed_place_is_listed_as_not_editable():
+    """Each description's "not_editable" rows: data in the exe its parameters don't hold, not part of its program."""
+    from Fujin.effectprogram import compile_program
+    exe_size = EXE.stat().st_size
+    rows = 0
+    for effect, description in _described():
+        held = [(int(entry["address"], 16), entry["size"]) for entry in description.get("exe_data", {}).values()
+                if isinstance(entry, dict) and "address" in entry and "size" in entry]
+        keys = [entry["key"] for entry in description.get("not_editable", [])]
+        assert len(keys) == len(set(keys)), effect
+        for entry in description.get("not_editable", []):
+            rows += 1
+            address = int(entry["address"], 16)
+            assert entry["label"] and entry["doc"] and 0 < entry["size"] <= 4096, (effect, entry["key"])
+            assert 0xC00000 <= address and address - 0x400000 + entry["size"] <= exe_size, (effect, entry["key"])
+            assert not any(start <= address < start + size for start, size in held), (effect, entry["key"])
+    assert rows >= 800
+    doom = load_description(8)
+    assert compile_program(doom) == compile_program({key: value for key, value in doom.items() if key != "not_editable"})
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_the_data_tab_shows_not_editable_rows(qapp):
+    """A shipped effect's and a new effect's not editable rows in the Data tab: greyed after its own data, their
+    bytes from the exe, nothing to apply."""
+    from Fujin.effectdataview import NO_DATA, EffectDataView, entries, hex_dump
+    exe = EXE.read_bytes()
+    view = EffectDataView(exe=lambda: exe)
+    doom = load_description(8)
+    view.show_data(doom)
+    assert view.list.isEnabled() and view.note.text().startswith(NO_DATA) and "not editable" in view.note.text()
+    assert view.list.count() == len(doom["not_editable"])
+    row = doom["not_editable"][0]
+    view.select(row["key"])
+    address = int(row["address"], 16)
+    assert "not editable" in view.title.text() and row["address"] in view.title.text()
+    assert view.fixed_bytes.isReadOnly()
+    assert view.fixed_bytes.toPlainText() == hex_dump(address, exe[address - 0x400000:address - 0x400000 + row["size"]])
+    assert not view.apply_button.isEnabled() and view.entry() is None and not view.apply()
+    new = new_effect(doom, 300, "New doom", exe)
+    view.show_data(new)
+    own = list(entries(new))
+    assert view.list.count() == len(own) + len(doom["not_editable"])
+    assert view.list.item(len(own)).text() == f"{row['label']} (not editable)"
+    view.select(row["key"])
+    assert view.pages.currentIndex() == view.pages_by_kind["not_editable"]
+    blind = EffectDataView()
+    blind.show_data(doom)
+    blind.select(row["key"])
+    assert "FF8_EN.exe" in blind.fixed_bytes.toPlainText()

@@ -186,5 +186,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.blend_table",
+   "label": "Blend table",
+   "doc": "Point velocity blend by t / 2",
+   "address": "0x10E098C",
+   "size": 4096
+  }
+ ]
 }

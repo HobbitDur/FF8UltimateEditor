@@ -286,5 +286,140 @@
    "native": "0x7327B0",
    "doc": "The module's own director (the port's task): every tick the phase bookkeeping (phase 2 spawns MiniMog, the sparkles and the particle actors), its 15 states (the cues, the sounds, the fades, the voice, the done flag), then its draw-mode packet."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.152bc04",
+   "label": "Model animations",
+   "doc": "The animation set its code binds to a model",
+   "address": "0x152BC04",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.1532c68",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532C68",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1532cb0",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532CB0",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1532cf8",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532CF8",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1532d40",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532D40",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1532d88",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532D88",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1532dd0",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532DD0",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1532e18",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532E18",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1532e60",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532E60",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1532ea8",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532EA8",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1532ef0",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532EF0",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1532f38",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532F38",
+   "size": 144
+  },
+  {
+   "key": "not_editable.1532fc8",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532FC8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.1532fd8",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532FD8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.1532fe8",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1532FE8",
+   "size": 24
+  },
+  {
+   "key": "not_editable.1692140",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0x1692140",
+   "size": 316
+  },
+  {
+   "key": "not_editable.169227c",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x169227C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.1696de8",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x1696DE8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.169a1bc",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x169A1BC",
+   "size": 256
+  }
  ]
 }

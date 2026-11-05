@@ -289,5 +289,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.muzzle_ref",
+   "label": "Muzzle ref",
+   "doc": "(0, 0, -0x1000)",
+   "address": "0xD0BD38",
+   "size": 16
+  },
+  {
+   "key": "not_editable.ring_ref",
+   "label": "Ring ref",
+   "doc": "(-0x1000, 0, 0)",
+   "address": "0xD0BD48",
+   "size": 16
+  }
+ ]
 }

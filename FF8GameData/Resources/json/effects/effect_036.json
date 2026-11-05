@@ -258,5 +258,14 @@
    "native": "0x85F840",
    "doc": "One per action: the module's own emitter (the port's task): its sound, the actor system, the chain transformation, the shake and overlay, the master's release, the result."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.overlay_script",
+   "label": "Overlay script",
+   "doc": "Screen overlay colour script",
+   "address": "0x15D97EC",
+   "size": 12
+  }
  ]
 }

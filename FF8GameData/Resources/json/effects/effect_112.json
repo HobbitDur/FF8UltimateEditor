@@ -321,5 +321,70 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.camera_blob",
+   "label": "Camera blob",
+   "doc": "Camera blob (0x5099A0)",
+   "address": "0x12DAFA8",
+   "size": 1708
+  },
+  {
+   "key": "not_editable.flags_ground",
+   "label": "Flags ground",
+   "doc": "A table its code reads",
+   "address": "0x12DB65C",
+   "size": 8
+  },
+  {
+   "key": "not_editable.flags_hand_a",
+   "label": "Flags hand a",
+   "doc": "A table its code reads",
+   "address": "0x12DB664",
+   "size": 24
+  },
+  {
+   "key": "not_editable.flags_hand_b",
+   "label": "Flags hand b",
+   "doc": "A table its code reads",
+   "address": "0x12DB67C",
+   "size": 48
+  },
+  {
+   "key": "not_editable.flags_fist",
+   "label": "Flags fist",
+   "doc": "A table its code reads",
+   "address": "0x12DB6AC",
+   "size": 44
+  },
+  {
+   "key": "not_editable.flags_impact",
+   "label": "Flags impact",
+   "doc": "A table its code reads",
+   "address": "0x12DB6D8",
+   "size": 8
+  },
+  {
+   "key": "not_editable.flags_billboard",
+   "label": "Flags billboard",
+   "doc": "A table its code reads",
+   "address": "0x12DB6E0",
+   "size": 64
+  },
+  {
+   "key": "not_editable.flags_target",
+   "label": "Flags target",
+   "doc": "A table its code reads",
+   "address": "0x12DB720",
+   "size": 16
+  },
+  {
+   "key": "not_editable.spark_dirs",
+   "label": "Spark dirs",
+   "doc": "4 SVECTORs (the impact sparks, last first)",
+   "address": "0x12DB730",
+   "size": 32
+  }
+ ]
 }

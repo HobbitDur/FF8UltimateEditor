@@ -626,3 +626,25 @@ def test_potion_shares_cures_parameters_but_keeps_its_own(tmp_path):
     assert effect(50, "short", "native=1", f"params={params}") == potion_native
     params.write_text("sparkle.seq 12345\n")
     assert effect(50, "bad", "native=1", f"params={params}") == potion_native
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_part_tab_shows_what_cant_be_edited(qapp):
+    """Fujin shows an effect's not editable rows greyed under the part that previews the whole effect; no parameter."""
+    from Fujin.effectprogram import load_description
+    from Fujin.fujinwidget import FujinWidget
+    if not cure_schema():
+        return
+    fujin = FujinWidget()
+    fujin.camera_editor.exe_binding.open_path(str(EXE))
+    fujin.select_effect(38)
+    rows = load_description(38)["not_editable"]
+    tabs = [tab for tab in fujin.part_tabs if tab.not_editable_rows]
+    assert len(tabs) == 1 and not tabs[0].part["id"]
+    tab = tabs[0]
+    assert list(tab.not_editable_rows) == [row["key"] for row in rows]
+    field = tab.not_editable_rows[rows[0]["key"]]
+    assert not field.isEnabled() and rows[0]["address"] in field.text() and "Not editable" in field.toolTip()
+    assert not set(tab.not_editable_rows) & set(tab.spins)
+    fujin.data_view.select(rows[0]["key"])
+    assert rows[0]["address"].removeprefix("0x") in fujin.data_view.fixed_bytes.toPlainText()

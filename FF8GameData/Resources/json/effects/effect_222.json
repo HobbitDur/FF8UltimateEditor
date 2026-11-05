@@ -62,5 +62,105 @@
    "default": ""
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.186c84c",
+   "label": "Data",
+   "doc": "Draw_table - 0x30C",
+   "address": "0x186C84C",
+   "size": 248
+  },
+  {
+   "key": "not_editable.186c96c",
+   "label": "Data",
+   "doc": "GF_222Water_BoneHandlerTable",
+   "address": "0x186C96C",
+   "size": 72
+  },
+  {
+   "key": "not_editable.186c9b4",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x186C9B4",
+   "size": 240
+  },
+  {
+   "key": "not_editable.186caa4",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x186CAA4",
+   "size": 20
+  },
+  {
+   "key": "not_editable.186cab8",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x186CAB8",
+   "size": 44
+  },
+  {
+   "key": "not_editable.186cae4",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x186CAE4",
+   "size": 20
+  },
+  {
+   "key": "not_editable.186caf8",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x186CAF8",
+   "size": 96
+  },
+  {
+   "key": "not_editable.186cb58",
+   "label": "Data",
+   "doc": "GF_222Water_DrawHandlerTable",
+   "address": "0x186CB58",
+   "size": 362
+  },
+  {
+   "key": "not_editable.186ccc2",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186CCC2",
+   "size": 26
+  },
+  {
+   "key": "not_editable.186ccdc",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186CCDC",
+   "size": 2
+  },
+  {
+   "key": "not_editable.186ccde",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186CCDE",
+   "size": 14
+  },
+  {
+   "key": "not_editable.186ccec",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186CCEC",
+   "size": 8
+  },
+  {
+   "key": "not_editable.186ccf4",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186CCF4",
+   "size": 8
+  },
+  {
+   "key": "not_editable.186ccfc",
+   "label": "Data",
+   "doc": "GF_222Water_VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x186CCFC",
+   "size": 1312
+  }
+ ]
 }

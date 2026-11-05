@@ -210,5 +210,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.item_kinds",
+   "label": "Item kinds",
+   "doc": "7 x 24 bytes",
+   "address": "0x1362730",
+   "size": 168
+  }
+ ]
 }

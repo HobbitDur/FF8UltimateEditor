@@ -224,5 +224,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.model_block",
+   "label": "Model block",
+   "doc": "0x8CA dwords",
+   "address": "0x1312918",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.model_block_uv",
+   "label": "Model block UV",
+   "doc": "Static, list 2 indices rewritten",
+   "address": "0x1315760",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.sparkle_matrix",
+   "label": "Sparkle matrix",
+   "doc": "Data its code reads",
+   "address": "0x13197B0",
+   "size": 32
+  },
+  {
+   "key": "not_editable.13197d0",
+   "label": "Table",
+   "doc": "Growth vertex sets",
+   "address": "0x13197D0",
+   "size": 8
+  }
+ ]
 }

@@ -299,5 +299,42 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.spark_frames",
+   "label": "Spark frames",
+   "doc": "A table its code reads",
+   "address": "0xDAFAC4",
+   "size": 100
+  },
+  {
+   "key": "not_editable.slash_ref",
+   "label": "Slash ref",
+   "doc": "Reference direction of the slash model",
+   "address": "0xDAFB28",
+   "size": 16
+  },
+  {
+   "key": "not_editable.hit_spread",
+   "label": "Hit spread",
+   "doc": "Per hit: the debris velocity's random part +- this",
+   "address": "0xDAFB68",
+   "size": 112
+  },
+  {
+   "key": "not_editable.sparkle_depth",
+   "label": "Sparkle depth",
+   "doc": "A table its code reads",
+   "address": "0xEA3448",
+   "size": 16
+  },
+  {
+   "key": "not_editable.sparkle_fade",
+   "label": "Sparkle fade",
+   "doc": "A table its code reads",
+   "address": "0xEA3458",
+   "size": 16
+  }
+ ]
 }

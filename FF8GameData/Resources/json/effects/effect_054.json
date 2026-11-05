@@ -278,5 +278,14 @@
    "native": "0x811E20",
    "doc": "The stage wobble out (the port's task: from its level down a step a tick to 0)."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.actor_data",
+   "label": "Actor data",
+   "doc": "The actor data (exe data, relocated once)",
+   "address": "0x17AA304",
+   "size": 256
+  }
  ]
 }

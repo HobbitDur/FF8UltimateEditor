@@ -165,5 +165,168 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.1298c68",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1298C68",
+   "size": 8
+  },
+  {
+   "key": "not_editable.bolt_vertices",
+   "label": "Bolt vertices",
+   "doc": "8 bytes each",
+   "address": "0x1298C70",
+   "size": 2728
+  },
+  {
+   "key": "not_editable.1299718",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1299718",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.129ba94",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x129BA94",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.129cd84",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x129CD84",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.129f4e8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x129F4E8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.12a1164",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12A1164",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.12a53e0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12A53E0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.12a9664",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12A9664",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.model_debris",
+   "label": "Model debris",
+   "doc": "Prim model (off_12AC8B8)",
+   "address": "0x12AC8B8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.12ae7e0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12AE7E0",
+   "size": 4
+  },
+  {
+   "key": "not_editable.12ae7e4",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12AE7E4",
+   "size": 4
+  },
+  {
+   "key": "not_editable.12ae7e8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12AE7E8",
+   "size": 4
+  },
+  {
+   "key": "not_editable.12ae7ec",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12AE7EC",
+   "size": 4
+  },
+  {
+   "key": "not_editable.12ae7f0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12AE7F0",
+   "size": 80
+  },
+  {
+   "key": "not_editable.12ae840",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12AE840",
+   "size": 4032
+  },
+  {
+   "key": "not_editable.12af800",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12AF800",
+   "size": 40
+  },
+  {
+   "key": "not_editable.12af828",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12AF828",
+   "size": 1560
+  },
+  {
+   "key": "not_editable.12afe40",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12AFE40",
+   "size": 24
+  },
+  {
+   "key": "not_editable.12afe58",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x12AFE58",
+   "size": 1944
+  },
+  {
+   "key": "not_editable.dist_table",
+   "label": "Distances table",
+   "doc": "[|dy|][|dx|] -> length, 128 x 128",
+   "address": "0x12B05F0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.sqrt_table",
+   "label": "Square roots table",
+   "doc": "A table its code reads",
+   "address": "0x12B4570",
+   "size": 512
+  },
+  {
+   "key": "not_editable.sin_table",
+   "label": "Sin table",
+   "doc": "4096 entries, 4.12",
+   "address": "0x12B4770",
+   "size": 4096
+  }
+ ]
 }

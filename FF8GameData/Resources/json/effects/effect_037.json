@@ -444,5 +444,21 @@
    "native": "0x856D70",
    "doc": "One per action: the module's own emitter (the port's task): its sound, the actor system and the ribbon spawner, the master's release, the damage."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.orb_template",
+   "label": "Orb template",
+   "doc": "A table its code reads",
+   "address": "0x15D860C",
+   "size": 2216
+  },
+  {
+   "key": "not_editable.actor_data",
+   "label": "Actor data",
+   "doc": "The actor system's data (exe data)",
+   "address": "0x17C8420",
+   "size": 256
+  }
  ]
 }

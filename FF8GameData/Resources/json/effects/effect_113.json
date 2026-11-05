@@ -172,5 +172,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.wave_table",
+   "label": "Wave table",
+   "doc": "S16 [4096]",
+   "address": "0x12C1604",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.part_flags",
+   "label": "Part flags",
+   "doc": "Per-object flags of the layout",
+   "address": "0x12C3604",
+   "size": 8
+  }
+ ]
 }

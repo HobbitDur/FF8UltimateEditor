@@ -206,5 +206,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.scale_mat",
+   "label": "Scale mat",
+   "doc": "Exe matrix, its diagonal rewritten",
+   "address": "0x11F0360",
+   "size": 4096
+  }
+ ]
 }

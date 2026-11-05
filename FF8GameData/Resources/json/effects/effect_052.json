@@ -220,5 +220,21 @@
    "native": "0x817750",
    "doc": "One per action: the module's own emitter (the port's task): its sound, the screen flash, the actor system, the master's release, the heal."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.flash_script",
+   "label": "Flash script",
+   "doc": "Screen flash colour script",
+   "address": "0x15A9208",
+   "size": 12
+  },
+  {
+   "key": "not_editable.actor_data",
+   "label": "Actor data",
+   "doc": "The actor system's data (exe data, relocated once by 0x818200)",
+   "address": "0x17AB0E8",
+   "size": 256
+  }
  ]
 }

@@ -370,5 +370,35 @@
    "native": "0x8A3150",
    "doc": "The stage light ramp down (the port's task: from the level down a step a tick to 0)."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.1629f14",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x1629F14",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1629f28",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1629F28",
+   "size": 96
+  },
+  {
+   "key": "not_editable.1629f88",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x1629F88",
+   "size": 20
+  },
+  {
+   "key": "not_editable.17f36a0",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0x17F36A0",
+   "size": 256
+  }
  ]
 }

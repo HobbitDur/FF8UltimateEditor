@@ -323,5 +323,28 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.dir_back",
+   "label": "Dir back",
+   "doc": "(0, 0, -0x1000)",
+   "address": "0xD05238",
+   "size": 16
+  },
+  {
+   "key": "not_editable.dir_front",
+   "label": "Dir front",
+   "doc": "(0, 0, 0x1000)",
+   "address": "0xD05248",
+   "size": 16
+  },
+  {
+   "key": "not_editable.dir_down",
+   "label": "Dir down",
+   "doc": "(0, -0x1000, 0)",
+   "address": "0xD05258",
+   "size": 16
+  }
+ ]
 }

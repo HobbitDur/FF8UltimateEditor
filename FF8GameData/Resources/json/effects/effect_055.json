@@ -516,5 +516,28 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.orb_template",
+   "label": "Orb template",
+   "doc": "Its vertex template",
+   "address": "0x15A6AD0",
+   "size": 2504
+  },
+  {
+   "key": "not_editable.drop_sprites",
+   "label": "Drop sprites",
+   "doc": "4 sprite pointers of the stream's drops",
+   "address": "0x15A75CC",
+   "size": 16
+  },
+  {
+   "key": "not_editable.rain_sprites",
+   "label": "Rain sprites",
+   "doc": "4 sprite pointers of the rain drops",
+   "address": "0x15A75DC",
+   "size": 16
+  }
  ]
 }

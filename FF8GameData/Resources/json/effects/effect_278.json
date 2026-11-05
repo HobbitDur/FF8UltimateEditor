@@ -301,5 +301,42 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.10b6f94",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x10B6F94",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.10c1940",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x10C1940",
+   "size": 920
+  },
+  {
+   "key": "not_editable.10c1cd8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x10C1CD8",
+   "size": 2352
+  },
+  {
+   "key": "not_editable.10c2608",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x10C2608",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.10c5c8c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x10C5C8C",
+   "size": 4096
+  }
+ ]
 }

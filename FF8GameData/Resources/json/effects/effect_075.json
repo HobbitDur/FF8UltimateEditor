@@ -62,5 +62,105 @@
    "default": ""
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.1875eac",
+   "label": "Table",
+   "doc": "Draw_table - 0x2E8 (read by 0xB3EA30)",
+   "address": "0x1875EAC",
+   "size": 212
+  },
+  {
+   "key": "not_editable.1875fa8",
+   "label": "Data",
+   "doc": "MAG_075 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x1875FA8",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1875ff0",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x1875FF0",
+   "size": 240
+  },
+  {
+   "key": "not_editable.18760e0",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x18760E0",
+   "size": 20
+  },
+  {
+   "key": "not_editable.18760f4",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x18760F4",
+   "size": 44
+  },
+  {
+   "key": "not_editable.1876120",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x1876120",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1876134",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x1876134",
+   "size": 96
+  },
+  {
+   "key": "not_editable.1876194",
+   "label": "Data",
+   "doc": "MAG_075 DrawHandlerTable",
+   "address": "0x1876194",
+   "size": 362
+  },
+  {
+   "key": "not_editable.18762fe",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18762FE",
+   "size": 26
+  },
+  {
+   "key": "not_editable.1876318",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1876318",
+   "size": 2
+  },
+  {
+   "key": "not_editable.187631a",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x187631A",
+   "size": 14
+  },
+  {
+   "key": "not_editable.1876328",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1876328",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1876330",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1876330",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1876338",
+   "label": "Data",
+   "doc": "MAG_075 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x1876338",
+   "size": 1312
+  }
+ ]
 }

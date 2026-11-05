@@ -270,5 +270,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.objs_plain",
+   "label": "Object flags plain",
+   "doc": "Per-object flags of the layouts: '1' = v scroll",
+   "address": "0x1354A08",
+   "size": 20
+  },
+  {
+   "key": "not_editable.objs_impact",
+   "label": "Object flags impact",
+   "doc": "Data its code reads",
+   "address": "0x1354A28",
+   "size": 256
+  }
+ ]
 }

@@ -309,5 +309,21 @@
    "native": "0x8568A0",
    "doc": "The stage wobble out (the port's task: from its level down a step a tick to 0)."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.15d190c",
+   "label": "Flash script",
+   "doc": "The colour script of a screen flash",
+   "address": "0x15D190C",
+   "size": 12
+  },
+  {
+   "key": "not_editable.15d1918",
+   "label": "Flash script",
+   "doc": "The colour script of a screen flash",
+   "address": "0x15D1918",
+   "size": 32
+  }
  ]
 }

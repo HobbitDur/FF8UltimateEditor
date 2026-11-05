@@ -177,5 +177,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.debris_shapes",
+   "label": "Debris shapes",
+   "doc": "7 vectors (triangle 3, quad 4)",
+   "address": "0x10D4DA0",
+   "size": 1928
+  },
+  {
+   "key": "not_editable.events",
+   "label": "Events",
+   "doc": "5 blocks its code picks from",
+   "address": "0x10D5528",
+   "size": 640
+  },
+  {
+   "key": "not_editable.arc_distance",
+   "label": "Arc distance",
+   "doc": "128 x 128 bytes: screen distance of |dx|, |dy|",
+   "address": "0x10D57A8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.arc_lengths",
+   "label": "Arc lengths",
+   "doc": "U16 square-root table",
+   "address": "0x10D9728",
+   "size": 512
+  }
+ ]
 }

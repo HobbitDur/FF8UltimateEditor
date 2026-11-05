@@ -62,5 +62,105 @@
    "default": ""
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.1863d68",
+   "label": "Data",
+   "doc": "Draw_table - 0x31C (read by 0xA0B4B0)",
+   "address": "0x1863D68",
+   "size": 184
+  },
+  {
+   "key": "not_editable.1863e48",
+   "label": "Data",
+   "doc": "BoneHandlerTable (draw_table - 0x23C: two extra tables below)",
+   "address": "0x1863E48",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1863e90",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x1863E90",
+   "size": 240
+  },
+  {
+   "key": "not_editable.1863f80",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x1863F80",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1863fe4",
+   "label": "Data",
+   "doc": "Bone_table + 0x19C (after the two piece tables)",
+   "address": "0x1863FE4",
+   "size": 44
+  },
+  {
+   "key": "not_editable.1864010",
+   "label": "Data",
+   "doc": "Spr_table + 0x2C",
+   "address": "0x1864010",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1864024",
+   "label": "Data",
+   "doc": "Spr_table + 0x40",
+   "address": "0x1864024",
+   "size": 96
+  },
+  {
+   "key": "not_editable.1864084",
+   "label": "Data",
+   "doc": "DrawHandlerTable",
+   "address": "0x1864084",
+   "size": 362
+  },
+  {
+   "key": "not_editable.18641ee",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18641EE",
+   "size": 26
+  },
+  {
+   "key": "not_editable.1864208",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1864208",
+   "size": 2
+  },
+  {
+   "key": "not_editable.186420a",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186420A",
+   "size": 14
+  },
+  {
+   "key": "not_editable.1864218",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1864218",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1864220",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1864220",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1864228",
+   "label": "Data",
+   "doc": "VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x1864228",
+   "size": 1312
+  }
+ ]
 }

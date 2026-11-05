@@ -282,5 +282,14 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.kind_rise",
+   "label": "Kind rise",
+   "doc": "A table its code reads",
+   "address": "0xFE0FC8",
+   "size": 4096
+  }
+ ]
 }

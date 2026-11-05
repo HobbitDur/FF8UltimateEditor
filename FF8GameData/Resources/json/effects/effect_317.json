@@ -179,5 +179,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.dist_table",
+   "label": "Distances table",
+   "doc": "[|dy|][|dx|] -> length, 128 x 128",
+   "address": "0x1001ACC",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.caster_point",
+   "label": "Caster point",
+   "doc": "{x, y, z, bone}: the streams' and the spray's start on the caster's model",
+   "address": "0x1005AD0",
+   "size": 8
+  }
+ ]
 }

@@ -433,5 +433,28 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.shell_to",
+   "label": "Shell to",
+   "doc": "168 vertices (8 bytes) each",
+   "address": "0xDA8728",
+   "size": 1344
+  },
+  {
+   "key": "not_editable.pillar_model",
+   "label": "Pillar model",
+   "doc": "8 entries (4 bytes) each",
+   "address": "0xDA8C74",
+   "size": 32
+  },
+  {
+   "key": "not_editable.alt_viewport",
+   "label": "Alt viewport",
+   "doc": "Data its code reads",
+   "address": "0xDA8D00",
+   "size": 24
+  }
+ ]
 }

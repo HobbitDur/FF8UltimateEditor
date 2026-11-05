@@ -521,5 +521,14 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.slide_curve",
+   "label": "Slide curve",
+   "doc": "The target's slide curve (s16 0..0x1000 per tick, exe data)",
+   "address": "0x1597820",
+   "size": 16
+  }
  ]
 }

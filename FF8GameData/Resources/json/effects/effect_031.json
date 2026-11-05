@@ -420,5 +420,28 @@
    "native": "0x8734A0",
    "doc": "The stage light ramp down (the port's task: from its level down a step a tick to 0)."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.flash_script_1",
+   "label": "Flash script 1",
+   "doc": "Screen flash colour scripts",
+   "address": "0x15F8DC8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.flash_script_2",
+   "label": "Flash script 2",
+   "doc": "Screen flash colour scripts",
+   "address": "0x15F8DD8",
+   "size": 24
+  },
+  {
+   "key": "not_editable.actor_data",
+   "label": "Actor data",
+   "doc": "The actor system's data (exe data)",
+   "address": "0x160D188",
+   "size": 260
+  }
  ]
 }

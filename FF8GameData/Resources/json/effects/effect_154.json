@@ -145,5 +145,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.warp_colours",
+   "label": "Warp colours",
+   "doc": "0x23 quad colours",
+   "address": "0xDBAD40",
+   "size": 176
+  },
+  {
+   "key": "not_editable.emitter_vectors",
+   "label": "Emitter vectors",
+   "doc": "4 x (offset SVECTOR, direction SVECTOR)",
+   "address": "0xDBADF0",
+   "size": 64
+  },
+  {
+   "key": "not_editable.stage_draw",
+   "label": "Stage draw",
+   "doc": "4 x (OT word offset, RenderGeometry mode)",
+   "address": "0xDBAE70",
+   "size": 112
+  },
+  {
+   "key": "not_editable.pkt_capture",
+   "label": "Pkt capture",
+   "doc": "2 x 0x18 (per display buffer), alternate viewport",
+   "address": "0xDBAEE0",
+   "size": 80
+  }
+ ]
 }

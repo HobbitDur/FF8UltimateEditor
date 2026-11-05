@@ -402,5 +402,28 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.ref_dir",
+   "label": "Ref dir",
+   "doc": "(0, 0, -0x1000)-style reference direction of the wave records",
+   "address": "0xE33D40",
+   "size": 16
+  },
+  {
+   "key": "not_editable.target_free",
+   "label": "Target free",
+   "doc": "[slot]: 1 = no flame director waits on it (exe data)",
+   "address": "0xE33D70",
+   "size": 28
+  },
+  {
+   "key": "not_editable.camera_script",
+   "label": "Camera script",
+   "doc": "A camera track its code plays",
+   "address": "0xE33D8C",
+   "size": 4096
+  }
+ ]
 }

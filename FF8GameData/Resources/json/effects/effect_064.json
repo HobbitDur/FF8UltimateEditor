@@ -199,5 +199,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.sound_voice",
+   "label": "Sound voice",
+   "doc": "A sound its code plays",
+   "address": "0x1342EF8",
+   "size": 1224
+  },
+  {
+   "key": "not_editable.sequences",
+   "label": "Sequences",
+   "doc": "Sprite sequence pointers",
+   "address": "0x13433C0",
+   "size": 8
+  },
+  {
+   "key": "not_editable.layouts",
+   "label": "Layouts",
+   "doc": "12-byte entries: data, size, per-object flag string",
+   "address": "0x13473C8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.scripts",
+   "label": "Scripts",
+   "doc": "18 blocks its code picks from",
+   "address": "0x134B560",
+   "size": 2608
+  }
+ ]
 }

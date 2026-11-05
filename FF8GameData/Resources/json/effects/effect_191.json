@@ -408,5 +408,77 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.e3702c",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xE3702C",
+   "size": 1424
+  },
+  {
+   "key": "not_editable.e3c37c",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xE3C37C",
+   "size": 512
+  },
+  {
+   "key": "not_editable.e3c57c",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xE3C57C",
+   "size": 504
+  },
+  {
+   "key": "not_editable.pools",
+   "label": "Pools",
+   "doc": "6 blocks its code picks from",
+   "address": "0xE3C8C0",
+   "size": 24
+  },
+  {
+   "key": "not_editable.e3c8d8",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE3C8D8",
+   "size": 4
+  },
+  {
+   "key": "not_editable.e3c8dc",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0xE3C8DC",
+   "size": 156
+  },
+  {
+   "key": "not_editable.e3c978",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0xE3C978",
+   "size": 16
+  },
+  {
+   "key": "not_editable.rain_color",
+   "label": "Rain color",
+   "doc": "A table its code reads",
+   "address": "0xE3C988",
+   "size": 256
+  },
+  {
+   "key": "not_editable.e3ca88",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0xE3CA88",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.f78380",
+   "label": "Sound",
+   "doc": "A sound its code plays",
+   "address": "0xF78380",
+   "size": 4
+  }
+ ]
 }

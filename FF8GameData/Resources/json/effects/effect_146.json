@@ -201,5 +201,42 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.piece_model",
+   "label": "Piece model",
+   "doc": "15 each",
+   "address": "0xDD6644",
+   "size": 60
+  },
+  {
+   "key": "not_editable.piece_ground",
+   "label": "Piece ground",
+   "doc": "15 each",
+   "address": "0xDD6680",
+   "size": 60
+  },
+  {
+   "key": "not_editable.piece_off_x",
+   "label": "Piece off x",
+   "doc": "15 each",
+   "address": "0xDD66BC",
+   "size": 60
+  },
+  {
+   "key": "not_editable.piece_off_z",
+   "label": "Piece off z",
+   "doc": "15 each",
+   "address": "0xDD66F8",
+   "size": 64
+  },
+  {
+   "key": "not_editable.funnel_matrix",
+   "label": "Funnel matrix",
+   "doc": "Identity; its translation 0xDD674C = the effect position",
+   "address": "0xDD6738",
+   "size": 72
+  }
+ ]
 }

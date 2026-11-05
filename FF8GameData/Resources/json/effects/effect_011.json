@@ -604,5 +604,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.flags_mouth",
+   "label": "Flags mouth",
+   "doc": "Draw flags per object",
+   "address": "0x136BAFC",
+   "size": 40
+  },
+  {
+   "key": "not_editable.flags_cone",
+   "label": "Flags cone",
+   "doc": "Data its code reads",
+   "address": "0x136BB24",
+   "size": 256
+  }
+ ]
 }

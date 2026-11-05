@@ -564,5 +564,126 @@
     }
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.154f898",
+   "label": "Node data",
+   "doc": "Data a task's node points at",
+   "address": "0x154F898",
+   "size": 128
+  },
+  {
+   "key": "not_editable.154f91c",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x154F91C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.155563c",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x155563C",
+   "size": 1828
+  },
+  {
+   "key": "not_editable.1555d60",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1555D60",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1555da8",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1555DA8",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1555df0",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1555DF0",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1555e38",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1555E38",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1555e80",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1555E80",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1555ec8",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1555EC8",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1555f10",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1555F10",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1555f58",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1555F58",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1555fa0",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1555FA0",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1555fe8",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1555FE8",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1556030",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1556030",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1556078",
+   "label": "Camera track",
+   "doc": "A camera track its code plays",
+   "address": "0x1556078",
+   "size": 72
+  },
+  {
+   "key": "not_editable.16f1f8c",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x16F1F8C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.16fb420",
+   "label": "TIM",
+   "doc": "A TIM its code uploads as it is",
+   "address": "0x16FB420",
+   "size": 256
+  }
  ]
 }

@@ -190,5 +190,21 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.14d0c2c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x14D0C2C",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.14d71e0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x14D71E0",
+   "size": 256
+  }
+ ]
 }

@@ -330,5 +330,21 @@
    "native": "0x846900",
    "doc": "One per action: the module's own emitter (the port's task): the grab sound, the actor system and the dribble spawner, the master's release, the damage."
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.actor_data",
+   "label": "Actor data",
+   "doc": "The actor system's data (exe data, relocated once by 0x8472A0)",
+   "address": "0x15CD8B0",
+   "size": 260
+  },
+  {
+   "key": "not_editable.radius_table",
+   "label": "Radius table",
+   "doc": "Ball y radius by dribble tick 0..56 (6-byte records)",
+   "address": "0x15CDC80",
+   "size": 344
+  }
  ]
 }

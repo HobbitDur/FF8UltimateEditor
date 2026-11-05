@@ -265,5 +265,35 @@
    "unit": "plain"
   }
  ],
- "tasks": []
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.spark_frames",
+   "label": "Spark frames",
+   "doc": "A table its code reads",
+   "address": "0xDAA668",
+   "size": 96
+  },
+  {
+   "key": "not_editable.slash_ref",
+   "label": "Slash ref",
+   "doc": "Reference direction of the slash model",
+   "address": "0xDAA6C8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.sparkle_depth",
+   "label": "Sparkle depth",
+   "doc": "A table its code reads",
+   "address": "0xE9AEA0",
+   "size": 16
+  },
+  {
+   "key": "not_editable.sparkle_fade",
+   "label": "Sparkle fade",
+   "doc": "A table its code reads",
+   "address": "0xE9AEB0",
+   "size": 16
+  }
+ ]
 }
