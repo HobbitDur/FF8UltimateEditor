@@ -28,16 +28,20 @@ from FF8GameData.kernelgfabilities import ABILITY_LIST_COUNT, gf_ability_slots
 from FF8GameData.kernellevels import load_kernel
 from SolomonRing.kernellookups import LookupRegistry
 from Quezacotl.quezacotlmanager import (
-    CHARACTER_NAMES, COMMAND_ABILITY_GROUPS, EQUIPPED_ABILITY_GROUPS,
+    CHARACTER_NAMES, COMMAND_ABILITY_GROUPS, EQUIPPED_ABILITY_GROUPS, CharacterEntry,
     VANILLA_ABILITY_COUNT,
     GF_COMPATIBILITY_MIN, GF_COMPATIBILITY_MAX,
+)
+from Hyne.hynesavepages import (
+    BattlePage, ChocoboPage, DrawPointsPage, ItemsExtrasPage, LoadScreenPage, PartyPage, ProgressPage, ShopsPage,
+    WorldMapPage,
 )
 from Hyne.hynemanager import (
     HyneManager, SAVE_ABILITY_IDS, TT_CARD_COPIES_MASK, TT_NB_RARE_CARDS, TT_NB_REGIONS, TT_NB_LAST_RULES,
     TT_VAR_REGION_RULES, TT_VAR_REGION_TRADE_RULE, TT_VAR_LAST_RULES, TT_VAR_LAST_REGIONS,
     TT_VAR_QUEEN_LOCATION, TT_VAR_TRADE_RATING_REGION, TT_VAR_TRADE_RATING, TT_VAR_DEGENERATION,
     TT_VAR_QUEEN_TRADE_RULE, TT_VAR_QUEEN_QUEST, TT_VAR_BGU_DIALOGS, TT_VAR_CC_QUEST, TT_VAR_BGU_WINS,
-    TT_CC_DIALOG_MASK,
+    TT_CC_DIALOG_MASK, ITEM_MAX_QUANTITY,
 )
 
 # Junction stat slots: (manager field, label). Each stores a magic id (0 = none); the
@@ -98,7 +102,8 @@ class HyneWidget(QWidget):
     save's savemap+80 region is byte-identical in layout to init.out, so this widget reuses
     Quezacotl's exact entry classes via HyneManager, which only differs in how it reads and
     writes the outer .ff8 envelope (LZSS compression + CRC16 checksum + a mandatory .bak
-    backup before every save)."""
+    backup before every save). The Triple Triad tab is here too; the other tabs of what init.out
+    doesn't hold are in hynesavepages.py."""
 
     def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
@@ -112,6 +117,10 @@ class HyneWidget(QWidget):
         self.game_data.load_card_data()
         self._card_info = self.game_data.card_data_json["card_info"]
         self.tt_var_widgets = []   # (widget, field variable) of the Triple Triad tab
+        self.game_data.load_monster_data()
+        self.game_data.load_field_data()
+        self.field_names = {entry["id"]: entry["name"] for entry in self.game_data.field_data_json["field"]
+                            if entry["id"] >= 0}
         self.icon_path = icon_path
 
         # Named option lists shared with the rest of the suite.
@@ -130,6 +139,8 @@ class HyneWidget(QWidget):
         def _load_json(name):
             with open(os.path.join(json_dir, name), encoding="utf-8") as json_file:
                 return json.load(json_file)
+
+        self.hyne_data = _load_json("hyne_data.json")
 
         # Button-remap action list (dedicated json — the config bytes store a logical action id).
         button_config = _load_json("button_config.json")
@@ -186,12 +197,38 @@ class HyneWidget(QWidget):
         self.tabs.addTab(self._build_misc_tab(), "Misc")
         self.tabs.addTab(self._build_items_tab(), "Items")
         self.tabs.addTab(self._build_triple_triad_tab(), "Triple Triad")
+        self.progress_page = ProgressPage(self)
+        self.party_page = PartyPage(self)
+        self.battle_page = BattlePage(self)
+        self.shops_page = ShopsPage(self)
+        self.draw_points_page = DrawPointsPage(self)
+        self.world_map_page = WorldMapPage(self)
+        self.chocobo_page = ChocoboPage(self)
+        self.load_screen_page = LoadScreenPage(self)
+        self.tabs.addTab(self.progress_page, "Progress")
+        self.tabs.addTab(self.party_page, "Party")
+        self.tabs.addTab(self.battle_page, "Battle")
+        self.tabs.addTab(self.shops_page, "Shops")
+        self.tabs.addTab(self.draw_points_page, "Draw points")
+        self.tabs.addTab(self.world_map_page, "World map")
+        self.tabs.addTab(self.chocobo_page, "Chocobo World")
+        self.tabs.addTab(self.load_screen_page, "Load screen")
+        self.save_pages = [self.items_extras_page, self.progress_page, self.party_page, self.battle_page, self.shops_page,
+                           self.draw_points_page, self.world_map_page, self.chocobo_page, self.load_screen_page]
         self.tabs.setTabToolTip(0, "The 16 Guardian Forces: stats, learned abilities and AP")
         self.tabs.setTabToolTip(1, "The 8 playable characters: stats, magic, junctions and abilities")
         self.tabs.setTabToolTip(2, "Saved game configuration (speeds, controls, map seal)")
         self.tabs.setTabToolTip(3, "Party, gil, weapons, Griever name and limit-break unlocks")
         self.tabs.setTabToolTip(4, "Current inventory (item id + quantity per slot)")
         self.tabs.setTabToolTip(5, "Cards owned, rare card locations, region rules, Queen of Cards and CC Group")
+        self.tabs.setTabToolTip(6, "Story moment, disc, play time, steps, SeeD and tutorial entries")
+        self.tabs.setTabToolTip(7, "The party walking on the field and where it stands")
+        self.tabs.setTabToolTip(8, "Battle counts and flags, summon flags, magic drawn and enemies scanned once")
+        self.tabs.setTabToolTip(9, "Shops visited and their items")
+        self.tabs.setTabToolTip(10, "State of the 256 draw points")
+        self.tabs.setTabToolTip(11, "Steps, rental car, displayed map, vehicles, PuPu and Obel Lake quests")
+        self.tabs.setTabToolTip(12, "Boko's level, HP, weapon, items and quest progress")
+        self.tabs.setTabToolTip(13, "What the load screen shows for this save")
         self.tabs.setEnabled(False)
 
         main_layout = QVBoxLayout()
@@ -254,6 +291,8 @@ class HyneWidget(QWidget):
             check.setEnabled(bool(names.weapons))
         if self.manager.item_entries:
             self._reload_items()   # the item names (and ids 199-255) come from it too
+            self.shops_page.reload()
+            self.items_extras_page.reload()
         self._update_ap_slots()
         if self._selected_gf():
             self._fill_learning_combo(self._selected_gf())
@@ -521,10 +560,14 @@ class HyneWidget(QWidget):
         self._reload_misc()
         self._reload_items()
         self._reload_triple_triad()
+        self._reload_names()
+        for page in self.save_pages:
+            page.reload()
 
     def save_file(self):
         if self.manager.file_path:
             self.manager.save_file()
+            self.load_screen_page.reload()   # saving updates what the load screen shows
 
     # ── GF tab ───────────────────────────────────────────────────────────
 
@@ -597,6 +640,7 @@ class HyneWidget(QWidget):
         self.gf_ap_spins = []
         self.gf_ap_labels = []
         self.gf_ap_infos = []
+        self.gf_forgotten_checks = []
         ap_form = QFormLayout()
         ap_note = QLabel("Slot N = AP invested in this GF's N-th learnable ability, named from kernel.bin\n"
                          "(Junctionable GFs section) with the AP it costs and when it unlocks.")
@@ -611,6 +655,12 @@ class HyneWidget(QWidget):
             info.setStyleSheet("color: gray;")
             row = QHBoxLayout()
             row.addWidget(spin)
+            if slot <= ABILITY_LIST_COUNT:
+                forgotten = QCheckBox("Forgotten")
+                forgotten.setToolTip("The GF forgot this ability (an Amnesia Greens): it leaves the list of what the GF can learn.")
+                forgotten.toggled.connect(lambda checked, s=slot: self._on_gf_forgotten_changed(s, checked))
+                self.gf_forgotten_checks.append(forgotten)
+                row.addWidget(forgotten)
             row.addWidget(info)
             row.addStretch(1)
             self.gf_ap_spins.append(spin)
@@ -675,6 +725,9 @@ class HyneWidget(QWidget):
         for slot, spin in enumerate(self.gf_ap_spins, start=1):
             with QSignalBlocker(spin):
                 self._set_spin_value(spin, gf.get_ap_ability(slot))
+        for slot, check in enumerate(self.gf_forgotten_checks, start=1):
+            with QSignalBlocker(check):
+                check.setChecked(gf.is_forgotten(slot))
         self._update_ap_slots()
 
     def _on_gf_name_changed(self):
@@ -701,6 +754,12 @@ class HyneWidget(QWidget):
             gf.set_ability(ability_id, check.isChecked())
         self._update_ap_slots()  # the "learned" marks of the AP tab
         self._fill_learning_combo(gf)
+
+    def _on_gf_forgotten_changed(self, slot, checked):
+        gf = self._selected_gf()
+        if gf:
+            gf.set_forgotten(slot, checked)
+            self._fill_learning_combo(gf)
 
     def _on_gf_ap_changed(self):
         gf = self._selected_gf()
@@ -731,6 +790,12 @@ class HyneWidget(QWidget):
         self.char_exist_check = QCheckBox("Exists (recruited)")
         self.char_exist_check.setToolTip("Character has joined the party at least once — available in menus/party select")
         self.char_exist_check.stateChanged.connect(self._on_character_status_changed)
+        self.char_exist_bit_checks = []  # the bits past "in the roster"
+        for mask, name in CharacterEntry.EXIST_BITS[1:]:
+            check = QCheckBox(name)
+            check.setToolTip(f"Mask 0x{mask:02X} of the character's exist flags. HOLD = set by the field scripts.")
+            check.toggled.connect(lambda checked, m=mask: self._on_character_exist_bit_changed(m, checked))
+            self.char_exist_bit_checks.append((mask, check))
 
         self.char_str_spin = self._spinbox(0, 0xFF, self._on_character_status_changed, "Base Strength")
         self.char_vit_spin = self._spinbox(0, 0xFF, self._on_character_status_changed, "Base Vitality")
@@ -749,6 +814,8 @@ class HyneWidget(QWidget):
         status_form.addRow("KOs:", self.char_kos_spin)
         status_form.addRow(self.char_alt_model_check)
         status_form.addRow(self.char_exist_check)
+        for _mask, check in self.char_exist_bit_checks:
+            status_form.addRow(check)
         stats_form = QFormLayout()
         stats_form.addRow("Str:", self.char_str_spin)
         stats_form.addRow("Vit:", self.char_vit_spin)
@@ -922,6 +989,9 @@ class HyneWidget(QWidget):
             self.char_alt_model_check.setChecked(char.alt_model)
         with QSignalBlocker(self.char_exist_check):
             self.char_exist_check.setChecked(char.exist)
+        for mask, check in self.char_exist_bit_checks:
+            with QSignalBlocker(check):
+                check.setChecked(bool(char.exist_flags & mask))
         for spin, value in zip(self.char_unused_spins, [char.unknown2, char.unknown3, char.unknown4]):
             self._set_spin_value(spin, value)
         for bit, check in self.char_status_checks.items():
@@ -971,6 +1041,11 @@ class HyneWidget(QWidget):
         char.luck = self.char_luck_spin.value()
         char.alt_model = self.char_alt_model_check.isChecked()
         char.exist = self.char_exist_check.isChecked()
+
+    def _on_character_exist_bit_changed(self, mask, checked):
+        char = self._selected_character()
+        if char:
+            char.set_exist_flag(mask, checked)
 
     def _on_character_status_flags_changed(self):
         char = self._selected_character()
@@ -1165,8 +1240,15 @@ class HyneWidget(QWidget):
         self.misc_griever_name_edit.setToolTip("Griever GF name (FF8 text, max 12 bytes)")
         self._compact_line(self.misc_griever_name_edit)
         self.misc_griever_name_edit.editingFinished.connect(self._on_misc_griever_name_changed)
-        self.misc_gil_spin = self._u32_spinbox(self._on_misc_changed, "Party gil")
-        self.misc_gil_laguna_spin = self._u32_spinbox(self._on_misc_changed, "Laguna-squad gil")
+        self.misc_name_edits = {}
+        for field, whose in (("squall_name", "Squall"), ("rinoa_name", "Rinoa"), ("angelo_name", "Angelo"), ("boko_name", "Boko")):
+            edit = QLineEdit()
+            edit.setToolTip(f"{whose}'s name (FF8 text, max 12 bytes), stored in the save's header")
+            self._compact_line(edit)
+            edit.editingFinished.connect(lambda f=field, e=edit: self._on_misc_name_changed(f, e))
+            self.misc_name_edits[field] = edit
+        self.misc_gil_spin = self._u32_spinbox(self._on_misc_changed, "Party gil (its copy in field variable 72 follows on save)")
+        self.misc_gil_laguna_spin = self._u32_spinbox(self._on_misc_changed, "Laguna-squad gil (its copy in field variable 76 follows on save)")
         self.misc_weapon_laguna_spin = self._spinbox(0, 0xFF, self._on_misc_changed, "Laguna's weapon id")
         self.misc_weapon_kiros_spin = self._spinbox(0, 0xFF, self._on_misc_changed, "Kiros's weapon id")
         self.misc_weapon_ward_spin = self._spinbox(0, 0xFF, self._on_misc_changed, "Ward's weapon id")
@@ -1174,7 +1256,11 @@ class HyneWidget(QWidget):
         general_form = QFormLayout()
         for label, combo in self._party_rows:
             general_form.addRow(label, combo)
+        general_form.addRow("Squall name:", self.misc_name_edits["squall_name"])
+        general_form.addRow("Rinoa name:", self.misc_name_edits["rinoa_name"])
         general_form.addRow("Griever name:", self.misc_griever_name_edit)
+        general_form.addRow("Angelo name:", self.misc_name_edits["angelo_name"])
+        general_form.addRow("Boko name:", self.misc_name_edits["boko_name"])
         general_form.addRow("Gil:", self.misc_gil_spin)
         general_form.addRow("Gil (Laguna squad):", self.misc_gil_laguna_spin)
         general_form.addRow("Laguna weapon:", self.misc_weapon_laguna_spin)
@@ -1213,6 +1299,15 @@ class HyneWidget(QWidget):
         points_group.setLayout(points_form)
 
         return self._left_column_scroll([general_group, weapons_group, *limit_groups, points_group])
+
+    def _reload_names(self):
+        for field, edit in self.misc_name_edits.items():
+            with QSignalBlocker(edit):
+                edit.setText(getattr(self.manager.header, field))
+
+    def _on_misc_name_changed(self, field, edit):
+        if self.manager.header and edit.text() != getattr(self.manager.header, field):
+            setattr(self.manager.header, field, edit.text())
 
     def _reload_misc(self):
         misc = self.manager.misc
@@ -1359,7 +1454,9 @@ class HyneWidget(QWidget):
         card_names = [card["name"] for card in self._card_info]
         location_model = QStandardItemModel(self)
         for location in [cardlocation.LOCATION_PLAYER, *(i for i in range(256) if i != cardlocation.LOCATION_PLAYER)]:
-            item = QStandardItem(f"{location}: {cardlocation.location_label(location, card_names)}")
+            place = self.field_names.get(self.hyne_data["card_locations"][location], "???")
+            place = "" if place == "???" else f" - {place}"
+            item = QStandardItem(f"{location}: {cardlocation.location_label(location, card_names)}{place}")
             item.setData(location, Qt.ItemDataRole.UserRole)
             location_model.appendRow(item)
         location_tip = ("Who holds this rare card. The player's own cards = you own it. Anything else is a Deck ID:\n"
@@ -1379,7 +1476,7 @@ class HyneWidget(QWidget):
             combo = QComboBox()
             combo.setModel(location_model)
             combo.setToolTip(location_tip)
-            combo.setMinimumContentsLength(38)
+            combo.setMinimumContentsLength(60)
             combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             combo.currentIndexChanged.connect(lambda _index, c=card_id, b=combo: self._on_card_location_changed(c, b))
             self.tt_rare_combos[card_id] = combo
@@ -1699,11 +1796,52 @@ class HyneWidget(QWidget):
         top = QHBoxLayout()
         top.addWidget(self.item_extension_label, 1)
         top.addWidget(self.item_extension_button)
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
+        self.all_items_button = QPushButton("All items")
+        self.all_items_button.setToolTip(f"Fill the inventory with every item, {ITEM_MAX_QUANTITY} of each")
+        self.all_items_button.clicked.connect(self._fill_all_items)
+        self.sort_by_id_button = QPushButton("Sort by type")
+        self.sort_by_id_button.setToolTip("Sort the inventory by item id, which groups items by type. Empty slots go last.")
+        self.sort_by_id_button.clicked.connect(lambda: self._sort_items(lambda item_id: item_id))
+        self.sort_by_name_button = QPushButton("Sort by name")
+        self.sort_by_name_button.setToolTip("Sort the inventory by item name. Empty slots go last.")
+        self.sort_by_name_button.clicked.connect(lambda: self._sort_items(self._item_sort_name))
+        bottom = QHBoxLayout()
+        bottom.addWidget(self.all_items_button)
+        bottom.addStretch(1)
+        bottom.addWidget(self.sort_by_id_button)
+        bottom.addWidget(self.sort_by_name_button)
+        inventory = QWidget()
+        layout = QVBoxLayout(inventory)
         layout.addLayout(top)
         layout.addWidget(self.items_table)
-        return tab
+        layout.addLayout(bottom)
+        self.items_extras_page = ItemsExtrasPage(self)
+        sub_tabs = QTabWidget()
+        sub_tabs.addTab(inventory, "Inventory")
+        sub_tabs.addTab(self.items_extras_page, "Battle order and magazines")
+        return sub_tabs
+
+    def _item_sort_name(self, item_id):
+        return (self.kernel_names.item_name(item_id) or f"Item {item_id}").lower()
+
+    def _set_item_slots(self, pairs):
+        for entry, (item_id, quantity) in zip(self.manager.item_entries, pairs):
+            entry.item_id = item_id
+            entry.quantity = quantity
+        self._reload_items()
+        self._mark_dirty()
+
+    def _fill_all_items(self):
+        ids = [entry["value"] for entry in self._item_choices() if entry["value"]]
+        slots = len(self.manager.item_entries)
+        pairs = [(item_id, ITEM_MAX_QUANTITY) for item_id in ids[:slots]]
+        self._set_item_slots(pairs + [(0, 0)] * (slots - len(pairs)))
+
+    def _sort_items(self, key):
+        """Empty slots last, an item's quantity staying with it."""
+        held = [(entry.item_id, entry.quantity) for entry in self.manager.item_entries if entry.item_id]
+        empty = [(0, 0)] * (len(self.manager.item_entries) - len(held))
+        self._set_item_slots(sorted(held, key=lambda pair: key(pair[0])) + empty)
 
     def _enable_item_extension(self):
         self.manager.enable_item_extension()

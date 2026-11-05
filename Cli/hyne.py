@@ -2,7 +2,7 @@
 Hyne CLI Tool.
 
 Headless .ff8 Steam save-file editing (same data as the Hyne GUI: G-Forces, Characters,
-Config, Misc, Items, Triple Triad tabs — the savemap's game-state block is byte-identical in layout to
+Config, Misc, Items, Triple Triad and the other savemap tabs — the savemap's game-state block is byte-identical in layout to
 init.out, so this reuses Quezacotl's JSON shape), via a JSON round-trip:
   • export-json  (.ff8 -> JSON with every editable field)
   • import-json  (base .ff8 + JSON -> new .ff8; only keys present in the JSON are applied,
@@ -76,6 +76,9 @@ def _cmd_export_json(args) -> int:
         "misc": _misc_to_dict(manager.misc),
         "items": [[item.item_id, item.quantity] for item in manager.item_entries],
         "triple_triad": _triple_triad_to_dict(manager.triple_triad),
+        "gf_forgotten": [[slot for slot in range(1, 22) if gf.is_forgotten(slot)] for gf in manager.gf_entries],
+        "character_exist_flags": [character.exist_flags for character in manager.character_entries],
+        "savemap": {name: getattr(manager, name).to_dict() for name in manager.SAVE_SECTIONS},
     }
     output = pathlib.Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -100,6 +103,13 @@ def _cmd_import_json(args) -> int:
         item.quantity = quantity
     if "triple_triad" in data:
         _triple_triad_from_dict(manager.triple_triad, data["triple_triad"])
+    for gf, forgotten in zip(manager.gf_entries, data.get("gf_forgotten", [])):
+        for slot in range(1, 22):
+            gf.set_forgotten(slot, slot in forgotten)
+    for character, flags in zip(manager.character_entries, data.get("character_exist_flags", [])):
+        character._set_byte(148, flags)
+    for name, values in data.get("savemap", {}).items():
+        getattr(manager, name).from_dict(values)
     manager.save_file(args.output or args.input, backup=not args.no_backup)
     print(f"[ok] {args.json} applied, written to {args.output or args.input}")
     return 0
@@ -114,7 +124,7 @@ class HyneCliTool(BaseCliTool):
 
     @property
     def description(self) -> str:
-        return ".ff8 save-file editor: export/import GFs, characters, config, misc, items and Triple Triad as JSON"
+        return ".ff8 save-file editor: export/import every tab (GFs, characters, config, misc, items, Triple Triad, savemap) as JSON"
 
     def build_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(

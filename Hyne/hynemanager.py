@@ -20,10 +20,10 @@ round-trip): a .ff8 file is `[u32 LE compressedSize][LZSS data]`, decompressing 
   algorithm whose table-build loop has a real off-by-one bug (table[255] is never written and
   stays 0) — NOT the textbook CRC-16/CCITT-FALSE table. See crc16_ff8() below.
 
-Bytes outside the parsed entries (shops cache, worldmap/chocobo-world/script-variable state
-past the item table, the header) are preserved byte-for-byte: the manager keeps the whole
+Bytes outside the parsed entries are preserved byte-for-byte: the manager keeps the whole
 8192-byte image in one buffer and every entry is a thin view over it, so anything never
-decoded is simply never touched.
+decoded is simply never touched. The rest of the savemap (load-screen header, shops, draw points,
+story, party position, battle counts, world map, Chocobo World) has its views in hynesavemap.py.
 
 Triple Triad (TripleTriadEntry) is two more views over that buffer, both inside the CRC span:
   the TTCardData block (SG_TT_CARD_DATA in FF8_EN.exe), 128 bytes at game state +4752:
@@ -64,6 +64,10 @@ import time
 
 from CCGroup.cardlocation import LOCATION_PLAYER, NB_CARDS, RARE_CARD_FIRST_ID, starting_location
 from FF8GameData.gamedata import GameData
+from Hyne.hynesavemap import (
+    BattleState, ChocoboWorld, DrawPointsState, FIELD_VARS_OFFSET as SAVEMAP_VARS_OFFSET, MAX_LEVEL, PartyState,
+    ProgressState, SaveHeader, ShopsState, WorldMapState,
+)
 from Quezacotl.quezacotlmanager import (
     GfEntry, CharacterEntry, ConfigEntry, MiscEntry, ItemEntry,
     NB_GF, GF_ENTRY_SIZE, NB_CHARACTERS, CHARACTER_ENTRY_SIZE,
@@ -105,6 +109,13 @@ ABILITY_EXT_EXTENDED = ABILITY_EXT_NATIVE + NB_GF * ABILITY_EXT_GF_BYTES
 ABILITY_EXT_SIZE = ABILITY_EXT_HEADER_SIZE + 2 * NB_GF * ABILITY_EXT_GF_BYTES   # 524
 SAVE_ABILITY_IDS = 255                # a save can mark ids 0-254 learned (255 means "no ability")
 GF_LEARNED_OFFSET = 20                # a GF record's 16-byte learned field
+
+# The field variables holding second copies of what the entries edit (HyneManager._sync_copies)
+VAR_PARTY_GIL = 72
+VAR_LAGUNA_GIL = 76
+VAR_TOTAL_KILLS = 68
+VAR_CHARACTER_KILLS = 28
+VAR_CHARACTER_KOS = 44
 
 TT_DATA_OFFSET = GAMESTATE_BASE + 4752   # TTCardData (see the docstring)
 TT_NB_RARE_CARDS = NB_CARDS - RARE_CARD_FIRST_ID
@@ -570,6 +581,9 @@ class HyneManager:
     state past the item table) is preserved byte-for-byte because it is never written.
     """
 
+    # The views of hynesavemap.py, and what the CLI's JSON carries
+    SAVE_SECTIONS = ("header", "progress", "party", "battle", "shops", "draw_points", "world_map", "chocobo")
+
     def __init__(self, game_data: GameData):
         self.game_data = game_data
         self.game_data.load_gforce_data()
@@ -583,6 +597,16 @@ class HyneManager:
         self.misc = None
         self.item_entries = []
         self.triple_triad = None
+        self.header = None
+        self.progress = None
+        self.party = None
+        self.battle = None
+        self.shops = None
+        self.draw_points = None
+        self.world_map = None
+        self.chocobo = None
+        self._copy_sources = {}
+        self._header_sources = {}
         # "extended": the FFNx AddMoreItems block is in use (255 slots); "stale": a block is
         # there but FFNx would ignore it (damaged, or the item table changed since); "none".
         self.item_extension = "none"
@@ -607,6 +631,7 @@ class HyneManager:
                           "refusing to load a file this tool cannot verify it understands "
                           "correctly (no changes made).")
         self._parse()
+        self._remember_sources()
 
     def _verify_crc(self, error_message):
         stored1 = struct.unpack_from("<H", self.buffer, CRC_OFFSET_1)[0]
@@ -630,6 +655,14 @@ class HyneManager:
         self.config = ConfigEntry(self.buffer, GAMESTATE_BASE + CONFIG_DATA_OFFSET)
         self.misc = MiscEntry(self.buffer, GAMESTATE_BASE + MISC_DATA_OFFSET, self.game_data)
         self.triple_triad = TripleTriadEntry(self.buffer)
+        self.header = SaveHeader(self.buffer, self.game_data)
+        self.progress = ProgressState(self.buffer)
+        self.party = PartyState(self.buffer)
+        self.battle = BattleState(self.buffer)
+        self.shops = ShopsState(self.buffer)
+        self.draw_points = DrawPointsState(self.buffer)
+        self.world_map = WorldMapState(self.buffer)
+        self.chocobo = ChocoboWorld(self.buffer)
         self.item_extension = self._item_extension_state()
         if self.item_extension == "extended":
             self.item_entries = [
@@ -737,6 +770,53 @@ class HyneManager:
         struct.pack_into("<IHHI", self.buffer, ABILITY_EXT_OFFSET, ABILITY_EXT_MAGIC, ABILITY_EXT_VERSION,
                          NB_GF, item_extension_checksum(data))
 
+    # ── Values the save holds twice ──────────────────────────────────────
+
+    def _copy_source_values(self):
+        """The field-variable copies, by (format, variable): what they should hold going by the entries."""
+        values = {("I", VAR_PARTY_GIL): self.misc.gil, ("I", VAR_LAGUNA_GIL): self.misc.gil_laguna}
+        for index, character in enumerate(self.character_entries):
+            values["H", VAR_CHARACTER_KILLS + 2 * index] = character.kills
+            values["H", VAR_CHARACTER_KOS + 2 * index] = character.kos
+        values["I", VAR_TOTAL_KILLS] = sum(character.kills for character in self.character_entries)
+        return values
+
+    def _header_source_values(self):
+        """What the load screen's header should say, as Save_BuildSaveFileImage@0x4E2EF0 writes it:
+        the leader is the first party member; the level is exp / 1000 + 1, up to 100."""
+        party = [self.misc.party_mem1, self.misc.party_mem2, self.misc.party_mem3]
+        leader = self.character_entries[next((member for member in party if member < NB_CHARACTERS), 0)]
+        values = {
+            "level": min(MAX_LEVEL, leader.exp // 1000 + 1),
+            "leader_hp": leader.current_hp,
+            "gil": self.misc.gil_laguna if self.battle.special_flags & 1 else self.misc.gil,
+            "time": self.progress.game_time,
+            "disc": max(0, self.progress.disc - 1),
+        }
+        for slot, member in enumerate(party, start=1):
+            values[f"party_{slot}"] = self.character_entries[member].model_id if member < NB_CHARACTERS else member
+        return values
+
+    def _remember_sources(self):
+        self._copy_sources = self._copy_source_values()
+        self._header_sources = self._header_source_values()
+
+    def _sync_copies(self):
+        """Before a save, carry over what changed since the load: gil, kills and deaths to their
+        field-variable copies (field scripts read those), and to the header what it shows. A value
+        whose source did not change stays as it is, so an unedited save comes back byte-identical
+        and a header set by hand stays."""
+        now = self._copy_source_values()
+        for (fmt, number), value in now.items():
+            if value != self._copy_sources[fmt, number]:
+                struct.pack_into("<" + fmt, self.buffer, SAVEMAP_VARS_OFFSET + number, value)
+        header_now = self._header_source_values()
+        for field, value in header_now.items():
+            if value != self._header_sources[field]:
+                setattr(self.header, field, value)
+        self._copy_sources = now
+        self._header_sources = header_now
+
     def save_file(self, file_path="", backup=True):
         if not file_path:
             file_path = self.file_path
@@ -747,6 +827,7 @@ class HyneManager:
             self._sync_item_extension()   # before the CRC: it covers the item table
         if self.ability_extension == "extended":
             self._sync_ability_extension()
+        self._sync_copies()
         crc = crc16_ff8(bytes(self.buffer[CRC_SPAN_START:CRC_SPAN_START + CRC_SPAN_LEN]))
         struct.pack_into("<H", self.buffer, CRC_OFFSET_1, crc)
         struct.pack_into("<H", self.buffer, CRC_OFFSET_2, crc)
