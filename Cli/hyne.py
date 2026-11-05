@@ -2,7 +2,7 @@
 Hyne CLI Tool.
 
 Headless .ff8 Steam save-file editing (same data as the Hyne GUI: G-Forces, Characters,
-Config, Misc, Items tabs — the savemap's game-state block is byte-identical in layout to
+Config, Misc, Items, Triple Triad tabs — the savemap's game-state block is byte-identical in layout to
 init.out, so this reuses Quezacotl's JSON shape), via a JSON round-trip:
   • export-json  (.ff8 -> JSON with every editable field)
   • import-json  (base .ff8 + JSON -> new .ff8; only keys present in the JSON are applied,
@@ -16,6 +16,8 @@ import json
 import pathlib
 import sys
 
+from CCGroup.cardlocation import NB_CARDS, RARE_CARD_FIRST_ID
+
 from .base import BaseCliTool
 from .common import load_game_data
 from .quezacotl import (
@@ -26,11 +28,43 @@ from .quezacotl import (
 )
 
 
+# Rules of the 8 regions, trade rules, last rules and regions, then the Queen and BGU values
+TT_EXPORTED_VARS = [*range(272, 292), *range(295, 301), 478]
+
+
 def _load_manager(ff8_path: str):
     from Hyne.hynemanager import HyneManager
     manager = HyneManager(load_game_data())
     manager.load_file(ff8_path)
     return manager
+
+
+def _triple_triad_to_dict(tt) -> dict:
+    return {
+        "common_cards": [[tt.is_obtained(card), tt.copies(card)] for card in range(RARE_CARD_FIRST_ID)],
+        "rare_cards": [[tt.is_obtained(card), tt.location(card)] for card in range(RARE_CARD_FIRST_ID, NB_CARDS)],
+        "collection_complete": tt.collection_complete,
+        "wins": tt.wins,
+        "losses": tt.losses,
+        "draws": tt.draws,
+        "seed": tt.seed,
+        "cc_quest": tt.cc_quest,
+        "vars": {str(number): tt.var(number) for number in TT_EXPORTED_VARS},
+    }
+
+
+def _triple_triad_from_dict(tt, data: dict) -> None:
+    for card, (obtained, copies) in enumerate(data.get("common_cards", [])):
+        tt.set_obtained(card, obtained)
+        tt.set_copies(card, copies)
+    for card, (obtained, location) in enumerate(data.get("rare_cards", []), start=RARE_CARD_FIRST_ID):
+        tt.set_obtained(card, obtained)
+        tt.set_location(card, location)
+    for key in ("collection_complete", "wins", "losses", "draws", "seed", "cc_quest"):
+        if key in data:
+            setattr(tt, key, data[key])
+    for number, value in data.get("vars", {}).items():
+        tt.set_var(int(number), value)
 
 
 def _cmd_export_json(args) -> int:
@@ -41,6 +75,7 @@ def _cmd_export_json(args) -> int:
         "config": _export_properties(manager.config),
         "misc": _misc_to_dict(manager.misc),
         "items": [[item.item_id, item.quantity] for item in manager.item_entries],
+        "triple_triad": _triple_triad_to_dict(manager.triple_triad),
     }
     output = pathlib.Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -63,6 +98,8 @@ def _cmd_import_json(args) -> int:
     for item, (item_id, quantity) in zip(manager.item_entries, data.get("items", [])):
         item.item_id = item_id
         item.quantity = quantity
+    if "triple_triad" in data:
+        _triple_triad_from_dict(manager.triple_triad, data["triple_triad"])
     manager.save_file(args.output or args.input, backup=not args.no_backup)
     print(f"[ok] {args.json} applied, written to {args.output or args.input}")
     return 0
@@ -77,7 +114,7 @@ class HyneCliTool(BaseCliTool):
 
     @property
     def description(self) -> str:
-        return ".ff8 save-file editor: export/import GFs, characters, config, misc and items as JSON"
+        return ".ff8 save-file editor: export/import GFs, characters, config, misc, items and Triple Triad as JSON"
 
     def build_parser(self) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(

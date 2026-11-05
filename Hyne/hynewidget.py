@@ -1,13 +1,14 @@
 import json
 import os
 
-from PyQt6.QtCore import QSignalBlocker
-from PyQt6.QtGui import QIcon
+from PIL.ImageQt import ImageQt
+from PyQt6.QtCore import QSignalBlocker, Qt
+from PyQt6.QtGui import QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QSpinBox, QDoubleSpinBox, QLineEdit, QGroupBox, QFormLayout, QTabWidget, QCheckBox,
-    QGridLayout, QScrollArea, QComboBox, QTableWidget, QHeaderView, QAbstractSpinBox,
-    QSizePolicy, QMessageBox, QPushButton,
+    QGridLayout, QScrollArea, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractSpinBox,
+    QAbstractItemView, QSizePolicy, QStyle, QMessageBox, QPushButton,
 )
 
 U32_MAX = 0xFFFFFFFF
@@ -17,6 +18,8 @@ RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed 
                     "no code reads it). It is shown for completeness and preserved on save, but "
                     "editing it would have no effect.")
 
+from CCGroup import cardlocation
+from CCGroup.jsmcardgame import GAME_RULE_BITS, TRADE_RULE_NAMES
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
@@ -29,7 +32,13 @@ from Quezacotl.quezacotlmanager import (
     VANILLA_ABILITY_COUNT,
     GF_COMPATIBILITY_MIN, GF_COMPATIBILITY_MAX,
 )
-from Hyne.hynemanager import HyneManager, SAVE_ABILITY_IDS
+from Hyne.hynemanager import (
+    HyneManager, SAVE_ABILITY_IDS, TT_CARD_COPIES_MASK, TT_NB_RARE_CARDS, TT_NB_REGIONS, TT_NB_LAST_RULES,
+    TT_VAR_REGION_RULES, TT_VAR_REGION_TRADE_RULE, TT_VAR_LAST_RULES, TT_VAR_LAST_REGIONS,
+    TT_VAR_QUEEN_LOCATION, TT_VAR_TRADE_RATING_REGION, TT_VAR_TRADE_RATING, TT_VAR_DEGENERATION,
+    TT_VAR_QUEEN_TRADE_RULE, TT_VAR_QUEEN_QUEST, TT_VAR_BGU_DIALOGS, TT_VAR_CC_QUEST, TT_VAR_BGU_WINS,
+    TT_CC_DIALOG_MASK,
+)
 
 # Junction stat slots: (manager field, label). Each stores a magic id (0 = none); the
 # potency comes from that spell's kernel junction value scaled by the quantity stocked.
@@ -42,6 +51,19 @@ JUNCTION_FIELDS = [
     ("jun_status_def1", "Status Def 1"), ("jun_status_def2", "Status Def 2"),
     ("jun_status_def3", "Status Def 3"), ("jun_status_def4", "Status Def 4"),
 ]
+
+TT_MAX_COPIES = 100   # MoveCardToLocation@0x5347F0 adds no copy past this
+TT_PREVIEW_SIZE = 128
+TT_SMALL_SPIN_WIDTH = 78   # a 3-digit value next to the arrows of the Windows 11 style
+# The regions of the card rule variables, in their order
+TT_REGION_NAMES = ["Balamb", "Galbadia", "Trabia", "Centra", "Dollet", "Fishermans Horizon", "Lunar Gate", "Esthar"]
+# The Queen's towns: value N is the town of region N-1
+TT_QUEEN_CITIES = ["Balamb", "Deling City", "Shumi Village", "Winhill", "Dollet", "Fishermans Horizon", "Lunar Gate",
+                   "Esthar City"]
+TT_QUEEN_QUEST_CARDS = ["None", "Kiros", "Irvine", "Chubby Chocobo", "Doomtrain", "Phoenix"]
+# (cc_quest value, the last member beaten): each step adds its bits to the previous ones
+TT_CC_QUEST_STEPS = [(0, "None"), (0x01, "Jack"), (0x03, "Clover"), (0x13, "Diamonds"), (0x17, "Spade"),
+                     (0x1F, "Queen of Hearts"), (0x021F, "Kadowaki"), (0x221F, "King of Cards")]
 
 
 class U32SpinBox(QDoubleSpinBox):
@@ -87,6 +109,9 @@ class HyneWidget(QWidget):
 
         self.game_data = GameData(game_data_folder)
         self.manager = HyneManager(self.game_data)
+        self.game_data.load_card_data()
+        self._card_info = self.game_data.card_data_json["card_info"]
+        self.tt_var_widgets = []   # (widget, field variable) of the Triple Triad tab
         self.icon_path = icon_path
 
         # Named option lists shared with the rest of the suite.
@@ -160,11 +185,13 @@ class HyneWidget(QWidget):
         self.tabs.addTab(self._build_config_tab(), "Config")
         self.tabs.addTab(self._build_misc_tab(), "Misc")
         self.tabs.addTab(self._build_items_tab(), "Items")
+        self.tabs.addTab(self._build_triple_triad_tab(), "Triple Triad")
         self.tabs.setTabToolTip(0, "The 16 Guardian Forces: stats, learned abilities and AP")
         self.tabs.setTabToolTip(1, "The 8 playable characters: stats, magic, junctions and abilities")
         self.tabs.setTabToolTip(2, "Saved game configuration (speeds, controls, map seal)")
         self.tabs.setTabToolTip(3, "Party, gil, weapons, Griever name and limit-break unlocks")
         self.tabs.setTabToolTip(4, "Current inventory (item id + quantity per slot)")
+        self.tabs.setTabToolTip(5, "Cards owned, rare card locations, region rules, Queen of Cards and CC Group")
         self.tabs.setEnabled(False)
 
         main_layout = QVBoxLayout()
@@ -493,6 +520,7 @@ class HyneWidget(QWidget):
         self._reload_config()
         self._reload_misc()
         self._reload_items()
+        self._reload_triple_triad()
 
     def save_file(self):
         if self.manager.file_path:
@@ -1241,6 +1269,410 @@ class HyneWidget(QWidget):
             setattr(misc, field, value)
         for i, spin in enumerate(self.misc_angelo_point_spins):
             misc.set_angelo_point(i, spin.value())
+
+    # ── Triple Triad tab ─────────────────────────────────────────────────
+
+    def _build_triple_triad_tab(self):
+        sub_tabs = QTabWidget()
+        sub_tabs.addTab(self._build_cards_page(), "Cards")
+        sub_tabs.addTab(self._build_card_rules_page(), "Rules and quests")
+        sub_tabs.setTabToolTip(0, "The cards you own: copies of the common ones, where each rare one is")
+        sub_tabs.setTabToolTip(1, "Rules of each region, Queen of Cards, CC Group and match counts")
+        return sub_tabs
+
+    @staticmethod
+    def _configure_card_table(table, labels):
+        table.setHorizontalHeaderLabels(labels)
+        table.verticalHeader().setVisible(False)
+        table.verticalHeader().setDefaultSectionSize(24)
+        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        header = table.horizontalHeader()
+        header.setStretchLastSection(False)
+        for column in range(table.columnCount()):
+            header.setSectionResizeMode(column, QHeaderView.ResizeMode.ResizeToContents)
+
+    @staticmethod
+    def _fit_card_table_width(table):
+        """As wide as its columns, so it never scrolls sideways and nothing stretches."""
+        table.resizeColumnsToContents()
+        scroll_bar = table.style().pixelMetric(QStyle.PixelMetric.PM_ScrollBarExtent)
+        table.setFixedWidth(table.horizontalHeader().length() + scroll_bar + 2 * table.frameWidth() + 4)
+
+    def _card_label(self, card_id):
+        level = card_id // cardlocation.NB_CARDS_PER_LEVEL + 1
+        return f"Lv{level} {card_id}: {self._card_info[card_id]['name']}"
+
+    def _centered_cell(self, widget):
+        cell = QWidget()
+        layout = QHBoxLayout(cell)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(widget, 0, Qt.AlignmentFlag.AlignCenter)
+        return cell
+
+    def _build_cards_page(self):
+        obtained_tip = ("The card was obtained at least once. The game ignores a card without it: no copies\n"
+                        "of it count, and it stays unknown in the card menu. Unticking takes the card away\n"
+                        "(copies to 0, or a rare card held by you back to its starting owner).")
+        # Common cards: obtained + copies
+        self.tt_common_table = QTableWidget(cardlocation.RARE_CARD_FIRST_ID, 3)
+        self._configure_card_table(self.tt_common_table, ["Card", "Obtained", "Copies"])
+        self.tt_common_checks = []
+        self.tt_common_spins = []
+        for card_id in range(cardlocation.RARE_CARD_FIRST_ID):
+            self.tt_common_table.setItem(card_id, 0, QTableWidgetItem(self._card_label(card_id)))
+            check = QCheckBox()
+            check.setToolTip(obtained_tip)
+            check.toggled.connect(lambda checked, c=card_id: self._on_card_obtained_changed(c, checked))
+            self.tt_common_checks.append(check)
+            self.tt_common_table.setCellWidget(card_id, 1, self._centered_cell(check))
+            spin = self._spinbox(0, TT_CARD_COPIES_MASK, tooltip=(
+                f"Copies owned. The game itself adds no copy past {TT_MAX_COPIES}."))
+            spin.setMaximumWidth(TT_SMALL_SPIN_WIDTH)
+            spin.valueChanged.connect(lambda value, c=card_id: self._on_card_copies_changed(c, value))
+            self.tt_common_spins.append(spin)
+            self.tt_common_table.setCellWidget(card_id, 2, spin)
+
+        self.tt_all_common_check = QCheckBox("All obtained")
+        self.tt_all_common_check.setToolTip("Tick or untick every common card. Unticking also removes their copies.")
+        self.tt_all_common_check.clicked.connect(self._on_all_common_obtained)
+        self.tt_all_copies_spin = self._spinbox(0, TT_MAX_COPIES, tooltip="Copies the button below gives every common card")
+        self.tt_all_copies_spin.setMaximumWidth(TT_SMALL_SPIN_WIDTH)
+        self.tt_all_copies_spin.setValue(TT_MAX_COPIES)
+        self.tt_all_copies_button = QPushButton("Set all copies")
+        self.tt_all_copies_button.setToolTip("Give every common card this number of copies")
+        self.tt_all_copies_button.clicked.connect(self._on_all_common_copies)
+        common_row = QHBoxLayout()
+        common_row.addWidget(self.tt_all_common_check)
+        common_row.addStretch(1)
+        common_row.addWidget(self.tt_all_copies_spin)
+        common_row.addWidget(self.tt_all_copies_button)
+        self._fit_card_table_width(self.tt_common_table)
+        common_layout = QVBoxLayout()
+        common_layout.addWidget(self.tt_common_table)
+        common_layout.addLayout(common_row)
+        common_group = QGroupBox("Common cards (levels 1-7)")
+        common_group.setLayout(common_layout)
+
+        # Rare cards: obtained + location. The 256 locations, the player's first, in one shared model.
+        card_names = [card["name"] for card in self._card_info]
+        location_model = QStandardItemModel(self)
+        for location in [cardlocation.LOCATION_PLAYER, *(i for i in range(256) if i != cardlocation.LOCATION_PLAYER)]:
+            item = QStandardItem(f"{location}: {cardlocation.location_label(location, card_names)}")
+            item.setData(location, Qt.ItemDataRole.UserRole)
+            location_model.appendRow(item)
+        location_tip = ("Who holds this rare card. The player's own cards = you own it. Anything else is a Deck ID:\n"
+                        "the card players with that Deck ID can deal it (see the CC Group tool).")
+        self.tt_rare_table = QTableWidget(TT_NB_RARE_CARDS, 3)
+        self._configure_card_table(self.tt_rare_table, ["Card", "Obtained", "Location"])
+        self.tt_rare_checks = {}
+        self.tt_rare_combos = {}
+        for row in range(TT_NB_RARE_CARDS):
+            card_id = cardlocation.RARE_CARD_FIRST_ID + row
+            self.tt_rare_table.setItem(row, 0, QTableWidgetItem(self._card_label(card_id)))
+            check = QCheckBox()
+            check.setToolTip(obtained_tip)
+            check.toggled.connect(lambda checked, c=card_id: self._on_card_obtained_changed(c, checked))
+            self.tt_rare_checks[card_id] = check
+            self.tt_rare_table.setCellWidget(row, 1, self._centered_cell(check))
+            combo = QComboBox()
+            combo.setModel(location_model)
+            combo.setToolTip(location_tip)
+            combo.setMinimumContentsLength(38)
+            combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+            combo.currentIndexChanged.connect(lambda _index, c=card_id, b=combo: self._on_card_location_changed(c, b))
+            self.tt_rare_combos[card_id] = combo
+            self.tt_rare_table.setCellWidget(row, 2, combo)
+
+        self.tt_all_rare_check = QCheckBox("All obtained")
+        self.tt_all_rare_check.setToolTip("Tick or untick every rare card. Unticking sends the ones you hold back to "
+                                          "their starting owners.")
+        self.tt_all_rare_check.clicked.connect(self._on_all_rare_obtained)
+        self.tt_all_rare_button = QPushButton("All to the player")
+        self.tt_all_rare_button.setToolTip("Give yourself every rare card")
+        self.tt_all_rare_button.clicked.connect(self._on_all_rare_to_player)
+        rare_row = QHBoxLayout()
+        rare_row.addWidget(self.tt_all_rare_check)
+        rare_row.addStretch(1)
+        rare_row.addWidget(self.tt_all_rare_button)
+        self._fit_card_table_width(self.tt_rare_table)
+        rare_layout = QVBoxLayout()
+        rare_layout.addWidget(self.tt_rare_table)
+        rare_layout.addLayout(rare_row)
+        rare_group = QGroupBox("Rare cards (levels 8-10)")
+        rare_group.setLayout(rare_layout)
+
+        # Preview of the selected card
+        self.tt_card_preview = QLabel()
+        self.tt_card_preview.setFixedSize(TT_PREVIEW_SIZE, TT_PREVIEW_SIZE)
+        self.tt_card_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.tt_card_name = QLabel()
+        self.tt_card_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.tt_card_name.setWordWrap(True)
+        preview_layout = QVBoxLayout()
+        preview_layout.addWidget(self.tt_card_preview)
+        preview_layout.addWidget(self.tt_card_name)
+        preview_layout.addStretch(1)
+        self.tt_common_table.currentCellChanged.connect(lambda row, *_: self._show_card_preview(row))
+        self.tt_rare_table.currentCellChanged.connect(
+            lambda row, *_: self._show_card_preview(cardlocation.RARE_CARD_FIRST_ID + row if row >= 0 else -1))
+
+        layout = QHBoxLayout()
+        layout.addWidget(common_group)
+        layout.addWidget(rare_group)
+        layout.addLayout(preview_layout)
+        layout.addStretch(1)
+        page = QWidget()
+        page.setLayout(layout)
+        return page
+
+    def _build_card_rules_page(self):
+        rules_grid = QGridLayout()
+        rules_grid.addWidget(QLabel("Region"), 0, 0)
+        for column, (mask, name) in enumerate(GAME_RULE_BITS, start=1):
+            rules_grid.addWidget(QLabel(name), 0, column, Qt.AlignmentFlag.AlignCenter)
+        trade_column = len(GAME_RULE_BITS) + 1
+        rules_grid.addWidget(QLabel("Trade rule"), 0, trade_column)
+        trade_entries = [{"value": value, "name": name} for value, name in enumerate(TRADE_RULE_NAMES)]
+        region_entries = [{"value": 0, "name": "None"}] + [{"value": index + 1, "name": name}
+                                                           for index, name in enumerate(TT_REGION_NAMES)]
+
+        def rule_checks(row, number):
+            for column, (mask, name) in enumerate(GAME_RULE_BITS, start=1):
+                check = QCheckBox()
+                check.setToolTip(f"{name} (variable {number}, mask 0x{mask:02X})")
+                check.toggled.connect(lambda checked, n=number, m=mask: self._on_card_rule_changed(n, m, checked))
+                self.tt_rule_checks.append((number, mask, check))
+                rules_grid.addWidget(check, row, column, Qt.AlignmentFlag.AlignCenter)
+
+        self.tt_rule_checks = []  # (variable, mask, checkbox)
+        self.tt_trade_combos = []
+        for region, name in enumerate(TT_REGION_NAMES):
+            row = region + 1
+            rules_grid.addWidget(QLabel(f"{name}:"), row, 0)
+            rule_checks(row, TT_VAR_REGION_RULES + region)
+            combo = self._enum_combo(trade_entries, tooltip=f"Trade rule of {name} (variable {TT_VAR_REGION_TRADE_RULE + region}, low 3 bits)")
+            combo.currentIndexChanged.connect(lambda _index, r=region, b=combo: self._on_card_trade_rule_changed(r, b))
+            self.tt_trade_combos.append(combo)
+            rules_grid.addWidget(combo, row, trade_column)
+
+        # The two last rule sets, each with its region
+        self.tt_last_region_combos = []
+        rules_grid.addWidget(QLabel("Region"), TT_NB_REGIONS + 1, trade_column)
+        for index in range(TT_NB_LAST_RULES):
+            row = TT_NB_REGIONS + 2 + index
+            rules_grid.addWidget(QLabel(f"Last rules {index + 1}:"), row, 0)
+            rule_checks(row, TT_VAR_LAST_RULES + index)
+            number = TT_VAR_LAST_REGIONS + index
+            combo = self._enum_combo(region_entries, tooltip=f"Region of these last rules (variable {number})")
+            self._connect_card_var(combo, number)
+            self.tt_last_region_combos.append((number, combo))
+            rules_grid.addWidget(combo, row, trade_column)
+        rules_grid.setColumnStretch(trade_column + 1, 1)   # the columns stay close together
+        rules_group = QGroupBox("Rules")
+        rules_group.setToolTip("The rules the Queen of Cards spreads and abolishes, per region. Most card players use "
+                               "their region's rules (a card player's own rules are in the CC Group tool).")
+        rules_group.setLayout(rules_grid)
+
+        # Queen of Cards + CC Group
+        self.tt_queen_location_combo = self._enum_combo(
+            [{"value": 0, "name": "Nowhere"}] + [{"value": index + 1, "name": name}
+                                                 for index, name in enumerate(TT_QUEEN_CITIES)],
+            tooltip=f"Where the Queen of Cards is (variable {TT_VAR_QUEEN_LOCATION})")
+        self.tt_queen_trade_combo = self._enum_combo(
+            trade_entries, tooltip=f"Trade rule the Queen of Cards spreads (variable {TT_VAR_QUEEN_TRADE_RULE})")
+        self.tt_rating_spin = self._spinbox(0, 0xFF, tooltip=f"Trade rating (variable {TT_VAR_TRADE_RATING})")
+        self.tt_rating_spin.setMaximumWidth(TT_SMALL_SPIN_WIDTH)
+        self.tt_rating_region_combo = self._enum_combo(
+            region_entries, tooltip=f"Region of the trade rating (variable {TT_VAR_TRADE_RATING_REGION})")
+        self.tt_degeneration_spin = self._spinbox(0, 0xFF, tooltip=f"Rule degeneration (variable {TT_VAR_DEGENERATION})")
+        self.tt_degeneration_spin.setMaximumWidth(TT_SMALL_SPIN_WIDTH)
+        self.tt_queen_quest_combo = self._enum_combo(
+            [{"value": value, "name": name} for value, name in enumerate(TT_QUEEN_QUEST_CARDS)],
+            tooltip=f"Last card made in the Queen of Cards' quest (variable {TT_VAR_QUEEN_QUEST})")
+        self.tt_cc_combo = self._enum_combo(
+            [{"value": value, "name": name} for value, name in TT_CC_QUEST_STEPS],
+            tooltip=f"CC Group members beaten (variable {TT_VAR_CC_QUEST}, low 5 bits, and variable "
+                    f"{TT_VAR_BGU_DIALOGS}, mask 0x{TT_CC_DIALOG_MASK:02X})")
+        self.tt_cc_combo.currentIndexChanged.connect(self._on_card_cc_quest_changed)
+        self._connect_card_var(self.tt_queen_location_combo, TT_VAR_QUEEN_LOCATION)
+        self._connect_card_var(self.tt_queen_trade_combo, TT_VAR_QUEEN_TRADE_RULE)
+        self._connect_card_var(self.tt_rating_spin, TT_VAR_TRADE_RATING)
+        self._connect_card_var(self.tt_rating_region_combo, TT_VAR_TRADE_RATING_REGION)
+        self._connect_card_var(self.tt_degeneration_spin, TT_VAR_DEGENERATION)
+        self._connect_card_var(self.tt_queen_quest_combo, TT_VAR_QUEEN_QUEST)
+        quest_form = QFormLayout()
+        quest_form.addRow("Queen location:", self.tt_queen_location_combo)
+        quest_form.addRow("Queen trade rule:", self.tt_queen_trade_combo)
+        quest_form.addRow("Trade rating:", self.tt_rating_spin)
+        quest_form.addRow("Trade rating region:", self.tt_rating_region_combo)
+        quest_form.addRow("Degeneration:", self.tt_degeneration_spin)
+        quest_form.addRow("Last card made:", self.tt_queen_quest_combo)
+        quest_form.addRow("CC Group quest:", self.tt_cc_combo)
+        quest_group = QGroupBox("Quests")
+        quest_group.setLayout(quest_form)
+
+        # Match counts
+        self.tt_count_spins = {
+            "wins": self._spinbox(0, 0xFFFF, tooltip="Card games won"),
+            "losses": self._spinbox(0, 0xFFFF, tooltip="Card games lost"),
+            "draws": self._spinbox(0, 0xFFFF, tooltip="Card games drawn"),
+        }
+        for field, spin in self.tt_count_spins.items():
+            spin.valueChanged.connect(lambda value, f=field: self._on_card_count_changed(f, value))
+        self.tt_bgu_wins_spin = self._spinbox(0, 0xFF, tooltip=f"Card games won in Balamb Garden (variable {TT_VAR_BGU_WINS})")
+        self.tt_bgu_wins_spin.setMaximumWidth(TT_SMALL_SPIN_WIDTH)
+        self._connect_card_var(self.tt_bgu_wins_spin, TT_VAR_BGU_WINS)
+        self.tt_seed_spin = self._u32_spinbox(tooltip="Random seed of the card game: the game draws from it and updates it")
+        self.tt_seed_spin.valueChanged.connect(self._on_card_seed_changed)
+        self.tt_complete_check = QCheckBox("Collection completed")
+        self.tt_complete_check.setToolTip("The game sets this the first time every card has been obtained and never clears it.")
+        self.tt_complete_check.toggled.connect(self._on_card_complete_changed)
+        self.tt_unused_spin = self._readonly_spin(RESERVED_TOOLTIP, 0xFFFF)
+        counts_form = QFormLayout()
+        counts_form.addRow("Wins:", self.tt_count_spins["wins"])
+        counts_form.addRow("Losses:", self.tt_count_spins["losses"])
+        counts_form.addRow("Draws:", self.tt_count_spins["draws"])
+        counts_form.addRow("Balamb Garden wins:", self.tt_bgu_wins_spin)
+        counts_form.addRow("Random seed:", self.tt_seed_spin)
+        counts_form.addRow(self.tt_complete_check)
+        counts_form.addRow(self._grey_label("Unused:", RESERVED_TOOLTIP), self.tt_unused_spin)
+        counts_group = QGroupBox("Statistics")
+        counts_group.setLayout(counts_form)
+
+        lower = QHBoxLayout()
+        lower.addWidget(quest_group)
+        lower.addWidget(counts_group)
+        lower.addStretch(1)
+        layout = QVBoxLayout()
+        layout.addWidget(rules_group)
+        layout.addLayout(lower)
+        layout.addStretch(1)
+        page = QWidget()
+        page.setLayout(layout)
+        return page
+
+    def _connect_card_var(self, widget, number):
+        """A combo or spin box holding one whole field variable."""
+        if isinstance(widget, QComboBox):
+            widget.currentIndexChanged.connect(lambda _index: self.manager.triple_triad.set_var(number, widget.currentData()))
+        else:
+            widget.valueChanged.connect(lambda value: self.manager.triple_triad.set_var(number, value))
+        self.tt_var_widgets.append((widget, number))
+
+    def _mark_dirty(self):
+        dirty_state = getattr(self, "dirty_state", None)
+        if dirty_state is not None:
+            dirty_state.mark()
+
+    def _show_card_preview(self, card_id):
+        if card_id < 0:
+            return
+        card = self._card_info[card_id]
+        self.tt_card_name.setText(card["name"])
+        pixmap = QPixmap.fromImage(ImageQt(card["img_remaster"]).copy())
+        self.tt_card_preview.setPixmap(pixmap.scaled(TT_PREVIEW_SIZE, TT_PREVIEW_SIZE,
+                                                     Qt.AspectRatioMode.KeepAspectRatio,
+                                                     Qt.TransformationMode.SmoothTransformation))
+
+    def _reload_cards(self):
+        """Show the cards of the save, nothing written back."""
+        tt = self.manager.triple_triad
+        for card_id in range(cardlocation.RARE_CARD_FIRST_ID):
+            with QSignalBlocker(self.tt_common_checks[card_id]):
+                self.tt_common_checks[card_id].setChecked(tt.is_obtained(card_id))
+            with QSignalBlocker(self.tt_common_spins[card_id]):
+                self._set_spin_value(self.tt_common_spins[card_id], tt.copies(card_id))
+        for card_id, check in self.tt_rare_checks.items():
+            with QSignalBlocker(check):
+                check.setChecked(tt.is_obtained(card_id))
+            combo = self.tt_rare_combos[card_id]
+            with QSignalBlocker(combo):
+                combo.setCurrentIndex(combo.findData(tt.location(card_id), Qt.ItemDataRole.UserRole))
+        with QSignalBlocker(self.tt_all_common_check):
+            self.tt_all_common_check.setChecked(all(tt.is_obtained(c) for c in range(cardlocation.RARE_CARD_FIRST_ID)))
+        with QSignalBlocker(self.tt_all_rare_check):
+            self.tt_all_rare_check.setChecked(all(tt.is_obtained(c) for c in self.tt_rare_checks))
+
+    def _reload_triple_triad(self):
+        tt = self.manager.triple_triad
+        self._reload_cards()
+        for number, mask, check in self.tt_rule_checks:
+            with QSignalBlocker(check):
+                check.setChecked(bool(tt.var(number) & mask))
+        for region, combo in enumerate(self.tt_trade_combos):
+            with QSignalBlocker(combo):
+                self._select_combo(combo, tt.region_trade_rule(region))
+        for widget, number in self.tt_var_widgets:
+            with QSignalBlocker(widget):
+                if isinstance(widget, QComboBox):
+                    self._select_combo(widget, tt.var(number))
+                else:
+                    self._set_spin_value(widget, tt.var(number))
+        with QSignalBlocker(self.tt_cc_combo):
+            self._select_combo(self.tt_cc_combo, tt.cc_quest)
+        for field, spin in self.tt_count_spins.items():
+            with QSignalBlocker(spin):
+                self._set_spin_value(spin, getattr(tt, field))
+        with QSignalBlocker(self.tt_seed_spin):
+            self._set_spin_value(self.tt_seed_spin, tt.seed)
+        with QSignalBlocker(self.tt_complete_check):
+            self.tt_complete_check.setChecked(tt.collection_complete)
+        self._set_spin_value(self.tt_unused_spin, tt.unused)
+
+    def _on_card_obtained_changed(self, card_id, obtained):
+        self.manager.triple_triad.set_obtained(card_id, obtained)
+        self._reload_cards()   # unticking also changes the copies or the location
+
+    def _on_card_copies_changed(self, card_id, copies):
+        self.manager.triple_triad.set_copies(card_id, copies)
+        self._reload_cards()   # copies tick Obtained
+
+    def _on_card_location_changed(self, card_id, combo):
+        self.manager.triple_triad.set_location(card_id, combo.currentData(Qt.ItemDataRole.UserRole))
+        self._reload_cards()   # at the player ticks Obtained
+
+    def _on_all_common_obtained(self, checked):
+        for card_id in range(cardlocation.RARE_CARD_FIRST_ID):
+            self.manager.triple_triad.set_obtained(card_id, checked)
+        self._reload_cards()
+
+    def _on_all_common_copies(self):
+        for card_id in range(cardlocation.RARE_CARD_FIRST_ID):
+            self.manager.triple_triad.set_copies(card_id, self.tt_all_copies_spin.value())
+        self._reload_cards()
+        self._mark_dirty()
+
+    def _on_all_rare_obtained(self, checked):
+        for card_id in self.tt_rare_checks:
+            self.manager.triple_triad.set_obtained(card_id, checked)
+        self._reload_cards()
+
+    def _on_all_rare_to_player(self):
+        for card_id in self.tt_rare_checks:
+            self.manager.triple_triad.set_location(card_id, cardlocation.LOCATION_PLAYER)
+        self._reload_cards()
+        self._mark_dirty()
+
+    def _on_card_rule_changed(self, number, mask, checked):
+        tt = self.manager.triple_triad
+        tt.set_var(number, tt.var(number) | mask if checked else tt.var(number) & ~mask & 0xFF)
+
+    def _on_card_trade_rule_changed(self, region, combo):
+        self.manager.triple_triad.set_region_trade_rule(region, combo.currentData())
+
+    def _on_card_cc_quest_changed(self):
+        self.manager.triple_triad.cc_quest = self.tt_cc_combo.currentData()
+
+    def _on_card_count_changed(self, field, value):
+        setattr(self.manager.triple_triad, field, value)
+
+    def _on_card_seed_changed(self):
+        self.manager.triple_triad.seed = self.tt_seed_spin.value()
+
+    def _on_card_complete_changed(self, checked):
+        self.manager.triple_triad.collection_complete = checked
 
     # ── Items tab ────────────────────────────────────────────────────────
 

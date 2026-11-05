@@ -225,7 +225,8 @@ automatically (see the update button in the toolbar).
   <img src="Resources/screenshots/quezacotl.png" width="800">
 
 - **Deling** — archive editor (browse/extract/repack the game's `.fs`/`.fi`/`.fl` archives).
-- **Hyne** — save file editor.
+- **Hyne** — save file editor: G-Forces, characters, config, party, items, and Triple Triad (cards
+  owned, rare card locations, region rules, Queen of Cards and CC Group quests, match counts).
 - **VincentTim** — command-line texture converter for FF7/FF8 `.tim`/`.tex` files (see its own
   [README](ExternalTools/VincentTim/README.md)).
 

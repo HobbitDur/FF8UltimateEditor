@@ -25,6 +25,18 @@ past the item table, the header) are preserved byte-for-byte: the manager keeps 
 8192-byte image in one buffer and every entry is a thin view over it, so anything never
 decoded is simply never touched.
 
+Triple Triad (TripleTriadEntry) is two more views over that buffer, both inside the CRC span:
+  the TTCardData block (SG_TT_CARD_DATA in FF8_EN.exe), 128 bytes at game state +4752:
+    +0    77 x u8  common cards: bit 7 = ever obtained, low 7 bits = copies owned
+    +77   33 x u8  rare cards' location (240 = the player, else a Deck ID)
+    +110  5 bytes  rare cards' "ever obtained" bits
+    +115  u8       bit 0 = collection completed (IsCardCollectionComplete@0x534A40 sets it for good)
+    +116  3 x u16  wins, losses, draws; +122 u16 unused; +124 u32 card game random seed
+  the card variables of the field scripts (field variable N = byte at game state +3344 + N),
+  variables 272-300 and 475-478, see the TT_VAR_ constants.
+The game reads a card's copies or location only once its "ever obtained" flag is set
+(GetOwnedCardCount@0x534950 returns -1 otherwise), which is why the setters keep them together.
+
 FFNx's AddMoreItems (255 inventory slots instead of 198, FF8GameData/itemids.py) keeps all its
 slots in a 522-byte block in the image's unused tail, outside the CRC:
   [0x1600..0x1603] magic 0x4D495846, [0x1604] u16 version 1, [0x1606] u16 slot count 255,
@@ -50,6 +62,7 @@ import shutil
 import struct
 import time
 
+from CCGroup.cardlocation import LOCATION_PLAYER, NB_CARDS, RARE_CARD_FIRST_ID, starting_location
 from FF8GameData.gamedata import GameData
 from Quezacotl.quezacotlmanager import (
     GfEntry, CharacterEntry, ConfigEntry, MiscEntry, ItemEntry,
@@ -92,6 +105,41 @@ ABILITY_EXT_EXTENDED = ABILITY_EXT_NATIVE + NB_GF * ABILITY_EXT_GF_BYTES
 ABILITY_EXT_SIZE = ABILITY_EXT_HEADER_SIZE + 2 * NB_GF * ABILITY_EXT_GF_BYTES   # 524
 SAVE_ABILITY_IDS = 255                # a save can mark ids 0-254 learned (255 means "no ability")
 GF_LEARNED_OFFSET = 20                # a GF record's 16-byte learned field
+
+TT_DATA_OFFSET = GAMESTATE_BASE + 4752   # TTCardData (see the docstring)
+TT_NB_RARE_CARDS = NB_CARDS - RARE_CARD_FIRST_ID
+TT_RARE_LOCATIONS = TT_DATA_OFFSET + RARE_CARD_FIRST_ID
+TT_RARE_OBTAINED = TT_RARE_LOCATIONS + TT_NB_RARE_CARDS
+TT_FLAGS = TT_RARE_OBTAINED + 5
+TT_WINS = TT_FLAGS + 1
+TT_LOSSES = TT_WINS + 2
+TT_DRAWS = TT_LOSSES + 2
+TT_UNUSED = TT_DRAWS + 2
+TT_SEED = TT_UNUSED + 2
+TT_CARD_OBTAINED = 0x80
+TT_CARD_COPIES_MASK = 0x7F
+TT_COLLECTION_COMPLETE = 0x01
+
+FIELD_VARS_OFFSET = GAMESTATE_BASE + 3344   # field variable N is the byte at this + N
+TT_VAR_REGION_RULES = 272        # 8 regions: Balamb, Galbadia, Trabia, Centra, Dollet, FH, Lunar Gate, Esthar
+TT_VAR_REGION_TRADE_RULE = 280   # the same 8, the rule in the low 3 bits
+TT_VAR_LAST_RULES = 288          # 2 rule sets...
+TT_VAR_LAST_REGIONS = 290        # ...and their regions (0 = none, else region + 1)
+TT_VAR_QUEEN_LOCATION = 295      # 0 = nowhere, else region + 1
+TT_VAR_TRADE_RATING_REGION = 296
+TT_VAR_TRADE_RATING = 297
+TT_VAR_DEGENERATION = 298
+TT_VAR_QUEEN_TRADE_RULE = 299
+TT_VAR_QUEEN_QUEST = 300
+TT_VAR_BGU_DIALOGS = 475
+TT_VAR_CC_QUEST = 477
+TT_VAR_BGU_WINS = 478
+TT_NB_REGIONS = 8
+TT_NB_LAST_RULES = 2
+TT_TRADE_RULE_MASK = 0x07
+# CC Group progress: a value = (variable 475's two bits << 8) | variable 477's low 5 bits
+TT_CC_QUEST_MASK = 0x1F
+TT_CC_DIALOG_MASK = 0x22
 
 
 def item_extension_checksum(slot_bytes) -> int:
@@ -384,6 +432,134 @@ class HyneGfEntry(GfEntry):
             self._buffer[position] &= ~bit & 0xFF
 
 
+class TripleTriadEntry:
+    """A save's Triple Triad state, a view over the image buffer (see the module docstring).
+
+    Card ids are the game's: 0-76 common, 77-109 rare. The setters keep together what the game
+    expects together: a card with copies, or a rare card at the player, has its "ever obtained"
+    flag set (AddCardToPlayerCollection@0x534840 does the same)."""
+
+    def __init__(self, buffer):
+        self._buffer = buffer
+
+    # ── Cards ────────────────────────────────────────────────────────────
+
+    def is_obtained(self, card_id):
+        if card_id >= RARE_CARD_FIRST_ID:
+            byte_index, bit = divmod(card_id - RARE_CARD_FIRST_ID, 8)
+            return bool(self._buffer[TT_RARE_OBTAINED + byte_index] & (1 << bit))
+        return bool(self._buffer[TT_DATA_OFFSET + card_id] & TT_CARD_OBTAINED)
+
+    def set_obtained(self, card_id, obtained):
+        """Taking the flag away also takes the card away, or the game would ignore what is left: a
+        common card's copies go to 0, a rare card at the player goes back to its starting owner."""
+        if card_id >= RARE_CARD_FIRST_ID:
+            byte_index, bit = divmod(card_id - RARE_CARD_FIRST_ID, 8)
+            if obtained:
+                self._buffer[TT_RARE_OBTAINED + byte_index] |= 1 << bit
+            else:
+                self._buffer[TT_RARE_OBTAINED + byte_index] &= ~(1 << bit) & 0xFF
+                if self.location(card_id) == LOCATION_PLAYER:
+                    self._buffer[TT_RARE_LOCATIONS + card_id - RARE_CARD_FIRST_ID] = starting_location(card_id)
+        elif obtained:
+            self._buffer[TT_DATA_OFFSET + card_id] |= TT_CARD_OBTAINED
+        else:
+            self._buffer[TT_DATA_OFFSET + card_id] = 0
+
+    def copies(self, card_id):
+        """Copies owned of a common card."""
+        return self._buffer[TT_DATA_OFFSET + card_id] & TT_CARD_COPIES_MASK
+
+    def set_copies(self, card_id, copies):
+        """Having copies of a common card means it was obtained."""
+        flag = TT_CARD_OBTAINED if copies else self._buffer[TT_DATA_OFFSET + card_id] & TT_CARD_OBTAINED
+        self._buffer[TT_DATA_OFFSET + card_id] = flag | copies
+
+    def location(self, card_id):
+        """Where a rare card is: LOCATION_PLAYER, or the Deck ID of who holds it."""
+        return self._buffer[TT_RARE_LOCATIONS + card_id - RARE_CARD_FIRST_ID]
+
+    def set_location(self, card_id, location):
+        """A rare card at the player counts only with its flag set."""
+        self._buffer[TT_RARE_LOCATIONS + card_id - RARE_CARD_FIRST_ID] = location
+        if location == LOCATION_PLAYER:
+            self.set_obtained(card_id, True)
+
+    # ── Counters and flags ───────────────────────────────────────────────
+
+    @property
+    def wins(self):
+        return struct.unpack_from("<H", self._buffer, TT_WINS)[0]
+
+    @wins.setter
+    def wins(self, value):
+        struct.pack_into("<H", self._buffer, TT_WINS, value)
+
+    @property
+    def losses(self):
+        return struct.unpack_from("<H", self._buffer, TT_LOSSES)[0]
+
+    @losses.setter
+    def losses(self, value):
+        struct.pack_into("<H", self._buffer, TT_LOSSES, value)
+
+    @property
+    def draws(self):
+        return struct.unpack_from("<H", self._buffer, TT_DRAWS)[0]
+
+    @draws.setter
+    def draws(self, value):
+        struct.pack_into("<H", self._buffer, TT_DRAWS, value)
+
+    @property
+    def unused(self):
+        return struct.unpack_from("<H", self._buffer, TT_UNUSED)[0]
+
+    @property
+    def seed(self):
+        return struct.unpack_from("<I", self._buffer, TT_SEED)[0]
+
+    @seed.setter
+    def seed(self, value):
+        struct.pack_into("<I", self._buffer, TT_SEED, value)
+
+    @property
+    def collection_complete(self):
+        return bool(self._buffer[TT_FLAGS] & TT_COLLECTION_COMPLETE)
+
+    @collection_complete.setter
+    def collection_complete(self, value):
+        if value:
+            self._buffer[TT_FLAGS] |= TT_COLLECTION_COMPLETE
+        else:
+            self._buffer[TT_FLAGS] &= ~TT_COLLECTION_COMPLETE & 0xFF
+
+    # ── Field variables ──────────────────────────────────────────────────
+
+    def var(self, number):
+        return self._buffer[FIELD_VARS_OFFSET + number]
+
+    def set_var(self, number, value):
+        self._buffer[FIELD_VARS_OFFSET + number] = value
+
+    def region_trade_rule(self, region):
+        return self.var(TT_VAR_REGION_TRADE_RULE + region) & TT_TRADE_RULE_MASK
+
+    def set_region_trade_rule(self, region, rule):
+        number = TT_VAR_REGION_TRADE_RULE + region
+        self.set_var(number, (self.var(number) & ~TT_TRADE_RULE_MASK & 0xFF) | rule)
+
+    @property
+    def cc_quest(self):
+        return ((self.var(TT_VAR_BGU_DIALOGS) & TT_CC_DIALOG_MASK) << 8) | (self.var(TT_VAR_CC_QUEST) & TT_CC_QUEST_MASK)
+
+    @cc_quest.setter
+    def cc_quest(self, value):
+        self.set_var(TT_VAR_CC_QUEST, (self.var(TT_VAR_CC_QUEST) & ~TT_CC_QUEST_MASK & 0xFF) | (value & TT_CC_QUEST_MASK))
+        self.set_var(TT_VAR_BGU_DIALOGS,
+                     (self.var(TT_VAR_BGU_DIALOGS) & ~TT_CC_DIALOG_MASK & 0xFF) | ((value >> 8) & TT_CC_DIALOG_MASK))
+
+
 class HyneManager:
     """.ff8 save-file editor logic.
 
@@ -406,6 +582,7 @@ class HyneManager:
         self.config = None
         self.misc = None
         self.item_entries = []
+        self.triple_triad = None
         # "extended": the FFNx AddMoreItems block is in use (255 slots); "stale": a block is
         # there but FFNx would ignore it (damaged, or the item table changed since); "none".
         self.item_extension = "none"
@@ -452,6 +629,7 @@ class HyneManager:
         ]
         self.config = ConfigEntry(self.buffer, GAMESTATE_BASE + CONFIG_DATA_OFFSET)
         self.misc = MiscEntry(self.buffer, GAMESTATE_BASE + MISC_DATA_OFFSET, self.game_data)
+        self.triple_triad = TripleTriadEntry(self.buffer)
         self.item_extension = self._item_extension_state()
         if self.item_extension == "extended":
             self.item_entries = [
