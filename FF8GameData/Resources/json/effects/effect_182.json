@@ -46,6 +46,18 @@
    "address": "0xD3ABC0",
    "size": 268,
    "frames": 9
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xD3B3D8",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.card": {
+   "kind": "model",
+   "address": "0xD3AE78",
+   "size": 1376,
+   "vertices": 35
   }
  },
  "resources": {
@@ -141,6 +153,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.card",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "director",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 25 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.card",
+   "part": "director",
+   "label": "Card model",
+   "doc": "The prim model card (a mesh of 35 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.card",
    "unit": "plain"
   }
  ],

@@ -26,19 +26,22 @@
    "kind": "model",
    "address": "0x12F9B80",
    "size": 7968,
-   "doc": "the reflect wall (+4 vertex count, +8 vertices of 8 bytes, then its primitive lists)"
+   "doc": "the reflect wall (+4 vertex count, +8 vertices of 8 bytes, then its primitive lists)",
+   "vertices": 193
   },
   "hexagon": {
    "kind": "model",
    "address": "0x12FBAA0",
    "size": 216,
-   "doc": "a prim model (drawn by 0x572200)"
+   "doc": "a prim model (drawn by 0x572200)",
+   "vertices": 10
   },
   "ring": {
    "kind": "model",
    "address": "0x12FBB78",
    "size": 1672,
-   "doc": "a prim model (drawn by 0x572200)"
+   "doc": "a prim model (drawn by 0x572200)",
+   "vertices": 60
   },
   "camera": {
    "kind": "camera",

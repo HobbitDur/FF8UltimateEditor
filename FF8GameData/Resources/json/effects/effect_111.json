@@ -30,7 +30,8 @@
    "kind": "model",
    "address": "0x12DB818",
    "size": 456,
-   "doc": "a prim model (its vertex frames and polygons; drawn by 0x572200)"
+   "doc": "a prim model (its vertex frames and polygons; drawn by 0x572200)",
+   "vertices": 22
   },
   "aura": {
    "kind": "layout",

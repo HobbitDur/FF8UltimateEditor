@@ -29,6 +29,12 @@
    "kind": "sound",
    "address": "0xDBAD38",
    "size": 4
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xDBAAC8",
+   "size": 624,
+   "vertices": 25
   }
  },
  "resources": {
@@ -74,6 +80,17 @@
    "min": 0,
    "max": 40,
    "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "controller",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 25 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
    "unit": "plain"
   }
  ],

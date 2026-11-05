@@ -41,6 +41,18 @@
    "address": "0x102E94C",
    "size": 332,
    "frames": 10
+  },
+  "model_data.sword": {
+   "kind": "model",
+   "address": "0x102EA98",
+   "size": 2076,
+   "vertices": 52
+  },
+  "model_data.trail": {
+   "kind": "model",
+   "address": "0x102F2B4",
+   "size": 472,
+   "vertices": 14
   }
  },
  "resources": {
@@ -97,6 +109,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.sword",
+   "part": "main",
+   "label": "Sword model",
+   "doc": "The prim model sword (a mesh of 52 vertices, 78 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.sword",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.trail",
+   "part": "main",
+   "label": "Trail model",
+   "doc": "The prim model trail (a mesh of 14 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.trail",
    "unit": "plain"
   }
  ],

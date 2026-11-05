@@ -80,6 +80,78 @@
    "address": "0xD20E10",
    "size": 428,
    "frames": 16
+  },
+  "models.at_d215c4": {
+   "kind": "model",
+   "address": "0xD215C4",
+   "size": 1496,
+   "vertices": 74
+  },
+  "models.at_d3138c": {
+   "kind": "model",
+   "address": "0xD3138C",
+   "size": 1768,
+   "vertices": 72
+  },
+  "models.at_d2f1c4": {
+   "kind": "model",
+   "address": "0xD2F1C4",
+   "size": 4808,
+   "vertices": 103
+  },
+  "models.at_d2ba3c": {
+   "kind": "model",
+   "address": "0xD2BA3C",
+   "size": 7108,
+   "vertices": 166
+  },
+  "models.at_d2d600": {
+   "kind": "model",
+   "address": "0xD2D600",
+   "size": 7108,
+   "vertices": 166
+  },
+  "models.at_d31a74": {
+   "kind": "model",
+   "address": "0xD31A74",
+   "size": 2256,
+   "vertices": 73
+  },
+  "models.at_d3048c": {
+   "kind": "model",
+   "address": "0xD3048C",
+   "size": 1304,
+   "vertices": 50
+  },
+  "models.at_d309a4": {
+   "kind": "model",
+   "address": "0xD309A4",
+   "size": 2536,
+   "vertices": 96
+  },
+  "models.at_d21b9c": {
+   "kind": "model",
+   "address": "0xD21B9C",
+   "size": 15408,
+   "vertices": 433
+  },
+  "models.at_d2a50c": {
+   "kind": "model",
+   "address": "0xD2A50C",
+   "size": 5424,
+   "vertices": 157
+  },
+  "models.at_d257cc": {
+   "kind": "model",
+   "address": "0xD257CC",
+   "size": 9888,
+   "vertices": 231
+  },
+  "models.at_d27e6c": {
+   "kind": "model",
+   "address": "0xD27E6C",
+   "size": 9888,
+   "vertices": 231
   }
  },
  "resources": {
@@ -230,6 +302,138 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_d20e10",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d215c4",
+   "part": "timeline",
+   "label": "Model D215C4",
+   "doc": "The prim model at 0xD215C4 (a mesh of 74 vertices, 36 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d215c4",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d3138c",
+   "part": "timeline",
+   "label": "Model D3138C",
+   "doc": "The prim model at 0xD3138C (a mesh of 72 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d3138c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d2f1c4",
+   "part": "timeline",
+   "label": "Model D2F1C4",
+   "doc": "The prim model at 0xD2F1C4 (a mesh of 103 vertices, 170 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d2f1c4",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d2ba3c",
+   "part": "timeline",
+   "label": "Model D2BA3C",
+   "doc": "The prim model at 0xD2BA3C (a mesh of 166 vertices, 287 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d2ba3c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d2d600",
+   "part": "timeline",
+   "label": "Model D2D600",
+   "doc": "The prim model at 0xD2D600 (a mesh of 166 vertices, 287 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d2d600",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d31a74",
+   "part": "timeline",
+   "label": "Model D31A74",
+   "doc": "The prim model at 0xD31A74 (a mesh of 73 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d31a74",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d3048c",
+   "part": "timeline",
+   "label": "Model D3048C",
+   "doc": "The prim model at 0xD3048C (a mesh of 50 vertices, 36 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d3048c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d309a4",
+   "part": "timeline",
+   "label": "Model D309A4",
+   "doc": "The prim model at 0xD309A4 (a mesh of 96 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d309a4",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d21b9c",
+   "part": "timeline",
+   "label": "Model D21B9C",
+   "doc": "The prim model at 0xD21B9C (a mesh of 433 vertices, 432 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d21b9c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d2a50c",
+   "part": "timeline",
+   "label": "Model D2A50C",
+   "doc": "The prim model at 0xD2A50C (a mesh of 157 vertices, 144 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d2a50c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d257cc",
+   "part": "timeline",
+   "label": "Model D257CC",
+   "doc": "The prim model at 0xD257CC (a mesh of 231 vertices, 400 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d257cc",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_d27e6c",
+   "part": "timeline",
+   "label": "Model D27E6C",
+   "doc": "The prim model at 0xD27E6C (a mesh of 231 vertices, 400 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_d27e6c",
    "unit": "plain"
   }
  ],

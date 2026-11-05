@@ -29,6 +29,18 @@
    "kind": "sound",
    "address": "0xD39304",
    "size": 4
+  },
+  "models.shield_a": {
+   "kind": "model",
+   "address": "0xD348C4",
+   "size": 1056,
+   "vertices": 31
+  },
+  "models.shield_b": {
+   "kind": "model",
+   "address": "0xD34CE4",
+   "size": 2736,
+   "vertices": 81
   }
  },
  "resources": {
@@ -74,6 +86,28 @@
    "min": 0,
    "max": 35,
    "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "models.shield_a",
+   "part": "director",
+   "label": "Shield a model",
+   "doc": "The prim model shield a (a mesh of 31 vertices, 30 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shield_a",
+   "unit": "plain"
+  },
+  {
+   "key": "models.shield_b",
+   "part": "director",
+   "label": "Shield b model",
+   "doc": "The prim model shield b (a mesh of 81 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shield_b",
    "unit": "plain"
   }
  ],

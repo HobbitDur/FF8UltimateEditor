@@ -331,9 +331,10 @@ Potion's description is the same with its own sequences and sound.
        differ. No exe address is left in their programs.
      - **Port effects** (director `port`) read their data through their parameters too, so a new
        effect made from one plays its own copy:
-       - FFNx's `fx_params.h` has the field types `Seq`, `Sound` and `Layout` (a prim-model
-         layout: the shared prim player's keyframed models). The port reads each one through
-         `fxp::sequence`, `fxp::sound` or `fxp::layout(value, game, capacity)`; a value that is
+       - FFNx's `fx_params.h` has the field types `Seq`, `Sound`, `Layout` (a prim-model
+         layout: the shared prim player's keyframed models) and `Model` (a prim model: a mesh
+         `Effect_RenderPrimModel` draws, `FF8GameData/psxgpu/primmodel.py`). The port reads each one
+         through `fxp::sequence`, `fxp::sound`, `fxp::layout(value, game, capacity)` or `fxp::model`; a value that is
          not one in the exe image or in a registered data block falls back to the game's.
        - The program host registers every `data` blob it allocates as a data block
          (`fxp::add_data`) and drops them with its program (`Release`).
@@ -344,9 +345,16 @@ Potion's description is the same with its own sequences and sound.
        - A port's flipbook plays a fixed number of frames (its code counts them). Its exe data
          entry says it (`frames`); `fxp::sequence` keeps the game's flipbook when the edited one
          has fewer, and the Data tab does not remove a frame below it.
-       - 50 port effects have their layouts as parameters (139 layouts), 137 their flipbooks (373).
+       - A port's prim model may be read, morphed, bent or bounded vertex by vertex by its code,
+         into blocks of its vertex count. Its exe data entry says the count (`vertices`);
+         `fxp::model` keeps the game's model when the edited one has another, and the Data tab
+         moves vertices but does not add or remove them. A model its code copies whole into a block
+         of its size (Sonic Wave, Gravija) is `same_size`: it keeps its primitives and its size too.
+         A morph's source models (`MORPH_*`), and models the game's own code prepares (Phoenix's
+         flames), stay code.
+       - 50 port effects have their layouts as parameters (139 layouts), 137 their flipbooks (373), 114 their prim models (426).
        - Checked: each one's own copy draws as the exe, and with its layouts' scale and spin or
-         its flipbooks' intensity changed, draws otherwise.
+         its flipbooks' intensity or its models' size changed, draws otherwise.
    - **Part by part** (`Fujin/effecttemplates.py`): a free slot shows **Create a new effect
      here**, which makes an empty effect. Choreography's **+** tab (always the last tab) adds
      parts; right-clicking a part's tab removes it, with the parts that need it.

@@ -74,6 +74,36 @@
    "address": "0x10BCE98",
    "size": 428,
    "frames": 16
+  },
+  "models.at_10c0d08": {
+   "kind": "model",
+   "address": "0x10C0D08",
+   "size": 3120,
+   "vertices": 115
+  },
+  "models.at_10bfb08": {
+   "kind": "model",
+   "address": "0x10BFB08",
+   "size": 4608,
+   "vertices": 81
+  },
+  "models.at_10bd488": {
+   "kind": "model",
+   "address": "0x10BD488",
+   "size": 7968,
+   "vertices": 193
+  },
+  "models.at_10bf3a8": {
+   "kind": "model",
+   "address": "0x10BF3A8",
+   "size": 216,
+   "vertices": 10
+  },
+  "models.at_10bf480": {
+   "kind": "model",
+   "address": "0x10BF480",
+   "size": 1672,
+   "vertices": 60
   }
  },
  "resources": {
@@ -213,6 +243,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_10bce98",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_10c0d08",
+   "part": "creature",
+   "label": "Model 10C0D08",
+   "doc": "The prim model at 0x10C0D08 (a mesh of 115 vertices, 90 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_10c0d08",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_10bfb08",
+   "part": "creature",
+   "label": "Model 10BFB08",
+   "doc": "The prim model at 0x10BFB08 (a mesh of 81 vertices, 140 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_10bfb08",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_10bd488",
+   "part": "creature",
+   "label": "Model 10BD488",
+   "doc": "The prim model at 0x10BD488 (a mesh of 193 vertices, 192 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_10bd488",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_10bf3a8",
+   "part": "creature",
+   "label": "Model 10BF3A8",
+   "doc": "The prim model at 0x10BF3A8 (a mesh of 10 vertices, 4 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_10bf3a8",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_10bf480",
+   "part": "creature",
+   "label": "Model 10BF480",
+   "doc": "The prim model at 0x10BF480 (a mesh of 60 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_10bf480",
    "unit": "plain"
   }
  ],

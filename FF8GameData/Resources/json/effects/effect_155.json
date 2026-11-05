@@ -41,6 +41,12 @@
    "address": "0xDB8040",
    "size": 272,
    "frames": 10
+  },
+  "models.funnel": {
+   "kind": "model",
+   "address": "0xDB8150",
+   "size": 10152,
+   "vertices": 304
   }
  },
  "resources": {
@@ -108,6 +114,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.dust_b",
+   "unit": "plain"
+  },
+  {
+   "key": "models.funnel",
+   "part": "director",
+   "label": "Funnel model",
+   "doc": "The prim model funnel (a mesh of 304 vertices, 288 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.funnel",
    "unit": "plain"
   }
  ],

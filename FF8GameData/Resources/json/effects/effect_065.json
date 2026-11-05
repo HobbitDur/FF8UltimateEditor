@@ -60,6 +60,30 @@
    "address": "0x1334F0C",
    "size": 240,
    "frames": 8
+  },
+  "models.at_133822c": {
+   "kind": "model",
+   "address": "0x133822C",
+   "size": 7888,
+   "vertices": 306
+  },
+  "models.at_133a0fc": {
+   "kind": "model",
+   "address": "0x133A0FC",
+   "size": 2672,
+   "vertices": 104
+  },
+  "models.at_1334ffc": {
+   "kind": "model",
+   "address": "0x1334FFC",
+   "size": 6440,
+   "vertices": 144
+  },
+  "models.at_1336924": {
+   "kind": "model",
+   "address": "0x1336924",
+   "size": 6408,
+   "vertices": 220
   }
  },
  "resources": {
@@ -199,6 +223,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.sprite",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_133822c",
+   "part": "master",
+   "label": "Model 133822C",
+   "doc": "The prim model at 0x133822C (a mesh of 306 vertices, 150 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_133822c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_133a0fc",
+   "part": "master",
+   "label": "Model 133A0FC",
+   "doc": "The prim model at 0x133A0FC (a mesh of 104 vertices, 50 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_133a0fc",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_1334ffc",
+   "part": "master",
+   "label": "Model 1334FFC",
+   "doc": "The prim model at 0x1334FFC (a mesh of 144 vertices, 160 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_1334ffc",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_1336924",
+   "part": "master",
+   "label": "Model 1336924",
+   "doc": "The prim model at 0x1336924 (a mesh of 220 vertices, 168 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_1336924",
    "unit": "plain"
   }
  ],

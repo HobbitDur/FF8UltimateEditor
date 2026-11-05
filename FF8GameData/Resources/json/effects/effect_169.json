@@ -47,6 +47,18 @@
    "address": "0xD6A620",
    "size": 248,
    "frames": 9
+  },
+  "models.main": {
+   "kind": "model",
+   "address": "0xD6A8C4",
+   "size": 2592,
+   "vertices": 73
+  },
+  "models.puddle": {
+   "kind": "model",
+   "address": "0xD6B534",
+   "size": 1768,
+   "vertices": 72
   }
  },
  "resources": {
@@ -125,6 +137,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.splash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.main",
+   "part": "director",
+   "label": "Main model",
+   "doc": "The prim model main (a mesh of 73 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.main",
+   "unit": "plain"
+  },
+  {
+   "key": "models.puddle",
+   "part": "director",
+   "label": "Puddle model",
+   "doc": "The prim model puddle (a mesh of 72 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.puddle",
    "unit": "plain"
   }
  ],

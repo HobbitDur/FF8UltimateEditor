@@ -53,6 +53,42 @@
    "address": "0xD524C4",
    "size": 820,
    "frames": 31
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xD54588",
+   "size": 9936,
+   "vertices": 313
+  },
+  "models.wave": {
+   "kind": "model",
+   "address": "0xD56C58",
+   "size": 9512,
+   "vertices": 272
+  },
+  "models.expand": {
+   "kind": "model",
+   "address": "0xD53BA0",
+   "size": 2536,
+   "vertices": 96
+  },
+  "models.pillar": {
+   "kind": "model",
+   "address": "0xD53688",
+   "size": 1304,
+   "vertices": 50
+  },
+  "models.disk": {
+   "kind": "model",
+   "address": "0xD52DD8",
+   "size": 2224,
+   "vertices": 81
+  },
+  "models.flash": {
+   "kind": "model",
+   "address": "0xD527F8",
+   "size": 1504,
+   "vertices": 63
   }
  },
  "resources": {
@@ -142,6 +178,72 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.sparkle",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "director",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 313 vertices, 312 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.wave",
+   "part": "director",
+   "label": "Wave model",
+   "doc": "The prim model wave (a mesh of 272 vertices, 256 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wave",
+   "unit": "plain"
+  },
+  {
+   "key": "models.expand",
+   "part": "director",
+   "label": "Expand model",
+   "doc": "The prim model expand (a mesh of 96 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.expand",
+   "unit": "plain"
+  },
+  {
+   "key": "models.pillar",
+   "part": "director",
+   "label": "Pillar model",
+   "doc": "The prim model pillar (a mesh of 50 vertices, 36 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.pillar",
+   "unit": "plain"
+  },
+  {
+   "key": "models.disk",
+   "part": "director",
+   "label": "Disk model",
+   "doc": "The prim model disk (a mesh of 81 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.disk",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flash",
+   "part": "director",
+   "label": "Flash model",
+   "doc": "The prim model flash (a mesh of 63 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flash",
    "unit": "plain"
   }
  ],

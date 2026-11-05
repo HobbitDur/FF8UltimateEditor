@@ -83,6 +83,18 @@
    "address": "0x113C2F0",
    "size": 220,
    "frames": 8
+  },
+  "model_data.rock": {
+   "kind": "model",
+   "address": "0x1140AA4",
+   "size": 440,
+   "vertices": 8
+  },
+  "model_data.twist": {
+   "kind": "model",
+   "address": "0x113C3CC",
+   "size": 2944,
+   "vertices": 123
   }
  },
  "resources": {
@@ -216,6 +228,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.ember",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.rock",
+   "part": "director",
+   "label": "Rock model",
+   "doc": "The prim model rock (a mesh of 8 vertices, 12 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.rock",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.twist",
+   "part": "director",
+   "label": "Twist model",
+   "doc": "The prim model twist (a mesh of 123 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.twist",
    "unit": "plain"
   }
  ],

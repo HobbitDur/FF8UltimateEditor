@@ -35,6 +35,12 @@
    "address": "0xDCEFD0",
    "size": 292,
    "frames": 10
+  },
+  "models.envelope": {
+   "kind": "model",
+   "address": "0xDCFC64",
+   "size": 2408,
+   "vertices": 80
   }
  },
  "resources": {
@@ -91,6 +97,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.leaf",
+   "unit": "plain"
+  },
+  {
+   "key": "models.envelope",
+   "part": "director",
+   "label": "Envelope model",
+   "doc": "The prim model envelope (a mesh of 80 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.envelope",
    "unit": "plain"
   }
  ],

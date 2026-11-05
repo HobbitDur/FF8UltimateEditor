@@ -45,6 +45,24 @@
    "address": "0xCF0740",
    "size": 428,
    "frames": 16
+  },
+  "models.at_cf26f8": {
+   "kind": "model",
+   "address": "0xCF26F8",
+   "size": 3104,
+   "vertices": 125
+  },
+  "models.at_cf08ec": {
+   "kind": "model",
+   "address": "0xCF08EC",
+   "size": 2256,
+   "vertices": 73
+  },
+  "models.at_cf11bc": {
+   "kind": "model",
+   "address": "0xCF11BC",
+   "size": 5436,
+   "vertices": 240
   }
  },
  "resources": {
@@ -118,6 +136,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_cf0740",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_cf26f8",
+   "part": "timeline",
+   "label": "Model CF26F8",
+   "doc": "The prim model at 0xCF26F8 (a mesh of 125 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_cf26f8",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_cf08ec",
+   "part": "timeline",
+   "label": "Model CF08EC",
+   "doc": "The prim model at 0xCF08EC (a mesh of 73 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_cf08ec",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_cf11bc",
+   "part": "timeline",
+   "label": "Model CF11BC",
+   "doc": "The prim model at 0xCF11BC (a mesh of 240 vertices, 145 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_cf11bc",
    "unit": "plain"
   }
  ],

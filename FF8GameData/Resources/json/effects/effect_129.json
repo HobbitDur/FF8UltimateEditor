@@ -59,6 +59,12 @@
    "address": "0x12238C0",
    "size": 248,
    "frames": 9
+  },
+  "model_data.main": {
+   "kind": "model",
+   "address": "0x12272DC",
+   "size": 7208,
+   "vertices": 176
   }
  },
  "resources": {
@@ -159,6 +165,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.main",
+   "part": "main",
+   "label": "Main model",
+   "doc": "The prim model main (a mesh of 176 vertices, 160 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.main",
    "unit": "plain"
   }
  ],

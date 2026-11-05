@@ -40,6 +40,12 @@
    "address": "0xDD0980",
    "size": 428,
    "frames": 16
+  },
+  "models.crater": {
+   "kind": "model",
+   "address": "0xDD5564",
+   "size": 4308,
+   "vertices": 142
   }
  },
  "resources": {
@@ -113,6 +119,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "models.crater",
+   "part": "director",
+   "label": "Crater model",
+   "doc": "The prim model crater (a mesh of 142 vertices, 261 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.crater",
    "unit": "plain"
   }
  ],

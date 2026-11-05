@@ -68,6 +68,12 @@
    "kind": "camera",
    "address": "0x16358D8",
    "size": 4908
+  },
+  "models.at_16350f0": {
+   "kind": "model",
+   "address": "0x16350F0",
+   "size": 2024,
+   "vertices": 59
   }
  },
  "resources": {
@@ -640,6 +646,17 @@
    "min": 0,
    "max": 200,
    "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_16350f0",
+   "part": "timing",
+   "label": "Model 16350F0",
+   "doc": "The prim model at 0x16350F0 (a mesh of 59 vertices, 42 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_16350f0",
    "unit": "plain"
   }
  ],

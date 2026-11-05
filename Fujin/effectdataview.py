@@ -14,6 +14,9 @@ when it was made: docs/fujin-effect-description.md), each entry edited by kind:
   blend: value / velocity / acceleration) and their keys; its models kept as they are. A port's
   layout has a capacity (the state block its code decodes it into): more objects or tracks than it
   holds are not applied;
+- model: a prim model (FF8GameData.psxgpu.primmodel, Fujin.modeleditor): its vertices and primitives
+  (kind, vertices, colours, texture corners), drawn in a preview, scaled or moved as a whole. A
+  model keeps its vertices (its code reads them by number; same_size: its primitives too);
 - camera: what it holds, read-only (the Camera tab edits it: its effect_NNN.bcam replaces it in the
   game).
 
@@ -30,6 +33,7 @@ from PyQt6.QtWidgets import (QComboBox, QFormLayout, QHBoxLayout, QHeaderView, Q
 
 from FF8GameData.psxgpu.primlayout import TRACKS, Track, encode_layout, parse_layout, state_size
 from FF8GameData.psxgpu.spritesequence import SpriteFrame, encode_sequence, parse_sequence
+from Fujin.modeleditor import ModelEditor
 
 NO_DATA = ("No data of its own: only a new effect made with the exe open has some (Description, New effect). "
            "Fujin's descriptions read the exe's data (exe_data).")
@@ -551,6 +555,8 @@ class EffectDataView(QWidget):
         self.sequence = SequenceEditor(vram)
         self.layout_editor = LayoutEditor()
         self.layout_editor.edited.connect(self._edited)
+        self.model_editor = ModelEditor()
+        self.model_editor.edited.connect(self._edited)
         self.sound = QSpinBox()
         self.sound.setRange(0, 0x7FFFFFFF)
         self.sound_archive = QLabel()
@@ -578,7 +584,8 @@ class EffectDataView(QWidget):
         self.summary.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.pages = QStackedWidget()
         self.pages_by_kind = {}
-        for kind, page in (("seq", self.sequence), ("layout", self.layout_editor), ("sound", sound_page),
+        for kind, page in (("seq", self.sequence), ("layout", self.layout_editor), ("model", self.model_editor),
+                           ("sound", sound_page),
                            ("table", self.table), ("name", name_page), ("pointers", self.pointers_page),
                            ("summary", self.summary)):
             self.pages_by_kind[kind] = self.pages.addWidget(page)
@@ -653,6 +660,10 @@ class EffectDataView(QWidget):
         elif kind == "layout":
             self.layout_editor.capacity = entry.get("capacity")
             self.layout_editor.load(data)
+        elif kind == "model":
+            self.model_editor.fixed_vertices = entry.get("vertices")
+            self.model_editor.same_size = bool(entry.get("same_size"))
+            self.model_editor.load(data)
         elif kind == "sound":
             self.sound.blockSignals(True)
             self.sound.setValue(struct.unpack_from("<I", data)[0] if len(data) >= 4 else 0)
@@ -714,8 +725,8 @@ class EffectDataView(QWidget):
         """The shown entry as edited (not applied yet)."""
         entry = dict(self.entry())
         kind = entry.get("kind")
-        if kind in ("seq", "layout"):
-            data = (self.sequence if kind == "seq" else self.layout_editor).data()
+        if kind in ("seq", "layout", "model"):
+            data = {"seq": self.sequence, "layout": self.layout_editor, "model": self.model_editor}[kind].data()
             if data is not None:
                 entry["hex"] = data.hex()
         elif kind == "sound":

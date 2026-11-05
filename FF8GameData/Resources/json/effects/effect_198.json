@@ -47,6 +47,36 @@
    "address": "0xCF5E44",
    "size": 528,
    "frames": 16
+  },
+  "models.muzzle_flash": {
+   "kind": "model",
+   "address": "0xCF9834",
+   "size": 3320,
+   "vertices": 98
+  },
+  "models.cone": {
+   "kind": "model",
+   "address": "0xCFA52C",
+   "size": 2360,
+   "vertices": 80
+  },
+  "models.beam": {
+   "kind": "model",
+   "address": "0xCF6394",
+   "size": 10648,
+   "vertices": 350
+  },
+  "models.beam_shadow": {
+   "kind": "model",
+   "address": "0xCF8D2C",
+   "size": 2824,
+   "vertices": 104
+  },
+  "models.ground_ring": {
+   "kind": "model",
+   "address": "0xCFAE64",
+   "size": 1176,
+   "vertices": 43
   }
  },
  "resources": {
@@ -114,6 +144,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "models.muzzle_flash",
+   "part": "shot",
+   "label": "Muzzle flash model",
+   "doc": "The prim model muzzle flash (a mesh of 98 vertices, 96 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.muzzle_flash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.cone",
+   "part": "shot",
+   "label": "Cone model",
+   "doc": "The prim model cone (a mesh of 80 vertices, 60 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.cone",
+   "unit": "plain"
+  },
+  {
+   "key": "models.beam",
+   "part": "shot",
+   "label": "Beam model",
+   "doc": "The prim model beam (a mesh of 350 vertices, 328 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.beam",
+   "unit": "plain"
+  },
+  {
+   "key": "models.beam_shadow",
+   "part": "shot",
+   "label": "Beam shadow model",
+   "doc": "The prim model beam shadow (a mesh of 104 vertices, 82 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.beam_shadow",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ground_ring",
+   "part": "shot",
+   "label": "Ground ring model",
+   "doc": "The prim model ground ring (a mesh of 43 vertices, 30 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ground_ring",
    "unit": "plain"
   }
  ],

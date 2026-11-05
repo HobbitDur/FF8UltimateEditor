@@ -71,6 +71,12 @@
    "address": "0x11FA2CC",
    "size": 244,
    "frames": 9
+  },
+  "model_data.beam": {
+   "kind": "model",
+   "address": "0x11FA580",
+   "size": 6600,
+   "vertices": 220
   }
  },
  "resources": {
@@ -193,6 +199,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.beam",
+   "part": "sweep",
+   "label": "Beam model",
+   "doc": "The prim model beam (a mesh of 220 vertices, 160 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.beam",
    "unit": "plain"
   }
  ],

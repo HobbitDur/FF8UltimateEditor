@@ -81,6 +81,12 @@
    "address": "0x111D0F8",
    "size": 532,
    "frames": 20
+  },
+  "model_data.shard": {
+   "kind": "model",
+   "address": "0x111D30C",
+   "size": 280,
+   "vertices": 12
   }
  },
  "resources": {
@@ -231,6 +237,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.shard",
+   "part": "master",
+   "label": "Shard model",
+   "doc": "The prim model shard (a mesh of 12 vertices, 6 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.shard",
    "unit": "plain"
   }
  ],

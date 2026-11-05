@@ -59,6 +59,36 @@
    "address": "0xD09C60",
    "size": 428,
    "frames": 16
+  },
+  "models.ground_flash": {
+   "kind": "model",
+   "address": "0xD0A978",
+   "size": 1008,
+   "vertices": 33
+  },
+  "models.cone": {
+   "kind": "model",
+   "address": "0xD0AFE0",
+   "size": 1192,
+   "vertices": 48
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xD0B488",
+   "size": 2216,
+   "vertices": 80
+  },
+  "models.debris": {
+   "kind": "model",
+   "address": "0xD0AD68",
+   "size": 632,
+   "vertices": 14
+  },
+  "models.impact_flash": {
+   "kind": "model",
+   "address": "0xD09FB8",
+   "size": 2496,
+   "vertices": 91
   }
  },
  "resources": {
@@ -148,6 +178,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.bone_smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ground_flash",
+   "part": "shot",
+   "label": "Ground flash model",
+   "doc": "The prim model ground flash (a mesh of 33 vertices, 32 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ground_flash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.cone",
+   "part": "shot",
+   "label": "Cone model",
+   "doc": "The prim model cone (a mesh of 48 vertices, 32 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.cone",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "shot",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 80 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.debris",
+   "part": "shot",
+   "label": "Debris model",
+   "doc": "The prim model debris (a mesh of 14 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "models.impact_flash",
+   "part": "shot",
+   "label": "Impact flash model",
+   "doc": "The prim model impact flash (a mesh of 91 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.impact_flash",
    "unit": "plain"
   }
  ],

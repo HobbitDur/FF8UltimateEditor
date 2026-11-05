@@ -53,6 +53,42 @@
    "address": "0x16269DC",
    "size": 352,
    "frames": 13
+  },
+  "models.morph": {
+   "kind": "model",
+   "address": "0x1627970",
+   "size": 2216,
+   "vertices": 80
+  },
+  "models.big_rune1": {
+   "kind": "model",
+   "address": "0x1627380",
+   "size": 872,
+   "vertices": 32
+  },
+  "models.big_rune2": {
+   "kind": "model",
+   "address": "0x1628218",
+   "size": 3560,
+   "vertices": 128
+  },
+  "models.column_flash": {
+   "kind": "model",
+   "address": "0x1627160",
+   "size": 544,
+   "vertices": 24
+  },
+  "models.column": {
+   "kind": "model",
+   "address": "0x1626F00",
+   "size": 608,
+   "vertices": 24
+  },
+  "models.rune": {
+   "kind": "model",
+   "address": "0x1626CF0",
+   "size": 528,
+   "vertices": 17
   }
  },
  "resources": {
@@ -253,6 +289,72 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.mote",
+   "unit": "plain"
+  },
+  {
+   "key": "models.morph",
+   "part": "emitter",
+   "label": "Morph model",
+   "doc": "The prim model morph (a mesh of 80 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.morph",
+   "unit": "plain"
+  },
+  {
+   "key": "models.big_rune1",
+   "part": "emitter",
+   "label": "Big rune1 model",
+   "doc": "The prim model big rune1 (a mesh of 32 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.big_rune1",
+   "unit": "plain"
+  },
+  {
+   "key": "models.big_rune2",
+   "part": "emitter",
+   "label": "Big rune2 model",
+   "doc": "The prim model big rune2 (a mesh of 128 vertices, 104 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.big_rune2",
+   "unit": "plain"
+  },
+  {
+   "key": "models.column_flash",
+   "part": "emitter",
+   "label": "Column flash model",
+   "doc": "The prim model column flash (a mesh of 24 vertices, 26 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.column_flash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.column",
+   "part": "emitter",
+   "label": "Column model",
+   "doc": "The prim model column (a mesh of 24 vertices, 26 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.column",
+   "unit": "plain"
+  },
+  {
+   "key": "models.rune",
+   "part": "emitter",
+   "label": "Rune model",
+   "doc": "The prim model rune (a mesh of 17 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.rune",
    "unit": "plain"
   }
  ],

@@ -41,6 +41,12 @@
    "address": "0x1023A60",
    "size": 1980,
    "capacity": 188
+  },
+  "model_data.debris": {
+   "kind": "model",
+   "address": "0x102421C",
+   "size": 696,
+   "vertices": 28
   }
  },
  "resources": {
@@ -97,6 +103,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.orbit",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.debris",
+   "part": "play",
+   "label": "Debris model",
+   "doc": "The prim model debris (a mesh of 28 vertices, 18 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.debris",
    "unit": "plain"
   }
  ],

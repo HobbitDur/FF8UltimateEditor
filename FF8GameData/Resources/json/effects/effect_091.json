@@ -64,6 +64,12 @@
    "address": "0x15430E8",
    "size": 324,
    "frames": 12
+  },
+  "models.at_154322c": {
+   "kind": "model",
+   "address": "0x154322C",
+   "size": 96,
+   "vertices": 4
   }
  },
  "resources": {
@@ -195,6 +201,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_15430e8",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_154322c",
+   "part": "director",
+   "label": "Model 154322C",
+   "doc": "The prim model at 0x154322C (a mesh of 4 vertices, 1 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_154322c",
    "unit": "plain"
   }
  ],

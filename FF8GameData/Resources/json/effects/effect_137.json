@@ -53,6 +53,18 @@
    "address": "0x11E91A0",
    "size": 344,
    "frames": 12
+  },
+  "model_data.main": {
+   "kind": "model",
+   "address": "0x11E92F8",
+   "size": 6600,
+   "vertices": 216
+  },
+  "model_data.chunk": {
+   "kind": "model",
+   "address": "0x11EACC0",
+   "size": 336,
+   "vertices": 8
   }
  },
  "resources": {
@@ -142,6 +154,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spray",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.main",
+   "part": "blast",
+   "label": "Main model",
+   "doc": "The prim model main (a mesh of 216 vertices, 168 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.main",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.chunk",
+   "part": "blast",
+   "label": "Chunk model",
+   "doc": "The prim model chunk (a mesh of 8 vertices, 12 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.chunk",
    "unit": "plain"
   }
  ],

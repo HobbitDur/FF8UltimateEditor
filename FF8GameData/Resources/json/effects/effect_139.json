@@ -41,6 +41,13 @@
    "address": "0x11DAB70",
    "size": 9900,
    "capacity": 1196
+  },
+  "model_data.at_11d4e90": {
+   "kind": "model",
+   "address": "0x11D4E90",
+   "size": 9248,
+   "vertices": 201,
+   "same_size": true
   }
  },
  "resources": {
@@ -97,6 +104,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@layouts.main",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.at_11d4e90",
+   "part": "main",
+   "label": "Model 11D4E90",
+   "doc": "The prim model at 0x11D4E90 (a mesh of 201 vertices, 380 primitives: its code copies it whole into a block of its size: an edited one keeps its vertices and its size (move vertices, change colours and texture corners))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.at_11d4e90",
    "unit": "plain"
   }
  ],

@@ -41,6 +41,42 @@
    "address": "0x1594950",
    "size": 68,
    "frames": 4
+  },
+  "models.at_1592794": {
+   "kind": "model",
+   "address": "0x1592794",
+   "size": 124,
+   "vertices": 5
+  },
+  "models.at_1592810": {
+   "kind": "model",
+   "address": "0x1592810",
+   "size": 124,
+   "vertices": 5
+  },
+  "models.at_1591c44": {
+   "kind": "model",
+   "address": "0x1591C44",
+   "size": 1000,
+   "vertices": 48
+  },
+  "models.at_159202c": {
+   "kind": "model",
+   "address": "0x159202C",
+   "size": 1896,
+   "vertices": 160
+  },
+  "models.at_159346c": {
+   "kind": "model",
+   "address": "0x159346C",
+   "size": 96,
+   "vertices": 4
+  },
+  "models.at_15934cc": {
+   "kind": "model",
+   "address": "0x15934CC",
+   "size": 136,
+   "vertices": 6
   }
  },
  "resources": {
@@ -174,6 +210,72 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_1594950",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_1592794",
+   "part": "scanner",
+   "label": "Model 1592794",
+   "doc": "The prim model at 0x1592794 (a mesh of 5 vertices, 3 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_1592794",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_1592810",
+   "part": "scanner",
+   "label": "Model 1592810",
+   "doc": "The prim model at 0x1592810 (a mesh of 5 vertices, 3 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_1592810",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_1591c44",
+   "part": "scanner",
+   "label": "Model 1591C44",
+   "doc": "The prim model at 0x1591C44 (a mesh of 48 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_1591c44",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_159202c",
+   "part": "scanner",
+   "label": "Model 159202C",
+   "doc": "The prim model at 0x159202C (a mesh of 160 vertices, 40 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_159202c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_159346c",
+   "part": "scanner",
+   "label": "Model 159346C",
+   "doc": "The prim model at 0x159346C (a mesh of 4 vertices, 1 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_159346c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15934cc",
+   "part": "scanner",
+   "label": "Model 15934CC",
+   "doc": "The prim model at 0x15934CC (a mesh of 6 vertices, 2 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15934cc",
    "unit": "plain"
   }
  ],

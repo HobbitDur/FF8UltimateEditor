@@ -94,6 +94,18 @@
    "address": "0x12C5794",
    "size": 404,
    "frames": 15
+  },
+  "model_data.debris": {
+   "kind": "model",
+   "address": "0x12C7230",
+   "size": 496,
+   "vertices": 12
+  },
+  "model_data.column": {
+   "kind": "model",
+   "address": "0x12C5928",
+   "size": 6408,
+   "vertices": 208
   }
  },
  "resources": {
@@ -255,6 +267,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.debris",
+   "part": "director",
+   "label": "Debris model",
+   "doc": "The prim model debris (a mesh of 12 vertices, 20 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.column",
+   "part": "director",
+   "label": "Column model",
+   "doc": "The prim model column (a mesh of 208 vertices, 144 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.column",
    "unit": "plain"
   }
  ],

@@ -59,6 +59,18 @@
    "address": "0x106EAF4",
    "size": 324,
    "frames": 12
+  },
+  "model_data.tube_a": {
+   "kind": "model",
+   "address": "0x106EDE4",
+   "size": 3344,
+   "vertices": 164
+  },
+  "model_data.tube_b": {
+   "kind": "model",
+   "address": "0x106FAF4",
+   "size": 3344,
+   "vertices": 164
   }
  },
  "resources": {
@@ -148,6 +160,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spit",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.tube_a",
+   "part": "main",
+   "label": "Tube a model",
+   "doc": "The prim model tube a (a mesh of 164 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.tube_a",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.tube_b",
+   "part": "main",
+   "label": "Tube b model",
+   "doc": "The prim model tube b (a mesh of 164 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.tube_b",
    "unit": "plain"
   }
  ],

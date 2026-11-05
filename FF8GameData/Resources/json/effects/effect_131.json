@@ -41,6 +41,18 @@
    "address": "0x1219078",
    "size": 480,
    "frames": 18
+  },
+  "model_data.model_1": {
+   "kind": "model",
+   "address": "0x1219258",
+   "size": 5248,
+   "vertices": 165
+  },
+  "model_data.model_2": {
+   "kind": "model",
+   "address": "0x121A6D8",
+   "size": 5248,
+   "vertices": 165
   }
  },
  "resources": {
@@ -108,6 +120,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.bubble",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.model_1",
+   "part": "emitter",
+   "label": "Model 1 model",
+   "doc": "The prim model model 1 (a mesh of 165 vertices, 120 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.model_1",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.model_2",
+   "part": "emitter",
+   "label": "Model 2 model",
+   "doc": "The prim model model 2 (a mesh of 165 vertices, 120 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.model_2",
    "unit": "plain"
   }
  ],

@@ -35,6 +35,12 @@
    "address": "0xD6BDE8",
    "size": 428,
    "frames": 16
+  },
+  "models.gas": {
+   "kind": "model",
+   "address": "0xD6EDE4",
+   "size": 2456,
+   "vertices": 122
   }
  },
  "resources": {
@@ -91,6 +97,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.sparkle",
+   "unit": "plain"
+  },
+  {
+   "key": "models.gas",
+   "part": "director",
+   "label": "Gas model",
+   "doc": "The prim model gas (a mesh of 122 vertices, 60 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.gas",
    "unit": "plain"
   }
  ],

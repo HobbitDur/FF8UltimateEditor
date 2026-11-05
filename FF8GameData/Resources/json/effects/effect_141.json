@@ -47,6 +47,30 @@
    "address": "0xDDF64C",
    "size": 292,
    "frames": 10
+  },
+  "models.sparkle": {
+   "kind": "model",
+   "address": "0xEA7E78",
+   "size": 376,
+   "vertices": 18
+  },
+  "models.slash": {
+   "kind": "model",
+   "address": "0xDDFA28",
+   "size": 2536,
+   "vertices": 96
+  },
+  "models.streak": {
+   "kind": "model",
+   "address": "0xDE0410",
+   "size": 640,
+   "vertices": 21
+  },
+  "models.final": {
+   "kind": "model",
+   "address": "0xDE0690",
+   "size": 4080,
+   "vertices": 97
   }
  },
  "resources": {
@@ -114,6 +138,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "models.sparkle",
+   "part": "controller",
+   "label": "Sparkle model",
+   "doc": "The prim model sparkle (a mesh of 18 vertices, 8 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.sparkle",
+   "unit": "plain"
+  },
+  {
+   "key": "models.slash",
+   "part": "controller",
+   "label": "Slash model",
+   "doc": "The prim model slash (a mesh of 96 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.slash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.streak",
+   "part": "controller",
+   "label": "Streak model",
+   "doc": "The prim model streak (a mesh of 21 vertices, 20 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.streak",
+   "unit": "plain"
+  },
+  {
+   "key": "models.final",
+   "part": "controller",
+   "label": "Final model",
+   "doc": "The prim model final (a mesh of 97 vertices, 96 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.final",
    "unit": "plain"
   }
  ],

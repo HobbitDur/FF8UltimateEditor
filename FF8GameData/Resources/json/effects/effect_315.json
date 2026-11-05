@@ -57,6 +57,30 @@
    "address": "0xCD2F68",
    "size": 560,
    "frames": 21
+  },
+  "models.splash": {
+   "kind": "model",
+   "address": "0xCD3F08",
+   "size": 2216,
+   "vertices": 80
+  },
+  "models.puddle": {
+   "kind": "model",
+   "address": "0xCD47B0",
+   "size": 4080,
+   "vertices": 121
+  },
+  "models.column": {
+   "kind": "model",
+   "address": "0xCD3A48",
+   "size": 1216,
+   "vertices": 48
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xCD3198",
+   "size": 2224,
+   "vertices": 81
   }
  },
  "resources": {
@@ -152,6 +176,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "models.splash",
+   "part": "master",
+   "label": "Splash model",
+   "doc": "The prim model splash (a mesh of 80 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.splash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.puddle",
+   "part": "master",
+   "label": "Puddle model",
+   "doc": "The prim model puddle (a mesh of 121 vertices, 120 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.puddle",
+   "unit": "plain"
+  },
+  {
+   "key": "models.column",
+   "part": "master",
+   "label": "Column model",
+   "doc": "The prim model column (a mesh of 48 vertices, 33 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.column",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "master",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 81 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
    "unit": "plain"
   }
  ],

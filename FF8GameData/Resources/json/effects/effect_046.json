@@ -76,6 +76,18 @@
    "address": "0x15B8BA4",
    "size": 428,
    "frames": 16
+  },
+  "models.a": {
+   "kind": "model",
+   "address": "0x15C0D58",
+   "size": 2816,
+   "vertices": 77
+  },
+  "models.b": {
+   "kind": "model",
+   "address": "0x15C1858",
+   "size": 2816,
+   "vertices": 77
   }
  },
  "resources": {
@@ -355,6 +367,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.flipbook_2",
+   "unit": "plain"
+  },
+  {
+   "key": "models.a",
+   "part": "emitter",
+   "label": "A model",
+   "doc": "The prim model a (a mesh of 77 vertices, 60 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.a",
+   "unit": "plain"
+  },
+  {
+   "key": "models.b",
+   "part": "emitter",
+   "label": "B model",
+   "doc": "The prim model b (a mesh of 77 vertices, 60 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.b",
    "unit": "plain"
   }
  ],

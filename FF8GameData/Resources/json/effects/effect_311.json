@@ -41,6 +41,13 @@
    "address": "0x101AF28",
    "size": 448,
    "frames": 50
+  },
+  "model_data.at_101b0e8": {
+   "kind": "model",
+   "address": "0x101B0E8",
+   "size": 7632,
+   "vertices": 241,
+   "same_size": true
   }
  },
  "resources": {
@@ -97,6 +104,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.particle",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.at_101b0e8",
+   "part": "main",
+   "label": "Model 101B0E8",
+   "doc": "The prim model at 0x101B0E8 (a mesh of 241 vertices, 240 primitives: its code copies it whole into a block of its size: an edited one keeps its vertices and its size (move vertices, change colours and texture corners))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.at_101b0e8",
    "unit": "plain"
   }
  ],

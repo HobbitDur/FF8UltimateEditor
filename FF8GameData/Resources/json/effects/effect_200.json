@@ -64,6 +64,60 @@
    "address": "0xE2DFE4",
    "size": 376,
    "frames": 14
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xE316B4",
+   "size": 3304,
+   "vertices": 96
+  },
+  "models.flash": {
+   "kind": "model",
+   "address": "0xE2E15C",
+   "size": 6016,
+   "vertices": 195
+  },
+  "models.slash_b": {
+   "kind": "model",
+   "address": "0xE33074",
+   "size": 1976,
+   "vertices": 42
+  },
+  "models.slash_a": {
+   "kind": "model",
+   "address": "0xE328BC",
+   "size": 1976,
+   "vertices": 42
+  },
+  "models.frame": {
+   "kind": "model",
+   "address": "0xE2FFB4",
+   "size": 4216,
+   "vertices": 144
+  },
+  "models.wavering": {
+   "kind": "model",
+   "address": "0xE3239C",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.tring": {
+   "kind": "model",
+   "address": "0xE3102C",
+   "size": 1672,
+   "vertices": 60
+  },
+  "models.shard": {
+   "kind": "model",
+   "address": "0xE2F8DC",
+   "size": 1752,
+   "vertices": 70
+  },
+  "models.wavetrail": {
+   "kind": "model",
+   "address": "0xE3260C",
+   "size": 688,
+   "vertices": 27
   }
  },
  "resources": {},
@@ -188,6 +242,105 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.tburst",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "director",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 96 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flash",
+   "part": "director",
+   "label": "Flash model",
+   "doc": "The prim model flash (a mesh of 195 vertices, 192 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.slash_b",
+   "part": "director",
+   "label": "Slash b model",
+   "doc": "The prim model slash b (a mesh of 42 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.slash_b",
+   "unit": "plain"
+  },
+  {
+   "key": "models.slash_a",
+   "part": "director",
+   "label": "Slash a model",
+   "doc": "The prim model slash a (a mesh of 42 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.slash_a",
+   "unit": "plain"
+  },
+  {
+   "key": "models.frame",
+   "part": "director",
+   "label": "Frame model",
+   "doc": "The prim model frame (a mesh of 144 vertices, 108 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.frame",
+   "unit": "plain"
+  },
+  {
+   "key": "models.wavering",
+   "part": "director",
+   "label": "Wavering model",
+   "doc": "The prim model wavering (a mesh of 25 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wavering",
+   "unit": "plain"
+  },
+  {
+   "key": "models.tring",
+   "part": "director",
+   "label": "Tring model",
+   "doc": "The prim model tring (a mesh of 60 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.tring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.shard",
+   "part": "director",
+   "label": "Shard model",
+   "doc": "The prim model shard (a mesh of 70 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shard",
+   "unit": "plain"
+  },
+  {
+   "key": "models.wavetrail",
+   "part": "director",
+   "label": "Wavetrail model",
+   "doc": "The prim model wavetrail (a mesh of 27 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wavetrail",
    "unit": "plain"
   }
  ],

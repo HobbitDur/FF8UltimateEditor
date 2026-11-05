@@ -47,6 +47,48 @@
    "address": "0xDAC47C",
    "size": 292,
    "frames": 10
+  },
+  "models.ring_a": {
+   "kind": "model",
+   "address": "0xDAD510",
+   "size": 1048,
+   "vertices": 36
+  },
+  "models.ring_b": {
+   "kind": "model",
+   "address": "0xDAD928",
+   "size": 160,
+   "vertices": 6
+  },
+  "models.ring_c": {
+   "kind": "model",
+   "address": "0xDAD9C8",
+   "size": 4080,
+   "vertices": 97
+  },
+  "models.ring_d": {
+   "kind": "model",
+   "address": "0xDAE9B8",
+   "size": 4360,
+   "vertices": 108
+  },
+  "models.sparkle": {
+   "kind": "model",
+   "address": "0xEA32D0",
+   "size": 376,
+   "vertices": 18
+  },
+  "models.slash": {
+   "kind": "model",
+   "address": "0xDAC858",
+   "size": 2536,
+   "vertices": 96
+  },
+  "models.streak": {
+   "kind": "model",
+   "address": "0xDAD240",
+   "size": 720,
+   "vertices": 25
   }
  },
  "resources": {
@@ -114,6 +156,83 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring_a",
+   "part": "controller",
+   "label": "Ring a model",
+   "doc": "The prim model ring a (a mesh of 36 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring_a",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring_b",
+   "part": "controller",
+   "label": "Ring b model",
+   "doc": "The prim model ring b (a mesh of 6 vertices, 2 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring_b",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring_c",
+   "part": "controller",
+   "label": "Ring c model",
+   "doc": "The prim model ring c (a mesh of 97 vertices, 96 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring_c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring_d",
+   "part": "controller",
+   "label": "Ring d model",
+   "doc": "The prim model ring d (a mesh of 108 vertices, 96 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring_d",
+   "unit": "plain"
+  },
+  {
+   "key": "models.sparkle",
+   "part": "controller",
+   "label": "Sparkle model",
+   "doc": "The prim model sparkle (a mesh of 18 vertices, 8 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.sparkle",
+   "unit": "plain"
+  },
+  {
+   "key": "models.slash",
+   "part": "controller",
+   "label": "Slash model",
+   "doc": "The prim model slash (a mesh of 96 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.slash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.streak",
+   "part": "controller",
+   "label": "Streak model",
+   "doc": "The prim model streak (a mesh of 25 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.streak",
    "unit": "plain"
   }
  ],

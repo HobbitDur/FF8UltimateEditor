@@ -278,3 +278,109 @@ def test_every_port_flipbook_is_a_sequence_its_code_plays_whole():
         assert any(param["key"] == key and param["type"] == "seq" and param["default"] == f"@{key}"
                    for param in load_description(effect)["params"]), (effect, key)
     assert own_data(load_description(found[0][0]), exe)[found[0][1]]["frames"] == found[0][2]["frames"]
+
+
+def _models():
+    """(effect, key, entry) of every prim model of the descriptions' exe data."""
+    from Fujin.effectprogram import described_effects
+    for effect in described_effects():
+        for key, entry in load_description(effect).get("exe_data", {}).items():
+            if isinstance(entry, dict) and entry.get("kind") == "model":
+                yield effect, key, entry
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_models_encode_back():
+    """Every prim model of the descriptions (Effect_RenderPrimModel's meshes) parsed and encoded again, byte for byte,
+    with the vertices its entry says its code reads; an entry may hold more after it (Double's morph pair)."""
+    from FF8GameData.psxgpu.primmodel import encode_model, parse_model
+    exe = EXE.read_bytes()
+    found = list(_models())
+    assert len(found) >= 400
+    for effect, key, entry in found:
+        address = int(entry["address"], 16)
+        at = address - 0x400000
+        model = parse_model(exe, at, address)
+        assert model is not None and model.size <= entry["size"], (effect, key)
+        assert encode_model(model) == exe[at:at + model.size], (effect, key)
+        assert len(model.vertices) == entry["vertices"], (effect, key)
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_every_port_model_is_a_parameter_that_keeps_its_vertices():
+    """Each port effect's prim model (its exe data has the vertex count its code reads): a model parameter on it, and a
+    copy keeps that count (FFNx fx_params.h model(): one with another count keeps the game's)."""
+    from Fujin.effectprogram import own_data
+    ports = [(effect, key, entry) for effect, key, entry in _models()
+             if any(param["key"] == key for param in load_description(effect)["params"])]
+    assert len(ports) >= 426 and len({effect for effect, _key, _entry in ports}) >= 114
+    for effect, key, _entry in ports:
+        assert any(param["key"] == key and param["type"] == "model" and param["default"] == f"@{key}"
+                   for param in load_description(effect)["params"]), (effect, key)
+    effect, key, entry = ports[0]
+    assert own_data(load_description(effect), EXE.read_bytes())[key]["vertices"] == entry["vertices"]
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe")
+def test_the_model_editor_scales_recolours_and_keeps_what_follows(qapp):
+    """The Data tab's model page: Double's big rune scaled to half, a primitive recoloured; its vertices (its code
+    reads them by number) are neither added nor removed; its morph pair's second model is kept."""
+    from FF8GameData.psxgpu.primmodel import parse_model
+    from Fujin.effectdataview import EffectDataView
+    new = new_effect(load_description(4), 300, "New double", EXE.read_bytes())
+    view = EffectDataView()
+    view.show_data(new)
+    view.select("big.model")
+    editor = view.model_editor
+    before = parse_model(bytes.fromhex(new["data"]["big.model"]["hex"]), 0, 0)
+    editor.scale.setValue(0.5)
+    editor.transform()
+    editor.primitives.item(0, 2).setText("FF0000")
+    edited = parse_model(bytes.fromhex(view.edited_entry()["hex"]), 0, 0)
+    assert edited.vertices[0][:3] == [round(v * 0.5) for v in before.vertices[0][:3]]
+    assert edited.primitives[0].colours == [(255, 0, 0)] and view.apply_button.isEnabled()
+    editor.remove_vertex()
+    assert len(editor.model.vertices) == 76 and "76" in editor.error.text()
+    editor.add_vertex()
+    assert len(editor.model.vertices) == 76
+    view.select("morph.model")
+    data = bytes.fromhex(new["data"]["morph.model"]["hex"])
+    view.model_editor.scale.setValue(2)
+    view.model_editor.transform()
+    out = bytes.fromhex(view.edited_entry()["hex"])
+    assert len(out) == len(data) and out[2268:] == data[2268:] and out[:2268] != data[:2268]
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+def test_a_port_effects_copy_draws_its_own_models(tmp_path):
+    """Triple's copy (a port effect) with its own models draws as the exe; with every model's vertices halved it draws
+    otherwise, as long (a smaller mesh may leave a few primitives on or off screen)."""
+    from FF8GameData.psxgpu.primmodel import encode_model, parse_model
+    from Fujin.effectparts import effect_schema
+    from Fujin.recorderbuild import RECORDER
+    if effect_schema(21) is None or not any(f["type"] == "model" for f in effect_schema(21)["fields"]):
+        pytest.skip("the recorder is not built with FFNx's effect sources that read models as parameters")
+    new = new_effect(load_description(21), 224, "New triple", EXE.read_bytes())
+
+    def record(effect, tag, *extra):
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(RECORDER), str(effect), f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}",
+                              f"slot3={BATTLE / 'c0m009.dat'}", "caster=0", "target=3", *extra],
+                             cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return [line.split(" ", 2)[2] if line.startswith("P ") else line for line in out.read_text().splitlines()
+                if line.startswith(("P ", "R "))]
+
+    original = record(21, "original")
+    assert record(224, "own", f"program={write_program(new, tmp_path / 'own.fxprog')}") == original
+    for key, entry in new["data"].items():
+        if isinstance(entry, dict) and entry.get("kind") == "model":
+            model = parse_model(bytes.fromhex(entry["hex"]), 0, 0)
+            for vertex in model.vertices:
+                vertex[:3] = [v // 2 for v in vertex[:3]]
+            entry["hex"] = encode_model(model).hex()
+    smaller = record(224, "smaller", f"program={write_program(new, tmp_path / 'smaller.fxprog')}")
+    frames = lambda lines: sum(line.startswith("R ") for line in lines)
+    assert smaller != original and frames(smaller) == frames(original)

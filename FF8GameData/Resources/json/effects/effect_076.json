@@ -34,6 +34,48 @@
    "kind": "sound",
    "address": "0xDE4148",
    "size": 4
+  },
+  "models.burst": {
+   "kind": "model",
+   "address": "0xDE2DE0",
+   "size": 216,
+   "vertices": 10
+  },
+  "models.spin": {
+   "kind": "model",
+   "address": "0xDE2EB8",
+   "size": 2288,
+   "vertices": 89
+  },
+  "models.rise": {
+   "kind": "model",
+   "address": "0xDE25E8",
+   "size": 520,
+   "vertices": 21
+  },
+  "models.debris": {
+   "kind": "model",
+   "address": "0xDE2470",
+   "size": 376,
+   "vertices": 18
+  },
+  "models.halo": {
+   "kind": "model",
+   "address": "0xDE27F0",
+   "size": 1520,
+   "vertices": 49
+  },
+  "models.flash2": {
+   "kind": "model",
+   "address": "0xDE37A8",
+   "size": 2120,
+   "vertices": 80
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xDE1748",
+   "size": 3368,
+   "vertices": 128
   }
  },
  "resources": {
@@ -172,6 +214,83 @@
    "min": 0,
    "max": 32767,
    "default": 1664,
+   "unit": "plain"
+  },
+  {
+   "key": "models.burst",
+   "part": "master",
+   "label": "Burst model",
+   "doc": "The prim model burst (a mesh of 10 vertices, 4 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "models.spin",
+   "part": "master",
+   "label": "Spin model",
+   "doc": "The prim model spin (a mesh of 89 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.spin",
+   "unit": "plain"
+  },
+  {
+   "key": "models.rise",
+   "part": "master",
+   "label": "Rise model",
+   "doc": "The prim model rise (a mesh of 21 vertices, 12 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "models.debris",
+   "part": "master",
+   "label": "Debris model",
+   "doc": "The prim model debris (a mesh of 18 vertices, 8 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "models.halo",
+   "part": "master",
+   "label": "Halo model",
+   "doc": "The prim model halo (a mesh of 49 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.halo",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flash2",
+   "part": "master",
+   "label": "Flash2 model",
+   "doc": "The prim model flash2 (a mesh of 80 vertices, 60 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flash2",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "master",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 128 vertices, 96 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
    "unit": "plain"
   }
  ],

@@ -41,6 +41,36 @@
    "address": "0xCE62A8",
    "size": 404,
    "frames": 15
+  },
+  "models.core": {
+   "kind": "model",
+   "address": "0xCEAB94",
+   "size": 920,
+   "vertices": 26
+  },
+  "models.pulse": {
+   "kind": "model",
+   "address": "0xCEAF2C",
+   "size": 856,
+   "vertices": 30
+  },
+  "models.screen_ring": {
+   "kind": "model",
+   "address": "0xCE643C",
+   "size": 5616,
+   "vertices": 169
+  },
+  "models.target_ring": {
+   "kind": "model",
+   "address": "0xCEA2E4",
+   "size": 2224,
+   "vertices": 81
+  },
+  "models.vortex": {
+   "kind": "model",
+   "address": "0xCE7A2C",
+   "size": 10424,
+   "vertices": 314
   }
  },
  "resources": {
@@ -97,6 +127,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "models.core",
+   "part": "controller",
+   "label": "Core model",
+   "doc": "The prim model core (a mesh of 26 vertices, 36 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.core",
+   "unit": "plain"
+  },
+  {
+   "key": "models.pulse",
+   "part": "controller",
+   "label": "Pulse model",
+   "doc": "The prim model pulse (a mesh of 30 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.pulse",
+   "unit": "plain"
+  },
+  {
+   "key": "models.screen_ring",
+   "part": "controller",
+   "label": "Screen ring model",
+   "doc": "The prim model screen ring (a mesh of 169 vertices, 168 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.screen_ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.target_ring",
+   "part": "controller",
+   "label": "Target ring model",
+   "doc": "The prim model target ring (a mesh of 81 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.target_ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.vortex",
+   "part": "controller",
+   "label": "Vortex model",
+   "doc": "The prim model vortex (a mesh of 314 vertices, 336 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.vortex",
    "unit": "plain"
   }
  ],

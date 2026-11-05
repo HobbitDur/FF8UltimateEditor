@@ -57,6 +57,42 @@
    "address": "0xDC35B8",
    "size": 460,
    "frames": 32
+  },
+  "models.streak": {
+   "kind": "model",
+   "address": "0xDC8BC4",
+   "size": 720,
+   "vertices": 25
+  },
+  "models.shard": {
+   "kind": "model",
+   "address": "0xDC8804",
+   "size": 960,
+   "vertices": 31
+  },
+  "models.energy": {
+   "kind": "model",
+   "address": "0xDC7F54",
+   "size": 2224,
+   "vertices": 81
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xDC3784",
+   "size": 6864,
+   "vertices": 217
+  },
+  "models.dome": {
+   "kind": "model",
+   "address": "0xDC5254",
+   "size": 7248,
+   "vertices": 217
+  },
+  "models.core": {
+   "kind": "model",
+   "address": "0xDC6EA4",
+   "size": 3304,
+   "vertices": 120
   }
  },
  "resources": {
@@ -163,6 +199,72 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "models.streak",
+   "part": "director",
+   "label": "Streak model",
+   "doc": "The prim model streak (a mesh of 25 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.streak",
+   "unit": "plain"
+  },
+  {
+   "key": "models.shard",
+   "part": "director",
+   "label": "Shard model",
+   "doc": "The prim model shard (a mesh of 31 vertices, 30 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shard",
+   "unit": "plain"
+  },
+  {
+   "key": "models.energy",
+   "part": "director",
+   "label": "Energy model",
+   "doc": "The prim model energy (a mesh of 81 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.energy",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "director",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 217 vertices, 216 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.dome",
+   "part": "director",
+   "label": "Dome model",
+   "doc": "The prim model dome (a mesh of 217 vertices, 216 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.dome",
+   "unit": "plain"
+  },
+  {
+   "key": "models.core",
+   "part": "director",
+   "label": "Core model",
+   "doc": "The prim model core (a mesh of 120 vertices, 96 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.core",
    "unit": "plain"
   }
  ],

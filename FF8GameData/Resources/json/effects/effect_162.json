@@ -64,6 +64,54 @@
    "address": "0xDA1B60",
    "size": 532,
    "frames": 20
+  },
+  "models.swipe": {
+   "kind": "model",
+   "address": "0xDA6700",
+   "size": 2712,
+   "vertices": 78
+  },
+  "models.shock": {
+   "kind": "model",
+   "address": "0xDA4488",
+   "size": 1336,
+   "vertices": 54
+  },
+  "models.glow": {
+   "kind": "model",
+   "address": "0xDA3A58",
+   "size": 1008,
+   "vertices": 33
+  },
+  "models.shard": {
+   "kind": "model",
+   "address": "0xDA3E48",
+   "size": 720,
+   "vertices": 25
+  },
+  "models.burst": {
+   "kind": "model",
+   "address": "0xDA4118",
+   "size": 496,
+   "vertices": 21
+  },
+  "models.rain": {
+   "kind": "model",
+   "address": "0xDA4308",
+   "size": 384,
+   "vertices": 15
+  },
+  "models.shell": {
+   "kind": "model",
+   "address": "0xDA7198",
+   "size": 5512,
+   "vertices": 168
+  },
+  "models.circle": {
+   "kind": "model",
+   "address": "0xDA2348",
+   "size": 5152,
+   "vertices": 93
   }
  },
  "resources": {
@@ -181,6 +229,94 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.swirl",
+   "unit": "plain"
+  },
+  {
+   "key": "models.swipe",
+   "part": "director",
+   "label": "Swipe model",
+   "doc": "The prim model swipe (a mesh of 78 vertices, 96 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.swipe",
+   "unit": "plain"
+  },
+  {
+   "key": "models.shock",
+   "part": "director",
+   "label": "Shock model",
+   "doc": "The prim model shock (a mesh of 54 vertices, 36 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shock",
+   "unit": "plain"
+  },
+  {
+   "key": "models.glow",
+   "part": "director",
+   "label": "Glow model",
+   "doc": "The prim model glow (a mesh of 33 vertices, 32 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "models.shard",
+   "part": "director",
+   "label": "Shard model",
+   "doc": "The prim model shard (a mesh of 25 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shard",
+   "unit": "plain"
+  },
+  {
+   "key": "models.burst",
+   "part": "director",
+   "label": "Burst model",
+   "doc": "The prim model burst (a mesh of 21 vertices, 12 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "models.rain",
+   "part": "director",
+   "label": "Rain model",
+   "doc": "The prim model rain (a mesh of 15 vertices, 12 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.rain",
+   "unit": "plain"
+  },
+  {
+   "key": "models.shell",
+   "part": "director",
+   "label": "Shell model",
+   "doc": "The prim model shell (a mesh of 168 vertices, 168 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shell",
+   "unit": "plain"
+  },
+  {
+   "key": "models.circle",
+   "part": "director",
+   "label": "Circle model",
+   "doc": "The prim model circle (a mesh of 93 vertices, 156 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.circle",
    "unit": "plain"
   }
  ],

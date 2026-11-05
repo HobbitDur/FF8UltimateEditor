@@ -59,6 +59,30 @@
    "address": "0xD17074",
    "size": 428,
    "frames": 16
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xD17B58",
+   "size": 616,
+   "vertices": 24
+  },
+  "models.flash": {
+   "kind": "model",
+   "address": "0xD17220",
+   "size": 1352,
+   "vertices": 56
+  },
+  "models.flash2": {
+   "kind": "model",
+   "address": "0xD17768",
+   "size": 1008,
+   "vertices": 33
+  },
+  "models.blast": {
+   "kind": "model",
+   "address": "0xD17DC0",
+   "size": 2216,
+   "vertices": 80
   }
  },
  "resources": {
@@ -148,6 +172,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "shot",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 24 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flash",
+   "part": "shot",
+   "label": "Flash model",
+   "doc": "The prim model flash (a mesh of 56 vertices, 36 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flash2",
+   "part": "shot",
+   "label": "Flash2 model",
+   "doc": "The prim model flash2 (a mesh of 33 vertices, 32 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flash2",
+   "unit": "plain"
+  },
+  {
+   "key": "models.blast",
+   "part": "shot",
+   "label": "Blast model",
+   "doc": "The prim model blast (a mesh of 80 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.blast",
    "unit": "plain"
   }
  ],

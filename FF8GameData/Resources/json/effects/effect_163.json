@@ -41,6 +41,66 @@
    "address": "0xD9B2AC",
    "size": 428,
    "frames": 16
+  },
+  "models.glow": {
+   "kind": "model",
+   "address": "0xD9E2D4",
+   "size": 2488,
+   "vertices": 99
+  },
+  "models.shard": {
+   "kind": "model",
+   "address": "0xD9D314",
+   "size": 640,
+   "vertices": 21
+  },
+  "models.chip": {
+   "kind": "model",
+   "address": "0xD9E1DC",
+   "size": 248,
+   "vertices": 6
+  },
+  "models.pillar": {
+   "kind": "model",
+   "address": "0xD9CE04",
+   "size": 1296,
+   "vertices": 37
+  },
+  "models.blade": {
+   "kind": "model",
+   "address": "0xD9FE54",
+   "size": 596,
+   "vertices": 20
+  },
+  "models.flash": {
+   "kind": "model",
+   "address": "0xD9EC8C",
+   "size": 4552,
+   "vertices": 186
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xD9B5D0",
+   "size": 5480,
+   "vertices": 176
+  },
+  "models.shock": {
+   "kind": "model",
+   "address": "0xD9D594",
+   "size": 1952,
+   "vertices": 65
+  },
+  "models.flare": {
+   "kind": "model",
+   "address": "0xD9DD34",
+   "size": 1192,
+   "vertices": 48
+  },
+  "models.wave": {
+   "kind": "model",
+   "address": "0xD9CB38",
+   "size": 716,
+   "vertices": 32
   }
  },
  "resources": {
@@ -108,6 +168,116 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.pillar",
+   "unit": "plain"
+  },
+  {
+   "key": "models.glow",
+   "part": "director",
+   "label": "Glow model",
+   "doc": "The prim model glow (a mesh of 99 vertices, 60 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "models.shard",
+   "part": "director",
+   "label": "Shard model",
+   "doc": "The prim model shard (a mesh of 21 vertices, 20 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shard",
+   "unit": "plain"
+  },
+  {
+   "key": "models.chip",
+   "part": "director",
+   "label": "Chip model",
+   "doc": "The prim model chip (a mesh of 6 vertices, 8 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.chip",
+   "unit": "plain"
+  },
+  {
+   "key": "models.pillar",
+   "part": "director",
+   "label": "Pillar model",
+   "doc": "The prim model pillar (a mesh of 37 vertices, 36 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.pillar",
+   "unit": "plain"
+  },
+  {
+   "key": "models.blade",
+   "part": "director",
+   "label": "Blade model",
+   "doc": "The prim model blade (a mesh of 20 vertices, 12 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.blade",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flash",
+   "part": "director",
+   "label": "Flash model",
+   "doc": "The prim model flash (a mesh of 186 vertices, 120 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "director",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 176 vertices, 160 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.shock",
+   "part": "director",
+   "label": "Shock model",
+   "doc": "The prim model shock (a mesh of 65 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shock",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flare",
+   "part": "director",
+   "label": "Flare model",
+   "doc": "The prim model flare (a mesh of 48 vertices, 32 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flare",
+   "unit": "plain"
+  },
+  {
+   "key": "models.wave",
+   "part": "director",
+   "label": "Wave model",
+   "doc": "The prim model wave (a mesh of 32 vertices, 15 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wave",
    "unit": "plain"
   }
  ],

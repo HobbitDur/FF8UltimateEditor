@@ -66,6 +66,12 @@
    "address": "0x153D1E8",
    "size": 220,
    "frames": 8
+  },
+  "models.at_153d2c4": {
+   "kind": "model",
+   "address": "0x153D2C4",
+   "size": 96,
+   "vertices": 4
   }
  },
  "resources": {
@@ -210,6 +216,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_153d1e8",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_153d2c4",
+   "part": "director",
+   "label": "Model 153D2C4",
+   "doc": "The prim model at 0x153D2C4 (a mesh of 4 vertices, 1 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_153d2c4",
    "unit": "plain"
   }
  ],

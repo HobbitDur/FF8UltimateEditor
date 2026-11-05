@@ -64,6 +64,36 @@
    "address": "0x13628FC",
    "size": 144,
    "frames": 5
+  },
+  "models.blade": {
+   "kind": "model",
+   "address": "0x13646EC",
+   "size": 2088,
+   "vertices": 144
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0x136401C",
+   "size": 1744,
+   "vertices": 69
+  },
+  "models.trail": {
+   "kind": "model",
+   "address": "0x1364F14",
+   "size": 1816,
+   "vertices": 110
+  },
+  "models.wing_a": {
+   "kind": "model",
+   "address": "0x1362E3C",
+   "size": 1488,
+   "vertices": 49
+  },
+  "models.wing_b": {
+   "kind": "model",
+   "address": "0x136372C",
+   "size": 1488,
+   "vertices": 49
   }
  },
  "resources": {
@@ -302,6 +332,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.blade",
+   "part": "blade",
+   "label": "Blade model",
+   "doc": "The prim model blade (a mesh of 144 vertices, 40 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.blade",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "blade",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 69 vertices, 44 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.trail",
+   "part": "blade",
+   "label": "Trail model",
+   "doc": "The prim model trail (a mesh of 110 vertices, 40 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.trail",
+   "unit": "plain"
+  },
+  {
+   "key": "models.wing_a",
+   "part": "blade",
+   "label": "Wing a model",
+   "doc": "The prim model wing a (a mesh of 49 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wing_a",
+   "unit": "plain"
+  },
+  {
+   "key": "models.wing_b",
+   "part": "blade",
+   "label": "Wing b model",
+   "doc": "The prim model wing b (a mesh of 49 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wing_b",
    "unit": "plain"
   }
  ],

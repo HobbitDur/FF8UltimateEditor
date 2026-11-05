@@ -72,6 +72,12 @@
    "address": "0xFD6814",
    "size": 428,
    "frames": 16
+  },
+  "models.at_fd6b6c": {
+   "kind": "model",
+   "address": "0xFD6B6C",
+   "size": 6680,
+   "vertices": 266
   }
  },
  "resources": {
@@ -211,6 +217,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_fd6814",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_fd6b6c",
+   "part": "timeline",
+   "label": "Model FD6B6C",
+   "doc": "The prim model at 0xFD6B6C (a mesh of 266 vertices, 288 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_fd6b6c",
    "unit": "plain"
   }
  ],

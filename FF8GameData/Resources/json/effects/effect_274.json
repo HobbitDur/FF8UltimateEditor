@@ -120,6 +120,24 @@
    "address": "0x10E7868",
    "size": 240,
    "frames": 8
+  },
+  "model_data.rock": {
+   "kind": "model",
+   "address": "0x10E9360",
+   "size": 464,
+   "vertices": 12
+  },
+  "model_data.kick": {
+   "kind": "model",
+   "address": "0x10E9530",
+   "size": 2816,
+   "vertices": 77
+  },
+  "model_data.wave": {
+   "kind": "model",
+   "address": "0x10E7E18",
+   "size": 5448,
+   "vertices": 208
   }
  },
  "resources": {
@@ -360,6 +378,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.rock",
+   "part": "punch",
+   "label": "Rock model",
+   "doc": "The prim model rock (a mesh of 12 vertices, 20 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.rock",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.kick",
+   "part": "punch",
+   "label": "Kick model",
+   "doc": "The prim model kick (a mesh of 77 vertices, 60 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.kick",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.wave",
+   "part": "punch",
+   "label": "Wave model",
+   "doc": "The prim model wave (a mesh of 208 vertices, 144 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.wave",
    "unit": "plain"
   }
  ],

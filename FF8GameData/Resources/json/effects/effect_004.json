@@ -44,22 +44,26 @@
   "column.model": {
    "kind": "model",
    "address": "0x163EB94",
-   "size": 608
+   "size": 608,
+   "vertices": 24
   },
   "columnflash.model": {
    "kind": "model",
    "address": "0x163EDF4",
-   "size": 544
+   "size": 544,
+   "vertices": 24
   },
   "rune.model": {
    "kind": "model",
    "address": "0x163F014",
-   "size": 528
+   "size": 528,
+   "vertices": 17
   },
   "big.model": {
    "kind": "model",
    "address": "0x163F224",
-   "size": 2268
+   "size": 2268,
+   "vertices": 76
   },
   "morph.a": {
    "kind": "table",
@@ -77,7 +81,8 @@
    "kind": "model",
    "address": "0x163FFD0",
    "size": 4536,
-   "doc": "the morphing ring's model: its vertex block (+8) is rewritten before each draw"
+   "doc": "the morphing ring's model: its vertex block (+8) is rewritten before each draw",
+   "vertices": 76
   },
   "texture_name": {
    "kind": "name",

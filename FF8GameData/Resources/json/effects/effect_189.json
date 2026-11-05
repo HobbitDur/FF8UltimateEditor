@@ -35,6 +35,24 @@
    "address": "0xD19658",
    "size": 428,
    "frames": 16
+  },
+  "models.wall": {
+   "kind": "model",
+   "address": "0xD19B74",
+   "size": 6192,
+   "vertices": 144
+  },
+  "models.shard": {
+   "kind": "model",
+   "address": "0xD19804",
+   "size": 696,
+   "vertices": 28
+  },
+  "models.debris": {
+   "kind": "model",
+   "address": "0xD19ABC",
+   "size": 184,
+   "vertices": 6
   }
  },
  "resources": {
@@ -91,6 +109,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.dust",
+   "unit": "plain"
+  },
+  {
+   "key": "models.wall",
+   "part": "main",
+   "label": "Wall model",
+   "doc": "The prim model wall (a mesh of 144 vertices, 250 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wall",
+   "unit": "plain"
+  },
+  {
+   "key": "models.shard",
+   "part": "main",
+   "label": "Shard model",
+   "doc": "The prim model shard (a mesh of 28 vertices, 18 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shard",
+   "unit": "plain"
+  },
+  {
+   "key": "models.debris",
+   "part": "main",
+   "label": "Debris model",
+   "doc": "The prim model debris (a mesh of 6 vertices, 8 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.debris",
    "unit": "plain"
   }
  ],

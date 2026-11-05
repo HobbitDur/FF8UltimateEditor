@@ -41,6 +41,60 @@
    "address": "0x15D0AF8",
    "size": 68,
    "frames": 4
+  },
+  "models.at_15ce93c": {
+   "kind": "model",
+   "address": "0x15CE93C",
+   "size": 124,
+   "vertices": 5
+  },
+  "models.at_15ce9b8": {
+   "kind": "model",
+   "address": "0x15CE9B8",
+   "size": 124,
+   "vertices": 5
+  },
+  "models.at_15cddec": {
+   "kind": "model",
+   "address": "0x15CDDEC",
+   "size": 1000,
+   "vertices": 48
+  },
+  "models.at_15ce1d4": {
+   "kind": "model",
+   "address": "0x15CE1D4",
+   "size": 1896,
+   "vertices": 160
+  },
+  "models.at_15cf37c": {
+   "kind": "model",
+   "address": "0x15CF37C",
+   "size": 568,
+   "vertices": 24
+  },
+  "models.at_15cf5b4": {
+   "kind": "model",
+   "address": "0x15CF5B4",
+   "size": 96,
+   "vertices": 4
+  },
+  "models.at_15cf614": {
+   "kind": "model",
+   "address": "0x15CF614",
+   "size": 96,
+   "vertices": 4
+  },
+  "models.at_15cea34": {
+   "kind": "model",
+   "address": "0x15CEA34",
+   "size": 2376,
+   "vertices": 84
+  },
+  "models.at_15cf674": {
+   "kind": "model",
+   "address": "0x15CF674",
+   "size": 136,
+   "vertices": 6
   }
  },
  "resources": {
@@ -201,6 +255,105 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_15d0af8",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15ce93c",
+   "part": "scanner",
+   "label": "Model 15CE93C",
+   "doc": "The prim model at 0x15CE93C (a mesh of 5 vertices, 3 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15ce93c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15ce9b8",
+   "part": "scanner",
+   "label": "Model 15CE9B8",
+   "doc": "The prim model at 0x15CE9B8 (a mesh of 5 vertices, 3 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15ce9b8",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15cddec",
+   "part": "scanner",
+   "label": "Model 15CDDEC",
+   "doc": "The prim model at 0x15CDDEC (a mesh of 48 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15cddec",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15ce1d4",
+   "part": "scanner",
+   "label": "Model 15CE1D4",
+   "doc": "The prim model at 0x15CE1D4 (a mesh of 160 vertices, 40 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15ce1d4",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15cf37c",
+   "part": "scanner",
+   "label": "Model 15CF37C",
+   "doc": "The prim model at 0x15CF37C (a mesh of 24 vertices, 28 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15cf37c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15cf5b4",
+   "part": "scanner",
+   "label": "Model 15CF5B4",
+   "doc": "The prim model at 0x15CF5B4 (a mesh of 4 vertices, 1 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15cf5b4",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15cf614",
+   "part": "scanner",
+   "label": "Model 15CF614",
+   "doc": "The prim model at 0x15CF614 (a mesh of 4 vertices, 1 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15cf614",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15cea34",
+   "part": "scanner",
+   "label": "Model 15CEA34",
+   "doc": "The prim model at 0x15CEA34 (a mesh of 84 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15cea34",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15cf674",
+   "part": "scanner",
+   "label": "Model 15CF674",
+   "doc": "The prim model at 0x15CF674 (a mesh of 6 vertices, 2 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15cf674",
    "unit": "plain"
   }
  ],

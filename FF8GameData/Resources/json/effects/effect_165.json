@@ -68,6 +68,102 @@
    "address": "0xD7B340",
    "size": 404,
    "frames": 15
+  },
+  "models.groundring": {
+   "kind": "model",
+   "address": "0xD879EC",
+   "size": 3304,
+   "vertices": 96
+  },
+  "models.tipflash": {
+   "kind": "model",
+   "address": "0xD7F960",
+   "size": 2256,
+   "vertices": 73
+  },
+  "models.tipring": {
+   "kind": "model",
+   "address": "0xD8392C",
+   "size": 1296,
+   "vertices": 49
+  },
+  "models.slasha": {
+   "kind": "model",
+   "address": "0xD823E4",
+   "size": 1912,
+   "vertices": 72
+  },
+  "models.slashb": {
+   "kind": "model",
+   "address": "0xD82B5C",
+   "size": 1768,
+   "vertices": 72
+  },
+  "models.flatring": {
+   "kind": "model",
+   "address": "0xD84BE4",
+   "size": 4496,
+   "vertices": 185
+  },
+  "models.wave": {
+   "kind": "model",
+   "address": "0xD7B668",
+   "size": 9016,
+   "vertices": 274
+  },
+  "models.tipflash2": {
+   "kind": "model",
+   "address": "0xD813B0",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.streak": {
+   "kind": "model",
+   "address": "0xD81B34",
+   "size": 2224,
+   "vertices": 81
+  },
+  "models.finalring": {
+   "kind": "model",
+   "address": "0xD7D9A0",
+   "size": 8128,
+   "vertices": 195
+  },
+  "models.finalflash": {
+   "kind": "model",
+   "address": "0xD83E3C",
+   "size": 3496,
+   "vertices": 96
+  },
+  "models.rock": {
+   "kind": "model",
+   "address": "0xD83244",
+   "size": 1768,
+   "vertices": 72
+  },
+  "models.debris": {
+   "kind": "model",
+   "address": "0xD85D74",
+   "size": 7288,
+   "vertices": 186
+  },
+  "models.tipshard": {
+   "kind": "model",
+   "address": "0xD818A0",
+   "size": 660,
+   "vertices": 25
+  },
+  "models.shard": {
+   "kind": "model",
+   "address": "0xD81620",
+   "size": 640,
+   "vertices": 21
+  },
+  "models.tiprock": {
+   "kind": "model",
+   "address": "0xD80230",
+   "size": 4480,
+   "vertices": 147
   }
  },
  "resources": {
@@ -185,6 +281,182 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.hitb",
+   "unit": "plain"
+  },
+  {
+   "key": "models.groundring",
+   "part": "director",
+   "label": "Groundring model",
+   "doc": "The prim model groundring (a mesh of 96 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.groundring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.tipflash",
+   "part": "director",
+   "label": "Tipflash model",
+   "doc": "The prim model tipflash (a mesh of 73 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.tipflash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.tipring",
+   "part": "director",
+   "label": "Tipring model",
+   "doc": "The prim model tipring (a mesh of 49 vertices, 36 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.tipring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.slasha",
+   "part": "director",
+   "label": "Slasha model",
+   "doc": "The prim model slasha (a mesh of 72 vertices, 54 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.slasha",
+   "unit": "plain"
+  },
+  {
+   "key": "models.slashb",
+   "part": "director",
+   "label": "Slashb model",
+   "doc": "The prim model slashb (a mesh of 72 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.slashb",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flatring",
+   "part": "director",
+   "label": "Flatring model",
+   "doc": "The prim model flatring (a mesh of 185 vertices, 120 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flatring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.wave",
+   "part": "director",
+   "label": "Wave model",
+   "doc": "The prim model wave (a mesh of 274 vertices, 288 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wave",
+   "unit": "plain"
+  },
+  {
+   "key": "models.tipflash2",
+   "part": "director",
+   "label": "Tipflash2 model",
+   "doc": "The prim model tipflash2 (a mesh of 25 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.tipflash2",
+   "unit": "plain"
+  },
+  {
+   "key": "models.streak",
+   "part": "director",
+   "label": "Streak model",
+   "doc": "The prim model streak (a mesh of 81 vertices, 64 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.streak",
+   "unit": "plain"
+  },
+  {
+   "key": "models.finalring",
+   "part": "director",
+   "label": "Finalring model",
+   "doc": "The prim model finalring (a mesh of 195 vertices, 192 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.finalring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.finalflash",
+   "part": "director",
+   "label": "Finalflash model",
+   "doc": "The prim model finalflash (a mesh of 96 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.finalflash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.rock",
+   "part": "director",
+   "label": "Rock model",
+   "doc": "The prim model rock (a mesh of 72 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.rock",
+   "unit": "plain"
+  },
+  {
+   "key": "models.debris",
+   "part": "director",
+   "label": "Debris model",
+   "doc": "The prim model debris (a mesh of 186 vertices, 240 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "models.tipshard",
+   "part": "director",
+   "label": "Tipshard model",
+   "doc": "The prim model tipshard (a mesh of 25 vertices, 18 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.tipshard",
+   "unit": "plain"
+  },
+  {
+   "key": "models.shard",
+   "part": "director",
+   "label": "Shard model",
+   "doc": "The prim model shard (a mesh of 21 vertices, 20 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shard",
+   "unit": "plain"
+  },
+  {
+   "key": "models.tiprock",
+   "part": "director",
+   "label": "Tiprock model",
+   "doc": "The prim model tiprock (a mesh of 147 vertices, 144 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.tiprock",
    "unit": "plain"
   }
  ],

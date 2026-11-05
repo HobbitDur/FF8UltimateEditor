@@ -40,7 +40,8 @@
    "kind": "model",
    "address": "0x12E7010",
    "size": 2992,
-   "doc": "a prim model (drawn by 0x572200)"
+   "doc": "a prim model (drawn by 0x572200)",
+   "vertices": 97
   },
   "burst": {
    "kind": "layout",

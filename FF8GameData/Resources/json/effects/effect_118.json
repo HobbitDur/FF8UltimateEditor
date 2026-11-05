@@ -26,7 +26,8 @@
    "kind": "model",
    "address": "0x1287C44",
    "size": 376,
-   "doc": "a prim model (its vertex frames and polygons; drawn by 0x572200)"
+   "doc": "a prim model (its vertex frames and polygons; drawn by 0x572200)",
+   "vertices": 12
   },
   "whirl": {
    "kind": "layout",

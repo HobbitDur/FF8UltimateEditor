@@ -35,6 +35,30 @@
    "address": "0xDDA594",
    "size": 428,
    "frames": 16
+  },
+  "models.burst": {
+   "kind": "model",
+   "address": "0xDDD208",
+   "size": 1768,
+   "vertices": 72
+  },
+  "models.flame_swirl": {
+   "kind": "model",
+   "address": "0xDDA740",
+   "size": 7736,
+   "vertices": 162
+  },
+  "models.fireball": {
+   "kind": "model",
+   "address": "0xDDC578",
+   "size": 2256,
+   "vertices": 73
+  },
+  "models.spark": {
+   "kind": "model",
+   "address": "0xDDCE48",
+   "size": 960,
+   "vertices": 31
   }
  },
  "resources": {
@@ -91,6 +115,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.area_flame",
+   "unit": "plain"
+  },
+  {
+   "key": "models.burst",
+   "part": "director",
+   "label": "Burst model",
+   "doc": "The prim model burst (a mesh of 72 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flame_swirl",
+   "part": "director",
+   "label": "Flame swirl model",
+   "doc": "The prim model flame swirl (a mesh of 162 vertices, 320 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flame_swirl",
+   "unit": "plain"
+  },
+  {
+   "key": "models.fireball",
+   "part": "director",
+   "label": "Fireball model",
+   "doc": "The prim model fireball (a mesh of 73 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.fireball",
+   "unit": "plain"
+  },
+  {
+   "key": "models.spark",
+   "part": "director",
+   "label": "Spark model",
+   "doc": "The prim model spark (a mesh of 31 vertices, 30 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.spark",
    "unit": "plain"
   }
  ],

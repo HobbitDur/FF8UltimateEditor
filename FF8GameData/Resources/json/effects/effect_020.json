@@ -56,6 +56,12 @@
    "address": "0x1629C54",
    "size": 428,
    "frames": 16
+  },
+  "models.at_1629e00": {
+   "kind": "model",
+   "address": "0x1629E00",
+   "size": 96,
+   "vertices": 4
   }
  },
  "resources": {
@@ -322,6 +328,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_1629c54",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_1629e00",
+   "part": "emitter",
+   "label": "Model 1629E00",
+   "doc": "The prim model at 0x1629E00 (a mesh of 4 vertices, 1 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_1629e00",
    "unit": "plain"
   }
  ],

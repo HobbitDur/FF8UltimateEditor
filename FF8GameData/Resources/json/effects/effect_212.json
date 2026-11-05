@@ -70,6 +70,36 @@
    "address": "0x11823C8",
    "size": 364,
    "frames": 12
+  },
+  "model_data.rock": {
+   "kind": "model",
+   "address": "0x1183FA4",
+   "size": 464,
+   "vertices": 12
+  },
+  "model_data.rock_a": {
+   "kind": "model",
+   "address": "0x1184174",
+   "size": 616,
+   "vertices": 11
+  },
+  "model_data.rock_b": {
+   "kind": "model",
+   "address": "0x11843DC",
+   "size": 696,
+   "vertices": 12
+  },
+  "model_data.rock_c": {
+   "kind": "model",
+   "address": "0x1184694",
+   "size": 1080,
+   "vertices": 18
+  },
+  "model_data.glow": {
+   "kind": "model",
+   "address": "0x11826E0",
+   "size": 6340,
+   "vertices": 225
   }
  },
  "resources": {
@@ -198,6 +228,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.flame",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.rock",
+   "part": "director",
+   "label": "Rock model",
+   "doc": "The prim model rock (a mesh of 12 vertices, 20 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.rock",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.rock_a",
+   "part": "director",
+   "label": "Rock a model",
+   "doc": "The prim model rock a (a mesh of 11 vertices, 18 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.rock_a",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.rock_b",
+   "part": "director",
+   "label": "Rock b model",
+   "doc": "The prim model rock b (a mesh of 12 vertices, 20 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.rock_b",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.rock_c",
+   "part": "director",
+   "label": "Rock c model",
+   "doc": "The prim model rock c (a mesh of 18 vertices, 32 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.rock_c",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.glow",
+   "part": "director",
+   "label": "Glow model",
+   "doc": "The prim model glow (a mesh of 225 vertices, 144 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.glow",
    "unit": "plain"
   }
  ],

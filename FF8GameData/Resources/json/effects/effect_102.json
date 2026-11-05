@@ -95,6 +95,24 @@
    "address": "0x131E760",
    "size": 280,
    "frames": 8
+  },
+  "models.tilted_glow": {
+   "kind": "model",
+   "address": "0x13200D0",
+   "size": 1768,
+   "vertices": 72
+  },
+  "models.column": {
+   "kind": "model",
+   "address": "0x13207B8",
+   "size": 1768,
+   "vertices": 72
+  },
+  "models.flash_ball": {
+   "kind": "model",
+   "address": "0x1320EA0",
+   "size": 1768,
+   "vertices": 72
   }
  },
  "resources": {
@@ -261,6 +279,39 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.flash_sprite",
+   "unit": "plain"
+  },
+  {
+   "key": "models.tilted_glow",
+   "part": "bolt",
+   "label": "Tilted glow model",
+   "doc": "The prim model tilted glow (a mesh of 72 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.tilted_glow",
+   "unit": "plain"
+  },
+  {
+   "key": "models.column",
+   "part": "bolt",
+   "label": "Column model",
+   "doc": "The prim model column (a mesh of 72 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.column",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flash_ball",
+   "part": "bolt",
+   "label": "Flash ball model",
+   "doc": "The prim model flash ball (a mesh of 72 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flash_ball",
    "unit": "plain"
   }
  ],

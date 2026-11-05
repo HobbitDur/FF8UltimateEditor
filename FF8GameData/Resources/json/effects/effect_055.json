@@ -73,6 +73,12 @@
    "address": "0x15A3B9C",
    "size": 352,
    "frames": 13
+  },
+  "models.orb": {
+   "kind": "model",
+   "address": "0x15A4168",
+   "size": 10600,
+   "vertices": 312
   }
  },
  "resources": {
@@ -332,6 +338,17 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_15a3b9c",
+   "unit": "plain"
+  },
+  {
+   "key": "models.orb",
+   "part": "director",
+   "label": "Orb model",
+   "doc": "The prim model orb (a mesh of 312 vertices, 240 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.orb",
    "unit": "plain"
   }
  ],

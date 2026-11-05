@@ -71,6 +71,30 @@
    "address": "0x1615440",
    "size": 372,
    "frames": 13
+  },
+  "models.pool": {
+   "kind": "model",
+   "address": "0x1615CE4",
+   "size": 5248,
+   "vertices": 91
+  },
+  "models.splat": {
+   "kind": "model",
+   "address": "0x1617E3C",
+   "size": 2616,
+   "vertices": 42
+  },
+  "models.blob": {
+   "kind": "model",
+   "address": "0x1619888",
+   "size": 20520,
+   "vertices": 467
+  },
+  "models.blob_boil": {
+   "kind": "model",
+   "address": "0x161F750",
+   "size": 16440,
+   "vertices": 258
   }
  },
  "resources": {
@@ -276,6 +300,50 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.bubble_b",
+   "unit": "plain"
+  },
+  {
+   "key": "models.pool",
+   "part": "emitter",
+   "label": "Pool model",
+   "doc": "The prim model pool (a mesh of 91 vertices, 160 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.pool",
+   "unit": "plain"
+  },
+  {
+   "key": "models.splat",
+   "part": "emitter",
+   "label": "Splat model",
+   "doc": "The prim model splat (a mesh of 42 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.splat",
+   "unit": "plain"
+  },
+  {
+   "key": "models.blob",
+   "part": "emitter",
+   "label": "Blob model",
+   "doc": "The prim model blob (a mesh of 467 vertices, 598 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.blob",
+   "unit": "plain"
+  },
+  {
+   "key": "models.blob_boil",
+   "part": "emitter",
+   "label": "Blob boil model",
+   "doc": "The prim model blob boil (a mesh of 258 vertices, 512 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.blob_boil",
    "unit": "plain"
   }
  ],

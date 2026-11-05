@@ -69,6 +69,36 @@
    "address": "0xE3D154",
    "size": 428,
    "frames": 16
+  },
+  "models.at_e40848": {
+   "kind": "model",
+   "address": "0xE40848",
+   "size": 2296,
+   "vertices": 82
+  },
+  "models.at_e40160": {
+   "kind": "model",
+   "address": "0xE40160",
+   "size": 1768,
+   "vertices": 66
+  },
+  "models.at_e3eff0": {
+   "kind": "model",
+   "address": "0xE3EFF0",
+   "size": 3448,
+   "vertices": 126
+  },
+  "models.at_e41140": {
+   "kind": "model",
+   "address": "0xE41140",
+   "size": 680,
+   "vertices": 32
+  },
+  "models.at_e41b28": {
+   "kind": "model",
+   "address": "0xE41B28",
+   "size": 448,
+   "vertices": 16
   }
  },
  "resources": {},
@@ -204,6 +234,61 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.at_e3d154",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_e40848",
+   "part": "timeline",
+   "label": "Model E40848",
+   "doc": "The prim model at 0xE40848 (a mesh of 82 vertices, 80 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_e40848",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_e40160",
+   "part": "timeline",
+   "label": "Model E40160",
+   "doc": "The prim model at 0xE40160 (a mesh of 66 vertices, 50 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_e40160",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_e3eff0",
+   "part": "timeline",
+   "label": "Model E3EFF0",
+   "doc": "The prim model at 0xE3EFF0 (a mesh of 126 vertices, 100 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_e3eff0",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_e41140",
+   "part": "timeline",
+   "label": "Model E41140",
+   "doc": "The prim model at 0xE41140 (a mesh of 32 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_e41140",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_e41b28",
+   "part": "timeline",
+   "label": "Model E41B28",
+   "doc": "The prim model at 0xE41B28 (a mesh of 16 vertices, 14 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_e41b28",
    "unit": "plain"
   }
  ],

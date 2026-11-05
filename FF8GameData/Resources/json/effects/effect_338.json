@@ -47,6 +47,18 @@
    "address": "0x137130C",
    "size": 344,
    "frames": 12
+  },
+  "models.debris": {
+   "kind": "model",
+   "address": "0x1372CE8",
+   "size": 376,
+   "vertices": 12
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0x1371640",
+   "size": 5800,
+   "vertices": 144
   }
  },
  "resources": {},
@@ -121,6 +133,28 @@
    "min": 0,
    "max": 2147483647,
    "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "models.debris",
+   "part": "creature",
+   "label": "Debris model",
+   "doc": "The prim model debris (a mesh of 12 vertices, 20 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "creature",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 144 vertices, 128 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
    "unit": "plain"
   }
  ],
