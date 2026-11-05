@@ -25,7 +25,8 @@ from PyQt6.QtGui import QPixmap, QBrush, QColor
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea,
                              QLabel, QComboBox, QCheckBox, QPushButton, QFileDialog,
                              QSpinBox, QGroupBox, QMessageBox, QSplitter, QLineEdit,
-                             QTreeWidget, QTreeWidgetItem, QTabWidget, QHeaderView, QPlainTextEdit)
+                             QTreeWidget, QTreeWidgetItem, QTabWidget, QHeaderView, QPlainTextEdit,
+                             QToolButton)
 
 from CCGroup import cardlocation
 from CCGroup import cardplayersfile
@@ -33,6 +34,7 @@ from CCGroup import jsmnpc as jsm_npc
 from CCGroup.addcardgamedialog import AddCardGameDialog
 from CCGroup.npccardtablewidget import NpcCardTableWidget
 from CCGroup.npcfieldview import NpcFieldView
+from CCGroup.textflow import TextFlow, FlowBranch, FlowMessage, FlowCardGame, FlowExit
 from Common.fieldfolder import MAPDATA, VANILLA_MIN_MAPS, check_field_folder
 from Common.fileregistry import busy_cursor
 from CCGroup.jsmcardgame import (CardGameFolderManager, OPCODE_PSHN_L, CardGamePlayer, CardGameParam,
@@ -547,6 +549,16 @@ def clear_layout(layout):
             clear_layout(item.layout())
 
 
+# Texts panel (TextsGroup)
+FLOW_INDENT = 18
+FLOW_ROLE_WIDTH = 110
+FLOW_MUTED_COLOR = QColor(130, 130, 130)
+FLOW_CARD_GAME_COLOR = ADD_BUTTON_COLOR
+FLOW_ROLE_COLORS = {jsm_npc.ROLE_QUESTION: MODIFIED_FOLDER_COLOR, jsm_npc.ROLE_NOT_ENOUGH: NO_CARD_MASTER_COLOR}
+TOOLTIP_TEXT_FLOW = ("The script's messages, card games and branches (if / otherwise) in the order the script\n"
+                     "runs them. Question = the card question asked right before this card game, Not enough\n"
+                     "cards = the first line after it (shown when the player owns fewer than 5 cards), Dialogue\n"
+                     "= any other line. A branch that never runs in the same talk as this card game is folded.")
 TOOLTIP_VARIANT = (
     "<b>Variants</b><br/>"
     "This NPC's script holds several CARDGAME calls, each with its own deck, rules and AI,<br/>"
@@ -639,60 +651,208 @@ class VariantGroup(QGroupBox):
 
 
 class TextsGroup(QGroupBox):
-    """The texts of a card player's script (question, 'not enough cards', other lines), editable in
-    the map's .msd. A message several script lines show is changed for all of them."""
+    """The texts of a card player's script as the script shows them: its messages, card games and
+    branches in order (textflow). The branches that lead to this card game are open, the others
+    folded. Each text is editable in the map's .msd; a message shown at several places is changed
+    everywhere."""
 
-    def __init__(self, player: CardGamePlayer, jsm_file, manager, changed_callback=None):
-        QGroupBox.__init__(self, "Texts")
+    def __init__(self, player: CardGamePlayer, jsm_file, manager, changed_callback=None,
+                 select_player_callback=None):
+        QGroupBox.__init__(self, f"Texts ({player.entity_name}::{player.script_name}, in script order)")
         self.player = player
         self.changed_callback = changed_callback
-        layout = QGridLayout()
-        layout.setColumnStretch(1, 1)
+        self.select_player_callback = select_player_callback or (lambda _: None)
+        layout = QVBoxLayout()
         self.setLayout(layout)
-        self.editors = {}  # message id -> QPlainTextEdit
-        msd_file = manager.msd(jsm_file)
-        if msd_file is None:
-            label = QLabel(f"No {jsm_file.map_name}.msd in the opened folders: the texts cannot be shown. A mod's field"
-                           f" folder holds only the files it changes: open the vanilla field folder (Import"
-                           f" complementary) to read them from it.")
-            label.setWordWrap(True)
-            layout.addWidget(label, 0, 0, 1, 2)
+        self.editors = {}  # message id -> [QPlainTextEdit], one per place the script shows it
+        self.msd_file = manager.msd(jsm_file)
+        if self.msd_file is None:
+            layout.addWidget(wrapped_label(
+                f"No {jsm_file.map_name}.msd in the opened folders: the texts cannot be shown. A mod's field"
+                f" folder holds only the files it changes: open the vanilla field folder (Import"
+                f" complementary) to read them from it."))
             return
-        uses_in_file = Counter()
+        self.flow = TextFlow(jsm_file, player)
+        self.uses_in_file = Counter()
         instructions = jsm_file.instructions()
         for index, (opcode, _) in enumerate(instructions):
             nb_values = jsm_npc.MESSAGE_OPCODES.get(opcode)
             if nb_values is not None and index >= nb_values and instructions[index - nb_values + 1][0] == OPCODE_PSHN_L:
-                uses_in_file[instructions[index - nb_values + 1][1]] += 1
-        row = 0
-        for use in jsm_npc.player_messages(jsm_file, player):
-            if use.message_id in self.editors or not 0 <= use.message_id < len(msd_file):
-                continue
-            role = QLabel(f"{use.role}:")
-            role.setToolTip(f"Message {use.message_id} of {jsm_file.map_name}.msd")
-            editor = QPlainTextEdit(msd_file.text(use.message_id))
-            editor.setFixedHeight(editor.fontMetrics().height() * (msd_file.text(use.message_id).count("\n") + 1) + 14)
-            tooltip = f"Message {use.message_id} of {jsm_file.map_name}.msd."
-            if uses_in_file[use.message_id] > 1:
-                tooltip += f" Shown by {uses_in_file[use.message_id]} script lines of this map: editing changes them all."
-            if msd_file.encode(msd_file.text(use.message_id)) != msd_file.messages[use.message_id]:
-                editor.setReadOnly(True)
-                tooltip += (" Read-only: it holds codes this tool cannot re-encode exactly (edit it with"
-                            " ShumiTranslator).")
-            editor.setToolTip(tooltip)
-            editor.textChanged.connect(lambda message_id=use.message_id, text_editor=editor, msd=msd_file:
-                                       self.__text_changed(msd, message_id, text_editor))
-            layout.addWidget(role, row, 0, Qt.AlignmentFlag.AlignTop)
-            layout.addWidget(editor, row, 1)
-            self.editors[use.message_id] = editor
-            row += 1
-        if not self.editors:
-            layout.addWidget(QLabel("No text found in this script."), 0, 0, 1, 2)
+                self.uses_in_file[instructions[index - nb_values + 1][1]] += 1
+        if not _has_content(self.flow.nodes):
+            layout.addWidget(QLabel("No text found in this script."))
+            return
+        intro = wrapped_label("The branches that lead to this card game are open; the others (other variants,"
+                              " the talk button's lines...) are folded: click to unfold them.")
+        intro.setToolTip(TOOLTIP_TEXT_FLOW)
+        layout.addWidget(intro)
+        self.__add_nodes(layout, self.flow.nodes)
 
-    def __text_changed(self, msd_file, message_id, editor):
-        msd_file.set_text(message_id, editor.toPlainText())
+    # ------------------------------------------------------------------ rows
+
+    def __add_nodes(self, layout, nodes):
+        for node in nodes:
+            if isinstance(node, FlowBranch):
+                self.__add_branch(layout, node, "While" if node.is_loop else "If")
+            elif isinstance(node, FlowMessage):
+                self.__add_message(layout, node)
+            elif isinstance(node, FlowCardGame):
+                self.__add_card_game(layout, node)
+            elif isinstance(node, FlowExit):
+                exit_label = QLabel("→ goes on in another part of the script")
+                exit_label.setStyleSheet(f"color: {FLOW_MUTED_COLOR.name()}")
+                exit_label.setToolTip("A jump out of this script part: e.g. into the NPC's own talk, after a card"
+                                      " game added by this tool.")
+                layout.addWidget(exit_label)
+
+    def __add_branch(self, layout, branch, prefix: str):
+        has_then = _has_content(branch.then_nodes)
+        has_else = branch.else_nodes is not None and _has_content(branch.else_nodes)
+        if not has_then and not has_else:
+            return
+        if not has_then:  # nothing shown when the test holds: the else block under the opposite test
+            self.__add_section(layout, f"{prefix} {self.__condition_text(branch.condition, True)}",
+                               branch.else_nodes, self.flow.side_on_path(branch, False))
+            return
+        self.__add_section(layout, f"{prefix} {self.__condition_text(branch.condition, False)}",
+                           branch.then_nodes, self.flow.side_on_path(branch, True))
+        if not has_else:
+            return
+        shown = [node for node in branch.else_nodes if _has_content([node])]
+        if len(shown) == 1 and isinstance(shown[0], FlowBranch) and not shown[0].is_loop:
+            self.__add_branch(layout, shown[0], "Otherwise, if")  # else-if chain: same level
+        else:
+            self.__add_section(layout, "Otherwise", branch.else_nodes, self.flow.side_on_path(branch, False))
+
+    def __add_section(self, layout, title: str, nodes, is_open: bool):
+        header = QHBoxLayout()
+        button = QToolButton()
+        button.setText(title.replace("&", "&&"))  # no mnemonic: "var 632 & 4"
+        button.setAutoRaise(True)
+        button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        if not is_open:
+            button.setToolTip("Never runs in the same talk as this card game.")
+        header.addWidget(button)
+        summary = QLabel(_summary_text(nodes, self.player))
+        summary.setStyleSheet(f"color: {FLOW_MUTED_COLOR.name()}")
+        header.addWidget(summary)
+        header.addStretch(1)
+        layout.addLayout(header)
+        content = QWidget()
+        content_layout = QVBoxLayout()
+        content_layout.setContentsMargins(FLOW_INDENT, 0, 0, 0)
+        content.setLayout(content_layout)
+        layout.addWidget(content)
+        state = {"open": is_open, "built": False}
+
+        def show(opened):
+            if opened and not state["built"]:  # a folded block is built when first unfolded
+                self.__add_nodes(content_layout, nodes)
+                state["built"] = True
+            state["open"] = opened
+            button.setArrowType(Qt.ArrowType.DownArrow if opened else Qt.ArrowType.RightArrow)
+            content.setVisible(opened)
+
+        button.clicked.connect(lambda: show(not state["open"]))
+        show(is_open)
+
+    def __add_message(self, layout, message):
+        if message.message_id is None or not 0 <= message.message_id < len(self.msd_file):
+            label = QLabel("A message chosen while the game runs" if message.message_id is None
+                           else f"Message {message.message_id} (not in {self.flow.jsm_file.map_name}.msd)")
+            label.setStyleSheet(f"color: {FLOW_MUTED_COLOR.name()}")
+            layout.addWidget(label)
+            return
+        role = QLabel(f"{message.role}:")
+        role.setMinimumWidth(FLOW_ROLE_WIDTH)
+        role.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        color = FLOW_ROLE_COLORS.get(message.role)
+        if color is not None:
+            role.setStyleSheet(f"color: {color.name()}; font-weight: bold")
+        message_id = message.message_id
+        text = self.msd_file.text(message_id)
+        editor = QPlainTextEdit(text)
+        editor.setFixedHeight(editor.fontMetrics().height() * (text.count("\n") + 1) + 14)
+        tooltip = f"Message {message_id} of {self.flow.jsm_file.map_name}.msd."
+        if self.uses_in_file[message_id] > 1:
+            tooltip += (f" Shown by {self.uses_in_file[message_id]} script lines of this map: editing changes"
+                        f" them all.")
+        if self.msd_file.encode(text) != self.msd_file.messages[message_id]:
+            editor.setReadOnly(True)
+            tooltip += " Read-only: it holds codes this tool cannot re-encode exactly (edit it with ShumiTranslator)."
+        role.setToolTip(tooltip)
+        editor.setToolTip(tooltip)
+        editor.textChanged.connect(lambda text_editor=editor: self.__text_changed(message_id, text_editor))
+        self.editors.setdefault(message_id, []).append(editor)
+        row = QHBoxLayout()
+        row.addWidget(role)
+        row.addWidget(editor, 1)
+        layout.addLayout(row)
+
+    def __add_card_game(self, layout, node):
+        if node.player is self.player:
+            label = QLabel("▶ Card game (this one)")
+            label.setStyleSheet(f"color: {FLOW_CARD_GAME_COLOR.name()}; font-weight: bold")
+        else:
+            label = QLabel(f"▶ Card game ({_card_game_name(node.player)}) - <a href='select'>edit it</a>")
+            label.linkActivated.connect(lambda _, other=node.player: self.select_player_callback(other))
+        layout.addWidget(label)
+
+    def __condition_text(self, condition, negate: bool):
+        if condition is None:
+            return "(a test this tool cannot read)"
+        if condition.kind == "button":
+            return ("the card button (Square) started the talk" if condition.equals != negate
+                    else "the talk button (Cross) started the talk")
+        if condition.kind == "answer":
+            lines = self.msd_file.text(condition.message_id).split("\n") \
+                if 0 <= condition.message_id < len(self.msd_file) else []
+            choice = f"“{lines[condition.line]}”" if 0 <= condition.line < len(lines) \
+                else f"choice {condition.line}"
+            return f"the answer is {choice}" if condition.equals != negate else f"the answer is not {choice}"
+        return condition.negated_text if negate else condition.text
+
+    def __text_changed(self, message_id, editor):
+        text = editor.toPlainText()
+        self.msd_file.set_text(message_id, text)
+        for other in self.editors[message_id]:
+            if other is not editor and other.toPlainText() != text:
+                other.blockSignals(True)
+                other.setPlainText(text)
+                other.blockSignals(False)
         if self.changed_callback is not None:
             self.changed_callback(self.player)
+
+
+def _has_content(nodes):
+    """Whether a block shows anything: a message, a card game or a jump out of the script."""
+    for node in nodes:
+        if not isinstance(node, FlowBranch):
+            return True
+        if _has_content(node.then_nodes) or (node.else_nodes is not None and _has_content(node.else_nodes)):
+            return True
+    return False
+
+
+def _card_game_name(player: CardGamePlayer):
+    variant = player.variant
+    return f"variant {variant.index + 1}" if variant is not None and variant.is_variant() else "another one"
+
+
+def _summary_text(nodes, player):
+    """What a block holds, for its header: e.g. '3 texts, card game variant 2'."""
+    texts, card_games = 0, set()
+    stack = list(nodes)
+    while stack:
+        node = stack.pop()
+        if isinstance(node, FlowMessage):
+            texts += 1
+        elif isinstance(node, FlowCardGame):
+            card_games.add("this card game" if node.player is player else f"card game {_card_game_name(node.player)}")
+        elif isinstance(node, FlowBranch):
+            stack += node.then_nodes + (node.else_nodes or [])
+    parts = [f"{texts} text{'s' if texts != 1 else ''}"] if texts else []
+    return ", ".join(parts + sorted(card_games))
 
 
 class RareCardsGroup(QGroupBox):
@@ -1025,7 +1185,7 @@ class CardPlayerWidget(QWidget):
         select_player_callback = select_player_callback or (lambda _: None)
         jsm_file = manager.file_of(player)
         if jsm_file is not None:
-            main_layout.addWidget(TextsGroup(player, jsm_file, manager, changed_callback))
+            main_layout.addWidget(TextsGroup(player, jsm_file, manager, changed_callback, select_player_callback))
         if player.variant is not None and player.variant.is_variant():
             main_layout.addWidget(VariantGroup(player, self.__variant_changed, select_player_callback))
         self.rare_cards_group = RareCardsGroup(card_images, manager, select_player_callback)

@@ -207,29 +207,13 @@ class MessageUse:
 
 
 def player_messages(jsm_file: JsmCardGameFile, player: CardGamePlayer):
-    """The messages of the script holding a CARDGAME, in script order, with their role: the
-    yes/no question before the match, the "not enough cards" line right after it, other lines."""
-    instructions = jsm_file.instructions()
-    cardgame_index = (player.cardgame_file_offset - jsm_file.offset_script) // 4
-    start, end = script_bounds(jsm_file, cardgame_index)
-    uses = []
-    first_after = True
-    for index in range(start, end):
-        opcode, _ = instructions[index]
-        nb_values = MESSAGE_OPCODES.get(opcode)
-        if nb_values is None or index < nb_values:
-            continue
-        push_opcode, message_id = instructions[index - nb_values + 1]
-        if push_opcode != OPCODE_PSHN_L:
-            continue  # message chosen at runtime
-        if index < cardgame_index:
-            role = ROLE_QUESTION if opcode in QUESTION_OPCODES else ROLE_DIALOGUE
-        elif first_after:
-            role, first_after = ROLE_NOT_ENOUGH, False
-        else:
-            role = ROLE_DIALOGUE
-        uses.append(MessageUse(role, message_id, index))
-    return uses
+    """The messages of the script holding a CARDGAME, in script order, with their role for that
+    card game: the yes/no question before the match, the "not enough cards" line right after it,
+    other lines. A message on another branch than the card game (another variant's question, the
+    talk button's lines) is a dialogue line (see textflow)."""
+    from CCGroup.textflow import TextFlow
+    return [MessageUse(message.role, message.message_id, message.instruction_index)
+            for message in TextFlow(jsm_file, player).messages() if message.message_id is not None]
 
 
 class _Code:
