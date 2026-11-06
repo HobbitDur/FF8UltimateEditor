@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 )
 
 from Hyne.hynesavemap import (
-    BattleState, ChocoboWorld, DRAW_POINT_STATES, NB_DRAW_POINTS, NB_SHOPS, NB_WORLD_POSITIONS, SCANNED_MOVED_BITS,
+    BattleState, ChocoboWorld, DRAW_POINT_STATES, MAGIC_MOVED_BITS, NB_DRAW_POINTS, NB_SHOPS, NB_WORLD_POSITIONS, SCANNED_MOVED_BITS,
     SHOP_NB_ITEMS, WORLD_POSITION_VALUES, field_var_tab,
 )
 
@@ -488,8 +488,16 @@ class BattlePage(SavePage):
         left.addStretch(1)
 
         self.magic_group = self.bit_list("Magic drawn once", "battle", "magic_drawn",
-                                         [tool.magic_label(index + 1, "Unused") for index in range(64)],
+                                         [tool.magic_label(index + 1, "Unused") for index in range(MAGIC_MOVED_BITS)],
                                          "Magic drawn at least once")
+        self.magic_moved_check = self.check(
+            "battle", "magic_moved", "Moved by FFNx (variables 753-784)",
+            "FFNx keeps this list in field variables 753-784 when kernel.bin holds a magic id of 96 or more. The save's\n"
+            "vanilla list is then ignored. Set from the kernel.bin opened with the toolbar's Import complementary.")
+        self.magic_moved_check.toggled.connect(lambda _checked: self.reload())
+        magic_column = QVBoxLayout()
+        magic_column.addWidget(self.magic_moved_check)
+        magic_column.addWidget(self.magic_group, 1)
         monsters = tool.game_data.monster_data_json["monster"]
         monster_names = {monster["com_id"]: monster["name"] for monster in monsters}
         scan_names = [FIELD_PARTY_NAMES[slot] if slot < len(FIELD_PARTY_NAMES) else "Unused"
@@ -509,7 +517,7 @@ class BattlePage(SavePage):
 
         layout = QHBoxLayout(self)
         layout.addLayout(left)
-        layout.addWidget(self.magic_group, 1)
+        layout.addLayout(magic_column, 1)
         layout.addLayout(scan_column, 1)
 
     def relabel_magic(self):
@@ -825,7 +833,7 @@ class LoadScreenPage(SavePage):
 class FieldVariablesPage(SavePage):
     """The field variables the scripts and the engine use, named from the research on them. One another tab
     holds is only shown here: that tab keeps its copies in step."""
-    SOURCES = ["All variables", "Vanilla", "Cronos"]
+    CRONOS_SETTING = "hyne/cronos_variables"
     COLUMN_VALUE = 2
     COLUMN_TEXT = 4
     CERTAINTY_NAMES = {"sure": "Sure", "likely": "Likely", "unknown": "Unclear"}
@@ -846,10 +854,11 @@ class FieldVariablesPage(SavePage):
         self.search_edit.setPlaceholderText("Search a number, a word or a field name")
         self.search_edit.setClearButtonEnabled(True)
         self.search_edit.textChanged.connect(self._apply_filter)
-        self.source_combo = QComboBox()
-        self.source_combo.addItems(self.SOURCES)
-        self.source_combo.setToolTip("Vanilla: what the game's own scripts and engine use. Cronos: what the mod adds")
-        self.source_combo.currentIndexChanged.connect(self._apply_filter)
+        self.cronos_check = QCheckBox("Cronos")
+        self.cronos_check.setToolTip("Also lists the variables the Cronos mod adds. They mean nothing in another save")
+        if tool.settings is not None:
+            self.cronos_check.setChecked(tool.settings.value(self.CRONOS_SETTING, False, type=bool))
+        self.cronos_check.toggled.connect(self._on_cronos)
         self.only_set_check = QCheckBox("Only values not zero")
         self.only_set_check.toggled.connect(self._apply_filter)
         filters = QWidget()
@@ -857,7 +866,7 @@ class FieldVariablesPage(SavePage):
         filter_row = QHBoxLayout(filters)
         filter_row.setContentsMargins(0, 0, 0, 0)
         filter_row.addWidget(self.search_edit, 1)
-        filter_row.addWidget(self.source_combo)
+        filter_row.addWidget(self.cronos_check)
         filter_row.addWidget(self.only_set_check)
 
         self.table = QTableWidget(len(self.entries), 5)
@@ -946,14 +955,19 @@ class FieldVariablesPage(SavePage):
         else:
             self._show_current()
 
+    def _on_cronos(self, checked):
+        if self.tool.settings is not None:
+            self.tool.settings.setValue(self.CRONOS_SETTING, checked)
+        self._apply_filter()
+
     def _apply_filter(self, *_):
         if self.section("field_variables") is None:
             return
         words = self.search_edit.text().lower().split()
-        source = self.SOURCES[self.source_combo.currentIndex()]
+        cronos = self.cronos_check.isChecked()
         only_set = self.only_set_check.isChecked()
         for row, entry in enumerate(self.entries):
-            shown = source == self.SOURCES[0] or entry.get("mod", "Vanilla") == source
+            shown = cronos or "mod" not in entry
             shown = shown and not (only_set and not self._value(entry))
             shown = shown and all(word in self._search_texts[row] for word in words)
             self.table.setRowHidden(row, not shown)

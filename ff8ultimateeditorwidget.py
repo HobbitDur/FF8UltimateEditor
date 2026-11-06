@@ -305,7 +305,7 @@ class FF8UltimateEditorWidget(QWidget):
         self._xu_widget = XuWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._chocoboy_widget = ChocoboyWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
         self._jumbo_cactuar_widget = JumboCactuarWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
-        self._hyne_widget = HyneWidget(icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
+        self._hyne_widget = HyneWidget(settings=self.settings, icon_path=os.path.join(resources_path), game_data_folder=os.path.join(game_data_path), file_registry=self.file_registry)
 
 
         # Add to Stack (MUST match HOBBIT_OPTION_ITEMS order)

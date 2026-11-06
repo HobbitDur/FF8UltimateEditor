@@ -36,7 +36,7 @@ from Quezacotl.quezacotlmanager import (
     VANILLA_ABILITY_COUNT,
     GF_COMPATIBILITY_MIN, GF_COMPATIBILITY_MAX,
 )
-from Hyne.hynesavemap import read_shop_file, scene_uses_extra_monsters
+from Hyne.hynesavemap import EXTENDED_MAGIC_FIRST, read_shop_file, scene_uses_extra_monsters
 from Hyne.hynesavepages import (
     BattlePage, ChocoboPage, DrawPointsPage, FieldVariablesPage, ItemsExtrasPage, LoadScreenPage, PartyPage, ProgressPage,
     ShopsPage, WorldMapPage,
@@ -110,8 +110,9 @@ class HyneWidget(QWidget):
     backup before every save). The Triple Triad tab is here too; the other tabs of what init.out
     doesn't hold are in hynesavepages.py."""
 
-    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
+    def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None, settings=None):
         QWidget.__init__(self)
+        self.settings = settings
 
         if file_registry is None:  # Used alone, it shares its files with nobody
             file_registry = FileRegistry()
@@ -275,14 +276,23 @@ class HyneWidget(QWidget):
                 or unknown or f"Magic {magic_id}")
 
     def _relabel_magic(self):
+        kernel_magic = self.kernel_names.magic
+        added = [magic_id for magic_id, name in kernel_magic.items() if name and magic_id not in self._magic_names]
         for combo in [*self.char_magic_combos, *self.char_junction_combos.values()]:
             with QSignalBlocker(combo):
+                for magic_id in added:   # spells FFNx's AddMoreMagic lets a kernel.bin add
+                    if combo.findData(magic_id) < 0:
+                        combo.addItem("", magic_id)
                 for index in range(combo.count()):
                     magic_id = combo.itemData(index)
-                    if magic_id in self._magic_names:
+                    if magic_id in self._magic_names or magic_id in kernel_magic:
                         combo.setItemText(index, f"{magic_id}: {self.magic_label(magic_id)}")
         self.battle_page.relabel_magic()
         self.draw_points_page.relabel_magic()
+        self.manager.kernel_magic_extended = any(magic_id >= EXTENDED_MAGIC_FIRST for magic_id in kernel_magic)
+        if self.manager.battle:
+            self.manager.detect_magic_moved()
+            self.battle_page.reload()
 
     def _load_draw_data(self, path):
         """Cid's draw_data.csv: Draw ID 1-256 with its Magic ID."""

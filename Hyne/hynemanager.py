@@ -600,6 +600,7 @@ class HyneManager:
         self.triple_triad = None
         self.header = None
         self.field_variables = None
+        self.kernel_magic_extended = False   # the kernel.bin open holds a magic id FFNx moves the drawn list for
         self.progress = None
         self.party = None
         self.battle = None
@@ -636,6 +637,7 @@ class HyneManager:
                           "correctly (no changes made).")
         self._parse()
         self.detect_scan_moved()
+        self.detect_magic_moved()
         self._remember_sources()
 
     def _verify_crc(self, error_message):
@@ -665,8 +667,10 @@ class HyneManager:
         self.progress = ProgressState(self.buffer)
         self.party = PartyState(self.buffer)
         scan_moved = self.battle.scan_moved if self.battle else False
+        magic_moved = self.battle.magic_moved if self.battle else False
         self.battle = BattleState(self.buffer)
         self.battle.scan_moved = scan_moved
+        self.battle.magic_moved = magic_moved
         self.shops = ShopsState(self.buffer)
         self.draw_points = DrawPointsState(self.buffer)
         self.world_map = WorldMapState(self.buffer)
@@ -777,6 +781,12 @@ class HyneManager:
         data = bytes(self.buffer[ABILITY_EXT_NATIVE:ABILITY_EXT_OFFSET + ABILITY_EXT_SIZE])
         struct.pack_into("<IHHI", self.buffer, ABILITY_EXT_OFFSET, ABILITY_EXT_MAGIC, ABILITY_EXT_VERSION,
                          NB_GF, item_extension_checksum(data))
+
+    def detect_magic_moved(self):
+        """Where this save has its magic drawn once: only kernel.bin tells, as it tells FFNx. The block alone
+        says nothing, older Cronos saves hold quest flags in it."""
+        if self.battle:
+            self.battle.magic_moved = self.kernel_magic_extended
 
     def detect_scan_moved(self):
         """Where this save has its enemies scanned once: scene.out tells, as it tells FFNx; without

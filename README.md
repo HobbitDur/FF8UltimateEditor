@@ -228,7 +228,9 @@ automatically (see the update button in the toolbar).
 - **Hyne** — save file editor: G-Forces, characters, config, items, Triple Triad (cards, rare card
   locations, region rules, Queen of Cards and CC Group quests), story progress, field party and
   position, battle counts, shops, draw points, world map quests, Chocobo World, load screen, names and
-  the field variables the game and Cronos really use.
+  the field variables the game really uses, with what each one means (the **Cronos** box adds the mod's own).
+  It follows FFNx's extensions: items 199-255, abilities up to 254, added spells, and the magic and
+  scan lists FFNx moves into field variables.
 - **VincentTim** — command-line texture converter for FF7/FF8 `.tim`/`.tex` files (see its own
   [README](ExternalTools/VincentTim/README.md)).
 

@@ -38,6 +38,10 @@ NAME_SIZE = 12
 MAX_LEVEL = 100
 # FFNx moves the enemies scanned once here when scene.out uses a monster of its extra ones (com id
 # 160 and up, src/ff8/battle/monsters.cpp): field variables 785-816, one bit per com id.
+# FFNx AddMoreMagic keeps the magic drawn once here, all 256 ids, when kernel.bin holds a magic id of 96 or more
+MAGIC_MOVED_VAR = 753
+MAGIC_MOVED_BITS = 256
+EXTENDED_MAGIC_FIRST = 96
 SCANNED_MOVED_VAR = 785
 SCANNED_MOVED_BITS = 256
 SCANNED_VANILLA_BITS = 160
@@ -150,7 +154,8 @@ FIELD_VARS_ELSEWHERE = (
     (4, 11, "Progress"), (16, 17, "Progress"), (20, 23, "Battle"), (26, 27, "Battle"), (28, 59, "Characters"),
     (68, 71, "Battle"), (72, 79, "Misc"), (80, 85, "Progress"), (116, 179, "Draw points"), (204, 204, "Progress"),
     (256, 257, "Progress"), (272, 291, "Triple Triad"), (295, 300, "Triple Triad"), (304, 305, "Items"),
-    (475, 475, "Triple Triad"), (477, 478, "Triple Triad"), (SCANNED_MOVED_VAR, SCANNED_MOVED_VAR + SCANNED_MOVED_BITS // 8 - 1, "Battle"),
+    (475, 475, "Triple Triad"), (477, 478, "Triple Triad"),
+    (MAGIC_MOVED_VAR, MAGIC_MOVED_VAR + MAGIC_MOVED_BITS // 8 - 1, "Battle"), (SCANNED_MOVED_VAR, SCANNED_MOVED_VAR + SCANNED_MOVED_BITS // 8 - 1, "Battle"),
 )
 NB_FIELD_VARS = 1024
 
@@ -322,7 +327,7 @@ class BattleState(SaveView):
     scanned once. Wins and escapes have a second copy in the field variables, written together."""
     FIELDS = ("wins", "escapes", "total_kills", "tonberries", "tonberry_king", "ufo", "first_bite_bug", "first_bomb",
               "first_t_rexaur", "first_irvine", "renzokuken_flags", "renzokuken_indicator", "special_flags",
-              "magic_drawn", "scan_moved", "enemies_scanned")
+              "magic_moved", "magic_drawn", "scan_moved", "enemies_scanned")
 
     _copy1_wins = Int("I", 12)
     _copy2_wins = Int("I", 144 + 20)
@@ -344,6 +349,7 @@ class BattleState(SaveView):
 
     def __init__(self, buffer):
         super().__init__(buffer, BATTLE_BLOCK_OFFSET)
+        self.magic_moved = False  # the magic drawn once are where FFNx moves them, not read from the save
         self.scan_moved = False  # the enemies scanned once are where FFNx moves them, not read from the save
 
     def moved_scan_block_used(self):
@@ -419,7 +425,9 @@ class BattleState(SaveView):
 
     @property
     def magic_drawn(self):
-        """Bit N = magic id N + 1 drawn once."""
+        """Bit N = magic id N + 1 drawn once. See magic_moved for where they are."""
+        if self.magic_moved:
+            return Bits(self.buffer, FIELD_VARS_OFFSET + MAGIC_MOVED_VAR, MAGIC_MOVED_BITS)
         return self.bits(52, 64)
 
     @property

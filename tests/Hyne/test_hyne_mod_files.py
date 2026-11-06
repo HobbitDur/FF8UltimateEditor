@@ -15,7 +15,7 @@ _APP = QApplication.instance() or QApplication([])
 
 from CCGroup.cardlocation import LOCATION_PLAYER, RARE_CARD_FIRST_ID, starting_location
 from Hyne.hynemanager import (
-    CRC_OFFSET_1, CRC_OFFSET_2, CRC_SPAN_LEN, CRC_SPAN_START, IMAGE_SIZE, crc16_ff8, lzss_compress,
+    CRC_OFFSET_1, CRC_OFFSET_2, CRC_SPAN_LEN, CRC_SPAN_START, IMAGE_SIZE, crc16_ff8, lzss_compress, lzss_decompress,
 )
 from Hyne.hynesavemap import read_shop_file, scene_uses_extra_monsters
 from Hyne.hynewidget import HyneWidget
@@ -33,6 +33,19 @@ def _write_save(path, moved_bits=False):
     if moved_bits:
         image[SCANNED_MOVED + 2] = 0x04     # bit 18
     image[SCANNED_VANILLA] = 0x80           # bit 7, in the vanilla list
+    crc = crc16_ff8(bytes(image[CRC_SPAN_START:CRC_SPAN_START + CRC_SPAN_LEN]))
+    struct.pack_into("<H", image, CRC_OFFSET_1, crc)
+    struct.pack_into("<H", image, CRC_OFFSET_2, crc)
+    compressed = lzss_compress(bytes(image))
+    path.write_bytes(struct.pack("<I", len(compressed)) + compressed)
+
+
+def lzss_decompress_save(path):
+    raw = path.read_bytes()
+    return lzss_decompress(raw[4:4 + struct.unpack_from("<I", raw)[0]])
+
+
+def write_image(path, image):
     crc = crc16_ff8(bytes(image[CRC_SPAN_START:CRC_SPAN_START + CRC_SPAN_LEN]))
     struct.pack_into("<H", image, CRC_OFFSET_1, crc)
     struct.pack_into("<H", image, CRC_OFFSET_2, crc)
@@ -217,6 +230,60 @@ class TestDeckIdNames:
         users = HyneWidget.read_deck_users(str(REPO / "extracted_files" / "field"))
         assert any("joker" in name for name in users[213])
         assert any("queen" in name for name in users[1])
+
+
+class TestMagicPlace:
+    """FFNx AddMoreMagic: a kernel.bin with a magic id of 96 or more moves the drawn-once list to variables 753-784."""
+
+    def _kernel(self, widget, magic):
+        widget.kernel_names.magic = magic
+        widget._relabel_magic()
+
+    @pytest.fixture(autouse=True)
+    def _no_kernel_after(self, shared_widget):
+        yield
+        self._kernel(shared_widget, {})
+
+    def test_a_stock_kernel_leaves_the_list_in_the_save(self, widget):
+        self._kernel(widget, {43: "Reaper"})
+        assert not widget.manager.battle.magic_moved
+        assert len(widget.manager.battle.magic_drawn) == 64
+
+    def test_a_grown_kernel_moves_it(self, widget):
+        self._kernel(widget, {96: "Meltdown"})
+        battle = widget.manager.battle
+        assert battle.magic_moved and len(battle.magic_drawn) == 256
+        battle.magic_drawn[95] = True      # magic id 96
+        assert widget.manager.buffer[VARS + 753 + 95 // 8] & (1 << (95 % 8))
+
+    def test_exactly_96_entries_stay_in_the_save(self, widget):
+        self._kernel(widget, {95: "Last"})   # ids 0-95, the count FFNx still leaves alone
+        assert not widget.manager.battle.magic_moved
+
+    def test_the_block_alone_moves_nothing(self, shared_widget, tmp_path):
+        path = tmp_path / "old_cronos.ff8"
+        _write_save(path)
+        image_bytes = bytearray(lzss_decompress_save(path))
+        image_bytes[VARS + 753] = 5        # quest flags of an older Cronos
+        write_image(path, image_bytes)
+        shared_widget.manager.load_file(str(path))
+        assert not shared_widget.manager.battle.magic_moved
+
+    def test_rows_follow_the_list_length(self, widget):
+        rows = widget.battle_page.magic_group.list_widget
+        widget.battle_page.reload()
+        assert rows.count() == 256 and rows.item(63).isHidden() is False and rows.item(64).isHidden()
+        self._kernel(widget, {96: "Meltdown"})
+        assert not rows.item(95).isHidden()
+        assert "Meltdown" in rows.item(95).text()
+
+    def test_added_spells_can_be_chosen(self, widget):
+        self._kernel(widget, {96: "Meltdown", 97: ""})
+        combo = widget.char_magic_combos[0]
+        assert combo.findData(96) >= 0 and "Meltdown" in combo.itemText(combo.findData(96))
+        assert combo.findData(97) < 0        # a dummy row names nothing
+        junction = next(iter(widget.char_junction_combos.values()))
+        assert junction.findData(96) >= 0
 
 
 class TestScanPlace:

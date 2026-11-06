@@ -65,7 +65,7 @@ def page(shared_widget, save):
     shared_widget.tabs.setEnabled(True)
     page = shared_widget.field_variables_page
     page.search_edit.clear()
-    page.source_combo.setCurrentIndex(0)
+    page.cronos_check.setChecked(True)
     page.only_set_check.setChecked(False)
     page.reload()
     return page
@@ -238,11 +238,26 @@ class TestPage:
         page.search_edit.setText("730")
         assert _shown(page) == [730]
 
-    def test_source_filter(self, page):
-        page.source_combo.setCurrentIndex(page.SOURCES.index("Cronos"))
-        assert _shown(page) == [817, 818, 819, 820, 821, 822, 1020, 1022]
-        page.source_combo.setCurrentIndex(page.SOURCES.index("Vanilla"))
-        assert 261 in _shown(page) and 819 not in _shown(page)
+    def test_cronos_variables_come_with_the_box(self, page):
+        page.cronos_check.setChecked(False)
+        assert 261 in _shown(page) and not {817, 818, 819, 820, 821, 822, 1020, 1022} & set(_shown(page))
+        page.cronos_check.setChecked(True)
+        assert {261, 817, 818, 819, 820, 821, 822, 1020, 1022} <= set(_shown(page))
+
+    def test_the_box_is_remembered(self, page, monkeypatch):
+        stored = {}
+
+        class Settings:
+            def value(self, key, default=None, type=None):
+                return stored.get(key, default)
+
+            def setValue(self, key, value):
+                stored[key] = value
+        monkeypatch.setattr(page.tool, "settings", Settings())
+        page.cronos_check.setChecked(False)
+        assert stored[page.CRONOS_SETTING] is False
+        page.cronos_check.setChecked(True)
+        assert stored[page.CRONOS_SETTING] is True
 
     def test_only_values_set(self, page):
         page.only_set_check.setChecked(True)
@@ -251,7 +266,7 @@ class TestPage:
     def test_choosing_what_to_show_edits_nothing(self, page):
         tool = _tracked(page.tool)
         page.search_edit.setText("x")
-        page.source_combo.setCurrentIndex(1)
+        page.cronos_check.click()
         page.only_set_check.click()
         _select(page, 261)
         page.reload()
