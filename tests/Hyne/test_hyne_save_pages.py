@@ -12,7 +12,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QSpinBox
+from PyQt6.QtWidgets import QApplication, QComboBox, QSpinBox
 
 _APP = QApplication.instance() or QApplication([])
 
@@ -432,6 +432,14 @@ class TestPages:
         assert [page.position_spins[2, column].value() for column in range(4)] == [-71602, -14836, -340, 4095]
         page.position_spins[2, 0].setValue(70000)
         assert widget.manager.world_map.place(2) == (70000, -14836, -340, 4095)
+
+    def test_obel_lake_progress_is_one_value(self, widget):
+        combo = next(c for c in widget.world_map_page.findChildren(QComboBox) if c.findData(123) >= 0)
+        widget.manager.world_map.obel_state = 123
+        widget.world_map_page.reload()
+        assert "red-faced" in combo.currentText()
+        combo.setCurrentIndex(combo.findData(2))
+        assert widget.manager.world_map.obel_state == 2
 
     def test_unused_fields_unlock(self, widget):
         page = widget.world_map_page

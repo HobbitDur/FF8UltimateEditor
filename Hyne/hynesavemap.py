@@ -512,6 +512,7 @@ class WorldMapState(SaveView):
     rental_car = Int("B", 98)      # 0 forbidden, 255 none
     displayed_map = Int("B", 110)  # 0 none, 1 globe, 2 map
     car_steps = Int("H", 112)
+    obel_state = Int("B", 124)     # the scripts' variable 0, also inside obel_quest for the JSON
 
     def __init__(self, buffer):
         super().__init__(buffer, WORLD_MAP_OFFSET)

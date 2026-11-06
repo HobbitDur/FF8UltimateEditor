@@ -39,14 +39,18 @@ WORLD_MESSAGE_NAMES = ["Car controls", UNUSED_NAME, "Garden controls", "Chocobo 
 PUPU_QUEST_NAMES = [UNUSED_NAME, UNUSED_NAME, "Mandy Beach", "Winhill", "Trabia", "Kashkabald Desert", "UFO defeated", "PuPu defeated"]
 # (text, byte of the quest block, bit)
 OBEL_QUEST_FLAGS = [
-    ("Talked with the shadow for the first time", 6, 0), ("Hummed a song twice", 0, 0),
-    ("Accepted to search the Monkey", 6, 1), ("Seen the Monkey", 6, 2),
+    ("Hummed a song twice", 0, 0),
     ("Didn't tell the shadow where the Monkey is", 0, 6), ("The shadow gave the Balamb hint", 3, 6),
     ("Rock beach Balamb", 3, 1), ("The Monkey said he's stronger than you", 0, 7), ("Did some skimming stones", 0, 4),
     ("Made a countless amount of ricochets", 0, 5), ("The Monkey rock", 3, 2), ("Galbadia mountain rock", 3, 3),
     ("Timber island rock", 3, 4), ("All rocks", 3, 5), ("The shadow gave the Eldbeak hint", 1, 6),
     ("Saw the pillar at Eldbeak", 1, 7), ("Minde island treasure found", 2, 0), ("Esthar's mountains treasure found", 2, 1),
 ]
+# The first script variable, which the world map scripts compare and set as a whole value
+OBEL_STATES = [{"value": 0, "name": "Lake not found"}, {"value": 1, "name": "Lake found"},
+               {"value": 2, "name": "Asked to find Mr. Monkey"}, {"value": 4, "name": "Mr. Monkey found"},
+               {"value": 121, "name": "Liar Rocks: black-faced rock"}, {"value": 122, "name": "Liar Rocks: white-faced rock"},
+               {"value": 123, "name": "Liar Rocks: red-faced rock"}, {"value": 124, "name": "Liar Rocks: blue-faced rock"}]
 WORLD_POSITION_ROWS = ["Party", "Party, second set", "Ragnarok", "Balamb Garden", "Rental car", "Rental car, second set",
                        UNUSED_NAME, UNUSED_NAME]
 WORLD_UNUSED_POSITIONS = (1, 5, 6, 7)   # the second set hangs on a flag FFWorldInit clears and nothing sets; no code reads the last two
@@ -717,8 +721,15 @@ class WorldMapPage(SavePage):
         obel_grid = QGridLayout()
         for index, (text, byte, bit) in enumerate(OBEL_QUEST_FLAGS):
             obel_grid.addWidget(self.bit_check("world_map", "obel_quest", byte * 8 + bit, text), index // 2, index % 2)
+        obel_state = QFormLayout()
+        obel_state.addRow("Progress:", self.combo("world_map", "obel_state", OBEL_STATES,
+                                                  "Where the quest stands. Meeting a Liar Rock replaces it with the kind "
+                                                  "of rock, drawn at random, which decides what that rock says."))
+        obel_layout = QVBoxLayout()
+        obel_layout.addLayout(obel_state)
+        obel_layout.addLayout(obel_grid)
         obel_group = QGroupBox("Obel Lake quest")
-        obel_group.setLayout(obel_grid)
+        obel_group.setLayout(obel_layout)
 
         self.position_spins = {}
         positions = QGridLayout()
