@@ -200,7 +200,7 @@ def test_widget_playback_follows_edits():
 
 @needs_files
 def test_magic_folder_brings_every_gf_file():
-    """The magic folder holds the .00, .01 and every streamed part (Import > Effect files, Ctrl+A),
+    """The magic and battle folders hold the .00, .01 and every streamed part (Import > Effect files),
     and the scene uses them."""
     import os
     from Common.fileregistry import FileRegistry

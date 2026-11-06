@@ -238,6 +238,7 @@ def test_xu_auto_upload_sources_include_reference_and_all_preview_inputs(main_wi
     ("_shumi_translator_widget", "open_files", "c0m000.dat", "ShumiTranslator battle text"),
     ("_xu_widget", "add_models", "d0c000.dat", "battle model (.dat)"),
     ("_fujin_widget", "import_paths", "mag001.tim", "Fujin effect files"),
+    ("_fujin_widget", "import_battle_paths", "mag200_b.02", "Fujin battle effect files"),
 ])
 def test_custom_imports_use_the_existing_loader(main_window, tmp_path, monkeypatch,
                                               widget_name, method, filename, key):

@@ -34,17 +34,45 @@ def test_tabs_and_empty_camera_editor(fujin):
     assert [label for label, _callback in fujin.import_entries()][0].startswith("FF8 exe")
 
 
-def test_effect_files_imported_from_two_folders_are_all_remembered(fujin, tmp_path):
-    """Ifrit's files lie in magic and battle: Auto-upload reopens both imports."""
+def test_the_magic_and_battle_folders_have_an_import_line_each(fujin, tmp_path, monkeypatch):
+    """No effect file lies in both, and Ifrit's are in both folders: each line remembers its own, Auto-upload reopens them all."""
+    from Fujin import fujinwidget
     first, second = tmp_path / "magic", tmp_path / "battle"
     first.mkdir(), second.mkdir()
-    for path in (first / "mag200_b.00", second / "mag200_b.02"):
+    for path in (first / "mag200_b.00", first / "mag200_b.01", second / "mag200_b.02"):
         path.write_bytes(bytes(64))
+    labels = [label for label, _callback in fujin.import_entries()]
+    assert [label.split(" (")[0] for label in labels[1:3]] == ["Effect files: magic", "Effect files: battle"]
+    asked = []
+
+    def choose(paths):
+        def dialog(_parent, title, folder, _filter):
+            asked.append((title, folder))
+            return [str(path) for path in paths], ""
+        monkeypatch.setattr(fujinwidget.QFileDialog, "getOpenFileNames", dialog)
     registry = fujin.file_registry
-    registry.remember_files("Fujin effect files", [str(first / "mag200_b.00")])
-    fujin.import_paths([str(second / "mag200_b.02")])
-    assert registry.last_files("Fujin effect files") == [str(first / "mag200_b.00"), str(second / "mag200_b.02")]
-    assert registry.last_folder("Fujin effect files") == str(second)
+    registry.remember_folder(fujinwidget.MODEL_FOLDER_KEY, str(second))
+    choose([first / "mag200_b.00"])
+    fujin.open_effect_files()
+    choose([first / "mag200_b.01"])
+    fujin.open_effect_files()
+    choose([second / "mag200_b.02"])
+    fujin.open_battle_effect_files()
+    assert asked[-1] == ("Import effect files: the game's battle folder", str(second))
+    assert registry.last_files("Fujin effect files") == [str(first / "mag200_b.00"), str(first / "mag200_b.01")]
+    assert registry.last_files("Fujin battle effect files") == [str(second / "mag200_b.02")]
+    assert registry.last_folder("Fujin effect files") == str(first)
+    assert registry.last_folder("Fujin battle effect files") == str(second)
+    sources = {source.key: source for source in fujin.auto_import_sources()}
+    assert sources["Fujin battle effect files"].find_paths(registry) == [str(second / "mag200_b.02")]
+
+
+def test_the_header_says_which_line_brings_the_missing_files(fujin):
+    catalog = fujin.catalog
+    assert catalog.file_folder("MAG200_B.00") == "magic" and catalog.file_folder("mag200_b.02") == "battle"
+    assert catalog.file_folder("ma8def_p.0") == "battle" and catalog.file_folder("mymod.tim") is None
+    fujin.select_effect(201)
+    assert "0 of 13 files imported · header's Import, Effect files: 2 from magic folder, 11 from battle folder" in fujin.context.text()
 
 
 def test_files_open_from_the_header_toolbar_only(fujin):
@@ -54,7 +82,7 @@ def test_files_open_from_the_header_toolbar_only(fujin):
     from PyQt6.QtWidgets import QPushButton
     buttons = [button.text() for button in fujin.findChildren(QPushButton) if not button.isHidden()]
     assert not [text for text in buttons if re.match(r"(Import|Open|Load|Reload)", text)], buttons
-    assert len(fujin.import_entries()) == 5 and len(fujin.complementary_entries()) == 7   # + .bcam files, Fujin's effect files, battle stages
+    assert len(fujin.import_entries()) == 6 and len(fujin.complementary_entries()) == 7   # + .bcam files, Fujin's effect files, battle stages
     fujin.select_effect(LIFE)                                     # mag004-034.tim, not imported
     fujin.textures.activate()
     assert "header's Import" in fujin.textures.status.text()    # what to do with a missing file

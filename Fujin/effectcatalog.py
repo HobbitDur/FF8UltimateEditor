@@ -41,12 +41,20 @@ class EffectCatalog:
         self.profiles = json.loads((folder / "mag_cinematic_profiles.json").read_text(encoding="utf-8"))["effects"]
         self.native = json.loads((folder / "effect_resources.json").read_text(encoding="utf-8"))
         self.facts = json.loads((folder / "effect_runtime.json").read_text(encoding="utf-8"))["effects"]
-        self.files = json.loads((folder / "mag_file_catalog.json").read_text(encoding="utf-8"))["files"]
+        file_catalog = json.loads((folder / "mag_file_catalog.json").read_text(encoding="utf-8"))
+        self.files = file_catalog["files"]
+        self._file_names = {name.lower() for name in self.files}
+        self._battle_folder = set(file_catalog["battle_folder"])
         # effect id -> catalog file names of its mag family, sorted (built once: resources() is
         # asked for every effect, and matching the whole catalog each time made that slow)
         self._families = {}
         for name in sorted(set(self.files), key=str.lower):
             self._families.setdefault(filename_effect(name), []).append(name)
+
+    def file_folder(self, name):
+        """The game's folder a vanilla file lies in, "magic" or "battle": never both. None for another file (a mod's)."""
+        name = name.lower()
+        return "battle" if name in self._battle_folder else "magic" if name in self._file_names else None
 
     def effect_ids(self):
         return sorted({int(k) for k in self.dump if k.isdigit()} | {i for i in self.names if i > 0})

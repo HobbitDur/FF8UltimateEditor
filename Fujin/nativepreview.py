@@ -210,7 +210,7 @@ def recording_notes(log, not_imported=()):
         notes += " Not drawn (not imported): " + ", ".join(not_imported) + "."
     if missing:
         notes += (" NOT IMPORTED, asked for by the effect: " + ", ".join(missing) + ": it stops or looks wrong without them. "
-                  "Header's Import, Effect files (they may be in the game's battle folder).")
+                  "Header's Import, Effect files: magic and battle folders.")
     problems = [line for line in lines if "faulted" in line or "failed" in line]
     if problems:
         notes += " Recorder: " + "; ".join(problems[:3])

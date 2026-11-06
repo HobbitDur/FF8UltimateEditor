@@ -85,8 +85,8 @@ class MagDocumentWidget(QWidget):
             binding.file_closed.connect(lambda _path, g=gf: self._close_companion(g))
             self.companion_bindings[gf] = binding
         # Streamed parts have independent editors and also feed the GF preview.
-        # Like every file here they come through the shared registry: selecting the whole magic
-        # folder in Import > Effect files brings the whole set at once.
+        # Like every file here they come through the shared registry: selecting the whole magic and
+        # battle folders with the Effect files lines of the Import menu brings the whole set at once.
         self.parts = {}             # gf -> {part number: MagContainer} (packed parts: objects)
         self.part_data = {}         # gf -> {part number: bytes} (every part: VRAM pages too)
         self.part_bindings = {}
@@ -113,7 +113,7 @@ class MagDocumentWidget(QWidget):
         self.gf_selector.completer().setFilterMode(Qt.MatchFlag.MatchContains)
         self.gf_selector.setToolTip("Choose any loaded MAG file or streamed part")
         self.gf_selector.activated.connect(lambda _i: self._show_gf(self.gf_selector.currentData()))
-        self.file_label = QLabel("Import MAG files (select the whole magic folder, Ctrl+A, for every one). "
+        self.file_label = QLabel("Import MAG files (the two Effect files lines, magic and battle folders, Ctrl+A for every one). "
                                 "The format is detected from the contents; each section has a read-only tab.")
         self.file_label.setWordWrap(True)
         top = QHBoxLayout()
@@ -302,7 +302,7 @@ class MagDocumentWidget(QWidget):
         self.scene_wire_check.toggled.connect(self._scene_option_changed)
         self.texture_check = QCheckBox("Textures")
         self.texture_check.setToolTip("Sample the VRAM the script has built at this tick (needs the .01 and the "
-                                      "streamed parts: Import > Effect files, Ctrl+A in the magic folder)")
+                                      "streamed parts: Import > Effect files, the battle folder)")
         self.texture_check.setChecked(True)
         self.texture_check.toggled.connect(self._scene_option_changed)
         frame_button = QPushButton("Frame all")
@@ -484,7 +484,7 @@ class MagDocumentWidget(QWidget):
         missing = self._missing_files()
         if missing:
             item = QTreeWidgetItem([f"{len(missing)} file(s) not loaded", "",
-                                    "Import > Effect files (Ctrl+A in the magic folder) loads them: "
+                                    "Import > Effect files (magic and battle folders) loads them: "
                                     + ", ".join(missing)])
             item.setToolTip(2, item.text(2))
             item.setForeground(0, QColor(220, 60, 60))

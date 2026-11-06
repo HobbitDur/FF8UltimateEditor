@@ -106,7 +106,7 @@ class EffectResourceView(QWidget):
         else:
             location = (f"{resource.address:#x} in EN exe → Hext export" if resource.source == "Executable"
                         else manager.file_path if manager else
-                        "Not imported: open it with the header's Import (Effect files).")
+                        "Not imported: open it with the header's Import (Effect files: magic and battle folders).")
             self.status.setText(f"{resource.evidence}. {resource.note}\n{location}")
         self.sections.set_manager(manager, self._sections(resource, manager) if manager else None)
         if self.mode == "parameters":

@@ -44,6 +44,9 @@ from Fujin.objectview import MagObjectView
 from SmallWidget.listsearchbar import ListSearchBar, SEARCH_TEXT_ROLE
 
 STAGE_FILES_KEY = "Fujin battle stages"
+EFFECT_FILE_PATTERNS = ("mag*", "MAG*", "ma8*", "MA8*")
+EFFECT_FILES_KEY = "Fujin effect files"                # the game's magic folder
+BATTLE_EFFECT_FILES_KEY = "Fujin battle effect files"  # the game's battle folder: no file is in both
 ANIM_SET_FOLDER_KEY = "FFNx animation sets"
 ANIM_SET_SELECTION_KEY = "FFNx animation set files"   # the .animset files last imported
 USERS_SHOWN = 24    # entries listed per kind in the Overview's Used by (effect 0 has hundreds)
@@ -279,7 +282,9 @@ class FujinWidget(QWidget):
 
     def import_entries(self):
         return [("FF8 exe (camera tracks and embedded effect assets)", self.camera_editor.open_exe),
-                ("Effect files (MAG / MA8, all sections)", self.open_effect_files),
+                ("Effect files: magic (MAG / MA8, all sections)", self.open_effect_files),
+                ("Effect files: battle (MAG / MA8: a summon's streamed parts and textures, more effects)",
+                 self.open_battle_effect_files),
                 ("Fujin effect patch (.hext)", self.import_hext),
                 ("FFNx effect cameras (effect_NNN.bcam files)", self._import_bcam),
                 ("FFNx animation sets (effect_NNN.animset files)", self.import_anim_sets)]
@@ -348,17 +353,25 @@ class FujinWidget(QWidget):
                                  selection_only=True, selection_key=CAM_SELECTION_KEY),
                 AutoImportSource(ANIM_SET_FOLDER_KEY, ("effect_*.animset",), lambda paths: self.import_anim_sets(paths, select=False),
                                  selection_only=True, selection_key=ANIM_SET_SELECTION_KEY),
-                AutoImportSource("Fujin effect files", ("mag*", "MAG*", "ma8*", "MA8*"),
-                                 self.import_paths, selection_only=True)]
+                AutoImportSource(EFFECT_FILES_KEY, EFFECT_FILE_PATTERNS, self.import_paths, selection_only=True),
+                AutoImportSource(BATTLE_EFFECT_FILES_KEY, EFFECT_FILE_PATTERNS, self.import_battle_paths, selection_only=True)]
 
     def auto_import_bindings(self):
         return self.mag_editor.file_bindings()
 
     def open_effect_files(self):
-        paths, _ = QFileDialog.getOpenFileNames(self, "Import effect files",
-            self.file_registry.last_folder("Fujin effect files"), "Effect files (MAG* mag* MA8* ma8*);;All files (*)")
+        paths, _ = QFileDialog.getOpenFileNames(self, "Import effect files: the game's magic folder",
+            self.file_registry.last_folder(EFFECT_FILES_KEY), "Effect files (MAG* mag* MA8* ma8*);;All files (*)")
         if paths:
             self.import_paths(paths)
+
+    def open_battle_effect_files(self):
+        # first time: where the models were imported from, the same folder
+        folder = self.file_registry.last_folder(BATTLE_EFFECT_FILES_KEY) or self.file_registry.last_folder(MODEL_FOLDER_KEY)
+        paths, _ = QFileDialog.getOpenFileNames(self, "Import effect files: the game's battle folder",
+            folder, "Effect files (MAG* mag* MA8* ma8*);;All files (*)")
+        if paths:
+            self.import_battle_paths(paths)
 
     def import_kernel(self):
         path = self.kernel_binding.open_dialog(self, default_dir=self.file_registry.last_folder("kernel.bin"))
@@ -444,7 +457,10 @@ class FujinWidget(QWidget):
                 "<p style='color:gray'>From the kernel.bin entries whose attack animation is this effect "
                 "(in brackets: the entry's index in its kernel section).</p>")
 
-    def import_paths(self, paths):
+    def import_battle_paths(self, paths):
+        self.import_paths(paths, BATTLE_EFFECT_FILES_KEY)
+
+    def import_paths(self, paths, key=EFFECT_FILES_KEY):
         """Open effect files with a progress bar (Cancel stops before the next file). The registry
         batches the opens: views refresh once at the end instead of after every file."""
         from Common.filetoolbarwidget import FileToolbarWidget
@@ -468,10 +484,10 @@ class FujinWidget(QWidget):
         finally:
             FileToolbarWidget.close_progress(progress)
         if opened:
-            # added to those remembered: an effect's files can lie in two folders (Ifrit: magic, then battle), Auto-upload reopens them all
-            earlier = [path for path in self.file_registry.last_files("Fujin effect files") or [] if os.path.isfile(path)]
-            self.file_registry.remember_files("Fujin effect files", earlier + opened)
-            self.file_registry.remember_folder("Fujin effect files", os.path.dirname(opened[-1]))
+            # added to those remembered: Auto-upload reopens every effect imported, each one at a time
+            earlier = [path for path in self.file_registry.last_files(key) or [] if os.path.isfile(path)]
+            self.file_registry.remember_files(key, earlier + opened)
+            self.file_registry.remember_folder(key, os.path.dirname(opened[-1]))
         self._refresh()
 
     def _load_native(self, path):
@@ -559,7 +575,7 @@ class FujinWidget(QWidget):
         for manager in self.mag_editor.managers.values():
             if manager.file_path:
                 return os.path.dirname(manager.file_path)
-        return self.file_registry.last_folder("Fujin effect files") or ""
+        return self.file_registry.last_folder(EFFECT_FILES_KEY) or ""
 
     def _preview_effect_files(self):
         """The current effect's imported files as Fujin holds them (unsaved edits included): all
@@ -627,6 +643,7 @@ class FujinWidget(QWidget):
         self.title.setText(f"{effect:03d} — {self.catalog.name(effect)}")
         loaded = sum(self.resolve(r) is not None for r in resources)
         self.context.setText(f"{self.catalog.runtime(effect)} · {loaded} of {len(resources)} files imported"
+                             + self._files_to_import(resources)
                              + (" · unsaved changes: see Pending changes" if self.can_save_folder()
                                 else f" · {self._saved_note}" if self._saved_note else ""))
         self._refresh_camera()
@@ -634,6 +651,12 @@ class FujinWidget(QWidget):
         self._grey_unused_tabs()
         self._refresh_summary()
         self._activate_tab()
+
+    def _files_to_import(self, resources):
+        """Which of the header's Effect files lines brings what is missing: Ifrit's first 2 files are in the magic folder, its 11 others in the battle one."""
+        folders = [self.catalog.file_folder(r.name) for r in resources if r.source == "File" and self.resolve(r) is None]
+        counts = [f"{folders.count(folder)} from {folder} folder" for folder in ("magic", "battle") if folder in folders]
+        return " · header's Import, Effect files: " + ", ".join(counts) if counts else ""
 
     def _refresh_camera(self):
         effect = self.current_effect
@@ -673,7 +696,7 @@ class FujinWidget(QWidget):
             self.camera_sources.setCurrentIndex(1)
         elif file_camera:
             self.camera_note.setText("This effect's camera comes from its MAG files (a camera track or cinematic camera "
-                                     "commands). Import them with the header's Import (Effect files) to edit it; camera "
+                                     "commands). Import them with the header's Import (Effect files: magic and battle folders) to edit it; camera "
                                      "moves driven by the cinematic script are in Choreography.")
         else:
             self.camera_note.setText("<b>This effect plays no camera track of its own.</b> It never starts the battle "
@@ -768,7 +791,7 @@ class FujinWidget(QWidget):
     def _no_script_text(self, effect):
         if self.catalog.runtime(effect).startswith("MAG cinematic"):
             return ("This effect runs a MAG cinematic script: import its MAG files (header's Import, "
-                    "Effect files) to read, edit and play it here.")
+                    "Effect files: magic and battle folders) to read, edit and play it here.")
         return ("No MAG script: this effect is run by the exe's own code (see Native code). Only cinematic "
                 "effects, the GF summons and the other MAG-script effects, have a MAG script.")
 
@@ -784,7 +807,7 @@ class FujinWidget(QWidget):
         missing = [r.name for r in resources if r.source == "File" and self.resolve(r) is None]
         if missing:
             text = ("Not imported yet: " + ", ".join(missing[:6]) + (" ..." if len(missing) > 6 else "")
-                    + ". Open them with the header's Import (Effect files).")
+                    + ". Open them with the header's Import (Effect files: magic and battle folders).")
             for view in (self.models, self.textures, self.sound):
                 view.empty_text = text
             return
@@ -836,7 +859,8 @@ class FujinWidget(QWidget):
             manager = self.resolve(resource)
             availability = ("Imported (" + manager.document.format + ")" if manager else
                 self.native.unavailable.get(resource.key, "Import the exe" if resource.source == "Executable"
-                                            else "Not imported: header's Import (Effect files)"))
+                                            else "Not imported: header's Import (Effect files"
+                                            + (f": {self.catalog.file_folder(resource.name)} folder)" if self.catalog.file_folder(resource.name) else ")")))
             rows.append("<tr>" + "".join(f"<td>{esc(value)}</td>" for value in (
                 resource.name, resource.source, resource.evidence, availability)) + "</tr>")
         aliases = self.catalog.aliases(effect)

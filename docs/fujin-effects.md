@@ -82,7 +82,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   picture, about 1 s a frame): polygons, sprites, lines, CLUT textures; FF8 PC's 3D output is in
   eighths of a pixel, the 320 x 224 window being 2560 x 1792 units.
   Files: only those opened in Fujin, one by one - nothing is read from their folders. FF8_EN.exe
-  and the effect files from the header's Import (the recorder gets the effect's imported files as
+  and the effect files from the header's Import, one line per game folder, magic and battle, no file being in both (the recorder gets the effect's imported files as
   Fujin holds them, unsaved edits included, staged privately; a file the effect asks for and was not
   imported is named in the status), the models from Import complementary (Camera preview models),
   scene.out from Import complementary for the encounters, and optionally `a8def.tim` from Import
@@ -310,7 +310,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   battle starts; tick one a script brings in later to see it, untick one to take it out. The recorder can draw enemy slots 0-3 only.
   **Summons**: a GF's action (`BattleActionSequence_Tick_GF_Cinematic` 0x50B2A0) plays the summoner's camera shot (section 5, set 1), the rest of the party fades, the
   sequence goes on once the shot ends, and the summon starts when the summoner has vanished (entity flag 4, its A8 03), not on a Magic cast's flag. A cinematic summon's
-  files past `_b.01` are streamed as it plays and hold its textures: import them too (Ifrit: `mag200_b.00`-`.12`, from `magic` and `battle`). Without them it stops where
+  files past `_b.01` are streamed as it plays and hold its textures: import them too (Ifrit: `mag200_b.00`-`.01` with the Effect files: magic line, `.02`-`.12` with the Effect files: battle one; the header says how many each line still has to bring). Without them it stops where
   it asks for one, and the status names what is missing.
   **Animation sets**: Import, FFNx animation sets: `effect_NNN.animset` files (Ifrit's "Exe - Limit anim." tab or "Export anim sets…"
   write them). The recorder (`animset=address:file`) binds the file in place of the exe's set, as FFNx does in the game, so the Overview
