@@ -222,8 +222,23 @@ class HyneWidget(QWidget):
         if self.settings is not None:
             self.unlock_unused_check.setChecked(self.settings.value(self.UNLOCK_SETTING, False, type=bool))
         self.unlock_unused_check.toggled.connect(self._on_unlock_unused)
+        self.cronos_check = QCheckBox("Cronos")
+        self.cronos_check.setToolTip(
+            "For a save of the Cronos mod. The Variables tab also lists the variables Cronos adds, which mean nothing in "
+            "another save.\nThe Battle tab shows the enemies scanned once where FFNx keeps them for Cronos's monsters, "
+            "unless a scene.out is open: that file then decides.")
+        if self.settings is not None:
+            self.cronos_check.setChecked(self.settings.value(FieldVariablesPage.CRONOS_SETTING, False, type=bool))
+        self.manager.cronos_mod = self.cronos_check.isChecked()
+        self.cronos_check.toggled.connect(self._on_cronos_mod)
+        tab_options = QWidget()
+        tab_options.setProperty("read_only_preview", True)   # choosing what to show edits nothing
+        tab_options_row = QHBoxLayout(tab_options)
+        tab_options_row.setContentsMargins(0, 0, 0, 0)
+        tab_options_row.addWidget(self.cronos_check)
+        tab_options_row.addWidget(self.unlock_unused_check)
         self.tabs = QTabWidget()
-        self.tabs.setCornerWidget(self.unlock_unused_check)
+        self.tabs.setCornerWidget(tab_options)
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
         self.tabs.addTab(self._build_character_tab(), "Characters")
         self.tabs.addTab(self._build_config_tab(), "Config")
@@ -384,15 +399,15 @@ class HyneWidget(QWidget):
                                           else "Places are the vanilla game's")
         self.tt_deck_clear_button.setVisible(bool(users))
 
-    def _pick_deck_folders(self):
-        """The whole game's field folder, then optionally a mod's on top (Cronos's FieldRework\\field), to
-        name who holds each Deck ID. Remembered with the CC Group tool's, which opens the same two."""
+    def _pick_field_folders(self):
+        """The whole game's field folder, then optionally a mod's on top (Cronos's FieldRework\\field), as
+        (game's, mod's or ""); None if cancelled. Remembered with the CC Group tool's, which opens the same two."""
         registry = self.file_registry
         check = pick_field_folder(self, "Hyne", "The whole game's 'field' folder holding mapdata",
                                   registry.last_folder(CCGroupWidget.REFERENCE_FOLDER_KEY), complete=True,
                                   remember=lambda folder: registry.remember_folder(CCGroupWidget.REFERENCE_FOLDER_KEY, folder))
         if check is None:
-            return
+            return None
         modified = ""
         answer = QMessageBox.question(self, "Hyne", "Does a mod change the field scripts? Pick its 'field' folder next.")
         if answer == QMessageBox.StandardButton.Yes:
@@ -400,10 +415,27 @@ class HyneWidget(QWidget):
                                           registry.last_folder(CCGroupWidget.EDITED_FOLDER_KEY),
                                           remember=lambda folder: registry.remember_folder(CCGroupWidget.EDITED_FOLDER_KEY, folder))
             if mod_check is None:
-                return
+                return None
             modified = mod_check.root
-        with busy_cursor():
-            self.set_deck_users(self.read_deck_users(check.root, modified))
+        return check.root, modified
+
+    def _pick_deck_folders(self):
+        """Field folders, to name who holds each Deck ID."""
+        folders = self._pick_field_folders()
+        if folders is not None:
+            with busy_cursor():
+                self.set_deck_users(self.read_deck_users(*folders))
+
+    def field_folders(self):
+        """The field folders chosen last, a mod's first."""
+        registry = self.file_registry
+        return [folder for folder in (registry.last_folder(CCGroupWidget.EDITED_FOLDER_KEY),
+                                      registry.last_folder(CCGroupWidget.REFERENCE_FOLDER_KEY)) if folder]
+
+    def pick_preview_folders(self):
+        """Field folders, for the Party tab's picture."""
+        if self._pick_field_folders() is not None:
+            self.party_page.forget_fields()
 
     @staticmethod
     def read_deck_users(vanilla_folder, modified_folder=""):
@@ -646,6 +678,19 @@ class HyneWidget(QWidget):
         """A widget, or a check list's item, for something the game never reads."""
         self._unused_fields.append(field)
         self._set_unused_locked(field, not self.unlock_unused_check.isChecked())
+
+    def set_unused(self, field, unused):
+        """For a field a mod's file can give a use to."""
+        known = field in self._unused_fields
+        if unused and not known:
+            self.mark_unused(field)
+        elif known and not unused:
+            self._unused_fields.remove(field)
+            self._set_unused_locked(field, False)
+
+    def _on_cronos_mod(self, checked):
+        self.manager.cronos_mod = checked
+        self._refresh_scan_place()
 
     def _on_unlock_unused(self, checked):
         if self.settings is not None:
@@ -1491,13 +1536,15 @@ class HyneWidget(QWidget):
         weapons_group, self.misc_weapon_checks = self._bitfield_group(
             "Unlocked weapons",
             "Weapon-upgrade recipes already built/owned (Junk Shop). Bit i = kernel weapon id i.",
-            weapon_entries, self._on_misc_changed, columns=7)
+            weapon_entries, self._on_misc_changed, columns=4)
 
         # Limit-break unlocks: each is a bitfield → a checkbox group.
         self.misc_limit_bitfields = []  # (manager field, [(bit, checkbox)])
         limit_groups = []
         for field, title, entries, tip in self._limit_bitfield_defs:
-            group, checks = self._bitfield_group(title, tip, entries, self._on_misc_changed, columns=4)
+            # Selphie's names are the long ones
+            group, checks = self._bitfield_group(title, tip, entries, self._on_misc_changed,
+                                                 columns=3 if field == "limit_selphie" else 4)
             self.misc_limit_bitfields.append((field, checks))
             limit_groups.append(group)
 

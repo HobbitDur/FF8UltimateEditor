@@ -636,6 +636,8 @@ class HyneManager:
         self._header_sources = {}
         # What the open scene.out says about FFNx moving the enemies scanned once; None without one.
         self.scene_uses_extra_monsters = None
+        # With no scene.out to ask, the tool's Cronos box stands for Cronos's, which uses those monsters.
+        self.cronos_mod = False
         # "extended": the FFNx AddMoreItems block is in use (255 slots); "stale": a block is
         # there but FFNx would ignore it (damaged, or the item table changed since); "none".
         self.item_extension = "none"
@@ -858,11 +860,13 @@ class HyneManager:
             self.battle.magic_moved = self.kernel_magic_extended
 
     def detect_scan_moved(self):
-        """Where this save has its enemies scanned once: scene.out tells, as it tells FFNx. With nothing
-        to go by (the CLI), FFNx's block holding anything is the sign."""
+        """Where this save has its enemies scanned once: scene.out tells, as it tells FFNx; without one, the
+        tool's Cronos box. With nothing to go by (the CLI), FFNx's block holding anything is the sign."""
         if self.battle:
-            if self.scene_uses_extra_monsters is not None or self.follow_mod_files:
-                self.battle.scan_moved = bool(self.scene_uses_extra_monsters)
+            if self.scene_uses_extra_monsters is not None:
+                self.battle.scan_moved = self.scene_uses_extra_monsters
+            elif self.follow_mod_files:
+                self.battle.scan_moved = self.cronos_mod
             else:
                 self.battle.scan_moved = self.battle.moved_scan_block_used()
 

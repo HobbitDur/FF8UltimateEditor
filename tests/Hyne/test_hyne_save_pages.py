@@ -12,7 +12,7 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QComboBox, QSpinBox
+from PyQt6.QtWidgets import QAbstractSpinBox, QApplication, QComboBox, QSpinBox
 
 _APP = QApplication.instance() or QApplication([])
 
@@ -426,6 +426,54 @@ class TestPages:
         scan.item(16 + 2).setCheckState(Qt.CheckState.Checked)
         assert widget.manager.battle.enemies_scanned[18]
 
+    def test_cronos_box_moves_the_scan_list(self, widget):
+        battle = widget.manager.battle
+        assert not battle.scan_moved
+        widget.cronos_check.setChecked(True)
+        try:
+            assert battle.scan_moved
+            widget.manager.scene_uses_extra_monsters = False    # an open scene.out decides
+            widget.manager.detect_scan_moved()
+            assert not battle.scan_moved
+        finally:
+            widget.manager.scene_uses_extra_monsters = None
+            widget.cronos_check.setChecked(False)
+        assert not battle.scan_moved
+
+    def test_party_preview_on_the_world_map(self, widget):
+        page = widget.party_page
+        widget.manager.world_map.set_place(0, 0, 0, 0, 0)
+        widget.manager.party.module = 2
+        page.show_preview()
+        assert page.preview_stack.currentWidget() is page.world_view
+        assert page.world_view.places == [("Party", 0.5, 0.5)]
+
+    def test_party_preview_on_a_field(self, widget, monkeypatch):
+        page = widget.party_page
+        widget.manager.party.module = 1
+        monkeypatch.setattr(widget, "field_folders", lambda: [])
+        page.show_preview()
+        assert page.preview_stack.currentWidget() is page.field_view
+        assert "field folder" in page.field_view.message
+        field = REPO / "extracted_files" / "field"
+        if not field.is_dir():
+            pytest.skip("no extracted field folder")
+        monkeypatch.setattr(widget, "field_folders", lambda: [str(field)])
+        widget.manager.party.location = widget.hyne_data["maps"].index("bghall_1")
+        widget.manager.party.party_1 = 0
+        widget.manager.party.set_position(0, 0, 0, 0, 0)
+        page.forget_fields()
+        assert page.field_view.pixmap is not None and not page.field_view.pixmap.isNull()
+        assert page.field_view.marks and page.field_view.marks[0][2].startswith("Squall")
+
+    def test_load_screen_boxes_share_a_width(self, widget):
+        page = widget.load_screen_page
+        widget.tabs.setCurrentWidget(page)
+        widget.show()
+        QApplication.processEvents()
+        assert len({spin.width() for spin in page.findChildren(QAbstractSpinBox)}) == 1
+        widget.hide()
+
     def test_world_map_preview(self, widget):
         assert world_to_map(0, 0) == (0.5, 0.5)
         assert world_to_map(WORLD_WIDTH // 2, 0) == (0, 0.5)     # the world wraps around
@@ -445,6 +493,9 @@ class TestPages:
         widget.manager.world_map.set_place(2, -71602, -14836, -340, 4095)
         page.reload()
         assert [page.position_spins[2, column].value() for column in range(4)] == [-71602, -14836, -340, 4095]
+        page.position_spins[2, 3].setValue(5120)       # past a full turn
+        assert page.angle_labels[2].text() == "90.0°"
+        page.position_spins[2, 3].setValue(4095)
         page.position_spins[2, 0].setValue(70000)
         assert widget.manager.world_map.place(2) == (70000, -14836, -340, 4095)
 

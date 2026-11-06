@@ -8,11 +8,12 @@ import os
 from PyQt6.QtCore import QPointF, QRectF, QSignalBlocker, Qt
 from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPixmap, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
-    QAbstractItemView, QCheckBox, QComboBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QPlainTextEdit, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QAbstractItemView, QAbstractSpinBox, QCheckBox, QComboBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
+    QLineEdit, QListWidget, QListWidgetItem, QPlainTextEdit, QPushButton, QSizePolicy, QStackedWidget, QTableWidget, QTableWidgetItem, QVBoxLayout,
     QWidget,
 )
 
+from CCGroup.npcfieldview import BackgroundView, FieldScene
 from Hyne.hynesavemap import (
     BattleState, ChocoboWorld, DRAW_POINT_STATES, MAGIC_MOVED_BITS, NB_DRAW_POINTS, NB_SHOPS, NB_WORLD_POSITIONS, SCANNED_MOVED_BITS,
     SHOP_NB_ITEMS, WORLD_POSITION_VALUES, field_var_tab,
@@ -66,6 +67,13 @@ WORLD_REGION_COLUMNS, WORLD_REGION_ROWS = 32, 24
 # (place in PUPU_QUEST_NAMES, region its battle waits in), from the scripts of battles 745-750
 PUPU_SITES = [(2, 334), (3, 394), (4, 153), (5, 596), (6, 187), (7, 275)]
 WORLD_MAP_IMAGE = "worldmap.png"
+WORLD_MAP_MODULE = 2
+WORLD_FULL_TURN = 4096
+
+
+def angle_text(angle):
+    """A world map angle in degrees. Saved values can go past a full turn."""
+    return f"{(angle % WORLD_FULL_TURN) * 360 / WORLD_FULL_TURN:.1f}°"
 
 
 def world_to_map(x, y):
@@ -386,6 +394,47 @@ class ProgressPage(SavePage):
         self._follow_disc()
 
 
+class MapFiles:
+    """One map's files in field folders, for FieldScene: the first folder holding one wins."""
+
+    def __init__(self, map_name, field_folders):
+        self.map_name = map_name
+        self.asset_folders = [os.path.join(folder, "mapdata", map_name[:2], map_name) for folder in field_folders]
+
+    def asset_path(self, file_name):
+        for folder in self.asset_folders:
+            path = os.path.join(folder, file_name)
+            if os.path.isfile(path):
+                return path
+        return ""
+
+
+class PartyFieldView(BackgroundView):
+    """A field's picture with where the party stands."""
+
+    def __init__(self):
+        super().__init__()
+        self.marks = []     # (x, y in picture pixels, text)
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self.pixmap is None or self.pixmap.isNull():
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        rect = self.picture_rect()
+        scale = rect.width() / self.pixmap.width()
+        for x, y, text in self.marks:
+            center = QPointF(rect.x() + x * scale, rect.y() + y * scale)
+            painter.setPen(QPen(QColor("black"), 1))
+            painter.setBrush(WorldMapPreview.PLACE_COLOR)
+            painter.drawEllipse(center, WorldMapPreview.MARK_RADIUS, WorldMapPreview.MARK_RADIUS)
+            label = center + QPointF(WorldMapPreview.MARK_RADIUS + 3, 4)
+            painter.drawText(label + QPointF(1, 1), text)
+            painter.setPen(WorldMapPreview.PLACE_COLOR)
+            painter.drawText(label, text)
+
+
 class PartyPage(SavePage):
     """The party on the field and where it stands; the party of the menus is on the Misc tab."""
 
@@ -456,9 +505,90 @@ class PartyPage(SavePage):
         column.addWidget(location_group)
         column.addWidget(position_group)
         column.addStretch(1)
+        self.field_view = PartyFieldView()
+        self.world_view = WorldMapPreview(os.path.join(tool.icon_path, WORLD_MAP_IMAGE))
+        self.preview_stack = QStackedWidget()
+        self.preview_stack.addWidget(self.field_view)
+        self.preview_stack.addWidget(self.world_view)
+        self.scenes = {}    # map name -> its FieldScene
+        folder_button = QPushButton("Field folders...")
+        folder_button.setToolTip("The game's field folder, and a mod's on top of it, that the picture is read from")
+        folder_button.clicked.connect(tool.pick_preview_folders)
+        folder_row = QHBoxLayout()
+        folder_row.addWidget(folder_button)
+        folder_row.addStretch(1)
+        preview_column = QVBoxLayout()
+        preview_column.addWidget(self.preview_stack, 1)
+        preview_column.addLayout(folder_row)
         layout = QHBoxLayout(self)
         layout.addLayout(column)
-        layout.addStretch(1)
+        layout.addLayout(preview_column, 1)
+        for widget in (self.module_combo, self.location_combo, *self.party_combos):
+            widget.currentIndexChanged.connect(self._refresh_preview)
+        self._refills.append(self._refresh_preview)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.show_preview()
+
+    def _refresh_preview(self, *_):
+        if self.isVisible():     # a field's picture costs its time only when it is seen
+            self.show_preview()
+
+    def forget_fields(self):
+        """Other folders were chosen."""
+        self.scenes = {}
+        self.show_preview()
+
+    def show_preview(self):
+        party, world = self.section("party"), self.section("world_map")
+        if party is None or world is None:
+            return
+        if party.module == WORLD_MAP_MODULE:
+            self.preview_stack.setCurrentWidget(self.world_view)
+            x, y, _height, _angle = world.place(0)
+            self.world_view.set_marks([("Party", *world_to_map(x, y))], [])
+            return
+        self.preview_stack.setCurrentWidget(self.field_view)
+        self._show_field(party)
+
+    def _show_field(self, party):
+        self.field_view.marks = []
+        folders = self.tool.field_folders()
+        maps = self.tool.hyne_data["maps"]
+        if not folders:
+            self.field_view.set_picture(None, message="To see where the party stands, choose the game's field folder.")
+            return
+        if not 0 <= party.location < len(maps):
+            self.field_view.set_picture(None, message=f"Field {party.location} is not a known map.")
+            return
+        name = maps[party.location]
+        if name not in self.scenes:
+            self.scenes[name] = FieldScene(MapFiles(name, folders), self._missing_files)
+        scene = self.scenes[name]
+        self.field_view.marks = self._field_marks(party, scene)
+        self.field_view.set_picture(scene.pixmap, message=scene.error or ("" if scene.camera else scene.camera_error))
+
+    @staticmethod
+    def _missing_files(names, needed_for):
+        return f"{', '.join(names)}, for {needed_for}: not in the field folders chosen."
+
+    @staticmethod
+    def _field_marks(party, scene):
+        """Members standing on one spot share a mark."""
+        spots = {}
+        for member in range(3):
+            character = getattr(party, f"party_{member + 1}")
+            if character >= len(FIELD_PARTY_NAMES):
+                continue
+            x, y, triangle, _direction = party.position(member)
+            try:
+                spot = scene.picture_position((x, y, None, triangle))
+            except (IndexError, ValueError):   # a triangle this map doesn't have
+                spot = None
+            if spot is not None:
+                spots.setdefault(spot, []).append(FIELD_PARTY_NAMES[character])
+        return [(x, y, ", ".join(names)) for (x, y), names in spots.items()]
 
     def _fill_positions(self):
         for member, row in enumerate(self.position_spins):
@@ -468,6 +598,7 @@ class PartyPage(SavePage):
 
     def _on_position_changed(self, member):
         self.section("party").set_position(member, *(spin.value() for spin in self.position_spins[member]))
+        self._refresh_preview()
 
     def _show_presets(self):
         on_world_map = self.module_combo.currentData() == 2
@@ -483,6 +614,7 @@ class PartyPage(SavePage):
         party.set_position(1, 0, 0, 0, 0)
         party.set_position(2, 0, 0, 0, 0)
         self._fill_positions()
+        self._refresh_preview()
         self.preset_combo.setCurrentIndex(0)
         self.tool._mark_dirty()
 
@@ -569,7 +701,9 @@ class BattlePage(SavePage):
         names = self.magic_group.list_widget
         with QSignalBlocker(names):
             for index in range(names.count()):
-                names.item(index).setText(self.tool.magic_label(index + 1, "Unused"))
+                name = self.tool.magic_label(index + 1, UNUSED_NAME)
+                names.item(index).setText(name)
+                self.tool.set_unused(names.item(index), name == UNUSED_NAME)
 
 
 class ShopsPage(SavePage):
@@ -736,11 +870,11 @@ class WorldMapPreview(QWidget):
     SITE_DONE_COLOR = QColor(70, 220, 90)
     SITE_LEFT_COLOR = QColor(235, 70, 70)
     MARK_RADIUS = 5
+    images = {}     # path -> the image, large, so read once for the two tabs showing it
 
     def __init__(self, image_path):
         super().__init__()
         self.image_path = image_path
-        self.image = None
         self.scaled = None
         self.places = []    # (name, x, y on the map from 0 to 1)
         self.sites = []     # (name, x, y on the map from 0 to 1, done)
@@ -757,15 +891,15 @@ class WorldMapPreview(QWidget):
         return QRectF(0, 0, width, width * WORLD_HEIGHT / WORLD_WIDTH)
 
     def paintEvent(self, _event):
-        if self.image is None:
-            self.image = QPixmap(self.image_path)
+        image = self.images.setdefault(self.image_path, None) or QPixmap(self.image_path)
+        self.images[self.image_path] = image
         painter = QPainter(self)
         rect = self._map_rect()
-        if self.image.isNull():
+        if image.isNull():
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "(no world map image)")
             return
         if self.scaled is None or self.scaled.width() != int(rect.width()):
-            self.scaled = self.image.scaledToWidth(int(rect.width()), Qt.TransformationMode.SmoothTransformation)
+            self.scaled = image.scaledToWidth(int(rect.width()), Qt.TransformationMode.SmoothTransformation)
         painter.drawPixmap(0, 0, self.scaled)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         for name, x, y, done in self.sites:
@@ -824,6 +958,7 @@ class WorldMapPage(SavePage):
         obel_group.setLayout(obel_layout)
 
         self.position_spins = {}
+        self.angle_labels = []
         positions = QGridLayout()
         for column, (text, _low, _high) in enumerate(WORLD_POSITION_COLUMNS, start=1):
             positions.addWidget(QLabel(text), 0, column)
@@ -838,6 +973,11 @@ class WorldMapPage(SavePage):
                 positions.addWidget(spin, row + 1, column + 1)
                 if unused:
                     tool.mark_unused(spin)
+            degrees = QLabel()
+            if unused:
+                degrees.setStyleSheet("color: gray;")
+            self.angle_labels.append(degrees)
+            positions.addWidget(degrees, row + 1, len(WORLD_POSITION_COLUMNS) + 1)
         self._refills.append(self._fill_positions)
         positions_group = QGroupBox("Positions")
         positions_group.setToolTip("Where the party and each vehicle stand on the world map. Y is stored negated; the angle "
@@ -867,6 +1007,7 @@ class WorldMapPage(SavePage):
     def _on_place(self, row):
         self.section("world_map").set_place(row, *(self.position_spins[row, column].value()
                                                    for column in range(len(WORLD_POSITION_COLUMNS))))
+        self.angle_labels[row].setText(angle_text(self.section("world_map").place(row)[3]))
         self._refresh_preview()
 
     def _refresh_preview(self, *_):
@@ -886,6 +1027,7 @@ class WorldMapPage(SavePage):
             for column, value in enumerate(self.section("world_map").place(row)):
                 with QSignalBlocker(self.position_spins[row, column]):
                     self.position_spins[row, column].setValue(value)
+            self.angle_labels[row].setText(angle_text(self.section("world_map").place(row)[3]))
 
 
 class ChocoboPage(SavePage):
@@ -976,6 +1118,14 @@ class LoadScreenPage(SavePage):
         layout.addLayout(column)
         layout.addStretch(1)
 
+    def showEvent(self, event):
+        """Every number box as wide as the widest, known once the style has been applied."""
+        super().showEvent(event)
+        spins = self.findChildren(QAbstractSpinBox)
+        width = max(spin.sizeHint().width() for spin in spins)
+        for spin in spins:
+            spin.setFixedWidth(width)
+
 
 class FieldVariablesPage(SavePage):
     """The field variables the scripts and the engine use, named from the research on them. One another tab
@@ -1001,10 +1151,7 @@ class FieldVariablesPage(SavePage):
         self.search_edit.setPlaceholderText("Search a number, a word or a field name")
         self.search_edit.setClearButtonEnabled(True)
         self.search_edit.textChanged.connect(self._apply_filter)
-        self.cronos_check = QCheckBox("Cronos")
-        self.cronos_check.setToolTip("Also lists the variables the Cronos mod adds. They mean nothing in another save")
-        if tool.settings is not None:
-            self.cronos_check.setChecked(tool.settings.value(self.CRONOS_SETTING, False, type=bool))
+        self.cronos_check = tool.cronos_check
         self.cronos_check.toggled.connect(self._on_cronos)
         self.only_set_check = QCheckBox("Only values not zero")
         self.only_set_check.toggled.connect(self._apply_filter)
@@ -1013,7 +1160,6 @@ class FieldVariablesPage(SavePage):
         filter_row = QHBoxLayout(filters)
         filter_row.setContentsMargins(0, 0, 0, 0)
         filter_row.addWidget(self.search_edit, 1)
-        filter_row.addWidget(self.cronos_check)
         filter_row.addWidget(self.only_set_check)
 
         self.table = QTableWidget(len(self.entries), 5)
