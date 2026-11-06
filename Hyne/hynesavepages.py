@@ -83,7 +83,8 @@ WORLD_SIDE_VIEW_TOP, WORLD_SIDE_VIEW_BOTTOM = 3800, -400
 # Where a click can put each position row, the walkmesh's vehicle bits (World_IsTriangleWalkable@0x53E6B0); the
 # Ragnarok flies, so it goes anywhere
 WORLD_ROW_WALK_MASKS = {0: 0x80, 3: 0x20, 4: 0x40}
-WORLD_RAGNAROK_ROW, WORLD_GARDEN_ROW = 2, 3
+WORLD_RAGNAROK_ROW, WORLD_GARDEN_ROW, WORLD_CAR_ROW = 2, 3, 4
+WORLD_CAR_MODELS = (73, 74, 75, 81, 82, 83, 84, 85, 86, 87)     # Wm_ModelIdToVehicleCode@0x546F90: vehicles 32 to 40
 WORLD_SINKING_TERRAIN_MAX = 5    # terrain types up to this one take 320 off the ground's height
 WORLD_SINKING = 320
 WORLD_GARDEN_HOVER, WORLD_RAGNAROK_CLEARANCE = 128, 200
@@ -1067,7 +1068,7 @@ class WorldMapSideView(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.rows = []      # (name, height with up positive, angle, ground height or None)
+        self.rows = []      # (name, height with up positive or None for no bar, angle, ground height or None)
         self.setMinimumSize(280, 250)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setToolTip("Height is drawn up from the sea. The save holds it the other way round, negative being up. "
@@ -1102,6 +1103,8 @@ class WorldMapSideView(QWidget):
         painter.setPen(text_color)
         below_dial = center.y() + self.DIAL_RADIUS + 2
         painter.drawText(QRectF(rect.x(), below_dial, rect.width(), line), Qt.AlignmentFlag.AlignCenter, angle_text(angle))
+        if height is None:
+            return
         self._height_bar(painter, QRectF(rect.x() + 6, below_dial + line + 2, rect.width() - 12,
                                          rect.bottom() - below_dial - 2 * line - 6), height, ground, text_color)
 
@@ -1204,10 +1207,20 @@ class WorldMapPage(SavePage):
 
     def __init__(self, tool):
         super().__init__(tool)
+        self.camera_spin = self.spin("world_map", "steps", 0, U16_MAX, "Where the world map camera looks, in the same "
+                                     "turns as a position's angle. It follows behind the party.")
+        self.camera_degrees = QLabel()
+        camera_row = QHBoxLayout()
+        camera_row.addWidget(self.camera_spin)
+        camera_row.addWidget(self.camera_degrees)
+        camera_row.addStretch(1)
+        self.rental_spin = self.spin("world_map", "rental_car", 0, U8_MAX,
+                                     "The world model of the car left on the map, at the Rental car position: 73 to 75 or "
+                                     "81 to 87. Anything else, as 255 for none, leaves no car there.")
         values_group = _form_group("World map", [
-            ("Camera angle:", self.spin("world_map", "steps", 0, U16_MAX, "Where the world map camera faces, 0 to 4095 for a full turn")),
+            ("Camera angle:", camera_row),
             (tool._grey_label("Unused:", "No code reads these two bytes."), self.unused_spin("world_map", "car_steps", U16_MAX)),
-            ("Rental car:", self.spin("world_map", "rental_car", 0, U8_MAX, "0 = not allowed, 255 = none")),
+            ("Rental car:", self.rental_spin),
             ("Displayed map:", self.combo("world_map", "displayed_map",
                                           [{"value": 0, "name": "None"}, {"value": 1, "name": "Globe"}, {"value": 2, "name": "Map"}])),
         ])
@@ -1294,6 +1307,8 @@ class WorldMapPage(SavePage):
         layout.addLayout(left)
         layout.addLayout(right)
         layout.addLayout(preview_column, 1)
+        self.camera_spin.valueChanged.connect(self._refresh_preview)
+        self.rental_spin.valueChanged.connect(self._refresh_preview)
         self._refills.append(self._refresh_preview)
 
     def _on_place(self, row):
@@ -1320,6 +1335,8 @@ class WorldMapPage(SavePage):
         terrain = self.tool.terrain_at(x, y)
         if terrain is None:
             return "No terrain there."
+        if row == WORLD_CAR_ROW and world.rental_car not in WORLD_CAR_MODELS:
+            return "No car on the map: give Rental car a car's model first."
         mask = WORLD_ROW_WALK_MASKS.get(row)
         if mask is not None and not terrain["walk_mask"] & mask:
             return f"{name} can't stand there."
@@ -1335,10 +1352,13 @@ class WorldMapPage(SavePage):
         world = self.section("world_map")
         if world is None:
             return
+        self.camera_degrees.setText(angle_text(world.steps))
         places = []
-        side_rows = []
+        side_rows = [("Camera", None, world.steps, None)]
         for row in range(NB_WORLD_POSITIONS):
             x, y, height, angle = world.place(row)
+            if row == WORLD_CAR_ROW and world.rental_car not in WORLD_CAR_MODELS:
+                continue    # the position stays in the save with no car standing there
             if row not in WORLD_UNUSED_POSITIONS and (x or y or height or angle):   # all zero: never placed
                 places.append((WORLD_POSITION_ROWS[row], *world_to_map(x, y), angle))
                 side_rows.append((WORLD_POSITION_ROWS[row], -height, angle, self.tool.ground_height(x, y)))

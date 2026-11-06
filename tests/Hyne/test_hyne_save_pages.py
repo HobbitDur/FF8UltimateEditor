@@ -453,6 +453,15 @@ class TestPages:
             page.reload()
             row = next(r for r in page.side_view.rows if r[0] == "Ragnarok")
             assert row == ("Ragnarok", 700, 1024, 300.0)
+            page.camera_spin.setValue(1024)
+            assert page.side_view.rows[0] == ("Camera", None, 1024, None)
+            assert page.camera_degrees.text() == "90.0°"
+            world.set_place(4, 100, 200, -300, 0)
+            page.rental_spin.setValue(255)
+            assert "Rental car" not in [r[0] for r in page.side_view.rows]    # a position left with no car
+            page.rental_spin.setValue(81)
+            assert "Rental car" in [r[0] for r in page.side_view.rows]
+            page.rental_spin.setValue(255)
         finally:
             del widget.ground_height
         vector = heading_vector(1024, 10)      # a quarter turn clockwise from up
