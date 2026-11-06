@@ -52,6 +52,48 @@ def test_preview_waits_for_the_build_and_says_why_it_failed(qapp, folder, monkey
     assert any("error C2065" in need for need in view.missing())
 
 
+def test_banner_says_how_far_and_why_it_failed(qapp, folder, monkeypatch):
+    from Fujin import recorderbuild
+    from Fujin.recorderbuildbanner import RecorderBuildBanner
+    build = recorderbuild.RecorderBuild()
+    monkeypatch.setattr(recorderbuild, "_build", build)
+    monkeypatch.setattr("Fujin.recorderbuildbanner.recorder_build", lambda: build)
+    banner = RecorderBuildBanner()
+    assert banner.isHidden()
+    build.building = True
+    build.changed.emit()
+    assert not banner.isHidden() and "Building the effect recorder" in banner.text.text() and banner.log_button.isHidden()
+    build._count(84, 236, "the effect recorder")
+    assert "84 of 236 files" in banner.text.text() and banner.bar.value() == 84 and banner.bar.maximum() == 236
+    build._end(2, "fxrecorder.cpp(10): error C2065: 'x': undeclared identifier")
+    assert not banner.isHidden() and "error C2065" in banner.text.text() and banner.bar.isHidden()
+    assert not banner.log_button.isHidden() and not banner.retry_button.isHidden() and "error C2065" in build.output
+    folder[1].write_bytes(b"MZ")
+    build.error = ""
+    build._end(0, "")
+    assert banner.isHidden()
+
+
+def test_play_waits_for_the_build(qapp, folder, monkeypatch):
+    from Common.fileregistry import FileRegistry
+    from Fujin import nativepreview, recorderbuild
+    build = recorderbuild.RecorderBuild()
+    monkeypatch.setattr(recorderbuild, "_build", build)
+    monkeypatch.setattr(nativepreview, "recorder_build", lambda: build)
+    monkeypatch.setattr(nativepreview, "RECORDER", recorderbuild.RECORDER)
+    view = nativepreview.NativePreviewView(FileRegistry())
+    view.effect_id = 1
+    recorded = []
+    monkeypatch.setattr(view, "record", lambda *_a: recorded.append(1) or True)
+    build.building = True
+    build.changed.emit()
+    assert view.play_button.isEnabled() and "being built" in view.status.text()
+    view.play_button.setChecked(True)
+    assert view.play_button.text().startswith("Waiting for build") and not recorded and view.play_button.isChecked()
+    build._end(0, "")
+    assert recorded == [1] and view.play_button.text() == "Pause"
+
+
 @pytest.fixture(scope="module")
 def qapp():
     from PyQt6.QtWidgets import QApplication

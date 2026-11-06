@@ -348,17 +348,15 @@ class CameraEffectPreview(QWidget):
         return self.cast.encounters.encounter
 
     def _plan_animations(self, cast):
-        """Each actor's idle animation and the caster's Magic cast, read from its sequences (a
-        character's are in its weapon file: without one imported it stands in animation 0)."""
-        from FF8GameData.dat.actoranimplan import cast_plan, idle_animation, read_frame_counts, read_sequences
+        """Each actor's idle animation, read from its sequences (a character's are in its weapon file:
+        without one imported it stands in animation 0)."""
+        from FF8GameData.dat.actoranimplan import idle_animation, read_sequences
         from FF8GameData.dat.sequencevm import as_sequence_vm
         vm = as_sequence_vm(self._shared_game_data())
         for slot, (body, weapon) in cast.slots.items():
             sequences = read_sequences(weapon if _CHARACTER_FILE.match(_name(body)) else body) \
                 if (weapon or not _CHARACTER_FILE.match(_name(body))) else {}
             cast.idle[slot] = idle_animation(vm, sequences)
-            if slot == cast.caster and sequences:
-                cast.cast_before, cast.cast_during = cast_plan(vm, sequences, read_frame_counts(body))
 
     def _place_cast(self, cast):
         """Where this preview's battle setup stands each actor and the effect camera it plays there:

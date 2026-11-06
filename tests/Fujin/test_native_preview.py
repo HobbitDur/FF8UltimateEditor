@@ -43,6 +43,13 @@ def test_flat_and_gouraud_polygons():
     assert tuple(gpu.image()[15, 15]) == (255, 0, 0)       # 255/2 + 255/2 on red, 0 + 0 elsewhere
 
 
+def test_lines_draw_at_any_scale():
+    for scale, pixels in ((1.0, 41), (0.5, 21)):
+        gpu = Gpu(scale=scale)
+        gpu.draw_packet([0x40FFFFFF, (10 << 16) | 10, (20 << 16) | 50])
+        assert gpu.counts["lines"] == 1 and (gpu.frame.sum(2) > 100).sum() == pixels
+
+
 def test_textured_sprite_through_a_clut():
     vram = Vram()
     vram.upload(0, 480, 2, 1, [0x0000, 0x801F])             # CLUT: 0 transparent, 1 red with STP
@@ -400,6 +407,40 @@ def test_failed_recorder_releases_unsaved_snapshot(qapp, tmp_path, monkeypatch):
     wait_for_preview(qapp, view)
     assert snapshots and not snapshots[0].exists() and view._scratch is None
     assert "Could not start" in view.status.text() and view.play_button.isEnabled()
+
+
+def test_effect_preview_stands_the_battle_on_an_imported_stage(qapp, tmp_path):
+    from Fujin.fujinwidget import FujinWidget
+    fujin = FujinWidget()
+    try:
+        preview = fujin.native_preview
+        assert preview.stage_combo.currentData() is None
+        stages = [tmp_path / "a0stg006.x", tmp_path / "A0STG001.X", tmp_path / "other.x"]
+        for stage in stages:
+            stage.write_bytes(b"stage")
+        fujin.stage_files.add([str(stage) for stage in stages[:2]])
+        assert [preview.stage_combo.itemData(row)[0] for row in range(1, preview.stage_combo.count())] == [1, 6]
+        assert "Dollet Bridge" in preview.stage_combo.itemText(1)
+        assert preview.stage_combo.currentIndex() == 1      # importing asks for one
+        preview.stage_combo.setCurrentIndex(2)
+        fujin.stage_files.add([str(stages[1])])
+        assert preview.stage_combo.currentData()[0] == 6    # the one picked stays
+    finally:
+        fujin.deleteLater()
+
+
+def test_manual_placement_moves_onto_the_stage():
+    from FF8GameData.dat.battlecamera import CameraPose
+    from Fujin.nativepreview import BattleCast, stand_on_stage
+    cast = BattleCast({}, 0, 3, {0: (0., 0., 0.), 3: (0., 0., -5000.)}, camera=[CameraPose((1., 2., 3.), (4., 5., 6.))],
+                      cast_camera=((0., 0., 0.), (0., 0., -1.)))
+    stand_on_stage(cast)
+    assert cast.positions == {0: (0., 0., 1800.), 3: (0., 0., -3200.)}     # one member: its formation place
+    assert cast.camera[0].eye == (1., 2., 1803.) and cast.camera[0].target == (4., 5., 1806.)
+    assert cast.cast_camera == ((0., 0., 1800.), (0., 0., 1799.))
+    cast = BattleCast({}, 4, 5, {4: (0., 0., 0.), 5: (1600., 0., 0.)})
+    stand_on_stage(cast)
+    assert cast.positions == {4: (0., 0., -3200.), 5: (1600., 0., -3200.)} # monsters: where enemies stand
 
 
 def test_opengl_draws_the_same_picture_as_the_software_gpu():

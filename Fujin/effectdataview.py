@@ -26,7 +26,8 @@ when it was made: docs/fujin-effect-description.md), each entry edited by kind:
   it loads in video memory; a .tim imported (with a palette when the game's has one) or exported;
 - anim_set: an animation set bound to the caster ({count, offsets, end}: body animations, sequence
   scripts, weapon animations): its sections; a set of the game's count imported, or exported. The bytes
-  after it ("tail": the game reads past a set's end) are kept.
+  after it ("tail": the game reads past a set's end) are kept. This is the new effect's own copy: the game's
+  effect itself takes an effect_NNN.animset file (Fujin.animsetfiles, Import: FFNx animation sets).
 
 The description's "not_editable" rows (data its code reads at a fixed place of the exe) are listed after
 them in grey, their bytes shown read-only.

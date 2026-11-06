@@ -27,7 +27,11 @@ file the effect asks for and was not imported too. Once an effect is recorded, e
 Redo refresh it.
 
 The game's sequence code runs too (sequences=1): a sequence an effect starts plays on its actor each tick (Renzokuken's slashes and
-its length, which its sequence's opcode AB computes). An effect that binds its own animation set plays that, not the Magic cast.
+its length, which its sequence's opcode AB computes), and the caster's action sequence, the one the game picks for the effect
+(Fujin.castsequence: a Magic cast, a GF's, an item's, a monster's ability), runs before and around it (castseq=): the effect starts
+when that sequence asks. An effect that binds its own animation set plays that; one the caster has no sequence for starts at once.
+
+An imported effect_NNN.animset (Fujin.animsetfiles) plays instead of the exe's animation set, as in the game with FFNx.
 
 Exact: what is drawn, where, its colours, blending and timing (the game's code ran).
 Approximated: the fake battle (actors stand at fixed places), the camera player is Fujin's
@@ -37,6 +41,7 @@ import dataclasses
 import hashlib
 import math
 import os
+import re
 import shutil
 import struct
 import subprocess
@@ -51,6 +56,8 @@ from PyQt6.QtWidgets import (QComboBox, QGroupBox, QHBoxLayout, QLabel, QPushBut
                              QSizePolicy, QSlider, QVBoxLayout, QWidget)
 
 from Common.filebinding import FileBinding
+from Fujin.castsequence import cast_sequence, shipped_users
+from JumboCactuar.jumbocactuarmanager import load_names
 from Fujin.effectprogram import binds_its_animations
 from Fujin.recorderbuild import RECORDER, recorder_build    # built from source at startup, never in git
 from FF8GameData.psxgpu.fxdump import load_recording
@@ -77,6 +84,10 @@ SLOT_POSITIONS = {0: (-1500, 0, 3000), 1: (0, 0, 3200), 2: (1500, 0, 3000), 3: (
 INITIAL_EYE, INITIAL_TARGET = (10000, -3000, 5000), (0, -500, 0)   # the battle camera words at the start
 
 
+STAGE_FILE = re.compile(r"a0stg(\d{3})\.x")
+ENEMY_PLACE = (0, 0, -3200)                           # (X-ATM092's in scene.out's Dollet City)
+
+
 @dataclass
 class BattleCast:
     """The battle an effect is recorded in: {slot: (body .dat, weapon .dat or None)}, the caster's
@@ -92,20 +103,33 @@ class BattleCast:
     camera: list = None
     not_imported: list = field(default_factory=list)   # actors' files the cast names, not imported
     idle: dict = field(default_factory=dict)           # {slot: the animation it loops}
-    cast_before: list = field(default_factory=list)    # [(animation, ticks, offset)] the caster plays before the effect
-    cast_during: list = field(default_factory=list)    # ... while it runs (last ticks 0 = to the end)
     cast_camera: tuple = None                          # (eye, target) seen during the cast
     actors: bool = True                                # False: the actors are loaded, not drawn (the effect alone)
     native: bool = False                               # the effect's C++ port (FFNx) instead of the exe's code
     params: tuple = ()                                 # ((key, value), ..) its parameters not at the game's value
     lab: bool = False                                  # only the target drawn (actors=2): Choreography's part tabs
     program: str = ""                                  # the effect run from this program (a description of Fujin's)
+    cast_sequence: int = None                          # the caster's action sequence around the effect, None: it has none
+    anim_sets: tuple = ()                              # ((exe address of a set, the .animset file played instead), ...)
+    stage: tuple = None                                # (battle stage id, its a0stgNNN.x) drawn behind the actors
 
     def key(self):
         """The cache tag of this cast: its files (where they are and their state on disk), roles,
         whether the actors are drawn and the recorder build (a new one records anew)."""
-        parts = [f"c{self.caster}t{self.target}a{int(self.actors)}n{int(self.native)}l{int(self.lab)}"]
+        parts = [f"c{self.caster}t{self.target}a{int(self.actors)}n{int(self.native)}l{int(self.lab)}s{self.cast_sequence}"]
         parts += [f"{key}={value}" for key, value in self.params]
+        for address, path in self.anim_sets:
+            try:
+                stat = os.stat(path)
+                parts.append(f"animset|{address:X}|{os.path.abspath(path)}|{stat.st_size}|{stat.st_mtime_ns}")
+            except OSError:
+                pass
+        if self.stage:
+            try:
+                stat = os.stat(self.stage[1])
+                parts.append(f"stage|{self.stage[0]}|{os.path.abspath(self.stage[1])}|{stat.st_size}|{stat.st_mtime_ns}")
+            except OSError:
+                pass
         if self.program:
             parts.append("program|" + hashlib.sha256(self.program.encode("ascii")).hexdigest())
         try:
@@ -126,10 +150,28 @@ class BattleCast:
         return f"{names}_{hashlib.sha256('/'.join(parts).encode('utf-8')).hexdigest()[:10]}"
 
 
-def _plan_text(plan):
-    """The recorder's a:n[:x:y:z] list of a cast plan (the offset only when it moves)."""
-    return ",".join(f"{animation}:{ticks}" + ("".join(f":{v}" for v in offset) if any(offset) else "")
-                    for animation, ticks, offset in plan)
+def stand_on_stage(cast):
+    """Manual placement stands its first actor at the origin, a stage's floor is in battle space: everything moved (the camera with it)
+    so the party stands in its formation, or a lone monster where enemies do."""
+    from Ifrit.IfritCameraSeq.battlepreview import PARTY_FORMATIONS
+    if not cast.positions:
+        return
+    party = sorted(slot for slot in cast.positions if slot < 3)
+    place = PARTY_FORMATIONS[max(party) + 1][party[0]] if party else ENEMY_PLACE
+    actor = cast.positions[party[0] if party else min(cast.positions)]
+    shift = [place[axis] - actor[axis] for axis in range(3)]
+    moved = lambda point: tuple(float(point[axis]) + shift[axis] for axis in range(3))
+    cast.positions = {slot: moved(point) for slot, point in cast.positions.items()}
+    if cast.cast_camera:
+        cast.cast_camera = tuple(moved(point) for point in cast.cast_camera)
+    if cast.camera:
+        cast.camera = [dataclasses.replace(pose, eye=moved(pose.eye), target=moved(pose.target)) for pose in cast.camera]
+
+
+def stage_label(stage_id, path):
+    names = load_names()[0]
+    name = names[stage_id] if stage_id < len(names) else "Unknown stage"
+    return f"{stage_id} - {name} ({os.path.basename(path)})"
 
 
 def camera_path(recording):
@@ -201,9 +243,12 @@ class NativePreviewView(QWidget):
     Choreography part tabs show it part by part)."""
 
     def __init__(self, file_registry, exe_path=None, effect_files=None, camera_track=None, file_edits=None,
-                 cast_source=None, params=None, lab=False, program=None):
+                 cast_source=None, params=None, lab=False, program=None, effect_users=None, anim_sets=None):
         super().__init__()
         self.params = params or (lambda _effect: {})
+        self.effect_users = effect_users or (lambda _effect: [])   # the imported kernel.bin's users of an effect
+        self.anim_sets = anim_sets or (lambda _effect: ())         # the .animset files of an effect (Fujin.animsetfiles)
+        self.anim_set_names = []                                   # those the recording plays
         self.program = program or (lambda _effect: None)
         self.lab = lab
         self.effect_id, self.effect_name = None, ""
@@ -297,6 +342,22 @@ class NativePreviewView(QWidget):
         self._actors_layout = QVBoxLayout(self.actors_group)
         if cast_source is None:
             self._actors_layout.addWidget(QLabel("The battle comes from the Camera tab's preview."))
+        # the battle stage drawn behind the actors: the imported files (Import complementary), the encounter's when one is picked
+        self.stage_combo = QComboBox()
+        self.stage_combo.addItem("No stage", None)
+        self.stage_combo.setToolTip("The battle stage drawn behind the actors, by the game's own code. Import complementary: Battle "
+                                    "stages (a0stg###.x). Picking an encounter picks its stage.")
+        self.stage_combo.currentIndexChanged.connect(lambda _i: self.refresh_cast())
+        self.stage_row = QWidget()
+        stage_layout = QHBoxLayout(self.stage_row)
+        stage_layout.setContentsMargins(0, 0, 0, 0)
+        stage_layout.addWidget(QLabel("Battle stage:"))
+        stage_layout.addWidget(self.stage_combo, 1)
+        self.stage_row.setVisible(False)
+        if cast_source is not None and not lab:
+            self._actors_layout.addWidget(self.stage_row)
+        self._stage_encounter = None                               # the encounter whose stage was last picked
+        self.stage_note = ""                                       # the encounter's stage when it is not imported
         controls = QHBoxLayout()
         controls.addWidget(self.view_mode)
         controls.addWidget(self.play_button)
@@ -308,7 +369,8 @@ class NativePreviewView(QWidget):
         layout.addLayout(controls)
         layout.addWidget(self.scroll, 1)
         layout.addWidget(self.status)
-        recorder_build().changed.connect(self._update_controls)
+        self._play_after_build = False
+        recorder_build().changed.connect(self._build_changed)
         self.textures_binding.load_opened_file()
         self.refresh_cast()
         self._update_controls()
@@ -331,8 +393,49 @@ class NativePreviewView(QWidget):
 
     def _fold_actors(self):
         """Battle actors off: its pickers hidden, the group a single line."""
+        self.stage_row.setVisible(self.actors_group.isChecked() and self.cast_source is not None and not self.lab)
         if self.cast_source is not None and self.cast_source.cast.parentWidget() is self.actors_group:
             self.cast_source.cast.setVisible(self.actors_group.isChecked())
+
+    # the battle stages (Common.battlesidefiles.BattleSideFiles' preview)
+    def set_party_files(self, paths):
+        """The a0stgNNN.x files imported: the picker lists them; the first import shows the first (importing one is asking for it)."""
+        chosen = self.stage_combo.currentData()
+        stages = {}
+        for path in paths:
+            match = STAGE_FILE.fullmatch(os.path.basename(path).lower())
+            if match:
+                stages[int(match.group(1))] = path
+        self.stage_combo.blockSignals(True)
+        self.stage_combo.clear()
+        self.stage_combo.addItem("No stage", None)
+        for stage_id, path in sorted(stages.items()):
+            self.stage_combo.addItem(stage_label(stage_id, path), (stage_id, path))
+        row = next((row for row in range(1, self.stage_combo.count()) if self.stage_combo.itemData(row) == chosen), None)
+        self.stage_combo.setCurrentIndex(row if row is not None else (1 if chosen is None and stages else 0))
+        self.stage_combo.blockSignals(False)
+        self._stage_encounter = None
+
+    def files_changed(self):
+        self.refresh_cast()
+
+    def _follow_encounter(self):
+        """An encounter just picked: its stage, when imported."""
+        combo = self.encounter_combo
+        encounter = combo.currentData() if combo is not None else None
+        self.stage_note = ""
+        if encounter is None:
+            self._stage_encounter = None
+            return
+        row = next((row for row in range(1, self.stage_combo.count()) if self.stage_combo.itemData(row)[0] == encounter.stage_id), None)
+        if row is None:
+            self.stage_note = (f" a0stg{encounter.stage_id:03d}.x, this encounter's stage, is not imported "
+                               "(Import complementary: Battle stages).")
+        elif encounter.index != self._stage_encounter:
+            self.stage_combo.blockSignals(True)
+            self.stage_combo.setCurrentIndex(row)
+            self.stage_combo.blockSignals(False)
+        self._stage_encounter = encounter.index
 
     # the battle setup's pickers (the Camera tab preview's panel)
     @property
@@ -367,6 +470,7 @@ class NativePreviewView(QWidget):
         cast = self.cast_source.battle_cast(placed) if self.cast_source is not None else None
         if cast is None:
             return BattleCast({}, 0, 3)
+        self._follow_encounter()
         slots, not_imported = {}, []
         for slot, (body, weapon) in cast.slots.items():
             if body and os.path.dirname(body) and os.path.isfile(body):
@@ -375,10 +479,19 @@ class NativePreviewView(QWidget):
                 not_imported.append(os.path.basename(body))
         params = tuple(sorted(self.params(self.effect_id).items())) if self.effect_id is not None else ()
         program = (self.program(self.effect_id) if self.effect_id is not None else None) or ""
+        actors = self.actors_group.isChecked() and not self.lab
+        stage = self.stage_combo.currentData() if actors else None
+        if stage and placed and self._stage_encounter is None:
+            stand_on_stage(cast)
+        body, weapon = slots.get(cast.caster, (None, None))
+        sequence = None
+        if actors and self.effect_id is not None and not binds_its_animations(self.effect_id, program):
+            users = [(user.kind, user.entry_id) for user in self.effect_users(self.effect_id)] or shipped_users(self.effect_id)
+            sequence = cast_sequence(users, body, weapon)
         return BattleCast(slots, cast.caster, cast.target, cast.positions, cast.yaws, cast.camera,
-                          sorted(set(not_imported)), cast.idle, cast.cast_before, cast.cast_during, cast.cast_camera,
-                          self.actors_group.isChecked() and not self.lab, self.lab or bool(params), params, self.lab,
-                          program)
+                          sorted(set(not_imported)), cast.idle, cast.cast_camera,
+                          actors, self.lab or bool(params), params, self.lab, program, sequence,
+                          self.anim_sets(self.effect_id) if self.effect_id is not None else (), stage)
 
     def _cast_changed(self):
         """Show the recording already made with this cast, if any."""
@@ -394,7 +507,7 @@ class NativePreviewView(QWidget):
         needs = []
         build = recorder_build()
         if build.building:
-            needs.append("the effect recorder, being built from its source (Tools/fxrecorder, under a minute)")
+            needs.append("the effect recorder, being built from its source (Tools/fxrecorder)")
         elif not RECORDER.is_file():
             needs.append(f"the effect recorder ({RECORDER}): " + (
                 build.error or "FF8UltimateEditor builds it from its source when it starts (Visual Studio C++ "
@@ -566,17 +679,18 @@ class NativePreviewView(QWidget):
                 file.write("".join(f"{key} {value if isinstance(value, str) else int(value)}\n"
                                    for key, value in cast.params if value != ""))
             args.append(f"params={path}")
-        # what each actor plays (worked out from its dat's sequences, FF8GameData.dat.actoranimplan):
-        # its idle loop, and the caster's cast before and while the effect runs, seen wide
+        # each actor's idle loop (worked out from its dat's sequences, FF8GameData.dat.actoranimplan); the game's sequence code runs
+        # on the actors: the caster's action sequence, as the game picks it (Fujin.castsequence), seen wide until the effect starts
         args += [f"idle{slot}={animation}" for slot, animation in sorted(cast.idle.items()) if slot in cast.slots]
-        args.append("sequences=1")           # the game's sequence code runs on the actors
-        own_sequence = binds_its_animations(self.effect_id, cast.program)
-        if cast.cast_before and cast.actors and not own_sequence:
-            args.append("castplan=" + _plan_text(cast.cast_before))
+        args.append("sequences=1")
+        if cast.stage:
+            args += [f"stage={cast.stage[0]}", f"stagefile={os.path.abspath(cast.stage[1])}", "stagedraw=1"]
+        args += [f"animset=0x{address:X}:{os.path.abspath(path)}" for address, path in cast.anim_sets]
+        self.anim_set_names = [os.path.basename(path) for _address, path in cast.anim_sets]
+        if cast.cast_sequence is not None:
+            args.append(f"castseq={cast.cast_sequence}")
             eye, target = cast.cast_camera or (INITIAL_EYE, INITIAL_TARGET)
             args.append("castcam=" + ",".join(str(int(round(v))) for v in (*eye, *target)))
-        if cast.cast_during and cast.actors and not own_sequence:
-            args.append("castafter=" + _plan_text(cast.cast_during))
         self._not_imported = cast.not_imported
         self.camera_used = False
         lines = self._camera_lines(cast)
@@ -630,7 +744,8 @@ class NativePreviewView(QWidget):
         if not os.path.isfile(output) or (code != 0 and not os.path.getsize(output)):
             last = [line for line in log.splitlines() if line.strip()][-1:] or [f"exit code {code}"]
             self._update_controls()
-            self.status.setText(f"The recorder made no recording: {last[0]}")
+            if not recorder_build().building:    # (rebuilt under it: it records again when the build ends)
+                self.status.setText(f"The recorder made no recording: {last[0]}")
             return
         self.load_recording_file(output, tick=tick, signature=signature)
         self._recorded_camera = camera
@@ -731,6 +846,9 @@ class NativePreviewView(QWidget):
             f"{gpu.counts['sprites']} sprites, {gpu.counts['lines']} lines. "
             + ("Camera: the effect's own track." if self.camera_used else
                "Camera: the default battle view (no camera track played).")
+            + (f" Animations: {', '.join(self.anim_set_names)}." if self.anim_set_names else "")
+            + (f" Stage: {self.stage_combo.currentText()}." if self.stage_combo.currentData() and self.actors_group.isChecked() else "")
+            + self.stage_note
             + (f" Flat grey: texture pages {missing} were never uploaded." if missing else "")
             + ("" if self.recording.has_vram else " No textures in this recording."))
         if self._recorded_edits:
@@ -749,6 +867,11 @@ class NativePreviewView(QWidget):
 
     def _toggle_play(self, playing):
         self.play_button.setText("Pause" if playing else "Play")
+        if playing and self.recording is None and recorder_build().building:
+            self._play_after_build = True        # it plays by itself when the recorder is ready
+            self._update_controls()
+            return
+        self._play_after_build = False
         if playing and self.recording is None and self._process is None and not self.record():
             self.play_button.setChecked(False)   # nothing to record yet: the status says what is missing
             return
@@ -761,6 +884,12 @@ class NativePreviewView(QWidget):
         maximum = self.slider.maximum()
         self.slider.setValue(0 if self.slider.value() >= maximum else self.slider.value() + 1)
 
+    def _build_changed(self):
+        waiting = self._play_after_build and not recorder_build().building
+        self._update_controls()
+        if waiting:                              # Play was pressed during the build
+            self._toggle_play(self.play_button.isChecked())
+
     def _update_controls(self):
         needs = self.missing()
         recording = self.recording is not None
@@ -769,8 +898,15 @@ class NativePreviewView(QWidget):
         for widget in (self.view_mode, self.slider):
             widget.setEnabled(recording and not busy)
         # Play records first when there is no recording yet
-        self.play_button.setEnabled((recording or can_record) and not busy or self.play_button.isChecked())
-        if needs and not recording:
+        building = recorder_build().building
+        self.play_button.setEnabled((recording or can_record or building) and not busy or self.play_button.isChecked())
+        if self._play_after_build and building:
+            self.play_button.setText("Waiting for build…")
+        if building and not recording:
+            self.status.setText("Fujin's effect recorder is being built: Play goes on by itself when it is ready."
+                                if self._play_after_build else
+                                "Fujin's effect recorder is being built: press Play, it goes on by itself when it is ready.")
+        elif needs and not recording:
             self.status.setText("To record, open: " + "; ".join(needs) + ".")
         elif not recording and not busy:
             self.status.setText("Play runs this effect's code (a second or less), then plays what it draws.")

@@ -287,8 +287,22 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   were added in.
   **Sequences**: the recorder runs the game's sequence code on the actors (`sequences=1`, Fujin always passes it): a sequence an
   effect starts plays each tick (`AnimSeq_UpdateEntityPerFrame` 0x504290). Renzokuken's length comes from it (opcode `AB`), and an
-  effect that binds its own animation set (limit breaks, Blue Magic) plays that and not the Magic cast. A slot with no model takes no sequence.
+  effect that binds its own animation set (limit breaks, Blue Magic) plays that. The caster's action sequence is the game's too
+  (`castseq=N`, `Fujin/castsequence.py`): a character's by the command that plays the effect (Magic 11, GF 14, item 15, from the imported
+  kernel.bin or `effect_users.json`), a monster's from its ability slots; the effect starts when that sequence asks, and the recording ends
+  with the effect. An actor with no sequence for it starts at once. A slot with no model takes no sequence, and a sequence that never gives
+  the hand back ends the recording after 20 seconds (what was recorded is kept).
+  **While the recorder builds**: a line across Fujin's top says how far it is (or why it failed, with its log and Retry); Play waits and
+  goes on by itself, and the part tabs record when it ends.
   An effect with no part tagged shows everything in its part tab: preview, images and flipbooks, its target's model included.
+  **Battle stage**: Import complementary, Effect preview: battle stages (`a0stg###.x`). The Overview's Battle actors group picks one (an
+  encounter picks its own); the recorder (`stage=N stagefile=file stagedraw=1`) runs the stage's own render task behind the actors, with the
+  game's texture upload and model palette. Manual placement moves onto it: the party in its formation, the camera with them.
+  **Targeting**: before an effect's setup the recorder runs the game's `AnimSeq92_SetupTargetingContext` 0x50D300, as every cast does: the
+  caster turns to its target, and what sequences read of them (C3 0x10, 0x11, 0x18, 0x1A) is set. X-ATM092's facing in Renzokuken is C3 0x1A.
+  **Animation sets**: Import, FFNx animation sets: `effect_NNN.animset` files (Ifrit's "Exe - Limit anim." tab or "Export anim sets…"
+  write them). The recorder (`animset=address:file`) binds the file in place of the exe's set, as FFNx does in the game, so the Overview
+  and the part tabs play it. A new effect plays its own copy instead (Data tab).
   **Data** (Choreography): a new effect made with the exe open has its own data, copied from the
   exe. This tab edits it by kind: a sprite sequence's frames and pieces, a sound's world id (with
   Play), a table of values, a file name, a table of layouts, and a layout's animation (its length,

@@ -1,0 +1,2912 @@
+{
+"0": [
+{
+"kind": "Magic",
+"id": 0
+},
+{
+"kind": "Enemy attack",
+"id": 0
+},
+{
+"kind": "Enemy attack",
+"id": 1
+},
+{
+"kind": "Enemy attack",
+"id": 2
+},
+{
+"kind": "Enemy attack",
+"id": 3
+},
+{
+"kind": "Enemy attack",
+"id": 4
+},
+{
+"kind": "Enemy attack",
+"id": 5
+},
+{
+"kind": "Enemy attack",
+"id": 6
+},
+{
+"kind": "Enemy attack",
+"id": 11
+},
+{
+"kind": "Enemy attack",
+"id": 13
+},
+{
+"kind": "Enemy attack",
+"id": 14
+},
+{
+"kind": "Enemy attack",
+"id": 15
+},
+{
+"kind": "Enemy attack",
+"id": 16
+},
+{
+"kind": "Enemy attack",
+"id": 18
+},
+{
+"kind": "Enemy attack",
+"id": 20
+},
+{
+"kind": "Enemy attack",
+"id": 22
+},
+{
+"kind": "Enemy attack",
+"id": 24
+},
+{
+"kind": "Enemy attack",
+"id": 27
+},
+{
+"kind": "Enemy attack",
+"id": 30
+},
+{
+"kind": "Enemy attack",
+"id": 31
+},
+{
+"kind": "Enemy attack",
+"id": 40
+},
+{
+"kind": "Enemy attack",
+"id": 41
+},
+{
+"kind": "Enemy attack",
+"id": 42
+},
+{
+"kind": "Enemy attack",
+"id": 43
+},
+{
+"kind": "Enemy attack",
+"id": 44
+},
+{
+"kind": "Enemy attack",
+"id": 45
+},
+{
+"kind": "Enemy attack",
+"id": 46
+},
+{
+"kind": "Enemy attack",
+"id": 47
+},
+{
+"kind": "Enemy attack",
+"id": 50
+},
+{
+"kind": "Enemy attack",
+"id": 51
+},
+{
+"kind": "Enemy attack",
+"id": 52
+},
+{
+"kind": "Enemy attack",
+"id": 54
+},
+{
+"kind": "Enemy attack",
+"id": 55
+},
+{
+"kind": "Enemy attack",
+"id": 59
+},
+{
+"kind": "Enemy attack",
+"id": 60
+},
+{
+"kind": "Enemy attack",
+"id": 66
+},
+{
+"kind": "Enemy attack",
+"id": 67
+},
+{
+"kind": "Enemy attack",
+"id": 71
+},
+{
+"kind": "Enemy attack",
+"id": 73
+},
+{
+"kind": "Enemy attack",
+"id": 74
+},
+{
+"kind": "Enemy attack",
+"id": 75
+},
+{
+"kind": "Enemy attack",
+"id": 78
+},
+{
+"kind": "Enemy attack",
+"id": 79
+},
+{
+"kind": "Enemy attack",
+"id": 81
+},
+{
+"kind": "Enemy attack",
+"id": 87
+},
+{
+"kind": "Enemy attack",
+"id": 88
+},
+{
+"kind": "Enemy attack",
+"id": 89
+},
+{
+"kind": "Enemy attack",
+"id": 90
+},
+{
+"kind": "Enemy attack",
+"id": 91
+},
+{
+"kind": "Enemy attack",
+"id": 92
+},
+{
+"kind": "Enemy attack",
+"id": 93
+},
+{
+"kind": "Enemy attack",
+"id": 95
+},
+{
+"kind": "Enemy attack",
+"id": 96
+},
+{
+"kind": "Enemy attack",
+"id": 97
+},
+{
+"kind": "Enemy attack",
+"id": 99
+},
+{
+"kind": "Enemy attack",
+"id": 101
+},
+{
+"kind": "Enemy attack",
+"id": 103
+},
+{
+"kind": "Enemy attack",
+"id": 104
+},
+{
+"kind": "Enemy attack",
+"id": 105
+},
+{
+"kind": "Enemy attack",
+"id": 107
+},
+{
+"kind": "Enemy attack",
+"id": 108
+},
+{
+"kind": "Enemy attack",
+"id": 109
+},
+{
+"kind": "Enemy attack",
+"id": 111
+},
+{
+"kind": "Enemy attack",
+"id": 116
+},
+{
+"kind": "Enemy attack",
+"id": 125
+},
+{
+"kind": "Enemy attack",
+"id": 126
+},
+{
+"kind": "Enemy attack",
+"id": 132
+},
+{
+"kind": "Enemy attack",
+"id": 134
+},
+{
+"kind": "Enemy attack",
+"id": 136
+},
+{
+"kind": "Enemy attack",
+"id": 137
+},
+{
+"kind": "Enemy attack",
+"id": 153
+},
+{
+"kind": "Enemy attack",
+"id": 156
+},
+{
+"kind": "Enemy attack",
+"id": 158
+},
+{
+"kind": "Enemy attack",
+"id": 160
+},
+{
+"kind": "Enemy attack",
+"id": 161
+},
+{
+"kind": "Enemy attack",
+"id": 162
+},
+{
+"kind": "Enemy attack",
+"id": 163
+},
+{
+"kind": "Enemy attack",
+"id": 164
+},
+{
+"kind": "Enemy attack",
+"id": 165
+},
+{
+"kind": "Enemy attack",
+"id": 166
+},
+{
+"kind": "Enemy attack",
+"id": 167
+},
+{
+"kind": "Enemy attack",
+"id": 170
+},
+{
+"kind": "Enemy attack",
+"id": 171
+},
+{
+"kind": "Enemy attack",
+"id": 172
+},
+{
+"kind": "Enemy attack",
+"id": 173
+},
+{
+"kind": "Enemy attack",
+"id": 178
+},
+{
+"kind": "Enemy attack",
+"id": 179
+},
+{
+"kind": "Enemy attack",
+"id": 186
+},
+{
+"kind": "Enemy attack",
+"id": 187
+},
+{
+"kind": "Enemy attack",
+"id": 188
+},
+{
+"kind": "Enemy attack",
+"id": 189
+},
+{
+"kind": "Enemy attack",
+"id": 190
+},
+{
+"kind": "Enemy attack",
+"id": 195
+},
+{
+"kind": "Enemy attack",
+"id": 196
+},
+{
+"kind": "Enemy attack",
+"id": 197
+},
+{
+"kind": "Enemy attack",
+"id": 198
+},
+{
+"kind": "Enemy attack",
+"id": 199
+},
+{
+"kind": "Enemy attack",
+"id": 202
+},
+{
+"kind": "Enemy attack",
+"id": 204
+},
+{
+"kind": "Enemy attack",
+"id": 205
+},
+{
+"kind": "Enemy attack",
+"id": 206
+},
+{
+"kind": "Enemy attack",
+"id": 207
+},
+{
+"kind": "Enemy attack",
+"id": 208
+},
+{
+"kind": "Enemy attack",
+"id": 209
+},
+{
+"kind": "Enemy attack",
+"id": 210
+},
+{
+"kind": "Enemy attack",
+"id": 216
+},
+{
+"kind": "Enemy attack",
+"id": 217
+},
+{
+"kind": "Enemy attack",
+"id": 218
+},
+{
+"kind": "Enemy attack",
+"id": 219
+},
+{
+"kind": "Enemy attack",
+"id": 220
+},
+{
+"kind": "Enemy attack",
+"id": 221
+},
+{
+"kind": "Enemy attack",
+"id": 222
+},
+{
+"kind": "Enemy attack",
+"id": 224
+},
+{
+"kind": "Enemy attack",
+"id": 227
+},
+{
+"kind": "Enemy attack",
+"id": 228
+},
+{
+"kind": "Enemy attack",
+"id": 229
+},
+{
+"kind": "Enemy attack",
+"id": 232
+},
+{
+"kind": "Enemy attack",
+"id": 235
+},
+{
+"kind": "Enemy attack",
+"id": 236
+},
+{
+"kind": "Enemy attack",
+"id": 237
+},
+{
+"kind": "Enemy attack",
+"id": 238
+},
+{
+"kind": "Enemy attack",
+"id": 239
+},
+{
+"kind": "Enemy attack",
+"id": 240
+},
+{
+"kind": "Enemy attack",
+"id": 243
+},
+{
+"kind": "Enemy attack",
+"id": 247
+},
+{
+"kind": "Enemy attack",
+"id": 248
+},
+{
+"kind": "Enemy attack",
+"id": 249
+},
+{
+"kind": "Enemy attack",
+"id": 250
+},
+{
+"kind": "Enemy attack",
+"id": 251
+},
+{
+"kind": "Enemy attack",
+"id": 252
+},
+{
+"kind": "Enemy attack",
+"id": 253
+},
+{
+"kind": "Enemy attack",
+"id": 254
+},
+{
+"kind": "Enemy attack",
+"id": 255
+},
+{
+"kind": "Enemy attack",
+"id": 256
+},
+{
+"kind": "Enemy attack",
+"id": 264
+},
+{
+"kind": "Enemy attack",
+"id": 267
+},
+{
+"kind": "Enemy attack",
+"id": 268
+},
+{
+"kind": "Enemy attack",
+"id": 269
+},
+{
+"kind": "Enemy attack",
+"id": 270
+},
+{
+"kind": "Enemy attack",
+"id": 275
+},
+{
+"kind": "Enemy attack",
+"id": 280
+},
+{
+"kind": "Enemy attack",
+"id": 288
+},
+{
+"kind": "Enemy attack",
+"id": 289
+},
+{
+"kind": "Enemy attack",
+"id": 296
+},
+{
+"kind": "Enemy attack",
+"id": 297
+},
+{
+"kind": "Enemy attack",
+"id": 298
+},
+{
+"kind": "Enemy attack",
+"id": 299
+},
+{
+"kind": "Enemy attack",
+"id": 300
+},
+{
+"kind": "Enemy attack",
+"id": 301
+},
+{
+"kind": "Enemy attack",
+"id": 302
+},
+{
+"kind": "Enemy attack",
+"id": 303
+},
+{
+"kind": "Enemy attack",
+"id": 304
+},
+{
+"kind": "Enemy attack",
+"id": 307
+},
+{
+"kind": "Enemy attack",
+"id": 320
+},
+{
+"kind": "Enemy attack",
+"id": 321
+},
+{
+"kind": "Enemy attack",
+"id": 322
+},
+{
+"kind": "Enemy attack",
+"id": 323
+},
+{
+"kind": "Enemy attack",
+"id": 324
+},
+{
+"kind": "Enemy attack",
+"id": 325
+},
+{
+"kind": "Enemy attack",
+"id": 326
+},
+{
+"kind": "Enemy attack",
+"id": 331
+},
+{
+"kind": "Enemy attack",
+"id": 332
+},
+{
+"kind": "Enemy attack",
+"id": 333
+},
+{
+"kind": "Enemy attack",
+"id": 334
+},
+{
+"kind": "Enemy attack",
+"id": 340
+},
+{
+"kind": "Enemy attack",
+"id": 341
+},
+{
+"kind": "Enemy attack",
+"id": 342
+},
+{
+"kind": "Enemy attack",
+"id": 343
+},
+{
+"kind": "Enemy attack",
+"id": 344
+},
+{
+"kind": "Enemy attack",
+"id": 345
+},
+{
+"kind": "Enemy attack",
+"id": 346
+},
+{
+"kind": "Enemy attack",
+"id": 347
+},
+{
+"kind": "Enemy attack",
+"id": 348
+},
+{
+"kind": "Enemy attack",
+"id": 349
+},
+{
+"kind": "Enemy attack",
+"id": 363
+},
+{
+"kind": "Enemy attack",
+"id": 366
+},
+{
+"kind": "Enemy attack",
+"id": 367
+},
+{
+"kind": "Enemy attack",
+"id": 369
+},
+{
+"kind": "Enemy attack",
+"id": 370
+},
+{
+"kind": "Enemy attack",
+"id": 371
+},
+{
+"kind": "Enemy attack",
+"id": 372
+},
+{
+"kind": "Enemy attack",
+"id": 374
+},
+{
+"kind": "Enemy attack",
+"id": 375
+},
+{
+"kind": "Enemy attack",
+"id": 376
+},
+{
+"kind": "Enemy attack",
+"id": 377
+},
+{
+"kind": "Enemy attack",
+"id": 382
+},
+{
+"kind": "Enemy attack",
+"id": 383
+},
+{
+"kind": "Battle item",
+"id": 0
+}
+],
+"1": [
+{
+"kind": "Magic",
+"id": 21
+},
+{
+"kind": "Enemy attack",
+"id": 211
+},
+{
+"kind": "Enemy attack",
+"id": 212
+},
+{
+"kind": "Battle item",
+"id": 31
+}
+],
+"2": [
+{
+"kind": "Magic",
+"id": 1
+},
+{
+"kind": "Magic",
+"id": 54
+},
+{
+"kind": "Magic",
+"id": 55
+},
+{
+"kind": "Battle item",
+"id": 30
+}
+],
+"3": [
+{
+"kind": "Magic",
+"id": 7
+},
+{
+"kind": "Enemy attack",
+"id": 271
+}
+],
+"4": [
+{
+"kind": "Magic",
+"id": 33
+}
+],
+"5": [
+{
+"kind": "Battle item",
+"id": 7
+}
+],
+"6": [
+{
+"kind": "GF",
+"id": 7
+}
+],
+"7": [
+{
+"kind": "Battle item",
+"id": 8
+}
+],
+"8": [
+{
+"kind": "Enemy attack",
+"id": 263
+},
+{
+"kind": "Command ability",
+"id": 4
+}
+],
+"10": [
+{
+"kind": "Enemy attack",
+"id": 8
+}
+],
+"11": [
+{
+"kind": "Enemy attack",
+"id": 9
+}
+],
+"12": [
+{
+"kind": "Enemy attack",
+"id": 7
+}
+],
+"13": [
+{
+"kind": "Enemy attack",
+"id": 10
+},
+{
+"kind": "Enemy attack",
+"id": 21
+}
+],
+"14": [
+{
+"kind": "Magic",
+"id": 43
+},
+{
+"kind": "Battle item",
+"id": 25
+}
+],
+"15": [
+{
+"kind": "Enemy attack",
+"id": 48
+},
+{
+"kind": "Battle item",
+"id": 32
+}
+],
+"16": [
+{
+"kind": "Command ability",
+"id": 0
+}
+],
+"19": [
+{
+"kind": "Enemy attack",
+"id": 244
+},
+{
+"kind": "Enemy attack",
+"id": 245
+},
+{
+"kind": "Enemy attack",
+"id": 246
+}
+],
+"20": [
+{
+"kind": "Enemy attack",
+"id": 287
+}
+],
+"21": [
+{
+"kind": "Magic",
+"id": 34
+}
+],
+"22": [
+{
+"kind": "Magic",
+"id": 12
+}
+],
+"23": [
+{
+"kind": "Enemy attack",
+"id": 168
+}
+],
+"24": [
+{
+"kind": "Magic",
+"id": 27
+},
+{
+"kind": "Enemy attack",
+"id": 364
+}
+],
+"25": [
+{
+"kind": "Magic",
+"id": 22
+}
+],
+"26": [
+{
+"kind": "Enemy attack",
+"id": 12
+}
+],
+"27": [
+{
+"kind": "Magic",
+"id": 25
+}
+],
+"28": [
+{
+"kind": "Magic",
+"id": 23
+}
+],
+"29": [
+{
+"kind": "Enemy attack",
+"id": 133
+}
+],
+"30": [
+{
+"kind": "Enemy attack",
+"id": 23
+}
+],
+"31": [
+{
+"kind": "Enemy attack",
+"id": 26
+}
+],
+"32": [
+{
+"kind": "Magic",
+"id": 29
+},
+{
+"kind": "Battle item",
+"id": 23
+}
+],
+"33": [
+{
+"kind": "Magic",
+"id": 30
+},
+{
+"kind": "Battle item",
+"id": 22
+}
+],
+"34": [
+{
+"kind": "Magic",
+"id": 45
+}
+],
+"35": [
+{
+"kind": "Magic",
+"id": 24
+}
+],
+"36": [
+{
+"kind": "Magic",
+"id": 39
+}
+],
+"37": [
+{
+"kind": "Enemy attack",
+"id": 194
+}
+],
+"38": [
+{
+"kind": "Magic",
+"id": 17
+},
+{
+"kind": "Enemy attack",
+"id": 380
+}
+],
+"39": [
+{
+"kind": "Magic",
+"id": 44
+},
+{
+"kind": "Enemy attack",
+"id": 318
+},
+{
+"kind": "Enemy attack",
+"id": 357
+},
+{
+"kind": "Enemy attack",
+"id": 359
+}
+],
+"40": [
+{
+"kind": "Magic",
+"id": 50
+}
+],
+"41": [
+{
+"kind": "Enemy attack",
+"id": 56
+}
+],
+"42": [
+{
+"kind": "Enemy attack",
+"id": 57
+}
+],
+"43": [
+{
+"kind": "Enemy attack",
+"id": 157
+}
+],
+"44": [
+{
+"kind": "Enemy attack",
+"id": 226
+}
+],
+"45": [
+{
+"kind": "Enemy attack",
+"id": 84
+}
+],
+"46": [
+{
+"kind": "Enemy attack",
+"id": 85
+}
+],
+"47": [
+{
+"kind": "Enemy attack",
+"id": 86
+}
+],
+"48": [
+{
+"kind": "Enemy attack",
+"id": 120
+}
+],
+"49": [
+{
+"kind": "Enemy attack",
+"id": 121
+}
+],
+"50": [
+{
+"kind": "Battle item",
+"id": 1
+},
+{
+"kind": "Battle item",
+"id": 2
+}
+],
+"51": [
+{
+"kind": "Battle item",
+"id": 3
+},
+{
+"kind": "Battle item",
+"id": 4
+}
+],
+"52": [
+{
+"kind": "Battle item",
+"id": 5
+}
+],
+"53": [
+{
+"kind": "Battle item",
+"id": 6
+}
+],
+"54": [
+{
+"kind": "Enemy attack",
+"id": 223
+}
+],
+"55": [
+{
+"kind": "Enemy attack",
+"id": 146
+}
+],
+"56": [
+{
+"kind": "Command ability",
+"id": 5
+}
+],
+"57": [
+{
+"kind": "Command ability",
+"id": 2
+}
+],
+"58": [
+{
+"kind": "Battle item",
+"id": 9
+}
+],
+"59": [
+{
+"kind": "Battle item",
+"id": 10
+}
+],
+"60": [
+{
+"kind": "Enemy attack",
+"id": 294
+}
+],
+"61": [
+{
+"kind": "Command ability",
+"id": 1
+}
+],
+"62": [
+{
+"kind": "Command ability",
+"id": 9
+}
+],
+"63": [
+{
+"kind": "Enemy attack",
+"id": 361
+}
+],
+"64": [
+{
+"kind": "Enemy attack",
+"id": 353
+}
+],
+"65": [
+{
+"kind": "Enemy attack",
+"id": 360
+}
+],
+"66": [
+{
+"kind": "Enemy attack",
+"id": 354
+}
+],
+"67": [
+{
+"kind": "Battle item",
+"id": 16
+},
+{
+"kind": "Battle item",
+"id": 17
+}
+],
+"68": [
+{
+"kind": "Enemy attack",
+"id": 135
+}
+],
+"69": [
+{
+"kind": "Enemy attack",
+"id": 350
+}
+],
+"70": [
+{
+"kind": "Enemy attack",
+"id": 362
+}
+],
+"71": [
+{
+"kind": "Blue magic",
+"id": 0
+}
+],
+"72": [
+{
+"kind": "Blue magic",
+"id": 5
+}
+],
+"73": [
+{
+"kind": "Blue magic",
+"id": 13
+}
+],
+"74": [
+{
+"kind": "Blue magic",
+"id": 3
+}
+],
+"75": [
+{
+"kind": "Enemy attack",
+"id": 358
+}
+],
+"76": [
+{
+"kind": "Enemy attack",
+"id": 355
+}
+],
+"77": [
+{
+"kind": "Enemy attack",
+"id": 356
+}
+],
+"78": [
+{
+"kind": "Enemy attack",
+"id": 262
+},
+{
+"kind": "Enemy attack",
+"id": 295
+}
+],
+"79": [
+{
+"kind": "Enemy attack",
+"id": 351
+}
+],
+"80": [
+{
+"kind": "Enemy attack",
+"id": 352
+}
+],
+"81": [
+{
+"kind": "Enemy attack",
+"id": 335
+}
+],
+"82": [
+{
+"kind": "Enemy attack",
+"id": 337
+}
+],
+"83": [
+{
+"kind": "Enemy attack",
+"id": 336
+}
+],
+"84": [
+{
+"kind": "Rinoa limit break",
+"id": 4
+}
+],
+"85": [
+{
+"kind": "Magic",
+"id": 56
+}
+],
+"86": [
+{
+"kind": "Rinoa limit break",
+"id": 0
+}
+],
+"87": [
+{
+"kind": "Rinoa limit break",
+"id": 1
+}
+],
+"88": [
+{
+"kind": "Rinoa limit break",
+"id": 2
+}
+],
+"89": [
+{
+"kind": "Rinoa limit break",
+"id": 3
+}
+],
+"90": [
+{
+"kind": "GF",
+"id": 14
+}
+],
+"91": [
+{
+"kind": "GF attack",
+"id": 11
+}
+],
+"92": [
+{
+"kind": "GF attack",
+"id": 14
+}
+],
+"93": [
+{
+"kind": "GF attack",
+"id": 12
+}
+],
+"94": [
+{
+"kind": "GF attack",
+"id": 13
+}
+],
+"95": [
+{
+"kind": "GF",
+"id": 3
+}
+],
+"96": [
+{
+"kind": "GF attack",
+"id": 6
+}
+],
+"97": [
+{
+"kind": "GF attack",
+"id": 2
+}
+],
+"98": [
+{
+"kind": "GF attack",
+"id": 3
+}
+],
+"99": [
+{
+"kind": "GF attack",
+"id": 4
+}
+],
+"100": [
+{
+"kind": "GF attack",
+"id": 5
+}
+],
+"101": [
+{
+"kind": "Enemy attack",
+"id": 290
+}
+],
+"102": [
+{
+"kind": "Magic",
+"id": 8
+},
+{
+"kind": "Enemy attack",
+"id": 272
+}
+],
+"103": [
+{
+"kind": "Magic",
+"id": 5
+}
+],
+"104": [
+{
+"kind": "Magic",
+"id": 6
+}
+],
+"105": [
+{
+"kind": "Magic",
+"id": 9
+},
+{
+"kind": "Enemy attack",
+"id": 273
+}
+],
+"106": [
+{
+"kind": "Magic",
+"id": 31
+}
+],
+"107": [
+{
+"kind": "Magic",
+"id": 13
+}
+],
+"108": [
+{
+"kind": "Magic",
+"id": 46
+}
+],
+"109": [
+{
+"kind": "Magic",
+"id": 28
+}
+],
+"111": [
+{
+"kind": "Magic",
+"id": 32
+},
+{
+"kind": "Battle item",
+"id": 24
+}
+],
+"112": [
+{
+"kind": "Duel",
+"id": 7
+}
+],
+"113": [
+{
+"kind": "Enemy attack",
+"id": 17
+}
+],
+"114": [
+{
+"kind": "Magic",
+"id": 48
+}
+],
+"115": [
+{
+"kind": "Magic",
+"id": 47
+}
+],
+"116": [
+{
+"kind": "GF",
+"id": 0
+}
+],
+"117": [
+{
+"kind": "Magic",
+"id": 42
+}
+],
+"118": [
+{
+"kind": "Magic",
+"id": 11
+}
+],
+"119": [
+{
+"kind": "Magic",
+"id": 37
+}
+],
+"120": [
+{
+"kind": "Enemy attack",
+"id": 19
+}
+],
+"121": [
+{
+"kind": "Magic",
+"id": 38
+}
+],
+"122": [
+{
+"kind": "Magic",
+"id": 41
+}
+],
+"123": [
+{
+"kind": "Magic",
+"id": 36
+}
+],
+"124": [
+{
+"kind": "Magic",
+"id": 15
+},
+{
+"kind": "Battle item",
+"id": 27
+}
+],
+"125": [
+{
+"kind": "Magic",
+"id": 35
+}
+],
+"126": [
+{
+"kind": "Enemy attack",
+"id": 28
+}
+],
+"127": [
+{
+"kind": "Enemy attack",
+"id": 29
+}
+],
+"128": [
+{
+"kind": "Enemy attack",
+"id": 77
+}
+],
+"129": [
+{
+"kind": "Enemy attack",
+"id": 102
+}
+],
+"130": [
+{
+"kind": "Enemy attack",
+"id": 185
+}
+],
+"131": [
+{
+"kind": "Enemy attack",
+"id": 184
+}
+],
+"132": [
+{
+"kind": "Enemy attack",
+"id": 183
+}
+],
+"133": [
+{
+"kind": "Enemy attack",
+"id": 76
+}
+],
+"134": [
+{
+"kind": "Enemy attack",
+"id": 176
+}
+],
+"135": [
+{
+"kind": "Enemy attack",
+"id": 177
+}
+],
+"136": [
+{
+"kind": "Enemy attack",
+"id": 180
+}
+],
+"137": [
+{
+"kind": "Enemy attack",
+"id": 181
+}
+],
+"138": [
+{
+"kind": "Enemy attack",
+"id": 175
+}
+],
+"139": [
+{
+"kind": "Enemy attack",
+"id": 182
+}
+],
+"140": [
+{
+"kind": "GF attack",
+"id": 1
+}
+],
+"142": [
+{
+"kind": "Magic",
+"id": 2
+}
+],
+"143": [
+{
+"kind": "Magic",
+"id": 3
+}
+],
+"144": [
+{
+"kind": "Magic",
+"id": 4
+}
+],
+"145": [
+{
+"kind": "Magic",
+"id": 40
+}
+],
+"146": [
+{
+"kind": "Magic",
+"id": 18
+},
+{
+"kind": "Enemy attack",
+"id": 381
+}
+],
+"147": [
+{
+"kind": "Magic",
+"id": 26
+}
+],
+"148": [
+{
+"kind": "Magic",
+"id": 49
+}
+],
+"149": [
+{
+"kind": "Magic",
+"id": 19
+},
+{
+"kind": "Enemy attack",
+"id": 378
+},
+{
+"kind": "Battle item",
+"id": 29
+}
+],
+"150": [
+{
+"kind": "Enemy attack",
+"id": 68
+}
+],
+"151": [
+{
+"kind": "Enemy attack",
+"id": 69
+}
+],
+"152": [
+{
+"kind": "Enemy attack",
+"id": 58
+},
+{
+"kind": "Enemy attack",
+"id": 63
+}
+],
+"153": [
+{
+"kind": "Enemy attack",
+"id": 100
+},
+{
+"kind": "Enemy attack",
+"id": 169
+}
+],
+"154": [
+{
+"kind": "Enemy attack",
+"id": 98
+}
+],
+"155": [
+{
+"kind": "Enemy attack",
+"id": 39
+}
+],
+"156": [
+{
+"kind": "Enemy attack",
+"id": 70
+}
+],
+"157": [
+{
+"kind": "Enemy attack",
+"id": 37
+}
+],
+"158": [
+{
+"kind": "Enemy attack",
+"id": 36
+}
+],
+"162": [
+{
+"kind": "Renzokuken finisher",
+"id": 1
+}
+],
+"163": [
+{
+"kind": "Renzokuken finisher",
+"id": 0
+}
+],
+"164": [
+{
+"kind": "Renzokuken finisher",
+"id": 2
+}
+],
+"165": [
+{
+"kind": "Renzokuken finisher",
+"id": 3
+}
+],
+"166": [
+{
+"kind": "Enemy attack",
+"id": 310
+}
+],
+"167": [
+{
+"kind": "Enemy attack",
+"id": 274
+}
+],
+"168": [
+{
+"kind": "Enemy attack",
+"id": 113
+}
+],
+"169": [
+{
+"kind": "Enemy attack",
+"id": 112
+}
+],
+"170": [
+{
+"kind": "Enemy attack",
+"id": 35
+}
+],
+"171": [
+{
+"kind": "Enemy attack",
+"id": 32
+},
+{
+"kind": "Enemy attack",
+"id": 33
+},
+{
+"kind": "Enemy attack",
+"id": 34
+}
+],
+"172": [
+{
+"kind": "Enemy attack",
+"id": 53
+}
+],
+"173": [
+{
+"kind": "Enemy attack",
+"id": 38
+}
+],
+"174": [
+{
+"kind": "Enemy attack",
+"id": 72
+}
+],
+"175": [
+{
+"kind": "Magic",
+"id": 14
+},
+{
+"kind": "Enemy attack",
+"id": 379
+},
+{
+"kind": "Battle item",
+"id": 26
+}
+],
+"176": [
+{
+"kind": "Enemy attack",
+"id": 80
+}
+],
+"177": [
+{
+"kind": "Enemy attack",
+"id": 25
+}
+],
+"178": [
+{
+"kind": "Enemy attack",
+"id": 230
+}
+],
+"179": [
+{
+"kind": "Enemy attack",
+"id": 82
+},
+{
+"kind": "Enemy attack",
+"id": 83
+}
+],
+"180": [
+{
+"kind": "Enemy attack",
+"id": 62
+}
+],
+"181": [
+{
+"kind": "Command ability",
+"id": 8
+}
+],
+"182": [
+{
+"kind": "Command ability",
+"id": 10
+}
+],
+"183": [
+{
+"kind": "Command ability",
+"id": 11
+}
+],
+"184": [
+{
+"kind": "Blue magic",
+"id": 1
+}
+],
+"185": [
+{
+"kind": "GF",
+"id": 1
+}
+],
+"186": [
+{
+"kind": "Enemy attack",
+"id": 122
+},
+{
+"kind": "Enemy attack",
+"id": 123
+}
+],
+"187": [
+{
+"kind": "GF attack",
+"id": 0
+}
+],
+"188": [
+{
+"kind": "Shot",
+"id": 0
+}
+],
+"189": [
+{
+"kind": "Magic",
+"id": 52
+}
+],
+"190": [
+{
+"kind": "Enemy attack",
+"id": 154
+}
+],
+"191": [
+{
+"kind": "GF",
+"id": 11
+}
+],
+"192": [
+{
+"kind": "Shot",
+"id": 1
+}
+],
+"193": [
+{
+"kind": "Shot",
+"id": 2
+}
+],
+"194": [
+{
+"kind": "Shot",
+"id": 3
+}
+],
+"195": [
+{
+"kind": "Shot",
+"id": 4
+}
+],
+"196": [
+{
+"kind": "Shot",
+"id": 5
+}
+],
+"197": [
+{
+"kind": "Shot",
+"id": 6
+}
+],
+"198": [
+{
+"kind": "Shot",
+"id": 7
+}
+],
+"199": [
+{
+"kind": "GF",
+"id": 13
+}
+],
+"200": [
+{
+"kind": "Limit break",
+"id": 0
+}
+],
+"201": [
+{
+"kind": "GF",
+"id": 2
+}
+],
+"202": [
+{
+"kind": "GF",
+"id": 12
+}
+],
+"203": [
+{
+"kind": "GF",
+"id": 9
+}
+],
+"204": [
+{
+"kind": "GF",
+"id": 10
+}
+],
+"205": [
+{
+"kind": "GF",
+"id": 4
+}
+],
+"206": [
+{
+"kind": "GF",
+"id": 15
+}
+],
+"207": [
+{
+"kind": "Enemy attack",
+"id": 338
+},
+{
+"kind": "Enemy attack",
+"id": 365
+}
+],
+"208": [
+{
+"kind": "Enemy attack",
+"id": 328
+}
+],
+"209": [
+{
+"kind": "Enemy attack",
+"id": 319
+},
+{
+"kind": "Enemy attack",
+"id": 327
+}
+],
+"210": [
+{
+"kind": "Enemy attack",
+"id": 315
+}
+],
+"211": [
+{
+"kind": "Enemy attack",
+"id": 317
+}
+],
+"212": [
+{
+"kind": "Duel",
+"id": 6
+}
+],
+"213": [
+{
+"kind": "Enemy attack",
+"id": 233
+}
+],
+"214": [
+{
+"kind": "Enemy attack",
+"id": 309
+}
+],
+"215": [
+{
+"kind": "Duel",
+"id": 9
+}
+],
+"216": [
+{
+"kind": "Duel",
+"id": 8
+}
+],
+"217": [
+{
+"kind": "Enemy attack",
+"id": 316
+}
+],
+"218": [
+{
+"kind": "Enemy attack",
+"id": 330
+}
+],
+"219": [
+{
+"kind": "Enemy attack",
+"id": 311
+}
+],
+"220": [
+{
+"kind": "Enemy attack",
+"id": 308
+}
+],
+"221": [
+{
+"kind": "Magic",
+"id": 20
+},
+{
+"kind": "Enemy attack",
+"id": 373
+}
+],
+"222": [
+{
+"kind": "Magic",
+"id": 10
+}
+],
+"223": [
+{
+"kind": "Magic",
+"id": 16
+},
+{
+"kind": "Battle item",
+"id": 28
+}
+],
+"226": [
+{
+"kind": "Enemy attack",
+"id": 276
+}
+],
+"227": [
+{
+"kind": "Enemy attack",
+"id": 339
+}
+],
+"228": [
+{
+"kind": "Limit break",
+"id": 1
+}
+],
+"229": [
+{
+"kind": "Blue magic",
+"id": 12
+}
+],
+"230": [
+{
+"kind": "Blue magic",
+"id": 9
+}
+],
+"231": [
+{
+"kind": "Enemy attack",
+"id": 65
+}
+],
+"232": [
+{
+"kind": "Enemy attack",
+"id": 64
+}
+],
+"233": [
+{
+"kind": "Enemy attack",
+"id": 49
+}
+],
+"234": [
+{
+"kind": "Enemy attack",
+"id": 110
+}
+],
+"235": [
+{
+"kind": "Enemy attack",
+"id": 94
+}
+],
+"236": [
+{
+"kind": "Enemy attack",
+"id": 127
+}
+],
+"237": [
+{
+"kind": "Enemy attack",
+"id": 128
+},
+{
+"kind": "Enemy attack",
+"id": 129
+},
+{
+"kind": "Enemy attack",
+"id": 130
+}
+],
+"238": [
+{
+"kind": "Enemy attack",
+"id": 114
+}
+],
+"239": [
+{
+"kind": "Enemy attack",
+"id": 192
+}
+],
+"240": [
+{
+"kind": "Enemy attack",
+"id": 193
+}
+],
+"241": [
+{
+"kind": "Enemy attack",
+"id": 138
+}
+],
+"242": [
+{
+"kind": "Enemy attack",
+"id": 139
+}
+],
+"243": [
+{
+"kind": "Enemy attack",
+"id": 140
+},
+{
+"kind": "Enemy attack",
+"id": 147
+}
+],
+"244": [
+{
+"kind": "Enemy attack",
+"id": 141
+},
+{
+"kind": "Enemy attack",
+"id": 148
+}
+],
+"245": [
+{
+"kind": "Enemy attack",
+"id": 142
+},
+{
+"kind": "Enemy attack",
+"id": 149
+}
+],
+"246": [
+{
+"kind": "Enemy attack",
+"id": 143
+},
+{
+"kind": "Enemy attack",
+"id": 150
+}
+],
+"247": [
+{
+"kind": "Enemy attack",
+"id": 144
+}
+],
+"249": [
+{
+"kind": "Enemy attack",
+"id": 117
+}
+],
+"250": [
+{
+"kind": "Enemy attack",
+"id": 118
+}
+],
+"251": [
+{
+"kind": "Enemy attack",
+"id": 314
+}
+],
+"252": [
+{
+"kind": "Enemy attack",
+"id": 284
+}
+],
+"253": [
+{
+"kind": "Enemy attack",
+"id": 283
+}
+],
+"254": [
+{
+"kind": "Enemy attack",
+"id": 281
+}
+],
+"255": [
+{
+"kind": "Enemy attack",
+"id": 282
+}
+],
+"256": [
+{
+"kind": "Enemy attack",
+"id": 174
+}
+],
+"257": [
+{
+"kind": "Enemy attack",
+"id": 234
+}
+],
+"258": [
+{
+"kind": "Enemy attack",
+"id": 213
+}
+],
+"260": [
+{
+"kind": "Blue magic",
+"id": 15
+}
+],
+"261": [
+{
+"kind": "Limit break",
+"id": 2
+}
+],
+"262": [
+{
+"kind": "Limit break",
+"id": 3
+}
+],
+"263": [
+{
+"kind": "Limit break",
+"id": 4
+}
+],
+"264": [
+{
+"kind": "Enemy attack",
+"id": 277
+}
+],
+"265": [
+{
+"kind": "Enemy attack",
+"id": 259
+}
+],
+"266": [
+{
+"kind": "Enemy attack",
+"id": 306
+}
+],
+"267": [
+{
+"kind": "Enemy attack",
+"id": 241
+}
+],
+"268": [
+{
+"kind": "Enemy attack",
+"id": 260
+}
+],
+"269": [
+{
+"kind": "Enemy attack",
+"id": 266
+}
+],
+"270": [
+{
+"kind": "Enemy attack",
+"id": 312
+}
+],
+"271": [
+{
+"kind": "Command ability",
+"id": 7
+}
+],
+"272": [
+{
+"kind": "Command ability",
+"id": 6
+}
+],
+"273": [
+{
+"kind": "Command ability",
+"id": 3
+}
+],
+"274": [
+{
+"kind": "Duel",
+"id": 0
+},
+{
+"kind": "Duel",
+"id": 1
+},
+{
+"kind": "Duel",
+"id": 2
+},
+{
+"kind": "Duel",
+"id": 3
+},
+{
+"kind": "Duel",
+"id": 4
+},
+{
+"kind": "Duel",
+"id": 5
+}
+],
+"275": [
+{
+"kind": "Blue magic",
+"id": 2
+}
+],
+"276": [
+{
+"kind": "Enemy attack",
+"id": 145
+}
+],
+"277": [
+{
+"kind": "Enemy attack",
+"id": 115
+}
+],
+"278": [
+{
+"kind": "GF",
+"id": 6
+}
+],
+"279": [
+{
+"kind": "Enemy attack",
+"id": 106
+}
+],
+"280": [
+{
+"kind": "Magic",
+"id": 51
+}
+],
+"281": [
+{
+"kind": "Enemy attack",
+"id": 61
+}
+],
+"282": [
+{
+"kind": "Enemy attack",
+"id": 152
+}
+],
+"283": [
+{
+"kind": "Enemy attack",
+"id": 261
+}
+],
+"284": [
+{
+"kind": "Enemy attack",
+"id": 201
+}
+],
+"285": [
+{
+"kind": "Enemy attack",
+"id": 242
+}
+],
+"286": [
+{
+"kind": "Enemy attack",
+"id": 293
+}
+],
+"287": [
+{
+"kind": "Enemy attack",
+"id": 292
+}
+],
+"288": [
+{
+"kind": "Magic",
+"id": 53
+}
+],
+"289": [
+{
+"kind": "Enemy attack",
+"id": 131
+}
+],
+"290": [
+{
+"kind": "Enemy attack",
+"id": 291
+}
+],
+"291": [
+{
+"kind": "GF",
+"id": 8
+}
+],
+"292": [
+{
+"kind": "Battle item",
+"id": 12
+}
+],
+"293": [
+{
+"kind": "Battle item",
+"id": 13
+}
+],
+"294": [
+{
+"kind": "Battle item",
+"id": 11
+}
+],
+"295": [
+{
+"kind": "Battle item",
+"id": 14
+}
+],
+"296": [
+{
+"kind": "Battle item",
+"id": 15
+}
+],
+"297": [
+{
+"kind": "Blue magic",
+"id": 11
+}
+],
+"298": [
+{
+"kind": "Enemy attack",
+"id": 119
+}
+],
+"299": [
+{
+"kind": "Blue magic",
+"id": 6
+}
+],
+"300": [
+{
+"kind": "Blue magic",
+"id": 10
+}
+],
+"301": [
+{
+"kind": "Enemy attack",
+"id": 265
+}
+],
+"302": [
+{
+"kind": "Enemy attack",
+"id": 155
+}
+],
+"303": [
+{
+"kind": "Enemy attack",
+"id": 258
+}
+],
+"304": [
+{
+"kind": "Enemy attack",
+"id": 159
+}
+],
+"305": [
+{
+"kind": "Blue magic",
+"id": 8
+}
+],
+"306": [
+{
+"kind": "Blue magic",
+"id": 4
+}
+],
+"307": [
+{
+"kind": "Blue magic",
+"id": 14
+}
+],
+"308": [
+{
+"kind": "Enemy attack",
+"id": 286
+}
+],
+"309": [
+{
+"kind": "Battle item",
+"id": 18
+},
+{
+"kind": "Battle item",
+"id": 19
+}
+],
+"310": [
+{
+"kind": "Battle item",
+"id": 20
+},
+{
+"kind": "Battle item",
+"id": 21
+}
+],
+"311": [
+{
+"kind": "Enemy attack",
+"id": 257
+}
+],
+"312": [
+{
+"kind": "Enemy attack",
+"id": 285
+}
+],
+"313": [
+{
+"kind": "Enemy attack",
+"id": 200
+}
+],
+"314": [
+{
+"kind": "Enemy attack",
+"id": 191
+}
+],
+"315": [
+{
+"kind": "Enemy attack",
+"id": 151
+}
+],
+"316": [
+{
+"kind": "Enemy attack",
+"id": 203
+}
+],
+"317": [
+{
+"kind": "Blue magic",
+"id": 7
+}
+],
+"318": [
+{
+"kind": "Enemy attack",
+"id": 278
+}
+],
+"319": [
+{
+"kind": "Enemy attack",
+"id": 279
+}
+],
+"320": [
+{
+"kind": "Enemy attack",
+"id": 305
+}
+],
+"321": [
+{
+"kind": "Enemy attack",
+"id": 231
+}
+],
+"322": [
+{
+"kind": "Enemy attack",
+"id": 214
+}
+],
+"323": [
+{
+"kind": "Enemy attack",
+"id": 215
+}
+],
+"324": [
+{
+"kind": "Enemy attack",
+"id": 225
+}
+],
+"325": [
+{
+"kind": "GF",
+"id": 5
+}
+],
+"326": [
+{
+"kind": "Enemy attack",
+"id": 329
+}
+],
+"327": [
+{
+"kind": "GF attack",
+"id": 10
+}
+],
+"328": [
+{
+"kind": "GF attack",
+"id": 9
+}
+],
+"329": [
+{
+"kind": "GF attack",
+"id": 7
+}
+],
+"330": [
+{
+"kind": "GF attack",
+"id": 8
+}
+],
+"331": [
+{
+"kind": "Enemy attack",
+"id": 313
+}
+],
+"338": [
+{
+"kind": "GF attack",
+"id": 15
+}
+],
+"344": [
+{
+"kind": "Enemy attack",
+"id": 368
+}
+],
+"345": [
+{
+"kind": "Enemy attack",
+"id": 124
+}
+]
+}

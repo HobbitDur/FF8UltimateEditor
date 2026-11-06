@@ -31,7 +31,7 @@ from FF8GameData.psxgpu.gpu import SUBPIXEL
 from FF8GameData.psxgpu.fxdiff import differences, tick_runs
 from Fujin.partsequences import PartSequences, SequenceField
 from FF8GameData.psxgpu.spritesequence import exe_sequences
-from Fujin.recorderbuild import FFNX_EFFECTS, RECORDER
+from Fujin.recorderbuild import FFNX_EFFECTS, RECORDER, recorder_build
 
 PREVIEW_WIDTH = 320                 # the part preview's picture width (pixels)
 PATH_COLOUR = QColor(190, 90, 255, 200)     # the part's sprite paths
@@ -425,7 +425,8 @@ class PartPreview(QWidget):
         if recording is None:
             self.play_button.setChecked(False)
             self.picture.setPixmap(QPixmap())
-            self.picture.setText(self.runner.status.text() or "Recording...")
+            self.picture.setText("Waiting for Fujin's effect recorder to finish building: this tab records by itself then."
+                                 if recorder_build().building else self.runner.status.text() or "Recording...")
             self.frame_label.setText("")
             return
         recordings = [r for r in (recording, self.variant) if r is not None]

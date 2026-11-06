@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWid
     QListWidgetItem, QTabWidget, QPlainTextEdit, QComboBox, QSplitter, QTextBrowser,
     QFileDialog, QMessageBox, QPushButton)
 from Common.autoimport import AutoImportSource
+from Common.battlesidefiles import BattleSideFiles
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
@@ -29,6 +30,7 @@ from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults 
                                recorder_has_ports)
 from Fujin.nativepreview import NativePreviewView, gl_renderer
 from Fujin.effectdescriptionview import EffectDescriptionView
+from Fujin.animsetfiles import AnimSetFiles
 from Fujin.effectdataview import EffectDataView
 from Fujin import effecttemplates
 from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, PROGRAM_FOLDER, SOURCE, compile_program,
@@ -36,10 +38,14 @@ from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, PROGRAM_FOLDER,
                                  read_effect_file)
 from Fujin.recorderbuild import HOST_DLL
 from Fujin.recorderbuild import recorder_build
+from Fujin.recorderbuildbanner import RecorderBuildBanner
 from Fujin.soundpanel import SoundPanel
 from Fujin.objectview import MagObjectView
 from SmallWidget.listsearchbar import ListSearchBar, SEARCH_TEXT_ROLE
 
+STAGE_FILES_KEY = "Fujin battle stages"
+ANIM_SET_FOLDER_KEY = "FFNx animation sets"
+ANIM_SET_SELECTION_KEY = "FFNx animation set files"   # the .animset files last imported
 USERS_SHOWN = 24    # entries listed per kind in the Overview's Used by (effect 0 has hundreds)
 
 
@@ -66,6 +72,7 @@ class FujinWidget(QWidget):
         self.camera_editor = CameraEffectEditorWidget(GameData(game_data_folder), self.file_registry, embedded=True)
         # kernel.bin (read-only, shared): which spells, items, GFs, enemy attacks... play each effect
         self.effect_users = {}
+        self.anim_set_files = AnimSetFiles()     # the .animset files the previews play
         self.kernel_binding = FileBinding("kernel.bin", self.file_registry, load_callback=self._load_kernel,
                                           file_filter="*kernel*.bin", read_only=True)
         self.kernel_binding.file_closed.connect(self._close_kernel)
@@ -99,14 +106,15 @@ class FujinWidget(QWidget):
             effect_files=self._preview_effect_files,
             file_edits=self._preview_file_edits,
             cast_source=self.camera_editor.preview, params=self.effect_parameters, program=self.effect_program,
-            camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
+            camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)),
+            effect_users=lambda effect: self.users(self._files_effect(effect)), anim_sets=self._anim_sets)
         # Choreography's part tabs: the effect recorded once more, its C++ port alone (no actors),
         # with the edited parameters; each tab shows its part of that recording (Fujin.effectparts)
         self.lab = NativePreviewView(
             self.file_registry, exe_path=lambda: self.camera_editor.exe_binding.current_path or "",
             effect_files=self._preview_effect_files, file_edits=self._preview_file_edits,
             cast_source=self.camera_editor.preview, params=self.effect_parameters, lab=True, program=self.effect_program,
-            camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)))
+            camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)), anim_sets=self._anim_sets)
         self.lab.setParent(self)
         self.lab.hide()
         self.part_tabs = []
@@ -243,6 +251,9 @@ class FujinWidget(QWidget):
         title_row.addStretch(1)
         layout.addLayout(title_row)
         layout.addWidget(self.context)
+        self.stage_files = BattleSideFiles(self, self.file_registry, STAGE_FILES_KEY, self.native_preview, patterns=("a0stg*.x",))
+        self.build_banner = RecorderBuildBanner()
+        layout.addWidget(self.build_banner)
         layout.addWidget(self.tabs, 1)
         splitter = QSplitter()
         splitter.addWidget(self.effect_search.column)
@@ -270,7 +281,33 @@ class FujinWidget(QWidget):
         return [("FF8 exe (camera tracks and embedded effect assets)", self.camera_editor.open_exe),
                 ("Effect files (MAG / MA8, all sections)", self.open_effect_files),
                 ("Fujin effect patch (.hext)", self.import_hext),
-                ("FFNx effect cameras (effect_NNN.bcam files)", self._import_bcam)]
+                ("FFNx effect cameras (effect_NNN.bcam files)", self._import_bcam),
+                ("FFNx animation sets (effect_NNN.animset files)", self.import_anim_sets)]
+
+    def import_anim_sets(self, paths=None, select=True):
+        """effect_NNN.animset files (body animations, sequences, weapon animations): the previews play them instead of the exe's
+        sets, as FFNx does in the game. (the effects taken, [(path, why refused)])."""
+        if paths is None:
+            paths = QFileDialog.getOpenFileNames(self, "Import FFNx animation sets (effect_NNN.animset)",
+                                                 self.file_registry.last_folder(ANIM_SET_FOLDER_KEY) or os.getcwd(),
+                                                 "FFNx animation set (*.animset)")[0]
+        if not paths:
+            return [], []
+        loaded, refused = self.anim_set_files.load(paths)
+        self.file_registry.remember_folder(ANIM_SET_FOLDER_KEY, os.path.dirname(paths[0]))
+        gone = {path for path, _reason in refused}
+        self.file_registry.remember_files(ANIM_SET_SELECTION_KEY, [path for path in paths if path not in gone])
+        if refused:
+            QMessageBox.warning(self, "Fujin", f"{len(loaded)} effect(s) loaded, {len(refused)} file(s) refused:\n"
+                                + "\n".join(f"{os.path.basename(path)}: {reason}" for path, reason in refused[:10]))
+        if loaded and select:
+            self.select_effect(loaded[0])
+        self.native_preview.refresh_cast()
+        self.lab.refresh_cast()
+        return loaded, refused
+
+    def _anim_sets(self, effect):
+        return self.anim_set_files.bindings(effect, self.camera_editor.exe_binding.current_path)
 
     def _import_bcam(self, paths=None):
         result = self.camera_editor.import_bcam(paths)
@@ -291,6 +328,8 @@ class FujinWidget(QWidget):
                 ("Sound preview: audio.fmt + audio.dat (battle sound archive)", self.sound_panel.import_archive),
                 ("Effect preview: a8def.tim (the battle's shared effect textures)",
                  self.native_preview.import_shared_textures),
+                ("Effect preview: battle stages a0stg###.x (drawn behind the actors; several, Ctrl+A for all)",
+                 self.stage_files.import_stages),
                 ("Fujin effects: FujinEffects/effect_NNN.fxprog (parameters, edited descriptions, new effects)",
                  self.import_effects)]
 
@@ -304,8 +343,11 @@ class FujinWidget(QWidget):
                 AutoImportSource.for_binding(self.sound_panel.audio_binding, self.file_registry.last_folder("audio.fmt")),
                 AutoImportSource.for_binding(self.native_preview.textures_binding,
                                              self.file_registry.last_folder(self.native_preview.textures_binding.file_name)),
+                self.stage_files.auto_import_source(),
                 AutoImportSource(CAM_FOLDER_KEY, ("effect_*.bcam",), self.camera_editor.reload_bcam,
                                  selection_only=True, selection_key=CAM_SELECTION_KEY),
+                AutoImportSource(ANIM_SET_FOLDER_KEY, ("effect_*.animset",), lambda paths: self.import_anim_sets(paths, select=False),
+                                 selection_only=True, selection_key=ANIM_SET_SELECTION_KEY),
                 AutoImportSource("Fujin effect files", ("mag*", "MAG*", "ma8*", "MA8*"),
                                  self.import_paths, selection_only=True)]
 
@@ -1246,7 +1288,7 @@ class FujinWidget(QWidget):
     def _show_parts_note(self):
         """Why there are no part tabs: the recorder is being built, or lacks FFNx's effect sources."""
         building = recorder_build().building
-        self.parts_note.setText("" if self._parts_schema is not None and not building else
+        self.parts_note.setText("" if self._parts_schema is not None else
                                 PORTS_BUILDING if building else "" if recorder_has_ports() else PORTS_MISSING)
         self.parts_note.setVisible(bool(self.parts_note.text()))
 

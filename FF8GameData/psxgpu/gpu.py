@@ -216,7 +216,7 @@ class Gpu:
             if not poly and len(points) == 2:
                 break
         for (x0, y0), (x1, y1) in zip(points, points[1:]):
-            steps = max(abs(x1 - x0), abs(y1 - y0), 1)
+            steps = max(int(np.ceil(max(abs(x1 - x0), abs(y1 - y0)))), 1)     # (points are scaled: floats)
             xs = np.round(np.linspace(x0, x1, steps + 1)).astype(int)
             ys = np.round(np.linspace(y0, y1, steps + 1)).astype(int)
             keep = (xs >= 0) & (xs < self.width) & (ys >= 0) & (ys < self.height)

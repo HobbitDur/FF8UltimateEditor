@@ -42,6 +42,9 @@
 // plays before it starts the effect (worked out by Fujin from the dat's sequences); those ticks are
 // recorded too, seen from castcam=ex,ey,ez,ax,ay,az; the camera file's tick 0 is the effect's first]
 // [castafter=a:n,..: the caster's animations while the effect runs, n = 0 looping to the end]
+// [animset=ADDRESS:<file>: the animation set at this exe address is this file]
+// [stage=N: the battle stage N is loaded] [stagefile=<file>: read from that file] [stagedraw=1: and drawn each tick by its own render task]
+// [sequences=1: the game's sequence code runs on the actors] [castseq=N: the caster's action sequence N before and around the effect]
 // [each a:n can be a:n:x:y:z: the caster stands at that model-local offset meanwhile - AnimSeq
 // variables 0x0D-0x0F, the step forward of a cast (Squall's 0, 0, -792), default 0, 0, 0]
 // [overrides=<folder>: unsaved effect-file snapshots, preferred over magic= without changing it]
@@ -83,6 +86,8 @@ struct Opt
 {
 	int eff = 0, ticks = 3000, targets = 1, caster = 0, model = 0;
 	int stage = -1;                   // stage=N: the battle stage a0stgNNN.x loaded (its models: an effect may draw them)
+	std::string stagefile;            // stagefile=<file>: that file is read for it instead of <battle>/a0stgNNN.x
+	bool stagedraw = false;           // stagedraw=1: the stage is drawn behind the actors, by its own render task
 	uint32_t seed = 12345;
 	std::string exe, magic, battle, out, camera, overrides;
 	std::string body[7], weapon[7];   // slotK= / weaponK=: the battle's cast, one file per slot
@@ -103,6 +108,11 @@ struct Opt
 	// sequences=1: the battle's AnimSeq VM runs: a sequence the effect starts (0x505C00) plays on its actor each tick, as the
 	// entity task does (AnimSeq_UpdateEntityPerFrame 0x504290): its animations, its opcodes (Renzokuken's AB)
 	bool sequences = false;
+	// castseq=N (with sequences=1): the caster's action sequence N runs as BattleActionSequence_Tick_MagicCast 0x50A9A0 drives it: told
+	// the files are loaded (state flag 0x10), the effect starts when it sets 0x20; the recording ends with the effect
+	int castseq = -1;
+	// animset=ADDRESS:<file>: the animation set at this exe address is this file, as FFNx plays effect_NNN.animset (battle anim sets)
+	std::vector<std::pair<uint32_t, std::string>> animsets;
 	// recall=T:MODE,..: at the effect's tick T its setup called again, the cast context's sequence mode (+8) = MODE and its
 	// done flag (+9) cleared - what the battle's Shot window does for each trigger press (BattleActionSequence_Tick_Shot
 	// 0x50BEE0: 2 a shot, 1 the closing action)
@@ -568,6 +578,7 @@ static void env_reset()
 static std::string g_modelfile;   // modelfile=: the target model's .dat, read instead of <battle>/c0mNNN.dat
 static std::string g_serve;       // the file a load in progress reads instead of the battle file it names
 static bool g_drawn_slot[7];      // the slots holding a model
+static uint32_t g_stage_queue = 0; // stagedraw=: the stage's task queue
 // a party slot's weapon (BattleAnimHeader + its anim cmd + attach rotation/offset: 68 bytes at
 // TASK_QUEUE_BATTLE_ENTITY.data + 17 dwords per slot), 0 for monsters, Zell, Edea and Kiros
 static uint32_t weapon_header(uint32_t e) { return *(uint32_t *)(e + 0x78); }
@@ -576,6 +587,49 @@ static uint32_t weapon_header(uint32_t e) { return *(uint32_t *)(e + 0x78); }
 // is hidden - an effect that redraws its target (Cure's overlay) hides it for that time. Each
 // actor plays its animation (idleK, or the caster's cast plan) in a loop, body and weapon in
 // an actor's next tick: a sequence it was given runs (the VM advances its animation), else its animation goes on and loops
+// animset=: BattleEntity_BindExternalAnimSet 0x5022C0 binds the file instead of the exe's set. The game reads past a set's end (a sequence
+// picking an animation past its sections, a 2-section set's weapon animations): the file is followed by the bytes after the exe's set
+static std::map<uint32_t, std::vector<uint8_t>> g_animset_files;
+static uint32_t __cdecl s_bind_animset(uint32_t entity, uint32_t out, uint32_t data)
+{
+	auto file = g_animset_files.find(data);
+	if (file != g_animset_files.end()) data = (uint32_t)file->second.data();
+	uint8_t *code = (uint8_t *)0x5022C0, jump[5];
+	memcpy(jump, code, 5);
+	unpatch(0x5022C0);
+	const uint32_t result = ((uint32_t (__cdecl *)(uint32_t, uint32_t, uint32_t))0x5022C0)(entity, out, data);
+	memcpy(code, jump, 5);
+	return result;
+}
+static bool load_animsets()
+{
+	for (const auto &set : O.animsets)
+	{
+		std::vector<uint8_t> file = readfile(set.second);
+		if (file.empty()) { printf("missing animation set %s\n", set.second.c_str()); return false; }
+		const uint32_t sections = *(uint32_t *)set.first, size = *(uint32_t *)(set.first + 4 * (sections + 1));
+		const uint8_t *after = (const uint8_t *)(set.first + size);
+		file.insert(file.end(), after, after + 4096);
+		g_animset_files[set.first] = std::move(file);
+	}
+	if (!O.animsets.empty()) patch_jmp(0x5022C0, (void *)s_bind_animset);
+	return true;
+}
+// a sequence of the fake battle that never gives the hand back (a jump to itself, waiting for what never comes): what was recorded is kept
+static DWORD WINAPI sequence_watchdog(void *)
+{
+	for (int seen = -1, still = 0;; Sleep(1000))
+	{
+		if (g_tick != seen) { seen = g_tick; still = 0; }
+		else if (++still >= 20)
+		{
+			printf("tick %d: the game's sequence code never gave the hand back\n", g_tick);
+			fflush(stdout);
+			if (g_out) fflush(g_out);
+			TerminateProcess(GetCurrentProcess(), 0);
+		}
+	}
+}
 // a sequence started (0x505BC0, doesSeqExist 0x505850): as the game, but a slot of the fake battle that holds no model has none
 static void __cdecl s_505BC0(uint32_t e, uint32_t seq)
 {
@@ -600,11 +654,18 @@ static bool runs_sequence(uint32_t e)
 	const uint32_t state = *(uint32_t *)(e + 0x74);
 	return O.sequences && state && (*(uint16_t *)(state + 0x2C) || *(uint8_t *)state);
 }
+static void place_actor(uint32_t e, const int offset[3]);
 static void advance_animation(uint32_t e)
 {
 	if (runs_sequence(e))
 	{
 		((int (__cdecl *)(uint32_t))0x504290)(e);
+		// what the entity task does next (0x502BE8): its facing and where it stands, from what the sequence wrote
+		((void (__cdecl *)(uint32_t, uint32_t))0x56CE30)(e + 12, e + 0x40);
+		const int16_t *moved = (const int16_t *)(*(uint32_t *)(e + 0x74) + 0x24);
+		const int offset[3] = { moved[0], moved[1], moved[2] };
+		place_actor(e, offset);
+		*(int32_t *)(e + 0x58) += *(int16_t *)(e + 0x22);
 		return;
 	}
 	if (((int (__cdecl *)(uint32_t))0x5094F0)(e) == 1)                    // READ_ANIMATION_RETURN_ANIMATION_COMPLETE
@@ -664,8 +725,27 @@ static bool advance_actor(uint32_t e)
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
 }
+// the queue the VM's opcodes add to (BattleAnimTaskQueue_Init 0x506BF0: a blink's timeline, a chain's flags...), run each tick as the battle does
+static void run_anim_tasks()
+{
+	if (!O.sequences) return;
+	__try { ((int (__cdecl *)(uint32_t))0x508420)(*(uint32_t *)0x1D96A8C); }
+	__except (filter(GetExceptionInformation())) {}
+	// and the hit-effect queue (a sequence's A5: a cast's glow; an effect's hit sparks, its screen fades)
+	__try { if (uint32_t q = *(uint32_t *)0x1D96AA0) ((int (__cdecl *)(uint32_t))0x508420)(q); }
+	__except (filter(GetExceptionInformation())) {}
+}
+// the stage drawn behind the actors: its render task runs before theirs, as the battle's queues do
+static void run_stage()
+{
+	if (!g_stage_queue) return;
+	__try { ((int (__cdecl *)(uint32_t))0x508420)(g_stage_queue); }
+	__except (filter(GetExceptionInformation())) {}
+}
 static void render_actors()
 {
+	run_stage();
+	run_anim_tasks();
 	for (int k = 0; k < 7; k++)
 	{
 		if (!g_drawn_slot[k]) continue;
@@ -864,25 +944,49 @@ static bool load_character(uint32_t e, int slot, int com, const std::string &bod
 // moved past it by its geometry parser, the models loaded after it as in the game), the render groups
 // set up as at the battle's start, its id theirs (BATTLE_STAGE_RENDER_GROUPS 0x1D9898C), then
 // BS_loadCameraAndGeometry 0x50E510: parse the
-// geometry (its four groups' models and animations), upload its textures; no camera, no render task
-static bool stage_command(int command)
+// geometry (its four groups' models and animations), upload its textures; with stagedraw= its command 2:
+// the queue of its render task (BS_StageNNN_RenderTask -> BattleStage_AnimateAndRenderGroups 0x500FD0), run each tick
+static bool stage_command(int command, uint32_t *result = nullptr)
 {
-	__try { ((uint32_t (__cdecl *)(int))0x50E510)(command); return true; }
+	__try
+	{
+		const uint32_t value = ((uint32_t (__cdecl *)(int))0x50E510)(command);
+		if (result) *result = value;
+		return true;
+	}
 	__except (filter(GetExceptionInformation())) { return false; }
 }
 static bool load_stage()
 {
 	char name[32];
 	sprintf_s(name, "a0stg%03d.x", O.stage);
-	std::vector<uint8_t> f = readfile(join(O.battle, name));
+	std::vector<uint8_t> f = readfile(O.stagefile.empty() ? join(O.battle, name) : O.stagefile);
 	if (f.empty() || f.size() > MODELMEM_SIZE / 2) { printf("missing battle stage %s\n", name); return false; }
 	memcpy(g_modelmem, f.data(), f.size());
 	call0(0x506C50);   // BS_BattleStageIDFixing: the groups' flags, each animation header on its group's data
 	*(uint32_t *)0xB6D07C = (uint32_t)g_modelmem;   // POINTER_TO_CURRENT_ADDR_A0STGXXX_DATA_BIS
 	*(uint8_t *)(0x1D9898C + 4) = (uint8_t)O.stage;
-	if (!stage_command(0) || !stage_command(1)) { printf("stage %d load faulted %08lX at eip %08lX\n", O.stage, g_fault_code, g_fault_eip); return false; }
+	if (!stage_command(0) || !stage_command(1) || (O.stagedraw && !stage_command(2, &g_stage_queue)))
+	{
+		printf("stage %d load faulted %08lX at eip %08lX\n", O.stage, g_fault_code, g_fault_eip);
+		return false;
+	}
 	dump_vram_queue();
+	// the stage's light on the models (the model palette its command 0 picked: CURRENT_BS_MODEL_PALETTE 0xB8B7D8, ORIGINAL_ 0x1D96DA0)
+	if (O.stagedraw) *(uint32_t *)0xB8B7D8 = *(uint32_t *)0x1D96DA0;
 	return true;
+}
+// BattleActionSequence_BuildMagicCastContext 0x50AFC0 before every effect's setup: AnimSeq92_SetupTargetingContext 0x50D300 turns the caster to
+// its target and works out what a sequence reads of them (C3 0x10, 0x11, 0x18, 0x1A: the angle X-ATM092 faces in Renzokuken)
+static void setup_targeting()
+{
+	const uint32_t caster = 0x1D972C0 + 0x9C * O.caster;
+	__try
+	{
+		((char (__cdecl *)(char, uint16_t))0x50D300)((char)O.caster, g_target_mask);
+		((void (__cdecl *)(uint32_t, uint32_t))0x56CE30)(caster + 12, caster + 0x40);
+	}
+	__except (filter(GetExceptionInformation())) {}
 }
 static bool load_models()
 {
@@ -928,6 +1032,10 @@ static bool load_models()
 			if (!load_entity(0x10 + O.model, slot, "")) return false;
 		}
 		g_drawn_slot[slot] = true;
+		// as BattleEntity_InitAnimationTask 0x5027D0: what the game's effects read of it (a cast's glow: +0x24 its height, +0x26 its size)
+		*(int16_t *)(e + 0x24) = 0;
+		if (uint32_t data = *(uint32_t *)(e + 0x64))
+			if (uint32_t skeleton = *(uint32_t *)data) *(int16_t *)(e + 0x26) = (int16_t)(*(int16_t *)(skeleton + 2) * 4);
 		*(uint32_t *)(e + 0x7C) = 0xFFFFFFFF;       // every object visible
 		// its state block (BattleStateEntity[slot]): read by the animation code, no sequence runs
 		uint8_t *state = (uint8_t *)(0x1D96ED0 + 64 * slot);
@@ -939,7 +1047,7 @@ static bool load_models()
 		((void (__cdecl *)(uint32_t, uint32_t))0x56CE30)(e + 12, e + 0x40);
 		env_reset();
 		play_animation(e, O.idle[slot]);
-		*(uint32_t *)(e + 0x28) = 0x808080;          // neutral model tint
+		*(uint32_t *)(e + 0x28) = O.stagedraw ? *(uint32_t *)0xB8B7D8 : 0x808080;   // the stage's model tint, else neutral
 	}
 	g_pending.clear();
 	return true;
@@ -1045,7 +1153,15 @@ static bool parse(int argc, char **argv)
 		else if (k == "schema") O.schema = v;
 		else if (k == "model") O.model = atoi(v.c_str());
 		else if (k == "stage") O.stage = atoi(v.c_str());
+		else if (k == "stagefile") O.stagefile = v;
+		else if (k == "stagedraw") O.stagedraw = atoi(v.c_str()) != 0;
 		else if (k == "sequences") O.sequences = atoi(v.c_str()) != 0;
+		else if (k == "castseq") O.castseq = atoi(v.c_str());
+		else if (k == "animset")
+		{
+			const size_t colon = v.find(':');
+			if (colon != std::string::npos) O.animsets.emplace_back(strtoul(v.c_str(), nullptr, 0), v.substr(colon + 1));
+		}
 		else if (k == "ticks") O.ticks = atoi(v.c_str());
 		else if (k == "poke")
 		{
@@ -1360,6 +1476,7 @@ int main(int argc, char **argv)
 	uint32_t zero2[] = { 0x46B450, 0x505C00, 0x505CE0, 0x46BD40, 0x512AA0, 0x512AC0 };
 	for (uint32_t a : zero2) if (!O.sequences || (a != 0x505C00 && a != 0x505CE0)) patch_jmp(a, (void *)s_zero2);
 	if (O.sequences) patch_jmp(0x505BC0, (void *)s_505BC0);
+	if (!load_animsets()) return 1;
 	uint32_t zero3[] = { 0x5018C0, 0x501460, 0x46BBC0, 0x47CF50 };
 	for (uint32_t a : zero3) patch_jmp(a, (void *)s_zero3);
 	patch_jmp(0x506690, (void *)s_result); patch_jmp(0x506BA0, (void *)s_results);
@@ -1425,6 +1542,8 @@ int main(int argc, char **argv)
 	g_loading_actors = false;
 	if (!loaded) return 1;
 	call0(0x56F9A0); // BS_memsetVars2: hit-effect queue (screen fades...)
+	if (O.sequences) *(uint32_t *)0x1D96A8C = ((uint32_t (__cdecl *)())0x506BF0)();
+	if (O.sequences) *(uint32_t *)0x1D96AA0 = 0x209FAA8;
 	int t = 0, cast_ticks = 0;
 	// The cast: the caster plays its cast plan (what its action sequence plays before the effect
 	// starts, BattleActionSequence_Tick_MagicCast 0x50A9A0), the ticks recorded from castcam; then the
@@ -1448,28 +1567,47 @@ int main(int argc, char **argv)
 		}
 	};
 	auto spend_plan = [&]() { if (plan && left > 0 && --left == 0) { segment++; if (segment >= plan->size()) plan = nullptr; } };
-	if (!O.castplan.empty() && g_drawn_slot[O.caster])
+	const uint32_t cast_state = g_drawn_slot[O.caster] ? *(uint32_t *)(caster + 0x74) : 0;
+	const bool real_cast = O.castseq >= 0 && O.sequences && cast_state && g_actors;
+	auto cast_tick = [&]() {
+		g_tick = t;
+		dump_vram_queue();
+		env_reset();
+		if (O.castcam)
+		{
+			memcpy((void *)0xB8B7F0, O.castcam_pose, 6);
+			memcpy((void *)0xB8B7F8, O.castcam_pose + 3, 6);
+			*(int16_t *)0x1D977A2 = 0;
+			call0(0x5033E0);
+		}
+		g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear(); g_notes.clear();
+		g_rec = true;
+		render_actors();
+		g_rec = false;
+		dump_vram_queue();
+		write_tick(t);
+	};
+	if (O.sequences) CreateThread(nullptr, 0, sequence_watchdog, nullptr, 0, nullptr);
+	run_stage();                       // (its task starts drawing from its second run: the first tick has the stage too)
+	if (real_cast)
+	{
+		((void (__cdecl *)(uint32_t, int))0x505C00)(caster, O.castseq);
+		for (; t < 300 && !(*(uint8_t *)(cast_state + 0x2C) & 0x20); t++)
+		{
+			cast_tick();
+			*(uint8_t *)(cast_state + 0x2C) |= 0x10;
+		}
+		*(uint8_t *)(cast_state + 0x2C) &= ~0x20;
+		cast_ticks = t;
+		printf("cast: sequence %d, %d ticks before the effect\n", O.castseq, cast_ticks);
+	}
+	else if (!O.castplan.empty() && g_drawn_slot[O.caster])
 	{
 		plan = &O.castplan; segment = 0; left = 0;
 		for (; plan && t < 300; t++)
 		{
 			step_plan();
-			g_tick = t;
-			dump_vram_queue();
-			env_reset();
-			if (O.castcam)
-			{
-				memcpy((void *)0xB8B7F0, O.castcam_pose, 6);
-				memcpy((void *)0xB8B7F8, O.castcam_pose + 3, 6);
-				*(int16_t *)0x1D977A2 = 0;
-				call0(0x5033E0);
-			}
-			g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear(); g_notes.clear();
-			g_rec = true;
-			render_actors();
-			g_rec = false;
-			dump_vram_queue();
-			write_tick(t);
+			cast_tick();
 			spend_plan();
 		}
 		cast_ticks = t;
@@ -1479,6 +1617,7 @@ int main(int argc, char **argv)
 	plan = O.castafter.empty() ? nullptr : &O.castafter; segment = 0; left = 0; resume = true;
 	if (!plan && !O.castplan.empty() && g_drawn_slot[O.caster]) play_animation(caster, O.idle[O.caster]);
 	env_reset();
+	if (O.sequences && g_drawn_slot[O.caster]) { setup_targeting(); env_reset(); }
 	if (!run_setup()) { printf("setup faulted %08lX at eip %08lX addr %08lX\n", g_fault_code, g_fault_eip, g_fault_addr); return 1; }
 	printf("effect %d: setup ok\n", O.eff);
 	for (const auto &poke : O.pokes) memcpy((void *)poke.first, poke.second.data(), poke.second.size());
@@ -1513,6 +1652,8 @@ int main(int argc, char **argv)
 		if (r == 0 || *(uint32_t *)C3_28 == 0) { t++; break; }
 	}
 	fclose(g_out);
+	for (int k = 0; k < 7; k++)
+		if (g_drawn_slot[k]) printf("slot %d faces %d\n", k, *(int16_t *)(0x1D972C0 + 0x9C * k + 14) & 0xFFF);
 	printf("done: effect %d, %d ticks recorded\n", O.eff, t);
 	return 0;
 }

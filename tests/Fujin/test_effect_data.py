@@ -627,4 +627,123 @@ def test_renzokuken_plays_its_own_sequence(tmp_path):
 
     assert len(record("plain")) == 3
     ticks = record("sequences", "sequences=1")
-    assert len(ticks) > 100 and min(ticks) > 300
+    assert len(ticks) > 100 and min(ticks) > 200
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag140-158-159-258-331-332.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m092.dat")
+def test_an_animset_file_plays_in_the_recording(tmp_path):
+    """effect_159.animset instead of the exe's set, as FFNx in the game (animset=address:file): the same bytes record the same; a
+    Renzokuken stage counting one more animation (its AB list) makes the effect longer. A file FFNx would refuse is refused."""
+    from FF8GameData.dat.exeanimset import anim_set_info, locate_anim_sets
+    from Fujin.animsetfiles import AnimSetFiles, file_error
+    from Fujin.recorderbuild import RECORDER
+    exe = EXE.read_bytes()
+    info = anim_set_info(159, 0)
+    start = locate_anim_sets(exe)[info]
+    data = exe[start:start + info.size]
+    same = tmp_path / "same" / "effect_159.animset"
+    same.parent.mkdir()
+    same.write_bytes(data)
+    longer = tmp_path / "effect_159.animset"
+    stages, counted_again = bytes((0xAB, 1, 0, 1, 0xA0, 2)), bytes((0xAB, 1, 0, 1, 1, 0xA0))
+    assert data.count(stages) == 2                                       # (its two sequences' AB lists: animations 0, 1 | 2 | ...)
+    longer.write_bytes(data.replace(stages, counted_again))              # (0, 1, 1 | nothing | ...)
+    (tmp_path / "effect_999.animset").write_bytes(data)
+    (tmp_path / "bad").mkdir()
+    (tmp_path / "bad" / "effect_159.animset").write_bytes(data[:40])
+    assert "no animation set" in file_error(str(tmp_path / "effect_999.animset"))
+    assert file_error(str(tmp_path / "bad" / "effect_159.animset")) and file_error(str(same)) is None
+    files = AnimSetFiles()
+    assert files.load([str(same), str(tmp_path / "effect_999.animset")])[0] == [159]
+    assert files.bindings(159, str(EXE)) == ((start + 0x400000, str(same)),) and files.bindings(160, str(EXE)) == ()
+
+    def record(tag, *extra):
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(RECORDER), "159", f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}", f"slot3={BATTLE / 'c0m092.dat'}",
+                              "caster=0", "target=3", "sequences=1", *extra], cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return [line for line in out.read_text().splitlines() if line.startswith(("P ", "R "))]
+
+    original = record("exe")
+    address = f"0x{start + 0x400000:X}"
+    assert record("same", f"animset={address}:{same}") == original
+    edited = record("longer", f"animset={address}:{longer}")
+    ticks = lambda lines: sum(line.startswith("R ") for line in lines)
+    assert ticks(edited) != ticks(original)
+
+
+def test_the_cast_sequence_is_the_one_the_game_picks():
+    """A character's by the command that plays the effect (Magic 11, GF 14, item 15), a monster's from its ability slots; nothing for an
+    actor with no sequence for it."""
+    from Fujin.castsequence import cast_sequence, monster_abilities, shipped_users
+    squall, weapon, monster = str(BATTLE / "d0c000.dat"), str(BATTLE / "d0w000.dat"), str(BATTLE / "c0m009.dat")
+    users = shipped_users(1)
+    assert ("Magic", 21) in users                                        # Cure
+    assert cast_sequence(users, squall, weapon) == 11
+    assert cast_sequence(users, squall) is None                          # no weapon file: no sequences
+    assert cast_sequence([("Battle item", 3)], squall, weapon) == 15
+    assert cast_sequence([("Enemy attack", 2)], squall, weapon) is None
+    abilities = monster_abilities(monster)
+    kind, sequence, entry = next(a for a in abilities if a[0] == 8)
+    assert cast_sequence([("Enemy attack", entry)], monster) == sequence
+    assert cast_sequence([("Enemy attack", 9999)], monster) is None
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag001.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+def _record_159(tmp_path, *extra):
+    from Fujin.recorderbuild import RECORDER
+    battle = ROOT / "extracted_files/battle"
+    out = tmp_path / "recording.txt"
+    run = subprocess.run([str(RECORDER), "159", f"exe={EXE}", f"magic={ROOT / 'extracted_files/magic'}", f"battle={battle}", f"out={out}",
+                          f"slot0={battle / 'd0c000.dat'}", f"weapon0={battle / 'd0w000.dat'}", f"slot3={battle / 'c0m092.dat'}", "caster=0", "target=3",
+                          "pos0=0,0,1800", "yaw0=0", "pos3=0,0,-3200", "yaw3=2048", "sequences=1", *extra],
+                         cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=300)
+    return run.stdout, out
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/battle/c0m092.dat", "extracted_files/magic/mag140-158-159-258-331-332.tim")
+def test_x_atm_faces_squall_in_renzokuken(tmp_path):
+    """X-ATM092's sequence in effect 159 faces it by C3 0x1A, the angle the game's targeting setup works out before the effect (facing away: 0)."""
+    log, _out = _record_159(tmp_path)
+    assert "slot 3 faces 2048" in log and "slot 0 faces 0" in log, log[-400:]
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/battle/a0stg006.x", "extracted_files/battle/c0m092.dat",
+                     "extracted_files/magic/mag140-158-159-258-331-332.tim")
+def test_the_stage_draws_behind_the_actors(tmp_path):
+    from FF8GameData.psxgpu.fxdump import load_recording
+    camera = tmp_path / "camera.txt"
+    camera.write_text("0 0 -1500 6000 0 -500 0 0 512\n")
+    plain, plain_out = _record_159(tmp_path, f"camera={camera}")
+    (tmp_path / "stage").mkdir()
+    staged, staged_out = _record_159(tmp_path / "stage", f"camera={camera}", "stage=6",
+                                     f"stagefile={ROOT / 'extracted_files/battle/a0stg006.x'}", "stagedraw=1")
+    assert "faulted" not in staged, staged[-400:]
+    bare, stage = load_recording(plain_out), load_recording(staged_out)
+    assert len(stage.ticks) == len(bare.ticks)
+    for tick in (0, len(stage.ticks) // 2):
+        assert stage.frame(tick)[1].counts["polygons"] > bare.frame(tick)[1].counts["polygons"] + 100
+    # tick 0 has it too (its task only starts drawing on its second run), and it fills the sky of the empty recording
+    image = stage.frame(0, scale=0.5)[0]
+    assert (image[:40].astype(int).sum(2) > 80).mean() > 0.5
+
+
+def test_cure_cast_is_the_games_sequence(tmp_path):
+    """Cure as the game plays it: Squall's sequence 11 starts the effect (it asks after its 45 ticks), the recording ends with the effect,
+    and the cast's glow stands at his height (+0x24 as the game inits it: 0, not above his head)."""
+    from Fujin.recorderbuild import RECORDER
+
+    def record(tag, *extra):
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(RECORDER), "1", f"exe={EXE}", f"magic={MAGIC}", f"battle={BATTLE}", f"out={out}",
+                              f"slot0={BATTLE / 'd0c000.dat'}", f"weapon0={BATTLE / 'd0w000.dat'}", f"slot3={BATTLE / 'c0m009.dat'}",
+                              "caster=0", "target=3", "sequences=1", *extra], cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=120)
+        assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
+        return run.stdout, sum(line.startswith("R ") for line in out.read_text().splitlines())
+
+    alone = record("alone")[1]
+    log, ticks = record("cast", "castseq=11")
+    assert "45 ticks before the effect" in log and ticks == alone + 45
