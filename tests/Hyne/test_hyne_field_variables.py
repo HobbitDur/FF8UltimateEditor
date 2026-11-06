@@ -157,6 +157,14 @@ class TestView:
         view.from_dict({"261": 3, "72": 9})
         assert view.value(261) == 3 and view.value(72) == 0
 
+    def test_negative_values_read_as_negative(self, entries):
+        by_var = {entry["var"]: entry for entry in entries}
+        for var in (108, 112, 184, 186, 199, 200, 202, 213, 448):
+            assert by_var[var]["signed"], var
+        image = bytearray(IMAGE_SIZE)
+        image[VARS + 112:VARS + 116] = b"\xFF" * 4
+        assert FieldVariables(image).value(112, 4, True) == -1
+
     def test_json_round_trip(self):
         view = FieldVariables(bytearray(IMAGE_SIZE))
         view.set_value(730, 5)

@@ -1728,15 +1728,15 @@ class HyneWidget(QWidget):
             self.tt_trade_combos.append(combo)
             rules_grid.addWidget(combo, row, trade_column)
 
-        # The two last rule sets, each with its region
+        # The two rule sets Squall carries, each with its region
         self.tt_last_region_combos = []
         rules_grid.addWidget(QLabel("Region"), TT_NB_REGIONS + 1, trade_column)
         for index in range(TT_NB_LAST_RULES):
             row = TT_NB_REGIONS + 2 + index
-            rules_grid.addWidget(QLabel(f"Last rules {index + 1}:"), row, 0)
+            rules_grid.addWidget(QLabel(f"Carried rules {index + 1}:"), row, 0)
             rule_checks(row, TT_VAR_LAST_RULES + index)
             number = TT_VAR_LAST_REGIONS + index
-            combo = self._enum_combo(region_entries, tooltip=f"Region of these last rules (variable {number})")
+            combo = self._enum_combo(region_entries, tooltip=f"Region these rules Squall carries come from (variable {number})")
             self._connect_card_var(combo, number)
             self.tt_last_region_combos.append((number, combo))
             rules_grid.addWidget(combo, row, trade_column)
@@ -1752,12 +1752,12 @@ class HyneWidget(QWidget):
                                                  for index, name in enumerate(TT_QUEEN_CITIES)],
             tooltip=f"Where the Queen of Cards is (variable {TT_VAR_QUEEN_LOCATION})")
         self.tt_queen_trade_combo = self._enum_combo(
-            trade_entries, tooltip=f"Trade rule the Queen of Cards spreads (variable {TT_VAR_QUEEN_TRADE_RULE})")
-        self.tt_rating_spin = self._spinbox(0, 0xFF, tooltip=f"Trade rating (variable {TT_VAR_TRADE_RATING})")
+            trade_entries, tooltip=f"Trade rule of the Queen of Cards, in matches against her and spreading where she is (variable {TT_VAR_QUEEN_TRADE_RULE})")
+        self.tt_rating_spin = self._spinbox(0, 0xFF, tooltip=f"How busy trading is in the region below, 0 to 10: the chance its rule spreads (variable {TT_VAR_TRADE_RATING})")
         self.tt_rating_spin.setMaximumWidth(TT_SMALL_SPIN_WIDTH)
         self.tt_rating_region_combo = self._enum_combo(
-            region_entries, tooltip=f"Region of the trade rating (variable {TT_VAR_TRADE_RATING_REGION})")
-        self.tt_degeneration_spin = self._spinbox(0, 0xFF, tooltip=f"Rule degeneration (variable {TT_VAR_DEGENERATION})")
+            region_entries, tooltip=f"Region where trading is busiest, whose trade rule spreads (variable {TT_VAR_TRADE_RATING_REGION})")
+        self.tt_degeneration_spin = self._spinbox(0, 0xFF, tooltip=f"Pull of the trade rules back to One: its chance in 256 after each match (variable {TT_VAR_DEGENERATION})")
         self.tt_degeneration_spin.setMaximumWidth(TT_SMALL_SPIN_WIDTH)
         self.tt_queen_quest_combo = self._enum_combo(
             [{"value": value, "name": name} for value, name in enumerate(TT_QUEEN_QUEST_CARDS)],
