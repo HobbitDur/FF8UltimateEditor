@@ -145,3 +145,21 @@ def test_a_stale_block_is_left_alone(game_data, tmp_path):
     saved = _read_image(path)
     assert saved[BLOCK:BLOCK + BLOCK_SIZE] == image[BLOCK:BLOCK + BLOCK_SIZE]
     assert not _ffnx_learned(saved, 0, 128)
+
+
+def test_ids_past_127_follow_the_kernel(tmp_path):
+    from PyQt6.QtWidgets import QApplication
+    from Hyne.hynewidget import HyneWidget
+    QApplication.instance() or QApplication([])
+    widget = HyneWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
+    assert not widget.manager.abilities_extended
+    widget.kernel_names.ability_groups = [20, 19, 19, 20, 5, 9, 24]    # the vanilla 116
+    widget.kernel_names.abilities = ["x"] * 116
+    widget._on_kernel_names_changed()
+    assert not widget.manager.abilities_extended
+    assert widget.gf_ability_checks[130].isHidden()
+    widget.kernel_names.ability_groups = [26, 27, 46, 19, 8, 15, 32]   # 173, as Cronos
+    widget.kernel_names.abilities = ["x"] * 173
+    widget._on_kernel_names_changed()
+    assert widget.manager.abilities_extended
+    assert not widget.gf_ability_checks[130].isHidden()

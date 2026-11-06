@@ -14,8 +14,9 @@ from PyQt6.QtWidgets import QApplication
 _APP = QApplication.instance() or QApplication([])
 
 from CCGroup.cardlocation import LOCATION_PLAYER, RARE_CARD_FIRST_ID, starting_location
+from FF8GameData.gamedata import GameData
 from Hyne.hynemanager import (
-    CRC_OFFSET_1, CRC_OFFSET_2, CRC_SPAN_LEN, CRC_SPAN_START, IMAGE_SIZE, crc16_ff8, lzss_compress, lzss_decompress,
+    HyneManager, CRC_OFFSET_1, CRC_OFFSET_2, CRC_SPAN_LEN, CRC_SPAN_START, IMAGE_SIZE, crc16_ff8, lzss_compress, lzss_decompress,
 )
 from Hyne.hynesavemap import read_shop_file, scene_uses_extra_monsters
 from Hyne.hynewidget import HyneWidget
@@ -237,7 +238,7 @@ class TestMagicPlace:
 
     def _kernel(self, widget, magic):
         widget.kernel_names.magic = magic
-        widget._relabel_magic()
+        widget._on_kernel_names_changed()
 
     @pytest.fixture(autouse=True)
     def _no_kernel_after(self, shared_widget):
@@ -278,12 +279,21 @@ class TestMagicPlace:
         assert "Meltdown" in rows.item(95).text()
 
     def test_added_spells_can_be_chosen(self, widget):
-        self._kernel(widget, {96: "Meltdown", 97: ""})
+        self._kernel(widget, {97: "Meltdown", 98: ""})   # the built-in list stops at 96
         combo = widget.char_magic_combos[0]
-        assert combo.findData(96) >= 0 and "Meltdown" in combo.itemText(combo.findData(96))
-        assert combo.findData(97) < 0        # a dummy row names nothing
+        assert combo.findData(97) >= 0 and "Meltdown" in combo.itemText(combo.findData(97))
+        assert combo.findData(98) < 0        # a dummy row names nothing
         junction = next(iter(widget.char_junction_combos.values()))
-        assert junction.findData(96) >= 0
+        assert junction.findData(97) >= 0
+        self._kernel(widget, {})
+        assert combo.findData(97) < 0 and junction.findData(97) < 0
+
+    def test_a_chosen_added_spell_stays_without_its_kernel(self, widget):
+        self._kernel(widget, {97: "Meltdown"})
+        combo = widget.char_magic_combos[0]
+        combo.setCurrentIndex(combo.findData(97))
+        self._kernel(widget, {})
+        assert combo.currentData() == 97 and combo.currentText() == "97: (unknown)"
 
 
 class TestScanPlace:
@@ -302,15 +312,19 @@ class TestScanPlace:
         assert battle.enemies_scanned[7]
         assert widget.battle_page.scan_group.list_widget.item(200).isHidden()
 
-    def test_a_used_ffnx_block_is_read(self, widget, save, shared_widget):
+    def test_the_block_alone_shows_nothing_in_the_tool(self, widget, save):
         _write_save(save, moved_bits=True)
         widget.manager.load_file(str(save))
         widget.battle_page.reload()
-        battle = widget.manager.battle
-        assert battle.scan_moved
-        assert battle.enemies_scanned[18]
-        assert not battle.enemies_scanned[7]
-        assert widget.battle_page.scan_moved_check.isChecked()
+        assert not widget.manager.battle.scan_moved
+        assert widget.battle_page.scan_moved_check.isHidden()
+        assert widget.manager.buffer[SCANNED_MOVED + 2] == 0x04     # still in the save
+
+    def test_the_cli_goes_by_the_block(self, save):
+        _write_save(save, moved_bits=True)
+        manager = HyneManager(GameData(str(REPO / "FF8GameData")))
+        manager.load_file(str(save))
+        assert manager.battle.scan_moved and manager.battle.enemies_scanned[18]
 
     def test_scene_out_decides(self, widget, tmp_path):
         scene = tmp_path / "scene.out"
@@ -318,6 +332,8 @@ class TestScanPlace:
         widget._load_scene_file(str(scene))
         assert widget.manager.battle.scan_moved
         assert widget.battle_page.scan_moved_check.isChecked()
+        assert not widget.battle_page.scan_moved_check.isHidden()
+        assert not widget.battle_page.scan_moved_check.isEnabled()      # it only tells
         assert not widget.battle_page.scan_group.list_widget.item(200).isHidden()
         widget._clear_scene_file()
         assert not widget.manager.battle.scan_moved

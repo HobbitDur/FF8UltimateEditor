@@ -55,6 +55,11 @@ FFNx's AddMoreAbility (up to 255 kernel.bin abilities) keeps learned ability ids
 FFNx uses the block only when it is valid AND its copy of the 16 learned fields still equals the
 savemap's (otherwise something saved over the slot without FFNx) - then ids 128+ start unlearned.
 This tool writes the block only once an id past 127 is ticked, or when the save already has one.
+
+The tool shows what FFNx would use: follow_mod_files makes the extended data depend on the mod's files
+as it does for FFNx (kernel.bin for items, abilities and magic, scene.out for the scan list). What is
+not shown stays in the save, and the item block's first 198 slots keep following the inventory so that
+it is still good when the mod's files come back. The CLI has no such files and goes by the save alone.
 """
 import os
 import re
@@ -600,7 +605,10 @@ class HyneManager:
         self.triple_triad = None
         self.header = None
         self.field_variables = None
-        self.kernel_magic_extended = False   # the kernel.bin open holds a magic id FFNx moves the drawn list for
+        self.follow_mod_files = False        # show the extended data only when the files below arm it
+        self.kernel_items_extended = False   # what the open kernel.bin makes FFNx do, see set_kernel_extensions
+        self.kernel_abilities_extended = False
+        self.kernel_magic_extended = False
         self.progress = None
         self.party = None
         self.battle = None
@@ -676,7 +684,7 @@ class HyneManager:
         self.world_map = WorldMapState(self.buffer)
         self.chocobo = ChocoboWorld(self.buffer)
         self.item_extension = self._item_extension_state()
-        if self.item_extension == "extended":
+        if self.item_slots_extended:
             self.item_entries = [
                 ItemEntry(self.buffer, ITEM_EXT_OFFSET + ITEM_EXT_HEADER_SIZE + i * ITEM_ENTRY_SIZE, i,
                           self.game_data)
@@ -711,6 +719,42 @@ class HyneManager:
         if slot_bytes[:NB_ITEMS * ITEM_ENTRY_SIZE] != self._native_item_bytes():
             return "stale"
         return "extended"
+
+    @property
+    def item_slots_extended(self):
+        """The 255 slots are what the tool edits: the save has the block, and FFNx would use it."""
+        return self.item_extension == "extended" and (self.kernel_items_extended or not self.follow_mod_files)
+
+    @property
+    def abilities_extended(self):
+        """Learned ids 128+ can be shown and ticked."""
+        return self.kernel_abilities_extended or not self.follow_mod_files
+
+    def set_kernel_extensions(self, items, abilities, magic):
+        """What the open kernel.bin arms in FFNx: more than the 199 items, abilities past id 127, a magic id
+        of 96 or more. A save loaded or shown afterwards follows it."""
+        unchanged = (self.follow_mod_files, self.kernel_items_extended, self.kernel_abilities_extended,
+                     self.kernel_magic_extended) == (True, items, abilities, magic)
+        if unchanged:
+            return
+        if self.buffer:
+            self._sync_item_slots()
+        self.follow_mod_files = True
+        self.kernel_items_extended, self.kernel_abilities_extended, self.kernel_magic_extended = items, abilities, magic
+        if self.buffer:
+            self._parse()
+            self.detect_magic_moved()
+            self.detect_scan_moved()
+
+    def _sync_item_slots(self):
+        """The item table and the block agree: from the 255 slots when they are what is edited, else from the
+        table, the block's slots 199-255 left as they are."""
+        if self.item_slots_extended:
+            self._sync_item_extension()
+        elif self.item_extension == "extended":
+            start = ITEM_EXT_OFFSET + ITEM_EXT_HEADER_SIZE
+            rest = bytes(self.buffer[start + NB_ITEMS * ITEM_ENTRY_SIZE:start + 2 * ITEM_EXT_SLOTS])
+            self._write_item_extension(self._native_item_bytes() + rest)
 
     def enable_item_extension(self):
         """Give the save FFNx AddMoreItems' 255 slots: a new block holding the item table's 198
@@ -789,11 +833,13 @@ class HyneManager:
             self.battle.magic_moved = self.kernel_magic_extended
 
     def detect_scan_moved(self):
-        """Where this save has its enemies scanned once: scene.out tells, as it tells FFNx; without
-        it, FFNx's block holding anything is the sign."""
+        """Where this save has its enemies scanned once: scene.out tells, as it tells FFNx. With nothing
+        to go by (the CLI), FFNx's block holding anything is the sign."""
         if self.battle:
-            self.battle.scan_moved = (self.battle.moved_scan_block_used() if self.scene_uses_extra_monsters is None
-                                      else self.scene_uses_extra_monsters)
+            if self.scene_uses_extra_monsters is not None or self.follow_mod_files:
+                self.battle.scan_moved = bool(self.scene_uses_extra_monsters)
+            else:
+                self.battle.scan_moved = self.battle.moved_scan_block_used()
 
     # ── Values the save holds twice ──────────────────────────────────────
 
@@ -848,8 +894,7 @@ class HyneManager:
         if backup and os.path.exists(file_path):
             shutil.copy2(file_path, file_path + ".bak")
 
-        if self.item_extension == "extended":
-            self._sync_item_extension()   # before the CRC: it covers the item table
+        self._sync_item_slots()   # before the CRC: it covers the item table
         if self.ability_extension == "extended":
             self._sync_ability_extension()
         self._sync_copies()

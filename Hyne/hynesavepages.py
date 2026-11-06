@@ -495,6 +495,8 @@ class BattlePage(SavePage):
             "FFNx keeps this list in field variables 753-784 when kernel.bin holds a magic id of 96 or more. The save's\n"
             "vanilla list is then ignored. Set from the kernel.bin opened with the toolbar's Import complementary.")
         self.magic_moved_check.toggled.connect(lambda _checked: self.reload())
+        self.magic_moved_check.setEnabled(False)
+        self._refills.append(lambda: self.magic_moved_check.setVisible(self.section("battle").magic_moved))
         magic_column = QVBoxLayout()
         magic_column.addWidget(self.magic_moved_check)
         magic_column.addWidget(self.magic_group, 1)
@@ -509,8 +511,10 @@ class BattlePage(SavePage):
             "battle", "scan_moved", "Moved by FFNx (variables 785-816)",
             "FFNx keeps this list in field variables 785-816 when the game's scene.out uses a monster of its extra ones\n"
             "(c0m144 and up), as Cronos does. The save's vanilla list is then ignored. Set from the scene.out opened with\n"
-            "the toolbar's Import complementary; without one, from that block holding anything.")
+            "the toolbar's Import complementary.")
         self.scan_moved_check.toggled.connect(lambda _checked: self.reload())
+        self.scan_moved_check.setEnabled(False)
+        self._refills.append(lambda: self.scan_moved_check.setVisible(self.section("battle").scan_moved))
         scan_column = QVBoxLayout()
         scan_column.addWidget(self.scan_moved_check)
         scan_column.addWidget(self.scan_group, 1)

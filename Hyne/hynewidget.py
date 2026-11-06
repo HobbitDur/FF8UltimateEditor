@@ -28,6 +28,7 @@ from Common.fileregistry import busy_cursor
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
+from FF8GameData.itemids import FIRST_ADDED_ITEM
 from FF8GameData.kernelgfabilities import ABILITY_LIST_COUNT, gf_ability_slots
 from FF8GameData.kernellevels import load_kernel
 from SolomonRing.kernellookups import LookupRegistry
@@ -42,7 +43,7 @@ from Hyne.hynesavepages import (
     ShopsPage, WorldMapPage,
 )
 from Hyne.hynemanager import (
-    HyneManager, SAVE_ABILITY_IDS, TT_CARD_COPIES_MASK, TT_NB_RARE_CARDS, TT_NB_REGIONS, TT_NB_LAST_RULES,
+    HyneManager, LEARNED_ABILITY_BITS, SAVE_ABILITY_IDS, TT_CARD_COPIES_MASK, TT_NB_RARE_CARDS, TT_NB_REGIONS, TT_NB_LAST_RULES,
     TT_VAR_REGION_RULES, TT_VAR_REGION_TRADE_RULE, TT_VAR_LAST_RULES, TT_VAR_LAST_REGIONS,
     TT_VAR_QUEEN_LOCATION, TT_VAR_TRADE_RATING_REGION, TT_VAR_TRADE_RATING, TT_VAR_DEGENERATION,
     TT_VAR_QUEEN_TRADE_RULE, TT_VAR_QUEEN_QUEST, TT_VAR_BGU_DIALOGS, TT_VAR_CC_QUEST, TT_VAR_BGU_WINS,
@@ -120,6 +121,7 @@ class HyneWidget(QWidget):
 
         self.game_data = GameData(game_data_folder)
         self.manager = HyneManager(self.game_data)
+        self.manager.follow_mod_files = True
         self.game_data.load_card_data()
         self._card_info = self.game_data.card_data_json["card_info"]
         self.tt_var_widgets = []   # (widget, field variable) of the Triple Triad tab
@@ -148,6 +150,7 @@ class HyneWidget(QWidget):
                 return json.load(json_file)
 
         self.hyne_data = _load_json("hyne_data.json")
+        self._added_magic_ids = set()   # the spells of the open kernel.bin in the magic lists
         self.field_variable_entries = _load_json("hyne_field_variables.json")
 
         # Button-remap action list (dedicated json — the config bytes store a logical action id).
@@ -278,8 +281,16 @@ class HyneWidget(QWidget):
     def _relabel_magic(self):
         kernel_magic = self.kernel_names.magic
         added = [magic_id for magic_id, name in kernel_magic.items() if name and magic_id not in self._magic_names]
+        gone = self._added_magic_ids - set(added)
+        self._added_magic_ids = set(added)
         for combo in [*self.char_magic_combos, *self.char_junction_combos.values()]:
             with QSignalBlocker(combo):
+                for magic_id in gone:   # a save's value stays, by its id
+                    index = combo.findData(magic_id)
+                    if index >= 0 and index != combo.currentIndex():
+                        combo.removeItem(index)
+                    elif index >= 0:
+                        combo.setItemText(index, f"{magic_id}: (unknown)")
                 for magic_id in added:   # spells FFNx's AddMoreMagic lets a kernel.bin add
                     if combo.findData(magic_id) < 0:
                         combo.addItem("", magic_id)
@@ -289,9 +300,7 @@ class HyneWidget(QWidget):
                         combo.setItemText(index, f"{magic_id}: {self.magic_label(magic_id)}")
         self.battle_page.relabel_magic()
         self.draw_points_page.relabel_magic()
-        self.manager.kernel_magic_extended = any(magic_id >= EXTENDED_MAGIC_FIRST for magic_id in kernel_magic)
         if self.manager.battle:
-            self.manager.detect_magic_moved()
             self.battle_page.reload()
 
     def _load_draw_data(self, path):
@@ -418,6 +427,10 @@ class HyneWidget(QWidget):
         the file (and unsaved edits) are untouched - only the names change."""
         names = self.kernel_names
         self.kernel_notice.setVisible(not (names.abilities and names.weapons))
+        self.manager.set_kernel_extensions(
+            items=bool(names.items) and max(names.items) != FIRST_ADDED_ITEM - 1,
+            abilities=sum(names.ability_groups) > LEARNED_ABILITY_BITS,
+            magic=any(magic_id >= EXTENDED_MAGIC_FIRST for magic_id in names.magic))
         commands = names.ability_group_ids(*COMMAND_ABILITY_GROUPS)
         equipped = names.ability_group_ids(*EQUIPPED_ABILITY_GROUPS)
         for combo, allowed in ([(self.gf_learning_ability_combo, None)]
@@ -840,7 +853,8 @@ class HyneWidget(QWidget):
         count = len(self.kernel_names.abilities) or VANILLA_ABILITY_COUNT
         gf = self._selected_gf()
         for ability_id, check in self.gf_ability_checks.items():
-            check.setVisible(ability_id < count or bool(gf and gf.has_ability(ability_id)))
+            usable = ability_id < LEARNED_ABILITY_BITS or self.manager.abilities_extended
+            check.setVisible(usable and (ability_id < count or bool(gf and gf.has_ability(ability_id))))
 
     def _selected_gf(self):
         index = self.gf_list.currentRow()
@@ -1941,6 +1955,12 @@ class HyneWidget(QWidget):
                      "own inventory, which the game without FFNx reads."),
     }
 
+    ITEM_EXTENSION_HIDDEN_TEXT = {
+        False: "198 inventory slots.",
+        True: ("198 inventory slots. The save also has an FFNx AddMoreItems block, kept as it is: its 255 slots "
+               "show with a kernel.bin that adds items."),
+    }
+
     def _build_items_tab(self):
         self.items_table = QTableWidget(0, 2)
         self.items_table.setHorizontalHeaderLabels(["Item", "Quantity"])
@@ -2012,8 +2032,10 @@ class HyneWidget(QWidget):
 
     def _reload_items(self):
         state = self.manager.item_extension
-        self.item_extension_label.setText(self.ITEM_EXTENSION_TEXT[state])
-        self.item_extension_button.setVisible(state != "extended")
+        armed = self.manager.kernel_items_extended
+        self.item_extension_label.setText(self.ITEM_EXTENSION_TEXT[state] if armed else
+                                          self.ITEM_EXTENSION_HIDDEN_TEXT[state != "none"])
+        self.item_extension_button.setVisible(armed and state != "extended")
         choices = self._item_choices()
         self.items_table.setRowCount(0)
         self.items_table.setRowCount(len(self.manager.item_entries))
