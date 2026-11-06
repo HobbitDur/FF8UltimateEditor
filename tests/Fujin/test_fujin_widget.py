@@ -34,6 +34,19 @@ def test_tabs_and_empty_camera_editor(fujin):
     assert [label for label, _callback in fujin.import_entries()][0].startswith("FF8 exe")
 
 
+def test_effect_files_imported_from_two_folders_are_all_remembered(fujin, tmp_path):
+    """Ifrit's files lie in magic and battle: Auto-upload reopens both imports."""
+    first, second = tmp_path / "magic", tmp_path / "battle"
+    first.mkdir(), second.mkdir()
+    for path in (first / "mag200_b.00", second / "mag200_b.02"):
+        path.write_bytes(bytes(64))
+    registry = fujin.file_registry
+    registry.remember_files("Fujin effect files", [str(first / "mag200_b.00")])
+    fujin.import_paths([str(second / "mag200_b.02")])
+    assert registry.last_files("Fujin effect files") == [str(first / "mag200_b.00"), str(second / "mag200_b.02")]
+    assert registry.last_folder("Fujin effect files") == str(second)
+
+
 def test_files_open_from_the_header_toolbar_only(fujin):
     """No Import / Open / Load / Reload button inside the tool: the header toolbar's Import,
     Import complementary and Reload do it (import_entries / complementary_entries / bindings)."""

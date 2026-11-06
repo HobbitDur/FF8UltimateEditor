@@ -467,7 +467,11 @@ class FujinWidget(QWidget):
                     opened.append(str(path))
         finally:
             FileToolbarWidget.close_progress(progress)
-        self.file_registry.remember_files("Fujin effect files", opened)
+        if opened:
+            # added to those remembered: an effect's files can lie in two folders (Ifrit: magic, then battle), Auto-upload reopens them all
+            earlier = [path for path in self.file_registry.last_files("Fujin effect files") or [] if os.path.isfile(path)]
+            self.file_registry.remember_files("Fujin effect files", earlier + opened)
+            self.file_registry.remember_folder("Fujin effect files", os.path.dirname(opened[-1]))
         self._refresh()
 
     def _load_native(self, path):
