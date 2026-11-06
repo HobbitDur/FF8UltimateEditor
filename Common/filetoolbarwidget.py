@@ -11,6 +11,41 @@ from Common.fileregistry import FileRegistry
 from Common.autoimport import AutoImportSource
 
 
+class _SharedProgress:
+    """An open_progress bar asked for while another one runs (Auto-upload's, around a loader with its own bar): the
+    words and Cancel go to the bar on screen, never a second dialog over it."""
+
+    def __init__(self, bar):
+        self._bar, self._start = bar, bar.value()
+
+    def wasCanceled(self):
+        return self._bar.wasCanceled()
+
+    def setLabelText(self, text):
+        self._bar.setLabelText(text)
+
+    def setValue(self, value):
+        self._bar.setValue(min(self._start + value, self._bar.maximum()))
+
+    def isVisible(self):
+        return True
+
+    def setRange(self, _minimum, _maximum):
+        pass
+
+    def show(self):
+        pass
+
+    def reset(self):
+        pass
+
+    def close(self):
+        pass
+
+    def deleteLater(self):
+        pass
+
+
 class FileToolbarWidget(QWidget):
     """The shared Import / Import complementary / Save buttons, one common set of file controls.
 
@@ -36,6 +71,7 @@ class FileToolbarWidget(QWidget):
       read-only alike) plus its ``reload_files()`` hook if it has one. Files another tool has
       open are left untouched, so reloading in one tool never disturbs edits in another.
     """
+    _running_progress = None     # Auto-upload's bar while it runs
 
     save_state_changed = pyqtSignal(bool)  # True when the active tool has something to save
 
@@ -198,21 +234,25 @@ class FileToolbarWidget(QWidget):
         total = sum(len(paths) for _source, paths in pending)
         progress = self._auto_upload_progress(total) if total else None
         done, stopped = 0, False
-        with self.registry.batch():   # the views refresh once, after the last file
-            for source, paths in pending:
-                if progress is not None:
-                    if progress.wasCanceled():
-                        stopped = True
-                        break
-                    progress.setValue(done)
-                    progress.setLabelText(self._auto_upload_step_text(done, total, paths))
-                    QApplication.processEvents()   # loaders block the UI: repaint before each one
-                try:
-                    source.loader(paths)
-                    opened += len(paths)
-                except Exception as error:
-                    problems.append(f"{source.key}: {error}")
-                done += len(paths)
+        FileToolbarWidget._running_progress = progress
+        try:
+            with self.registry.batch():   # the views refresh once, after the last file
+                for source, paths in pending:
+                    if progress is not None:
+                        if progress.wasCanceled():
+                            stopped = True
+                            break
+                        progress.setValue(done)
+                        progress.setLabelText(self._auto_upload_step_text(done, total, paths))
+                        QApplication.processEvents()   # loaders block the UI: repaint before each one
+                    try:
+                        source.loader(paths)
+                        opened += len(paths)
+                    except Exception as error:
+                        problems.append(f"{source.key}: {error}")
+                    done += len(paths)
+        finally:
+            FileToolbarWidget._running_progress = None
         if progress is not None:
             progress.close()
         self._refresh()
@@ -405,7 +445,9 @@ class FileToolbarWidget(QWidget):
     @staticmethod
     def open_progress(parent, total, title):
         """A modal progress bar for opening many files (shown only if it takes over half a second);
-        Cancel stops before the next file. Always end it with close_progress()."""
+        Cancel stops before the next file. Always end it with close_progress(). While Auto-upload's bar runs, that bar does it."""
+        if FileToolbarWidget._running_progress is not None:
+            return _SharedProgress(FileToolbarWidget._running_progress)
         from PyQt6.QtCore import Qt
         from PyQt6.QtWidgets import QProgressDialog
         progress = QProgressDialog(title, "Cancel", 0, max(total, 1), parent)

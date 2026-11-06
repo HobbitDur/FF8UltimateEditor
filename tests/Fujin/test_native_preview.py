@@ -54,6 +54,18 @@ def _draw_mode(packets):
     return 0
 
 
+def test_the_battle_actors_fold_for_a_bigger_preview(qapp):
+    from Fujin.fujinwidget import FujinWidget
+    view = FujinWidget().native_preview
+    assert not view.actors_section.is_expanded() and not view.actors_group.isEnabled()
+    view.actors_check.setChecked(True)
+    assert view.actors_section.is_expanded() and view.actors_group.isEnabled()
+    view.actors_section.set_expanded(False)                                     # the arrow: only the pickers go
+    assert view.actors_check.isChecked() and view.actors_group.isEnabled()
+    view.actors_check.setChecked(False)
+    assert not view.actors_section.is_expanded() and not view.actors_group.isEnabled()
+
+
 def test_an_untextured_polygon_blends_with_the_last_draw_mode():
     """The ring of a cast's glow has no draw mode of its own: the page of the textured polygon before it says additive (SSIGPU_SetTPage 0x45B960). Its black
     corners leave the floor alone; averaged with it they drew a black ring."""
@@ -182,7 +194,7 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
     fujin.import_paths([str(MAGIC / "mag000-049.tim")])
     fujin.camera_editor.exe_binding.open_path(str(EXE))
     view = fujin.native_preview
-    view.actors_group.setChecked(True)                                          # drawn, with the cast
+    view.actors_check.setChecked(True)                                          # drawn, with the cast
     view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
     squall, gunblade, monster = (str(BATTLE / name) for name in ("d0c000.dat", "d0w000.dat", "c0m002.dat"))
     preview = fujin.camera_editor.preview
@@ -247,11 +259,11 @@ def test_effect_preview_party_pickers_and_effect_alone(qapp):
     fujin.select_effect(1)
     view._take_battle_setup()                    # shown: the Camera tab's very battle setup panel moves here
     assert preview.cast.parentWidget() is view.actors_group
-    assert not view.actors_group.isChecked() and not view.party_combos[0].isEnabled()   # off by default: greyed
-    view.actors_group.setChecked(True)
+    assert not view.actors_check.isChecked() and not view.party_combos[0].isEnabled()   # off by default: greyed
+    view.actors_check.setChecked(True)
     assert view.party_combos[0].isEnabled() and view.caster_combo.isEnabled()
     with_actors = view.cast().key()
-    view.actors_group.setChecked(False)
+    view.actors_check.setChecked(False)
     assert view.cast().key() != with_actors and not view.cast().actors
     if os.path.exists(nativepreview.recording_path(1, view.cast().key())):
         os.remove(nativepreview.recording_path(1, view.cast().key()))
@@ -262,7 +274,7 @@ def test_effect_preview_party_pickers_and_effect_alone(qapp):
     # ... nor the target Cure redraws itself (its own inline renderer, ticks 3-28): no primitive of
     # the effect alone uses an actor's palette - the ones the actors are drawn with before Cure
     alone = view.recording
-    view.actors_group.setChecked(True)
+    view.actors_check.setChecked(True)
     if os.path.exists(nativepreview.recording_path(1, view.cast().key())):
         os.remove(nativepreview.recording_path(1, view.cast().key()))
     assert view.record()
@@ -316,7 +328,7 @@ def test_effect_preview_plays_a_scene_out_encounter(qapp):
         os.remove(cached)
     view.set_effect(None)
     view.set_effect(1, "Cure")
-    view.actors_group.setChecked(True)
+    view.actors_check.setChecked(True)
     view.play_button.setChecked(True)                                           # records, then plays
     wait_for_preview(qapp, view)
     assert view.recording is not None and len(view.recording.ticks) > 51 and view.timer.isActive()   # cast + Cure

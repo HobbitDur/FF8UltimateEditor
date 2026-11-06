@@ -52,10 +52,11 @@ from pathlib import Path
 from PyQt6 import sip
 from PyQt6.QtCore import QProcess, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtWidgets import (QComboBox, QGroupBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
+from PyQt6.QtWidgets import (QCheckBox, QComboBox, QHBoxLayout, QLabel, QPushButton, QScrollArea,
                              QSizePolicy, QSlider, QVBoxLayout, QWidget)
 
 from Common.filebinding import FileBinding
+from Common.collapsiblesection import CollapsibleSection
 from Fujin.castsequence import cast_sequence, shipped_users
 from JumboCactuar.jumbocactuarmanager import load_names
 from Fujin.effectprogram import binds_its_animations
@@ -295,19 +296,23 @@ class NativePreviewView(QWidget):
             "edits are included; after the first recording, editing a texture or using Undo / Redo refreshes "
             "this preview automatically.")
         self.intro.setWordWrap(True)
-        # the battle's actors, drawn or not: their pickers live in this group, folded away while it is off
-        # (the Camera tab shows them too)
-        self.actors_group = QGroupBox("Battle actors")
-        self.actors_group.setCheckable(True)
-        self.actors_group.setChecked(False)
-        self.actors_group.setToolTip("On: draw the party and enemies, the caster playing its cast before the "
+        # the battle's actors, drawn or not: their pickers live in this section (the Camera tab shows them too),
+        # folded for a bigger preview whether they are drawn or not
+        self.actors_check = QCheckBox("Draw them")
+        self.actors_check.setToolTip("On: draw the party and enemies, the caster playing its cast before the "
                                      "effect. Off: the effect alone - the actors picked here are still loaded, "
                                      "unseen (the effect's code places itself on its caster and target; one it "
                                      "redraws itself, as Cure does its target, is left out too - its own models, "
                                      "as Protect's shield, stay). The caster and target are also picked in the "
                                      "Camera tab.")
-        self.actors_group.toggled.connect(lambda _on: (self._fold_actors(), self._cast_changed(),
-                                                       self._update_controls()))
+        self.actors_check.toggled.connect(self._actors_toggled)
+        self.actors_section = CollapsibleSection("Battle actors", expanded=False,
+                                                 tooltip="Fold it for a bigger preview: the battle set here stays.")
+        self.actors_section.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.actors_section.add_header_widget(self.actors_check)
+        self.actors_group = QWidget()
+        self.actors_group.setEnabled(False)
+        self.actors_section.content_layout().addWidget(self.actors_group)
         self._cast_key = None
         if cast_source is not None:
             # the battle setup is the Camera tab preview's own panel, shown here while this preview is:
@@ -345,6 +350,7 @@ class NativePreviewView(QWidget):
         self._prerender.setInterval(0)
         self._prerender.timeout.connect(self._prerender_step)
         self._actors_layout = QVBoxLayout(self.actors_group)
+        self._actors_layout.setContentsMargins(0, 0, 0, 0)
         if cast_source is None:
             self._actors_layout.addWidget(QLabel("The battle comes from the Camera tab's preview."))
         # the battle stage drawn behind the actors: the imported files (Import complementary), the encounter's when one is picked
@@ -370,7 +376,7 @@ class NativePreviewView(QWidget):
         controls.addWidget(self.frame_label)
         layout = QVBoxLayout(self)
         layout.addWidget(self.intro)
-        layout.addWidget(self.actors_group)
+        layout.addWidget(self.actors_section)
         layout.addLayout(controls)
         layout.addWidget(self.scroll, 1)
         layout.addWidget(self.status)
@@ -396,11 +402,18 @@ class NativePreviewView(QWidget):
                 self._actors_layout.addWidget(panel)
             self._fold_actors()
 
+    def _actors_toggled(self, on):
+        """Drawn: the pickers open, usable. Not drawn: folded and greyed. The arrow folds them at any time."""
+        self.actors_section.set_expanded(on)
+        self.actors_group.setEnabled(on)
+        self._fold_actors()
+        self._cast_changed()
+        self._update_controls()
+
     def _fold_actors(self):
-        """Battle actors off: its pickers hidden, the group a single line."""
-        self.stage_row.setVisible(self.actors_group.isChecked() and self.cast_source is not None and not self.lab)
+        self.stage_row.setVisible(self.cast_source is not None and not self.lab)
         if self.cast_source is not None and self.cast_source.cast.parentWidget() is self.actors_group:
-            self.cast_source.cast.setVisible(self.actors_group.isChecked())
+            self.cast_source.cast.setVisible(True)
 
     # the battle stages (Common.battlesidefiles.BattleSideFiles' preview)
     def set_party_files(self, paths):
@@ -484,7 +497,7 @@ class NativePreviewView(QWidget):
                 not_imported.append(os.path.basename(body))
         params = tuple(sorted(self.params(self.effect_id).items())) if self.effect_id is not None else ()
         program = (self.program(self.effect_id) if self.effect_id is not None else None) or ""
-        actors = self.actors_group.isChecked() and not self.lab
+        actors = self.actors_check.isChecked() and not self.lab
         stage = self.stage_combo.currentData() if actors else None
         if stage and placed and self._stage_encounter is None:
             stand_on_stage(cast)
@@ -863,7 +876,7 @@ class NativePreviewView(QWidget):
             + ("Camera: the effect's own track." if self.camera_used else
                "Camera: the default battle view (no camera track played).")
             + (f" Animations: {', '.join(self.anim_set_names)}." if self.anim_set_names else "")
-            + (f" Stage: {self.stage_combo.currentText()}." if self.stage_combo.currentData() and self.actors_group.isChecked() else "")
+            + (f" Stage: {self.stage_combo.currentText()}." if self.stage_combo.currentData() and self.actors_check.isChecked() else "")
             + self.stage_note
             + (f" Flat grey: texture pages {missing} were never uploaded." if missing else "")
             + ("" if self.recording.has_vram else " No textures in this recording."))

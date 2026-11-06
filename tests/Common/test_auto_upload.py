@@ -359,6 +359,32 @@ def test_progress_bar_counts_files_and_names_the_one_loading(tmp_path):
     assert not bar.findChild(QProgressDialog).isVisible()
 
 
+def test_a_loader_with_its_own_bar_uses_auto_uploads(tmp_path):
+    """Fujin's effect files open under their own progress bar: never a popup over Auto-upload's."""
+    registry = FileRegistry()
+    for name in ("mag000", "mag001"):
+        touch(tmp_path, name)
+    registry.remember_folder("files", str(tmp_path))
+    seen = []
+
+    def load(paths):
+        own = FileToolbarWidget.open_progress(tool, len(paths), "Opening effect files")
+        own.setLabelText("Opening mag001")
+        own.setValue(1)
+        seen.append((len(bar.findChildren(QProgressDialog)) + len(tool.findChildren(QProgressDialog)),
+                     bar.findChild(QProgressDialog).labelText(), bar.findChild(QProgressDialog).value(), own.wasCanceled()))
+        FileToolbarWidget.close_progress(own)
+
+    tool = Tool()
+    tool.auto_import_sources = lambda: [AutoImportSource("files", ("mag*",), load)]
+    bar, stack = toolbar(registry, tool)
+    bar.auto_upload_button.click()
+    assert seen == [(1, "Opening mag001", 1, False)]
+    alone = FileToolbarWidget.open_progress(tool, 1, "Alone")      # and a bar of its own again after it
+    assert isinstance(alone, QProgressDialog)
+    FileToolbarWidget.close_progress(alone)
+
+
 def test_stop_skips_the_inputs_not_started_yet(tmp_path, monkeypatch):
     registry = FileRegistry()
     paths = [touch(tmp_path, name) for name in ("a.bin", "b.bin")]
