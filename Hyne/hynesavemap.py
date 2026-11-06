@@ -36,6 +36,38 @@ NB_WORLD_POSITIONS = 8
 WORLD_POSITION_VALUES = 6
 NAME_SIZE = 12
 MAX_LEVEL = 100
+# FFNx moves the enemies scanned once here when scene.out uses a monster of its extra ones (com id
+# 160 and up, src/ff8/battle/monsters.cpp): field variables 785-816, one bit per com id.
+SCANNED_MOVED_VAR = 785
+SCANNED_MOVED_BITS = 256
+SCANNED_VANILLA_BITS = 160
+SCENE_RECORD_SIZE = 128
+SCENE_ENEMY_IDS_OFFSET = 56
+SCENE_ENEMY_SLOTS = 8
+FIRST_EXTRA_MONSTER_COM_ID = 160
+SHOP_FILE_SIZE = NB_SHOPS * SHOP_NB_ITEMS * 2
+SHOP_FILE_RARE_FLAG = 0x00  # (item id, flag) per slot: rare items have flag 0, the others 0xFF
+
+
+def scene_uses_extra_monsters(scene_data):
+    """FFNx's own test for moving the enemies scanned once: does an encounter use a com id of 160 or up?"""
+    return any(scene_data[record + SCENE_ENEMY_IDS_OFFSET + slot] >= FIRST_EXTRA_MONSTER_COM_ID
+               for record in range(0, len(scene_data) - SCENE_RECORD_SIZE + 1, SCENE_RECORD_SIZE)
+               for slot in range(SCENE_ENEMY_SLOTS))
+
+
+def read_shop_file(data):
+    """shop.bin's [(item ids, rare slots)] by shop. Only its first 20 x 32 bytes count: the game reads
+    no further (Cronos's file is twice that, the vanilla list repeated after its own)."""
+    if len(data) < SHOP_FILE_SIZE:
+        raise ValueError(f"shop.bin too small: {len(data)} bytes, expected {SHOP_FILE_SIZE}")
+    shops = []
+    for shop in range(NB_SHOPS):
+        start = shop * SHOP_NB_ITEMS * 2
+        pairs = [(data[start + 2 * slot], data[start + 2 * slot + 1]) for slot in range(SHOP_NB_ITEMS)]
+        shops.append(([item for item, _flag in pairs],
+                      [slot for slot, (_item, flag) in enumerate(pairs) if flag == SHOP_FILE_RARE_FLAG]))
+    return shops
 
 
 class Int:
@@ -249,7 +281,7 @@ class BattleState(SaveView):
     scanned once. Wins and escapes have a second copy in the field variables, written together."""
     FIELDS = ("wins", "escapes", "total_kills", "tonberries", "tonberry_king", "ufo", "first_bite_bug", "first_bomb",
               "first_t_rexaur", "first_irvine", "renzokuken_flags", "renzokuken_indicator", "special_flags",
-              "magic_drawn", "enemies_scanned")
+              "magic_drawn", "scan_moved", "enemies_scanned")
 
     _copy1_wins = Int("I", 12)
     _copy2_wins = Int("I", 144 + 20)
@@ -271,6 +303,11 @@ class BattleState(SaveView):
 
     def __init__(self, buffer):
         super().__init__(buffer, BATTLE_BLOCK_OFFSET)
+        self.scan_moved = False  # the enemies scanned once are where FFNx moves them, not read from the save
+
+    def moved_scan_block_used(self):
+        start = FIELD_VARS_OFFSET + SCANNED_MOVED_VAR
+        return any(self.buffer[start:start + SCANNED_MOVED_BITS // 8])
 
     @property
     def wins(self):
@@ -347,8 +384,10 @@ class BattleState(SaveView):
     @property
     def enemies_scanned(self):
         """Save_MarkEnemySpeciesScanned@0x493810, bit = the battle slot's com_file_id: 0-15 party
-        members, 16 and up monster c0m(N - 16)."""
-        return self.bits(60, 160)
+        members, 16 and up monster c0m(N - 16). See scan_moved for where they are."""
+        if self.scan_moved:
+            return Bits(self.buffer, FIELD_VARS_OFFSET + SCANNED_MOVED_VAR, SCANNED_MOVED_BITS)
+        return self.bits(60, SCANNED_VANILLA_BITS)
 
 
 class ShopsState(SaveView):

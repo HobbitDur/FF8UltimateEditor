@@ -11,8 +11,8 @@ from PyQt6.QtWidgets import (
 )
 
 from Hyne.hynesavemap import (
-    BattleState, ChocoboWorld, DRAW_POINT_STATES, NB_DRAW_POINTS, NB_SHOPS, NB_WORLD_POSITIONS, SHOP_NB_ITEMS,
-    WORLD_POSITION_VALUES,
+    BattleState, ChocoboWorld, DRAW_POINT_STATES, NB_DRAW_POINTS, NB_SHOPS, NB_WORLD_POSITIONS, SCANNED_MOVED_BITS,
+    SHOP_NB_ITEMS, WORLD_POSITION_VALUES,
 )
 
 SPIN_WIDTH_3_DIGITS = 78
@@ -181,7 +181,10 @@ class SavePage(QWidget):
         def refill():
             values = getattr(self.section(section), bits)
             for index in range(list_widget.count()):
-                list_widget.item(index).setCheckState(role.Checked if values[index] else role.Unchecked)
+                item = list_widget.item(index)
+                item.setHidden(index >= len(values))   # a run can change length (the moved scan block)
+                if index < len(values):
+                    item.setCheckState(role.Checked if values[index] else role.Unchecked)
             with QSignalBlocker(all_check):
                 all_check.setChecked(all(values))
 
@@ -483,22 +486,36 @@ class BattlePage(SavePage):
         left.addWidget(special_group)
         left.addStretch(1)
 
-        magic_names = {entry["value"]: entry["name"] for entry in tool._magic_entries}
         self.magic_group = self.bit_list("Magic drawn once", "battle", "magic_drawn",
-                                         [magic_names.get(index + 1, "Unused") for index in range(64)],
+                                         [tool.magic_label(index + 1, "Unused") for index in range(64)],
                                          "Magic drawn at least once")
         monsters = tool.game_data.monster_data_json["monster"]
         monster_names = {monster["com_id"]: monster["name"] for monster in monsters}
         scan_names = [FIELD_PARTY_NAMES[slot] if slot < len(FIELD_PARTY_NAMES) else "Unused"
                       for slot in range(SCAN_PARTY_SLOTS)]
-        scan_names += [f"c0m{com:03}: {monster_names.get(com, 'Unused')}" for com in range(160 - SCAN_PARTY_SLOTS)]
+        scan_names += [f"c0m{com:03}: {monster_names.get(com, 'Unused')}" for com in range(SCANNED_MOVED_BITS - SCAN_PARTY_SLOTS)]
         self.scan_group = self.bit_list("Scanned once", "battle", "enemies_scanned", scan_names,
                                         "With the Scan option on Once, a repeat Scan of these shows the short result")
+        self.scan_moved_check = self.check(
+            "battle", "scan_moved", "Moved by FFNx (variables 785-816)",
+            "FFNx keeps this list in field variables 785-816 when the game's scene.out uses a monster of its extra ones\n"
+            "(c0m144 and up), as Cronos does. The save's vanilla list is then ignored. Set from the scene.out opened with\n"
+            "the toolbar's Import complementary; without one, from that block holding anything.")
+        self.scan_moved_check.toggled.connect(lambda _checked: self.reload())
+        scan_column = QVBoxLayout()
+        scan_column.addWidget(self.scan_moved_check)
+        scan_column.addWidget(self.scan_group, 1)
 
         layout = QHBoxLayout(self)
         layout.addLayout(left)
         layout.addWidget(self.magic_group, 1)
-        layout.addWidget(self.scan_group, 1)
+        layout.addLayout(scan_column, 1)
+
+    def relabel_magic(self):
+        names = self.magic_group.list_widget
+        with QSignalBlocker(names):
+            for index in range(names.count()):
+                names.item(index).setText(self.tool.magic_label(index + 1, "Unused"))
 
 
 class ShopsPage(SavePage):
@@ -512,6 +529,7 @@ class ShopsPage(SavePage):
         data = tool.hyne_data
         self.item_tables = data["shop_items"]
         self.rare_slots = data["shop_rare_slots"]
+        self.file_shops = None   # shop.bin's [(item ids, rare slots)] by shop, when one is open
         self.shop_list = QListWidget()
         self.shop_list.addItems(data["shops"])
         self.shop_list.setFixedWidth(240)
@@ -528,8 +546,8 @@ class ShopsPage(SavePage):
             self.item_checks.append(check)
             grid.addWidget(check, slot % 8, slot // 8)
         items_group = QGroupBox("Items")
-        items_group.setToolTip("myst6re's Hyne notes that the game does not seem to use these values. "
-                               "The list is vanilla shop.bin's.")
+        items_group.setToolTip("myst6re's Hyne notes that the game does not seem to use these values. The list is "
+                               "vanilla shop.bin's until a shop.bin is opened with the toolbar's Import complementary.")
         items_group.setLayout(grid)
         self.items_group = items_group
         right = QVBoxLayout()
@@ -542,8 +560,20 @@ class ShopsPage(SavePage):
         layout.addStretch(1)
         self._refills.append(self._fill_shop)
 
-    def _table(self, shop):
-        return self.SHOP_ITEM_TABLES.get(shop, 1)
+    def _items(self, shop):
+        if self.file_shops:
+            return self.file_shops[shop][0]
+        return self.item_tables[self.SHOP_ITEM_TABLES.get(shop, 1)]
+
+    def _rare(self, shop):
+        if self.file_shops:
+            return self.file_shops[shop][1]
+        return self.rare_slots[self.SHOP_ITEM_TABLES.get(shop, 1)]
+
+    def set_file_shops(self, shops):
+        self.file_shops = shops
+        if self.tool.manager.shops:
+            self._fill_shop()
 
     def _fill_shop(self, *_):
         shop = max(0, self.shop_list.currentRow())
@@ -554,11 +584,11 @@ class ShopsPage(SavePage):
             self.shop_list.item(row).setData(Qt.ItemDataRole.ForegroundRole, None if shops.is_visited(row) else QBrush(QColor("gray")))
         with QSignalBlocker(self.visited_check):
             self.visited_check.setChecked(shops.is_visited(shop))
-        table = self._table(shop)
+        items, rare = self._items(shop), self._rare(shop)
         for slot, check in enumerate(self.item_checks):
-            check.setText(self.tool.kernel_names.item_name(self.item_tables[table][slot]) or f"Item {self.item_tables[table][slot]}")
+            check.setText(self.tool.kernel_names.item_name(items[slot]) or f"Item {items[slot]}")
             font = QFont(check.font())
-            font.setItalic(slot in self.rare_slots[table])
+            font.setItalic(slot in rare)
             check.setFont(font)
             with QSignalBlocker(check):
                 check.setChecked(shops.is_visited(shop) and shops.has_item(shop, slot))
@@ -566,7 +596,7 @@ class ShopsPage(SavePage):
 
     def _on_visited(self, checked):
         shop = self.shop_list.currentRow()
-        self.section("shops").set_visited(shop, checked, self.rare_slots[self._table(shop)])
+        self.section("shops").set_visited(shop, checked, self._rare(shop))
         self._fill_shop()
 
     def _on_item(self, slot, checked):
@@ -576,10 +606,14 @@ class ShopsPage(SavePage):
 class DrawPointsPage(SavePage):
     """The state of the 256 draw points."""
 
+    VANILLA_NOTE = ("Magic and places are the vanilla game's. A mod can change the magic: open its draw_data.csv "
+                    "(made by the Cid tool) with the toolbar's Import complementary.")
+
     def __init__(self, tool):
         super().__init__(tool)
         data = tool.hyne_data
-        magic_names = {entry["value"]: entry["name"] for entry in tool._magic_entries}
+        self.vanilla_magic = data["draw_point_magic"]
+        self.magic_ids = list(self.vanilla_magic)
         state_entries = [{"value": value, "name": name} for value, name in enumerate(DRAW_POINT_STATES)]
         self.state_model = _shared_model(self, state_entries)
         self.table = QTableWidget(NB_DRAW_POINTS, 3)
@@ -591,11 +625,10 @@ class DrawPointsPage(SavePage):
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.state_combos = []
         for point in range(NB_DRAW_POINTS):
-            magic = data["draw_point_magic"][point]
             location = data["draw_point_locations"][point]
             area = "World map" if point >= NB_DRAW_POINTS // 2 else "Field"
             place = tool.field_names.get(location, "???") if location >= 0 else "Nowhere"
-            self.table.setItem(point, 0, QTableWidgetItem(magic_names.get(magic, f"Magic {magic}")))
+            self.table.setItem(point, 0, QTableWidgetItem(tool.magic_label(self.magic_ids[point])))
             self.table.setItem(point, 1, QTableWidgetItem(f"{area} - {place}"))
             combo = QComboBox()
             combo.setModel(self.state_model)
@@ -612,12 +645,22 @@ class DrawPointsPage(SavePage):
         bottom.addWidget(self.all_combo)
         bottom.addWidget(self.all_button)
         layout = QVBoxLayout(self)
-        note = QLabel("Magic and places are the vanilla game's; a mod can change them (see the Cid tool).")
-        note.setStyleSheet("color: gray;")
-        layout.addWidget(note)
+        self.note = QLabel(self.VANILLA_NOTE)
+        self.note.setStyleSheet("color: gray;")
+        layout.addWidget(self.note)
         layout.addWidget(self.table)
         layout.addLayout(bottom)
         self._refills.append(self._fill)
+
+    def set_magic_ids(self, magic_ids, source=""):
+        """The magic of each draw point, from a mod's file; None for the vanilla ones."""
+        self.magic_ids = list(magic_ids) if magic_ids else list(self.vanilla_magic)
+        self.note.setText(f"Magic from {source}. Places are the vanilla game's." if magic_ids else self.VANILLA_NOTE)
+        self.relabel_magic()
+
+    def relabel_magic(self):
+        for point, magic in enumerate(self.magic_ids):
+            self.table.item(point, 0).setText(self.tool.magic_label(magic))
 
     def _fill(self):
         for point, combo in enumerate(self.state_combos):

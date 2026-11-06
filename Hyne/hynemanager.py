@@ -607,6 +607,8 @@ class HyneManager:
         self.chocobo = None
         self._copy_sources = {}
         self._header_sources = {}
+        # What the open scene.out says about FFNx moving the enemies scanned once; None without one.
+        self.scene_uses_extra_monsters = None
         # "extended": the FFNx AddMoreItems block is in use (255 slots); "stale": a block is
         # there but FFNx would ignore it (damaged, or the item table changed since); "none".
         self.item_extension = "none"
@@ -631,6 +633,7 @@ class HyneManager:
                           "refusing to load a file this tool cannot verify it understands "
                           "correctly (no changes made).")
         self._parse()
+        self.detect_scan_moved()
         self._remember_sources()
 
     def _verify_crc(self, error_message):
@@ -658,7 +661,9 @@ class HyneManager:
         self.header = SaveHeader(self.buffer, self.game_data)
         self.progress = ProgressState(self.buffer)
         self.party = PartyState(self.buffer)
+        scan_moved = self.battle.scan_moved if self.battle else False
         self.battle = BattleState(self.buffer)
+        self.battle.scan_moved = scan_moved
         self.shops = ShopsState(self.buffer)
         self.draw_points = DrawPointsState(self.buffer)
         self.world_map = WorldMapState(self.buffer)
@@ -769,6 +774,13 @@ class HyneManager:
         data = bytes(self.buffer[ABILITY_EXT_NATIVE:ABILITY_EXT_OFFSET + ABILITY_EXT_SIZE])
         struct.pack_into("<IHHI", self.buffer, ABILITY_EXT_OFFSET, ABILITY_EXT_MAGIC, ABILITY_EXT_VERSION,
                          NB_GF, item_extension_checksum(data))
+
+    def detect_scan_moved(self):
+        """Where this save has its enemies scanned once: scene.out tells, as it tells FFNx; without
+        it, FFNx's block holding anything is the sign."""
+        if self.battle:
+            self.battle.scan_moved = (self.battle.moved_scan_block_used() if self.scene_uses_extra_monsters is None
+                                      else self.scene_uses_extra_monsters)
 
     # ── Values the save holds twice ──────────────────────────────────────
 

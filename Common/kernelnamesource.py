@@ -39,6 +39,7 @@ class KernelNameSource(QObject):
         self.ability_groups = []  # entry count of the 7 ability sections (junction, command, stat %,
                                   # character, party, GF, menu): the ids are these, one after the other
         self.items = {}      # name by item id, ids 0-255 as far as the kernel.bin defines them
+        self.magic = {}      # name by magic id, for the tools naming magic from a built-in list
 
     @property
     def loaded(self):
@@ -63,6 +64,10 @@ class KernelNameSource(QObject):
             if item["id"] == item_id and item_id < 199:   # 255 "Immune" is no item
                 return item["name"]
         return f"Item {item_id}"
+
+    def magic_name(self, magic_id):
+        """The kernel.bin name of a magic, or "" without one: a built-in list has the rest."""
+        return self.magic.get(magic_id, "")
 
     def weapon_name(self, weapon_id):
         """The kernel.bin name of a weapon, or "" when there is none (no kernel.bin, unknown id)."""
@@ -102,11 +107,13 @@ class KernelNameSource(QObject):
             names = read_weapon_and_ability_names(self.game_data, path)
         except Exception as error:  # noqa: BLE001 - a bad kernel.bin just gives no names
             print(f"[kernel names] could not read {path}: {error}")
-            names = {"weapon": [], "ability": [], "ability_groups": [], "item": {}}
+            names = {"weapon": [], "ability": [], "ability_groups": [], "item": {}, "magic": {}}
         self.weapons, self.abilities, self.items = names["weapon"], names["ability"], names["item"]
+        self.magic = names["magic"]
         self.ability_groups = names["ability_groups"]
         self.changed.emit()
 
     def _clear(self, _path=None):
         self.weapons, self.abilities, self.ability_groups, self.items = [], [], [], {}
+        self.magic = {}
         self.changed.emit()

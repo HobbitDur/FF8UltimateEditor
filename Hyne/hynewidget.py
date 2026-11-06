@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 
@@ -19,8 +20,11 @@ RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed 
                     "editing it would have no effect.")
 
 from CCGroup import cardlocation
-from CCGroup.jsmcardgame import GAME_RULE_BITS, TRADE_RULE_NAMES
+from CCGroup.ccgroup import CCGroupWidget
+from CCGroup.jsmcardgame import CardGameFolderManager, GAME_RULE_BITS, TRADE_RULE_NAMES
+from Common.fieldfolder import pick_field_folder
 from Common.filebinding import FileBinding
+from Common.fileregistry import busy_cursor
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
@@ -32,6 +36,7 @@ from Quezacotl.quezacotlmanager import (
     VANILLA_ABILITY_COUNT,
     GF_COMPATIBILITY_MIN, GF_COMPATIBILITY_MAX,
 )
+from Hyne.hynesavemap import read_shop_file, scene_uses_extra_monsters
 from Hyne.hynesavepages import (
     BattlePage, ChocoboPage, DrawPointsPage, ItemsExtrasPage, LoadScreenPage, PartyPage, ProgressPage, ShopsPage,
     WorldMapPage,
@@ -126,6 +131,7 @@ class HyneWidget(QWidget):
         # Named option lists shared with the rest of the suite.
         self.lookups = LookupRegistry(self.game_data, game_data_folder)
         self._magic_entries = self.lookups.resolve("magic")["entries"]
+        self._magic_names = {entry["value"]: entry["name"] for entry in self._magic_entries}
         self._item_entries = self.lookups.resolve("item")["entries"]
         self._gforce_entries = self.lookups.resolve("gforce")["entries"]
         self._status_entries = self.lookups.resolve("status_1")["entries"]
@@ -189,6 +195,14 @@ class HyneWidget(QWidget):
         self.gf_slots = None
         self.kernel_names.binding.file_opened.connect(self._load_kernel_data)
         self.kernel_names.binding.file_closed.connect(self._clear_kernel_data)
+        # What a mod changes in the lists of the savemap tabs, each optional and vanilla without it
+        self.draw_binding = FileBinding("draw_data.csv", file_registry, load_callback=self._load_draw_data,
+                                        file_filter="*.csv", read_only=True)
+        self.draw_binding.file_closed.connect(lambda _path: self.draw_points_page.set_magic_ids(None))
+        self.shop_binding = FileBinding("shop.bin", file_registry, load_callback=self._load_shop_file, read_only=True)
+        self.shop_binding.file_closed.connect(lambda _path: self.shops_page.set_file_shops(None))
+        self.scene_binding = FileBinding("scene.out", file_registry, load_callback=self._load_scene_file, read_only=True)
+        self.scene_binding.file_closed.connect(self._clear_scene_file)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
@@ -239,11 +253,127 @@ class HyneWidget(QWidget):
         self._on_kernel_names_changed()  # no kernel.bin yet: ids only, greyed out
         self.ff8_binding.load_opened_file()  # pick up a .ff8 another instance already opened
         self.kernel_names.binding.load_opened_file()  # ...or a kernel.bin
+        for binding in (self.draw_binding, self.shop_binding, self.scene_binding):
+            binding.load_opened_file()
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool: the .ff8 save, and kernel.bin
-        as a complementary file naming the abilities and weapons."""
-        return [self.ff8_binding, self.kernel_names.binding]
+        """The files the shared header toolbar drives for this tool: the .ff8 save; kernel.bin as a
+        complementary file naming the abilities, weapons and magic; and what a mod changes in the
+        lists of the savemap tabs."""
+        return [self.ff8_binding, self.kernel_names.binding, self.draw_binding, self.shop_binding, self.scene_binding]
+
+    # ── A mod's files ────────────────────────────────────────────────────
+
+    def magic_label(self, magic_id, unknown=""):
+        """A magic's name: the open kernel.bin's, else the built-in list's."""
+        return (self.kernel_names.magic_name(magic_id) or self._magic_names.get(magic_id)
+                or unknown or f"Magic {magic_id}")
+
+    def _relabel_magic(self):
+        for combo in [*self.char_magic_combos, *self.char_junction_combos.values()]:
+            with QSignalBlocker(combo):
+                for index in range(combo.count()):
+                    magic_id = combo.itemData(index)
+                    if magic_id in self._magic_names:
+                        combo.setItemText(index, f"{magic_id}: {self.magic_label(magic_id)}")
+        self.battle_page.relabel_magic()
+        self.draw_points_page.relabel_magic()
+
+    def _load_draw_data(self, path):
+        """Cid's draw_data.csv: Draw ID 1-256 with its Magic ID."""
+        try:
+            with open(path, encoding="utf-8-sig", newline="") as csv_file:
+                rows = list(csv.DictReader(csv_file, delimiter="|"))
+            magic_ids = list(self.hyne_data["draw_point_magic"])
+            for row in rows:
+                magic_ids[int(row["Draw ID"]) - 1] = int(row["Magic ID"])
+        except (OSError, KeyError, ValueError, IndexError, TypeError) as error:
+            QMessageBox.warning(self, "Hyne", f"Not a draw_data.csv made by the Cid tool:\n{path}\n{error}")
+            return
+        self.draw_points_page.set_magic_ids(magic_ids, os.path.basename(path))
+
+    def _load_shop_file(self, path):
+        try:
+            with open(path, "rb") as shop_file:
+                shops = read_shop_file(shop_file.read())
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Hyne", f"Not a usable shop.bin:\n{path}\n{error}")
+            return
+        self.shops_page.set_file_shops(shops)
+
+    def _load_scene_file(self, path):
+        try:
+            with open(path, "rb") as scene_file:
+                self.manager.scene_uses_extra_monsters = scene_uses_extra_monsters(scene_file.read())
+        except OSError as error:
+            QMessageBox.warning(self, "Hyne", f"Could not read scene.out:\n{path}\n{error}")
+            return
+        self._refresh_scan_place()
+
+    def _clear_scene_file(self, _path=None):
+        self.manager.scene_uses_extra_monsters = None
+        self._refresh_scan_place()
+
+    def _refresh_scan_place(self):
+        if self.manager.battle:
+            self.manager.detect_scan_moved()
+            self.battle_page.reload()
+
+    def _location_label(self, location):
+        """A rare card location: what the game makes of it, then who has that Deck ID - the card players
+        of the field folders when they are open, else the place myst6re's Hyne lists for vanilla."""
+        label = cardlocation.location_label(location, [card["name"] for card in self._card_info])
+        users = self.deck_users.get(location)
+        if users:
+            more = f" +{len(users) - 1}" if len(users) > 1 else ""
+            return f"{location}: {label} - {users[0]}{more}"
+        if self.deck_users and location != cardlocation.LOCATION_PLAYER:
+            return f"{location}: {label}"
+        place = self.field_names.get(self.hyne_data["card_locations"][location], "???")
+        return f"{location}: {label}" + ("" if place == "???" else f" - {place}")
+
+    def _relabel_locations(self):
+        for row in range(self.tt_location_model.rowCount()):
+            item = self.tt_location_model.item(row)
+            item.setText(self._location_label(item.data(Qt.ItemDataRole.UserRole)))
+
+    def set_deck_users(self, users):
+        """{Deck ID: ["<map> <entity>", ...]} from field folders; {} for the vanilla places."""
+        self.deck_users = users
+        self._relabel_locations()
+        self.tt_deck_folder_label.setText(f"{len(users)} Deck IDs named from field folders" if users
+                                          else "Places are the vanilla game's")
+        self.tt_deck_clear_button.setVisible(bool(users))
+
+    def _pick_deck_folders(self):
+        """The whole game's field folder, then optionally a mod's on top (Cronos's FieldRework\\field), to
+        name who holds each Deck ID. Remembered with the CC Group tool's, which opens the same two."""
+        registry = self.file_registry
+        check = pick_field_folder(self, "Hyne", "The whole game's 'field' folder holding mapdata",
+                                  registry.last_folder(CCGroupWidget.REFERENCE_FOLDER_KEY), complete=True,
+                                  remember=lambda folder: registry.remember_folder(CCGroupWidget.REFERENCE_FOLDER_KEY, folder))
+        if check is None:
+            return
+        modified = ""
+        answer = QMessageBox.question(self, "Hyne", "Does a mod change the field scripts? Pick its 'field' folder next.")
+        if answer == QMessageBox.StandardButton.Yes:
+            mod_check = pick_field_folder(self, "Hyne", "The mod's 'field' folder",
+                                          registry.last_folder(CCGroupWidget.EDITED_FOLDER_KEY),
+                                          remember=lambda folder: registry.remember_folder(CCGroupWidget.EDITED_FOLDER_KEY, folder))
+            if mod_check is None:
+                return
+            modified = mod_check.root
+        with busy_cursor():
+            self.set_deck_users(self.read_deck_users(check.root, modified))
+
+    @staticmethod
+    def read_deck_users(vanilla_folder, modified_folder=""):
+        """{Deck ID: card players with it} of field folders, a mod's maps read over the game's."""
+        folders = CardGameFolderManager()
+        folders.load_folder(vanilla_folder, modified_folder)
+        deck_ids = range(256)
+        users = {deck_id: folders.deck_id_users(deck_id) for deck_id in deck_ids}
+        return {deck_id: names for deck_id, names in users.items() if names}
 
     # ── Names from kernel.bin ────────────────────────────────────────────
 
@@ -296,6 +426,7 @@ class HyneWidget(QWidget):
         self._update_ap_slots()
         if self._selected_gf():
             self._fill_learning_combo(self._selected_gf())
+        self._relabel_magic()
 
     # ── GF ability lists from kernel.bin ─────────────────────────────────
 
@@ -1451,12 +1582,11 @@ class HyneWidget(QWidget):
         common_group.setLayout(common_layout)
 
         # Rare cards: obtained + location. The 256 locations, the player's first, in one shared model.
-        card_names = [card["name"] for card in self._card_info]
+        self.deck_users = {}   # {Deck ID: card players} from field folders
         location_model = QStandardItemModel(self)
+        self.tt_location_model = location_model
         for location in [cardlocation.LOCATION_PLAYER, *(i for i in range(256) if i != cardlocation.LOCATION_PLAYER)]:
-            place = self.field_names.get(self.hyne_data["card_locations"][location], "???")
-            place = "" if place == "???" else f" - {place}"
-            item = QStandardItem(f"{location}: {cardlocation.location_label(location, card_names)}{place}")
+            item = QStandardItem(self._location_label(location))
             item.setData(location, Qt.ItemDataRole.UserRole)
             location_model.appendRow(item)
         location_tip = ("Who holds this rare card. The player's own cards = you own it. Anything else is a Deck ID:\n"
@@ -1493,10 +1623,25 @@ class HyneWidget(QWidget):
         rare_row.addWidget(self.tt_all_rare_check)
         rare_row.addStretch(1)
         rare_row.addWidget(self.tt_all_rare_button)
+        self.tt_deck_folder_label = QLabel("Places are the vanilla game's")
+        self.tt_deck_folder_label.setStyleSheet("color: gray;")
+        self.tt_deck_folder_button = QPushButton("Name from field folders...")
+        self.tt_deck_folder_button.setToolTip("Read the field scripts of the game and of a mod (e.g. Cronos's FieldRework\\field)\n"
+                                              "to name the card players holding each Deck ID. A mod can move them.")
+        self.tt_deck_folder_button.clicked.connect(self._pick_deck_folders)
+        self.tt_deck_clear_button = QPushButton("Vanilla places")
+        self.tt_deck_clear_button.setVisible(False)
+        self.tt_deck_clear_button.clicked.connect(lambda: self.set_deck_users({}))
+        deck_row = QHBoxLayout()
+        deck_row.addWidget(self.tt_deck_folder_label)
+        deck_row.addStretch(1)
+        deck_row.addWidget(self.tt_deck_clear_button)
+        deck_row.addWidget(self.tt_deck_folder_button)
         self._fit_card_table_width(self.tt_rare_table)
         rare_layout = QVBoxLayout()
         rare_layout.addWidget(self.tt_rare_table)
         rare_layout.addLayout(rare_row)
+        rare_layout.addLayout(deck_row)
         rare_group = QGroupBox("Rare cards (levels 8-10)")
         rare_group.setLayout(rare_layout)
 
