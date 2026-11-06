@@ -64,6 +64,11 @@ class EncounterSlot:
         """The c0mNNN.dat number this slot loads."""
         return self.enemy_id - ENEMY_ID_BASE
 
+    @property
+    def present(self):
+        """Whether the monster stands there when the battle starts (else a script may bring it in later)."""
+        return self.enabled and self.visible and self.loaded
+
 
 class Encounter:
     """One 128-byte scene.out record."""
@@ -93,6 +98,10 @@ class Encounter:
 
     def enabled_slots(self):
         return [slot for slot in self.slots if slot.enabled]
+
+    def monster_slots(self):
+        """The slots holding a monster, there at the start or not (an empty slot: not enabled, c0m000)."""
+        return [slot for slot in self.slots if slot.enabled or slot.com_file_id > 0]
 
 
 class SlotData:

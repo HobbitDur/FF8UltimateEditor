@@ -219,6 +219,8 @@ class BattlePreviewSetup(QWidget):
     def encounter_roles(self):
         """(loaded model's slot, opponent's slot) in the selected encounter, or None."""
         selected = self.encounters.selected_slot
+        if selected is None and self.encounters.selected is not None and not self.encounters.is_monster:
+            return self.party_slot.value(), self.party_slot.value()    # no monster shown: the player alone
         if self.encounters.selected is None or selected is None:
             return None
         enemy, player = 3 + selected.slot_index, self.party_slot.value()
@@ -296,7 +298,7 @@ class BattlePreviewSetup(QWidget):
         self._pose_cache = {}
         self.main_position, self.main_yaw = (0., 0., 0.), 0.
         self._sync_kind()
-        if self.encounters.selected is not None and self.encounters.selected_slot is not None:
+        if self.encounters.selected is not None and (self.encounters.selected_slot is not None or not self.encounters.is_monster):
             return self._build_encounter(animation, animate)
         self.status.setText('Opponent: ' + (f'{self.opponent.enemy.origin_file_name}.'
                             if self.opponent else 'model not loaded.') + ' Manual placement.')
@@ -386,23 +388,21 @@ class BattlePreviewSetup(QWidget):
         main = actor_from_model(self.manager, self.main_position, self.main_yaw, animation, animate)
         self._main = main
         slots, notes = {}, []
-        for slot in encounter.enabled_slots():
+        for slot in self.encounters.present_slots():
             if monster and slot.slot_index == selected.slot_index:
                 actor, manager = main, None
             else:
                 name = f'c0m{slot.com_file_id:03}.dat'
                 try:
-                    manager = (self.manager if monster and slot.com_file_id == self.manager.enemy.id else
-                               self._asset(name)) if slot.loaded else None
+                    manager = self.manager if monster and slot.com_file_id == self.manager.enemy.id else self._asset(name)
                     if manager is None:
-                        notes.append(f'{name}: not imported (a marker)' if slot.loaded else
-                                     f'{name}: not initially loaded')
+                        notes.append(f'{name}: not imported (a marker)')
                 except Exception as error:
                     manager = None
                     notes.append(f'{name}: {error}')
                 actor = (actor_from_model(manager, slot.position, math.pi, animate=animate) if manager else
                          CameraActor(slot.position, math.pi))
-                if manager is not None and slot.loaded and slot.visible:
+                if manager is not None:
                     self._scene_mesh_actors.append((manager, actor))
             slots[3 + slot.slot_index] = actor
         party = dict(self.party_models)

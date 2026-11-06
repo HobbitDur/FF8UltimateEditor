@@ -69,10 +69,11 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   (`Battle_QueueAnimation` 0x509520, `AdvanceAnimationBy1AndCheckCompletion` 0x5094F0,
   `BattleModel_RebuildBodyAndWeaponMatrices` 0x508F60, `BattleEntity_ComputeViewBounds` 0x5086F0,
   `BS_RenderBattleEntity` 0x502D40) unless the effect hides them (a hidden one still moves on,
-  as the entity task does: Cure redraws its target in its current pose), and orders everything by depth
-  from the GPU emulation's execution list; a draw-mode packet (E1, no depth) goes right before the
-  primitives inserted ahead of it, which the console's ordering table runs after it (Cure's rays
-  take their additive mode from one). The
+  as the entity task does: Cure redraws its target in its current pose), and lists everything in the order
+  the game draws it: the ordering table from its highest bucket down, last inserted first, so a draw-mode
+  packet (E1) runs before the primitives inserted ahead of it. An untextured semi-transparent polygon blends
+  with the last draw mode set, by an E1 or a textured polygon's page (`SSIGPU_SetTPage` 0x45B960): Cure's rays,
+  the ring of a cast's glow (`sub_575250`, no draw mode of its own). The
   camera is the shot the Camera tab's preview plays for the effect (its track: exe, created or
   `.bcam`), so both previews show the same view. Fujin draws the recording with OpenGL at the
   battle's 15 frames per second (`FF8GameData/psxgpu/glrender.py`: VRAM as a 16-bit integer
@@ -305,6 +306,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   as FFNx plays `effect_NNN.bcam`. Fujin's own player (`FF8GameData/dat/battlecamera.py`) still drives the Camera tab, where no sequence moves the actors.
   With a battle stage, the cast and the effect start from the end of the stage's intro shot (`stagecam=N`: the encounter's main camera byte, 0 without one): the game's
   camera code plays the shot, jumped to its last frame as AutoTest's `finish_camera_shots` does. Without a stage they start from the setup's view.
+  **Monsters shown** (every battle preview, `Common/encountermonsters.py`): a check box per monster of the encounter. By default the ones scene.out has there when the
+  battle starts; tick one a script brings in later to see it, untick one to take it out. The recorder can draw enemy slots 0-3 only.
   **Animation sets**: Import, FFNx animation sets: `effect_NNN.animset` files (Ifrit's "Exe - Limit anim." tab or "Export anim sets…"
   write them). The recorder (`animset=address:file`) binds the file in place of the exe's set, as FFNx does in the game, so the Overview
   and the part tabs play it. A new effect plays its own copy instead (Data tab).

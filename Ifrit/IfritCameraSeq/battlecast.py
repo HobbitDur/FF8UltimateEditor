@@ -322,7 +322,7 @@ class BattleCastPanel(QWidget):
             picker = self.encounters
             options += [(f"Enemy {FIRST_ENEMY_SLOT + slot.slot_index}: {picker.monster_name(slot.com_file_id)} "
                          f"(c0m{slot.com_file_id:03})", ("enemy", slot.slot_index))
-                        for slot in encounter.enabled_slots()]
+                        for slot in picker.present_slots()]
         else:
             options += [(f"Monster: {file_name(path)}", ("monster", path)) for path in self.monster_paths()]
         if self.mode != "cast":
@@ -399,7 +399,7 @@ class BattleCastPanel(QWidget):
         if key[0] == "monster":
             return key[1]
         encounter = self._encounter()
-        slot = next((slot for slot in encounter.enabled_slots() if slot.slot_index == key[1]), None) \
+        slot = next((slot for slot in self.encounters.present_slots() if slot.slot_index == key[1]), None) \
             if encounter is not None else None
         if slot is None:
             return None

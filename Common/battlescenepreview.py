@@ -39,6 +39,8 @@ from FF8GameData.battlestage.battlestageanalyser import VERTEX_SCALE
 from FF8GameData.battlestage.stagecamera import read_stage_camera, INTRO_CAMERA_NOTE
 from FF8GameData.dat.battlecamera import BattleCameraContext, CameraActor, CameraPose, play_camera_animation
 from FF8GameData.dat.camerascript import camera_animation_at
+from Common.encountermonsters import EncounterMonsterChecks
+from FF8GameData.sceneout import Encounter
 from FF8GameData.sceneout import NB_SLOT, ENEMY_ID_BASE
 
 UNIT = VERTEX_SCALE            # viewer units per battle unit (the stage's own vertex scale)
@@ -169,6 +171,7 @@ class BattleScenePreview(QWidget):
         self.track = None           # an edited camera track replacing the stage file's camera section
         self._picked = None         # (set, slot) of the track animation preview_animation films
         self._vm = None             # the camera script VM, read on first use
+        self._monster_names = None  # com id -> name, read on first use
 
         from Ifrit.Ifrit3D.ff8openwidget import FF8OpenGLWidget
         self.gl = FF8OpenGLWidget()
@@ -228,6 +231,9 @@ class BattleScenePreview(QWidget):
         layout.addWidget(self.gl, 1)
         layout.addLayout(controls)
         layout.addLayout(party_row)
+        self.monsters = EncounterMonsterChecks()
+        self.monsters.changed.connect(lambda: self._rebuild_timer.start())
+        layout.addWidget(self.monsters)
         layout.addWidget(self.status)
 
         self._timer = QTimer(self)
@@ -387,6 +393,7 @@ class BattleScenePreview(QWidget):
         if self._record is None:
             self.gl.set_preview_actor(None)
             self.gl.set_preview_slot_markers()
+            self._show_monsters(None)
             self.status.setText("No encounter.")
             return
         record, notes = self._record, []
@@ -410,14 +417,15 @@ class BattleScenePreview(QWidget):
             batches.extend(_shifted(model.batches, offset))
             self._actors.append((model, actor, slice(offset, offset + model.vertex_count), body))
 
+        self._show_monsters(record)
         for slot_index in range(NB_SLOT):
-            if not record.slot_flag("enabled", slot_index):
+            if not self.monsters.present(slot_index):
                 continue
             position = record.position(slot_index)
             enemy_byte = record.enemy_byte(slot_index)
             name = model_file_name(enemy_byte - ENEMY_ID_BASE) if enemy_byte >= ENEMY_ID_BASE else None
             model = None
-            if name and not record.slot_flag("not_loaded", slot_index):
+            if name:
                 model = self._read(self._models, name, lambda path: _Model(path, self._game_data_loaded()))
                 if isinstance(model, str):
                     notes.append(model)
@@ -429,9 +437,9 @@ class BattleScenePreview(QWidget):
             else:
                 actor = CameraActor(position, ENEMY_YAW)
             self._slots[3 + slot_index] = actor
-            if model is not None and not record.slot_flag("not_visible", slot_index):
+            if model is not None:
                 draw(model, actor)
-            elif model is None:
+            else:
                 markers.append(position)
         missing = [note for note in notes if note.endswith(".dat")]
         notes = [note for note in notes if not note.endswith(".dat")]
@@ -482,6 +490,18 @@ class BattleScenePreview(QWidget):
             if key != self._framed:
                 self._frame_free_camera()
                 self._framed = key
+
+    def _show_monsters(self, record):
+        """The check boxes of the encounter shown (the same ones as the other battle previews)."""
+        if record is not None and self._monster_names is None:
+            from FF8GameData.gamedata import GameData
+            game_data = GameData(self._game_data_folder)
+            game_data.load_monster_data()
+            self._monster_names = {monster["com_id"]: monster["name"] for monster in game_data.monster_data_json["monster"]}
+        self.monsters.blockSignals(True)
+        self.monsters.show_encounter(Encounter(self._encounter_index or 0, record.to_bytes()) if record is not None else None,
+                                     lambda com_id: self._monster_names.get(com_id, f"c0m{com_id:03}"))
+        self.monsters.blockSignals(False)
 
     def _pose_actors(self, tick):
         if self._mesh is None:

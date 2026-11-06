@@ -324,7 +324,7 @@ class CameraEffectPreview(QWidget):
         slots = {slot: (body, weapon) for slot, (body, weapon) in self.party_members().items()}
         encounter = self._encounter()
         if encounter is not None:
-            for enemy in encounter.enabled_slots():
+            for enemy in self.cast.encounters.present_slots():
                 key = ("enemy", enemy.slot_index)
                 slots[self._slot_of(key)] = (self._actor_path(key) or f"c0m{enemy.com_file_id:03}.dat", None)
         for key, other in ((caster_key, target_key), (target_key, caster_key)):

@@ -5,6 +5,7 @@ from pathlib import Path
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QLabel, QSizePolicy
 
+from Common.encountermonsters import EncounterMonsterChecks
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.sceneout import read_encounters, ENCOUNTER_SIZE, NB_ENCOUNTER
@@ -45,13 +46,16 @@ class EncounterPicker(QWidget):
         row.addWidget(self.enemy_slot)
         row.addStretch(1)
         layout.addLayout(row)
+        self.monsters = EncounterMonsterChecks()
+        layout.addWidget(self.monsters)
         self.status = QLabel(self.NO_SCENE_TEXT)
         self.status.setWordWrap(True)
         # A wrapped line keeps all its lines: the 3D view above gives up the height instead
         self.status.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
         layout.addWidget(self.status)
         self.encounter.currentIndexChanged.connect(self._picked)
-        self.enemy_slot.currentIndexChanged.connect(lambda _i: self.changed.emit())
+        self.enemy_slot.currentIndexChanged.connect(self._slot_picked)
+        self.monsters.changed.connect(self._picked)
         self.binding = FileBinding('scene.out', self.registry, load_callback=self.load,
                                    read_only=True)
         self.binding.file_closed.connect(self._closed)
@@ -72,6 +76,10 @@ class EncounterPicker(QWidget):
     @property
     def selected_slot(self):
         return self.enemy_slot.currentData()
+
+    def present_slots(self):
+        """The slots the preview shows: the check boxes', the model filmed always among them."""
+        return self.monsters.present_slots() if self.selected is not None else []
 
     def load(self, path):
         try:
@@ -120,12 +128,12 @@ class EncounterPicker(QWidget):
         self.encounter.clear()
         self.encounter.addItem('Manual placement', None)
         for encounter in self.encounters:
-            slots = encounter.enabled_slots()
+            slots = encounter.monster_slots()
             if not slots:
                 continue
             if self.is_monster and not any(s.com_file_id == key[2] for s in slots):
                 continue
-            names = ', '.join(self.monster_name(s.com_file_id) for s in slots)
+            names = ', '.join(self.monster_name(s.com_file_id) for s in [s for s in slots if s.present] or slots)
             self.encounter.addItem(f'Encounter {encounter.index} · stage {encounter.stage_id} · {names}', encounter)
             if previous is not None and encounter.index == previous.index:
                 # Another model loaded: stay in the same encounter while it still matches
@@ -133,20 +141,31 @@ class EncounterPicker(QWidget):
         self.encounter.blockSignals(False)
         self._picked()
 
+    def _require_filmed(self):
+        slot = self.selected_slot
+        self.monsters.require(slot.slot_index if self.is_monster and slot is not None else None)
+
+    def _slot_picked(self, _index=0):
+        self._require_filmed()
+        self.changed.emit()
+
     def _picked(self, _index=0):
         encounter = self.selected
         previous = self.selected_slot
         self.enemy_slot.blockSignals(True)
         self.enemy_slot.clear()
+        self.monsters.show_encounter(encounter, self.monster_name)
         if encounter is not None:
-            for slot in encounter.enabled_slots():
-                if self.is_monster and slot.com_file_id != self.manager.enemy.id:
-                    continue
+            # a monster's own slots, the ones there at the start first; else the slots shown
+            slots = (sorted((slot for slot in encounter.monster_slots() if slot.com_file_id == self.manager.enemy.id),
+                            key=lambda slot: not slot.present) if self.is_monster else self.present_slots())
+            for slot in slots:
                 self.enemy_slot.addItem(
                     f'Slot {slot.slot_index} · {self.monster_name(slot.com_file_id)} · {slot.position}', slot)
                 if previous is not None and slot.slot_index == previous.slot_index:
                     self.enemy_slot.setCurrentIndex(self.enemy_slot.count() - 1)
         self.enemy_slot.blockSignals(False)
+        self._require_filmed()
         self.slot_label.setText('Loaded monster:' if self.is_monster else 'Enemy opponent:')
         shown = encounter is not None and not self.host_cast and (self.is_monster or not self.monster_slot_only)
         self.slot_label.setVisible(shown)
