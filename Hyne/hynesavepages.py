@@ -377,8 +377,8 @@ class PartyPage(SavePage):
             self.combo("party", f"party_{slot}", member_entries, f"Field party member {slot}. Laguna's squad can walk here too.")
             for slot in (1, 2, 3)]
         for combo in self.party_combos:
-            combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             party_row.addWidget(combo)
+        party_row.addStretch(1)
         self.dream_check = self.byte_flag_check("battle", "special_flags", 0x01, "Dream world (Laguna's squad)",
                                                 "The party isolated in a dream: battle and save screen use Laguna's squad and gil")
         party_layout = QVBoxLayout()
@@ -437,6 +437,7 @@ class PartyPage(SavePage):
         column.addStretch(1)
         layout = QHBoxLayout(self)
         layout.addLayout(column)
+        layout.addStretch(1)
 
     def _fill_positions(self):
         for member, row in enumerate(self.position_spins):
@@ -592,6 +593,7 @@ class ShopsPage(SavePage):
         layout = QHBoxLayout(self)
         layout.addWidget(self.shop_list)
         layout.addLayout(right)
+        layout.addStretch(1)
         self._refills.append(self._fill_shop)
 
     def _items(self, shop):
@@ -648,7 +650,10 @@ class DrawPointsPage(SavePage):
         self.table.setHorizontalHeaderLabels(["Magic", "Location", "State"])
         self.table.verticalHeader().setDefaultSectionSize(24)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setStretchLastSection(False)
+        self.table.setSizeAdjustPolicy(QAbstractItemView.SizeAdjustPolicy.AdjustToContents)
+        self.table.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
         self.state_combos = []
         for point in range(NB_DRAW_POINTS):
             location = data["draw_point_locations"][point]
@@ -667,14 +672,17 @@ class DrawPointsPage(SavePage):
         self.all_button.setToolTip("Give every draw point this state")
         self.all_button.clicked.connect(self._set_all)
         bottom = QHBoxLayout()
-        bottom.addStretch(1)
         bottom.addWidget(self.all_combo)
         bottom.addWidget(self.all_button)
+        bottom.addStretch(1)
         layout = QVBoxLayout(self)
         self.note = QLabel(self.VANILLA_NOTE)
         self.note.setStyleSheet("color: gray;")
         layout.addWidget(self.note)
-        layout.addWidget(self.table)
+        table_row = QHBoxLayout()
+        table_row.addWidget(self.table)
+        table_row.addStretch(1)
+        layout.addLayout(table_row, 1)
         layout.addLayout(bottom)
         self._refills.append(self._fill)
 
@@ -764,6 +772,7 @@ class WorldMapPage(SavePage):
         layout = QHBoxLayout(self)
         layout.addLayout(left)
         layout.addLayout(right)
+        layout.addStretch(1)
 
     def _on_place(self, row):
         self.section("world_map").set_place(row, *(self.position_spins[row, column].value()
@@ -810,6 +819,7 @@ class ChocoboPage(SavePage):
         layout = QHBoxLayout(self)
         layout.addLayout(left)
         layout.addLayout(right)
+        layout.addStretch(1)
 
 
 class LoadScreenPage(SavePage):
@@ -861,6 +871,7 @@ class LoadScreenPage(SavePage):
         column.addStretch(1)
         layout = QHBoxLayout(self)
         layout.addLayout(column)
+        layout.addStretch(1)
 
 
 class FieldVariablesPage(SavePage):

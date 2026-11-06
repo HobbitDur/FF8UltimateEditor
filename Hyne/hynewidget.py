@@ -267,7 +267,7 @@ class HyneWidget(QWidget):
         self.tabs.setTabToolTip(13, "What the load screen shows for this save")
         self.tabs.setTabToolTip(14, "The field variables the game and Cronos really use, named and editable")
         self.tabs.setEnabled(False)
-        self._stretch_fields()
+        self._fit_fields()
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.kernel_notice)
@@ -623,30 +623,24 @@ class HyneWidget(QWidget):
 
     @staticmethod
     def _configure_list_table(table):
-        """An (item/magic, quantity) table shares its width between the columns."""
-        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        """Size an (item/magic, quantity) table to its content so the quantity column sits
+        right next to the name column instead of the name stretching across the pane."""
+        header = table.horizontalHeader()
+        header.setStretchLastSection(False)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
 
-    def _stretch_fields(self):
-        """Every form and grid of the tabs fills its width, so no gap opens between its values."""
-        fields = (QAbstractSpinBox, QComboBox, QLineEdit)
-
-        def grow(widget):
-            widget.setMaximumWidth(NO_MAXIMUM_WIDTH)
-            widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-
+    def _fit_fields(self):
+        """Every number box of the tabs is just wide enough for its highest value, and forms and grids keep
+        their values together, the free space staying on the right."""
+        for spin in self.tabs.findChildren(QAbstractSpinBox):
+            spin.setMaximumWidth(NO_MAXIMUM_WIDTH)
+            spin.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         for form in self.tabs.findChildren(QFormLayout):
-            form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-            for row in range(form.rowCount()):
-                item = form.itemAt(row, QFormLayout.ItemRole.FieldRole)
-                if item is not None and isinstance(item.widget(), fields):
-                    grow(item.widget())
+            form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         for grid in self.tabs.findChildren(QGridLayout):
-            for index in range(grid.count()):
-                widget = grid.itemAt(index).widget()
-                if isinstance(widget, (*fields, QCheckBox)):
-                    grid.setColumnStretch(grid.getItemPosition(index)[1], 1)
-                    if isinstance(widget, fields):
-                        grow(widget)
+            if not any(grid.columnStretch(column) for column in range(grid.columnCount())):
+                grid.setColumnStretch(grid.columnCount(), 1)
 
     def mark_unused(self, field):
         """A widget, or a check list's item, for something the game never reads."""
@@ -710,14 +704,15 @@ class HyneWidget(QWidget):
 
     @staticmethod
     def _two_columns(left_groups, right_groups):
-        """Groups stacked in two columns sharing the tab's width."""
+        """Groups stacked in two columns side by side, the free space on the right."""
         columns = QHBoxLayout()
         for groups in (left_groups, right_groups):
             column = QVBoxLayout()
             for group in groups:
                 column.addWidget(group)
             column.addStretch(1)
-            columns.addLayout(column, 1)
+            columns.addLayout(column)
+        columns.addStretch(1)
         container = QWidget()
         container.setLayout(columns)
         return container
@@ -1037,6 +1032,7 @@ class HyneWidget(QWidget):
         status_layout = QHBoxLayout()
         status_layout.addLayout(status_form)
         status_layout.addLayout(stats_form)
+        status_layout.addStretch(1)
         status_group.setLayout(status_layout)
 
         # Persistent status flags: only bits 0-6 of the 16-bit status_1 field are real,
