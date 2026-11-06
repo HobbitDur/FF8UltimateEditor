@@ -29,6 +29,7 @@ from FF8GameData.psxgpu.texuse import texture_sheets
 from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults as schema_defaults, effect_schema,
                                recorder_has_ports)
 from Fujin.nativepreview import NativePreviewView, gl_renderer
+from Fujin.scriptparts import apply_script_values, edits, is_script_key, script_matches, script_values, with_script_parts
 from Fujin.effectdescriptionview import EffectDescriptionView
 from Fujin.animsetfiles import AnimSetFiles
 from Fujin.effectdataview import EffectDataView
@@ -116,6 +117,7 @@ class FujinWidget(QWidget):
         self.lab = NativePreviewView(
             self.file_registry, exe_path=lambda: self.camera_editor.exe_binding.current_path or "",
             effect_files=self._preview_effect_files, file_edits=self._preview_file_edits,
+            script_values=self._preview_script_values,
             cast_source=self.camera_editor.preview, params=self.effect_parameters, lab=True, program=self.effect_program,
             camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)), anim_sets=self._anim_sets)
         self.lab.setParent(self)
@@ -646,6 +648,7 @@ class FujinWidget(QWidget):
                              + self._files_to_import(resources)
                              + (" · unsaved changes: see Pending changes" if self.can_save_folder()
                                 else f" · {self._saved_note}" if self._saved_note else ""))
+        self._sync_script_parts()
         self._refresh_camera()
         self._refresh_choreography()
         self._grey_unused_tabs()
@@ -943,9 +946,58 @@ class FujinWidget(QWidget):
         recorder's (FFNx's port)."""
         if effect is None:
             return None
-        if effect in self.descriptions:
-            return description_schema(self.descriptions[effect])
-        return effect_schema(effect)
+        schema = description_schema(self.descriptions[effect]) if effect in self.descriptions else effect_schema(effect)
+        return with_script_parts(schema, self.description(effect))
+
+    def _script_manager(self, effect):
+        """(an effect's script parts, the imported file they edit): None for the file when it is not imported or
+        not laid out as they say."""
+        script = (self.description(effect) or {}).get("script")
+        if not script:
+            return None, None
+        name = self.effect_params.get(effect, {}).get(script["param"]) or script["file"]
+        manager = next((m for m in self.mag_editor.managers.values() if os.path.basename(m.file_path).lower() == name.lower()), None)
+        return script, manager if manager is not None and script_matches(script, manager.data) else None
+
+    def _part_values(self, effect):
+        """The values a part tab shows: an effect's parameters, its script's as its file holds them."""
+        script, manager = self._script_manager(effect)
+        return {**self.effect_params.get(effect, {}), **(script_values(script, manager.data) if manager else {})}
+
+    def _sync_script_parts(self):
+        """The script parts' tabs as the file is (an undo, a Script tab edit, the file imported or closed)."""
+        script, manager = self._script_manager(self.current_effect)
+        if not script:
+            return
+        values = self._part_values(self.current_effect)
+        for tab in self.part_tabs:
+            if any(is_script_key(field["key"]) for field in tab.fields):
+                tab.set_values(values)
+                tab.set_fields_enabled(manager is not None)
+
+    def _script_changed(self, key, value):
+        """A script part's value: written in the effect's file, as an edit of it (Save writes the file)."""
+        script, manager = self._script_manager(self.current_effect)
+        if manager is None:
+            return
+        field = next(field for field in script["fields"] if field["key"] == key)
+        # at once, one undo step: a choice's places go together
+        places = edits(field, value, manager.data)
+        start, end = min(at for at, _raw in places), max(at + len(raw) for at, raw in places)
+        changed = bytearray(manager.data[start:end])
+        for at, raw in places:
+            changed[at - start:at - start + len(raw)] = raw
+        if manager.patch_bytes(start, changed):
+            self.mag_editor._section_edited()
+            self._params_refresh.start()
+
+    def _preview_script_values(self, files, values):
+        """The effect's files with these script values (a part tab's compare): the recordings' only."""
+        script, manager = self._script_manager(self.current_effect)
+        if manager is None:
+            return files
+        name = os.path.basename(manager.file_path)
+        return {**files, name: apply_script_values(script, files.get(name, bytes(manager.data)), values)}
 
     def effect_program(self, effect):
         """The program an effect's previews run (one whose description is edited here, or a new
@@ -1278,7 +1330,6 @@ class FujinWidget(QWidget):
         self._show_parts_note()
         if schema is None:
             return
-        values = self.effect_params.get(effect, {})
         drawing = frozenset(part["id"] for part in schema["parts"] if part["id"])
         names = {0: "The target"} | {part["id"]: part["title"] for part in schema["parts"] if part["id"]}
         # what its code reads at a fixed place of the exe: under the part that previews the whole effect
@@ -1289,7 +1340,7 @@ class FujinWidget(QWidget):
             # Cure's ring spawns the other parts: their windows count its ticks
             ring = next((p for p in schema["parts"] if p["key"] == "ring"), None)
             spawner = (ring["id"], ring["title"]) if ring and part is not ring and part["id"] else None
-            tab = PartTab(part, fields, values, self.lab, gl_renderer, drawing, self._locate_texture, names,
+            tab = PartTab(part, fields, self._part_values(effect), self.lab, gl_renderer, drawing, self._locate_texture, names,
                           schema.get("groups", []), self.sound_panel, spawner, fixed if part is whole else ())
             tab.value_changed.connect(self._param_changed)
             tab.preview.reference_toggled.connect(self._part_reference)
@@ -1298,6 +1349,7 @@ class FujinWidget(QWidget):
             self.choreography.setTabToolTip(index, part["doc"])
             if part["key"] == shown_key:
                 self.choreography.setCurrentWidget(tab)
+        self._sync_script_parts()
 
     def _recorder_built(self):
         """The recorder's build started or ended (the updater brought FFNx's effect sources): the
@@ -1370,6 +1422,8 @@ class FujinWidget(QWidget):
             tab.preview.set_reference(on)
 
     def _param_changed(self, key, value):
+        if is_script_key(key):
+            return self._script_changed(key, value)
         effect = self.current_effect
         schema = self._schema(effect)
         if schema is None:

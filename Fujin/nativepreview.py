@@ -60,6 +60,7 @@ from Common.collapsiblesection import CollapsibleSection
 from Fujin.castsequence import cast_sequence, shipped_users
 from JumboCactuar.jumbocactuarmanager import load_names
 from Fujin.effectprogram import binds_its_animations
+from Fujin.scriptparts import is_script_key
 from Fujin.recorderbuild import RECORDER, recorder_build    # built from source at startup, never in git
 from FF8GameData.psxgpu.fxdump import load_recording
 from FF8GameData.psxgpu.gpu import GAME_WINDOW
@@ -206,6 +207,9 @@ def recording_notes(log, not_imported=()):
     missing = sorted({os.path.basename(line.split(" file ", 1)[1].split(" (")[0]) for line in lines if line.startswith("missing ")})
     missing = [name for name in missing if not name.lower().startswith("ma8def_p.")]
     notes = ""
+    if SHARED_TEXTURES in map(str.lower, missing):
+        missing = [name for name in missing if name.lower() != SHARED_TEXTURES]
+        notes += f" {SHARED_TEXTURES} not imported (Import complementary): the battle's shared effect textures are missing."
     if not_imported:
         notes += " Not drawn (not imported): " + ", ".join(not_imported) + "."
     if missing:
@@ -275,7 +279,7 @@ class NativePreviewView(QWidget):
     Choreography part tabs show it part by part)."""
 
     def __init__(self, file_registry, exe_path=None, effect_files=None, camera_track=None, file_edits=None,
-                 cast_source=None, params=None, lab=False, program=None, effect_users=None, anim_sets=None):
+                 cast_source=None, params=None, lab=False, program=None, effect_users=None, anim_sets=None, script_values=None):
         super().__init__()
         self.params = params or (lambda _effect: {})
         self.effect_users = effect_users or (lambda _effect: [])   # the imported kernel.bin's users of an effect
@@ -305,6 +309,7 @@ class NativePreviewView(QWidget):
         self._recording_notes = ""
         self.exe_path = exe_path or (lambda: "")
         self.effect_files = effect_files or (lambda: {})
+        self.script_values = script_values               # (files, {key: value}): the files with a script part's values (a compare)
         self.camera_track = camera_track or (lambda _effect: (None, None))
         self.file_edits = file_edits or (lambda: {})
         self.cast_source = cast_source
@@ -697,7 +702,11 @@ class NativePreviewView(QWidget):
         effect_folder, battle_folder = Path(folder, "effect"), Path(folder, "battle")
         effect_folder.mkdir()
         battle_folder.mkdir()
-        for name, data in self.effect_files().items():
+        files = self.effect_files()
+        script = {key: value for key, value in cast.params if is_script_key(key)}
+        if script and self.script_values:
+            files = self.script_values(files, script)
+        for name, data in files.items():
             if name != os.path.basename(name) or name in ("", ".", ".."):
                 raise ValueError(f"invalid effect file name: {name}")
             (effect_folder / name).write_bytes(data)
@@ -734,7 +743,7 @@ class NativePreviewView(QWidget):
             with open(path, "w", encoding="ascii") as file:
                 # a file name as its text, an empty one (the game's) not at all
                 file.write("".join(f"{key} {value if isinstance(value, str) else int(value)}\n"
-                                   for key, value in cast.params if value != ""))
+                                   for key, value in cast.params if value != "" and not is_script_key(key)))
             args.append(f"params={path}")
         # each actor's idle loop (worked out from its dat's sequences, FF8GameData.dat.actoranimplan); the game's sequence code runs
         # on the actors: the caster's action sequence, as the game picks it (Fujin.castsequence), seen wide until the effect starts

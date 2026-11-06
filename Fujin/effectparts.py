@@ -19,7 +19,7 @@ import tempfile
 
 from PyQt6.QtCore import QEvent, QPoint, QPointF, QRectF, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF
-from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSpinBox,
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QScrollArea, QSpinBox,
                              QSizePolicy, QSlider, QSplitter, QTabWidget, QToolButton, QVBoxLayout, QWidget)
 
 from Fujin.partimages import SHEET_HEIGHT, PartImages
@@ -696,6 +696,25 @@ class FileField(QLineEdit):
         pass
 
 
+class ChoiceField(QComboBox):
+    """A value among a few named ones (a script's "choice" field), in the calls a part tab makes."""
+    valueChanged = pyqtSignal(int)
+
+    def __init__(self, field):
+        super().__init__()
+        self.addItems(option["label"] for option in field["options"])
+        self.currentIndexChanged.connect(self.valueChanged)
+
+    def value(self):
+        return self.currentIndex()
+
+    def setValue(self, value):
+        self.setCurrentIndex(value)
+
+    def setRange(self, _low, _high):
+        pass
+
+
 class AddressField(QSpinBox):
     """A parameter that names data at an exe address (a prim model, a camera track, a table...): the address in hex, typed in hex."""
 
@@ -854,8 +873,8 @@ class PartTab(QWidget):
         self.part_names = part_names or {}
         self.groups = {group["key"]: group for group in groups if any(_in_group(f["key"], group["key"]) for f in fields)}
         self.spins, self.labels = {}, {}
-        doc = QLabel(part["doc"] + ("" if part["id"] else
-                                    ". It draws nothing: the preview shows the whole effect, its ticks marked."))
+        doc = self.doc = QLabel(part["doc"] + ("" if part["id"] else
+                                               ". It draws nothing: the preview shows the whole effect, its ticks marked."))
         doc.setWordWrap(True)
         form = QFormLayout()
         boxes = {}                                      # group key -> its form
@@ -864,10 +883,12 @@ class PartTab(QWidget):
             spin = (SequenceField(runner, self.part_names) if field.get("type") == "seq" else
                     SoundField(runner, sounds) if field.get("type") == "sound" else
                     FileField(field) if field.get("type") == "file" else
+                    ChoiceField(field) if field.get("type") == "choice" else
                     AddressField() if sequence else FieldSpin(field))
             spin.setRange(field["min"], field["max"])
             spin.setValue(values.get(field["key"], field["default"]))
             game = (field["default"] or "its own" if field.get("type") == "file" else
+                    field["options"][field["default"]]["label"] if field.get("type") == "choice" else
                     f"0x{field['default']:X}" if sequence else shown_value(field, field["default"]))
             spin.setToolTip(f"{field['doc']}\nThe game's value: {game}".strip())
             spin.valueChanged.connect(lambda value, key=field["key"]: self._changed(key, value))
@@ -1205,6 +1226,13 @@ class PartTab(QWidget):
     def reset(self):
         for field in self.fields:
             self.spins[field["key"]].setValue(field["default"])
+
+    def set_fields_enabled(self, enabled):
+        """A script part's values, while its file is imported."""
+        for key, spin in self.spins.items():
+            spin.setEnabled(enabled)
+            self.labels[key].setEnabled(enabled)
+        self.doc.setText(self.part["doc"] + ("" if enabled else ". Import the effect's files to edit it (header's Import, Effect files)."))
 
     def set_values(self, values):
         for field in self.fields:
