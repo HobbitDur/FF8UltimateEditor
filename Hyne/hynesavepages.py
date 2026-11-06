@@ -30,8 +30,8 @@ U8_MAX = 0xFF
 DISC_MOMENTS = (395, 901, 3860)   # the story moments each disc after the first starts at
 FIELD_PARTY_NAMES = ["Squall", "Zell", "Irvine", "Quistis", "Rinoa", "Selphie", "Seifer", "Edea", "Laguna", "Kiros", "Ward"]
 SCAN_PARTY_SLOTS = 16
-MODULE_ENTRIES = [{"value": 0, "name": "Field"}, {"value": 1, "name": "Field"}, {"value": 2, "name": "World map"},
-                  {"value": 3, "name": "Battle"}]
+MODULE_ENTRIES = [{"value": 0, "name": "Field (the game reads it as 1)"}, {"value": 1, "name": "Field"},
+                  {"value": 2, "name": "World map"}]
 TIMBER_MANIACS_ISSUES = [
     "Balamb Hotel", "Balamb Station", "Dollet Pub", "Dollet Hotel", "Timber Maniacs Redaction", "Timber Hotel",
     "Deling City Hotel", "Horizon: handyman's House", "Horizon Hotel", "Trabia Garden - Cemetery",
@@ -70,6 +70,11 @@ WORLD_REGION_COLUMNS, WORLD_REGION_ROWS = 32, 24
 PUPU_SITES = [(2, 334), (3, 394), (4, 153), (5, 596), (6, 187), (7, 275)]
 WORLD_MAP_IMAGE = "worldmap.png"
 WORLD_MAP_MODULE = 2
+FIELD_FULL_TURN = 256
+FIELD_DIRECTION_STEP = 100    # how far along its direction a field position is projected, to draw the direction
+FIELD_DIRECTION_LENGTH = 16   # the direction's line on screen
+FOLLOWER_POSITION_TIP = ("The game saves where this member stands but doesn't read it back: loading only uses member 1 "
+                         "(FFNewGame_or_load@0x470560), and the others come in after them.")
 WORLD_FULL_TURN = 4096
 # wmx.obj's squares
 WORLD_BLOCK_COLUMNS, WORLD_BLOCK_ROWS = 128, 96
@@ -110,6 +115,13 @@ def read_monster_name(path, game_data):
         return None
     name = game_data.translate_hex_to_str(raw.split(b"\0")[0]).strip()
     return name if name and "{" not in name else None
+
+
+def field_direction_step(direction):
+    """The field X, Y a direction walks toward, per unit: 0 is -Y, 64 +X, 128 +Y, as followers walking after the leader
+    show in real saves."""
+    radians = 2 * math.pi * direction / FIELD_FULL_TURN
+    return math.sin(radians), -math.cos(radians)
 
 
 def map_to_world(map_x, map_y):
@@ -467,7 +479,7 @@ class PartyFieldView(BackgroundView):
 
     def __init__(self):
         super().__init__()
-        self.marks = []         # (x, y in picture pixels, text, on the walkable area)
+        self.marks = []         # (x, y in picture pixels, text, on the walkable area, x, y a step along its direction)
         self.polygons = []      # the walkable triangles, in picture pixels
         self.show_mesh = True
         self.setCursor(Qt.CursorShape.CrossCursor)
@@ -487,9 +499,13 @@ class PartyFieldView(BackgroundView):
             painter.setBrush(fill)
             for polygon in self.polygons:
                 painter.drawPolygon(QPolygonF([QPointF(rect.x() + x * scale, rect.y() + y * scale) for x, y in polygon]))
-        for x, y, text, on_mesh in self.marks:
+        for x, y, text, on_mesh, step_x, step_y in self.marks:
             color = WorldMapPreview.PLACE_COLOR if on_mesh else self.OFF_MESH_COLOR
             center = QPointF(rect.x() + x * scale, rect.y() + y * scale)
+            length = math.hypot(step_x - x, step_y - y)
+            if length:
+                painter.setPen(QPen(color, 2))
+                painter.drawLine(center, center + QPointF(step_x - x, step_y - y) * (FIELD_DIRECTION_LENGTH / length))
             painter.setPen(QPen(QColor("black"), 1))
             painter.setBrush(color)
             painter.drawEllipse(center, WorldMapPreview.MARK_RADIUS, WorldMapPreview.MARK_RADIUS)
@@ -543,7 +559,8 @@ class PartyPage(SavePage):
         for column, text in enumerate(("X", "Y", "Triangle", "Direction"), start=1):
             grid.addWidget(QLabel(text), 0, column)
         for member in range(3):
-            grid.addWidget(QLabel(f"Member {member + 1}:"), member + 1, 0)
+            name = f"Member {member + 1}:"
+            grid.addWidget(QLabel(name) if member == 0 else tool._grey_label(name, FOLLOWER_POSITION_TIP), member + 1, 0)
             row = []
             for column, (minimum, maximum) in enumerate(((I16_MIN, I16_MAX), (I16_MIN, I16_MAX), (0, U16_MAX), (0, U8_MAX))):
                 spin = tool._spinbox(minimum, maximum)
@@ -551,6 +568,9 @@ class PartyPage(SavePage):
                 spin.valueChanged.connect(lambda _value, m=member: self._on_position_changed(m))
                 grid.addWidget(spin, member + 1, column + 1)
                 row.append(spin)
+                if member:
+                    spin.setToolTip(FOLLOWER_POSITION_TIP)
+                    tool.mark_unused(spin)
             self.position_spins.append(row)
         self._refills.append(self._fill_positions)
         self.preset_combo = QComboBox()
@@ -587,9 +607,8 @@ class PartyPage(SavePage):
         folder_button.clicked.connect(tool.pick_preview_folders)
         self.current_scene = None
         self.click_target = QComboBox()
-        self.click_target.setToolTip("Who a click on the picture moves. A click only lands on the walkable area, which "
-                                     "gives X, Y and Triangle together. Scripts can still block a walkable spot.")
-        self.click_target.addItem("All members", None)
+        self.click_target.setToolTip("Who a click on the picture moves, since the Unlock box lets you edit members 2 and 3. "
+                                     "A click only lands on the walkable area, which gives X, Y and Triangle together.")
         for member in range(3):
             self.click_target.addItem(f"Member {member + 1}", member)
         self.mesh_check = QCheckBox("Show walkable area")
@@ -604,7 +623,8 @@ class PartyPage(SavePage):
         self.world_view.setCursor(Qt.CursorShape.CrossCursor)
         folder_row = QHBoxLayout()
         folder_row.addWidget(folder_button)
-        folder_row.addWidget(QLabel("A click moves:"))
+        self.click_target_label = QLabel("A click moves:")
+        folder_row.addWidget(self.click_target_label)
         folder_row.addWidget(self.click_target)
         folder_row.addWidget(self.mesh_check)
         folder_row.addStretch(1)
@@ -617,6 +637,10 @@ class PartyPage(SavePage):
         layout.addLayout(preview_column, 1)
         for widget in (self.module_combo, self.location_combo, *self.party_combos):
             widget.currentIndexChanged.connect(self._refresh_preview)
+        for combo in self.party_combos:
+            combo.currentIndexChanged.connect(self._show_member_rows)
+        tool.unlock_unused_check.toggled.connect(self._show_member_rows)
+        self._refills.append(self._show_member_rows)
         self._refills.append(self._refresh_preview)
 
     def showEvent(self, event):
@@ -626,6 +650,22 @@ class PartyPage(SavePage):
     def _refresh_preview(self, *_):
         if self.isVisible():     # a field's picture costs its time only when it is seen
             self.show_preview()
+
+    def _show_member_rows(self, *_):
+        """A row is greyed with nobody in that place of the party, and members 2 and 3 until unlocked: the game doesn't
+        read their positions."""
+        party = self.section("party")
+        unlocked = self.tool.unlock_unused_check.isChecked()
+        self.click_target.setVisible(unlocked)
+        self.click_target_label.setVisible(unlocked)
+        if not unlocked:
+            self.click_target.setCurrentIndex(0)
+        if party is None:
+            return
+        for member, row in enumerate(self.position_spins):
+            there = getattr(party, f"party_{member + 1}") < len(FIELD_PARTY_NAMES)
+            for spin in row:
+                self.tool._set_unused_locked(spin, not there or (member > 0 and not unlocked))
 
     def _on_show_mesh(self, checked):
         self.field_view.show_mesh = checked
@@ -641,11 +681,8 @@ class PartyPage(SavePage):
             self.place_message.setText("Not a walkable spot.")
             return
         x, y, triangle = spot
-        target = self.click_target.currentData()
-        members = [target] if target is not None else [
-            member for member in range(3) if getattr(party, f"party_{member + 1}") < len(FIELD_PARTY_NAMES)]
-        for member in members:
-            party.set_position(member, x, y, triangle, party.position(member)[3])
+        member = self.click_target.currentData()
+        party.set_position(member, x, y, triangle, party.position(member)[3])
         self._fill_positions()
         self.show_preview()
         self.tool._mark_dirty()
@@ -690,8 +727,8 @@ class PartyPage(SavePage):
             self.scenes[name] = FieldScene(MapFiles(name, folders), self._missing_files)
         scene = self.current_scene = self.scenes[name]
         self.field_view.polygons = scene.walkmesh_polygons()
-        self.field_view.marks = self._field_marks(party, scene)
-        lost = [text for _x, _y, text, on_mesh in self.field_view.marks if not on_mesh]
+        self.field_view.marks = self._field_marks(party, scene, self.tool.unlock_unused_check.isChecked())
+        lost = [mark[2] for mark in self.field_view.marks if not mark[3]]
         if lost:
             self.place_message.setText(f"Not on this map's walkable area: {', '.join(lost)}. Click a spot to place them.")
         self.field_view.set_picture(scene.pixmap, message=scene.error or ("" if scene.camera else scene.camera_error))
@@ -701,22 +738,25 @@ class PartyPage(SavePage):
         return f"{', '.join(names)}, for {needed_for}: not in the field folders chosen."
 
     @staticmethod
-    def _field_marks(party, scene):
-        """Members standing on one spot share a mark. A position off its triangle is flagged."""
-        spots = {}
-        for member in range(3):
+    def _field_marks(party, scene, with_followers):
+        """Member 1, the one the game reads, and the others once unlocked. A position off its triangle is flagged."""
+        marks = []
+        for member in range(3 if with_followers else 1):
             character = getattr(party, f"party_{member + 1}")
             if character >= len(FIELD_PARTY_NAMES):
                 continue
-            x, y, triangle, _direction = party.position(member)
-            try:
-                spot = scene.picture_position((x, y, None, triangle))
-            except (IndexError, ValueError):   # a triangle this map doesn't have
-                spot = None
+            x, y, triangle, direction = party.position(member)
+            spot, step = None, None
+            if scene.camera is not None:
+                height = scene.walkmesh.height_at(triangle, x, y) if scene.walkmesh is not None else 0.0
+                along_x, along_y = field_direction_step(direction)
+                spot = scene.picture_position((x, y, height, triangle))
+                step = scene.picture_position((x + along_x * FIELD_DIRECTION_STEP, y + along_y * FIELD_DIRECTION_STEP,
+                                               height, triangle))
             if spot is not None:
                 on_mesh = scene.walkmesh is None or scene.walkmesh.contains(triangle, x, y)
-                spots.setdefault((*spot, on_mesh), []).append(FIELD_PARTY_NAMES[character])
-        return [(x, y, ", ".join(names), on_mesh) for (x, y, on_mesh), names in spots.items()]
+                marks.append((*spot, FIELD_PARTY_NAMES[character], on_mesh, *(step or spot)))
+        return marks
 
     def _fill_positions(self):
         for member, row in enumerate(self.position_spins):

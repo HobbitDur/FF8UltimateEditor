@@ -291,7 +291,7 @@ class PartyState(SaveView):
     party_1 = Int("B", 104)
     party_2 = Int("B", 105)
     party_3 = Int("B", 106)
-    module = Int("H", 112)         # 1 field, 2 world map, 3 battle
+    module = Int("H", 112)         # 1 field, 2 world map: all a save holds (sub_470250); loading reads 0 as 1
     location = Int("H", 114)
     last_location = Int("H", 116)
 

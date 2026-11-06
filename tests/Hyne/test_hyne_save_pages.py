@@ -22,7 +22,7 @@ from Hyne.hynemanager import (
     CRC_OFFSET_1, CRC_OFFSET_2, CRC_SPAN_LEN, CRC_SPAN_START, HyneManager, IMAGE_SIZE, crc16_ff8, lzss_compress,
     lzss_decompress,
 )
-from Hyne.hynesavepages import WORLD_WIDTH, heading_vector, region_to_map, world_to_map
+from Hyne.hynesavepages import WORLD_WIDTH, field_direction_step, heading_vector, region_to_map, world_to_map
 from Hyne.hynewidget import HyneWidget
 
 REPO = pathlib.Path(__file__).parent.parent.parent
@@ -495,9 +495,11 @@ class TestPages:
         spot_y = sum(corner[1] for corner in polygon) / 3
         page._on_field_click(spot_x, spot_y)
         x, y, triangle, _direction = party.position(0)
-        assert party.position(1)[:3] == (x, y, triangle)
-        assert party.position(2) == (1, 2, 3, 4)       # nobody there
+        assert party.position(1)[:3] != (x, y, triangle)     # the game only reads member 1
+        assert party.position(2) == (1, 2, 3, 4)
         assert scene.walkmesh.contains(triangle, x, y)
+        mark = page.field_view.marks[0]
+        assert mark[2] == "Squall" and len(page.field_view.marks) == 1 and (mark[0], mark[1]) != (mark[4], mark[5])
         polygons = page.field_view.polygons
         off = max(corner[0] for polygon in polygons for corner in polygon) + 50
         page._on_field_click(off, 1)                   # off the walkmesh: nothing moves
@@ -506,6 +508,27 @@ class TestPages:
         party.set_position(0, 30000, 30000, 0, 0)
         page.show_preview()
         assert "Squall" in page.place_message.text()
+
+    def test_field_directions_follow_real_saves(self):
+        # Followers walking after the leader in real saves: 128 walks +Y, 192 -X
+        assert [round(value) for value in field_direction_step(128)] == [0, 1]
+        assert [round(value) for value in field_direction_step(192)] == [-1, 0]
+        assert [round(value) for value in field_direction_step(64)] == [1, 0]
+
+    def test_member_rows_grey_out(self, widget):
+        page = widget.party_page
+        party = widget.manager.party
+        party.party_1, party.party_2, party.party_3 = 0, 3, 255
+        page.reload()
+        assert not page.position_spins[0][0].isReadOnly()
+        assert page.position_spins[1][0].isReadOnly() and page.position_spins[2][0].isReadOnly()
+        widget.unlock_unused_check.setChecked(True)
+        try:
+            assert not page.position_spins[1][0].isReadOnly()    # Quistis
+            assert page.position_spins[2][0].isReadOnly()        # nobody
+        finally:
+            widget.unlock_unused_check.setChecked(False)
+        assert page.position_spins[1][0].isReadOnly()
 
     def test_world_click_follows_what_can_stand_there(self, widget):
         wmx = REPO / "extracted_files" / "world" / "dat" / "wmx.obj"
@@ -543,7 +566,7 @@ class TestPages:
         widget.manager.party.set_position(0, 0, 0, 0, 0)
         page.forget_fields()
         assert page.field_view.pixmap is not None and not page.field_view.pixmap.isNull()
-        assert page.field_view.marks and page.field_view.marks[0][2].startswith("Squall")
+        assert page.field_view.marks and page.field_view.marks[0][2] == "Squall"
 
     def test_load_screen_boxes_share_a_width(self, widget):
         page = widget.load_screen_page
