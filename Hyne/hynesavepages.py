@@ -499,8 +499,9 @@ class PartyFieldView(BackgroundView):
             painter.drawText(label, text)
 
     def mousePressEvent(self, event):
+        """Anywhere in the view: a walkable area can run past the edge of its picture."""
         rect = self.picture_rect()
-        if event.button() == Qt.MouseButton.LeftButton and rect.contains(event.position()):
+        if event.button() == Qt.MouseButton.LeftButton and self.pixmap is not None and not self.pixmap.isNull():
             scale = rect.width() / self.pixmap.width()
             self.picture_clicked.emit((event.position().x() - rect.x()) / scale, (event.position().y() - rect.y()) / scale)
 
