@@ -755,6 +755,38 @@ def test_the_battle_view_is_the_end_of_the_stage_intro(tmp_path):
     assert view(0xF0) == [-3981, -3552, -7305, 18, -1552, -305, 0x280]
 
 
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/battle/mag200_b.12", "extracted_files/magic/MAG200_B.00", "extracted_files/battle/c0m092.dat")
+def test_ifrit_plays_whole_after_its_summoner_vanishes(tmp_path):
+    """A GF's action starts the effect when the summoner has faded away (entity flag 4), after its camera shot: not on a Magic cast's flag. The later files are
+    streamed from the effect's imported files; without them it faults where it asks for them, and says which."""
+    import re
+    import shutil
+    from Fujin.recorderbuild import RECORDER
+    battle = ROOT / "extracted_files/battle"
+    files = tmp_path / "effect"
+    files.mkdir()
+    for path in [*(ROOT / "extracted_files/magic").glob("mag200_b.*"), *battle.glob("mag200_b.*")]:
+        shutil.copy(path, files)
+
+    def record(tag, folder):
+        out = tmp_path / f"{tag}.txt"
+        run = subprocess.run([str(RECORDER), "201", f"exe={EXE}", f"magic={folder}", f"battle={tmp_path}", f"out={out}", f"slot0={battle / 'd0c000.dat'}",
+                              f"weapon0={battle / 'd0w000.dat'}", f"slot3={battle / 'c0m092.dat'}", "caster=0", "target=3", "sequences=1", "castseq=14", "gamecamera=1"],
+                             cwd=str(RECORDER.parent), capture_output=True, text=True, timeout=300)
+        return run.stdout, sum(line.startswith("R ") for line in out.read_text().splitlines())
+    log, ticks = record("all", files)
+    assert "faulted" not in log and "MAG200" not in log, log[-400:]
+    cast = int(re.search(r"cast: sequence 14, (\d+) ticks", log).group(1))
+    assert 40 < cast < 300 and ticks == cast + 325
+    for path in files.glob("mag200_b.0[2-9]"):
+        path.unlink()
+    log, ticks = record("two", files)
+    assert "missing battle file MAG200_B.02" in log and ticks < cast + 325
+    from Fujin.nativepreview import recording_notes
+    notes = recording_notes(log)
+    assert "MAG200_B.02" in notes and "ma8def" not in notes.lower()
+
+
 def _camera_ticks(log):
     return {int(fields[1]): [int(value) for value in fields[3:6] + fields[11:14] + fields[15:18]]
             for fields in (line.split() for line in log.splitlines() if line.startswith("cam "))}

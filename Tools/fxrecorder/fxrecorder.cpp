@@ -740,6 +740,22 @@ static void run_stage()
 	__try { ((int (__cdecl *)(uint32_t))0x508420)(g_stage_queue); }
 	__except (filter(GetExceptionInformation())) {}
 }
+// a sequence's A8 (AnimSeqA8_Visibility): the fade BattleEntity_TickAnimationAndRender runs each tick, ending in entity flag 4 (hidden). Leaving the battle
+// (mode 5) releases the model in the game: here it only hides it
+static void update_fade(uint32_t e)
+{
+	uint8_t &mode = *(uint8_t *)(e + 5);
+	if (mode == 5)
+	{
+		*(uint16_t *)e |= 4;
+		mode = 0;
+	}
+	else if (mode && !(*(uint16_t *)(e + 2) & 4))
+	{
+		__try { ((int (__cdecl *)(uint32_t))0x50C110)(e); }
+		__except (filter(GetExceptionInformation())) { mode = 0; }
+	}
+}
 static void render_actors()
 {
 	run_stage();
@@ -748,6 +764,7 @@ static void render_actors()
 	{
 		if (!g_drawn_slot[k]) continue;
 		uint32_t e = 0x1D972C0 + 0x9C * k;
+		update_fade(e);
 		if (!g_actors || (g_actors == 2 && !(g_target_mask & (1 << k))))
 		{
 			if (runs_sequence(e)) advance_actor(e);      // not drawn, its sequence still runs (Renzokuken's length is its AB)
@@ -857,6 +874,7 @@ static void apply_pending(std::vector<Pending> v)
 			if (!g_serve.empty()) f = readfile(g_serve);                     // the slot's chosen file
 			else if (!g_modelfile.empty() && _strnicmp(name, "c0m", 3) == 0) f = readfile(g_modelfile); // the chosen .dat
 			if (f.empty() && g_serve.empty()) f = readfile(join(O.battle, name));
+			if (f.empty() && g_serve.empty()) f = readfile(join(O.magic, name));   // a summon's later files (mag200_b.02..), imported with its others
 			if (!f.empty()) memcpy((void *)p.b, f.data(), f.size());
 			else printf("missing battle file %s\n", g_serve.empty() ? name : g_serve.c_str());
 			if (p.c) ((void (__cdecl *)())p.c)();
@@ -867,6 +885,18 @@ static void apply_pending(std::vector<Pending> v)
 }
 
 static uint8_t *g_cast_act, *g_cast_tg;
+static void start_summon(uint32_t caster)
+{
+	__try
+	{
+		const uint32_t model = *(uint32_t *)(caster + 0x84), shots = model ? *(uint32_t *)(model + 0x2C) : 0;
+		if (shots && O.gamecamera) ((void (__cdecl *)(uint32_t, int))0x503520)(shots, 0x10);   // BS_GetCameraAnimationPointer, the first of its 3
+		for (int k = 0; k < 3; k++)
+			if (k != O.caster && g_drawn_slot[k]) ((int (__cdecl *)(uint32_t, int))0x50C090)(0x1D972C0 + 0x9C * k, 0xB);  // AnimSeqA8_Visibility
+	}
+	__except (filter(GetExceptionInformation())) {}
+}
+
 static void build_battle()
 {
 	uint8_t *act = g_fake + 0x200, *tg = g_fake + 0x400, *mdl = g_fake + 0x1000;
@@ -1686,11 +1716,16 @@ int main(int argc, char **argv)
 	run_stage();                       // (its task starts drawing from its second run: the first tick has the stage too)
 	if (real_cast)
 	{
+		// A GF's (a character's sequence 14), BattleActionSequence_Tick_GF_Cinematic 0x50B2A0: the summoner's camera shot (its section 5, set 1), the rest of the party
+		// fades away; once the shot is over its sequence goes on (flag 0x10) and the summon starts when the summoner has vanished (entity flag 4, its A8 03), not on flag 0x20
+		const bool summon = O.castseq == 14 && O.caster < 3;
 		((void (__cdecl *)(uint32_t, int))0x505C00)(caster, O.castseq);
-		for (; t < 300 && !(*(uint8_t *)(cast_state + 0x2C) & 0x20); t++)
+		if (summon) start_summon(caster);
+		for (; t < 300 && !(*(uint8_t *)(cast_state + 0x2C) & 0x20) && !(summon && (*(uint16_t *)caster & 4) && !*(uint32_t *)0x1D96A90); t++)
 		{
 			cast_tick();
-			*(uint8_t *)(cast_state + 0x2C) |= 0x10;
+			if (summon) update_game_camera();
+			if (!summon || !*(uint8_t *)0x1D97718) *(uint8_t *)(cast_state + 0x2C) |= 0x10;
 		}
 		*(uint8_t *)(cast_state + 0x2C) &= ~0x20;
 		cast_ticks = t;

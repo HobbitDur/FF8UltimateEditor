@@ -308,6 +308,10 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   camera code plays the shot, jumped to its last frame as AutoTest's `finish_camera_shots` does. Without a stage they start from the setup's view.
   **Monsters shown** (every battle preview, `Common/encountermonsters.py`): a check box per monster of the encounter. By default the ones scene.out has there when the
   battle starts; tick one a script brings in later to see it, untick one to take it out. The recorder can draw enemy slots 0-3 only.
+  **Summons**: a GF's action (`BattleActionSequence_Tick_GF_Cinematic` 0x50B2A0) plays the summoner's camera shot (section 5, set 1), the rest of the party fades, the
+  sequence goes on once the shot ends, and the summon starts when the summoner has vanished (entity flag 4, its A8 03), not on a Magic cast's flag. A cinematic summon's
+  files past `_b.01` are streamed as it plays and hold its textures: import them too (Ifrit: `mag200_b.00`-`.12`, from `magic` and `battle`). Without them it stops where
+  it asks for one, and the status names what is missing.
   **Animation sets**: Import, FFNx animation sets: `effect_NNN.animset` files (Ifrit's "Exe - Limit anim." tab or "Export anim sets…"
   write them). The recorder (`animset=address:file`) binds the file in place of the exe's set, as FFNx does in the game, so the Overview
   and the part tabs play it. A new effect plays its own copy instead (Data tab).

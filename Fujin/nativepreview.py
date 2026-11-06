@@ -115,6 +115,7 @@ class BattleCast:
     stage: tuple = None                                # (battle stage id, its a0stgNNN.x) drawn behind the actors
     opening_shot: int = 0                              # the camera script's variable 0 (the Camera tab's Opening shot)
     stage_camera: int = 0                              # the stage's intro shot the battle's view is the end of: the encounter's main camera byte
+    effect_files: tuple = ()                           # the names of the effect's files imported: one more, a new recording
 
     def key(self):
         """The cache tag of this cast: its files (where they are and their state on disk), roles,
@@ -128,6 +129,8 @@ class BattleCast:
             except OSError:
                 pass
         parts.append(f"opening{self.opening_shot}")
+        if self.effect_files:
+            parts.append("files|" + "|".join(self.effect_files))
         if self.stage:
             parts.append(f"stagecam{self.stage_camera}")
         if self.stage:
@@ -189,6 +192,29 @@ def recording_path(effect_id, cast_key="none"):
     folder = os.path.join(tempfile.gettempdir(), "fujin_native_preview")
     os.makedirs(folder, exist_ok=True)
     return os.path.join(folder, f"effect_{effect_id:03d}_{cast_key}.txt")
+
+
+def notes_path(path):
+    return path + ".notes"
+
+
+def recording_notes(log, not_imported=()):
+    """What the status adds to a recording: what it lacked, from the recorder's log. A summon's files past its first two are
+    streamed as it plays and hold its textures: without them it stops there, its pictures wrong before that. ma8def_p.* only
+    put the shared textures back once the effect is over."""
+    lines = log.splitlines()
+    missing = sorted({os.path.basename(line.split(" file ", 1)[1].split(" (")[0]) for line in lines if line.startswith("missing ")})
+    missing = [name for name in missing if not name.lower().startswith("ma8def_p.")]
+    notes = ""
+    if not_imported:
+        notes += " Not drawn (not imported): " + ", ".join(not_imported) + "."
+    if missing:
+        notes += (" NOT IMPORTED, asked for by the effect: " + ", ".join(missing) + ": it stops or looks wrong without them. "
+                  "Header's Import, Effect files (they may be in the game's battle folder).")
+    problems = [line for line in lines if "faulted" in line or "failed" in line]
+    if problems:
+        notes += " Recorder: " + "; ".join(problems[:3])
+    return notes
 
 
 def model_scale(path):
@@ -276,6 +302,7 @@ class NativePreviewView(QWidget):
         self._fit = GAME_WINDOW
         self._prerender_tick = 0
         self.camera_used = False
+        self._recording_notes = ""
         self.exe_path = exe_path or (lambda: "")
         self.effect_files = effect_files or (lambda: {})
         self.camera_track = camera_track or (lambda _effect: (None, None))
@@ -510,7 +537,8 @@ class NativePreviewView(QWidget):
                           sorted(set(not_imported)), cast.idle, cast.cast_camera,
                           actors, self.lab or bool(params), params, self.lab, program, sequence,
                           self.anim_sets(self.effect_id) if self.effect_id is not None else (), stage,
-                          self.cast_source.inputs().opening, self._stage_camera())
+                          self.cast_source.inputs().opening, self._stage_camera(),
+                          tuple(sorted(self.effect_files())) if self.effect_id is not None else ())
 
     def _stage_camera(self):
         combo = self.encounter_combo
@@ -597,6 +625,11 @@ class NativePreviewView(QWidget):
         self._prerender_tick = 0
         path = recording_path(effect_id, self.cast().key()) if effect_id is not None else None
         if path and os.path.isfile(path):
+            try:
+                with open(notes_path(path), encoding="utf-8") as file:
+                    self._recording_notes = file.read()
+            except OSError:
+                self._recording_notes = ""
             self.load_recording_file(path)       # recorded earlier: shown again, a camera edit redoes it
             try:
                 with open(camera_path(path), encoding="ascii") as file:
@@ -776,6 +809,7 @@ class NativePreviewView(QWidget):
             if not recorder_build().building:    # (rebuilt under it: it records again when the build ends)
                 self.status.setText(f"The recorder made no recording: {last[0]}")
             return
+        self._recording_notes = recording_notes(log, getattr(self, "_not_imported", []))
         self.load_recording_file(output, tick=tick, signature=signature)
         self._recorded_camera = camera
         if not signature:
@@ -784,21 +818,12 @@ class NativePreviewView(QWidget):
                 shutil.copyfile(output, recording_path(effect_id, model))
                 with open(camera_path(recording_path(effect_id, model)), "w", encoding="ascii") as file:
                     file.write("\n".join(camera or []))
+                with open(notes_path(recording_path(effect_id, model)), "w", encoding="utf-8") as file:
+                    file.write(self._recording_notes)
             except OSError:
                 pass  # caching is optional; the in-memory preview is already loaded
         if self.play_button.isChecked():
             self.timer.start()
-        lines = log.splitlines()
-        missing = sorted({line.split(" file ", 1)[1].split(" (")[0] for line in lines if line.startswith("missing ")})
-        not_imported = getattr(self, "_not_imported", [])
-        if not_imported:
-            self.status.setText(self.status.text() + " Not drawn (not imported): " + ", ".join(not_imported) + ".")
-        if missing:
-            self.status.setText(self.status.text() + " Not imported, asked for by the effect: "
-                                + ", ".join(os.path.basename(name) for name in missing) + ".")
-        problems = [line for line in lines if "faulted" in line or "failed" in line]
-        if problems:
-            self.status.setText(self.status.text() + " Recorder: " + "; ".join(problems[:3]))
 
     def params_changed(self):
         """The effect's parameters changed: a recording made with these is shown if there is one,
@@ -874,12 +899,13 @@ class NativePreviewView(QWidget):
             f"({len(self.recording.ticks) / TICKS_PER_SECOND:.1f} s). This tick: {gpu.counts['polygons']} polygons, "
             f"{gpu.counts['sprites']} sprites, {gpu.counts['lines']} lines. "
             + ("Camera: the effect's own track." if self.camera_used else
-               "Camera: the default battle view (no camera track played).")
+               "Camera: the battle's view, or the effect's code moving it (no camera track).")
             + (f" Animations: {', '.join(self.anim_set_names)}." if self.anim_set_names else "")
             + (f" Stage: {self.stage_combo.currentText()}." if self.stage_combo.currentData() and self.actors_check.isChecked() else "")
             + self.stage_note
             + (f" Flat grey: texture pages {missing} were never uploaded." if missing else "")
-            + ("" if self.recording.has_vram else " No textures in this recording."))
+            + ("" if self.recording.has_vram else " No textures in this recording.")
+            + self._recording_notes)
         if self._recorded_edits:
             self.status.setText(self.status.text() + " Includes unsaved effect-file edits.")
 
