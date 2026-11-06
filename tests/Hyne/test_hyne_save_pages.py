@@ -162,10 +162,13 @@ class TestFieldsAreWhereTheSaveHasThem:
     def test_a_copy_written_twice(self, manager):
         manager.battle.wins = 321
         manager.battle.escapes = 12
+        manager.battle.losses = 3
         assert struct.unpack_from("<I", manager.buffer, BLOCK + 12)[0] == 321
         assert struct.unpack_from("<I", manager.buffer, VARS + 20)[0] == 321
         assert struct.unpack_from("<H", manager.buffer, BLOCK + 18)[0] == 12
         assert struct.unpack_from("<H", manager.buffer, VARS + 26)[0] == 12
+        assert struct.unpack_from("<H", manager.buffer, BLOCK + 16)[0] == 3
+        assert struct.unpack_from("<H", manager.buffer, VARS + 24)[0] == 3
 
     def test_battle_flags_keep_their_other_bits(self, manager):
         struct.pack_into("<I", manager.buffer, BLOCK + 28, 0x100)

@@ -150,7 +150,7 @@ class SaveView:
 
 # The field variables another tab holds, (first, last, tab): that tab keeps their copies in step
 FIELD_VARS_ELSEWHERE = (
-    (4, 11, "Progress"), (16, 17, "Progress"), (20, 23, "Battle"), (26, 27, "Battle"), (28, 59, "Characters"),
+    (4, 11, "Progress"), (16, 17, "Progress"), (20, 27, "Battle"), (28, 59, "Characters"),
     (68, 71, "Battle"), (72, 79, "Misc"), (80, 85, "Progress"), (116, 179, "Draw points"), (204, 204, "Progress"),
     (256, 257, "Progress"), (272, 291, "Triple Triad"), (295, 300, "Triple Triad"), (304, 305, "Items"),
     (475, 475, "Triple Triad"), (477, 478, "Triple Triad"),
@@ -323,13 +323,15 @@ class PartyState(SaveView):
 
 class BattleState(SaveView):
     """Battle counts, first-time flags, Renzokuken and special-flag bytes, magic drawn and enemies
-    scanned once. Wins and escapes have a second copy in the field variables, written together."""
-    FIELDS = ("wins", "escapes", "total_kills", "tonberries", "tonberry_king", "ufo", "first_bite_bug", "first_bomb",
+    scanned once. Wins, losses and escapes have a second copy in the field variables, written together."""
+    FIELDS = ("wins", "losses", "escapes", "total_kills", "tonberries", "tonberry_king", "ufo", "first_bite_bug", "first_bomb",
               "first_t_rexaur", "first_irvine", "renzokuken_flags", "renzokuken_indicator", "special_flags",
               "magic_moved", "magic_drawn", "scan_moved", "enemies_scanned")
 
     _copy1_wins = Int("I", 12)
     _copy2_wins = Int("I", 144 + 20)
+    _copy1_losses = Int("H", 16)           # defeats and battles that ran out of time
+    _copy2_losses = Int("H", 144 + 24)
     _copy1_escapes = Int("H", 18)
     _copy2_escapes = Int("H", 144 + 26)
     total_kills = Int("I", 144 + 68)
@@ -363,6 +365,15 @@ class BattleState(SaveView):
     def wins(self, value):
         self._copy1_wins = value
         self._copy2_wins = value
+
+    @property
+    def losses(self):
+        return self._copy1_losses
+
+    @losses.setter
+    def losses(self, value):
+        self._copy1_losses = value
+        self._copy2_losses = value
 
     @property
     def escapes(self):

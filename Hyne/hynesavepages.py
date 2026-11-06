@@ -795,6 +795,7 @@ class BattlePage(SavePage):
         super().__init__(tool)
         counts_group = _form_group("Statistics", [
             ("Battles won:", self.u32_spin("battle", "wins", "Also written to its copy in field variable 20")),
+            ("Battles lost:", self.spin("battle", "losses", 0, U16_MAX, "Defeats and battles that ran out of time. Also written to its copy in field variable 24")),
             ("Battles escaped:", self.spin("battle", "escapes", 0, U16_MAX, "Also written to its copy in field variable 26")),
             ("Monsters killed:", self.u32_spin("battle", "total_kills", "Field variable 68. Editing a character's kills updates it on save.")),
             ("Tonberries killed:", self.u32_spin("battle", "tonberries", "Counts toward the Tonberry King")),
