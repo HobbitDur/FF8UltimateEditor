@@ -1,5 +1,5 @@
 """The Hyne tabs over Hyne/hynesavemap.py: progress, party, battle, shops, draw points, world map,
-Chocobo World, load screen, and the battle order and Timber Maniacs pages of the Items tab.
+Chocobo World, load screen, field variables, and the battle order and Timber Maniacs pages of the Items tab.
 
 A SavePage builds its widgets through binding helpers: each widget is tied to one field of a section
 of HyneManager, written at once on edit and refilled by reload() with its signals blocked."""
@@ -7,12 +7,13 @@ from PyQt6.QtCore import QSignalBlocker, Qt
 from PyQt6.QtGui import QBrush, QColor, QFont, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView, QCheckBox, QComboBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
-    QListWidget, QListWidgetItem, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+    QLineEdit, QListWidget, QListWidgetItem, QPlainTextEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QWidget,
 )
 
 from Hyne.hynesavemap import (
     BattleState, ChocoboWorld, DRAW_POINT_STATES, NB_DRAW_POINTS, NB_SHOPS, NB_WORLD_POSITIONS, SCANNED_MOVED_BITS,
-    SHOP_NB_ITEMS, WORLD_POSITION_VALUES,
+    SHOP_NB_ITEMS, WORLD_POSITION_VALUES, field_var_tab,
 )
 
 SPIN_WIDTH_3_DIGITS = 78
@@ -819,6 +820,205 @@ class LoadScreenPage(SavePage):
         layout = QHBoxLayout(self)
         layout.addLayout(column)
         layout.addStretch(1)
+
+
+class FieldVariablesPage(SavePage):
+    """The field variables the scripts and the engine use, named from the research on them. One another tab
+    holds is only shown here: that tab keeps its copies in step."""
+    SOURCES = ["All variables", "Vanilla", "Cronos"]
+    COLUMN_VALUE = 2
+    COLUMN_TEXT = 4
+    CERTAINTY_NAMES = {"sure": "Sure", "likely": "Likely", "unknown": "Unclear"}
+    TYPE_NAMES = {(1, False): "Byte", (1, True): "Signed byte", (2, False): "Word", (2, True): "Signed word",
+                  (4, False): "Long", (4, True): "Signed long"}
+    BIT_NAME_LENGTH = 36
+
+    def __init__(self, tool):
+        super().__init__(tool)
+        self.entries = tool.field_variable_entries
+        self._current = None
+        self._search_texts = [
+            " ".join([str(entry["var"]), entry["text"], *entry["fields"], *entry.get("flags", {}).values(),
+                      *entry.get("values", {}).values()]).lower() for entry in self.entries
+        ]
+
+        self.search_edit = QLineEdit()
+        self.search_edit.setPlaceholderText("Search a number, a word or a field name")
+        self.search_edit.setClearButtonEnabled(True)
+        self.search_edit.textChanged.connect(self._apply_filter)
+        self.source_combo = QComboBox()
+        self.source_combo.addItems(self.SOURCES)
+        self.source_combo.setToolTip("Vanilla: what the game's own scripts and engine use. Cronos: what the mod adds")
+        self.source_combo.currentIndexChanged.connect(self._apply_filter)
+        self.only_set_check = QCheckBox("Only values not zero")
+        self.only_set_check.toggled.connect(self._apply_filter)
+        filters = QWidget()
+        filters.setProperty("read_only_preview", True)   # choosing what to show edits nothing
+        filter_row = QHBoxLayout(filters)
+        filter_row.setContentsMargins(0, 0, 0, 0)
+        filter_row.addWidget(self.search_edit, 1)
+        filter_row.addWidget(self.source_combo)
+        filter_row.addWidget(self.only_set_check)
+
+        self.table = QTableWidget(len(self.entries), 5)
+        self.table.setProperty("read_only_preview", True)
+        self.table.setHorizontalHeaderLabels(["Var", "Type", "Value", "How sure", "What it holds"])
+        self.table.horizontalHeaderItem(3).setToolTip(
+            "Sure: the dialogue or the code shows it. Likely: the evidence points that way. "
+            "Unclear: only where it is used is known.")
+        self.table.verticalHeader().setVisible(False)
+        self.table.verticalHeader().setDefaultSectionSize(22)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        header = self.table.horizontalHeader()
+        for column in (0, 1, 3):
+            header.setSectionResizeMode(column, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.setColumnWidth(self.COLUMN_VALUE, 90)
+        header.setSectionResizeMode(self.COLUMN_TEXT, QHeaderView.ResizeMode.Stretch)
+        grey = QBrush(QColor("gray"))
+        for row, entry in enumerate(self.entries):
+            cells = [str(entry["var"]), self.TYPE_NAMES[entry["size"], entry["signed"]], "",
+                     self.CERTAINTY_NAMES.get(entry.get("certainty"), ""), entry["text"].split("\n")[0]]
+            for column, text in enumerate(cells):
+                item = QTableWidgetItem(text)
+                if field_var_tab(entry["var"]):
+                    item.setForeground(grey)
+                self.table.setItem(row, column, item)
+        self.table.currentCellChanged.connect(self._on_row)
+
+        self.title_label = QLabel()
+        title_font = QFont(self.title_label.font())
+        title_font.setBold(True)
+        self.title_label.setFont(title_font)
+        self.text_view = QPlainTextEdit()
+        self.text_view.setProperty("read_only_preview", True)
+        self.text_view.setReadOnly(True)
+        self.fields_label = QLabel()
+        self.fields_label.setWordWrap(True)
+        self.value_spin = tool._u32_spinbox(tooltip="The variable's value in the save")
+        self.value_spin.valueChanged.connect(self._on_value)
+        self.value_name_label = QLabel()
+        self.bit_group = QGroupBox("Bits")
+        bit_layout = QVBoxLayout(self.bit_group)
+        self.bit_checks = []
+        for bit in range(8):
+            check = QCheckBox()
+            check.toggled.connect(lambda checked, mask=1 << bit: self._on_bit(mask, checked))
+            bit_layout.addWidget(check)
+            self.bit_checks.append(check)
+        value_row = QHBoxLayout()
+        value_row.addWidget(QLabel("Value:"))
+        value_row.addWidget(self.value_spin)
+        value_row.addWidget(self.value_name_label, 1)
+        panel = QGroupBox("Selected variable")
+        panel.setFixedWidth(330)
+        panel_layout = QVBoxLayout(panel)
+        panel_layout.addWidget(self.title_label)
+        panel_layout.addWidget(self.text_view, 1)
+        panel_layout.addWidget(self.fields_label)
+        panel_layout.addLayout(value_row)
+        panel_layout.addWidget(self.bit_group)
+
+        left = QVBoxLayout()
+        left.addWidget(filters)
+        left.addWidget(self.table)
+        layout = QHBoxLayout(self)
+        layout.addLayout(left, 1)
+        layout.addWidget(panel)
+        self._refills.append(self._refresh)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._refresh()   # another tab may have changed a variable it holds
+
+    def _value(self, entry):
+        return self.section("field_variables").value(entry["var"], entry["size"], entry["signed"])
+
+    def _refresh(self):
+        if self.section("field_variables") is None:
+            return
+        for row, entry in enumerate(self.entries):
+            self.table.item(row, self.COLUMN_VALUE).setText(str(self._value(entry)))
+        self._apply_filter()
+        if self.table.currentRow() < 0 and self.entries:
+            self.table.setCurrentCell(0, 0)
+        else:
+            self._show_current()
+
+    def _apply_filter(self, *_):
+        if self.section("field_variables") is None:
+            return
+        words = self.search_edit.text().lower().split()
+        source = self.SOURCES[self.source_combo.currentIndex()]
+        only_set = self.only_set_check.isChecked()
+        for row, entry in enumerate(self.entries):
+            shown = source == self.SOURCES[0] or entry.get("mod", "Vanilla") == source
+            shown = shown and not (only_set and not self._value(entry))
+            shown = shown and all(word in self._search_texts[row] for word in words)
+            self.table.setRowHidden(row, not shown)
+
+    def _on_row(self, row, *_):
+        self._current = self.entries[row] if 0 <= row < len(self.entries) else None
+        self._show_current()
+
+    def _show_current(self):
+        entry = self._current
+        if entry is None:
+            return
+        tab = field_var_tab(entry["var"])
+        self.title_label.setText(f"Variable {entry['var']}: {self.TYPE_NAMES[entry['size'], entry['signed']].lower()}")
+        values = entry.get("values", {})
+        self.text_view.setPlainText("\n".join([entry["text"], *([""] if values else []),
+                                               *(f"{value}: {name}" for value, name in values.items())]))
+        if entry["nb_fields"]:
+            more = entry["nb_fields"] - len(entry["fields"])
+            where = f"Used in {', '.join(entry['fields'])}" + (f" and {more} more fields." if more else ".")
+        else:
+            where = "No field script uses it: only the engine does."
+        self.fields_label.setText(where + (f"\nEdited on the {tab} tab." if tab else ""))
+        bits = 8 * entry["size"]
+        low = -(1 << (bits - 1)) if entry["signed"] else 0
+        high = (1 << (bits - 1)) - 1 if entry["signed"] else (1 << bits) - 1
+        with QSignalBlocker(self.value_spin):
+            self.value_spin.setRange(low, high)
+            self.value_spin.setValue(self._value(entry))
+        self.value_name_label.setText(values.get(str(self._value(entry)), ""))
+        self.value_spin.setEnabled(tab is None)
+        self.bit_group.setVisible(entry["size"] == 1)
+        self.bit_group.setEnabled(tab is None)
+        if entry["size"] == 1:
+            names = entry.get("flags", {})
+            raw = self.section("field_variables").value(entry["var"])
+            for bit, check in enumerate(self.bit_checks):
+                mask = 1 << bit
+                name = names.get(str(mask), "")
+                with QSignalBlocker(check):
+                    check.setText(f"{mask}: {name[:self.BIT_NAME_LENGTH]}" if name else str(mask))
+                    check.setToolTip(name)
+                    check.setChecked(bool(raw & mask))
+
+    def _on_value(self, _value):
+        entry = self._current
+        if entry is None:
+            return
+        self.section("field_variables").set_value(entry["var"], self.value_spin.value(), entry["size"], entry["signed"])
+        self._written()
+
+    def _on_bit(self, mask, checked):
+        entry = self._current
+        if entry is None:
+            return
+        view = self.section("field_variables")
+        raw = view.value(entry["var"])
+        view.set_value(entry["var"], raw | mask if checked else raw & ~mask & U8_MAX)
+        self._written()
+
+    def _written(self):
+        row = self.entries.index(self._current)
+        self.table.item(row, self.COLUMN_VALUE).setText(str(self._value(self._current)))
+        self._show_current()
+        self.tool._mark_dirty()
 
 
 class ItemsExtrasPage(SavePage):

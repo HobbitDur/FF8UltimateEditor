@@ -38,8 +38,8 @@ from Quezacotl.quezacotlmanager import (
 )
 from Hyne.hynesavemap import read_shop_file, scene_uses_extra_monsters
 from Hyne.hynesavepages import (
-    BattlePage, ChocoboPage, DrawPointsPage, ItemsExtrasPage, LoadScreenPage, PartyPage, ProgressPage, ShopsPage,
-    WorldMapPage,
+    BattlePage, ChocoboPage, DrawPointsPage, FieldVariablesPage, ItemsExtrasPage, LoadScreenPage, PartyPage, ProgressPage,
+    ShopsPage, WorldMapPage,
 )
 from Hyne.hynemanager import (
     HyneManager, SAVE_ABILITY_IDS, TT_CARD_COPIES_MASK, TT_NB_RARE_CARDS, TT_NB_REGIONS, TT_NB_LAST_RULES,
@@ -147,6 +147,7 @@ class HyneWidget(QWidget):
                 return json.load(json_file)
 
         self.hyne_data = _load_json("hyne_data.json")
+        self.field_variable_entries = _load_json("hyne_field_variables.json")
 
         # Button-remap action list (dedicated json — the config bytes store a logical action id).
         button_config = _load_json("button_config.json")
@@ -219,6 +220,7 @@ class HyneWidget(QWidget):
         self.world_map_page = WorldMapPage(self)
         self.chocobo_page = ChocoboPage(self)
         self.load_screen_page = LoadScreenPage(self)
+        self.field_variables_page = FieldVariablesPage(self)
         self.tabs.addTab(self.progress_page, "Progress")
         self.tabs.addTab(self.party_page, "Party")
         self.tabs.addTab(self.battle_page, "Battle")
@@ -227,8 +229,10 @@ class HyneWidget(QWidget):
         self.tabs.addTab(self.world_map_page, "World map")
         self.tabs.addTab(self.chocobo_page, "Chocobo World")
         self.tabs.addTab(self.load_screen_page, "Load screen")
+        self.tabs.addTab(self.field_variables_page, "Variables")
         self.save_pages = [self.items_extras_page, self.progress_page, self.party_page, self.battle_page, self.shops_page,
-                           self.draw_points_page, self.world_map_page, self.chocobo_page, self.load_screen_page]
+                           self.draw_points_page, self.world_map_page, self.chocobo_page, self.load_screen_page,
+                           self.field_variables_page]
         self.tabs.setTabToolTip(0, "The 16 Guardian Forces: stats, learned abilities and AP")
         self.tabs.setTabToolTip(1, "The 8 playable characters: stats, magic, junctions and abilities")
         self.tabs.setTabToolTip(2, "Saved game configuration (speeds, controls, map seal)")
@@ -243,6 +247,7 @@ class HyneWidget(QWidget):
         self.tabs.setTabToolTip(11, "Steps, rental car, displayed map, vehicles, PuPu and Obel Lake quests")
         self.tabs.setTabToolTip(12, "Boko's level, HP, weapon, items and quest progress")
         self.tabs.setTabToolTip(13, "What the load screen shows for this save")
+        self.tabs.setTabToolTip(14, "The field variables the game and Cronos really use, named and editable")
         self.tabs.setEnabled(False)
 
         main_layout = QVBoxLayout()

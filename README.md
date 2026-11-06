@@ -227,7 +227,8 @@ automatically (see the update button in the toolbar).
 - **Deling** — archive editor (browse/extract/repack the game's `.fs`/`.fi`/`.fl` archives).
 - **Hyne** — save file editor: G-Forces, characters, config, items, Triple Triad (cards, rare card
   locations, region rules, Queen of Cards and CC Group quests), story progress, field party and
-  position, battle counts, shops, draw points, world map quests, Chocobo World, load screen and names.
+  position, battle counts, shops, draw points, world map quests, Chocobo World, load screen, names and
+  the field variables the game and Cronos really use.
 - **VincentTim** — command-line texture converter for FF7/FF8 `.tim`/`.tex` files (see its own
   [README](ExternalTools/VincentTim/README.md)).
 

@@ -65,7 +65,7 @@ import time
 from CCGroup.cardlocation import LOCATION_PLAYER, NB_CARDS, RARE_CARD_FIRST_ID, starting_location
 from FF8GameData.gamedata import GameData
 from Hyne.hynesavemap import (
-    BattleState, ChocoboWorld, DrawPointsState, FIELD_VARS_OFFSET as SAVEMAP_VARS_OFFSET, MAX_LEVEL, PartyState,
+    BattleState, ChocoboWorld, DrawPointsState, FieldVariables, FIELD_VARS_OFFSET as SAVEMAP_VARS_OFFSET, MAX_LEVEL, PartyState,
     ProgressState, SaveHeader, ShopsState, WorldMapState,
 )
 from Quezacotl.quezacotlmanager import (
@@ -582,7 +582,8 @@ class HyneManager:
     """
 
     # The views of hynesavemap.py, and what the CLI's JSON carries
-    SAVE_SECTIONS = ("header", "progress", "party", "battle", "shops", "draw_points", "world_map", "chocobo")
+    SAVE_SECTIONS = ("header", "progress", "party", "battle", "shops", "draw_points", "world_map", "chocobo",
+                     "field_variables")
 
     def __init__(self, game_data: GameData):
         self.game_data = game_data
@@ -598,6 +599,7 @@ class HyneManager:
         self.item_entries = []
         self.triple_triad = None
         self.header = None
+        self.field_variables = None
         self.progress = None
         self.party = None
         self.battle = None
@@ -659,6 +661,7 @@ class HyneManager:
         self.misc = MiscEntry(self.buffer, GAMESTATE_BASE + MISC_DATA_OFFSET, self.game_data)
         self.triple_triad = TripleTriadEntry(self.buffer)
         self.header = SaveHeader(self.buffer, self.game_data)
+        self.field_variables = FieldVariables(self.buffer)
         self.progress = ProgressState(self.buffer)
         self.party = PartyState(self.buffer)
         scan_moved = self.battle.scan_moved if self.battle else False

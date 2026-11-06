@@ -360,7 +360,8 @@ class TestCli:
 class TestPages:
     def test_every_tab_is_there(self, widget):
         names = [widget.tabs.tabText(index) for index in range(widget.tabs.count())]
-        assert names[6:] == ["Progress", "Party", "Battle", "Shops", "Draw points", "World map", "Chocobo World", "Load screen"]
+        assert names[6:] == ["Progress", "Party", "Battle", "Shops", "Draw points", "World map", "Chocobo World", "Load screen",
+                             "Variables"]
 
     def test_refilling_writes_nothing(self, widget, save):
         assert bytes(widget.manager.buffer) == bytes(_read_image(save))

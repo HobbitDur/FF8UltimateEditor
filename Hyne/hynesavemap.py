@@ -145,6 +145,47 @@ class SaveView:
                     setattr(self, field, data[field])
 
 
+# The field variables another tab holds, (first, last, tab): that tab keeps their copies in step
+FIELD_VARS_ELSEWHERE = (
+    (4, 11, "Progress"), (16, 17, "Progress"), (20, 23, "Battle"), (26, 27, "Battle"), (28, 59, "Characters"),
+    (68, 71, "Battle"), (72, 79, "Misc"), (80, 85, "Progress"), (116, 179, "Draw points"), (204, 204, "Progress"),
+    (256, 257, "Progress"), (272, 291, "Triple Triad"), (295, 300, "Triple Triad"), (304, 305, "Items"),
+    (475, 475, "Triple Triad"), (477, 478, "Triple Triad"), (SCANNED_MOVED_VAR, SCANNED_MOVED_VAR + SCANNED_MOVED_BITS // 8 - 1, "Battle"),
+)
+NB_FIELD_VARS = 1024
+
+
+def field_var_tab(var):
+    """The tab holding this field variable, None if only the Variables tab does."""
+    for first, last, tab in FIELD_VARS_ELSEWHERE:
+        if first <= var <= last:
+            return tab
+    return None
+
+
+class FieldVariables(SaveView):
+    """The field variables by number. The CLI's JSON carries the bytes no other section holds, those not zero."""
+
+    def __init__(self, buffer):
+        super().__init__(buffer, FIELD_VARS_OFFSET)
+
+    def value(self, var, size=1, signed=False):
+        start = self.base + var
+        return int.from_bytes(self.buffer[start:start + size], "little", signed=signed)
+
+    def set_value(self, var, value, size=1, signed=False):
+        start = self.base + var
+        self.buffer[start:start + size] = value.to_bytes(size, "little", signed=signed)
+
+    def to_dict(self):
+        return {str(var): self.value(var) for var in range(NB_FIELD_VARS) if self.value(var) and field_var_tab(var) is None}
+
+    def from_dict(self, data):
+        for var, value in data.items():
+            if field_var_tab(int(var)) is None:
+                self.set_value(int(var), value)
+
+
 class SaveHeader(SaveView):
     """The load screen's copy of the save (savemap +4), plus the names only kept here."""
     FIELDS = ("location", "leader_hp", "leader_max_hp", "save_count", "gil", "time", "level",
