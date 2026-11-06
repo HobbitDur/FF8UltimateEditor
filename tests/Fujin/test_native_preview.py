@@ -128,7 +128,7 @@ def test_effect_camera_lines():
 
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim",
                      "extracted_files/battle/a8def.tim", "extracted_files/battle/d0c000.dat",
-                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m002.dat")
 def test_effect_preview_records_the_camera_preview_battle(qapp):
     """The cast is the Camera tab preview's: Squall (with his gunblade) in party slot 0, an imported
     monster in enemy slot 3; picking the caster here picks it there; the recording draws both."""
@@ -142,7 +142,7 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
     view = fujin.native_preview
     view.actors_group.setChecked(True)                                          # drawn, with the cast
     view.textures_binding.open_path(str(BATTLE / "a8def.tim"))
-    squall, gunblade, monster = (str(BATTLE / name) for name in ("d0c000.dat", "d0w000.dat", "c0m009.dat"))
+    squall, gunblade, monster = (str(BATTLE / name) for name in ("d0c000.dat", "d0w000.dat", "c0m002.dat"))
     preview = fujin.camera_editor.preview
     preview.add_models([squall, gunblade, monster])
     view.refresh_cast()

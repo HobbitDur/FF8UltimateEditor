@@ -300,6 +300,10 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   game's texture upload and model palette. Manual placement moves onto it: the party in its formation, the camera with them.
   **Targeting**: before an effect's setup the recorder runs the game's `AnimSeq92_SetupTargetingContext` 0x50D300, as every cast does: the
   caster turns to its target, and what sequences read of them (C3 0x10, 0x11, 0x18, 0x1A) is set. X-ATM092's facing in Renzokuken is C3 0x1A.
+  **Camera**: the recorder runs the game's camera code (`gamecamera=1`: `updateBattleCamera` 0x504060, its script VM and keyframe player), so a track in
+  an actor's frame follows that actor as its sequence moves it. `camvar=N` is the Camera tab's Opening shot; a changed track goes in with `cameratrack=file`,
+  as FFNx plays `effect_NNN.bcam`. Fujin's own player (`FF8GameData/dat/battlecamera.py`) still drives the Camera tab, where no sequence moves the actors.
+  The view the track starts from is the setup's, not the end of the game's opening shot or the stage's intro.
   **Animation sets**: Import, FFNx animation sets: `effect_NNN.animset` files (Ifrit's "Exe - Limit anim." tab or "Export anim sets…"
   write them). The recorder (`animset=address:file`) binds the file in place of the exe's set, as FFNx does in the game, so the Overview
   and the part tabs play it. A new effect plays its own copy instead (Data tab).

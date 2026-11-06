@@ -44,6 +44,7 @@
 // [castafter=a:n,..: the caster's animations while the effect runs, n = 0 looping to the end]
 // [animset=ADDRESS:<file>: the animation set at this exe address is this file]
 // [stage=N: the battle stage N is loaded] [stagefile=<file>: read from that file] [stagedraw=1: and drawn each tick by its own render task]
+// [gamecamera=1: the game's camera code plays the tracks started (from castcam's view), no camera file] [camvar=N: opening shot] [cameratrack=<file>: the setup's track]
 // [sequences=1: the game's sequence code runs on the actors] [castseq=N: the caster's action sequence N before and around the effect]
 // [each a:n can be a:n:x:y:z: the caster stands at that model-local offset meanwhile - AnimSeq
 // variables 0x0D-0x0F, the step forward of a cast (Squall's 0, 0, -792), default 0, 0, 0]
@@ -88,10 +89,14 @@ struct Opt
 	int stage = -1;                   // stage=N: the battle stage a0stgNNN.x loaded (its models: an effect may draw them)
 	std::string stagefile;            // stagefile=<file>: that file is read for it instead of <battle>/a0stgNNN.x
 	bool stagedraw = false;           // stagedraw=1: the stage is drawn behind the actors, by its own render task
+	bool gamecamera = false;          // gamecamera=1: the game's camera code plays the tracks the effect starts, around the actors as they move
+	int camvar = 0;                   // camvar=N: the camera script's variable 0, the opening shot (default 0)
+	std::string cameratrack;          // cameratrack=<file>: the track the effect's setup starts is this file, as FFNx plays effect_NNN.bcam
 	uint32_t seed = 12345;
 	std::string exe, magic, battle, out, camera, overrides;
 	std::string body[7], weapon[7];   // slotK= / weaponK=: the battle's cast, one file per slot
 	std::vector<int> target_slots;    // target=K[,K..]: the effect's targets (default: enemy slots 3..)
+	int target_slots_first() const { return target_slots.empty() ? 3 : target_slots[0]; }
 	bool placed[7] = {}; int pos[7][3] = {}; int yaw[7] = { 0, 0, 0, 2048, 2048, 2048, 2048 }; // posK= / yawK=
 	int idle[7] = {};                 // idleK=N: the animation each actor loops
 	struct Step { int anim, ticks, offset[3]; };
@@ -338,9 +343,14 @@ static int __cdecl s_sound(uint32_t sound, uint32_t, uint32_t) { if (g_rec) g_ev
 // a camera track started (its bytes, not its address: a new effect's own copy has another), written with the
 // next tick (its setup starts it before the first)
 static std::vector<BattleEvent> g_cameras;
+static std::vector<uint8_t> g_camera_track;   // cameratrack=
+static bool g_in_setup = false;
+static void play_camera_track(uint32_t track);
 static int __cdecl s_camera(uint32_t track)
 {
 	if (IsBadReadPtr((void *)track, 8)) return 0;
+	if (g_in_setup && !g_camera_track.empty()) track = (uint32_t)g_camera_track.data();
+	if (O.gamecamera) play_camera_track(track);
 	const uint32_t size = *(const uint16_t *)(track + 6);
 	uint32_t hash = 2166136261u;
 	if (!IsBadReadPtr((void *)track, size))
@@ -766,6 +776,43 @@ static void render_actors()
 	}
 }
 
+// gamecamera=: Battle_PlayCameraAnimation 0x5099A0 (the original, it is hooked) starts the track; each tick ends as BattleRender_UpdateTasksAndSubmitFrame
+// 0x500900: updateBattleCamera 0x504060 (the script VM, the keyframe player reading the actors as they stand); the next tick draws through that view
+static void play_camera_track(uint32_t track)
+{
+	uint8_t *code = (uint8_t *)0x5099A0, jump[5];
+	const Patch *patch = std::find_if(g_patches, g_patches + g_npatches, [](const Patch &p) { return p.at == 0x5099A0; });
+	memcpy(jump, code, 5);
+	memcpy(code, patch->orig, 5);
+	__try { ((uint32_t (__cdecl *)(uint32_t))0x5099A0)(track); }
+	__except (filter(GetExceptionInformation())) {}
+	memcpy(code, jump, 5);
+}
+static bool call0(uint32_t fn);
+static void init_game_camera()
+{
+	static const int16_t fallback[6] = { 0, -1500, 6000, 0, -500, -1000 };
+	const int16_t *view = O.castcam ? O.castcam_pose : fallback;
+	call0(0x5041E0);                                  // InitCameraStruct
+	*(int16_t *)0x1D9771E = 0;                        // Battle_Camera_ReturnViewBlend: no blend pending
+	for (uint32_t base : { 0xB8B7F0u, 0xB8B800u })    // the camera and the view it returns to
+	{
+		memcpy((void *)base, view, 6);
+		memcpy((void *)(base + 8), view + 3, 6);
+	}
+	*(int16_t *)0x1D8E038 = 0x280; *(int16_t *)0x1D977A0 = 0x280;   // the projection distance and the one it returns to
+}
+static void game_camera_view()
+{
+	if (!call0(0x5033E0)) printf("view matrix build faulted %08lX at eip %08lX\n", g_fault_code, g_fault_eip);
+	((void (__cdecl *)(int32_t, int))0x45D7F0)(*(int16_t *)0x1D8E038, 26);
+}
+static void update_game_camera()
+{
+	__try { ((void (__cdecl *)())0x504060)(); }
+	__except (filter(GetExceptionInformation())) {}
+}
+
 static void apply_pending(std::vector<Pending> v)
 {
 	g_pending.clear();
@@ -983,6 +1030,9 @@ static void setup_targeting()
 	const uint32_t caster = 0x1D972C0 + 0x9C * O.caster;
 	__try
 	{
+		// it reads the actors' bones (GetEffectSpawnPosition 0x502170), posed each tick in the battle: before the first tick here
+		for (int k = 0; k < 7; k++)
+			if (g_drawn_slot[k]) ((int (__cdecl *)(uint32_t))0x508F60)(0x1D972C0 + 0x9C * k);
 		((char (__cdecl *)(char, uint16_t))0x50D300)((char)O.caster, g_target_mask);
 		((void (__cdecl *)(uint32_t, uint32_t))0x56CE30)(caster + 12, caster + 0x40);
 	}
@@ -1034,6 +1084,8 @@ static bool load_models()
 		g_drawn_slot[slot] = true;
 		// as BattleEntity_InitAnimationTask 0x5027D0: what the game's effects read of it (a cast's glow: +0x24 its height, +0x26 its size)
 		*(int16_t *)(e + 0x24) = 0;
+		// based_x/y/z_scale, monster_size_scale (BattleEntity_InitAnimationTask 0x5027D0): the camera's actor frames are scaled by the last (getCameraScalingFactor 0x50D790)
+		for (uint32_t scale : { 0x94u, 0x96u, 0x98u, 0x9Au }) *(int16_t *)(e + scale) = 0x1000;
 		if (uint32_t data = *(uint32_t *)(e + 0x64))
 			if (uint32_t skeleton = *(uint32_t *)data) *(int16_t *)(e + 0x26) = (int16_t)(*(int16_t *)(skeleton + 2) * 4);
 		*(uint32_t *)(e + 0x7C) = 0xFFFFFFFF;       // every object visible
@@ -1094,8 +1146,10 @@ static bool run_setup()
 		uint32_t fn = 0;
 		((void (__cdecl *)(int, uint32_t *))0x50AF20)(O.eff, &fn); // Magic_GetIDLoad
 		g_setup_fn = fn;
-		*(uint16_t *)0x1D97728 = 0xFFFF;
+		*(uint16_t *)0x1D97728 = O.gamecamera ? (uint16_t)O.camvar : 0xFFFF;
+		g_in_setup = true;
 		*(uint32_t *)C3_28 = ((uint32_t (__cdecl *)(uint32_t))fn)(0x1D99A78);
+		g_in_setup = false;
 		return true;
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
@@ -1154,6 +1208,9 @@ static bool parse(int argc, char **argv)
 		else if (k == "model") O.model = atoi(v.c_str());
 		else if (k == "stage") O.stage = atoi(v.c_str());
 		else if (k == "stagefile") O.stagefile = v;
+		else if (k == "gamecamera") O.gamecamera = atoi(v.c_str()) != 0;
+		else if (k == "camvar") O.camvar = atoi(v.c_str());
+		else if (k == "cameratrack") O.cameratrack = v;
 		else if (k == "stagedraw") O.stagedraw = atoi(v.c_str()) != 0;
 		else if (k == "sequences") O.sequences = atoi(v.c_str()) != 0;
 		else if (k == "castseq") O.castseq = atoi(v.c_str());
@@ -1544,6 +1601,12 @@ int main(int argc, char **argv)
 	call0(0x56F9A0); // BS_memsetVars2: hit-effect queue (screen fades...)
 	if (O.sequences) *(uint32_t *)0x1D96A8C = ((uint32_t (__cdecl *)())0x506BF0)();
 	if (O.sequences) *(uint32_t *)0x1D96AA0 = 0x209FAA8;
+	if (O.gamecamera) init_game_camera();
+	if (!O.cameratrack.empty())
+	{
+		g_camera_track = readfile(O.cameratrack);
+		if (g_camera_track.empty()) printf("missing camera track %s\n", O.cameratrack.c_str());
+	}
 	int t = 0, cast_ticks = 0;
 	// The cast: the caster plays its cast plan (what its action sequence plays before the effect
 	// starts, BattleActionSequence_Tick_MagicCast 0x50A9A0), the ticks recorded from castcam; then the
@@ -1622,6 +1685,8 @@ int main(int argc, char **argv)
 	printf("effect %d: setup ok\n", O.eff);
 	for (const auto &poke : O.pokes) memcpy((void *)poke.first, poke.second.data(), poke.second.size());
 	std::vector<Pending> keep = g_pending;
+	// the first tick is seen through the track, not through the view it starts from (no cast before it: the battle's view here is only a preview's)
+	if (O.gamecamera && !cast_ticks) update_game_camera();
 	for (; t < O.ticks; t++)
 	{
 		g_tick = t;
@@ -1629,7 +1694,8 @@ int main(int argc, char **argv)
 		apply_pending(keep);
 		dump_vram_queue();                 // uploads queued by the setup / the loads applied before this tick
 		env_reset();
-		set_camera(t - cast_ticks);
+		if (O.gamecamera) game_camera_view();
+		else set_camera(t - cast_ticks);
 		g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear(); g_notes.clear();
 		g_rec = true;
 		int r = 0;
@@ -1648,6 +1714,14 @@ int main(int argc, char **argv)
 		if (!ok) { printf("tick %d faulted %08lX at eip %08lX addr %08lX\n", t, g_fault_code, g_fault_eip, g_fault_addr); break; }
 		dump_vram_queue();                 // uploads this tick queued
 		write_tick(t);
+		if (O.gamecamera) update_game_camera();
+		if (getenv("FXR_CAMERA"))
+		{
+			const uint32_t a = 0x1D972C0 + 0x9C * O.caster, b = 0x1D972C0 + 0x9C * O.target_slots_first();
+			const int16_t *eye = (const int16_t *)0xB8B7F0, *at = (const int16_t *)0xB8B7F8;
+			printf("cam %d caster %d %d %d target %d %d %d eye %d %d %d at %d %d %d h %d shot %04X\n", t, *(int32_t *)(a + 0x54), *(int32_t *)(a + 0x58), *(int32_t *)(a + 0x5C),
+				*(int32_t *)(b + 0x54), *(int32_t *)(b + 0x58), *(int32_t *)(b + 0x5C), eye[0], eye[1], eye[2], at[0], at[1], at[2], *(int16_t *)0x1D8E038, *(uint16_t *)0x1D97718);
+		}
 		keep = g_pending;
 		if (r == 0 || *(uint32_t *)C3_28 == 0) { t++; break; }
 	}

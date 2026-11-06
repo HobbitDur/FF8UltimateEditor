@@ -731,6 +731,43 @@ def test_the_stage_draws_behind_the_actors(tmp_path):
     assert (image[:40].astype(int).sum(2) > 80).mean() > 0.5
 
 
+def _camera_ticks(log):
+    return {int(fields[1]): [int(value) for value in fields[3:6] + fields[11:14] + fields[15:18]]
+            for fields in (line.split() for line in log.splitlines() if line.startswith("cam "))}
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/battle/c0m092.dat", "extracted_files/magic/mag140-158-159-258-331-332.tim")
+def test_the_game_camera_follows_squall(tmp_path, monkeypatch):
+    """Effect 159's track is in the caster's frame (mode 0x90), scaled by its monster_size_scale: the game's camera code plays it around Squall where he
+    stands and an edited track (cameratrack=) plays instead. A 0 scale made the keyframes raw world coordinates, below the floor."""
+    import numpy as np
+    monkeypatch.setenv("FXR_CAMERA", "1")
+    start = "castcam=-3981,-3552,-7305,18,-1552,-305"
+    log, _out = _record_159(tmp_path, "gamecamera=1", "camvar=0", start)
+    ticks = _camera_ticks(log)
+    caster, eye, target = np.split(np.array(ticks[0]), 3)
+    assert caster.tolist() == [0, 0, 1800] and np.abs(eye - (57, -667, 4060)).max() <= 2 and np.abs(target - (35, -630, 1687)).max() <= 2
+    # where the sequence moved him the camera looks at him, up in the air
+    caster, eye, target = np.split(np.array(ticks[40]), 3)
+    assert caster[2] == -1700 and eye[1] < -1000 and target[1] < -1000 and np.abs(target[[0, 2]] - caster[[0, 2]]).max() < 500
+    exe = EXE.read_bytes()
+    size = 1456
+    track = bytearray(exe[_camera_address(159) - 0x400000:][:size])
+    edited = tmp_path / "track.bin"
+    keyframe = track.find(bytes.fromhex("3d 00 eb 03 f4 19"))            # block 0's eye: 61, 1003, 6644
+    assert keyframe > 0
+    track[keyframe:keyframe + 2] = (1061).to_bytes(2, "little", signed=True)
+    edited.write_bytes(track)
+    (tmp_path / "edited").mkdir()
+    log, _out = _record_159(tmp_path / "edited", "gamecamera=1", "camvar=0", start, f"cameratrack={edited}")
+    assert _camera_ticks(log)[0][3] != ticks[0][3]
+
+
+def _camera_address(effect):
+    from Fujin.cameraeffectmanager import load_effect_camera_data
+    return next(entry["eng_address"] for entry in load_effect_camera_data()["tracks"] if entry["effect_id"] == effect)
+
+
 def test_cure_cast_is_the_games_sequence(tmp_path):
     """Cure as the game plays it: Squall's sequence 11 starts the effect (it asks after its 45 ticks), the recording ends with the effect,
     and the cast's glow stands at his height (+0x24 as the game inits it: 0, not above his head)."""

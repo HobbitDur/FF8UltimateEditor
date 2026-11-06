@@ -112,6 +112,7 @@ class BattleCast:
     cast_sequence: int = None                          # the caster's action sequence around the effect, None: it has none
     anim_sets: tuple = ()                              # ((exe address of a set, the .animset file played instead), ...)
     stage: tuple = None                                # (battle stage id, its a0stgNNN.x) drawn behind the actors
+    opening_shot: int = 0                              # the camera script's variable 0 (the Camera tab's Opening shot)
 
     def key(self):
         """The cache tag of this cast: its files (where they are and their state on disk), roles,
@@ -124,6 +125,7 @@ class BattleCast:
                 parts.append(f"animset|{address:X}|{os.path.abspath(path)}|{stat.st_size}|{stat.st_mtime_ns}")
             except OSError:
                 pass
+        parts.append(f"opening{self.opening_shot}")
         if self.stage:
             try:
                 stat = os.stat(self.stage[1])
@@ -491,7 +493,8 @@ class NativePreviewView(QWidget):
         return BattleCast(slots, cast.caster, cast.target, cast.positions, cast.yaws, cast.camera,
                           sorted(set(not_imported)), cast.idle, cast.cast_camera,
                           actors, self.lab or bool(params), params, self.lab, program, sequence,
-                          self.anim_sets(self.effect_id) if self.effect_id is not None else (), stage)
+                          self.anim_sets(self.effect_id) if self.effect_id is not None else (), stage,
+                          self.cast_source.inputs().opening)
 
     def _cast_changed(self):
         """Show the recording already made with this cast, if any."""
@@ -689,17 +692,20 @@ class NativePreviewView(QWidget):
         self.anim_set_names = [os.path.basename(path) for _address, path in cast.anim_sets]
         if cast.cast_sequence is not None:
             args.append(f"castseq={cast.cast_sequence}")
-            eye, target = cast.cast_camera or (INITIAL_EYE, INITIAL_TARGET)
-            args.append("castcam=" + ",".join(str(int(round(v))) for v in (*eye, *target)))
+        # the game's camera code plays the tracks the effect starts, around the actors as its sequences move them: from the battle's view, an edited
+        # track in place of the exe's. The poses worked out here (_camera_lines) only say when the camera changed and a new recording is due
+        eye, target = cast.cast_camera or (INITIAL_EYE, INITIAL_TARGET)
+        args.append("castcam=" + ",".join(str(int(round(v))) for v in (*eye, *target)))
+        args += ["gamecamera=1", f"camvar={cast.opening_shot}"]
+        _manager, track = self.camera_track(self.effect_id)
+        if track is not None and track.modified:
+            path = os.path.join(folder, "camera_track.bin")
+            with open(path, "wb") as file:
+                file.write(track.to_bytes())
+            args.append(f"cameratrack={path}")
         self._not_imported = cast.not_imported
-        self.camera_used = False
         lines = self._camera_lines(cast)
-        if lines:
-            camera = output[:-4] + "_camera.txt"
-            with open(camera, "w", encoding="ascii") as file:
-                file.write("\n".join(lines) + "\n")
-            args.append(f"camera={camera}")
-            self.camera_used = True
+        self.camera_used = bool(lines)
         return args, output, lines
 
     def _clean_scratch(self):
