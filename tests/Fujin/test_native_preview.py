@@ -126,6 +126,14 @@ def test_effect_camera_lines():
 
 
 
+def test_the_encounter_picks_the_stage_intro_the_view_comes_from():
+    from Fujin.nativepreview import BattleCast
+    stage = (6, __file__)
+    keys = {BattleCast({}, 0, 3, stage=stage, stage_camera=byte).key() for byte in (0, 1)}
+    assert len(keys) == 2                                                      # another recording
+    assert "stagecam" not in BattleCast({}, 0, 3).key()
+
+
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag000-049.tim",
                      "extracted_files/battle/a8def.tim", "extracted_files/battle/d0c000.dat",
                      "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m002.dat")

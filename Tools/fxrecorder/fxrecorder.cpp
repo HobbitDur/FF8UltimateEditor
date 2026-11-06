@@ -44,7 +44,8 @@
 // [castafter=a:n,..: the caster's animations while the effect runs, n = 0 looping to the end]
 // [animset=ADDRESS:<file>: the animation set at this exe address is this file]
 // [stage=N: the battle stage N is loaded] [stagefile=<file>: read from that file] [stagedraw=1: and drawn each tick by its own render task]
-// [gamecamera=1: the game's camera code plays the tracks started (from castcam's view), no camera file] [camvar=N: opening shot] [cameratrack=<file>: the setup's track]
+// [gamecamera=1: the game's camera code plays the tracks started (from castcam's view, with stagedraw= from the end of the stage's intro shot stagecam=N), no camera file]
+// [camvar=N: opening shot] [cameratrack=<file>: the setup's track]
 // [sequences=1: the game's sequence code runs on the actors] [castseq=N: the caster's action sequence N before and around the effect]
 // [each a:n can be a:n:x:y:z: the caster stands at that model-local offset meanwhile - AnimSeq
 // variables 0x0D-0x0F, the step forward of a cast (Squall's 0, 0, -792), default 0, 0, 0]
@@ -91,6 +92,7 @@ struct Opt
 	bool stagedraw = false;           // stagedraw=1: the stage is drawn behind the actors, by its own render task
 	bool gamecamera = false;          // gamecamera=1: the game's camera code plays the tracks the effect starts, around the actors as they move
 	int camvar = 0;                   // camvar=N: the camera script's variable 0, the opening shot (default 0)
+	int stagecam = 0;                 // stagecam=N: the stage's intro shot the battle's view comes from: the encounter's camera byte (scene.out +2, +3; set << 4 | shot)
 	std::string cameratrack;          // cameratrack=<file>: the track the effect's setup starts is this file, as FFNx plays effect_NNN.bcam
 	uint32_t seed = 12345;
 	std::string exe, magic, battle, out, camera, overrides;
@@ -812,6 +814,47 @@ static void update_game_camera()
 	__try { ((void (__cdecl *)())0x504060)(); }
 	__except (filter(GetExceptionInformation())) {}
 }
+// The battle's view: the stage's intro shot (BS_CameraInit 0x500F70, in the stage's command 2, started its script) played by the game's camera code, each
+// shot jumped to its last frame instead of waited for (CurrentAnimationTime +12 = TotalAnimationDuration +14 - 1 of the 2 BattleStageCameraMainData at 0x1D977A8;
+// AutoTest's finish_camera_shots): what it leaves is the view the cast and the effect start from, and return to. A byte the stage has no shot for leaves castcam's
+static void finish_stage_intro()
+{
+	__try
+	{
+		for (int k = 0; k < 7; k++)
+			if (g_drawn_slot[k]) ((int (__cdecl *)(uint32_t))0x508F60)(0x1D972C0 + 0x9C * k);
+	}
+	__except (filter(GetExceptionInformation())) {}
+	*(uint16_t *)0x1D97728 = (uint16_t)O.stagecam;
+	bool seen = false;
+	for (int i = 0; i < 256; i++)
+	{
+		update_game_camera();
+		bool playing = false;
+		for (uint32_t shot = 0; shot < 2; shot++)
+		{
+			const uint32_t data = 0x1D977A8 + shot * 0x524;
+			if (*(uint8_t *)data == 0xFF) continue;
+			playing = true;
+			const int16_t total = *(int16_t *)(data + 14);
+			if (total > 1 && *(int16_t *)(data + 12) < total - 1) *(int16_t *)(data + 12) = total - 1;
+		}
+		if (seen && !playing) break;
+		if (!seen && !playing && i >= 2) break;
+		seen |= playing;
+	}
+	*(uint32_t *)0x1D99A34 = 0;                       // CURRENT_CAMERA_SETTING_ADDR: its script waits for the battle's first action, none here
+	*(uint16_t *)0x1D97718 = 0;                       // no shot running, no blend: the camera code leaves the view alone
+	*(int16_t *)0x1D9771E = 0;
+	memcpy(O.castcam_pose, (void *)0xB8B7F0, 6);
+	memcpy(O.castcam_pose + 3, (void *)0xB8B7F8, 6);
+	O.castcam = true;
+	memcpy((void *)0xB8B800, O.castcam_pose, 6);        // the view it returns to
+	memcpy((void *)0xB8B808, O.castcam_pose + 3, 6);
+	*(int16_t *)0x1D977A0 = *(int16_t *)0x1D8E038;    // the projection distance it returns to
+	printf("stage view: shot %02X%s, eye %d %d %d at %d %d %d, h %d\n", O.stagecam, seen ? "" : " (none)", O.castcam_pose[0], O.castcam_pose[1], O.castcam_pose[2],
+		O.castcam_pose[3], O.castcam_pose[4], O.castcam_pose[5], *(int16_t *)0x1D8E038);
+}
 
 static void apply_pending(std::vector<Pending> v)
 {
@@ -1210,6 +1253,7 @@ static bool parse(int argc, char **argv)
 		else if (k == "stagefile") O.stagefile = v;
 		else if (k == "gamecamera") O.gamecamera = atoi(v.c_str()) != 0;
 		else if (k == "camvar") O.camvar = atoi(v.c_str());
+		else if (k == "stagecam") O.stagecam = atoi(v.c_str());
 		else if (k == "cameratrack") O.cameratrack = v;
 		else if (k == "stagedraw") O.stagedraw = atoi(v.c_str()) != 0;
 		else if (k == "sequences") O.sequences = atoi(v.c_str()) != 0;
@@ -1595,13 +1639,14 @@ int main(int argc, char **argv)
 	if (!a8def.empty()) dump_tim(0, a8def.data());
 	else printf("missing battle file a8def.tim (the battle's shared effect textures)\n");
 	g_loading_actors = true;
+	if (O.gamecamera) init_game_camera();   // before the stage's command 2, as in the battle's init: it clears the camera script
 	bool loaded = !(O.cast() || O.model >= 0) || load_models();
 	g_loading_actors = false;
 	if (!loaded) return 1;
 	call0(0x56F9A0); // BS_memsetVars2: hit-effect queue (screen fades...)
 	if (O.sequences) *(uint32_t *)0x1D96A8C = ((uint32_t (__cdecl *)())0x506BF0)();
 	if (O.sequences) *(uint32_t *)0x1D96AA0 = 0x209FAA8;
-	if (O.gamecamera) init_game_camera();
+	if (O.gamecamera && O.stagedraw) finish_stage_intro();
 	if (!O.cameratrack.empty())
 	{
 		g_camera_track = readfile(O.cameratrack);
@@ -1636,7 +1681,8 @@ int main(int argc, char **argv)
 		g_tick = t;
 		dump_vram_queue();
 		env_reset();
-		if (O.castcam)
+		if (O.gamecamera) game_camera_view();
+		else if (O.castcam)
 		{
 			memcpy((void *)0xB8B7F0, O.castcam_pose, 6);
 			memcpy((void *)0xB8B7F8, O.castcam_pose + 3, 6);

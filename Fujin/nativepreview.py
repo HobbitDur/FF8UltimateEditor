@@ -113,6 +113,7 @@ class BattleCast:
     anim_sets: tuple = ()                              # ((exe address of a set, the .animset file played instead), ...)
     stage: tuple = None                                # (battle stage id, its a0stgNNN.x) drawn behind the actors
     opening_shot: int = 0                              # the camera script's variable 0 (the Camera tab's Opening shot)
+    stage_camera: int = 0                              # the stage's intro shot the battle's view is the end of: the encounter's main camera byte
 
     def key(self):
         """The cache tag of this cast: its files (where they are and their state on disk), roles,
@@ -126,6 +127,8 @@ class BattleCast:
             except OSError:
                 pass
         parts.append(f"opening{self.opening_shot}")
+        if self.stage:
+            parts.append(f"stagecam{self.stage_camera}")
         if self.stage:
             try:
                 stat = os.stat(self.stage[1])
@@ -494,7 +497,12 @@ class NativePreviewView(QWidget):
                           sorted(set(not_imported)), cast.idle, cast.cast_camera,
                           actors, self.lab or bool(params), params, self.lab, program, sequence,
                           self.anim_sets(self.effect_id) if self.effect_id is not None else (), stage,
-                          self.cast_source.inputs().opening)
+                          self.cast_source.inputs().opening, self._stage_camera())
+
+    def _stage_camera(self):
+        combo = self.encounter_combo
+        encounter = combo.currentData() if combo is not None else None
+        return encounter.camera_main if encounter is not None else 0
 
     def _cast_changed(self):
         """Show the recording already made with this cast, if any."""
@@ -697,6 +705,8 @@ class NativePreviewView(QWidget):
         eye, target = cast.cast_camera or (INITIAL_EYE, INITIAL_TARGET)
         args.append("castcam=" + ",".join(str(int(round(v))) for v in (*eye, *target)))
         args += ["gamecamera=1", f"camvar={cast.opening_shot}"]
+        if cast.stage:
+            args.append(f"stagecam={cast.stage_camera}")
         _manager, track = self.camera_track(self.effect_id)
         if track is not None and track.modified:
             path = os.path.join(folder, "camera_track.bin")

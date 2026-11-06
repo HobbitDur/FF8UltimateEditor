@@ -303,7 +303,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   **Camera**: the recorder runs the game's camera code (`gamecamera=1`: `updateBattleCamera` 0x504060, its script VM and keyframe player), so a track in
   an actor's frame follows that actor as its sequence moves it. `camvar=N` is the Camera tab's Opening shot; a changed track goes in with `cameratrack=file`,
   as FFNx plays `effect_NNN.bcam`. Fujin's own player (`FF8GameData/dat/battlecamera.py`) still drives the Camera tab, where no sequence moves the actors.
-  The view the track starts from is the setup's, not the end of the game's opening shot or the stage's intro.
+  With a battle stage, the cast and the effect start from the end of the stage's intro shot (`stagecam=N`: the encounter's main camera byte, 0 without one): the game's
+  camera code plays the shot, jumped to its last frame as AutoTest's `finish_camera_shots` does. Without a stage they start from the setup's view.
   **Animation sets**: Import, FFNx animation sets: `effect_NNN.animset` files (Ifrit's "Exe - Limit anim." tab or "Export anim sets…"
   write them). The recorder (`animset=address:file`) binds the file in place of the exe's set, as FFNx does in the game, so the Overview
   and the part tabs play it. A new effect plays its own copy instead (Data tab).

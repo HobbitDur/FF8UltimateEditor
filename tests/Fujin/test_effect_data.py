@@ -731,6 +731,30 @@ def test_the_stage_draws_behind_the_actors(tmp_path):
     assert (image[:40].astype(int).sum(2) > 80).mean() > 0.5
 
 
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/battle/a0stg006.x", "extracted_files/battle/c0m092.dat",
+                     "extracted_files/magic/mag140-158-159-258-331-332.tim")
+def test_the_battle_view_is_the_end_of_the_stage_intro(tmp_path):
+    """With a stage the camera starts where the encounter's intro shot ends, the shot jumped to its end by the game's camera code as AutoTest does: the shot's last
+    pose, whatever the keyframes played (a set the stage doesn't have: no shot, the view asked for)."""
+    import re
+    from FF8GameData.battlestage.stagecamera import read_stage_camera
+    from FF8GameData.dat.battlecamera import BattleCameraContext, CameraActor, play_camera_animation
+    path = ROOT / "extracted_files/battle/a0stg006.x"
+    stage = read_stage_camera(str(path), 6)
+    start = "castcam=-3981,-3552,-7305,18,-1552,-305"
+
+    def view(byte):
+        (tmp_path / str(byte)).mkdir()
+        log, _out = _record_159(tmp_path / str(byte), "gamecamera=1", "camvar=0", start, "stage=6", f"stagefile={path}", "stagedraw=1", f"stagecam={byte}")
+        assert "faulted" not in log, log[-400:]
+        return [int(value) for value in re.search(r"stage view: shot \w+( \(none\))?, eye (\S+) (\S+) (\S+) at (\S+) (\S+) (\S+), h (\S+)", log).groups()[1:]]
+
+    for byte in (0, 1, 16):
+        pose = play_camera_animation(stage.intro_animation(byte), BattleCameraContext(CameraActor(), CameraActor()))[-1]
+        assert view(byte) == [*pose.eye, *pose.target, pose.projection]
+    assert view(0xF0) == [-3981, -3552, -7305, 18, -1552, -305, 0x280]
+
+
 def _camera_ticks(log):
     return {int(fields[1]): [int(value) for value in fields[3:6] + fields[11:14] + fields[15:18]]
             for fields in (line.split() for line in log.splitlines() if line.startswith("cam "))}
