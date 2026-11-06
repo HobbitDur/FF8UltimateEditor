@@ -43,7 +43,7 @@ from Hyne.hynesavepages import (
     ShopsPage, WorldMapPage,
 )
 from Hyne.hynemanager import (
-    HyneManager, LEARNED_ABILITY_BITS, SAVE_ABILITY_IDS, TT_CARD_COPIES_MASK, TT_NB_RARE_CARDS, TT_NB_REGIONS, TT_NB_LAST_RULES,
+    HyneManager, LEARNED_ABILITY_BITS, SAVE_ABILITY_IDS, kernel_widens_abilities, TT_CARD_COPIES_MASK, TT_NB_RARE_CARDS, TT_NB_REGIONS, TT_NB_LAST_RULES,
     TT_VAR_REGION_RULES, TT_VAR_REGION_TRADE_RULE, TT_VAR_LAST_RULES, TT_VAR_LAST_REGIONS,
     TT_VAR_QUEEN_LOCATION, TT_VAR_TRADE_RATING_REGION, TT_VAR_TRADE_RATING, TT_VAR_DEGENERATION,
     TT_VAR_QUEEN_TRADE_RULE, TT_VAR_QUEEN_QUEST, TT_VAR_BGU_DIALOGS, TT_VAR_CC_QUEST, TT_VAR_BGU_WINS,
@@ -429,7 +429,7 @@ class HyneWidget(QWidget):
         self.kernel_notice.setVisible(not (names.abilities and names.weapons))
         self.manager.set_kernel_extensions(
             items=bool(names.items) and max(names.items) != FIRST_ADDED_ITEM - 1,
-            abilities=sum(names.ability_groups) > LEARNED_ABILITY_BITS,
+            abilities=kernel_widens_abilities(names.ability_groups),
             magic=any(magic_id >= EXTENDED_MAGIC_FIRST for magic_id in names.magic))
         commands = names.ability_group_ids(*COMMAND_ABILITY_GROUPS)
         equipped = names.ability_group_ids(*EQUIPPED_ABILITY_GROUPS)
@@ -1948,9 +1948,10 @@ class HyneWidget(QWidget):
     # ── Items tab ────────────────────────────────────────────────────────
 
     ITEM_EXTENSION_TEXT = {
-        "none": "198 inventory slots.",
-        "stale": ("198 inventory slots. The save has an FFNx AddMoreItems block that FFNx ignores "
-                  "(damaged, or the inventory changed after it): FFNx empties slots 199-255."),
+        "none": ("255 inventory slots: this kernel.bin adds items (FFNx AddMoreItems). The save holds slots "
+                 "199-255 from the first time one of them has an item."),
+        "stale": ("255 inventory slots: this kernel.bin adds items (FFNx AddMoreItems). The save has a block for "
+                  "them that FFNx ignores (damaged, or the inventory changed after it), so they start empty."),
         "extended": ("255 inventory slots (FFNx AddMoreItems). The first 198 are also the save's "
                      "own inventory, which the game without FFNx reads."),
     }
@@ -1967,15 +1968,9 @@ class HyneWidget(QWidget):
         self._configure_list_table(self.items_table)
         self.item_extension_label = QLabel()
         self.item_extension_label.setWordWrap(True)
-        self.item_extension_button = QPushButton("Use 255 slots (FFNx AddMoreItems)")
-        self.item_extension_button.setToolTip(
-            "Add FFNx AddMoreItems' inventory block to this save: slots 199-255, after the 198 the\n"
-            "game has. Only FFNx with AddMoreItems uses them; the game without it keeps the first 198.\n"
-            "Items 199-255 themselves come from a kernel.bin made with SolomonRing.")
-        self.item_extension_button.clicked.connect(self._enable_item_extension)
-        top = QHBoxLayout()
-        top.addWidget(self.item_extension_label, 1)
-        top.addWidget(self.item_extension_button)
+        self.item_extension_label.setToolTip(
+            "A kernel.bin that adds items gives FFNx 255 slots, and the tool follows: open yours with the\n"
+            "toolbar's Import complementary. The game without FFNx keeps the first 198.")
         self.all_items_button = QPushButton("All items")
         self.all_items_button.setToolTip(f"Fill the inventory with every item, {ITEM_MAX_QUANTITY} of each")
         self.all_items_button.clicked.connect(self._fill_all_items)
@@ -1992,7 +1987,7 @@ class HyneWidget(QWidget):
         bottom.addWidget(self.sort_by_name_button)
         inventory = QWidget()
         layout = QVBoxLayout(inventory)
-        layout.addLayout(top)
+        layout.addWidget(self.item_extension_label)
         layout.addWidget(self.items_table)
         layout.addLayout(bottom)
         self.items_extras_page = ItemsExtrasPage(self)
@@ -2023,19 +2018,10 @@ class HyneWidget(QWidget):
         empty = [(0, 0)] * (len(self.manager.item_entries) - len(held))
         self._set_item_slots(sorted(held, key=lambda pair: key(pair[0])) + empty)
 
-    def _enable_item_extension(self):
-        self.manager.enable_item_extension()
-        self._reload_items()
-        dirty_state = getattr(self, "dirty_state", None)
-        if dirty_state is not None:
-            dirty_state.mark()
-
     def _reload_items(self):
         state = self.manager.item_extension
-        armed = self.manager.kernel_items_extended
-        self.item_extension_label.setText(self.ITEM_EXTENSION_TEXT[state] if armed else
+        self.item_extension_label.setText(self.ITEM_EXTENSION_TEXT[state] if self.manager.kernel_items_extended else
                                           self.ITEM_EXTENSION_HIDDEN_TEXT[state != "none"])
-        self.item_extension_button.setVisible(armed and state != "extended")
         choices = self._item_choices()
         self.items_table.setRowCount(0)
         self.items_table.setRowCount(len(self.manager.item_entries))

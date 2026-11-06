@@ -532,7 +532,7 @@ class BattlePage(SavePage):
 
 
 class ShopsPage(SavePage):
-    """Which shops were visited and which items they show."""
+    """Which shops were visited, for Call Shop, and what they sell."""
 
     # The shops selling something else than the common list (myst6re's Hyne): shop -> item table
     SHOP_ITEM_TABLES = {0: 0, 8: 2, 17: 3, 18: 4, 19: 5}
@@ -548,24 +548,28 @@ class ShopsPage(SavePage):
         self.shop_list.setFixedWidth(240)
         self.shop_list.currentRowChanged.connect(self._fill_shop)
         self.visited_check = QCheckBox("Shop visited once")
-        self.visited_check.setToolTip("Opening a shop turns its items on, but the rare ones (in italics).\n"
-                                      "Closing one puts back the bytes it holds before its first visit.")
+        self.visited_check.setToolTip("The game ticks this when the shop opens. The Call Shop ability lists only "
+                                      "the shops ticked.\nIt changes nothing to what a shop sells.")
         self.visited_check.toggled.connect(self._on_visited)
         self.item_checks = []
         grid = QGridLayout()
         for slot in range(SHOP_NB_ITEMS):
             check = QCheckBox()
-            check.toggled.connect(lambda checked, s=slot: self._on_item(s, checked))
+            check.setEnabled(False)
             self.item_checks.append(check)
             grid.addWidget(check, slot % 8, slot // 8)
-        items_group = QGroupBox("Items")
-        items_group.setToolTip("myst6re's Hyne notes that the game does not seem to use these values. The list is "
-                               "vanilla shop.bin's until a shop.bin is opened with the toolbar's Import complementary.")
+        items_group = QGroupBox("Items sold")
+        items_group.setToolTip("The list is vanilla shop.bin's until a shop.bin is opened with the toolbar's "
+                               "Import complementary.")
         items_group.setLayout(grid)
-        self.items_group = items_group
+        items_note = QLabel("Sold in italics only with the Familiar ability, the others always. A tick is what the "
+                            "shop had on sale at its last visit: the game works it out again each time a shop opens, "
+                            "so it can't be edited.")
+        items_note.setWordWrap(True)
         right = QVBoxLayout()
         right.addWidget(self.visited_check)
         right.addWidget(items_group)
+        right.addWidget(items_note)
         right.addStretch(1)
         layout = QHBoxLayout(self)
         layout.addWidget(self.shop_list)
@@ -599,21 +603,16 @@ class ShopsPage(SavePage):
             self.visited_check.setChecked(shops.is_visited(shop))
         items, rare = self._items(shop), self._rare(shop)
         for slot, check in enumerate(self.item_checks):
+            check.setVisible(items[slot] != 0)
             check.setText(self.tool.kernel_names.item_name(items[slot]) or f"Item {items[slot]}")
             font = QFont(check.font())
             font.setItalic(slot in rare)
             check.setFont(font)
-            with QSignalBlocker(check):
-                check.setChecked(shops.is_visited(shop) and shops.has_item(shop, slot))
-        self.items_group.setEnabled(shops.is_visited(shop))
+            check.setChecked(shops.is_visited(shop) and shops.has_item(shop, slot))
 
     def _on_visited(self, checked):
-        shop = self.shop_list.currentRow()
-        self.section("shops").set_visited(shop, checked, self._rare(shop))
+        self.section("shops").set_visited(self.shop_list.currentRow(), checked)
         self._fill_shop()
-
-    def _on_item(self, slot, checked):
-        self.section("shops").set_item(self.shop_list.currentRow(), slot, checked)
 
 
 class DrawPointsPage(SavePage):

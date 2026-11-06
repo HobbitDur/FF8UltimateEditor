@@ -22,7 +22,6 @@ from Hyne.hynemanager import (
     CRC_OFFSET_1, CRC_OFFSET_2, CRC_SPAN_LEN, CRC_SPAN_START, HyneManager, IMAGE_SIZE, crc16_ff8, lzss_compress,
     lzss_decompress,
 )
-from Hyne.hynesavemap import SHOP_UNVISITED_BYTES
 from Hyne.hynewidget import HyneWidget
 
 REPO = pathlib.Path(__file__).parent.parent.parent
@@ -223,15 +222,13 @@ class TestFieldsAreWhereTheSaveHasThem:
 
     def test_shops(self, manager):
         shops = manager.shops
-        shops.set_visited(2, True, rare_slots=(1, 3))
         start = 2768 + 2 * 20
-        assert manager.buffer[start + 16] == 1
-        assert list(manager.buffer[start:start + 4]) == [1, 0, 1, 0]
-        shops.set_item(2, 1, True)
-        assert shops.has_item(2, 1)
+        items = bytes(manager.buffer[start:start + 16])
+        shops.set_visited(2, True)
+        assert manager.buffer[start + 16] == 1 and shops.is_visited(2)
         shops.set_visited(2, False)
-        assert bytes(manager.buffer[start:start + 16]) == SHOP_UNVISITED_BYTES
-        assert not shops.is_visited(2)
+        assert manager.buffer[start + 16] == 0 and not shops.is_visited(2)
+        assert bytes(manager.buffer[start:start + 16]) == items    # the game rewrites them when a shop opens
 
     def test_names(self, manager):
         header = manager.header
@@ -431,14 +428,11 @@ class TestPages:
     def test_shop_page(self, widget):
         page = widget.shops_page
         page.shop_list.setCurrentRow(8)
-        assert not page.items_group.isEnabled()
+        assert page.item_checks[11].font().italic()   # a rare item of the Esthar shop
+        assert not page.item_checks[0].font().italic()
+        assert not page.item_checks[0].isEnabled()    # the game works them out itself
         page.visited_check.setChecked(True)
         assert widget.manager.shops.is_visited(8)
-        assert page.items_group.isEnabled()
-        assert not page.item_checks[11].isChecked()   # a rare item of the Esthar shop
-        assert page.item_checks[0].isChecked()
-        page.item_checks[0].setChecked(False)
-        assert not widget.manager.shops.has_item(8, 0)
         page.shop_list.setCurrentRow(0)
         assert not page.visited_check.isChecked()
 

@@ -44,7 +44,8 @@ slots in a 522-byte block in the image's unused tail, outside the CRC:
 FFNx uses the block only when it is valid AND its first 198 slots equal the savemap's own item
 table (otherwise the vanilla table was changed after it, by the game or a tool, and FFNx takes
 that table and empties slots 199-255). So with a block this tool edits its 255 slots and copies
-the first 198 into the savemap's table on save; without one the save is edited as vanilla.
+the first 198 into the savemap's table on save. With a kernel.bin that adds items there are 255 slots
+even without a block, as in FFNx, and the block is written once one of slots 199-255 holds an item.
 
 FFNx's AddMoreAbility (up to 255 kernel.bin abilities) keeps learned ability ids 128-254 in a
 524-byte block right after it, also outside the CRC; ids 0-127 stay in each GF's 16-byte field:
@@ -108,6 +109,7 @@ ABILITY_EXT_OFFSET = 0x1810           # FFNx AddMoreAbility learned-ability bloc
 ABILITY_EXT_MAGIC = 0x42415846
 ABILITY_EXT_VERSION = 1
 ABILITY_EXT_HEADER_SIZE = 12
+MAX_KERNEL_ABILITIES = 255
 ABILITY_EXT_GF_BYTES = LEARNED_ABILITY_BITS // 8                     # 16 per GF, per half
 ABILITY_EXT_NATIVE = ABILITY_EXT_OFFSET + ABILITY_EXT_HEADER_SIZE    # the learned fields' copy
 ABILITY_EXT_EXTENDED = ABILITY_EXT_NATIVE + NB_GF * ABILITY_EXT_GF_BYTES
@@ -156,6 +158,16 @@ TT_TRADE_RULE_MASK = 0x07
 # CC Group progress: a value = (variable 475's two bits << 8) | variable 477's low 5 bits
 TT_CC_QUEST_MASK = 0x1F
 TT_CC_DIALOG_MASK = 0x22
+
+
+def kernel_widens_abilities(group_sizes) -> bool:
+    """FFNx's test for its learned-ability block, from the entry counts of the 7 ability sections: more than
+    128 ids, or the menu group past them. It refuses a kernel.bin holding more than 255, or whose GF group
+    starts at 128 or later."""
+    total, first_gf, first_menu = sum(group_sizes), sum(group_sizes[:5]), sum(group_sizes[:6])
+    if total > MAX_KERNEL_ABILITIES or first_gf >= LEARNED_ABILITY_BITS:
+        return False
+    return total > LEARNED_ABILITY_BITS or first_menu >= LEARNED_ABILITY_BITS
 
 
 def item_extension_checksum(slot_bytes) -> int:
@@ -623,6 +635,8 @@ class HyneManager:
         # "extended": the FFNx AddMoreItems block is in use (255 slots); "stale": a block is
         # there but FFNx would ignore it (damaged, or the item table changed since); "none".
         self.item_extension = "none"
+        # Slots 199-255 of a kernel.bin that adds items while the save has no usable block; None otherwise.
+        self.added_item_slots = None
         # The same states for FFNx AddMoreAbility's learned-ability block.
         self.ability_extension = "none"
 
@@ -684,7 +698,8 @@ class HyneManager:
         self.world_map = WorldMapState(self.buffer)
         self.chocobo = ChocoboWorld(self.buffer)
         self.item_extension = self._item_extension_state()
-        if self.item_slots_extended:
+        self.added_item_slots = None
+        if self.item_extension == "extended" and self.item_slots_extended:
             self.item_entries = [
                 ItemEntry(self.buffer, ITEM_EXT_OFFSET + ITEM_EXT_HEADER_SIZE + i * ITEM_ENTRY_SIZE, i,
                           self.game_data)
@@ -696,6 +711,12 @@ class HyneManager:
                           self.game_data)
                 for i in range(NB_ITEMS)
             ]
+            if self.item_slots_extended:
+                self.added_item_slots = bytearray((ITEM_EXT_SLOTS - NB_ITEMS) * ITEM_ENTRY_SIZE)
+                self.item_entries += [
+                    ItemEntry(self.added_item_slots, (i - NB_ITEMS) * ITEM_ENTRY_SIZE, i, self.game_data)
+                    for i in range(NB_ITEMS, ITEM_EXT_SLOTS)
+                ]
 
     # ── FFNx AddMoreItems inventory block ────────────────────────────────
 
@@ -722,8 +743,9 @@ class HyneManager:
 
     @property
     def item_slots_extended(self):
-        """The 255 slots are what the tool edits: the save has the block, and FFNx would use it."""
-        return self.item_extension == "extended" and (self.kernel_items_extended or not self.follow_mod_files)
+        """The 255 slots are what the tool edits: as FFNx with a kernel.bin that adds items, whatever the save
+        holds; the CLI, which has no kernel.bin, goes by the save's block."""
+        return self.kernel_items_extended if self.follow_mod_files else self.item_extension == "extended"
 
     @property
     def abilities_extended(self):
@@ -748,22 +770,21 @@ class HyneManager:
 
     def _sync_item_slots(self):
         """The item table and the block agree: from the 255 slots when they are what is edited, else from the
-        table, the block's slots 199-255 left as they are."""
-        if self.item_slots_extended:
+        table, the block's slots 199-255 left as they are. Empty slots 199-255 need no block, so a save
+        nothing was put in stays as it is."""
+        if self.added_item_slots is not None:
+            if any(self.added_item_slots) or self.item_extension == "extended":
+                self._write_item_extension(self._native_item_bytes() + bytes(self.added_item_slots))
+                self._sync_item_extension()
+                self.added_item_slots[:] = self.buffer[ITEM_EXT_OFFSET + ITEM_EXT_HEADER_SIZE + NB_ITEMS * ITEM_ENTRY_SIZE:
+                                                        ITEM_EXT_OFFSET + ITEM_EXT_SIZE]
+                self.item_extension = "extended"
+        elif self.item_slots_extended:
             self._sync_item_extension()
         elif self.item_extension == "extended":
             start = ITEM_EXT_OFFSET + ITEM_EXT_HEADER_SIZE
             rest = bytes(self.buffer[start + NB_ITEMS * ITEM_ENTRY_SIZE:start + 2 * ITEM_EXT_SLOTS])
             self._write_item_extension(self._native_item_bytes() + rest)
-
-    def enable_item_extension(self):
-        """Give the save FFNx AddMoreItems' 255 slots: a new block holding the item table's 198
-        slots, then 57 empty ones. A stale block is replaced the same way FFNx would."""
-        if self.item_extension == "extended":
-            return
-        slot_bytes = self._native_item_bytes() + bytes(2 * (ITEM_EXT_SLOTS - NB_ITEMS))
-        self._write_item_extension(slot_bytes)
-        self._parse()
 
     def _write_item_extension(self, slot_bytes):
         struct.pack_into("<IHHI", self.buffer, ITEM_EXT_OFFSET, ITEM_EXT_MAGIC, ITEM_EXT_VERSION,

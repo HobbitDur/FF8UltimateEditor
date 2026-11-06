@@ -190,9 +190,7 @@ class TestShopFile:
         assert page.item_checks[0].text() == widget.kernel_names.item_name(1)
         assert page.item_checks[3].font().italic()
         assert not page.item_checks[4].font().italic()
-        page.visited_check.setChecked(True)
-        assert widget.manager.shops.has_item(0, 0)
-        assert not widget.manager.shops.has_item(0, 3)
+        assert read_shop_file(bytes([1, 128, 2, 129] * 320))[0][1] == list(range(0, 16, 2))    # as the game's test
 
 
 class TestDeckIdNames:

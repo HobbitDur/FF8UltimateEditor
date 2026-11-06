@@ -71,15 +71,15 @@ def game_data():
     return GameData(str(PROJECT_ROOT / "FF8GameData"))
 
 
-def test_a_vanilla_save_gets_the_255_slots_on_request(game_data, tmp_path):
+def test_a_vanilla_save_gets_the_255_slots_from_the_kernel(game_data, tmp_path):
     path = tmp_path / "slot1_save01.ff8"
     _write(path, _image([(1, 10), (33, 2)]))
     manager = HyneManager(game_data)
     manager.load_file(str(path))
     assert manager.item_extension == "none" and len(manager.item_entries) == 198
 
-    manager.enable_item_extension()
-    assert manager.item_extension == "extended" and len(manager.item_entries) == 255
+    manager.set_kernel_extensions(items=True, abilities=False, magic=False)
+    assert manager.item_extension == "none" and len(manager.item_entries) == 255
     assert (manager.item_entries[1].item_id, manager.item_entries[1].quantity) == (33, 2)
     manager.item_entries[230].item_id, manager.item_entries[230].quantity = 201, 5
     manager.save_file(backup=False)
@@ -90,6 +90,50 @@ def test_a_vanilla_save_gets_the_255_slots_on_request(game_data, tmp_path):
     reloaded.load_file(str(path))
     assert reloaded.item_extension == "extended"
     assert (reloaded.item_entries[230].item_id, reloaded.item_entries[230].quantity) == (201, 5)
+
+
+def test_empty_added_slots_leave_the_save_as_it_is(game_data, tmp_path):
+    path = tmp_path / "slot1_save01.ff8"
+    image = _image([(1, 10)])
+    _write(path, image)
+    manager = HyneManager(game_data)
+    manager.load_file(str(path))
+    manager.set_kernel_extensions(items=True, abilities=False, magic=False)
+    manager.item_entries[0].quantity = 11
+    manager.save_file(backup=False)
+    saved = _read_image(path)
+    assert saved[BLOCK:BLOCK + 522] == image[BLOCK:BLOCK + 522]
+    assert _ffnx_inventory(saved)[0] == (1, 11)
+
+
+def test_slots_emptied_after_a_save_reach_the_block(game_data, tmp_path):
+    path = tmp_path / "slot1_save01.ff8"
+    _write(path, _image([(1, 10)]))
+    manager = HyneManager(game_data)
+    manager.load_file(str(path))
+    manager.set_kernel_extensions(items=True, abilities=False, magic=False)
+    entry = manager.item_entries[200]
+    entry.item_id, entry.quantity = 201, 5
+    manager.save_file(backup=False)
+    assert _ffnx_inventory(_read_image(path))[200] == (201, 5)
+    entry.item_id, entry.quantity = 0, 0
+    manager.save_file(backup=False)
+    assert _ffnx_inventory(_read_image(path))[200] == (0, 0)
+
+
+def test_a_stale_block_gives_empty_added_slots_like_ffnx(game_data, tmp_path):
+    path = tmp_path / "slot1_save01.ff8"
+    image = _image([(2, 3)], block_slots=[(1, 10), (0, 0)] + [(0, 0)] * 220 + [(240, 1)])
+    _write(path, image)
+    manager = HyneManager(game_data)
+    manager.load_file(str(path))
+    manager.set_kernel_extensions(items=True, abilities=False, magic=False)
+    assert manager.item_extension == "stale" and len(manager.item_entries) == 255
+    assert manager.item_entries[0].item_id == 2 and not any(entry.item_id for entry in manager.item_entries[198:])
+    manager.item_entries[210].item_id, manager.item_entries[210].quantity = 240, 2
+    manager.save_file(backup=False)
+    inventory = _ffnx_inventory(_read_image(path))
+    assert inventory[0] == (2, 3) and inventory[210] == (240, 2)
 
 
 def test_slot_edits_reach_the_vanilla_table_and_stay_acceptable(game_data, tmp_path):
@@ -147,11 +191,9 @@ def test_the_items_tab_offers_the_kernel_items(qapp, tmp_path):
     widget = HyneWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
     widget.load_file(str(path))
     assert widget.items_table.rowCount() == 198         # no kernel.bin that adds items: as FFNx
-    assert widget.item_extension_button.isHidden()
     assert "kept as it is" in widget.item_extension_label.text()
     widget.kernel_names._load(str(kernel))
     assert widget.items_table.rowCount() == 255
-    assert widget.item_extension_button.isHidden()
     combo = widget.items_table.cellWidget(201, 0)
     assert combo.currentText() == f"201: {POTION_NAME}"
     assert combo.findData(255) >= 0 and combo.findData(1) >= 0
@@ -170,14 +212,14 @@ def test_the_255_slots_follow_the_kernel(qapp, tmp_path):
     _write(path, _image([(1, 10)]))
     widget = HyneWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
     widget.load_file(str(path))
-    assert widget.item_extension_button.isHidden()      # nothing to offer without added items
+    assert widget.items_table.rowCount() == 198
     widget.kernel_names._load(str(plain))
-    assert widget.item_extension_button.isHidden() and widget.items_table.rowCount() == 198
+    assert widget.items_table.rowCount() == 198
     widget.kernel_names._load(str(grown))
-    assert not widget.item_extension_button.isHidden()
-    widget.item_extension_button.click()
     assert widget.items_table.rowCount() == 255
-    assert widget.item_extension_button.isHidden()
+    assert "adds items" in widget.item_extension_label.text()
+    widget.kernel_names._load(str(plain))
+    assert widget.items_table.rowCount() == 198
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")

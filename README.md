@@ -135,8 +135,8 @@ FFNx's AddMoreItems lets a mod add items 199-255 and gives the player 255 invent
 - Open the mod's `kernel.bin` as a complementary file and the new items are named and offered
   in Kadowaki, Siren, TonberryShop (shops), Junkshop (weapon upgrades), Shiva (refines), Quezacotl
   (starting inventory) and Hyne.
-- **Hyne** edits the 255 slots of a save made with AddMoreItems, and **Use 255 slots** adds them
-  to any other save.
+- **Hyne** shows 255 slots as soon as the kernel.bin it has open adds items, as FFNx does, and writes
+  the block once one of slots 199-255 holds an item.
 
 ### Nida — SeeD written test editor (`mngrp.bin`)
 Edits the 30 SeeD written tests (tutorial menu): the question texts, the expected answer of each

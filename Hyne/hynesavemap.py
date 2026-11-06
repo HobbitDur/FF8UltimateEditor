@@ -28,8 +28,6 @@ CHOCOBO_OFFSET = 5344
 NB_SHOPS = 20
 SHOP_SIZE = 20
 SHOP_NB_ITEMS = 16
-# What a shop's item bytes hold until it is first visited (ShopEditor in myst6re's Hyne)
-SHOP_UNVISITED_BYTES = bytes([0x64, 0x64, 0x32, 0x28, 0x1E, 0x14, 0x05, 0x03, 0x32, 0x32, 0x1E, 0x14, 0x0A, 0x05, 0x04, 0x01])
 NB_DRAW_POINTS = 256
 DRAW_POINT_STATES = ["Filled", "Half-filled", "Empty", "Completely empty"]
 NB_WORLD_POSITIONS = 8
@@ -50,7 +48,7 @@ SCENE_ENEMY_IDS_OFFSET = 56
 SCENE_ENEMY_SLOTS = 8
 FIRST_EXTRA_MONSTER_COM_ID = 160
 SHOP_FILE_SIZE = NB_SHOPS * SHOP_NB_ITEMS * 2
-SHOP_FILE_RARE_FLAG = 0x00  # (item id, flag) per slot: rare items have flag 0, the others 0xFF
+SHOP_FILE_RARE_MAX = 128  # (item id, flag) per slot: up to this flag sold only with Familiar (vanilla: 0 or 255)
 
 
 def scene_uses_extra_monsters(scene_data):
@@ -70,7 +68,7 @@ def read_shop_file(data):
         start = shop * SHOP_NB_ITEMS * 2
         pairs = [(data[start + 2 * slot], data[start + 2 * slot + 1]) for slot in range(SHOP_NB_ITEMS)]
         shops.append(([item for item, _flag in pairs],
-                      [slot for slot, (_item, flag) in enumerate(pairs) if flag == SHOP_FILE_RARE_FLAG]))
+                      [slot for slot, (_item, flag) in enumerate(pairs) if flag <= SHOP_FILE_RARE_MAX]))
     return shops
 
 
@@ -440,7 +438,9 @@ class BattleState(SaveView):
 
 
 class ShopsState(SaveView):
-    """The 20 shops: their item bytes and whether they were visited."""
+    """The 20 shops. Each time one opens (ShopMenu_Enter@0x4EBBA0) the game sets its visited word, which is
+    all the Call Shop list reads, and rewrites the item bytes from shop.bin and Familiar: they only record
+    what was on sale last."""
     FIELDS = ("visited", "items")
 
     def __init__(self, buffer):
@@ -450,23 +450,13 @@ class ShopsState(SaveView):
         return self.base + shop * SHOP_SIZE
 
     def is_visited(self, shop):
-        return bool(self.buffer[self._shop(shop) + SHOP_NB_ITEMS] & 1)
+        return struct.unpack_from("<H", self.buffer, self._shop(shop) + SHOP_NB_ITEMS)[0] != 0
 
-    def set_visited(self, shop, visited, rare_slots=()):
-        """Like myst6re's Hyne: a shop opening has its items on, but the rare ones; a closed one
-        goes back to the bytes it holds before its first visit."""
-        start = self._shop(shop)
-        flag = self.buffer[start + SHOP_NB_ITEMS]
-        self.buffer[start + SHOP_NB_ITEMS] = flag | 1 if visited else flag & 0xFE
-        self.buffer[start:start + SHOP_NB_ITEMS] = (bytes(int(slot not in rare_slots) for slot in range(SHOP_NB_ITEMS))
-                                                    if visited else SHOP_UNVISITED_BYTES)
+    def set_visited(self, shop, visited):
+        struct.pack_into("<H", self.buffer, self._shop(shop) + SHOP_NB_ITEMS, int(visited))
 
     def has_item(self, shop, slot):
         return bool(self.buffer[self._shop(shop) + slot] & 1)
-
-    def set_item(self, shop, slot, value):
-        position = self._shop(shop) + slot
-        self.buffer[position] = self.buffer[position] | 1 if value else self.buffer[position] & 0xFE
 
     @property
     def visited(self):

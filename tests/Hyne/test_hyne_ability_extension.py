@@ -12,6 +12,7 @@ import pytest
 
 from FF8GameData.gamedata import GameData
 from Hyne.hynemanager import (
+    kernel_widens_abilities,
     HyneManager, IMAGE_SIZE, GAMESTATE_BASE, CRC_OFFSET_1, CRC_OFFSET_2, CRC_SPAN_START, CRC_SPAN_LEN,
     crc16_ff8, lzss_compress, lzss_decompress,
 )
@@ -145,6 +146,14 @@ def test_a_stale_block_is_left_alone(game_data, tmp_path):
     saved = _read_image(path)
     assert saved[BLOCK:BLOCK + BLOCK_SIZE] == image[BLOCK:BLOCK + BLOCK_SIZE]
     assert not _ffnx_learned(saved, 0, 128)
+
+
+def test_the_block_arms_on_ffnx_test():
+    assert not kernel_widens_abilities([20, 19, 19, 20, 5, 9, 24])      # vanilla
+    assert kernel_widens_abilities([26, 27, 46, 19, 8, 15, 32])         # Cronos
+    assert not kernel_widens_abilities([30, 30, 30, 30, 8, 9, 24])      # GF group at 128: FFNx ignores it
+    assert kernel_widens_abilities([30, 30, 30, 30, 7, 1, 0])           # no more than 128, the menu group at 128
+    assert not kernel_widens_abilities([100, 100, 56, 0, 0, 0, 0])      # more than 255
 
 
 def test_ids_past_127_follow_the_kernel(tmp_path):
