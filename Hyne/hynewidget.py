@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import re
 
 from PIL.ImageQt import ImageQt
 from PyQt6.QtCore import QSignalBlocker, Qt
@@ -22,6 +23,8 @@ RESERVED_TOOLTIP = ("This byte has no meaning in the game (confirmed unused / pa
 from CCGroup import cardlocation
 from CCGroup.ccgroup import CCGroupWidget
 from CCGroup.jsmcardgame import CardGameFolderManager, GAME_RULE_BITS, TRADE_RULE_NAMES
+from Cid.worlddrawgeometry import WorldDrawGeometry
+from Common.battlesidefiles import BattleSideFiles
 from Common.fieldfolder import pick_field_folder
 from Common.filebinding import FileBinding
 from Common.fileregistry import busy_cursor
@@ -40,7 +43,7 @@ from Quezacotl.quezacotlmanager import (
 from Hyne.hynesavemap import EXTENDED_MAGIC_FIRST, read_shop_file, scene_uses_extra_monsters
 from Hyne.hynesavepages import (
     BattlePage, ChocoboPage, DrawPointsPage, FieldVariablesPage, ItemsExtrasPage, LoadScreenPage, PartyPage, ProgressPage,
-    ShopsPage, WorldMapPage,
+    ShopsPage, WORLD_BLOCK_COLUMNS, WORLD_BLOCK_ROWS, WorldMapPage, read_monster_name, world_to_map,
 )
 from Hyne.hynemanager import (
     HyneManager, LEARNED_ABILITY_BITS, SAVE_ABILITY_IDS, kernel_widens_abilities, TT_CARD_COPIES_MASK, TT_NB_RARE_CARDS, TT_NB_REGIONS, TT_NB_LAST_RULES,
@@ -63,6 +66,8 @@ JUNCTION_FIELDS = [
 ]
 
 NO_MAXIMUM_WIDTH = 16777215
+MONSTER_FILES_KEY = "Hyne monster names"
+MONSTER_FILE_NAME = re.compile(r"c0m(\d{3})\.dat")
 TT_MAX_COPIES = 100   # MoveCardToLocation@0x5347F0 adds no copy past this
 TT_PREVIEW_SIZE = 128
 TT_SMALL_SPIN_WIDTH = 78   # a 3-digit value next to the arrows of the Windows 11 style
@@ -211,6 +216,12 @@ class HyneWidget(QWidget):
         self.shop_binding.file_closed.connect(lambda _path: self.shops_page.set_file_shops(None))
         self.scene_binding = FileBinding("scene.out", file_registry, load_callback=self._load_scene_file, read_only=True)
         self.scene_binding.file_closed.connect(self._clear_scene_file)
+        # The ground under the world map positions
+        self.world_terrain = None
+        self.wmx_binding = FileBinding("wmx.obj", file_registry, load_callback=self._load_wmx_file, read_only=True)
+        self.wmx_binding.file_closed.connect(self._clear_wmx_file)
+        # The names of a mod's monsters: c0m###.dat has no fixed name, so several are opened at once
+        self.monster_files = BattleSideFiles(self, file_registry, MONSTER_FILES_KEY, self, patterns=("c0m*.dat",))
 
         # Fields the game never reads are shown greyed, as in SolomonRing, until this box unlocks them
         self._unused_fields = []
@@ -222,23 +233,9 @@ class HyneWidget(QWidget):
         if self.settings is not None:
             self.unlock_unused_check.setChecked(self.settings.value(self.UNLOCK_SETTING, False, type=bool))
         self.unlock_unused_check.toggled.connect(self._on_unlock_unused)
-        self.cronos_check = QCheckBox("Cronos")
-        self.cronos_check.setToolTip(
-            "For a save of the Cronos mod. The Variables tab also lists the variables Cronos adds, which mean nothing in "
-            "another save.\nThe Battle tab shows the enemies scanned once where FFNx keeps them for Cronos's monsters, "
-            "unless a scene.out is open: that file then decides.")
-        if self.settings is not None:
-            self.cronos_check.setChecked(self.settings.value(FieldVariablesPage.CRONOS_SETTING, False, type=bool))
-        self.manager.cronos_mod = self.cronos_check.isChecked()
-        self.cronos_check.toggled.connect(self._on_cronos_mod)
-        tab_options = QWidget()
-        tab_options.setProperty("read_only_preview", True)   # choosing what to show edits nothing
-        tab_options_row = QHBoxLayout(tab_options)
-        tab_options_row.setContentsMargins(0, 0, 0, 0)
-        tab_options_row.addWidget(self.cronos_check)
-        tab_options_row.addWidget(self.unlock_unused_check)
+        self.unlock_unused_check.setProperty("read_only_preview", True)   # choosing what to edit edits nothing
         self.tabs = QTabWidget()
-        self.tabs.setCornerWidget(tab_options)
+        self.tabs.setCornerWidget(self.unlock_unused_check)
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
         self.tabs.addTab(self._build_character_tab(), "Characters")
         self.tabs.addTab(self._build_config_tab(), "Config")
@@ -292,14 +289,61 @@ class HyneWidget(QWidget):
         self._on_kernel_names_changed()  # no kernel.bin yet: ids only, greyed out
         self.ff8_binding.load_opened_file()  # pick up a .ff8 another instance already opened
         self.kernel_names.binding.load_opened_file()  # ...or a kernel.bin
-        for binding in (self.draw_binding, self.shop_binding, self.scene_binding):
+        for binding in (self.draw_binding, self.shop_binding, self.scene_binding, self.wmx_binding):
             binding.load_opened_file()
 
     def file_bindings(self):
         """The files the shared header toolbar drives for this tool: the .ff8 save; kernel.bin as a
         complementary file naming the abilities, weapons and magic; and what a mod changes in the
         lists of the savemap tabs."""
-        return [self.ff8_binding, self.kernel_names.binding, self.draw_binding, self.shop_binding, self.scene_binding]
+        return [self.ff8_binding, self.kernel_names.binding, self.draw_binding, self.shop_binding, self.scene_binding,
+                self.wmx_binding]
+
+    def complementary_entries(self):
+        """The header's Import complementary menu: the files with a name, then the monsters, which have none."""
+        entries = [(binding.file_name, lambda b=binding: b.open_remembered(self))
+                   for binding in self.file_bindings() if binding.read_only or getattr(binding, "complementary", False)]
+        return entries + self.monster_files.entries()[:1]
+
+    def auto_import_sources(self):
+        return [self.monster_files.auto_import_source()]
+
+    def set_party_files(self, _paths):
+        """BattleSideFiles tells its preview this; only the monsters are opened here."""
+
+    def files_changed(self):
+        """Other monster files: their names go on the Battle tab."""
+        names = {}
+        for file_name, path in self.monster_files.files.items():
+            match = MONSTER_FILE_NAME.fullmatch(file_name)
+            name = read_monster_name(path, self.game_data) if match else None
+            if name:
+                names[int(match.group(1))] = name
+        self.battle_page.set_monster_file_names(names)
+
+    def _load_wmx_file(self, path):
+        try:
+            self.world_terrain = WorldDrawGeometry(path)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Hyne", f"Could not read wmx.obj:\n{path}\n{error}")
+            return
+        self.world_map_page.reload_preview()
+
+    def _clear_wmx_file(self, _path=None):
+        self.world_terrain = None
+        self.world_map_page.reload_preview()
+
+    def ground_height(self, x, y):
+        """How high the world map's ground is under a saved position, up being positive; None without wmx.obj.
+        wmx.obj's own world only: what the story replaces in it is not looked up."""
+        if self.world_terrain is None:
+            return None
+        map_x, map_y = world_to_map(x, y)
+        try:
+            terrain = self.world_terrain.terrain_at(map_x * WORLD_BLOCK_COLUMNS, map_y * WORLD_BLOCK_ROWS)
+        except ValueError:
+            return None
+        return terrain["height"] if terrain else None
 
     # ── A mod's files ────────────────────────────────────────────────────
 
@@ -687,10 +731,6 @@ class HyneWidget(QWidget):
         elif known and not unused:
             self._unused_fields.remove(field)
             self._set_unused_locked(field, False)
-
-    def _on_cronos_mod(self, checked):
-        self.manager.cronos_mod = checked
-        self._refresh_scan_place()
 
     def _on_unlock_unused(self, checked):
         if self.settings is not None:

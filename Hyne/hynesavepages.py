@@ -3,7 +3,9 @@ Chocobo World, load screen, field variables, and the battle order and Timber Man
 
 A SavePage builds its widgets through binding helpers: each widget is tied to one field of a section
 of HyneManager, written at once on edit and refilled by reload() with its signals blocked."""
+import math
 import os
+import struct
 
 from PyQt6.QtCore import QPointF, QRectF, QSignalBlocker, Qt
 from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPixmap, QStandardItem, QStandardItemModel
@@ -69,6 +71,12 @@ PUPU_SITES = [(2, 334), (3, 394), (4, 153), (5, 596), (6, 187), (7, 275)]
 WORLD_MAP_IMAGE = "worldmap.png"
 WORLD_MAP_MODULE = 2
 WORLD_FULL_TURN = 4096
+# wmx.obj's squares
+WORLD_BLOCK_COLUMNS, WORLD_BLOCK_ROWS = 128, 96
+# How high the side view reaches, up being positive: the Ragnarok flies up to 3584 (World_ComputeVehicleAltitude@0x53ECE0)
+WORLD_SIDE_VIEW_TOP, WORLD_SIDE_VIEW_BOTTOM = 3800, -400
+MONSTER_INFO_SECTION = 6     # the name opens it
+MONSTER_NAME_SIZE = 24
 
 
 def angle_text(angle):
@@ -79,6 +87,22 @@ def angle_text(angle):
 def world_to_map(x, y):
     """Where a saved world position is on the map, from 0 to 1 in both directions."""
     return (x + WORLD_WIDTH // 2) % WORLD_WIDTH / WORLD_WIDTH, (y + WORLD_HEIGHT // 2) % WORLD_HEIGHT / WORLD_HEIGHT
+
+
+def read_monster_name(path, game_data):
+    """The name in a c0m###.dat, None when the file has none (the game's unused monsters hold other data there)."""
+    try:
+        with open(path, "rb") as file:
+            count = struct.unpack("<I", file.read(4))[0]
+            if count <= MONSTER_INFO_SECTION:
+                return None
+            offsets = struct.unpack(f"<{count}I", file.read(4 * count))
+            file.seek(offsets[MONSTER_INFO_SECTION])
+            raw = file.read(MONSTER_NAME_SIZE)
+    except (OSError, struct.error):
+        return None
+    name = game_data.translate_hex_to_str(raw.split(b"\0")[0]).strip()
+    return name if name and "{" not in name else None
 
 
 def region_to_map(region):
@@ -546,8 +570,8 @@ class PartyPage(SavePage):
             return
         if party.module == WORLD_MAP_MODULE:
             self.preview_stack.setCurrentWidget(self.world_view)
-            x, y, _height, _angle = world.place(0)
-            self.world_view.set_marks([("Party", *world_to_map(x, y))], [])
+            x, y, _height, angle = world.place(0)
+            self.world_view.set_marks([("Party", *world_to_map(x, y), angle)], [])
             return
         self.preview_stack.setCurrentWidget(self.field_view)
         self._show_field(party)
@@ -674,12 +698,16 @@ class BattlePage(SavePage):
         magic_column.addWidget(self.magic_moved_check)
         magic_column.addWidget(self.magic_group, 1)
         monsters = tool.game_data.monster_data_json["monster"]
-        monster_names = {monster["com_id"]: monster["name"] for monster in monsters}
-        scan_names = [FIELD_PARTY_NAMES[slot] if slot < len(FIELD_PARTY_NAMES) else "Unused"
+        self.monster_names = {monster["com_id"]: monster["name"] for monster in monsters}
+        self.monster_file_names = {}     # c0m number -> the name in an opened c0m###.dat
+        scan_names = [FIELD_PARTY_NAMES[slot] if slot < len(FIELD_PARTY_NAMES) else UNUSED_NAME
                       for slot in range(SCAN_PARTY_SLOTS)]
-        scan_names += [f"c0m{com:03}: {monster_names.get(com, 'Unused')}" for com in range(SCANNED_MOVED_BITS - SCAN_PARTY_SLOTS)]
+        scan_names += [""] * (SCANNED_MOVED_BITS - SCAN_PARTY_SLOTS)
         self.scan_group = self.bit_list("Scanned once", "battle", "enemies_scanned", scan_names,
-                                        "With the Scan option on Once, a repeat Scan of these shows the short result")
+                                        "With the Scan option on Once, a repeat Scan of these shows the short result. "
+                                        "A mod's monster names come from its c0m###.dat files, opened with the toolbar's "
+                                        "Import complementary.")
+        self._relabel_monsters()
         self.scan_moved_check = self.check(
             "battle", "scan_moved", "Moved by FFNx (variables 785-816)",
             "FFNx keeps this list in field variables 785-816 when the game's scene.out uses a monster of its extra ones\n"
@@ -704,6 +732,21 @@ class BattlePage(SavePage):
                 name = self.tool.magic_label(index + 1, UNUSED_NAME)
                 names.item(index).setText(name)
                 self.tool.set_unused(names.item(index), name == UNUSED_NAME)
+
+    def set_monster_file_names(self, names):
+        self.monster_file_names = names
+        self._relabel_monsters()
+
+    def _relabel_monsters(self):
+        """Each row keeps its file number beside the name, and a monster with neither is unused."""
+        rows = self.scan_group.list_widget
+        with QSignalBlocker(rows):
+            for com in range(SCANNED_MOVED_BITS - SCAN_PARTY_SLOTS):
+                item = rows.item(SCAN_PARTY_SLOTS + com)
+                number = f"c0m{com:03}"
+                name = self.monster_file_names.get(com) or self.monster_names.get(com)
+                item.setText(number if name == number else f"{number}: {name or UNUSED_NAME}")
+                self.tool.set_unused(item, not name)
 
 
 class ShopsPage(SavePage):
@@ -863,6 +906,81 @@ class DrawPointsPage(SavePage):
         self.tool._mark_dirty()
 
 
+def heading_vector(angle, length):
+    """Where a world map angle points on the map: 0 up, growing clockwise (World_UpdateVehicleSteeringAndCamera@0x557A90
+    moves by sin along X and cos along the stored Y's opposite)."""
+    radians = 2 * math.pi * angle / WORLD_FULL_TURN
+    return QPointF(math.sin(radians) * length, -math.cos(radians) * length)
+
+
+class WorldMapSideView(QWidget):
+    """Each placed row seen from the side, height above the sea over the ground if wmx.obj is open, under a dial of
+    where it faces on the map. It only shows."""
+
+    GROUND_COLOR = QColor(150, 105, 60)
+    SEA_COLOR = QColor(70, 130, 220)
+    DIAL_RADIUS = 26
+
+    def __init__(self):
+        super().__init__()
+        self.rows = []      # (name, height with up positive, angle, ground height or None)
+        self.setMinimumSize(280, 250)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setToolTip("Height is drawn up from the sea. The save holds it the other way round, negative being up. "
+                        "The game keeps people and cars on the ground and the Garden just above it; only the Ragnarok "
+                        "flies freely. The ground needs wmx.obj, from the toolbar's Import complementary, and leaves out "
+                        "what the story changes on the map.")
+
+    def set_rows(self, rows):
+        self.rows = rows
+        self.update()
+
+    def paintEvent(self, _event):
+        if not self.rows:
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        width = self.width() / len(self.rows)
+        for index, row in enumerate(self.rows):
+            self._column(painter, QRectF(index * width, 0, width, self.height()), *row)
+
+    def _column(self, painter, rect, name, height, angle, ground):
+        text_color = self.palette().text().color()
+        line = painter.fontMetrics().height()
+        painter.setPen(text_color)
+        painter.drawText(QRectF(rect.x(), 0, rect.width(), line), Qt.AlignmentFlag.AlignCenter, name)
+        center = QPointF(rect.center().x(), line + self.DIAL_RADIUS + 6)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawEllipse(center, self.DIAL_RADIUS, self.DIAL_RADIUS)
+        painter.drawLine(center + QPointF(0, -self.DIAL_RADIUS), center + QPointF(0, -self.DIAL_RADIUS + 4))
+        painter.setPen(QPen(WorldMapPreview.PLACE_COLOR, 3))
+        painter.drawLine(center, center + heading_vector(angle, self.DIAL_RADIUS - 5))
+        painter.setPen(text_color)
+        below_dial = center.y() + self.DIAL_RADIUS + 2
+        painter.drawText(QRectF(rect.x(), below_dial, rect.width(), line), Qt.AlignmentFlag.AlignCenter, angle_text(angle))
+        self._height_bar(painter, QRectF(rect.x() + 6, below_dial + line + 2, rect.width() - 12,
+                                         rect.bottom() - below_dial - 2 * line - 6), height, ground, text_color)
+
+    def _height_bar(self, painter, area, height, ground, text_color):
+        span = WORLD_SIDE_VIEW_TOP - WORLD_SIDE_VIEW_BOTTOM
+
+        def level(value):
+            kept = min(WORLD_SIDE_VIEW_TOP, max(WORLD_SIDE_VIEW_BOTTOM, value))
+            return area.bottom() - (kept - WORLD_SIDE_VIEW_BOTTOM) / span * area.height()
+
+        if ground is not None:
+            painter.fillRect(QRectF(area.x(), level(ground), area.width(), area.bottom() - level(ground)), self.GROUND_COLOR)
+        painter.setPen(QPen(self.SEA_COLOR, 1, Qt.PenStyle.DashLine))
+        painter.drawLine(QPointF(area.x(), level(0)), QPointF(area.right(), level(0)))
+        painter.setPen(QPen(QColor("black"), 1))
+        painter.setBrush(WorldMapPreview.PLACE_COLOR)
+        painter.drawEllipse(QPointF(area.center().x(), level(height)), WorldMapPreview.MARK_RADIUS, WorldMapPreview.MARK_RADIUS)
+        painter.setPen(text_color)
+        text = f"{height}" if ground is None else f"{height} / {round(ground)}"
+        painter.drawText(QRectF(area.x(), area.bottom() + 2, area.width(), painter.fontMetrics().height()),
+                         Qt.AlignmentFlag.AlignCenter, text)
+
+
 class WorldMapPreview(QWidget):
     """The world map with who stands where and the PuPu sightings. It only shows: the image is read at first paint."""
 
@@ -870,13 +988,14 @@ class WorldMapPreview(QWidget):
     SITE_DONE_COLOR = QColor(70, 220, 90)
     SITE_LEFT_COLOR = QColor(235, 70, 70)
     MARK_RADIUS = 5
+    HEADING_LENGTH = 14
     images = {}     # path -> the image, large, so read once for the two tabs showing it
 
     def __init__(self, image_path):
         super().__init__()
         self.image_path = image_path
         self.scaled = None
-        self.places = []    # (name, x, y on the map from 0 to 1)
+        self.places = []    # (name, x, y on the map from 0 to 1, angle)
         self.sites = []     # (name, x, y on the map from 0 to 1, done)
         self.setMinimumSize(320, 240)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -904,8 +1023,11 @@ class WorldMapPreview(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         for name, x, y, done in self.sites:
             self._mark(painter, rect, name, x, y, self.SITE_DONE_COLOR if done else self.SITE_LEFT_COLOR, square=True)
-        for name, x, y in self.places:
+        for name, x, y, angle in self.places:
             self._mark(painter, rect, name, x, y, self.PLACE_COLOR, square=False)
+            center = QPointF(x * rect.width(), y * rect.height())
+            painter.setPen(QPen(self.PLACE_COLOR, 2))
+            painter.drawLine(center, center + heading_vector(angle, self.HEADING_LENGTH))
 
     def _mark(self, painter, rect, name, x, y, color, square):
         point = QPointF(x * rect.width(), y * rect.height())
@@ -992,7 +1114,8 @@ class WorldMapPage(SavePage):
         left.addStretch(1)
         right = QVBoxLayout()
         right.addWidget(obel_group)
-        right.addStretch(1)
+        self.side_view = WorldMapSideView()
+        right.addWidget(self.side_view, 1)
         layout = QHBoxLayout(self)
         legend = QLabel("Circles: the party and the vehicles. Squares: where the PuPu quest's battles wait, green once done.")
         legend.setWordWrap(True)
@@ -1010,15 +1133,21 @@ class WorldMapPage(SavePage):
         self.angle_labels[row].setText(angle_text(self.section("world_map").place(row)[3]))
         self._refresh_preview()
 
+    def reload_preview(self):
+        self._refresh_preview()
+
     def _refresh_preview(self, *_):
         world = self.section("world_map")
         if world is None:
             return
         places = []
+        side_rows = []
         for row in range(NB_WORLD_POSITIONS):
             x, y, height, angle = world.place(row)
             if row not in WORLD_UNUSED_POSITIONS and (x or y or height or angle):   # all zero: never placed
-                places.append((WORLD_POSITION_ROWS[row], *world_to_map(x, y)))
+                places.append((WORLD_POSITION_ROWS[row], *world_to_map(x, y), angle))
+                side_rows.append((WORLD_POSITION_ROWS[row], -height, angle, self.tool.ground_height(x, y)))
+        self.side_view.set_rows(side_rows)
         sites = [(PUPU_QUEST_NAMES[place], *region_to_map(region), world.pupu_quest[place]) for place, region in PUPU_SITES]
         self.preview.set_marks(places, sites)
 
@@ -1151,7 +1280,10 @@ class FieldVariablesPage(SavePage):
         self.search_edit.setPlaceholderText("Search a number, a word or a field name")
         self.search_edit.setClearButtonEnabled(True)
         self.search_edit.textChanged.connect(self._apply_filter)
-        self.cronos_check = tool.cronos_check
+        self.cronos_check = QCheckBox("Cronos")
+        self.cronos_check.setToolTip("Also lists the variables the Cronos mod adds. They mean nothing in another save")
+        if tool.settings is not None:
+            self.cronos_check.setChecked(tool.settings.value(self.CRONOS_SETTING, False, type=bool))
         self.cronos_check.toggled.connect(self._on_cronos)
         self.only_set_check = QCheckBox("Only values not zero")
         self.only_set_check.toggled.connect(self._apply_filter)
@@ -1160,6 +1292,7 @@ class FieldVariablesPage(SavePage):
         filter_row = QHBoxLayout(filters)
         filter_row.setContentsMargins(0, 0, 0, 0)
         filter_row.addWidget(self.search_edit, 1)
+        filter_row.addWidget(self.cronos_check)
         filter_row.addWidget(self.only_set_check)
 
         self.table = QTableWidget(len(self.entries), 5)

@@ -22,7 +22,7 @@ from Hyne.hynemanager import (
     CRC_OFFSET_1, CRC_OFFSET_2, CRC_SPAN_LEN, CRC_SPAN_START, HyneManager, IMAGE_SIZE, crc16_ff8, lzss_compress,
     lzss_decompress,
 )
-from Hyne.hynesavepages import WORLD_WIDTH, region_to_map, world_to_map
+from Hyne.hynesavepages import WORLD_WIDTH, heading_vector, region_to_map, world_to_map
 from Hyne.hynewidget import HyneWidget
 
 REPO = pathlib.Path(__file__).parent.parent.parent
@@ -426,19 +426,48 @@ class TestPages:
         scan.item(16 + 2).setCheckState(Qt.CheckState.Checked)
         assert widget.manager.battle.enemies_scanned[18]
 
-    def test_cronos_box_moves_the_scan_list(self, widget):
-        battle = widget.manager.battle
-        assert not battle.scan_moved
-        widget.cronos_check.setChecked(True)
+    def test_monster_rows_keep_the_number_beside_the_name(self, widget, tmp_path):
+        rows = widget.battle_page.scan_group.list_widget
+        row = 16 + 155
+        assert rows.item(row).text() == "c0m155"
+        assert not rows.item(16 + 200).flags() & Qt.ItemFlag.ItemIsEnabled     # past what FFNx loads
+        name = widget.game_data.translate_str_to_hex("Meltdown")
+        data = struct.pack("<8I", 7, 32, 32, 32, 32, 32, 32, 32) + bytes(name) + bytes(40)
+        path = tmp_path / "c0m155.dat"
+        path.write_bytes(data)
+        garbage = tmp_path / "c0m156.dat"
+        garbage.write_bytes(b"not a monster")
+        widget.monster_files.add([str(path), str(garbage)])
+        assert rows.item(row).text() == "c0m155: Meltdown"
+        assert rows.item(row + 1).text() == "c0m156"
+        widget.monster_files.files.clear()
+        widget.files_changed()
+        assert rows.item(row).text() == "c0m155"
+
+    def test_world_map_side_view(self, widget):
+        page = widget.world_map_page
+        world = widget.manager.world_map
+        world.set_place(2, 100, 200, -700, 1024)
+        widget.ground_height = lambda _x, _y: 300.0
         try:
-            assert battle.scan_moved
-            widget.manager.scene_uses_extra_monsters = False    # an open scene.out decides
-            widget.manager.detect_scan_moved()
-            assert not battle.scan_moved
+            page.reload()
+            row = next(r for r in page.side_view.rows if r[0] == "Ragnarok")
+            assert row == ("Ragnarok", 700, 1024, 300.0)
         finally:
-            widget.manager.scene_uses_extra_monsters = None
-            widget.cronos_check.setChecked(False)
-        assert not battle.scan_moved
+            del widget.ground_height
+        vector = heading_vector(1024, 10)      # a quarter turn clockwise from up
+        assert round(vector.x()) == 10 and round(vector.y()) == 0
+
+    def test_ground_from_wmx(self, widget):
+        wmx = REPO / "extracted_files" / "world" / "dat" / "wmx.obj"
+        if not wmx.exists():
+            pytest.skip("no extracted wmx.obj")
+        assert widget.ground_height(23305, -28169) is None
+        widget._load_wmx_file(str(wmx))
+        try:
+            assert round(widget.ground_height(23305, -28169)) == 554     # a real save's party stood there at -554
+        finally:
+            widget._clear_wmx_file()
 
     def test_party_preview_on_the_world_map(self, widget):
         page = widget.party_page
@@ -446,7 +475,7 @@ class TestPages:
         widget.manager.party.module = 2
         page.show_preview()
         assert page.preview_stack.currentWidget() is page.world_view
-        assert page.world_view.places == [("Party", 0.5, 0.5)]
+        assert page.world_view.places == [("Party", 0.5, 0.5, 0)]
 
     def test_party_preview_on_a_field(self, widget, monkeypatch):
         page = widget.party_page
