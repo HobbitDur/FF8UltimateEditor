@@ -8,14 +8,14 @@ from PyQt6.QtGui import QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QSpinBox, QDoubleSpinBox, QLineEdit, QGroupBox, QFormLayout, QTabWidget, QCheckBox,
-    QGridLayout, QScrollArea, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractSpinBox,
+    QGridLayout, QScrollArea, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractSpinBox, QListWidgetItem,
     QAbstractItemView, QSizePolicy, QStyle, QMessageBox, QPushButton,
 )
 
 U32_MAX = 0xFFFFFFFF
 
 # Tooltip shown on the read-only (greyed) padding fields.
-RESERVED_TOOLTIP = ("Read-only: this byte has no meaning in the game (confirmed unused / padding — "
+RESERVED_TOOLTIP = ("This byte has no meaning in the game (confirmed unused / padding — "
                     "no code reads it). It is shown for completeness and preserved on save, but "
                     "editing it would have no effect.")
 
@@ -62,6 +62,7 @@ JUNCTION_FIELDS = [
     ("jun_status_def3", "Status Def 3"), ("jun_status_def4", "Status Def 4"),
 ]
 
+NO_MAXIMUM_WIDTH = 16777215
 TT_MAX_COPIES = 100   # MoveCardToLocation@0x5347F0 adds no copy past this
 TT_PREVIEW_SIZE = 128
 TT_SMALL_SPIN_WIDTH = 78   # a 3-digit value next to the arrows of the Windows 11 style
@@ -110,6 +111,8 @@ class HyneWidget(QWidget):
     writes the outer .ff8 envelope (LZSS compression + CRC16 checksum + a mandatory .bak
     backup before every save). The Triple Triad tab is here too; the other tabs of what init.out
     doesn't hold are in hynesavepages.py."""
+
+    UNLOCK_SETTING = "hyne/unlock_unused"
 
     def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None, settings=None):
         QWidget.__init__(self)
@@ -209,7 +212,18 @@ class HyneWidget(QWidget):
         self.scene_binding = FileBinding("scene.out", file_registry, load_callback=self._load_scene_file, read_only=True)
         self.scene_binding.file_closed.connect(self._clear_scene_file)
 
+        # Fields the game never reads are shown greyed, as in SolomonRing, until this box unlocks them
+        self._unused_fields = []
+        self.unlock_unused_check = QCheckBox("Unlock fields unused by the vanilla game")
+        self.unlock_unused_check.setToolTip(
+            "Off (default): a field the unmodified game never reads is shown - so you can see its value - "
+            "but greyed out, so you cannot change something that does nothing.\n"
+            "On: it becomes editable, for a mod that gave it a purpose. Loading and saving are identical either way.")
+        if self.settings is not None:
+            self.unlock_unused_check.setChecked(self.settings.value(self.UNLOCK_SETTING, False, type=bool))
+        self.unlock_unused_check.toggled.connect(self._on_unlock_unused)
         self.tabs = QTabWidget()
+        self.tabs.setCornerWidget(self.unlock_unused_check)
         self.tabs.addTab(self._build_gf_tab(), "G-Forces")
         self.tabs.addTab(self._build_character_tab(), "Characters")
         self.tabs.addTab(self._build_config_tab(), "Config")
@@ -248,11 +262,12 @@ class HyneWidget(QWidget):
         self.tabs.setTabToolTip(8, "Battle counts and flags, summon flags, magic drawn and enemies scanned once")
         self.tabs.setTabToolTip(9, "Shops visited and their items")
         self.tabs.setTabToolTip(10, "State of the 256 draw points")
-        self.tabs.setTabToolTip(11, "Steps, rental car, displayed map, vehicles, PuPu and Obel Lake quests")
+        self.tabs.setTabToolTip(11, "Camera, rental car, displayed map, positions, PuPu and Obel Lake quests")
         self.tabs.setTabToolTip(12, "Boko's level, HP, weapon, items and quest progress")
         self.tabs.setTabToolTip(13, "What the load screen shows for this save")
         self.tabs.setTabToolTip(14, "The field variables the game and Cronos really use, named and editable")
         self.tabs.setEnabled(False)
+        self._stretch_fields()
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.kernel_notice)
@@ -608,12 +623,55 @@ class HyneWidget(QWidget):
 
     @staticmethod
     def _configure_list_table(table):
-        """Size an (item/magic, quantity) table to its content so the quantity column sits
-        right next to the name column instead of the name stretching across the pane."""
-        header = table.horizontalHeader()
-        header.setStretchLastSection(False)
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        """An (item/magic, quantity) table shares its width between the columns."""
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+    def _stretch_fields(self):
+        """Every form and grid of the tabs fills its width, so no gap opens between its values."""
+        fields = (QAbstractSpinBox, QComboBox, QLineEdit)
+
+        def grow(widget):
+            widget.setMaximumWidth(NO_MAXIMUM_WIDTH)
+            widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+        for form in self.tabs.findChildren(QFormLayout):
+            form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+            for row in range(form.rowCount()):
+                item = form.itemAt(row, QFormLayout.ItemRole.FieldRole)
+                if item is not None and isinstance(item.widget(), fields):
+                    grow(item.widget())
+        for grid in self.tabs.findChildren(QGridLayout):
+            for index in range(grid.count()):
+                widget = grid.itemAt(index).widget()
+                if isinstance(widget, (*fields, QCheckBox)):
+                    grid.setColumnStretch(grid.getItemPosition(index)[1], 1)
+                    if isinstance(widget, fields):
+                        grow(widget)
+
+    def mark_unused(self, field):
+        """A widget, or a check list's item, for something the game never reads."""
+        self._unused_fields.append(field)
+        self._set_unused_locked(field, not self.unlock_unused_check.isChecked())
+
+    def _on_unlock_unused(self, checked):
+        if self.settings is not None:
+            self.settings.setValue(self.UNLOCK_SETTING, checked)
+        for field in self._unused_fields:
+            self._set_unused_locked(field, not checked)
+
+    @staticmethod
+    def _set_unused_locked(field, locked):
+        if isinstance(field, QListWidgetItem):
+            enabled = Qt.ItemFlag.ItemIsEnabled
+            field.setFlags(field.flags() & ~enabled if locked else field.flags() | enabled)
+        elif isinstance(field, QAbstractSpinBox):
+            # Kept enabled, so its tooltip shows when locked
+            field.setReadOnly(locked)
+            field.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons if locked else
+                                   QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+            field.setStyleSheet("color: gray;" if locked else "")
+        else:
+            field.setEnabled(not locked)
 
     @staticmethod
     def _select_combo(combo, value):
@@ -623,16 +681,10 @@ class HyneWidget(QWidget):
             index = combo.findData(value)
         combo.setCurrentIndex(index)
 
-    def _readonly_spin(self, tooltip, maximum=0xFF):
-        """A greyed, non-editable spinbox for showing a byte the tool won't let you change.
-        Kept enabled (read-only) so the hover tooltip still works."""
-        spin = QSpinBox()
-        spin.setRange(0, maximum)
-        spin.setReadOnly(True)
-        spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
-        self._compact_spin(spin)
-        spin.setToolTip(tooltip)
-        spin.setStyleSheet("color: gray;")
+    def _unused_spin(self, tooltip, slot, maximum=0xFF):
+        """A spinbox for a byte the game never reads: greyed until the Unlock box is ticked."""
+        spin = self._spinbox(0, maximum, slot, tooltip)
+        self.mark_unused(spin)
         return spin
 
     @staticmethod
@@ -642,42 +694,33 @@ class HyneWidget(QWidget):
         label.setStyleSheet("color: gray;")
         return label
 
-    def _reserved_group(self, rows):
-        """Build a 'Reserved (read-only)' group from rows of (label, offset_tooltip). Returns
-        (group, [(spin, ...)]) so the caller can populate values on reload."""
+    def _reserved_group(self, rows, slot):
+        """Build an 'Unused' group from rows of labels. Returns (group, [spin, ...]) so the caller
+        can populate values on reload."""
         form = QFormLayout()
         spins = []
         for label_text in rows:
-            spin = self._readonly_spin(RESERVED_TOOLTIP)
+            spin = self._unused_spin(RESERVED_TOOLTIP, slot)
             form.addRow(self._grey_label(label_text, RESERVED_TOOLTIP), spin)
             spins.append(spin)
-        group = QGroupBox("Reserved (read-only)")
-        group.setToolTip("Bytes with no game meaning — shown for completeness, not editable")
+        group = QGroupBox("Unused")
+        group.setToolTip("Bytes with no game meaning: shown for completeness, editable with the Unlock box")
         group.setLayout(form)
         return group, spins
 
-    def _left_column_scroll(self, group_widgets):
-        """Stack groups vertically, hugged to the left with a stretch filling the right, inside
-        a scroll area — so the content stays at its natural width instead of spreading."""
-        column = QVBoxLayout()
-        for widget in group_widgets:
-            column.addWidget(widget)
-        column.addStretch(1)
-        column_widget = QWidget()
-        column_widget.setLayout(column)
-        column_widget.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
-
-        outer = QHBoxLayout()
-        outer.setContentsMargins(0, 0, 0, 0)
-        outer.addWidget(column_widget)
-        outer.addStretch(1)
+    @staticmethod
+    def _two_columns(left_groups, right_groups):
+        """Groups stacked in two columns sharing the tab's width."""
+        columns = QHBoxLayout()
+        for groups in (left_groups, right_groups):
+            column = QVBoxLayout()
+            for group in groups:
+                column.addWidget(group)
+            column.addStretch(1)
+            columns.addLayout(column, 1)
         container = QWidget()
-        container.setLayout(outer)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(container)
-        return scroll
+        container.setLayout(columns)
+        return container
 
     def _bitfield_group(self, title, tooltip, entries, changed_slot, columns=2):
         """Build a QGroupBox of checkboxes over a bitfield. Returns (group, [(bit, checkbox)])."""
@@ -764,7 +807,7 @@ class HyneWidget(QWidget):
         status_group.setToolTip("Core stats and state of the selected GF")
         status_group.setLayout(status_form)
 
-        gf_reserved_group, gf_reserved_spins = self._reserved_group(["Unused (0x10):"])
+        gf_reserved_group, gf_reserved_spins = self._reserved_group(["Unused (0x10):"], self._on_gf_unused_changed)
         self.gf_unused_spin = gf_reserved_spins[0]
         status_tab_container = QWidget()
         status_tab_layout = QVBoxLayout()
@@ -856,6 +899,11 @@ class HyneWidget(QWidget):
             usable = ability_id < LEARNED_ABILITY_BITS or self.manager.abilities_extended
             check.setVisible(usable and (ability_id < count or bool(gf and gf.has_ability(ability_id))))
 
+    def _on_gf_unused_changed(self, value):
+        gf = self._selected_gf()
+        if gf:
+            gf.unknown1 = value
+
     def _selected_gf(self):
         index = self.gf_list.currentRow()
         if self.manager.gf_entries and 0 <= index < len(self.manager.gf_entries):
@@ -875,7 +923,8 @@ class HyneWidget(QWidget):
             with QSignalBlocker(spin):
                 self._set_spin_value(spin, value)
         self._fill_learning_combo(gf)
-        self._set_spin_value(self.gf_unused_spin, gf.unknown1)
+        with QSignalBlocker(self.gf_unused_spin):
+            self._set_spin_value(self.gf_unused_spin, gf.unknown1)
         with QSignalBlocker(self.gf_available_check):
             self.gf_available_check.setChecked(gf.available)
         for ability_id, check in self.gf_ability_checks.items():
@@ -1008,7 +1057,7 @@ class HyneWidget(QWidget):
         status_checks_group.setLayout(status_checks_form)
 
         char_reserved_group, char_reserved_spins = self._reserved_group(
-            ["Unused (0x5A):", "Unused (0x6F):", "Unused (0x95):"])
+            ["Unused (0x5A):", "Unused (0x6F):", "Unused (0x95):"], self._on_character_unused_changed)
         self.char_unused_spins = char_reserved_spins
 
         status_tab_layout = QVBoxLayout()
@@ -1153,7 +1202,8 @@ class HyneWidget(QWidget):
             with QSignalBlocker(check):
                 check.setChecked(bool(char.exist_flags & mask))
         for spin, value in zip(self.char_unused_spins, [char.unknown2, char.unknown3, char.unknown4]):
-            self._set_spin_value(spin, value)
+            with QSignalBlocker(spin):
+                self._set_spin_value(spin, value)
         for bit, check in self.char_status_checks.items():
             with QSignalBlocker(check):
                 check.setChecked(char.has_status(bit))
@@ -1314,8 +1364,7 @@ class HyneWidget(QWidget):
 
         # Button remap table (offsets 8-19): each physical button picks a logical action.
         # Slots 9/10 (0x11/0x12) are L3 and R3 - the slot order is the PSX DualShock button word
-        # (remap_pad_input @0x4A2D60). They are real, editable buttons on a PSX analog pad; it is
-        # only the PC input layer that can never emit them, so say that rather than grey them out.
+        # (remap_pad_input @0x4A2D60). The PC input layer can never emit them, so they are unused here.
         pc_inert_tip = ("Analog-pad only. This is a real config slot and the PSX engine remaps it, but "
                         "the PC input layer never emits pad bit 0x200/0x400 (Input_Cfg_ApplyBindingToPadBit "
                         "has no binding for them), so on PC the button can never fire whatever you set here.")
@@ -1328,6 +1377,7 @@ class HyneWidget(QWidget):
                                      f"Logical action triggered by the {label} button")
             self.config_key_combos[field] = combo
             if pc_inert:
+                self.mark_unused(combo)
                 key_form.addRow(self._grey_label(f"{label} button:", pc_inert_tip), combo)
             else:
                 key_form.addRow(f"{label} button:", combo)
@@ -1337,7 +1387,7 @@ class HyneWidget(QWidget):
                              "L2+R2 held = flee battle, R1 = Renzokuken critical timing.")
         key_group.setLayout(key_form)
 
-        return self._left_column_scroll([settings_group, flag_group, seal_group, key_group])
+        return self._two_columns([settings_group, flag_group, seal_group], [key_group])
 
     def _reload_config(self):
         config = self.manager.config
@@ -1379,20 +1429,28 @@ class HyneWidget(QWidget):
 
     # ── Misc tab ─────────────────────────────────────────────────────────
 
+    def _on_character_unused_changed(self):
+        char = self._selected_character()
+        if char:
+            char.unknown2, char.unknown3, char.unknown4 = (spin.value() for spin in self.char_unused_spins)
+
+    def _on_tt_unused_changed(self, value):
+        self.manager.triple_triad.unused = value
+
     def _build_misc_tab(self):
         # Party slots 1-3 are the real party; slot 4 (party[3]) is unused padding (the top byte
-        # of the 32-bit party word) — FF8's party is fixed at 3, so it is shown read-only.
-        party4_tip = ("Read-only: party slot 4 is unused padding (the high byte of the 32-bit party word). "
+        # of the 32-bit party word) — FF8's party is fixed at 3.
+        party4_tip = ("Party slot 4 is unused padding (the high byte of the 32-bit party word). "
                       "FF8's party is fixed at 3 members; the game never stores a character here.")
         self.misc_party_combos = []
         self._party_rows = []
         for i in range(4):
             phantom = i == 3
-            combo = self._enum_combo(self._party_entries, None if phantom else self._on_misc_changed,
+            combo = self._enum_combo(self._party_entries, self._on_misc_changed,
                                      party4_tip if phantom else f"Party slot {i + 1} character (None = empty)")
             self.misc_party_combos.append(combo)
             if phantom:
-                combo.setEnabled(False)
+                self.mark_unused(combo)
                 self._party_rows.append((self._grey_label("Party member 4:", party4_tip), combo))
             else:
                 self._party_rows.append((f"Party member {i + 1}:", combo))
@@ -1435,13 +1493,13 @@ class HyneWidget(QWidget):
         weapons_group, self.misc_weapon_checks = self._bitfield_group(
             "Unlocked weapons",
             "Weapon-upgrade recipes already built/owned (Junk Shop). Bit i = kernel weapon id i.",
-            weapon_entries, self._on_misc_changed, columns=3)
+            weapon_entries, self._on_misc_changed, columns=7)
 
         # Limit-break unlocks: each is a bitfield → a checkbox group.
         self.misc_limit_bitfields = []  # (manager field, [(bit, checkbox)])
         limit_groups = []
         for field, title, entries, tip in self._limit_bitfield_defs:
-            group, checks = self._bitfield_group(title, tip, entries, self._on_misc_changed)
+            group, checks = self._bitfield_group(title, tip, entries, self._on_misc_changed, columns=4)
             self.misc_limit_bitfields.append((field, checks))
             limit_groups.append(group)
 
@@ -1458,7 +1516,7 @@ class HyneWidget(QWidget):
         points_group.setToolTip("Per-command AP-like learning progress; 0 = learned")
         points_group.setLayout(points_form)
 
-        return self._left_column_scroll([general_group, weapons_group, *limit_groups, points_group])
+        return self._two_columns([general_group, points_group], [weapons_group, *limit_groups])
 
     def _reload_names(self):
         for field, edit in self.misc_name_edits.items():
@@ -1800,7 +1858,7 @@ class HyneWidget(QWidget):
         self.tt_complete_check = QCheckBox("Collection completed")
         self.tt_complete_check.setToolTip("The game sets this the first time every card has been obtained and never clears it.")
         self.tt_complete_check.toggled.connect(self._on_card_complete_changed)
-        self.tt_unused_spin = self._readonly_spin(RESERVED_TOOLTIP, 0xFFFF)
+        self.tt_unused_spin = self._unused_spin(RESERVED_TOOLTIP, self._on_tt_unused_changed, 0xFFFF)
         counts_form = QFormLayout()
         counts_form.addRow("Wins:", self.tt_count_spins["wins"])
         counts_form.addRow("Losses:", self.tt_count_spins["losses"])
@@ -1890,7 +1948,8 @@ class HyneWidget(QWidget):
             self._set_spin_value(self.tt_seed_spin, tt.seed)
         with QSignalBlocker(self.tt_complete_check):
             self.tt_complete_check.setChecked(tt.collection_complete)
-        self._set_spin_value(self.tt_unused_spin, tt.unused)
+        with QSignalBlocker(self.tt_unused_spin):
+            self._set_spin_value(self.tt_unused_spin, tt.unused)
 
     def _on_card_obtained_changed(self, card_id, obtained):
         self.manager.triple_triad.set_obtained(card_id, obtained)

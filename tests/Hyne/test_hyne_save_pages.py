@@ -425,12 +425,35 @@ class TestPages:
         scan.item(16 + 2).setCheckState(Qt.CheckState.Checked)
         assert widget.manager.battle.enemies_scanned[18]
 
+    def test_world_map_places(self, widget):
+        page = widget.world_map_page
+        widget.manager.world_map.set_place(2, -71602, -14836, -340, 4095)
+        page.reload()
+        assert [page.position_spins[2, column].value() for column in range(4)] == [-71602, -14836, -340, 4095]
+        page.position_spins[2, 0].setValue(70000)
+        assert widget.manager.world_map.place(2) == (70000, -14836, -340, 4095)
+
+    def test_unused_fields_unlock(self, widget):
+        page = widget.world_map_page
+        spin = page.position_spins[1, 0]
+        l3 = widget.config_key_combos["key_l3"]
+        assert spin.isReadOnly() and not l3.isEnabled() and not widget.misc_party_combos[3].isEnabled()
+        assert not page.position_spins[0, 0].isReadOnly()
+        widget.unlock_unused_check.setChecked(True)
+        try:
+            assert not spin.isReadOnly() and l3.isEnabled() and widget.misc_party_combos[3].isEnabled()
+            spin.setValue(70000)
+            assert widget.manager.world_map.place(1)[0] == 70000
+            spin.setValue(0)
+        finally:
+            widget.unlock_unused_check.setChecked(False)
+        assert spin.isReadOnly() and not l3.isEnabled()
+
     def test_shop_page(self, widget):
         page = widget.shops_page
         page.shop_list.setCurrentRow(8)
-        assert page.item_checks[11].font().italic()   # a rare item of the Esthar shop
-        assert not page.item_checks[0].font().italic()
-        assert not page.item_checks[0].isEnabled()    # the game works them out itself
+        assert page.item_labels[11].font().italic()   # a rare item of the Esthar shop
+        assert not page.item_labels[0].font().italic()
         page.visited_check.setChecked(True)
         assert widget.manager.shops.is_visited(8)
         page.shop_list.setCurrentRow(0)

@@ -187,9 +187,9 @@ class TestShopFile:
         widget._load_shop_file(str(path))
         page = widget.shops_page
         page.shop_list.setCurrentRow(0)
-        assert page.item_checks[0].text() == widget.kernel_names.item_name(1)
-        assert page.item_checks[3].font().italic()
-        assert not page.item_checks[4].font().italic()
+        assert page.item_labels[0].text() == widget.kernel_names.item_name(1)
+        assert page.item_labels[3].font().italic()
+        assert not page.item_labels[4].font().italic()
         assert read_shop_file(bytes([1, 128, 2, 129] * 320))[0][1] == list(range(0, 16, 2))    # as the game's test
 
 

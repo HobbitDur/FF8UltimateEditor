@@ -32,6 +32,7 @@ NB_DRAW_POINTS = 256
 DRAW_POINT_STATES = ["Filled", "Half-filled", "Empty", "Completely empty"]
 NB_WORLD_POSITIONS = 8
 WORLD_POSITION_VALUES = 6
+WORLD_PLACE_FORMAT = "<iihH"
 NAME_SIZE = 12
 MAX_LEVEL = 100
 # FFNx moves the enemies scanned once here when scene.out uses a monster of its extra ones (com id
@@ -526,6 +527,13 @@ class WorldMapState(SaveView):
     @property
     def obel_quest(self):
         return self.bits(118, 64)
+
+    def place(self, row):
+        """(x, y, height, angle) of a position row, what World_SaveWorldmapStateToSavemap@0x549E80 stores."""
+        return struct.unpack_from(WORLD_PLACE_FORMAT, self.buffer, self.base + 2 * row * WORLD_POSITION_VALUES)
+
+    def set_place(self, row, x, y, height, angle):
+        struct.pack_into(WORLD_PLACE_FORMAT, self.buffer, self.base + 2 * row * WORLD_POSITION_VALUES, x, y, height, angle)
 
     def position(self, row, column):
         return struct.unpack_from("<h", self.buffer, self.base + 2 * (row * WORLD_POSITION_VALUES + column))[0]

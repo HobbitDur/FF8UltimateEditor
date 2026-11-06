@@ -543,6 +543,10 @@ class TripleTriadEntry:
     def unused(self):
         return struct.unpack_from("<H", self._buffer, TT_UNUSED)[0]
 
+    @unused.setter
+    def unused(self, value):
+        struct.pack_into("<H", self._buffer, TT_UNUSED, value)
+
     @property
     def seed(self):
         return struct.unpack_from("<I", self._buffer, TT_SEED)[0]

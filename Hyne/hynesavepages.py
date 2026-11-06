@@ -7,7 +7,7 @@ from PyQt6.QtCore import QSignalBlocker, Qt
 from PyQt6.QtGui import QBrush, QColor, QFont, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView, QCheckBox, QComboBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QPlainTextEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout,
+    QLineEdit, QListWidget, QListWidgetItem, QPlainTextEdit, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout,
     QWidget,
 )
 
@@ -19,6 +19,7 @@ from Hyne.hynesavemap import (
 SPIN_WIDTH_3_DIGITS = 78
 SPIN_WIDTH_5_DIGITS = 92
 I16_MIN, I16_MAX = -32768, 32767
+I32_MIN, I32_MAX = -2147483648, 2147483647
 U16_MAX = 0xFFFF
 U8_MAX = 0xFF
 DISC_MOMENTS = (395, 901, 3860)   # the story moments each disc after the first starts at
@@ -31,8 +32,11 @@ TIMBER_MANIACS_ISSUES = [
     "Deling City Hotel", "Horizon: handyman's House", "Horizon Hotel", "Trabia Garden - Cemetery",
     "Centra Ruins (automatic)", "Shumi Village: Handyman's House", "Edea's House", "White SeeD Ship", "Unused", "Unused",
 ]
-VEHICLE_NAMES = ["Car", "???", "Balamb Garden", "Chocobo", "Ragnarok", "???", "???", "???"]
-PUPU_QUEST_NAMES = ["???", "???", "Mandy Beach", "Winhill", "Trabia", "Kashkabald Desert", "UFO defeated", "PuPu defeated"]
+UNUSED_NAME = "Unused"
+# The world map scripts' bits 0-15, from section 36 of wmsetus.obj. Nothing tests or sets the unused ones.
+WORLD_MESSAGE_NAMES = ["Car controls", UNUSED_NAME, "Garden controls", "Chocobo controls", "Ragnarok controls",
+                       "Selphie: to the Missile Base", "Edea's house looks familiar", "Garden: gauge going berserk"]
+PUPU_QUEST_NAMES = [UNUSED_NAME, UNUSED_NAME, "Mandy Beach", "Winhill", "Trabia", "Kashkabald Desert", "UFO defeated", "PuPu defeated"]
 # (text, byte of the quest block, bit)
 OBEL_QUEST_FLAGS = [
     ("Talked with the shadow for the first time", 6, 0), ("Hummed a song twice", 0, 0),
@@ -43,8 +47,10 @@ OBEL_QUEST_FLAGS = [
     ("Timber island rock", 3, 4), ("All rocks", 3, 5), ("The shadow gave the Eldbeak hint", 1, 6),
     ("Saw the pillar at Eldbeak", 1, 7), ("Minde island treasure found", 2, 0), ("Esthar's mountains treasure found", 2, 1),
 ]
-WORLD_POSITION_ROWS = ["Character", "Unknown 1", "Ragnarok", "Balamb Garden", "Car", "Unknown 2", "Unknown 3", "Unknown 4"]
-WORLD_POSITION_COLUMNS = ["X", "Z", "Y", "?", "?", "Rotation"]
+WORLD_POSITION_ROWS = ["Party", "Party, second set", "Ragnarok", "Balamb Garden", "Rental car", "Rental car, second set",
+                       UNUSED_NAME, UNUSED_NAME]
+WORLD_UNUSED_POSITIONS = (1, 5, 6, 7)   # the second set hangs on a flag FFWorldInit clears and nothing sets; no code reads the last two
+WORLD_POSITION_COLUMNS = [("X", I32_MIN, I32_MAX), ("Y", I32_MIN, I32_MAX), ("Height", I16_MIN, I16_MAX), ("Angle", 0, U16_MAX)]
 SUMMON_LEVEL_NAMES = ["ChocoFire", "ChocoFlare", "ChocoMeteor", "ChocoBocle"]
 
 
@@ -128,6 +134,11 @@ class SavePage(QWidget):
         check.toggled.connect(lambda checked: setattr(self.section(section), field, checked))
         return self._bound(check, lambda: check.setChecked(getattr(self.section(section), field)))
 
+    def unused_spin(self, section, field, maximum):
+        spin = self.spin(section, field, 0, maximum, "No code reads this.")
+        self.tool.mark_unused(spin)
+        return spin
+
     def bit_check(self, section, bits, index, text, tooltip=""):
         check = QCheckBox(text)
         if tooltip:
@@ -149,7 +160,10 @@ class SavePage(QWidget):
     def bit_group(self, title, section, bits, names, columns=2, tooltip=""):
         grid = QGridLayout()
         for index, name in enumerate(names):
-            grid.addWidget(self.bit_check(section, bits, index, name), index // columns, index % columns)
+            check = self.bit_check(section, bits, index, name)
+            if name == UNUSED_NAME:
+                self.tool.mark_unused(check)
+            grid.addWidget(check, index // columns, index % columns)
         group = QGroupBox(title)
         if tooltip:
             group.setToolTip(tooltip)
@@ -166,6 +180,8 @@ class SavePage(QWidget):
             item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
             item.setCheckState(role.Unchecked)
             list_widget.addItem(item)
+            if name == UNUSED_NAME:
+                self.tool.mark_unused(item)
         all_check = QCheckBox("Select all")
 
         def item_changed(item):
@@ -357,8 +373,8 @@ class PartyPage(SavePage):
             self.combo("party", f"party_{slot}", member_entries, f"Field party member {slot}. Laguna's squad can walk here too.")
             for slot in (1, 2, 3)]
         for combo in self.party_combos:
+            combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             party_row.addWidget(combo)
-        party_row.addStretch(1)
         self.dream_check = self.byte_flag_check("battle", "special_flags", 0x01, "Dream world (Laguna's squad)",
                                                 "The party isolated in a dream: battle and save screen use Laguna's squad and gil")
         party_layout = QVBoxLayout()
@@ -417,7 +433,6 @@ class PartyPage(SavePage):
         column.addStretch(1)
         layout = QHBoxLayout(self)
         layout.addLayout(column)
-        layout.addStretch(1)
 
     def _fill_positions(self):
         for member, row in enumerate(self.position_spins):
@@ -551,20 +566,19 @@ class ShopsPage(SavePage):
         self.visited_check.setToolTip("The game ticks this when the shop opens. The Call Shop ability lists only "
                                       "the shops ticked.\nIt changes nothing to what a shop sells.")
         self.visited_check.toggled.connect(self._on_visited)
-        self.item_checks = []
+        self.item_labels = []
         grid = QGridLayout()
         for slot in range(SHOP_NB_ITEMS):
-            check = QCheckBox()
-            check.setEnabled(False)
-            self.item_checks.append(check)
-            grid.addWidget(check, slot % 8, slot // 8)
+            label = QLabel()
+            self.item_labels.append(label)
+            grid.addWidget(label, slot % 8, slot // 8)
         items_group = QGroupBox("Items sold")
         items_group.setToolTip("The list is vanilla shop.bin's until a shop.bin is opened with the toolbar's "
                                "Import complementary.")
         items_group.setLayout(grid)
-        items_note = QLabel("Sold in italics only with the Familiar ability, the others always. A tick is what the "
-                            "shop had on sale at its last visit: the game works it out again each time a shop opens, "
-                            "so it can't be edited.")
+        items_note = QLabel("In italics: sold only with the Familiar ability. The game works out what is on sale each "
+                            "time a shop opens, and the prices from price.bin, Haggle and Sell-High, so a save has "
+                            "nothing to change here but the visit.")
         items_note.setWordWrap(True)
         right = QVBoxLayout()
         right.addWidget(self.visited_check)
@@ -574,7 +588,6 @@ class ShopsPage(SavePage):
         layout = QHBoxLayout(self)
         layout.addWidget(self.shop_list)
         layout.addLayout(right)
-        layout.addStretch(1)
         self._refills.append(self._fill_shop)
 
     def _items(self, shop):
@@ -602,13 +615,12 @@ class ShopsPage(SavePage):
         with QSignalBlocker(self.visited_check):
             self.visited_check.setChecked(shops.is_visited(shop))
         items, rare = self._items(shop), self._rare(shop)
-        for slot, check in enumerate(self.item_checks):
-            check.setVisible(items[slot] != 0)
-            check.setText(self.tool.kernel_names.item_name(items[slot]) or f"Item {items[slot]}")
-            font = QFont(check.font())
+        for slot, label in enumerate(self.item_labels):
+            label.setVisible(items[slot] != 0)
+            label.setText(self.tool.kernel_names.item_name(items[slot]) or f"Item {items[slot]}")
+            font = QFont(label.font())
             font.setItalic(slot in rare)
-            check.setFont(font)
-            check.setChecked(shops.is_visited(shop) and shops.has_item(shop, slot))
+            label.setFont(font)
 
     def _on_visited(self, checked):
         self.section("shops").set_visited(self.shop_list.currentRow(), checked)
@@ -632,9 +644,7 @@ class DrawPointsPage(SavePage):
         self.table.setHorizontalHeaderLabels(["Magic", "Location", "State"])
         self.table.verticalHeader().setDefaultSectionSize(24)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.state_combos = []
         for point in range(NB_DRAW_POINTS):
             location = data["draw_point_locations"][point]
@@ -687,18 +697,22 @@ class DrawPointsPage(SavePage):
 
 
 class WorldMapPage(SavePage):
-    """World map steps, rental car, displayed map, vehicles, quests, vehicle positions."""
+    """Camera, rental car, displayed map, messages shown once, quests, where the party and vehicles stand."""
+
+    UNUSED_POSITION_TIP = "The game never writes this row in normal play."
 
     def __init__(self, tool):
         super().__init__(tool)
         values_group = _form_group("World map", [
-            ("Steps related:", self.spin("world_map", "steps", 0, U16_MAX)),
-            ("Mileage related:", self.spin("world_map", "car_steps", 0, U16_MAX)),
+            ("Camera angle:", self.spin("world_map", "steps", 0, U16_MAX, "Where the world map camera faces, 0 to 4095 for a full turn")),
+            (tool._grey_label("Unused:", "No code reads these two bytes."), self.unused_spin("world_map", "car_steps", U16_MAX)),
             ("Rental car:", self.spin("world_map", "rental_car", 0, U8_MAX, "0 = not allowed, 255 = none")),
             ("Displayed map:", self.combo("world_map", "displayed_map",
                                           [{"value": 0, "name": "None"}, {"value": 1, "name": "Globe"}, {"value": 2, "name": "Map"}])),
         ])
-        vehicles_group = self.bit_group("Vehicles driven once", "world_map", "vehicles", VEHICLE_NAMES, columns=4)
+        vehicles_group = self.bit_group("Messages shown once", "world_map", "vehicles", WORLD_MESSAGE_NAMES, columns=4,
+                                        tooltip="The world map scripts show each of these the first time, then tick it: the "
+                                                "controls of a vehicle when first boarded, and a few story lines.")
         pupu_group = self.bit_group("PuPu quest", "world_map", "pupu_quest", PUPU_QUEST_NAMES, columns=4)
         obel_grid = QGridLayout()
         for index, (text, byte, bit) in enumerate(OBEL_QUEST_FLAGS):
@@ -708,20 +722,23 @@ class WorldMapPage(SavePage):
 
         self.position_spins = {}
         positions = QGridLayout()
-        for column, text in enumerate(WORLD_POSITION_COLUMNS, start=1):
+        for column, (text, _low, _high) in enumerate(WORLD_POSITION_COLUMNS, start=1):
             positions.addWidget(QLabel(text), 0, column)
         for row in range(NB_WORLD_POSITIONS):
-            positions.addWidget(QLabel(f"{WORLD_POSITION_ROWS[row]}:"), row + 1, 0)
-            for column in range(WORLD_POSITION_VALUES):
-                spin = tool._spinbox(I16_MIN, I16_MAX)
-                spin.setMaximumWidth(SPIN_WIDTH_5_DIGITS)
-                spin.valueChanged.connect(lambda value, r=row, c=column: self.section("world_map").set_position(r, c, value))
+            unused = row in WORLD_UNUSED_POSITIONS
+            name = f"{WORLD_POSITION_ROWS[row]}:"
+            positions.addWidget(tool._grey_label(name, self.UNUSED_POSITION_TIP) if unused else QLabel(name), row + 1, 0)
+            for column, (_text, low, high) in enumerate(WORLD_POSITION_COLUMNS):
+                spin = tool._spinbox(low, high, tooltip=self.UNUSED_POSITION_TIP if unused else "")
+                spin.valueChanged.connect(lambda _value, r=row: self._on_place(r))
                 self.position_spins[row, column] = spin
                 positions.addWidget(spin, row + 1, column + 1)
+                if unused:
+                    tool.mark_unused(spin)
         self._refills.append(self._fill_positions)
         positions_group = QGroupBox("Positions")
-        positions_group.setToolTip("Where each vehicle stands on the world map. The row names come from myst6re's Hyne; "
-                                   "three rows have no known meaning.")
+        positions_group.setToolTip("Where the party and each vehicle stand on the world map. Y is stored negated; the angle "
+                                   "is 0 to 4095 for a full turn. Each row is 12 bytes: two longs and two words.")
         positions_group.setLayout(positions)
 
         left = QVBoxLayout()
@@ -736,12 +753,16 @@ class WorldMapPage(SavePage):
         layout = QHBoxLayout(self)
         layout.addLayout(left)
         layout.addLayout(right)
-        layout.addStretch(1)
+
+    def _on_place(self, row):
+        self.section("world_map").set_place(row, *(self.position_spins[row, column].value()
+                                                   for column in range(len(WORLD_POSITION_COLUMNS))))
 
     def _fill_positions(self):
-        for (row, column), spin in self.position_spins.items():
-            with QSignalBlocker(spin):
-                spin.setValue(self.section("world_map").position(row, column))
+        for row in range(NB_WORLD_POSITIONS):
+            for column, value in enumerate(self.section("world_map").place(row)):
+                with QSignalBlocker(self.position_spins[row, column]):
+                    self.position_spins[row, column].setValue(value)
 
 
 class ChocoboPage(SavePage):
@@ -778,7 +799,6 @@ class ChocoboPage(SavePage):
         layout = QHBoxLayout(self)
         layout.addLayout(left)
         layout.addLayout(right)
-        layout.addStretch(1)
 
 
 class LoadScreenPage(SavePage):
@@ -830,7 +850,6 @@ class LoadScreenPage(SavePage):
         column.addStretch(1)
         layout = QHBoxLayout(self)
         layout.addLayout(column)
-        layout.addStretch(1)
 
 
 class FieldVariablesPage(SavePage):
