@@ -532,48 +532,34 @@ static uint32_t ot_index(uint32_t bucket)
 static const uint32_t MODELMEM_SIZE = 0x400000, MODELWORK_SIZE = 0x40000;
 static const uint32_t C3_28 = 0x1D96AAC; // running effect root queue
 
-// Everything the frame draws, as SSIGPU keeps it: every insert (SSIGPU_InsertPrim* 0x45C740.., and
-// the model renderer's own inline inserts, which the hooks above never see) appends an
-// SSIGPU_ExecNode {pkt, 4 depth keys = the GTE SZ of its points, msk, prev head byte} at the cursor
-// 0x1CA8828. Listed far to near by their deepest key (what the PlayStation's depth buckets do), in
-// insertion order among equals; prims with no depth keys (2D) last, on top. A draw-mode packet
-// (E1..E6, no depth) set for primitives is inserted right after them into their bucket, so the
-// console runs it first (an ordering table bucket is drawn last-in first): it goes right before each
-// primitive inserted since the previous one - Cure's rays (untextured, semi-transparent) take their
-// blend mode (B + F) from it, not from whatever mode the frame's last packet left.
+// Everything the frame draws, as SSIGPU draws it (SSIGPU_DrawOrderingTablePass 0x45D310): the ordering table from its highest bucket down. Each insert
+// (SSIGPU_InsertPrim* 0x45C740.., and the model renderer's own inline inserts, which the hooks above never see) puts an SSIGPU_ExecNode {pkt, 4 depth keys, msk,
+// prev head byte} at the bucket's head, the packet's tag keeping the head it replaced: last in, first drawn, a draw-mode packet before the primitives inserted ahead
+// of it. (Sorting by the depth keys instead cut a floor effect with the stage's floor: a big polygon's deepest key says nothing of its bucket.) A node on another
+// list: after them, as inserted. A packet's "bucket" is its table index, what `under=` merges by
 static const uint32_t EXEC_START = 0x1C48828, EXEC_CURSOR = 0x1CA8828;
 static void walk_render_list(std::vector<Ins> &out)
 {
 	uint32_t start = EXEC_START, end = *(const uint32_t *)EXEC_CURSOR;
 	if (end <= start || end - start > 0x60000) return;
-	struct Node { int32_t depth; uint32_t order, pkt, state; int part; };
-	std::vector<Node> nodes;
-	size_t group = 0;           // the first primitive a coming draw-mode packet applies to
-	for (uint32_t node = start; node + 24 <= end; node += 24)
-	{
-		uint32_t pkt = *(const uint32_t *)node;
-		if (IsBadReadPtr((void *)pkt, 8)) continue;
-		const int32_t *k = (const int32_t *)(node + 4);
-		int32_t depth = k[0];
-		for (int i = 1; i < 4; i++) if (k[i] > depth) depth = k[i];
-		if (getenv("FXR_NODES") && atoi(getenv("FXR_NODES")) == g_tick)
-			printf("node %u keys %d %d %d %d msk %04X code %02X len %u\n", (unsigned)nodes.size(), k[0], k[1], k[2], k[3],
-				*(const uint16_t *)(node + 20), *(const uint32_t *)(pkt + 4) >> 24, *(const uint8_t *)(pkt + 3));
-		uint32_t code = *(const uint32_t *)(pkt + 4) >> 24;
-		if (depth <= 0 && code >= 0xE1 && code <= 0xE6)
+	const bool trace = getenv("FXR_NODES") && atoi(getenv("FXR_NODES")) == g_tick;
+	std::map<uint32_t, bool> reached;
+	const uint32_t *ot = (const uint32_t *)g_ot;
+	for (int i = OT_SIZE / 4 - 1; i >= 0; i--)
+		for (uint32_t node = ot[i]; node >= start && node < end && !reached.count(node); )
 		{
-			for (size_t i = group; i < nodes.size(); i++) nodes[i].state = pkt;
-			group = nodes.size();
-			continue;
+			reached[node] = true;
+			const uint32_t pkt = *(const uint32_t *)node;
+			if (IsBadReadPtr((void *)pkt, 8)) break;
+			if (trace)
+				printf("node bucket %d keys %d %d %d %d code %02X len %u\n", i, *(const int32_t *)(node + 4), *(const int32_t *)(node + 8), *(const int32_t *)(node + 12),
+					*(const int32_t *)(node + 16), *(const uint32_t *)(pkt + 4) >> 24, *(const uint8_t *)(pkt + 3));
+			out.push_back({ 0, (uint32_t)i, pkt, part_at(node) });
+			node = (*(const uint32_t *)pkt & 0xFFFFFF) | (uint32_t)*(const uint8_t *)(node + 22) << 24;
 		}
-		nodes.push_back({ depth > 0 ? depth : -1, (uint32_t)nodes.size(), pkt, 0, part_at(node) });
-	}
-	std::stable_sort(nodes.begin(), nodes.end(), [](const Node &a, const Node &b) { return a.depth > b.depth; });
-	for (const Node &n : nodes)
-	{
-		if (n.state) out.push_back({ 0, (uint32_t)n.depth, n.state, n.part });
-		out.push_back({ 0, (uint32_t)n.depth, n.pkt, n.part });
-	}
+	for (uint32_t node = start; node + 24 <= end; node += 24)
+		if (!reached.count(node) && !IsBadReadPtr(*(void **)node, 8))
+			out.push_back({ 0, 0xFFFFFFFFu, *(const uint32_t *)node, part_at(node) });
 }
 
 static void env_reset()

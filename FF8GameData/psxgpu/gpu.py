@@ -161,6 +161,8 @@ class Gpu:
         if not gouraud:
             colours = colours * points
         triangles = [(0, 1, 2)] + ([(1, 3, 2)] if quad else [])
+        if textured:
+            self.tpage = tpage          # the draw mode from now on (SSIGPU_SetTPage 0x45B960): an untextured polygon blends with its mode
         if textured and not self.vram.page_written(tpage):
             self.missing_pages.add(tpage)
             textured = False

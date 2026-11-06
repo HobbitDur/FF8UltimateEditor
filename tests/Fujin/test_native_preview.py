@@ -43,6 +43,40 @@ def test_flat_and_gouraud_polygons():
     assert tuple(gpu.image()[15, 15]) == (255, 0, 0)       # 255/2 + 255/2 on red, 0 + 0 elsewhere
 
 
+def _draw_mode(packets):
+    """The blend mode these packets leave set: the last draw-mode packet's or textured polygon's page."""
+    for words in reversed(packets):
+        code = words[0] >> 24 if words else 0
+        if code == 0xE1:
+            return (words[0] >> 5) & 3
+        if 0x20 <= code < 0x40 and code & 4:
+            return ((words[5] if code & 0x10 else words[4]) >> 21) & 3
+    return 0
+
+
+def test_an_untextured_polygon_blends_with_the_last_draw_mode():
+    """The ring of a cast's glow has no draw mode of its own: the page of the textured polygon before it says additive (SSIGPU_SetTPage 0x45B960). Its black
+    corners leave the floor alone; averaged with it they drew a black ring."""
+    def xy(x, y):
+        return (y << 16) | x
+
+    def floor():
+        vram = Vram()
+        vram.upload(0, 0, 4, 4, [0x4210] * 16)                                    # grey texels, 15 bits
+        gpu = Gpu(vram, background=(0, 0, 0))
+        return gpu
+    additive, average = 1 << 5, 0
+    picture = {}
+    for mode in (additive, average):
+        gpu = floor()
+        gpu.draw_packet([0x2D808080, xy(0, 0), 0, xy(100, 0), (mode | (2 << 7)) << 16, xy(0, 100), 3 << 8, xy(100, 100), (3 << 8) | 3])
+        before = gpu.image()[50, 50].astype(int)
+        gpu.draw_packet([0x3A000000, xy(0, 0), 0, xy(100, 0), 0, xy(0, 100), 0, xy(100, 100)])
+        picture[mode] = before, gpu.image()[50, 50].astype(int)
+    assert (picture[additive][0] == picture[additive][1]).all() and picture[additive][0].sum() > 0
+    assert (picture[average][1] < picture[average][0]).all()
+
+
 def test_lines_draw_at_any_scale():
     for scale, pixels in ((1.0, 41), (0.5, 21)):
         gpu = Gpu(scale=scale)
@@ -178,8 +212,7 @@ def test_effect_preview_records_the_camera_preview_battle(qapp):
     # inserted after them, which the console runs first: B + F, light added, not a darkening B/2 + F/2
     ordered = [words for tick in view.recording.ticks for _bucket, _order, words in tick.packets]
     rays = [index for index, words in enumerate(ordered) if words and words[0] >> 24 in (0x32, 0x3A)]
-    assert rays and all(ordered[index - 1][0] >> 24 == 0xE1 and (ordered[index - 1][0] >> 5) & 3 == 1
-                        for index in rays)
+    assert rays and all(ordered[index][0] >> 24 != 0x32 or _draw_mode(ordered[:index]) == 1 for index in rays)
     assert (image.astype(int).sum(axis=2) > 200).mean() > 0.01                 # in the game window
 
 
