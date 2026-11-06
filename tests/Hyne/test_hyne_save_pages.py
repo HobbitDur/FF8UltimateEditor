@@ -22,6 +22,7 @@ from Hyne.hynemanager import (
     CRC_OFFSET_1, CRC_OFFSET_2, CRC_SPAN_LEN, CRC_SPAN_START, HyneManager, IMAGE_SIZE, crc16_ff8, lzss_compress,
     lzss_decompress,
 )
+from Hyne.hynesavepages import WORLD_WIDTH, region_to_map, world_to_map
 from Hyne.hynewidget import HyneWidget
 
 REPO = pathlib.Path(__file__).parent.parent.parent
@@ -425,6 +426,20 @@ class TestPages:
         scan.item(16 + 2).setCheckState(Qt.CheckState.Checked)
         assert widget.manager.battle.enemies_scanned[18]
 
+    def test_world_map_preview(self, widget):
+        assert world_to_map(0, 0) == (0.5, 0.5)
+        assert world_to_map(WORLD_WIDTH // 2, 0) == (0, 0.5)     # the world wraps around
+        assert region_to_map(32 * 12 + 10) == (10.5 / 32, 12.5 / 24)
+        page = widget.world_map_page
+        world = widget.manager.world_map
+        world.set_place(0, 0, 0, -100, 5)
+        world.set_place(2, 0, 0, 0, 0)
+        world.pupu_quest[7] = True
+        page.reload()
+        names = [place[0] for place in page.preview.places]
+        assert "Party" in names and "Ragnarok" not in names      # never placed
+        assert dict((site[0], site[3]) for site in page.preview.sites)["PuPu defeated"]
+
     def test_world_map_places(self, widget):
         page = widget.world_map_page
         widget.manager.world_map.set_place(2, -71602, -14836, -340, 4095)
@@ -447,6 +462,8 @@ class TestPages:
         l3 = widget.config_key_combos["key_l3"]
         assert spin.isReadOnly() and not l3.isEnabled() and not widget.misc_party_combos[3].isEnabled()
         assert not page.position_spins[0, 0].isReadOnly()
+        flags = dict(widget.config_flag_checks)
+        assert not flags[0x08].isEnabled() and flags[0x01].isEnabled()
         widget.unlock_unused_check.setChecked(True)
         try:
             assert not spin.isReadOnly() and l3.isEnabled() and widget.misc_party_combos[3].isEnabled()

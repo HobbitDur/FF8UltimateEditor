@@ -3,8 +3,10 @@ Chocobo World, load screen, field variables, and the battle order and Timber Man
 
 A SavePage builds its widgets through binding helpers: each widget is tied to one field of a section
 of HyneManager, written at once on edit and refilled by reload() with its signals blocked."""
-from PyQt6.QtCore import QSignalBlocker, Qt
-from PyQt6.QtGui import QBrush, QColor, QFont, QStandardItem, QStandardItemModel
+import os
+
+from PyQt6.QtCore import QPointF, QRectF, QSignalBlocker, Qt
+from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPixmap, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView, QCheckBox, QComboBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
     QLineEdit, QListWidget, QListWidgetItem, QPlainTextEdit, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout,
@@ -56,6 +58,25 @@ WORLD_POSITION_ROWS = ["Party", "Party, second set", "Ragnarok", "Balamb Garden"
 WORLD_UNUSED_POSITIONS = (1, 5, 6, 7)   # the second set hangs on a flag FFWorldInit clears and nothing sets; no code reads the last two
 WORLD_POSITION_COLUMNS = [("X", I32_MIN, I32_MAX), ("Y", I32_MIN, I32_MAX), ("Height", I16_MIN, I16_MAX), ("Angle", 0, U16_MAX)]
 SUMMON_LEVEL_NAMES = ["ChocoFire", "ChocoFlare", "ChocoMeteor", "ChocoBocle"]
+
+
+# wm_GetRegionNumber@0x553910: the world wraps around at this size, 0,0 in its middle, cut into 32 x 24 regions
+WORLD_WIDTH, WORLD_HEIGHT = 262144, 196608
+WORLD_REGION_COLUMNS, WORLD_REGION_ROWS = 32, 24
+# (place in PUPU_QUEST_NAMES, region its battle waits in), from the scripts of battles 745-750
+PUPU_SITES = [(2, 334), (3, 394), (4, 153), (5, 596), (6, 187), (7, 275)]
+WORLD_MAP_IMAGE = "worldmap.png"
+
+
+def world_to_map(x, y):
+    """Where a saved world position is on the map, from 0 to 1 in both directions."""
+    return (x + WORLD_WIDTH // 2) % WORLD_WIDTH / WORLD_WIDTH, (y + WORLD_HEIGHT // 2) % WORLD_HEIGHT / WORLD_HEIGHT
+
+
+def region_to_map(region):
+    """The middle of a world map region on the map, from 0 to 1 in both directions."""
+    row, column = divmod(region, WORLD_REGION_COLUMNS)
+    return (column + 0.5) / WORLD_REGION_COLUMNS, (row + 0.5) / WORLD_REGION_ROWS
 
 
 def format_seconds(seconds):
@@ -708,6 +729,66 @@ class DrawPointsPage(SavePage):
         self.tool._mark_dirty()
 
 
+class WorldMapPreview(QWidget):
+    """The world map with who stands where and the PuPu sightings. It only shows: the image is read at first paint."""
+
+    PLACE_COLOR = QColor(255, 210, 0)
+    SITE_DONE_COLOR = QColor(70, 220, 90)
+    SITE_LEFT_COLOR = QColor(235, 70, 70)
+    MARK_RADIUS = 5
+
+    def __init__(self, image_path):
+        super().__init__()
+        self.image_path = image_path
+        self.image = None
+        self.scaled = None
+        self.places = []    # (name, x, y on the map from 0 to 1)
+        self.sites = []     # (name, x, y on the map from 0 to 1, done)
+        self.setMinimumSize(320, 240)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    def set_marks(self, places, sites):
+        self.places, self.sites = places, sites
+        self.update()
+
+    def _map_rect(self):
+        """The largest part of the widget with the map's proportions."""
+        width = min(self.width(), self.height() * WORLD_WIDTH / WORLD_HEIGHT)
+        return QRectF(0, 0, width, width * WORLD_HEIGHT / WORLD_WIDTH)
+
+    def paintEvent(self, _event):
+        if self.image is None:
+            self.image = QPixmap(self.image_path)
+        painter = QPainter(self)
+        rect = self._map_rect()
+        if self.image.isNull():
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "(no world map image)")
+            return
+        if self.scaled is None or self.scaled.width() != int(rect.width()):
+            self.scaled = self.image.scaledToWidth(int(rect.width()), Qt.TransformationMode.SmoothTransformation)
+        painter.drawPixmap(0, 0, self.scaled)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        for name, x, y, done in self.sites:
+            self._mark(painter, rect, name, x, y, self.SITE_DONE_COLOR if done else self.SITE_LEFT_COLOR, square=True)
+        for name, x, y in self.places:
+            self._mark(painter, rect, name, x, y, self.PLACE_COLOR, square=False)
+
+    def _mark(self, painter, rect, name, x, y, color, square):
+        point = QPointF(x * rect.width(), y * rect.height())
+        radius = self.MARK_RADIUS
+        painter.setPen(QPen(QColor("black"), 1))
+        painter.setBrush(color)
+        if square:
+            painter.drawRect(QRectF(point.x() - radius, point.y() - radius, 2 * radius, 2 * radius))
+        else:
+            painter.drawEllipse(point, radius, radius)
+        label = point + QPointF(radius + 3, 4)
+        painter.setPen(QColor("black"))
+        painter.drawText(label + QPointF(1, 1), name)
+        painter.setPen(color)
+        painter.drawText(label, name)
+
+
 class WorldMapPage(SavePage):
     """Camera, rental car, displayed map, messages shown once, quests, where the party and vehicles stand."""
 
@@ -726,6 +807,9 @@ class WorldMapPage(SavePage):
                                         tooltip="The world map scripts show each of these the first time, then tick it: the "
                                                 "controls of a vehicle when first boarded, and a few story lines.")
         pupu_group = self.bit_group("PuPu quest", "world_map", "pupu_quest", PUPU_QUEST_NAMES, columns=4)
+        self.preview = WorldMapPreview(os.path.join(tool.icon_path, WORLD_MAP_IMAGE))
+        for check in pupu_group.findChildren(QCheckBox):
+            check.toggled.connect(self._refresh_preview)
         obel_grid = QGridLayout()
         for index, (text, byte, bit) in enumerate(OBEL_QUEST_FLAGS):
             obel_grid.addWidget(self.bit_check("world_map", "obel_quest", byte * 8 + bit, text), index // 2, index % 2)
@@ -770,13 +854,32 @@ class WorldMapPage(SavePage):
         right.addWidget(obel_group)
         right.addStretch(1)
         layout = QHBoxLayout(self)
+        legend = QLabel("Circles: the party and the vehicles. Squares: where the PuPu quest's battles wait, green once done.")
+        legend.setWordWrap(True)
+        preview_column = QVBoxLayout()
+        preview_column.addWidget(self.preview, 1)
+        preview_column.addWidget(legend)
         layout.addLayout(left)
         layout.addLayout(right)
-        layout.addStretch(1)
+        layout.addLayout(preview_column, 1)
+        self._refills.append(self._refresh_preview)
 
     def _on_place(self, row):
         self.section("world_map").set_place(row, *(self.position_spins[row, column].value()
                                                    for column in range(len(WORLD_POSITION_COLUMNS))))
+        self._refresh_preview()
+
+    def _refresh_preview(self, *_):
+        world = self.section("world_map")
+        if world is None:
+            return
+        places = []
+        for row in range(NB_WORLD_POSITIONS):
+            x, y, height, angle = world.place(row)
+            if row not in WORLD_UNUSED_POSITIONS and (x or y or height or angle):   # all zero: never placed
+                places.append((WORLD_POSITION_ROWS[row], *world_to_map(x, y)))
+        sites = [(PUPU_QUEST_NAMES[place], *region_to_map(region), world.pupu_quest[place]) for place, region in PUPU_SITES]
+        self.preview.set_marks(places, sites)
 
     def _fill_positions(self):
         for row in range(NB_WORLD_POSITIONS):

@@ -703,10 +703,10 @@ class HyneWidget(QWidget):
         return group, spins
 
     @staticmethod
-    def _two_columns(left_groups, right_groups):
-        """Groups stacked in two columns side by side, the free space on the right."""
+    def _columns(*group_lists):
+        """Groups stacked in columns side by side, the free space on the right."""
         columns = QHBoxLayout()
-        for groups in (left_groups, right_groups):
+        for groups in group_lists:
             column = QVBoxLayout()
             for group in groups:
                 column.addWidget(group)
@@ -1338,6 +1338,8 @@ class HyneWidget(QWidget):
             check.setToolTip(f"Mask 0x{mask:02X}" + (" — normally managed by the game, not the player"
                                                      if "auto" in name else ""))
             check.stateChanged.connect(self._on_config_changed)
+            if mask in ConfigEntry.UNUSED_FLAG_BITS:
+                self.mark_unused(check)
             self.config_flag_checks.append((mask, check))
             flag_grid.addWidget(check, i // 2, i % 2)
         flag_group = QGroupBox("Config flags")
@@ -1383,7 +1385,7 @@ class HyneWidget(QWidget):
                              "L2+R2 held = flee battle, R1 = Renzokuken critical timing.")
         key_group.setLayout(key_form)
 
-        return self._two_columns([settings_group, flag_group, seal_group], [key_group])
+        return self._columns([settings_group, flag_group, seal_group], [key_group])
 
     def _reload_config(self):
         config = self.manager.config
@@ -1504,15 +1506,17 @@ class HyneWidget(QWidget):
             self._spinbox(0, 0xFF, self._on_misc_changed,
                          "Remaining points to learn this Angelo command (counts down to 0)")
             for _ in range(8)]
-        points_form = QFormLayout()
+        points_grid = QGridLayout()
         for i, spin in enumerate(self.misc_angelo_point_spins):
             angelo_name = self._limit_bitfield_defs[-1][2][i]["name"]
-            points_form.addRow(f"{angelo_name}:", spin)
+            points_grid.addWidget(QLabel(f"{angelo_name}:"), i // 2, 2 * (i % 2))
+            points_grid.addWidget(spin, i // 2, 2 * (i % 2) + 1)
         points_group = QGroupBox("Angelo Search — learning points")
         points_group.setToolTip("Per-command AP-like learning progress; 0 = learned")
-        points_group.setLayout(points_form)
+        points_group.setLayout(points_grid)
 
-        return self._two_columns([general_group, points_group], [weapons_group, *limit_groups])
+        half = len(limit_groups) // 3
+        return self._columns([general_group], [weapons_group, *limit_groups[:half]], [*limit_groups[half:], points_group])
 
     def _reload_names(self):
         for field, edit in self.misc_name_edits.items():
