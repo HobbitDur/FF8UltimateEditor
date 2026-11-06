@@ -121,6 +121,23 @@ class FieldScene:
         except (OSError, ValueError, IndexError):
             self.walkmesh = None  # the position then stands at height 0
 
+    def walkmesh_polygons(self):
+        """The walkmesh's triangles in picture pixels, [] without a camera and a walkmesh."""
+        if self.camera is None or self.walkmesh is None:
+            return []
+        polygons = []
+        for vertices in self.walkmesh.triangles:
+            corners = [self.camera.project(vertex) for vertex in vertices]
+            if None not in corners:
+                polygons.append([(x + self.origin[0], y + self.origin[1]) for x, y in corners])
+        return polygons
+
+    def walkmesh_point_at(self, picture_x, picture_y):
+        """The (x, y, triangle) of a picture pixel, None off the walkmesh."""
+        if self.camera is None or self.walkmesh is None:
+            return None
+        return self.walkmesh.point_at(self.camera, (picture_x - self.origin[0], picture_y - self.origin[1]))
+
     def picture_position(self, position):
         """Picture pixel of an entity position (x, y, z or None, triangle), or None."""
         if position is None or self.camera is None:

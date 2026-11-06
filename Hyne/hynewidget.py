@@ -333,16 +333,20 @@ class HyneWidget(QWidget):
         self.world_terrain = None
         self.world_map_page.reload_preview()
 
-    def ground_height(self, x, y):
-        """How high the world map's ground is under a saved position, up being positive; None without wmx.obj.
+    def terrain_at(self, x, y):
+        """wmx.obj's triangle under a saved position, as WorldDrawGeometry.terrain_at gives it; None without one.
         wmx.obj's own world only: what the story replaces in it is not looked up."""
         if self.world_terrain is None:
             return None
         map_x, map_y = world_to_map(x, y)
         try:
-            terrain = self.world_terrain.terrain_at(map_x * WORLD_BLOCK_COLUMNS, map_y * WORLD_BLOCK_ROWS)
+            return self.world_terrain.terrain_at(map_x * WORLD_BLOCK_COLUMNS, map_y * WORLD_BLOCK_ROWS)
         except ValueError:
             return None
+
+    def ground_height(self, x, y):
+        """How high the world map's ground is under a saved position, up being positive; None without wmx.obj."""
+        terrain = self.terrain_at(x, y)
         return terrain["height"] if terrain else None
 
     # ── A mod's files ────────────────────────────────────────────────────

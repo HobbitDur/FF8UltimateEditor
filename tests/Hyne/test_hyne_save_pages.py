@@ -477,6 +477,56 @@ class TestPages:
         assert page.preview_stack.currentWidget() is page.world_view
         assert page.world_view.places == [("Party", 0.5, 0.5, 0)]
 
+    def test_field_click_places_on_the_walkmesh(self, widget, monkeypatch):
+        field = REPO / "extracted_files" / "field"
+        if not field.is_dir():
+            pytest.skip("no extracted field folder")
+        page = widget.party_page
+        party = widget.manager.party
+        monkeypatch.setattr(widget, "field_folders", lambda: [str(field)])
+        party.module = 1
+        party.location = widget.hyne_data["maps"].index("bghall_1")
+        party.party_1, party.party_2, party.party_3 = 0, 1, 255
+        party.set_position(2, 1, 2, 3, 4)
+        page.forget_fields()
+        scene = page.current_scene
+        polygon = page.field_view.polygons[10]
+        spot_x = sum(corner[0] for corner in polygon) / 3
+        spot_y = sum(corner[1] for corner in polygon) / 3
+        page._on_field_click(spot_x, spot_y)
+        x, y, triangle, _direction = party.position(0)
+        assert party.position(1)[:3] == (x, y, triangle)
+        assert party.position(2) == (1, 2, 3, 4)       # nobody there
+        assert scene.walkmesh.contains(triangle, x, y)
+        polygons = page.field_view.polygons
+        off = max(corner[0] for polygon in polygons for corner in polygon) + 50
+        page._on_field_click(off, 1)                   # off the walkmesh: nothing moves
+        assert party.position(0)[:3] == (x, y, triangle)
+        assert "Not a walkable" in page.place_message.text()
+        party.set_position(0, 30000, 30000, 0, 0)
+        page.show_preview()
+        assert "Squall" in page.place_message.text()
+
+    def test_world_click_follows_what_can_stand_there(self, widget):
+        wmx = REPO / "extracted_files" / "world" / "dat" / "wmx.obj"
+        if not wmx.exists():
+            pytest.skip("no extracted wmx.obj")
+        page = widget.world_map_page
+        world = widget.manager.world_map
+        before = world.place(0)
+        assert "wmx.obj" in page.place_row(0, 0.5, 0.5)
+        widget._load_wmx_file(str(wmx))
+        try:
+            map_x, map_y = world_to_map(23305, -28169)          # a real save's party stood there at -554
+            assert "moved" in page.place_row(0, map_x, map_y)
+            assert abs(world.place(0)[2] + 554) <= 2 and world.place(0)[3] == before[3]
+            assert "moved" not in page.place_row(0, 0.02, 0.02)  # the open sea
+            world.set_place(2, 0, 0, -3000, 0)
+            assert "moved" in page.place_row(2, 0.02, 0.02)      # the Ragnarok flies over it, at its height
+            assert world.place(2)[2] == -3000
+        finally:
+            widget._clear_wmx_file()
+
     def test_party_preview_on_a_field(self, widget, monkeypatch):
         page = widget.party_page
         widget.manager.party.module = 1

@@ -86,7 +86,7 @@ class WorldDrawGeometry:
         hx = (dh1 * dy2 - dh2 * dy1) / determinant
         hy = (dx1 * dh2 - dx2 * dh1) / determinant
         height = a[2] + hx * ((x - bx) * self.BLOCK_SIZE - a[0]) + hy * ((y - by) * self.BLOCK_SIZE - a[1])
-        return dict(block_x=bx, block_y=by, triangle=triangle_index, ground=face[13],
+        return dict(block_x=bx, block_y=by, triangle=triangle_index, ground=face[13], walk_mask=face[15],
                     height=height, slope=math.degrees(math.atan(math.hypot(hx, hy))))
 
     def overview_png(self):

@@ -7,8 +7,8 @@ import math
 import os
 import struct
 
-from PyQt6.QtCore import QPointF, QRectF, QSignalBlocker, Qt
-from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPixmap, QStandardItem, QStandardItemModel
+from PyQt6.QtCore import QPointF, QRectF, QSignalBlocker, Qt, pyqtSignal
+from PyQt6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPixmap, QPolygonF, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView, QAbstractSpinBox, QCheckBox, QComboBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
     QLineEdit, QListWidget, QListWidgetItem, QPlainTextEdit, QPushButton, QSizePolicy, QStackedWidget, QTableWidget, QTableWidgetItem, QVBoxLayout,
@@ -75,6 +75,13 @@ WORLD_FULL_TURN = 4096
 WORLD_BLOCK_COLUMNS, WORLD_BLOCK_ROWS = 128, 96
 # How high the side view reaches, up being positive: the Ragnarok flies up to 3584 (World_ComputeVehicleAltitude@0x53ECE0)
 WORLD_SIDE_VIEW_TOP, WORLD_SIDE_VIEW_BOTTOM = 3800, -400
+# Where a click can put each position row, the walkmesh's vehicle bits (World_IsTriangleWalkable@0x53E6B0); the
+# Ragnarok flies, so it goes anywhere
+WORLD_ROW_WALK_MASKS = {0: 0x80, 3: 0x20, 4: 0x40}
+WORLD_RAGNAROK_ROW, WORLD_GARDEN_ROW = 2, 3
+WORLD_SINKING_TERRAIN_MAX = 5    # terrain types up to this one take 320 off the ground's height
+WORLD_SINKING = 320
+WORLD_GARDEN_HOVER, WORLD_RAGNAROK_CLEARANCE = 128, 200
 MONSTER_INFO_SECTION = 6     # the name opens it
 MONSTER_NAME_SIZE = 24
 
@@ -103,6 +110,22 @@ def read_monster_name(path, game_data):
         return None
     name = game_data.translate_hex_to_str(raw.split(b"\0")[0]).strip()
     return name if name and "{" not in name else None
+
+
+def map_to_world(map_x, map_y):
+    """The saved position of a place on the map, from 0 to 1 in both directions: world_to_map's opposite."""
+    return int(map_x * WORLD_WIDTH) - WORLD_WIDTH // 2, int(map_y * WORLD_HEIGHT) - WORLD_HEIGHT // 2
+
+
+def world_row_height(row, terrain, height):
+    """The height to save for a row placed on a triangle, as World_ComputeVehicleAltitude@0x53ECE0 would bring it there.
+    Negative is up, as saved. `height` is what the row has now: only the Ragnarok keeps it."""
+    ground = -round(terrain["height"])
+    if row == WORLD_RAGNAROK_ROW:
+        return min(height, ground - WORLD_RAGNAROK_CLEARANCE)
+    if terrain["ground"] <= WORLD_SINKING_TERRAIN_MAX:
+        ground += WORLD_SINKING
+    return ground - WORLD_GARDEN_HOVER if row == WORLD_GARDEN_ROW else ground
 
 
 def region_to_map(region):
@@ -434,11 +457,20 @@ class MapFiles:
 
 
 class PartyFieldView(BackgroundView):
-    """A field's picture with where the party stands."""
+    """A field's picture with its walkable area and where the party stands. A click says which picture pixel."""
+
+    picture_clicked = pyqtSignal(float, float)
+
+    MESH_COLOR = QColor(80, 220, 255)
+    MESH_FILL_ALPHA = 45
+    OFF_MESH_COLOR = QColor(235, 70, 70)
 
     def __init__(self):
         super().__init__()
-        self.marks = []     # (x, y in picture pixels, text)
+        self.marks = []         # (x, y in picture pixels, text, on the walkable area)
+        self.polygons = []      # the walkable triangles, in picture pixels
+        self.show_mesh = True
+        self.setCursor(Qt.CursorShape.CrossCursor)
 
     def paintEvent(self, event):
         super().paintEvent(event)
@@ -448,15 +480,29 @@ class PartyFieldView(BackgroundView):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         rect = self.picture_rect()
         scale = rect.width() / self.pixmap.width()
-        for x, y, text in self.marks:
+        if self.show_mesh:
+            fill = QColor(self.MESH_COLOR)
+            fill.setAlpha(self.MESH_FILL_ALPHA)
+            painter.setPen(QPen(self.MESH_COLOR, 1))
+            painter.setBrush(fill)
+            for polygon in self.polygons:
+                painter.drawPolygon(QPolygonF([QPointF(rect.x() + x * scale, rect.y() + y * scale) for x, y in polygon]))
+        for x, y, text, on_mesh in self.marks:
+            color = WorldMapPreview.PLACE_COLOR if on_mesh else self.OFF_MESH_COLOR
             center = QPointF(rect.x() + x * scale, rect.y() + y * scale)
             painter.setPen(QPen(QColor("black"), 1))
-            painter.setBrush(WorldMapPreview.PLACE_COLOR)
+            painter.setBrush(color)
             painter.drawEllipse(center, WorldMapPreview.MARK_RADIUS, WorldMapPreview.MARK_RADIUS)
             label = center + QPointF(WorldMapPreview.MARK_RADIUS + 3, 4)
             painter.drawText(label + QPointF(1, 1), text)
-            painter.setPen(WorldMapPreview.PLACE_COLOR)
+            painter.setPen(color)
             painter.drawText(label, text)
+
+    def mousePressEvent(self, event):
+        rect = self.picture_rect()
+        if event.button() == Qt.MouseButton.LeftButton and rect.contains(event.position()):
+            scale = rect.width() / self.pixmap.width()
+            self.picture_clicked.emit((event.position().x() - rect.x()) / scale, (event.position().y() - rect.y()) / scale)
 
 
 class PartyPage(SavePage):
@@ -538,12 +584,33 @@ class PartyPage(SavePage):
         folder_button = QPushButton("Field folders...")
         folder_button.setToolTip("The game's field folder, and a mod's on top of it, that the picture is read from")
         folder_button.clicked.connect(tool.pick_preview_folders)
+        self.current_scene = None
+        self.click_target = QComboBox()
+        self.click_target.setToolTip("Who a click on the picture moves. A click only lands on the walkable area, which "
+                                     "gives X, Y and Triangle together. Scripts can still block a walkable spot.")
+        self.click_target.addItem("All members", None)
+        for member in range(3):
+            self.click_target.addItem(f"Member {member + 1}", member)
+        self.mesh_check = QCheckBox("Show walkable area")
+        self.mesh_check.setChecked(True)
+        self.mesh_check.toggled.connect(self._on_show_mesh)
+        for widget in (self.click_target, self.mesh_check):
+            widget.setProperty("read_only_preview", True)   # choosing how to look edits nothing
+        self.place_message = QLabel()
+        self.place_message.setWordWrap(True)
+        self.field_view.picture_clicked.connect(self._on_field_click)
+        self.world_view.clicked.connect(self._on_world_click)
+        self.world_view.setCursor(Qt.CursorShape.CrossCursor)
         folder_row = QHBoxLayout()
         folder_row.addWidget(folder_button)
+        folder_row.addWidget(QLabel("A click moves:"))
+        folder_row.addWidget(self.click_target)
+        folder_row.addWidget(self.mesh_check)
         folder_row.addStretch(1)
         preview_column = QVBoxLayout()
         preview_column.addWidget(self.preview_stack, 1)
         preview_column.addLayout(folder_row)
+        preview_column.addWidget(self.place_message)
         layout = QHBoxLayout(self)
         layout.addLayout(column)
         layout.addLayout(preview_column, 1)
@@ -558,6 +625,34 @@ class PartyPage(SavePage):
     def _refresh_preview(self, *_):
         if self.isVisible():     # a field's picture costs its time only when it is seen
             self.show_preview()
+
+    def _on_show_mesh(self, checked):
+        self.field_view.show_mesh = checked
+        self.field_view.update()
+
+    def _on_field_click(self, picture_x, picture_y):
+        party = self.section("party")
+        if self.current_scene is None or self.current_scene.walkmesh is None or self.current_scene.camera is None:
+            self.place_message.setText("Placing needs this map's .id and .ca files.")
+            return
+        spot = self.current_scene.walkmesh_point_at(picture_x, picture_y)
+        if spot is None:
+            self.place_message.setText("Not a walkable spot.")
+            return
+        x, y, triangle = spot
+        target = self.click_target.currentData()
+        members = [target] if target is not None else [
+            member for member in range(3) if getattr(party, f"party_{member + 1}") < len(FIELD_PARTY_NAMES)]
+        for member in members:
+            party.set_position(member, x, y, triangle, party.position(member)[3])
+        self._fill_positions()
+        self.show_preview()
+        self.tool._mark_dirty()
+        self.place_message.setText(f"Moved to X {x}, Y {y}, triangle {triangle}. Scripts can still block a walkable spot.")
+
+    def _on_world_click(self, map_x, map_y):
+        self.place_message.setText(self.tool.world_map_page.place_row(0, map_x, map_y))
+        self.show_preview()
 
     def forget_fields(self):
         """Other folders were chosen."""
@@ -578,6 +673,9 @@ class PartyPage(SavePage):
 
     def _show_field(self, party):
         self.field_view.marks = []
+        self.field_view.polygons = []
+        self.current_scene = None
+        self.place_message.setText("")
         folders = self.tool.field_folders()
         maps = self.tool.hyne_data["maps"]
         if not folders:
@@ -589,8 +687,12 @@ class PartyPage(SavePage):
         name = maps[party.location]
         if name not in self.scenes:
             self.scenes[name] = FieldScene(MapFiles(name, folders), self._missing_files)
-        scene = self.scenes[name]
+        scene = self.current_scene = self.scenes[name]
+        self.field_view.polygons = scene.walkmesh_polygons()
         self.field_view.marks = self._field_marks(party, scene)
+        lost = [text for _x, _y, text, on_mesh in self.field_view.marks if not on_mesh]
+        if lost:
+            self.place_message.setText(f"Not on this map's walkable area: {', '.join(lost)}. Click a spot to place them.")
         self.field_view.set_picture(scene.pixmap, message=scene.error or ("" if scene.camera else scene.camera_error))
 
     @staticmethod
@@ -599,7 +701,7 @@ class PartyPage(SavePage):
 
     @staticmethod
     def _field_marks(party, scene):
-        """Members standing on one spot share a mark."""
+        """Members standing on one spot share a mark. A position off its triangle is flagged."""
         spots = {}
         for member in range(3):
             character = getattr(party, f"party_{member + 1}")
@@ -611,8 +713,9 @@ class PartyPage(SavePage):
             except (IndexError, ValueError):   # a triangle this map doesn't have
                 spot = None
             if spot is not None:
-                spots.setdefault(spot, []).append(FIELD_PARTY_NAMES[character])
-        return [(x, y, ", ".join(names)) for (x, y), names in spots.items()]
+                on_mesh = scene.walkmesh is None or scene.walkmesh.contains(triangle, x, y)
+                spots.setdefault((*spot, on_mesh), []).append(FIELD_PARTY_NAMES[character])
+        return [(x, y, ", ".join(names), on_mesh) for (x, y, on_mesh), names in spots.items()]
 
     def _fill_positions(self):
         for member, row in enumerate(self.position_spins):
@@ -982,7 +1085,10 @@ class WorldMapSideView(QWidget):
 
 
 class WorldMapPreview(QWidget):
-    """The world map with who stands where and the PuPu sightings. It only shows: the image is read at first paint."""
+    """The world map with who stands where and the PuPu sightings. A click says where on the map, from 0 to 1 in both
+    directions. The image is read at first paint."""
+
+    clicked = pyqtSignal(float, float)
 
     PLACE_COLOR = QColor(255, 210, 0)
     SITE_DONE_COLOR = QColor(70, 220, 90)
@@ -1003,6 +1109,11 @@ class WorldMapPreview(QWidget):
     def set_marks(self, places, sites):
         self.places, self.sites = places, sites
         self.update()
+
+    def mousePressEvent(self, event):
+        rect = self._map_rect()
+        if event.button() == Qt.MouseButton.LeftButton and rect.contains(event.position()):
+            self.clicked.emit(event.position().x() / rect.width(), event.position().y() / rect.height())
 
     def _map_rect(self):
         """The largest part of the widget with the map's proportions."""
@@ -1119,9 +1230,26 @@ class WorldMapPage(SavePage):
         layout = QHBoxLayout(self)
         legend = QLabel("Circles: the party and the vehicles. Squares: where the PuPu quest's battles wait, green once done.")
         legend.setWordWrap(True)
+        self.click_target = QComboBox()
+        self.click_target.setToolTip("What a click on the map moves. It needs wmx.obj, from the toolbar's Import "
+                                     "complementary, for the height and for what can stand there.")
+        self.click_target.setProperty("read_only_preview", True)     # choosing edits nothing
+        self.click_target.addItem("Nothing", None)
+        for row in range(NB_WORLD_POSITIONS):
+            if row not in WORLD_UNUSED_POSITIONS:
+                self.click_target.addItem(WORLD_POSITION_ROWS[row], row)
+        self.place_message = QLabel()
+        self.place_message.setWordWrap(True)
+        self.preview.clicked.connect(self._on_map_click)
+        click_row = QHBoxLayout()
+        click_row.addWidget(QLabel("A click moves:"))
+        click_row.addWidget(self.click_target)
+        click_row.addStretch(1)
         preview_column = QVBoxLayout()
         preview_column.addWidget(self.preview, 1)
         preview_column.addWidget(legend)
+        preview_column.addLayout(click_row)
+        preview_column.addWidget(self.place_message)
         layout.addLayout(left)
         layout.addLayout(right)
         layout.addLayout(preview_column, 1)
@@ -1135,6 +1263,32 @@ class WorldMapPage(SavePage):
 
     def reload_preview(self):
         self._refresh_preview()
+
+    def _on_map_click(self, map_x, map_y):
+        row = self.click_target.currentData()
+        if row is not None:
+            self.place_message.setText(self.place_row(row, map_x, map_y))
+
+    def place_row(self, row, map_x, map_y):
+        """Move a row to a place on the map if it can stand there; returns what became of it."""
+        world = self.section("world_map")
+        x, y = map_to_world(map_x, map_y)
+        name = WORLD_POSITION_ROWS[row]
+        if self.tool.world_terrain is None:
+            return "Placing needs wmx.obj, from the toolbar's Import complementary."
+        terrain = self.tool.terrain_at(x, y)
+        if terrain is None:
+            return "No terrain there."
+        mask = WORLD_ROW_WALK_MASKS.get(row)
+        if mask is not None and not terrain["walk_mask"] & mask:
+            return f"{name} can't stand there."
+        _x, _y, height, angle = world.place(row)
+        height = world_row_height(row, terrain, height)
+        world.set_place(row, x, y, height, angle)
+        self._fill_positions()
+        self._refresh_preview()
+        self.tool._mark_dirty()
+        return f"{name} moved to X {x}, Y {y}, height {height}."
 
     def _refresh_preview(self, *_):
         world = self.section("world_map")
