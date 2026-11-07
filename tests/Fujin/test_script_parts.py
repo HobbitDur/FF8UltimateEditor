@@ -173,6 +173,20 @@ def test_the_purple_lines_land_where_the_game_draws(tmp_path, script):
 
 
 @pytest.mark.ff8data(*FILES)
+def test_the_game_camera_holds_the_view_until_its_shot_moves(tmp_path):
+    """Disease Breath's shot holds the current view for 10 ticks (keyframe modes 0xF3, 0xF4), then leaves it towards the target: not from the world's origin."""
+    folder = tmp_path / "effect"
+    folder.mkdir()
+    shutil.copy(MAGIC / "MAG230_B.00", folder)
+    shutil.copy(MAGIC / "MAG230_B.01", folder)
+    recording = _record(folder, tmp_path, "camera", "gamecamera=1", "camvar=0", "castcam=0,-1500,6000,0,-500,-1000")
+    start = ((0, -1500, 6000), (0, -500, -1000))
+    assert all(recording.ticks[index].camera == start for index in range(13))
+    assert recording.ticks[20].camera != start and abs(recording.ticks[20].camera[0][2] - 6000) < 1000
+    assert all(tick.view for tick in recording.ticks)
+
+
+@pytest.mark.ff8data(*FILES)
 def test_the_tight_rings_go_on_when_the_wide_ones_start(tmp_path, script):
     """StartChannel 0 takes the first free channel: unlike the puffs (channel 2, replaced), both kinds of rings run together."""
     folder = tmp_path / "effect"

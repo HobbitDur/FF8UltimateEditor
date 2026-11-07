@@ -833,6 +833,9 @@ static void init_game_camera()
 		memcpy((void *)base, view, 6);
 		memcpy((void *)(base + 8), view + 3, 6);
 	}
+	// what a keyframe's "hold the view" reads (modes 0xF3, 0xF4: getCameraScalingFactor 0x50D790): the last shot's pose, updateBattleCamera 0x504060 only writes it while a shot runs
+	memcpy((void *)0x1D97720, view, 6);
+	memcpy((void *)0x1D981F0, view + 3, 6);
 	*(int16_t *)0x1D8E038 = 0x280; *(int16_t *)0x1D977A0 = 0x280;   // the projection distance and the one it returns to
 }
 static void game_camera_view()
