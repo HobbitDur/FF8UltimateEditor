@@ -264,7 +264,6 @@ class PartPreview(QWidget):
         self.path.setToolTip("Where each sprite of the part goes over the whole effect: a thin purple line from "
                              "where it is drawn one tick to where it is drawn the next, a dot where it appears")
         self.path.toggled.connect(lambda _on: self._redraw())
-        self._paths = {}                                # id(recording) -> its sprite paths for this part
         self.timer = QTimer(self)
         self.timer.setInterval(int(1000 / TICKS_PER_SECOND))
         self.timer.timeout.connect(lambda: self.slider.setValue((self.slider.value() + 1) % (self.slider.maximum() + 1)))
@@ -409,7 +408,7 @@ class PartPreview(QWidget):
     def refresh(self, again=False):
         """A new lab recording (or none): frame the part on it again (again: the values changed, the
         compared recording is made again with them)."""
-        self._frames, self._view, self._paths = {}, None, {}
+        self._frames, self._view = {}, None
         cast = self.runner.cast()
         body = cast.slots.get(cast.target, (None, None))[0]
         self.reference.setText(f"Target ({os.path.basename(body)})" if body else "Target")
@@ -458,7 +457,7 @@ class PartPreview(QWidget):
         pixmap = QPixmap.fromImage(QImage(image.tobytes(), width, height, width * 3,
                                           QImage.Format.Format_RGB888).copy())
         if self.path.isChecked():
-            self._draw_paths(pixmap, recording, scale)
+            self._draw_paths(pixmap, recording, tick, scale)
         self._draw_numbers(pixmap, recording, tick, scale)
         return pixmap
 
@@ -509,10 +508,9 @@ class PartPreview(QWidget):
             self.highlight = on
             self._redraw()
 
-    def _draw_paths(self, pixmap, recording, scale):
-        """The part's sprite paths over the whole effect (fxdump.sprite_paths) on its picture."""
-        if id(recording) not in self._paths:
-            self._paths[id(recording)] = recording.sprite_paths(self.part_ids if self.path_ids is None else self.path_ids)
+    def _draw_paths(self, pixmap, recording, tick, scale):
+        """The part's sprite paths over the whole effect (fxdump.sprite_paths) on its picture, seen by this tick's camera."""
+        paths = recording.sprite_paths(self.part_ids if self.path_ids is None else self.path_ids, camera_tick=tick)
         x, y = self._view[0], self._view[1]
         point = lambda px, py: QPointF((px - x) * scale, (py - y) * scale)
         painter = QPainter(pixmap)
@@ -520,12 +518,12 @@ class PartPreview(QWidget):
         pen = QPen(QColor(255, 220, 60) if self.highlight else PATH_COLOUR, 2 if self.highlight else 1)
         pen.setCosmetic(True)
         painter.setPen(pen)
-        for path in self._paths[id(recording)]:
+        for path in paths:
             if len(path) > 1:
                 painter.drawPolyline(QPolygonF([point(px, py) for _tick, px, py in path]))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(PATH_COLOUR)
-        for path in self._paths[id(recording)]:
+        for path in paths:
             painter.drawEllipse(point(path[0][1], path[0][2]), 1.8, 1.8)
         painter.end()
 

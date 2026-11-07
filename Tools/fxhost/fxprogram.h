@@ -313,6 +313,7 @@ namespace fxprog
 
 	// a plain node's field (nullptr: the task has none)
 	template<typename T> inline T *Fld(const Task &t, void *n, int f) { return t.field[f] < 0 ? nullptr : (T *)((uint8_t *)n + t.field[f]); }
+	inline const layouts::BarrierNode *BarrierNodeOf(const layouts::Barrier *b) { return (const layouts::BarrierNode *)((const uint8_t *)b - offsetof(layouts::BarrierNode, b)); }
 	inline int16_t *CounterOf(const Task &t, void *n) { return t.plain ? Fld<int16_t>(t, n, F_COUNTER) : &((FxNode *)n)->counter; }
 	inline int32_t Tick(const Task &t, void *n) { const int16_t *c = CounterOf(t, n); return c ? *c : 0; }
 
@@ -670,7 +671,11 @@ namespace fxprog
 			if ((uint32_t)Tick(t, n) < (uint32_t)V(a[0]))
 			{
 				const Pool &pool = g_program->pools[V(a[2])];
-				layouts::DeadBeams(pool.base ? MagicBuffer() + pool.storage : pool.storage, pool.size, pool.count, V(a[1]));
+				TaskQueue beams = {};   // a queue of the pool, its nodes never linked (no task: they never run)
+				beams.pool = (void *)(pool.base ? MagicBuffer() + pool.storage : pool.storage);
+				beams.node_size = (int16_t)pool.size;
+				beams.capacity = (int16_t)pool.count;
+				layouts::DeadBeams(&beams, 0, V(a[1]), BarrierNodeOf(Fld<layouts::Barrier>(t, n, F_BARRIER)));
 			}
 			break;
 		case ORBIT_MOVE: // the node's orbit turned and tilted a tick
@@ -978,7 +983,7 @@ namespace fxprog
 			// count, tilt, angle step, turn, tilt speed base, mask (Reflect's hexagons): around the spawner's
 			// barrier, from one shared rand (its turn's side and tilt speed: two more each; a full pool
 			// skips a node, its angle not advanced)
-			const layouts::Barrier *parent = Fld<layouts::Barrier>(from, n, F_BARRIER);
+			const layouts::BarrierNode *parent = BarrierNodeOf(Fld<layouts::Barrier>(from, n, F_BARRIER));
 			int32_t angle = layouts::SharedRand();
 			for (int32_t k = V(a[0]); k > 0; k--)
 			{
@@ -1059,7 +1064,8 @@ namespace fxprog
 			break;
 		}
 		case RIBBON_START: // angle, angle step, wave: a ribbon around the spawner's anchor, its first angle angle + the spawner's tick x step
-			layouts::RibbonStart(Fld<layouts::Ribbon>(t, m, F_RIBBON), Fld<int16_t>(from, n, F_ANCHOR), Tick(from, n) * V(a[1]) + V(a[0]), V(a[2]));
+			// (its owner: the spawner's anchor itself, its point 0 bytes in: RIBBON doesn't know the spawner's layout)
+			layouts::RibbonStart(Fld<layouts::Ribbon>(t, m, F_RIBBON), (const TaskNode *)Fld<int16_t>(from, n, F_ANCHOR), Tick(from, n) * V(a[1]) + V(a[0]), V(a[2]));
 			break;
 		case SPARK_NEAR: // sequence, scale, mask, offset: at the spawner's anchor + (rand & mask) - offset on each axis
 		{
@@ -1076,7 +1082,7 @@ namespace fxprog
 			int32_t scale = shl32(*(const int16_t *)(ent + 0x26), V(a[6]));
 			if (scale > 0x1000) scale = 0x1000;
 			layouts::Growth *g = Fld<layouts::Growth>(t, m, F_GROWTH);
-			g->parent = Fld<layouts::Barrier>(from, n, F_BARRIER);
+			g->parent = BarrierNodeOf(Fld<layouts::Barrier>(from, n, F_BARRIER));
 			g->height = (int16_t)(mul32((int16_t)layouts::WallHeight((uint32_t)V(a[0]), Tick(from, n) - V(a[1]), V(a[2])), scale) >> 12);
 			g->scale = (int16_t)V(a[3]);
 			g->speed = (int16_t)V(a[4]);
@@ -1087,7 +1093,7 @@ namespace fxprog
 		{
 			uint8_t *ent = *Fld<uint8_t *>(from, n, F_ENTITY);
 			layouts::WhirlLeafStart(Fld<layouts::WhirlLeaf>(t, m, F_LEAF), *Fld<int16_t>(from, n, F_ACTION), Fld<int16_t>(from, n, F_ANCHOR),
-			                        layouts::SizeScale(ent, V(a[3]), V(a[4])), Fld<int16_t>(from, n, F_COUNTER), V(a[0]), V(a[1]), V(a[2]));
+			                        layouts::SizeScale(ent, V(a[3]), V(a[4])), (const TaskNode *)Fld<int16_t>(from, n, F_COUNTER) - 1, V(a[0]), V(a[1]), V(a[2]));
 			break;
 		}
 		case RANDOM_AROUND: // lift, scale, sequence, frames: around the spawner's anchor, spread by its 4th word
@@ -1398,7 +1404,7 @@ namespace fxprog
 		case RIBBON: // push ticks, per tick, angle step, fade, strip window, reset window: the node's ribbon a tick
 		{
 			const layouts::RibbonMotion mo = { V(a[0]), V(a[1]), V(a[2]), V(a[3]) };
-			layouts::RibbonTick(Fld<layouts::Ribbon>(t, n, F_RIBBON), Tick(t, n), mo, (const uint8_t *)V(a[4]), (const uint8_t *)V(a[5]), PacketCursor());
+			layouts::RibbonTick(Fld<layouts::Ribbon>(t, n, F_RIBBON), 0, Tick(t, n), mo, (const uint8_t *)V(a[4]), (const uint8_t *)V(a[5]), PacketCursor());
 			break;
 		}
 		case MOTE_SPRITE: layouts::MoteDraw(Fld<layouts::Mote>(t, n, F_MOTE), PacketCursor()); break;   // the node's sprite sequence

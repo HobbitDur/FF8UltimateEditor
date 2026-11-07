@@ -19,6 +19,9 @@ second); its "between" dump lists, per real tick:
                           battle then shows its number (BattleFx_DamageNumbers_Spawn)
     S t address           (Tools/fxrecorder) a sound the effect played: its sound block's address
     M t value name        (Tools/fxrecorder) a value the port measured (FX_NOTE: the target's size...)
+    P t part id x y [vx vy vz]  (Tools/fxrecorder) where a port says one thing of a part is (id: which one):
+                          on screen (packet units), and in front of the tick's camera
+    W t r*9 tx ty tz h ofx ofy  (Tools/fxrecorder) the camera the port drew with: rotation (4.12), translation, screen
 
 Other blocks (H, Z, O: 30 fps held frames; S: spawned tasks) are skipped. The packets are drawn in
 reverse insertion order within an OT bucket and buckets from the highest address down, the
@@ -28,6 +31,8 @@ depth-sorted inserts, so prims sharing a bucket keep that order.
 from dataclasses import dataclass, field
 
 from FF8GameData.psxgpu.gpu import Gpu, Vram
+
+NEAREST_SEEN = 16       # a path's point closer to the camera than this is not drawn (sprite_paths)
 
 
 @dataclass
@@ -44,7 +49,8 @@ class EffectTick:
     sounds: list = field(default_factory=list)      # [sound block address] played (S lines)
     sound_words: list = field(default_factory=list)  # [the world sound id each block holds] (None: an older recording)
     notes: list = field(default_factory=list)       # [(name, value)] the port measured (M lines)
-    moves: list = field(default_factory=list)       # [(part, which one, x, y)] where the port says they are (P lines)
+    moves: list = field(default_factory=list)       # [(part, which one, x, y, view xyz or None)] where the port says they are (P lines)
+    view: tuple = None                              # (rotation rows, translation, H, OFX, OFY) the port drew with (W line)
 
     def part_packets(self, parts=None):
         """The packets of these effect parts (all of them for None)."""
@@ -64,6 +70,7 @@ class EffectRecording:
     pre_uploads: list = field(default_factory=list)  # queued before tick 0 (setup, file loads)
     summary: str = ""
     _vram_cache: tuple = field(default=None, repr=False, compare=False)   # (uploads key, Vram) of the last frame
+    _path_cache: dict = field(default_factory=dict, repr=False, compare=False)   # parts -> their paths (sprite_paths)
 
     def fit_view(self, margin=0.08, parts=None):
         """(x, y, width, height) of the screen-plane window holding what the effect draws over all its
@@ -130,12 +137,39 @@ class EffectRecording:
         before = [index for index in drawing if index <= tick_index]
         return before[-1] if before else drawing[0] if drawing else None
 
-    def sprite_paths(self, parts):
+    def sprite_paths(self, parts, camera_tick=None):
         """Where each sprite of these effect parts goes, tick after tick: [[(tick, x, y), ...]], one
         list per sprite (screen middles of the Q lines). A recording does not say which particle drew
         a sprite, so a tick's sprites are joined to the last tick's nearest ones of the same part
         that can be them: same sequence, same frame or the next one (a part drawing one sprite may
-        also switch its sequence, as Cure's ring its ending flipbook)."""
+        also switch its sequence, as Cure's ring its ending flipbook). What a port names itself (P
+        lines) needs no joining; camera_tick: it is drawn as the camera of that tick sees the battle,
+        each point where it was in the battle (the line then moves with the scene; a point behind
+        that camera cuts it in two), not where it was on screen at its own tick."""
+        key = frozenset(parts)
+        if key not in self._path_cache:
+            self._path_cache[key] = (self._joined_sprites(parts), self._named_paths(parts))
+        joined, named = self._path_cache[key]
+        if camera_tick is None:
+            return joined + [[(tick, x, y) for tick, x, y, _scene in path] for path in named]
+        camera = self._view_at(camera_tick)
+        return joined + [seen for path in named for seen in _seen_by(path, camera)]
+
+    def _view_at(self, index):
+        """The camera a port drew with at this tick, or at the closest tick that says (None: none did)."""
+        said = [tick for tick in self.ticks if tick.view is not None]
+        return min(said, key=lambda tick: abs(tick.index - index)).view if said else None
+
+    def _named_paths(self, parts):
+        """What the port names: [[(tick, x, y, position in the battle or None), ...]], one list per thing."""
+        named = {}
+        for tick in self.ticks:
+            for part, which, x, y, view in tick.moves:
+                if part in parts:
+                    named.setdefault((part, which), []).append((tick.index, x, y, _in_battle(view, tick.view)))
+        return list(named.values())
+
+    def _joined_sprites(self, parts):
         paths, last = [], []                                # last: [(part, seq, frame, x, y, path)]
         for tick in self.ticks:
             now = [(part, seq, frame, *place) for (part, seq, frame), place in zip(tick.sprites, tick.places)
@@ -158,13 +192,7 @@ class EffectRecording:
                 path.append((tick.index, sprite[3], sprite[4]))
                 following.append((*sprite, path))
             last = following
-        # what the port names itself needs no joining
-        named = {}
-        for tick in self.ticks:
-            for part, which, x, y in tick.moves:
-                if part in parts:
-                    named.setdefault((part, which), []).append((tick.index, x, y))
-        return paths + list(named.values())
+        return paths
 
     def frame(self, tick_index, vram=None, view=None, scale=1.0, renderer=None, parts=None, under=None):
         """The RGB image of tick `tick_index` and the Gpu that drew it (its missing_pages / counts).
@@ -231,6 +259,37 @@ def _apply(vram, upload):
         vram.copy(x, y, u, v, w, h)
 
 
+def _in_battle(view, camera):
+    """Where a position in front of this camera is in the battle (None: no camera to tell)."""
+    if view is None or camera is None:
+        return None
+    import numpy as np
+    rotation, translation = np.array(camera[0], float).reshape(3, 3) / 4096, np.array(camera[1], float)
+    return tuple(np.linalg.solve(rotation, np.array(view, float) - translation))
+
+
+def _seen_by(path, camera):
+    """The screen line of a named path through this camera, the GTE's RTPS (1/8 pixels: sx = 8 * x * H / z + 8 * OFX): one list per
+    stretch in front of it. A point that doesn't say where it was in the battle is left out (drawn without a camera); a path with
+    none of them stays where it was on screen."""
+    known = [point for point in path if point[3] is not None]
+    if camera is None or not known:
+        return [[point[:3] for point in path]]
+    import numpy as np
+    rotation, translation, h, ofx, ofy = np.array(camera[0], float).reshape(3, 3) / 4096, np.array(camera[1], float), *camera[2:]
+    views = np.array([point[3] for point in known]) @ rotation.T + translation
+    stretches, stretch = [], None
+    for (tick, *_rest), (x, y, z) in zip(known, views):
+        if z < NEAREST_SEEN:
+            stretch = None
+            continue
+        if stretch is None:
+            stretch = []
+            stretches.append(stretch)
+        stretch.append((tick, 8 * x * h / z + 8 * ofx, 8 * y * h / z + 8 * ofy))
+    return stretches
+
+
 def _hex_words(text):
     return [int(text[i:i + 4], 16) for i in range(0, len(text), 4)]
 
@@ -265,7 +324,12 @@ def parse_recording(lines, effect_id=None) -> EffectRecording:
             tick.sprites.append((int(parts[2]), int(parts[3], 16), int(parts[4])))
             tick.places.append((int(parts[5]), int(parts[6])) if len(parts) >= 7 else None)
         elif kind == "P" and len(parts) >= 6:
-            by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).moves.append((int(parts[2]), int(parts[3], 16), int(parts[4]), int(parts[5])))
+            view = (int(parts[6]), int(parts[7]), int(parts[8])) if len(parts) >= 9 else None
+            by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).moves.append((int(parts[2]), int(parts[3], 16), int(parts[4]), int(parts[5]), view))
+        elif kind == "W" and len(parts) >= 17:
+            values = [int(value) for value in parts[2:17]]
+            if any(values[:9]):                     # (all zeros: the battle has no camera yet)
+                by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).view = (values[:9], values[9:12], *values[12:15])
         elif kind == "N" and len(parts) >= 6:
             by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).results.append(tuple(int(v) for v in parts[2:6]))
         elif kind == "M" and len(parts) >= 4:

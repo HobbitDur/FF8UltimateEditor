@@ -374,10 +374,26 @@ namespace ff8fx { void fx_part(int id) { g_part_marks.push_back({ *(const uint32
 // values a port measures (FX_NOTE: the target's size, the radius it takes...): M lines, with their tick
 static std::vector<std::pair<std::string, int32_t>> g_notes;
 namespace ff8fx { void fx_note(const char *name, int32_t value) { if (g_rec) g_notes.push_back({ name, value }); } }
-// where a port says something of a part is (the P lines: tick, part, which one, screen position)
-struct PlaceDraw { int part; uint32_t id; int x, y; };
+// where a port says something of a part is (the P lines: tick, part, which one, screen position, position in front
+// of the camera), and the camera the tick used (the W line: rotation, translation, H, OFX, OFY)
+struct PlaceDraw { int part; uint32_t id; int x, y; int32_t view[3]; };
 static std::vector<PlaceDraw> g_places;
-namespace ff8fx { void fx_place(int part, uint32_t id, int x, int y) { if (g_rec) g_places.push_back({ part, id, x, y }); } }
+struct ViewDraw { int16_t m[9]; int32_t t[3]; int h, ofx, ofy; bool set; };
+static ViewDraw g_view;
+namespace ff8fx
+{
+	void fx_place(int part, uint32_t id, int x, int y, const int32_t view[3])
+	{
+		if (g_rec) g_places.push_back({ part, id, x, y, { view[0], view[1], view[2] } });
+	}
+	void fx_view(const void *matrix, int h, int ofx, int ofy)
+	{
+		if (!g_rec) return;
+		memcpy(g_view.m, matrix, sizeof(g_view.m));
+		memcpy(g_view.t, (const uint8_t *)matrix + 0x14, sizeof(g_view.t));
+		g_view.h = h; g_view.ofx = ofx; g_view.ofy = ofy; g_view.set = true;
+	}
+}
 #endif
 static int part_at(uint32_t node)
 {
@@ -511,7 +527,14 @@ static void write_tick(int t)
 	for (const SpriteDraw &s : g_sprites)
 		if (s.placed) fprintf(g_out, "Q %d %d %X %d %d %d\n", t, part_at(s.node), s.seq, s.frame, s.x, s.y);
 		else fprintf(g_out, "Q %d %d %X %d\n", t, part_at(s.node), s.seq, s.frame);
-	for (const PlaceDraw &p : g_places) fprintf(g_out, "P %d %d %X %d %d\n", t, p.part, p.id, p.x, p.y);
+	if (g_view.set)
+	{
+		fprintf(g_out, "W %d", t);
+		for (int16_t value : g_view.m) fprintf(g_out, " %d", value);
+		fprintf(g_out, " %d %d %d %d %d %d\n", g_view.t[0], g_view.t[1], g_view.t[2], g_view.h, g_view.ofx, g_view.ofy);
+		g_view.set = false;
+	}
+	for (const PlaceDraw &p : g_places) fprintf(g_out, "P %d %d %X %d %d %d %d %d\n", t, p.part, p.id, p.x, p.y, p.view[0], p.view[1], p.view[2]);
 	for (const BattleEvent &e : g_events)
 		if (e.kind == 'N') fprintf(g_out, "N %d %u %u %u %u\n", t, e.a, e.b, e.c, e.d);
 		else fprintf(g_out, "S %d %X %X\n", t, e.a, e.b);

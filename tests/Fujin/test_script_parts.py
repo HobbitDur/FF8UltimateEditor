@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from PyQt6.QtWidgets import QApplication
 
+from FF8GameData.psxgpu.fxdump import parse_recording
 from Fujin.effectprogram import load_description
 from Fujin.scriptparts import apply_script_values, edits, read_value, script_matches, script_values, with_script_parts
 
@@ -128,6 +129,47 @@ def test_the_purple_lines_follow_what_moves(tmp_path, script):
     assert way(slow)[0] == way(game)[0] and way(slow)[-1] != way(game)[-1]
     (folder / "MAG230_B.00").write_bytes(apply_script_values(script, _file(), {"script.path.start": 1}))
     assert way(_record(folder, tmp_path, "target"))[0] != way(game)[0]
+
+
+def test_a_purple_line_is_seen_by_the_camera_of_the_tick_shown():
+    """A point at (0, 0, 1000) in the battle; the camera then moves it 100 to the right and to 2000 away, then behind it."""
+    camera = lambda x, z: f"4096 0 0 0 4096 0 0 0 4096 {x} 0 {z} 640 160 112"
+    recording = parse_recording([
+        f"W 0 {camera(0, 0)}", "P 0 7 1 1280 896 0 0 1000",
+        f"W 1 {camera(100, 1000)}", "P 1 7 1 1536 896 100 0 2000",
+        f"W 2 {camera(0, -5000)}", "P 2 7 1 1280 896 0 0 -4000",
+        "P 3 8 1 10 20"])
+    seen = lambda tick: [[(index, round(x), round(y)) for index, x, y in path] for path in recording.sprite_paths({7}, camera_tick=tick)]
+    assert seen(0) == [[(0, 1280, 896), (1, 1280, 896), (2, 1280, 896)]]    # it never moved in the battle
+    assert seen(1) == [[(0, 1536, 896), (1, 1536, 896), (2, 1536, 896)]]    # 8 * 100 * 640 / 2000 + 8 * 160
+    assert seen(2) == []                                                    # behind the camera
+    # at their own tick: where the game drew them; a recording without a position stays as drawn
+    assert recording.sprite_paths({7}) == [[(0, 1280, 896), (1, 1536, 896), (2, 1280, 896)]]
+    assert recording.sprite_paths({8}, camera_tick=0) == [[(3, 10, 20)]]
+    # a tick without a camera yet (all zeros): its point has no place in the battle, the others do, seen by the closest camera
+    recording = parse_recording(["W 0 0 0 0 0 0 0 0 0 0 0 0 0 352 160 112", "P 0 7 1 1280 896 0 0 0",
+                                 f"W 1 {camera(0, 0)}", "P 1 7 1 1280 896 0 0 1000"])
+    assert recording.ticks[0].view is None
+    assert recording.sprite_paths({7}, camera_tick=0) == [[(1, 1280.0, 896.0)]]
+
+
+@pytest.mark.ff8data(*FILES)
+def test_the_purple_lines_land_where_the_game_draws(tmp_path, script):
+    folder = tmp_path / "effect"
+    folder.mkdir()
+    shutil.copy(MAGIC / "MAG230_B.00", folder)
+    shutil.copy(MAGIC / "MAG230_B.01", folder)
+    recording = _record(folder, tmp_path, "camera", "gamecamera=1", "camvar=0")
+    assert len({(tuple(tick.view[0]), tuple(tick.view[1])) for tick in recording.ticks if tick.view}) > 1   # it moves
+    way = set(next(part for part in script["parts"] if part["key"] == "path")["paths"])
+    drawn = recording.sprite_paths(way)[0]
+    compared = 0
+    for index, x, y in drawn:
+        seen = [point for path in recording.sprite_paths(way, camera_tick=index) for point in path if point[0] == index]
+        if seen:                                                    # (not while it passes behind that camera)
+            compared += 1
+            assert abs(seen[0][1] - x) <= 16 and abs(seen[0][2] - y) <= 16, index
+    assert compared > len(drawn) * 3 // 4
 
 
 @pytest.mark.ff8data(*FILES)
