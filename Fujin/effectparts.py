@@ -232,9 +232,10 @@ class PartPreview(QWidget):
     reference_toggled = pyqtSignal(bool)
 
     def __init__(self, runner, part_ids, renderer, markers=lambda: {}, part_names=None, sounds=None, heals=False,
-                 timeline=False):
+                 timeline=False, path_ids=None):
         super().__init__()
         self.runner, self.part_ids, self.renderer, self.markers = runner, part_ids, renderer, markers
+        self.path_ids = path_ids                        # whose paths it draws (None: the part's)
         self.part_names = part_names or {}
         self.sounds, self.heals = sounds, heals         # Fujin's Sound tab plays; a result's number is a heal
         self.highlight = False                          # a group of the tab hovered: the paths stand out
@@ -511,7 +512,7 @@ class PartPreview(QWidget):
     def _draw_paths(self, pixmap, recording, scale):
         """The part's sprite paths over the whole effect (fxdump.sprite_paths) on its picture."""
         if id(recording) not in self._paths:
-            self._paths[id(recording)] = recording.sprite_paths(self.part_ids)
+            self._paths[id(recording)] = recording.sprite_paths(self.part_ids if self.path_ids is None else self.path_ids)
         x, y = self._view[0], self._view[1]
         point = lambda px, py: QPointF((px - x) * scale, (py - y) * scale)
         painter = QPainter(pixmap)
@@ -928,7 +929,8 @@ class PartTab(QWidget):
         # a result's number is a heal when the part gives HP (Cure's emitter: Heal tick)
         heals = any(f["key"].endswith("heal_tick") for f in fields)
         self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers, part_names=self.part_names,
-                                   sounds=sounds, heals=heals, timeline=not part["id"])
+                                   sounds=sounds, heals=heals, timeline=not part["id"],
+                                   path_ids=set(part["paths"]) if "paths" in part else None)
         self.images = PartImages(runner, part_ids, self.named_images, locate, part["title"])
         self.sequences = PartSequences(runner, part_ids, self.part_names)
         self.sequences.picked.connect(self.images.select)

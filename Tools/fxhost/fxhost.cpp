@@ -38,6 +38,7 @@ namespace ff8fx
 	// (the ports built in for the programs' port pieces: no lab here to note their parts)
 	void fx_part(int) {}
 	void fx_note(const char *, int32_t) {}
+	void fx_place(int, uint32_t, int, int) {}
 #endif
 }
 

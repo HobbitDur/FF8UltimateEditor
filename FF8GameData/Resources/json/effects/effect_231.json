@@ -173,13 +173,17 @@
     "id": 0,
     "key": "timing",
     "title": "Timing",
+    "paths": [],
     "doc": "When things happen, and the camera. Sound: Sound tab; pictures: Textures tab"
    },
    {
     "id": 0,
     "key": "path",
     "title": "Path",
-    "doc": "Where the cloud starts and how it reaches the target"
+    "paths": [
+     65866
+    ],
+    "doc": "Where the cloud starts and how it reaches the target. The purple line is the way it goes; in the game's order it starts at the world's origin, where its first puff goes"
    },
    {
     "id": 1016,
@@ -203,12 +207,18 @@
     "id": 724,
     "key": "swirl_a",
     "title": "Swirl 1 (pink)",
+    "paths": [
+     66260
+    ],
     "doc": "The pink spiral: a model turning around the target's feet"
    },
    {
     "id": 848,
     "key": "swirl_b",
     "title": "Swirl 2 (dark)",
+    "paths": [
+     66384
+    ],
     "doc": "The dark disc: a second model turning around the target's feet"
    }
   ],

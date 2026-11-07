@@ -374,6 +374,10 @@ namespace ff8fx { void fx_part(int id) { g_part_marks.push_back({ *(const uint32
 // values a port measures (FX_NOTE: the target's size, the radius it takes...): M lines, with their tick
 static std::vector<std::pair<std::string, int32_t>> g_notes;
 namespace ff8fx { void fx_note(const char *name, int32_t value) { if (g_rec) g_notes.push_back({ name, value }); } }
+// where a port says something of a part is (the P lines: tick, part, which one, screen position)
+struct PlaceDraw { int part; uint32_t id; int x, y; };
+static std::vector<PlaceDraw> g_places;
+namespace ff8fx { void fx_place(int part, uint32_t id, int x, int y) { if (g_rec) g_places.push_back({ part, id, x, y }); } }
 #endif
 static int part_at(uint32_t node)
 {
@@ -507,6 +511,7 @@ static void write_tick(int t)
 	for (const SpriteDraw &s : g_sprites)
 		if (s.placed) fprintf(g_out, "Q %d %d %X %d %d %d\n", t, part_at(s.node), s.seq, s.frame, s.x, s.y);
 		else fprintf(g_out, "Q %d %d %X %d\n", t, part_at(s.node), s.seq, s.frame);
+	for (const PlaceDraw &p : g_places) fprintf(g_out, "P %d %d %X %d %d\n", t, p.part, p.id, p.x, p.y);
 	for (const BattleEvent &e : g_events)
 		if (e.kind == 'N') fprintf(g_out, "N %d %u %u %u %u\n", t, e.a, e.b, e.c, e.d);
 		else fprintf(g_out, "S %d %X %X\n", t, e.a, e.b);
@@ -1705,7 +1710,7 @@ int main(int argc, char **argv)
 			*(int16_t *)0x1D977A2 = 0;
 			call0(0x5033E0);
 		}
-		g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear(); g_notes.clear();
+		g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear(); g_notes.clear(); g_places.clear();
 		g_rec = true;
 		render_actors();
 		g_rec = false;
@@ -1763,7 +1768,7 @@ int main(int argc, char **argv)
 		env_reset();
 		if (O.gamecamera) game_camera_view();
 		else set_camera(t - cast_ticks);
-		g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear(); g_notes.clear();
+		g_ins.clear(); g_pending.clear(); g_sprites.clear(); g_events.clear(); g_notes.clear(); g_places.clear();
 		g_rec = true;
 		int r = 0;
 		step_plan();

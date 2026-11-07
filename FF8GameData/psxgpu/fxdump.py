@@ -44,6 +44,7 @@ class EffectTick:
     sounds: list = field(default_factory=list)      # [sound block address] played (S lines)
     sound_words: list = field(default_factory=list)  # [the world sound id each block holds] (None: an older recording)
     notes: list = field(default_factory=list)       # [(name, value)] the port measured (M lines)
+    moves: list = field(default_factory=list)       # [(part, which one, x, y)] where the port says they are (P lines)
 
     def part_packets(self, parts=None):
         """The packets of these effect parts (all of them for None)."""
@@ -157,7 +158,13 @@ class EffectRecording:
                 path.append((tick.index, sprite[3], sprite[4]))
                 following.append((*sprite, path))
             last = following
-        return paths
+        # what the port names itself needs no joining
+        named = {}
+        for tick in self.ticks:
+            for part, which, x, y in tick.moves:
+                if part in parts:
+                    named.setdefault((part, which), []).append((tick.index, x, y))
+        return paths + list(named.values())
 
     def frame(self, tick_index, vram=None, view=None, scale=1.0, renderer=None, parts=None, under=None):
         """The RGB image of tick `tick_index` and the Gpu that drew it (its missing_pages / counts).
@@ -257,6 +264,8 @@ def parse_recording(lines, effect_id=None) -> EffectRecording:
             tick = by_index.setdefault(int(parts[1]), EffectTick(int(parts[1])))
             tick.sprites.append((int(parts[2]), int(parts[3], 16), int(parts[4])))
             tick.places.append((int(parts[5]), int(parts[6])) if len(parts) >= 7 else None)
+        elif kind == "P" and len(parts) >= 6:
+            by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).moves.append((int(parts[2]), int(parts[3], 16), int(parts[4]), int(parts[5])))
         elif kind == "N" and len(parts) >= 6:
             by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).results.append(tuple(int(v) for v in parts[2:6]))
         elif kind == "M" and len(parts) >= 4:

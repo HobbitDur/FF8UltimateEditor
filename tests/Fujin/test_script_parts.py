@@ -108,6 +108,29 @@ def test_each_part_is_recorded_under_its_own_id(tmp_path, script):
 
 
 @pytest.mark.ff8data(*FILES)
+def test_the_purple_lines_follow_what_moves(tmp_path, script):
+    folder = tmp_path / "effect"
+    folder.mkdir()
+    shutil.copy(MAGIC / "MAG230_B.00", folder)
+    shutil.copy(MAGIC / "MAG230_B.01", folder)
+    game = _record(folder, tmp_path, "game")
+    moves = lambda path: len({(x, y) for _tick, x, y in path}) > 1
+    # each ring stays where it is released, the rising puffs rise, the trail's don't
+    assert game.sprite_paths({RINGS}) and not any(moves(path) for path in game.sprite_paths({RINGS}))
+    puffs = game.sprite_paths({CLOUD})
+    assert any(moves(path) for path in puffs) and not all(moves(path) for path in puffs)
+    # the Path tab draws the cloud's own way, and a value edited moves it
+    parts = {part["key"]: part for part in script["parts"]}
+    way = lambda recording: recording.sprite_paths(set(parts["path"]["paths"]))[0]
+    assert parts["timing"]["paths"] == [] and moves(way(game))
+    (folder / "MAG230_B.00").write_bytes(apply_script_values(script, _file(), {"script.path.speed": 2048}))
+    slow = _record(folder, tmp_path, "slow")
+    assert way(slow)[0] == way(game)[0] and way(slow)[-1] != way(game)[-1]
+    (folder / "MAG230_B.00").write_bytes(apply_script_values(script, _file(), {"script.path.start": 1}))
+    assert way(_record(folder, tmp_path, "target"))[0] != way(game)[0]
+
+
+@pytest.mark.ff8data(*FILES)
 def test_the_tight_rings_go_on_when_the_wide_ones_start(tmp_path, script):
     """StartChannel 0 takes the first free channel: unlike the puffs (channel 2, replaced), both kinds of rings run together."""
     folder = tmp_path / "effect"
