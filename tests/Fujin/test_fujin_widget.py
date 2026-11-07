@@ -67,6 +67,27 @@ def test_the_magic_and_battle_folders_have_an_import_line_each(fujin, tmp_path, 
     assert sources["Fujin battle effect files"].find_paths(registry) == [str(second / "mag200_b.02")]
 
 
+def test_imported_fujin_effects_are_reopened_by_auto_upload(fujin, tmp_path):
+    """Import complementary's Fujin effects (a new effect such as Bio 349): remembered, each one added, reopened at the next launch."""
+    from Fujin import fujinwidget
+    from Fujin.effectprogram import effect_file_text, load_description, new_effect
+    folder = tmp_path / "FujinEffects"
+    folder.mkdir()
+    paths = []
+    for effect, name in ((349, "Bio"), (350, "Other")):
+        path = folder / f"effect_{effect}.fxprog"
+        path.write_text(effect_file_text(new_effect(load_description(1), effect, name), {}, edited=True), encoding="ascii")
+        paths.append(str(path))
+    assert fujin.import_effects(paths[:1]) == [349]
+    assert fujin.import_effects(paths[1:]) == [350]
+    registry = fujin.file_registry
+    assert registry.last_files(fujinwidget.PROGRAM_SELECTION_KEY) == paths and registry.last_folder(fujinwidget.PROGRAM_FOLDER_KEY) == str(folder)
+    again = fujinwidget.FujinWidget(file_registry=registry)
+    source = next(source for source in again.auto_import_sources() if source.key == fujinwidget.PROGRAM_FOLDER_KEY)
+    source.loader(source.find_paths(registry))
+    assert again.effect_name(349) == "Bio" and again.effect_name(350) == "Other"
+
+
 def test_the_header_says_which_line_brings_the_missing_files(fujin):
     catalog = fujin.catalog
     assert catalog.file_folder("MAG200_B.00") == "magic" and catalog.file_folder("mag200_b.02") == "battle"

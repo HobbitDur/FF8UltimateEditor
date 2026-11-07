@@ -54,6 +54,36 @@ def _draw_mode(packets):
     return 0
 
 
+def test_a_cached_recording_is_shown_only_while_its_files_are_the_same(qapp, tmp_path):
+    """A cache is keyed by the files' names: Bio's script edited and saved (or changed on disk) is recorded anew."""
+    import json
+    from Common.fileregistry import FileRegistry
+    from Fujin.nativepreview import NativePreviewView, files_path
+    files, edits = {"mag348_b.00": b"bio", "mag348_b.01": b"data"}, {}
+    view = NativePreviewView(FileRegistry(), effect_files=lambda: dict(files), file_edits=lambda: dict(edits))
+    cached = tmp_path / "effect_349.txt"
+    cached.write_text("")
+    assert not view._cached(str(cached))                                # made before files were noted
+    Path(files_path(str(cached))).write_text(json.dumps(view._files_stamp()))
+    assert view._cached(str(cached))
+    files["mag348_b.00"] = b"bio, starting sooner"
+    assert not view._cached(str(cached))
+    edits["mag348_b.00"] = files["mag348_b.00"]                         # unsaved: its edits record anew anyway
+    assert view._cached(str(cached))
+
+
+def test_the_camera_box_is_one_choice_with_its_own_recording(qapp):
+    from Fujin.fujinwidget import FujinWidget
+    from Fujin.nativepreview import BattleCast
+    widget = FujinWidget()
+    assert BattleCast({}, 0, 3).key() != BattleCast({}, 0, 3, game_camera=False).key()
+    assert widget.native_preview.cast().game_camera and widget.lab.cast().game_camera
+    widget.native_preview.camera_check.setChecked(False)
+    assert not widget.lab.camera_check.isChecked() and not widget.lab.cast().game_camera
+    widget.lab.camera_check.setChecked(True)
+    assert widget.native_preview.camera_check.isChecked()
+
+
 def test_the_battle_actors_fold_for_a_bigger_preview(qapp):
     from Fujin.fujinwidget import FujinWidget
     view = FujinWidget().native_preview
@@ -151,10 +181,16 @@ def test_fujin_native_preview_view(qapp):
     view.load_recording_file(str(SAMPLE))
     assert view.slider.maximum() == 3 and "Effect 1" in view.status.text()
     view.slider.setValue(3)
+    assert not view.actors_check.isChecked() and view.frame(3)[0].width() == 560   # no actors drawn: the effect framed
+    view.view_mode.setCurrentIndex(0)
     assert view.picture.pixmap() is not None and view.frame(3)[0].width() == 640   # the game window
     view.view_mode.setCurrentIndex(1)
     assert view.frame(3)[0].width() == 560                            # fit the effect
     assert "Flat grey" in view.status.text()
+    view.actors_check.setChecked(True)                                # the actors drawn: the game window, framed by them
+    assert view.view_mode.currentData() == "game"
+    view.actors_check.setChecked(False)
+    assert view.view_mode.currentData() == "fit"
 
 
 @pytest.mark.skipif(not EXE.exists(), reason="FF8_EN.exe not extracted")

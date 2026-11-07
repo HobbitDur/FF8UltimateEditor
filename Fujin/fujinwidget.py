@@ -50,6 +50,8 @@ EFFECT_FILES_KEY = "Fujin effect files"                # the game's magic folder
 BATTLE_EFFECT_FILES_KEY = "Fujin battle effect files"  # the game's battle folder: no file is in both
 ANIM_SET_FOLDER_KEY = "FFNx animation sets"
 ANIM_SET_SELECTION_KEY = "FFNx animation set files"   # the .animset files last imported
+PROGRAM_FOLDER_KEY = "Fujin effect programs"
+PROGRAM_SELECTION_KEY = "Fujin effect program files"   # every effect_NNN.fxprog imported, reopened by Auto-upload
 USERS_SHOWN = 24    # entries listed per kind in the Overview's Used by (effect 0 has hundreds)
 
 
@@ -122,6 +124,8 @@ class FujinWidget(QWidget):
             camera_track=lambda effect: (self.camera_editor.manager, self.camera_editor.manager.track(effect)), anim_sets=self._anim_sets)
         self.lab.setParent(self)
         self.lab.hide()
+        self.native_preview.camera_toggled.connect(self.lab.camera_check.setChecked)   # one Camera box for both
+        self.lab.camera_toggled.connect(self.native_preview.camera_check.setChecked)
         self.part_tabs = []
         self._parts_schema = None           # the parameter table the part tabs show
         recorder_build().changed.connect(self._recorder_built)     # FFNx's sources updated: tabs without a restart
@@ -356,7 +360,9 @@ class FujinWidget(QWidget):
                 AutoImportSource(ANIM_SET_FOLDER_KEY, ("effect_*.animset",), lambda paths: self.import_anim_sets(paths, select=False),
                                  selection_only=True, selection_key=ANIM_SET_SELECTION_KEY),
                 AutoImportSource(EFFECT_FILES_KEY, EFFECT_FILE_PATTERNS, self.import_paths, selection_only=True),
-                AutoImportSource(BATTLE_EFFECT_FILES_KEY, EFFECT_FILE_PATTERNS, self.import_battle_paths, selection_only=True)]
+                AutoImportSource(BATTLE_EFFECT_FILES_KEY, EFFECT_FILE_PATTERNS, self.import_battle_paths, selection_only=True),
+                AutoImportSource(PROGRAM_FOLDER_KEY, ("effect_*.fxprog",), self.import_effects,
+                                 selection_only=True, selection_key=PROGRAM_SELECTION_KEY)]
 
     def auto_import_bindings(self):
         return self.mag_editor.file_bindings()
@@ -579,25 +585,37 @@ class FujinWidget(QWidget):
                 return os.path.dirname(manager.file_path)
         return self.file_registry.last_folder(EFFECT_FILES_KEY) or ""
 
+    def _effect_file_managers(self, effect):
+        """{file name: its imported file} of what an effect reads: its base's files, and a new effect's own
+        (named for its id, or as its Files tab says: Bio 349's mag348_b.00)."""
+        extra = [os.path.basename(m.file_path) for m in self.mag_editor.managers.values()]
+        base = self._files_effect(effect)
+        names = [resource.key for resource in self.catalog.resources(base, extra) if resource.source == "File"]
+        if base != effect:
+            names += [resource.key for resource in self.catalog.resources(effect, extra) if resource.source == "File"]
+            values = self.effect_params.get(effect, {})
+            names += [values[param["key"]].lower() for param in self.descriptions[effect].get("params", [])
+                      if param.get("type") == "file" and values.get(param["key"])]
+        managers = {}
+        for name in names:
+            manager = next((m for m in self.mag_editor.managers.values() if os.path.basename(m.file_path).lower() == name), None)
+            if manager is not None:
+                managers[name] = manager
+        return managers
+
     def _preview_effect_files(self):
         """The current effect's imported files as Fujin holds them (unsaved edits included): all
         the effect preview's recorder reads of them - never their folder."""
         if self.current_effect is None:
             return {}
-        extra = [os.path.basename(m.file_path) for m in self.mag_editor.managers.values()]
-        return {resource.key: bytes(manager.data)
-                for resource in self.catalog.resources(self._files_effect(self.current_effect), extra)
-                if resource.source == "File" and (manager := self.resolve(resource)) is not None}
+        return {name: bytes(manager.data) for name, manager in self._effect_file_managers(self.current_effect).items()}
 
     def _preview_file_edits(self):
         """Current effect's unsaved file bytes, for preview without saving the imported files."""
         if self.current_effect is None:
             return {}
-        extra = [os.path.basename(m.file_path) for m in self.mag_editor.managers.values()]
-        return {resource.key: bytes(manager.data)
-                for resource in self.catalog.resources(self._files_effect(self.current_effect), extra)
-                if resource.source == "File" and (manager := self.resolve(resource)) is not None
-                and manager.modified}
+        return {name: bytes(manager.data) for name, manager in self._effect_file_managers(self.current_effect).items()
+                if manager.modified}
 
     def _selection_changed(self, *_args):
         item = self.effect_list.currentItem()
@@ -642,7 +660,7 @@ class FujinWidget(QWidget):
         for view in self.component_views:
             view.set_resources(resources)
         self.choreography.setTabVisible(self.workspace_tab, self.workspace.sources.count() > 0)
-        self.title.setText(f"{effect:03d} — {self.catalog.name(effect)}")
+        self.title.setText(f"{effect:03d} — {self.effect_name(effect)}")
         loaded = sum(self.resolve(r) is not None for r in resources)
         self.context.setText(f"{self.catalog.runtime(effect)} · {loaded} of {len(resources)} files imported"
                              + self._files_to_import(resources)
@@ -1283,11 +1301,12 @@ class FujinWidget(QWidget):
         """Header Import complementary: Fujin's effect files (FujinEffects/effect_NNN.fxprog, what Save
         writes): each effect's parameters and, for an edited one or a new one, its description."""
         if paths is None:
-            folder = self.file_registry.last_folder("Fujin effect export") or os.getcwd()
+            folder = self.file_registry.last_folder(PROGRAM_FOLDER_KEY) or os.path.join(
+                self.file_registry.last_folder("Fujin effect export") or os.getcwd(), PROGRAM_FOLDER)
             paths = QFileDialog.getOpenFileNames(self, "Import Fujin effects (FujinEffects/effect_NNN.fxprog)",
-                                                 os.path.join(folder, PROGRAM_FOLDER), "Fujin effects (*.fxprog)")[0]
+                                                 folder, "Fujin effects (*.fxprog)")[0]
         clean = self._native_signature() == self._exported_signature
-        loaded = []
+        loaded, read = [], []
         for path in paths:
             try:
                 with open(path, encoding="ascii") as file:
@@ -1301,6 +1320,12 @@ class FujinWidget(QWidget):
                 self.descriptions.pop(effect, None)
             self.effect_params[effect] = values
             loaded.append(effect)
+            read.append(str(path))
+        if read:
+            # added to those remembered (one effect per file, imported one at a time): Auto-upload reopens them all
+            earlier = [path for path in self.file_registry.last_files(PROGRAM_SELECTION_KEY) or [] if os.path.isfile(path)]
+            self.file_registry.remember_files(PROGRAM_SELECTION_KEY, earlier + read)
+            self.file_registry.remember_folder(PROGRAM_FOLDER_KEY, os.path.dirname(read[-1]))
         if loaded and clean:
             self._exported_signature = self._native_signature()     # what the files hold: nothing to save
         if loaded:

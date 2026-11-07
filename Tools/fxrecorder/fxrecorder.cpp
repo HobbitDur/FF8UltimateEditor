@@ -45,6 +45,7 @@
 // [animset=ADDRESS:<file>: the animation set at this exe address is this file]
 // [stage=N: the battle stage N is loaded] [stagefile=<file>: read from that file] [stagedraw=1: and drawn each tick by its own render task]
 // [gamecamera=1: the game's camera code plays the tracks started (from castcam's view, with stagedraw= from the end of the stage's intro shot stagecam=N), no camera file]
+// [stillcamera=1: with gamecamera=1, the shots run but what is drawn stays seen from the view they start from]
 // [camvar=N: opening shot] [cameratrack=<file>: the setup's track]
 // [sequences=1: the game's sequence code runs on the actors] [castseq=N: the caster's action sequence N before and around the effect]
 // [each a:n can be a:n:x:y:z: the caster stands at that model-local offset meanwhile - AnimSeq
@@ -91,6 +92,7 @@ struct Opt
 	std::string stagefile;            // stagefile=<file>: that file is read for it instead of <battle>/a0stgNNN.x
 	bool stagedraw = false;           // stagedraw=1: the stage is drawn behind the actors, by its own render task
 	bool gamecamera = false;          // gamecamera=1: the game's camera code plays the tracks the effect starts, around the actors as they move
+	bool stillcamera = false;         // stillcamera=1: the camera code runs on (what waits for a shot's end still does), the view stays the battle's
 	int camvar = 0;                   // camvar=N: the camera script's variable 0, the opening shot (default 0)
 	int stagecam = 0;                 // stagecam=N: the stage's intro shot the battle's view comes from: the encounter's camera byte (scene.out +2, +3; set << 4 | shot)
 	std::string cameratrack;          // cameratrack=<file>: the track the effect's setup starts is this file, as FFNx plays effect_NNN.bcam
@@ -838,8 +840,22 @@ static void init_game_camera()
 	memcpy((void *)0x1D981F0, view + 3, 6);
 	*(int16_t *)0x1D8E038 = 0x280; *(int16_t *)0x1D977A0 = 0x280;   // the projection distance and the one it returns to
 }
+static int16_t g_still_view[6], g_still_h;
+static void keep_still_view()
+{
+	memcpy(g_still_view, (void *)0xB8B7F0, 6);
+	memcpy(g_still_view + 3, (void *)0xB8B7F8, 6);
+	g_still_h = *(int16_t *)0x1D8E038;
+}
 static void game_camera_view()
 {
+	if (O.stillcamera)
+	{
+		memcpy((void *)0xB8B7F0, g_still_view, 6);
+		memcpy((void *)0xB8B7F8, g_still_view + 3, 6);
+		*(int16_t *)0x1D977A2 = 0;
+		*(int16_t *)0x1D8E038 = g_still_h;
+	}
 	if (!call0(0x5033E0)) printf("view matrix build faulted %08lX at eip %08lX\n", g_fault_code, g_fault_eip);
 	((void (__cdecl *)(int32_t, int))0x45D7F0)(*(int16_t *)0x1D8E038, 26);
 }
@@ -1299,6 +1315,7 @@ static bool parse(int argc, char **argv)
 		else if (k == "stage") O.stage = atoi(v.c_str());
 		else if (k == "stagefile") O.stagefile = v;
 		else if (k == "gamecamera") O.gamecamera = atoi(v.c_str()) != 0;
+		else if (k == "stillcamera") O.stillcamera = atoi(v.c_str()) != 0;
 		else if (k == "camvar") O.camvar = atoi(v.c_str());
 		else if (k == "stagecam") O.stagecam = atoi(v.c_str());
 		else if (k == "cameratrack") O.cameratrack = v;
@@ -1694,6 +1711,7 @@ int main(int argc, char **argv)
 	if (O.sequences) *(uint32_t *)0x1D96A8C = ((uint32_t (__cdecl *)())0x506BF0)();
 	if (O.sequences) *(uint32_t *)0x1D96AA0 = 0x209FAA8;
 	if (O.gamecamera && O.stagedraw) finish_stage_intro();
+	if (O.gamecamera) keep_still_view();
 	if (!O.cameratrack.empty())
 	{
 		g_camera_track = readfile(O.cameratrack);

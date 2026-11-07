@@ -39,6 +39,7 @@ Approximated: the fake battle (actors stand at fixed places), the camera player 
 """
 import dataclasses
 import hashlib
+import json
 import math
 import os
 import re
@@ -90,6 +91,10 @@ STAGE_FILE = re.compile(r"a0stg(\d{3})\.x")
 ENEMY_PLACE = (0, 0, -3200)                           # (X-ATM092's in scene.out's Dollet City)
 
 
+CAMERA_TIP = ("On: the effect as the game shows it, through its camera shots. Off: the same effect seen from the battle's view the whole "
+              "time, to see what moves in the battle and not what the camera does. What it draws and where stay the same; Save is not concerned.")
+
+
 @dataclass
 class BattleCast:
     """The battle an effect is recorded in: {slot: (body .dat, weapon .dat or None)}, the caster's
@@ -117,6 +122,7 @@ class BattleCast:
     opening_shot: int = 0                              # the camera script's variable 0 (the Camera tab's Opening shot)
     stage_camera: int = 0                              # the stage's intro shot the battle's view is the end of: the encounter's main camera byte
     effect_files: tuple = ()                           # the names of the effect's files imported: one more, a new recording
+    game_camera: bool = True                           # False: the Camera box off, everything seen from the battle's view
 
     def key(self):
         """The cache tag of this cast: its files (where they are and their state on disk), roles,
@@ -130,6 +136,8 @@ class BattleCast:
             except OSError:
                 pass
         parts.append(f"opening{self.opening_shot}")
+        if not self.game_camera:
+            parts.append("still")
         if self.effect_files:
             parts.append("files|" + "|".join(self.effect_files))
         if self.stage:
@@ -199,6 +207,11 @@ def notes_path(path):
     return path + ".notes"
 
 
+def files_path(path):
+    """What the effect's files held when a cached recording was made, kept next to it."""
+    return path + ".files"
+
+
 def recording_notes(log, not_imported=()):
     """What the status adds to a recording: what it lacked, from the recorder's log. A summon's files past its first two are
     streamed as it plays and hold its textures: without them it stops there, its pictures wrong before that. ma8def_p.* only
@@ -264,6 +277,7 @@ def camera_lines(manager, track, cast=None, ticks=600):
 
 class NativePreviewView(QWidget):
     recording_changed = pyqtSignal()        # another recording is shown (or none)
+    camera_toggled = pyqtSignal(bool)       # the Camera box
 
     """providers: exe_path() -> the opened FF8_EN.exe; effect_files() -> {file name: bytes} of the
     effect's imported files as Fujin holds them (unsaved edits included);
@@ -357,8 +371,16 @@ class NativePreviewView(QWidget):
         self.view_mode.addItem("Game window (320 × 224)", "game")
         self.view_mode.addItem("Fit the effect", "fit")
         self.view_mode.setToolTip("Game window: the screen through the effect's camera. Fit the effect: frame "
-                                  "everything it draws.")
+                                  "everything it draws. Battle actors' Draw them picks one: the game window with the "
+                                  "actors drawn, the effect framed without them (nothing to judge the framing by).")
+        # (the actors are not drawn at first)
+        self.view_mode.setCurrentIndex(self.view_mode.findData("game" if self.actors_check.isChecked() else "fit"))
         self.view_mode.currentIndexChanged.connect(lambda _i: self._show(self.slider.value()))
+        self.camera_check = QCheckBox("Camera")
+        self.camera_check.setChecked(True)
+        self.camera_check.setToolTip(CAMERA_TIP)
+        self.camera_check.toggled.connect(self._camera_toggled)
+        self._camera_recorded = True                               # the box when the last recording started
         self.play_button = QPushButton("Play")
         self.play_button.setCheckable(True)
         self.play_button.toggled.connect(self._toggle_play)
@@ -406,6 +428,7 @@ class NativePreviewView(QWidget):
         controls.addWidget(self.play_button)
         controls.addWidget(self.slider, 1)
         controls.addWidget(self.frame_label)
+        controls.addWidget(self.camera_check)
         layout = QVBoxLayout(self)
         layout.addWidget(self.intro)
         layout.addWidget(self.actors_section)
@@ -435,8 +458,10 @@ class NativePreviewView(QWidget):
             self._fold_actors()
 
     def _actors_toggled(self, on):
-        """Drawn: the pickers open, usable. Not drawn: folded and greyed. The arrow folds them at any time."""
+        """Drawn: the pickers open, usable, the game window shown. Not drawn: folded and greyed, the effect framed.
+        The arrow folds them at any time."""
         self.actors_section.set_expanded(on)
+        self.view_mode.setCurrentIndex(self.view_mode.findData("game" if on else "fit"))
         self.actors_group.setEnabled(on)
         self._fold_actors()
         self._cast_changed()
@@ -519,7 +544,7 @@ class NativePreviewView(QWidget):
         listed in not_imported; no caster = nothing to record."""
         cast = self.cast_source.battle_cast(placed) if self.cast_source is not None else None
         if cast is None:
-            return BattleCast({}, 0, 3)
+            return BattleCast({}, 0, 3, game_camera=self.camera_check.isChecked())
         self._follow_encounter()
         slots, not_imported = {}, []
         for slot, (body, weapon) in cast.slots.items():
@@ -543,7 +568,8 @@ class NativePreviewView(QWidget):
                           actors, self.lab or bool(params), params, self.lab, program, sequence,
                           self.anim_sets(self.effect_id) if self.effect_id is not None else (), stage,
                           self.cast_source.inputs().opening, self._stage_camera(),
-                          tuple(sorted(self.effect_files())) if self.effect_id is not None else ())
+                          tuple(sorted(self.effect_files())) if self.effect_id is not None else (),
+                          self.camera_check.isChecked())
 
     def _stage_camera(self):
         combo = self.encounter_combo
@@ -558,6 +584,22 @@ class NativePreviewView(QWidget):
         effect_id, name = self.effect_id, self.effect_name
         self.effect_id = None
         self.set_effect(effect_id, name)
+
+    def _camera_toggled(self, on):
+        self.camera_toggled.emit(on)
+        self._show_camera_choice()
+
+    def _show_camera_choice(self):
+        """The same effect at the same tick, seen as the Camera box now says: recorded earlier, or now."""
+        if self.effect_id is None or self._process is not None or (self.recording is None and not self._preview_requested):
+            return
+        self._cast_key = self.cast().key()
+        path = recording_path(self.effect_id, self._cast_key)
+        if self._cached(path):
+            self._load_cached(path, self.slider.value())
+            self.edits_changed()
+        else:
+            self.record(keep_tick=True)
 
     def missing(self):
         """What Record still needs, in words ([] = ready)."""
@@ -629,22 +671,41 @@ class NativePreviewView(QWidget):
         self._prerender.stop()
         self._prerender_tick = 0
         path = recording_path(effect_id, self.cast().key()) if effect_id is not None else None
-        if path and os.path.isfile(path):
-            try:
-                with open(notes_path(path), encoding="utf-8") as file:
-                    self._recording_notes = file.read()
-            except OSError:
-                self._recording_notes = ""
-            self.load_recording_file(path)       # recorded earlier: shown again, a camera edit redoes it
-            try:
-                with open(camera_path(path), encoding="ascii") as file:
-                    self._recorded_camera = file.read().splitlines()
-            except OSError:
-                self._recorded_camera = None
+        if path and self._cached(path):
+            self._load_cached(path)
         else:
             self.picture.clear()
             self._update_controls()
         self.edits_changed()
+
+    def _files_stamp(self):
+        return {name: hashlib.sha256(data).hexdigest() for name, data in self.effect_files().items()}
+
+    def _cached(self, path):
+        """A recording made earlier with this cast and the effect's files as they are (a cache is keyed by their names: one
+        changed on disk, a Bio edited and saved, is recorded anew). A file with unsaved edits is not compared: they record anew."""
+        try:
+            with open(files_path(path), encoding="ascii") as file:
+                made_with = json.load(file)
+        except (OSError, ValueError):
+            return False
+        edited = self.file_edits()
+        return os.path.isfile(path) and all(made_with.get(name) == stamp for name, stamp in self._files_stamp().items()
+                                             if name not in edited)
+
+    def _load_cached(self, path, tick=0):
+        """Recorded earlier: shown again, a camera edit redoes it."""
+        try:
+            with open(notes_path(path), encoding="utf-8") as file:
+                self._recording_notes = file.read()
+        except OSError:
+            self._recording_notes = ""
+        self.load_recording_file(path, tick)
+        try:
+            with open(camera_path(path), encoding="ascii") as file:
+                self._recorded_camera = file.read().splitlines()
+        except OSError:
+            self._recorded_camera = None
 
     def record(self, keep_tick=False):
         """Record a private snapshot of the working edits; never save the imported effect files."""
@@ -654,6 +715,7 @@ class NativePreviewView(QWidget):
         cast = self.cast(placed=True)
         model = cast.key()
         self._preview_requested = True
+        self._camera_recorded = cast.game_camera
         edits = self.file_edits()
         signature = self._edit_signature(edits)
         # A recorder killed with the preview can still hold its output open: never fail on cleanup
@@ -760,6 +822,8 @@ class NativePreviewView(QWidget):
         eye, target = cast.cast_camera or (INITIAL_EYE, INITIAL_TARGET)
         args.append("castcam=" + ",".join(str(int(round(v))) for v in (*eye, *target)))
         args += ["gamecamera=1", f"camvar={cast.opening_shot}"]
+        if not cast.game_camera:
+            args.append("stillcamera=1")
         if cast.stage:
             args.append(f"stagecam={cast.stage_camera}")
         _manager, track = self.camera_track(self.effect_id)
@@ -801,6 +865,8 @@ class NativePreviewView(QWidget):
             self._load_recorded(effect_id, output, code, signature, tick, model, log, camera)
         finally:
             self._clean_scratch()
+        if self._camera_recorded != self.camera_check.isChecked():     # the box changed while it recorded
+            self._show_camera_choice()
 
     def _load_recorded(self, effect_id, output, code, signature, tick, model, log, camera=None):
         if effect_id != self.effect_id:
@@ -829,6 +895,8 @@ class NativePreviewView(QWidget):
                     file.write("\n".join(camera or []))
                 with open(notes_path(recording_path(effect_id, model)), "w", encoding="utf-8") as file:
                     file.write(self._recording_notes)
+                with open(files_path(recording_path(effect_id, model)), "w", encoding="ascii") as file:
+                    json.dump(self._files_stamp(), file)
             except OSError:
                 pass  # caching is optional; the in-memory preview is already loaded
         if self.play_button.isChecked():
@@ -907,7 +975,8 @@ class NativePreviewView(QWidget):
             f"Effect {self.effect_id} {self.effect_name}: {len(self.recording.ticks)} ticks "
             f"({len(self.recording.ticks) / TICKS_PER_SECOND:.1f} s). This tick: {gpu.counts['polygons']} polygons, "
             f"{gpu.counts['sprites']} sprites, {gpu.counts['lines']} lines. "
-            + ("Camera: the effect's own track." if self.camera_used else
+            + ("Camera: off, everything seen from the battle's view." if not self.camera_check.isChecked() else
+               "Camera: the effect's own track." if self.camera_used else
                "Camera: the battle's view, or the effect's code moving it (no camera track).")
             + (f" Animations: {', '.join(self.anim_set_names)}." if self.anim_set_names else "")
             + (f" Stage: {self.stage_combo.currentText()}." if self.stage_combo.currentData() and self.actors_check.isChecked() else "")

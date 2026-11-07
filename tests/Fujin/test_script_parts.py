@@ -187,6 +187,27 @@ def test_the_game_camera_holds_the_view_until_its_shot_moves(tmp_path):
 
 
 @pytest.mark.ff8data(*FILES)
+def test_with_the_camera_off_the_view_stays_and_the_effect_does_not_change(tmp_path, script):
+    """The same shot starts and runs, seen from where it starts: one camera, the purple line in the same place in the battle."""
+    folder = tmp_path / "effect"
+    folder.mkdir()
+    shutil.copy(MAGIC / "MAG230_B.00", folder)
+    shutil.copy(MAGIC / "MAG230_B.01", folder)
+    pose = "castcam=0,-1500,6000,0,-500,-1000"
+    moving = _record(folder, tmp_path, "moving", "gamecamera=1", "camvar=0", pose)
+    still = _record(folder, tmp_path, "still", "gamecamera=1", "camvar=0", pose, "stillcamera=1")
+    assert len(still.ticks) == len(moving.ticks)
+    assert len({(tuple(tick.view[0]), tuple(tick.view[1])) for tick in moving.ticks if tick.view}) > 1
+    assert len({(tuple(tick.view[0]), tuple(tick.view[1]), tuple(tick.view[2:])) for tick in still.ticks if tick.view}) == 1
+    assert all(tick.camera == ((0, -1500, 6000), (0, -500, -1000)) for tick in still.ticks)
+    way = set(next(part for part in script["parts"] if part["key"] == "path")["paths"])
+    places = [recording._named_paths(way)[0] for recording in (moving, still)]
+    assert [point[0] for point in places[0]] == [point[0] for point in places[1]]
+    for ours, theirs in zip(*places):
+        assert max(abs(a - b) for a, b in zip(ours[3], theirs[3])) < 4, ours[0]
+
+
+@pytest.mark.ff8data(*FILES)
 def test_the_tight_rings_go_on_when_the_wide_ones_start(tmp_path, script):
     """StartChannel 0 takes the first free channel: unlike the puffs (channel 2, replaced), both kinds of rings run together."""
     folder = tmp_path / "effect"
@@ -281,6 +302,10 @@ def test_the_tabs_edit_the_effects_file_with_one_undo_a_change(qapp, tmp_path, s
     tabs["timing"].spins["script.timing.camera"].setValue(1)
     own = next(m for m in fujin.mag_editor.managers.values() if m.file_path.endswith("mag348_b.00"))
     assert bytes(own.data[0x5A:0x5C]).hex() == "3930" and bytes(manager.data) == _file()
+    # its preview records it with that file, its own name in the title
+    assert fujin._preview_effect_files()["mag348_b.00"] == bytes(own.data) and "mag348_b.00" in fujin._preview_file_edits()
+    fujin._refresh()
+    assert fujin.title.text().endswith("Bio")
 
 
 def test_a_missing_shared_texture_is_sent_to_import_complementary():

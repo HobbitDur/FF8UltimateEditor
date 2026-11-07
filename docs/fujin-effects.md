@@ -314,6 +314,8 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   **Camera**: the recorder runs the game's camera code (`gamecamera=1`: `updateBattleCamera` 0x504060, its script VM and keyframe player), so a track in
   an actor's frame follows that actor as its sequence moves it. `camvar=N` is the Camera tab's Opening shot; a changed track goes in with `cameratrack=file`,
   as FFNx plays `effect_NNN.bcam`. Fujin's own player (`FF8GameData/dat/battlecamera.py`) still drives the Camera tab, where no sequence moves the actors.
+  The previews' **Camera** box off (`stillcamera=1`): the camera code still runs, so what waits for a shot's end does not change, but each tick is drawn from the view
+  the shots start from. One choice for the Overview and every part tab; each state keeps its own recording.
   With a battle stage, the cast and the effect start from the end of the stage's intro shot (`stagecam=N`: the encounter's main camera byte, 0 without one): the game's
   camera code plays the shot, jumped to its last frame as AutoTest's `finish_camera_shots` does. Without a stage they start from the setup's view.
   **Monsters shown** (every battle preview, `Common/encountermonsters.py`): a check box per monster of the encounter. By default the ones scene.out has there when the
