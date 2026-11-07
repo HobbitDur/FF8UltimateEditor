@@ -191,25 +191,25 @@
     "id": 330,
     "key": "cloud",
     "title": "Dark cloud",
-    "doc": "The cloud of puffs. Their picture and their darkening blend are in their sprites (Textures tab, Sections)"
+    "doc": "The dark smoke: a trail of puffs, then puffs that rise. Their picture and their darkening blend are in their sprites (Textures tab, Sections). Swirl 2 darkens the target too"
    },
    {
     "id": 530,
     "key": "rings",
     "title": "Green rings",
-    "doc": "The green rings released with the cloud. Their picture and blend are in their sprites (Textures tab, Sections)"
+    "doc": "The green circles, released with the smoke and separate from it. Each one is a dot that opens into a circle and fades. Their picture, colour and blend are in their sprites (Textures tab, Sections)"
    },
    {
     "id": 724,
     "key": "swirl_a",
-    "title": "Swirl 1",
-    "doc": "A model turning around the target's feet"
+    "title": "Swirl 1 (pink)",
+    "doc": "The pink spiral: a model turning around the target's feet"
    },
    {
     "id": 848,
     "key": "swirl_b",
-    "title": "Swirl 2",
-    "doc": "A second model turning around the target's feet"
+    "title": "Swirl 2 (dark)",
+    "doc": "The dark disc: a second model turning around the target's feet"
    }
   ],
   "groups": [
@@ -230,13 +230,13 @@
    },
    {
     "key": "script.cloud.first",
-    "label": "First puffs",
-    "doc": "Close together, while it travels"
+    "label": "Trail",
+    "doc": "Released first, close together: they stay where they are released"
    },
    {
     "key": "script.cloud.second",
-    "label": "Second puffs",
-    "doc": "Wider, rising from the target"
+    "label": "Rising puffs",
+    "doc": "Released next, further apart: each one rises"
    },
    {
     "key": "script.cloud.colour",
@@ -250,13 +250,13 @@
    },
    {
     "key": "script.rings.first",
-    "label": "First rings",
-    "doc": "Close together"
+    "label": "Tight rings",
+    "doc": "Close to the cloud's centre, 2 per tick from the start to the end"
    },
    {
     "key": "script.rings.second",
-    "label": "Second rings",
-    "doc": "Wider"
+    "label": "Wide rings",
+    "doc": "Twice as far from it, 2 more per tick once they start"
    },
    {
     "key": "script.swirl_a.size",
@@ -593,8 +593,8 @@
    {
     "key": "script.sparks.one.frames",
     "part": "sparks",
-    "label": "Animation",
-    "doc": "Which of the file's two sprite animations it plays (0 or 1)",
+    "label": "Picture",
+    "doc": "0: the green ring, 1: the dark puff (each with its own blend)",
     "type": "int",
     "min": 0,
     "max": 1,
@@ -719,8 +719,8 @@
    {
     "key": "script.cloud.first_for",
     "part": "cloud",
-    "label": "First puffs for",
-    "doc": "Ticks it releases the first kind, 1 per tick",
+    "label": "Trail for",
+    "doc": "Ticks it releases the trail, 1 puff per tick, then the rising puffs instead (the game: 16, the time the flight takes)",
     "type": "int",
     "min": 0,
     "max": 127,
@@ -733,8 +733,8 @@
    {
     "key": "script.cloud.second_for",
     "part": "cloud",
-    "label": "Second puffs for",
-    "doc": "Ticks it then releases the second kind, 1 per tick",
+    "label": "Rising puffs for",
+    "doc": "Ticks it then releases the rising puffs, 1 per tick",
     "type": "int",
     "min": 0,
     "max": 127,
@@ -747,8 +747,8 @@
    {
     "key": "script.cloud.first.frames",
     "part": "cloud",
-    "label": "Animation",
-    "doc": "Which of the file's two sprite animations it plays (0 or 1)",
+    "label": "Picture",
+    "doc": "0: the green ring, 1: the dark puff (each with its own blend)",
     "type": "int",
     "min": 0,
     "max": 1,
@@ -831,8 +831,8 @@
    {
     "key": "script.cloud.second.frames",
     "part": "cloud",
-    "label": "Animation",
-    "doc": "Which of the file's two sprite animations it plays (0 or 1)",
+    "label": "Picture",
+    "doc": "0: the green ring, 1: the dark puff (each with its own blend)",
     "type": "int",
     "min": 0,
     "max": 1,
@@ -985,7 +985,7 @@
    {
     "key": "script.cloud.fade.one_r",
     "part": "cloud",
-    "label": "Red (first)",
+    "label": "Red (stretch 1)",
     "doc": "",
     "type": "int",
     "min": -128,
@@ -999,7 +999,7 @@
    {
     "key": "script.cloud.fade.one_g",
     "part": "cloud",
-    "label": "Green (first)",
+    "label": "Green (stretch 1)",
     "doc": "",
     "type": "int",
     "min": -128,
@@ -1013,7 +1013,7 @@
    {
     "key": "script.cloud.fade.one_b",
     "part": "cloud",
-    "label": "Blue (first)",
+    "label": "Blue (stretch 1)",
     "doc": "",
     "type": "int",
     "min": -128,
@@ -1027,7 +1027,7 @@
    {
     "key": "script.cloud.fade.two_r",
     "part": "cloud",
-    "label": "Red (second)",
+    "label": "Red (stretch 2)",
     "doc": "",
     "type": "int",
     "min": -128,
@@ -1041,7 +1041,7 @@
    {
     "key": "script.cloud.fade.two_g",
     "part": "cloud",
-    "label": "Green (second)",
+    "label": "Green (stretch 2)",
     "doc": "",
     "type": "int",
     "min": -128,
@@ -1055,7 +1055,7 @@
    {
     "key": "script.cloud.fade.two_b",
     "part": "cloud",
-    "label": "Blue (second)",
+    "label": "Blue (stretch 2)",
     "doc": "",
     "type": "int",
     "min": -128,
@@ -1069,7 +1069,7 @@
    {
     "key": "script.cloud.fade.one_for",
     "part": "cloud",
-    "label": "First stretch",
+    "label": "Stretch 1 lasts",
     "doc": "Ticks",
     "type": "int",
     "min": 0,
@@ -1083,7 +1083,7 @@
    {
     "key": "script.cloud.fade.two_for",
     "part": "cloud",
-    "label": "Second stretch",
+    "label": "Stretch 2 lasts",
     "doc": "Ticks",
     "type": "int",
     "min": 0,
@@ -1097,8 +1097,8 @@
    {
     "key": "script.rings.first_for",
     "part": "rings",
-    "label": "First rings for",
-    "doc": "Ticks it releases the first kind, 2 per tick",
+    "label": "Wide rings start after",
+    "doc": "Ticks with the tight rings alone (the game: 16, the time the flight takes). The tight rings don't stop when the wide ones start",
     "type": "int",
     "min": 0,
     "max": 127,
@@ -1111,8 +1111,8 @@
    {
     "key": "script.rings.second_for",
     "part": "rings",
-    "label": "Second rings for",
-    "doc": "Ticks it then releases the second kind, 2 per tick",
+    "label": "Both then go on for",
+    "doc": "Ticks both kinds are released, then all of it stops",
     "type": "int",
     "min": 0,
     "max": 127,
@@ -1125,8 +1125,8 @@
    {
     "key": "script.rings.first.frames",
     "part": "rings",
-    "label": "Animation",
-    "doc": "Which of the file's two sprite animations it plays (0 or 1)",
+    "label": "Picture",
+    "doc": "0: the green ring, 1: the dark puff (each with its own blend)",
     "type": "int",
     "min": 0,
     "max": 1,
@@ -1223,8 +1223,8 @@
    {
     "key": "script.rings.second.frames",
     "part": "rings",
-    "label": "Animation",
-    "doc": "Which of the file's two sprite animations it plays (0 or 1)",
+    "label": "Picture",
+    "doc": "0: the green ring, 1: the dark puff (each with its own blend)",
     "type": "int",
     "min": 0,
     "max": 1,

@@ -108,6 +108,20 @@ def test_each_part_is_recorded_under_its_own_id(tmp_path, script):
 
 
 @pytest.mark.ff8data(*FILES)
+def test_the_tight_rings_go_on_when_the_wide_ones_start(tmp_path, script):
+    """StartChannel 0 takes the first free channel: unlike the puffs (channel 2, replaced), both kinds of rings run together."""
+    folder = tmp_path / "effect"
+    folder.mkdir()
+    shutil.copy(MAGIC / "MAG230_B.00", folder)
+    shutil.copy(MAGIC / "MAG230_B.01", folder)
+    recording = _record(folder, tmp_path, "rings")
+    first = next(index for index, tick in enumerate(recording.ticks) if RINGS in tick.parts)
+    count = lambda after, part: len(recording.ticks[first + after].part_packets({part}))
+    assert count(8, RINGS) == 16 and count(32, RINGS) == 32     # 2 a tick, then 4 a tick, for 8 ticks each
+    assert count(16, CLOUD) == count(32, CLOUD) == 16           # 1 a tick throughout
+
+
+@pytest.mark.ff8data(*FILES)
 @pytest.mark.parametrize("place", [(), ("pos3=1500,0,-2500",)], ids=["where it stands", "moved"])
 def test_from_the_target_the_cloud_never_leaves_it(tmp_path, script, place):
     """The bone is spawned before it gets its position in the game's order: its first puff goes to the world's origin, on the
