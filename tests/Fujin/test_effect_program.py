@@ -40,8 +40,9 @@ def record(tmp_path, effect, tag, *extra):
 
 
 def untag(lines):
-    """Without part tags nor the port's notes (M lines): what the original code draws."""
-    return [re.sub(r"^(P|Q \d+) \d+ ", r"\1 0 ", line) for line in lines if not line.startswith("M ")]
+    """Without part tags nor what only a port says (M notes, W camera, P places, shorter than a packet): what the original code draws."""
+    return [re.sub(r"^(P|Q \d+) \d+ ", r"\1 0 ", line) for line in lines
+            if not line.startswith(("M ", "W ")) and not (line.startswith("P ") and len(line.split()) < 11)]
 
 
 def test_cure_and_potion_descriptions_compile():

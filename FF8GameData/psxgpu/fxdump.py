@@ -323,7 +323,7 @@ def parse_recording(lines, effect_id=None) -> EffectRecording:
             tick = by_index.setdefault(int(parts[1]), EffectTick(int(parts[1])))
             tick.sprites.append((int(parts[2]), int(parts[3], 16), int(parts[4])))
             tick.places.append((int(parts[5]), int(parts[6])) if len(parts) >= 7 else None)
-        elif kind == "P" and len(parts) >= 6:
+        elif kind == "P" and len(parts) in (6, 9):
             view = (int(parts[6]), int(parts[7]), int(parts[8])) if len(parts) >= 9 else None
             by_index.setdefault(int(parts[1]), EffectTick(int(parts[1]))).moves.append((int(parts[2]), int(parts[3], 16), int(parts[4]), int(parts[5]), view))
         elif kind == "W" and len(parts) >= 17:
