@@ -14,8 +14,11 @@
 //
 // Loading: Junction VIII's mod.xml <LoadLibrary>FujinEffects.dll</LoadLibrary> (the DLL at the
 // mod's root). The programs are read with CreateFileW (Junction VIII redirects it to a mod
-// folder's file) on a thread of their own, after the loader lock: never inside DllMain. Messages go
-// to %LOCALAPPDATA%\FujinEffects.log. Fujin's recorder loads it too (host=, FujinEffects_Install)
+// folder's file) at the first effect the game dispatches: Junction VIII loads the mod's DLLs
+// BEFORE it maps the mod folders' files (AppWrapper/Wrap.cs Run), so a read at load time finds
+// none of them and the slots stay empty (the game then plays effect 0, Cure). DllMain only points
+// Magic_GetIDLoad's first instruction at the reading (DispatchHook). Messages go to
+// %LOCALAPPDATA%\FujinEffects.log. Fujin's recorder loads it too (host=, FujinEffects_Install)
 // to check it records what the programs do.
 
 #include <windows.h>
@@ -46,6 +49,9 @@ namespace ff8fx
 namespace
 {
 	const uint32_t LOGIC = 0xC81774, TEXTURE_LOAD = 0xC81DB8;
+	// Magic_GetIDLoad: its first instruction, sub esp, 200h (6 bytes), runs after the reading
+	const uint32_t DISPATCH = 0x50AF20, DISPATCH_RESUME = DISPATCH + 6;
+	const uint8_t DISPATCH_ORIGINAL[6] = { 0x81, 0xEC, 0x00, 0x02, 0x00, 0x00 };
 	const int SLOTS = 400;
 	fxprog::Program *g_slots[SLOTS];
 
@@ -142,14 +148,46 @@ namespace
 		return installed;
 	}
 
-	DWORD WINAPI InstallThread(void *)
+	// the game folder's programs, once (the game's thread, at its first effect)
+	void __cdecl InstallOnce()
 	{
+		static bool done = false;
+		if (done) return;
+		done = true;
 		wchar_t exe[MAX_PATH];
 		GetModuleFileNameW(nullptr, exe, MAX_PATH);
 		std::wstring folder = exe;
 		folder.resize(folder.find_last_of(L"\\/"));
-		Install(folder);
-		return 0;
+		Log("%d programs in %ls\\FujinEffects", Install(folder), folder.c_str());
+	}
+
+	uint32_t g_dispatch_resume = DISPATCH_RESUME;
+	__declspec(naked) void DispatchHook()
+	{
+		__asm
+		{
+			call InstallOnce
+			sub esp, 200h
+			jmp g_dispatch_resume
+		}
+	}
+
+	// Magic_GetIDLoad's first instruction jumps to DispatchHook; false when it is not the original
+	bool HookDispatch()
+	{
+		uint8_t *at = (uint8_t *)DISPATCH;
+		MEMORY_BASIC_INFORMATION info;   // (another process than the game: nothing there)
+		if (!VirtualQuery(at, &info, sizeof(info)) || info.State != MEM_COMMIT || !(info.Protect & (PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE)))
+			return false;
+		if (memcmp(at, DISPATCH_ORIGINAL, sizeof(DISPATCH_ORIGINAL)) != 0) return false;
+		DWORD old;
+		if (!VirtualProtect(at, 6, PAGE_EXECUTE_READWRITE, &old)) return false;
+		at[0] = 0xE9;
+		*(uint32_t *)(at + 1) = (uint32_t)DispatchHook - (DISPATCH + 5);
+		at[5] = 0x90;
+		VirtualProtect(at, 6, old, &old);
+		FlushInstructionCache(GetCurrentProcess(), at, 6);
+		return true;
 	}
 }
 
@@ -167,6 +205,6 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID)
 	GetModuleFileNameW(nullptr, exe, MAX_PATH);
 	const wchar_t *base = wcsrchr(exe, L'\\');
 	if (base && _wcsnicmp(base + 1, L"fxrecorder", 10) == 0) return TRUE;
-	if (HANDLE thread = CreateThread(nullptr, 0, InstallThread, nullptr, 0, nullptr)) CloseHandle(thread);
+	if (!HookDispatch()) Log("Magic_GetIDLoad (0x%X) is not the original: no effect installed", DISPATCH);
 	return TRUE;
 }
