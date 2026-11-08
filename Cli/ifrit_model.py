@@ -12,7 +12,7 @@ Headless monster editing, same operations as the Ifrit GUI tabs:
   • apply-sections  (section folder → onto a base .dat, sections without a file are kept)
   • convert-fps     (.dat files → 30 fps for FFNx True30FPS: animations 2n frames, sequences,
                      camera durations x2; or 60 fps: animation frames only; --ffnx-chunks: only the
-                     changed sections of c0m000-143, as FFNx section chunks)
+                     changed sections of c0m000-143, dXc and dXw, as FFNx section chunks)
 """
 
 import argparse
@@ -220,8 +220,9 @@ def _cmd_convert_fps(args) -> int:
 
 def _split_into_ffnx_chunks(sources, copies, chunk_folder):
     """Each converted copy: removed if it is still its source, else replaced by FFNx chunks of the
-    sections that changed when FFNx accepts chunks for it (c0m000-143), else kept whole."""
-    from FF8GameData.dat.ffnxchunks import accepts_chunks, write_chunks
+    sections that changed when FFNx accepts chunks for it (c0m000-143, dXc, dXw) and the chunks rebuild
+    it exactly, else kept whole."""
+    from FF8GameData.dat.ffnxchunks import accepts_chunks, rebuild, write_chunks
     unchanged = chunked = whole = 0
     for source, copy in zip(sources, copies):
         reference, converted = source.read_bytes(), copy.read_bytes()
@@ -230,6 +231,12 @@ def _split_into_ffnx_chunks(sources, copies, chunk_folder):
             unchanged += 1
         elif accepts_chunks(copy.name, reference) and accepts_chunks(copy.name, converted):
             written = write_chunks(copy.name, reference, converted, chunk_folder)
+            if rebuild(reference, chunk_folder, copy.name) != converted:
+                for chunk in chunk_folder.glob(f"{copy.name}.chunk.*"):
+                    chunk.unlink()
+                whole += 1
+                print(f"[whole] {copy.name}: its chunks would not rebuild it exactly, kept whole")
+                continue
             copy.unlink()
             chunked += 1
             print(f"[chunks] {copy.name}: section(s) {', '.join(map(str, written))}")
@@ -325,8 +332,9 @@ class IfritModelCliTool(BaseCliTool):
         p_fps.add_argument("--no-split", action="store_true", help="Refuse a file instead of splitting a too-long animation")
         p_fps.add_argument("--ffnx-chunks",
                            help="Folder for FFNx section chunks (<name>.chunk.N, game path direct/battle/): a converted "
-                                "c0m000-143 is written there as its changed sections only; the others stay whole in "
-                                "--output-dir; a file the conversion left as it was is not written")
+                                "c0m000-143, dXc or dXw is written there as its changed sections only (dXc/dXw need "
+                                "an FFNx newer than 1.25.2); the others stay whole in --output-dir; a file the "
+                                "conversion left as it was is not written")
         p_fps.set_defaults(func=_cmd_convert_fps)
 
         return parser
