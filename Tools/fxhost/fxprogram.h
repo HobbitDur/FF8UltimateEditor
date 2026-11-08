@@ -2242,15 +2242,19 @@ namespace fxprog
 		if (g.director == PORT)
 		{
 			UseModule();
+			TaskQueue *q = nullptr;
 			if (g.port_setup_exe) // the module's own setup, then its root (the original's task) re-pointed at the program's director
 			{
-				TaskQueue *q = fn<TaskQueue *(__cdecl *)(CastContext *)>(g.port_setup)(ctx);
+				q = fn<TaskQueue *(__cdecl *)(CastContext *)>(g.port_setup)(ctx);
 				for (TaskNode *n = q ? q->head : nullptr; n; n = n->next)
 					if ((uint32_t)n->func == g.port_root) n->func = (uint32_t (__cdecl *)(TaskNode *))ProgramTaskOf(g.port_root);
-				return q;
 			}
-			void *setup = ff8fx::own::find(g.port_setup);
-			return setup ? ((TaskQueue *(__cdecl *)(CastContext *))setup)(ctx) : nullptr;
+			else if (void *setup = ff8fx::own::find(g.port_setup))
+				q = ((TaskQueue *(__cdecl *)(CastContext *))setup)(ctx);
+			// the program's camera on top of the port's (a new effect's: a copy of an exe effect's track), unless
+			// the cast repeats (flags & 1)
+			if (q && g.camera && !(ctx->flags & 1)) PlayCameraAnimation((const void *)g.camera);
+			return q;
 		}
 		UseModule();   // (a port module's parameters)
 		if (g.director == CHAIN) return ChainSetup(ctx);

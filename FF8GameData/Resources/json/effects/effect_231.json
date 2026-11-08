@@ -168,6 +168,7 @@
   "file": "mag230_b.00",
   "param": "files.file00",
   "size": 9268,
+  "camera": {"at": "0x870", "size": "0xC0"},
   "parts": [
    {
     "id": 0,

@@ -65,6 +65,27 @@ def test_a_file_laid_out_otherwise_is_not_edited(script):
     assert not script_matches(script, bytes(data))
 
 
+@pytest.mark.ff8data(*SCRIPT, "extracted_files/FF8_EN.exe", "extracted_files/magic/MAG230_B.01")
+def test_a_file_whose_camera_track_changed_size_keeps_its_parts(script):
+    """Cronos Bio's file holds the exe Bio's camera track (2328 bytes, not 192): every value is still read and written in place."""
+    from FF8GameData.magcine.packedmag import PackedMag
+    track = EXE.read_bytes()[0x1626014 - 0x400000:][:0x918]
+    grown = PackedMag(_file()).with_camera(track, loaded_after=(MAGIC / "MAG230_B.01").read_bytes())
+    assert len(grown) != script["size"] and script_matches(script, grown)
+    assert script_values(script, grown) == script_values(script, _file())
+    assert not script_matches(script, grown[:-4]) and not script_matches(script, grown + bytes(4))
+
+
+def test_a_copy_reopens_with_its_bases_script_parts():
+    """A new effect's file keeps the script parts it was saved with; reopened, it takes its base's as they are now (Cronos
+    Bio's was saved before 231's script knew where its camera track is)."""
+    from Fujin.effectprogram import effect_file_text, new_effect, read_effect_file
+    description = new_effect(load_description(231), 349, "Bio")
+    description["script"].pop("camera")
+    _effect, read, _values = read_effect_file(effect_file_text(description, {}, edited=True))
+    assert read["script"] == load_description(231)["script"]
+
+
 def test_a_description_without_a_script_keeps_its_parts():
     schema = {"parts": [{"id": 0}], "fields": [], "groups": []}
     assert with_script_parts(schema, {"parts": []}) is schema
@@ -306,6 +327,18 @@ def test_the_tabs_edit_the_effects_file_with_one_undo_a_change(qapp, tmp_path, s
     assert fujin._preview_effect_files()["mag348_b.00"] == bytes(own.data) and "mag348_b.00" in fujin._preview_file_edits()
     fujin._refresh()
     assert fujin.title.text().endswith("Bio")
+    # the camera it starts, chosen in the Camera tab: the exe Bio's (a copy in its program)
+    from Fujin.effectprogram import program_camera
+    assert not fujin.program_camera_row.isHidden() and fujin.program_camera.currentData() is None
+    bio = next(i for i in range(fujin.program_camera.count()) if (fujin.program_camera.itemData(i) or (0,))[0] == 0x1626014)
+    fujin.program_camera.setCurrentIndex(bio)
+    assert program_camera(fujin.descriptions[349]) == 0x1626014   # (no exe open: the exe's own track, a copy with it)
+    assert f"\ncamera {0x1626014}\n" in fujin.effect_program(349)
+    assert fujin.program_camera.currentIndex() == bio and fujin.can_save_folder()
+    fujin.program_camera.setCurrentIndex(0)
+    assert program_camera(fujin.descriptions[349]) is None and "\ncamera 0\n" in fujin.effect_program(349)
+    fujin.select_effect(231)
+    assert fujin.program_camera_row.isHidden()
 
 
 def test_a_missing_shared_texture_is_sent_to_import_complementary():

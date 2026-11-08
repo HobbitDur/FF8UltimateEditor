@@ -10,7 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from Fujin.effectprogram import DescriptionError, compile_program, load_description, new_effect, write_program
+from Fujin.effectprogram import (DescriptionError, compile_program, load_description, new_effect, program_camera,
+                                 set_program_camera, write_program)
 
 ROOT = Path(__file__).resolve().parents[2]
 EXE = ROOT / "extracted_files/FF8_EN.exe"
@@ -127,6 +128,51 @@ def record_hypnotize(tmp_path, effect, tag, *extra):
                          cwd=str(recorder.parent), capture_output=True, text=True, timeout=120)
     assert run.returncode == 0 and "faulted" not in run.stdout, run.stdout[-500:]
     return out.read_text().splitlines(), run.stdout
+
+
+def test_a_new_effect_starts_the_camera_chosen_for_it():
+    """The camera track a new effect starts: a copy of an exe effect's in its program (Cronos Bio: the exe Bio's), the
+    exe's own track without the exe at hand, or none."""
+    exe = bytes(range(64))
+    description = new_effect(load_description(231), 349, "Bio")
+    assert program_camera(description) is None and "\ncamera 0\n" in compile_program(description)
+    set_program_camera(description, 0x400010, 8, exe)
+    assert program_camera(description) == 0x400010
+    text = compile_program(description)
+    assert f"\ndata camera {exe[16:24].hex()}\n" in text and "\ncamera @camera\n" in text
+    set_program_camera(description, 0x400020, 4)
+    assert "camera" not in description["data"] and f"\ncamera {0x400020}\n" in compile_program(description)
+    set_program_camera(description)
+    assert program_camera(description) is None and "camera" not in description["exe_data"]
+    assert "\ncamera 0\n" in compile_program(description)
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG230_B.00", "extracted_files/magic/MAG230_B.01",
+                     "extracted_files/magic/mag021.tim", "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_a_port_effect_plays_the_camera_of_its_program(tmp_path):
+    """Disease Breath as a new effect, its script's own track off: the view stays; with the exe Bio's camera (effect
+    22's) in its program, it moves as Bio's does, tick for tick."""
+    from FF8GameData.psxgpu.fxdump import load_recording
+    magic = tmp_path / "magic"
+    magic.mkdir()
+    script = bytearray((MAGIC / "MAG230_B.00").read_bytes())
+    script[0x5A:0x5C] = bytes.fromhex("3930")                      # (Timing, Camera: None)
+    (magic / "MAG230_B.00").write_bytes(script)
+    (magic / "MAG230_B.01").write_bytes((MAGIC / "MAG230_B.01").read_bytes())
+    exe, view = EXE.read_bytes(), ("gamecamera=1", "camvar=0", "castcam=0,-1500,6000,0,-500,-1000")
+    cameras = {}
+    for name, track in (("none", None), ("bio", (0x1626014, 0x918))):
+        description = new_effect(load_description(231), 349, "Bio", exe)
+        if track:
+            set_program_camera(description, *track, exe)
+        program = write_program(description, tmp_path / f"{name}.fxprog")
+        record(tmp_path, 349, name, f"magic={magic}", f"program={program}", *view)
+        cameras[name] = [tick.camera for tick in load_recording(str(tmp_path / f"{name}.txt")).ticks]
+    record(tmp_path, 22, "exe_bio", *view)
+    bio = [tick.camera for tick in load_recording(str(tmp_path / "exe_bio.txt")).ticks]
+    assert len(set(cameras["none"])) == 1
+    assert len(set(bio)) > 10 and cameras["bio"][:len(bio)] == bio
 
 
 def test_hypnotize_description_compiles():

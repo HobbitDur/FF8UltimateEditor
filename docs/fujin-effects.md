@@ -111,6 +111,16 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   **Remove this camera** deletes it. Other camera-less effects are not offered one: they may
   move the camera with their own code (GF summons, Shot, Duel, Zell's finishers, Angelo,
   Gilgamesh...), and the Camera tab says so.
+  **Camera it starts** (a new effect's, at the top of the Camera tab): none, or the camera track
+  of an effect of the exe, copied into the effect's program (`data camera`, `camera @camera`;
+  without the exe open it points at the exe's track). FujinEffects.dll starts it when the effect
+  is cast (not when the cast repeats), for every kind of program, ports included; no FFNx file is
+  needed. A cinematic's own track (Timing part, Camera) plays too unless it is None; a cinematic
+  better gets another camera in its MAG file (Cronos Bio, 349: the exe Bio's track replaces
+  Disease Breath's in `mag348_b.00`, MAG track, Replace section, with a `.bcam` export of the exe
+  track: same format). With no track at all the view stays where the cast left it, and a close-up
+  of the caster can hide the whole effect. The part tabs still edit a script file whose camera
+  track changed size (its description's `script.camera`: where the game's is and its size).
 - **Choreography:** editable MAG instructions using each effect's opcode profile, scene
   playback (verified for the seven GFs; every other cinematic script replays with the same
   engine model as a labelled, untextured approximation that names the draw handlers it shows as

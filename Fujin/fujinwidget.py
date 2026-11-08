@@ -35,8 +35,8 @@ from Fujin.animsetfiles import AnimSetFiles
 from Fujin.effectdataview import EffectDataView
 from Fujin import effecttemplates
 from Fujin.effectprogram import (DescriptionError, FREE_EFFECTS, PROGRAM_FOLDER, SOURCE, compile_program,
-                                 described_effects, description_schema, effect_file_text, load_description, new_effect, program_file_name,
-                                 read_effect_file)
+                                 described_effects, description_schema, effect_file_text, load_description, new_effect, program_camera,
+                                 program_file_name, read_effect_file, set_program_camera)
 from Fujin.recorderbuild import HOST_DLL
 from Fujin.recorderbuild import recorder_build
 from Fujin.recorderbuildbanner import RecorderBuildBanner
@@ -52,6 +52,10 @@ ANIM_SET_FOLDER_KEY = "FFNx animation sets"
 ANIM_SET_SELECTION_KEY = "FFNx animation set files"   # the .animset files last imported
 PROGRAM_FOLDER_KEY = "Fujin effect programs"
 PROGRAM_SELECTION_KEY = "Fujin effect program files"   # every effect_NNN.fxprog imported, reopened by Auto-upload
+PROGRAM_CAMERA_TIP = ("The camera track this new effect starts when it is cast (not when the cast repeats): a copy of "
+                      "the camera of an effect of the game, kept in the effect's program (FujinEffects.dll plays it). "
+                      "Characters' spells frame the target from the party's side: Bio's (022) suits a spell on one "
+                      "monster. A cinematic's own track (Timing part, Camera) plays too unless it is set to None.")
 USERS_SHOWN = 24    # entries listed per kind in the Overview's Used by (effect 0 has hundreds)
 
 
@@ -149,8 +153,19 @@ class FujinWidget(QWidget):
         self.camera_sources.addTab(self.native_camera, "Native parameters")
         self.camera_note = QLabel()
         self.camera_note.setWordWrap(True)
+        # a new effect's program: the camera track it starts (a copy of an exe effect's), or none
+        self.program_camera = QComboBox()
+        self.program_camera.setToolTip(PROGRAM_CAMERA_TIP)
+        self.program_camera.currentIndexChanged.connect(self._program_camera_chosen)
+        self.program_camera_row = QWidget()
+        program_camera_layout = QHBoxLayout(self.program_camera_row)
+        program_camera_layout.setContentsMargins(0, 0, 0, 0)
+        program_camera_layout.addWidget(QLabel("Camera it starts:"))
+        program_camera_layout.addWidget(self.program_camera, 1)
+        self.program_camera_row.hide()
         camera_page = QWidget()
         camera_layout = QVBoxLayout(camera_page)
+        camera_layout.addWidget(self.program_camera_row)
         camera_layout.addWidget(self.camera_note)
         camera_splitter = QSplitter()
         camera_splitter.addWidget(self.camera_sources)
@@ -681,6 +696,7 @@ class FujinWidget(QWidget):
 
     def _refresh_camera(self):
         effect = self.current_effect
+        self._fill_program_camera(effect)
         exe = self.catalog.camera_entry(effect)
         manager = self.camera_editor.manager
         created = manager.camera_kind(effect) == "created"
@@ -725,12 +741,49 @@ class FujinWidget(QWidget):
                                      "plays, as for Phoenix Down and Mega Phoenix. Its game code can still move the "
                                      "camera: see Choreography, Native code. " + html.escape(self.catalog.notes(effect)))
 
+    def _fill_program_camera(self, effect):
+        """A new effect's camera choice: none, or the camera track of an effect of the exe (its own
+        copy in the program), the one it starts now selected."""
+        new = self.is_new_effect(effect)
+        self.program_camera_row.setVisible(new)
+        if not new:
+            return
+        current = program_camera(self.descriptions[effect])
+        with QSignalBlocker(self.program_camera):
+            self.program_camera.clear()
+            self.program_camera.addItem("None: the battle's view stays", None)
+            for track in sorted(self.catalog.camera["tracks"], key=lambda t: t["effect_id"]):
+                address = int(track["eng_address"], 16)
+                self.program_camera.addItem(f"{track['effect_id']:03d} — {self.catalog.name(track['effect_id'])}'s camera",
+                                            (address, int(track["size"], 16)))
+            index = next((i for i in range(self.program_camera.count())
+                          if (self.program_camera.itemData(i) or (None,))[0] == current), -1)
+            if index < 0:   # (a track of its own, from no effect's)
+                self.program_camera.addItem(f"Its own track (from 0x{current:X})", (current, 0))
+                index = self.program_camera.count() - 1
+            self.program_camera.setCurrentIndex(index)
+
+    def _program_camera_chosen(self, index):
+        """The new effect starts the chosen camera track (a copy in its program) or none."""
+        effect = self.current_effect
+        choice = self.program_camera.itemData(index)
+        if not self.is_new_effect(effect) or (choice or (None,))[0] == program_camera(self.descriptions[effect]):
+            return
+        try:
+            set_program_camera(self.descriptions[effect], *(choice or (None,)), exe=self._exe_bytes())
+        except DescriptionError as error:
+            QMessageBox.warning(self, "Camera", str(error))
+            self._fill_program_camera(effect)
+            return
+        self._description_changed()
+
     def _grey_unused_tabs(self):
         """Grey the tabs with nothing for this effect; the reason is the tab's tooltip (and listed
         in the Overview). A greyed current tab hands over to the Overview."""
         camera = not self.camera_sources.isHidden()
         reasons = {
-            1: None if camera else self.camera_note.text().replace("<b>", "").replace("</b>", ""),
+            1: None if camera or self.is_new_effect(self.current_effect)
+            else self.camera_note.text().replace("<b>", "").replace("</b>", ""),
             2: None if (self.choreography.isTabEnabled(0) or self.function_selector.count()
                         or self.workspace.sources.count() or self.part_tabs or self.current_effect in self.descriptions)
             else "No MAG script and no native code snapshot for this effect.",

@@ -58,10 +58,28 @@ def script_values(script, data):
     return {field["key"]: read_value(field, data) for field in script["fields"]}
 
 
+def _sized(script, data):
+    """The file's size is the game's, or only its stage camera track ("camera": where the game's is, its size) has
+    another size (Cronos Bio's holds the exe Bio's): the track in its place, the rest of the file as long as the game's
+    (up to the zero padding a resize keeps 4-byte aligned)."""
+    if len(data) == script["size"]:
+        return True
+    if "camera" not in script:
+        return False
+    from FF8GameData.magcine.packedmag import PackedMag
+    try:
+        camera = PackedMag(bytes(data)).camera
+    except (ValueError, IndexError, struct.error):
+        return False
+    at, size = int(script["camera"]["at"], 16), int(script["camera"]["size"], 16)
+    rest = (len(data) - camera[1]) - (script["size"] - size) if camera else None
+    return camera is not None and camera[0] == at and rest is not None and -4 < rest < 4 and len(data) % 4 == script["size"] % 4
+
+
 def script_matches(script, data):
-    """Whether a file is laid out as the script says (a mod's may not be): the file's size, each value's instruction
-    in its place, each choice one of its own."""
-    return len(data) == script["size"] and all(
+    """Whether a file is laid out as the script says (a mod's may not be): the file's size (its camera track's aside),
+    each value's instruction in its place, each choice one of its own."""
+    return _sized(script, data) and all(
         data[int(field["inst"], 16)] == int(field["code"], 16) and read_value(field, data) is not None for field in script["fields"])
 
 

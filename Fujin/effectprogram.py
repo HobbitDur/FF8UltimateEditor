@@ -164,6 +164,36 @@ def data_origin(description, key):
     return _number(address) if address is not None else None
 
 
+def program_camera(description):
+    """The exe address of the camera track the program starts (where its own copy came from), or None."""
+    camera = description["resources"].get("camera")
+    if isinstance(camera, str) and camera.startswith("@"):
+        return data_origin(description, camera[1:])
+    return None if camera is None else _number(camera)
+
+
+def set_program_camera(description, address=None, size=0, exe=None):
+    """The program starts the exe's camera track at `address` (`size` bytes) when the effect starts -
+    with `exe` (FF8_EN.exe's bytes) a copy of it in its own data - or none (`address` None)."""
+    resources = description["resources"]
+    old = resources.pop("camera", None)
+    key = old[1:] if isinstance(old, str) and old.startswith("@") else "camera"
+    for table in ("data", "exe_data"):
+        if (_entries(description.get(table)).get(key) or {}).get("kind") == "camera":
+            del description[table][key]
+    if address is None:
+        return
+    if exe is not None:
+        start = address - IMAGE_BASE
+        if not 0 <= start <= len(exe) - size:
+            raise DescriptionError(f"camera: 0x{address:X} is not in this exe")
+        table = description.setdefault("data", {"doc": "The effect's own data (@key in its values), copied from the exe's (\"from\")."})
+        table[key] = {"kind": "camera", "from": f"0x{address:X}", "hex": exe[start:start + size].hex()}
+    else:
+        description.setdefault("exe_data", {})[key] = {"kind": "camera", "address": f"0x{address:X}", "size": size}
+    resources["camera"] = f"@{key}"
+
+
 def compile_program(description, values=None):
     """The program text of `description` (a dict), its parameters at `values` (key: value, the
     others at the game's); DescriptionError says what is wrong."""
@@ -704,5 +734,10 @@ def read_effect_file(text):
                 if key not in data:
                     raise ValueError(f"its data {key} is missing")
                 entry["hex"] = data[key]
+        # a copy's script parts as its base's are now: they describe the base's file, not the program (Cronos Bio's
+        # file, its camera track grown, edited by the parts of 231's script)
+        base = load_description(description["base"]) if "script" in description and "base" in description else None
+        if base and base.get("script"):
+            description["script"] = base["script"]
     values = {str(key): value if isinstance(value, str) else int(value) for key, value in source.get("values", {}).items()}
     return int(source["effect"]), description, values
