@@ -372,6 +372,50 @@
    "unit": "plain"
   },
   {
+   "key": "anchor.at_targets",
+   "part": "director",
+   "label": "On the targets",
+   "doc": "0: everything starts at the caster's mouth (the game). 1: at the targets instead, nothing launched from the caster - the anchor is their centre moved by the next values (a new effect's choice)",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "anchor.x",
+   "part": "director",
+   "label": "Targets: sideways",
+   "doc": "On the targets: the anchor this far sideways of their centre (the caster's x)",
+   "type": "i16",
+   "min": -8000,
+   "max": 8000,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "anchor.y",
+   "part": "director",
+   "label": "Targets: height",
+   "doc": "On the targets: the anchor's height (y, negative = up; the floor is 0)",
+   "type": "i16",
+   "min": -4000,
+   "max": 0,
+   "default": -600,
+   "unit": "plain"
+  },
+  {
+   "key": "anchor.z",
+   "part": "director",
+   "label": "Targets: before them",
+   "doc": "On the targets: the anchor this far before their centre, toward the caster (the way it blows is from there to the centre and on; at least 1)",
+   "type": "i16",
+   "min": -8000,
+   "max": 8000,
+   "default": 2000,
+   "unit": "plain"
+  },
+  {
    "key": "flash.colour",
    "part": "director",
    "label": "Colour",

@@ -351,7 +351,7 @@ CYCLES = {
     176: ("mag175.tim", 5, "sounds.wind 22311280\nsounds.land 22311276\n"),
     175: ("mag174.tim", 16, "sound 22311280\ndirector.damage 90\n"),
     169: ("mag168.tim", 9, "sound 22311280\ndirector.damage 30\n"),
-    173: ("mag172.tim", 89, "sounds.start 22311280\ndirector.damage 60\nswirl.per_tick 6\ntrail.speed_min 300\n"),
+    173: ("mag172.tim", 93, "sounds.start 22311280\ndirector.damage 60\nswirl.per_tick 6\ntrail.speed_min 300\n"),
     168: ("mag167.tim", 6, "sound 22311280\ndirector.damage 50\n"),
     165: ("mag164.tim", 30, "sounds.a 22311280\nsounds.d 22311276\n"),
     164: ("mag163.tim", 30, "sounds.raise 22311280\nsounds.blast 22311276\ndirector.damage 280\n"),
@@ -3562,6 +3562,36 @@ def test_ultima_weapon_death_runs_from_its_description(tmp_path):
     del description["copy"]["functions"]
     new, log = record_self(tmp_path, 270, "c0m090", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
     assert "program: New_ultima_weapon_death" in log and untag(new) == original
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag172.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+def test_ice_breath_on_the_targets(tmp_path):
+    """A new effect made from Ice Breath that happens on the monsters (Cronos's Arctic Wind, effect 350): its anchor at
+    the targets (anchor.at_targets), the mouth's swirl, glow and cones never started (their ticks past the end) - the
+    puffs, crystals, trail and shards drawn, earlier, around the target instead of from Squall."""
+    from FF8GameData.psxgpu.fxdump import parse_recording
+    description = new_effect(load_description(173), 350, "Arctic Wind", EXE.read_bytes())
+    values = {"director.swirl": 300, "director.glow": 300, "director.cones": 300, "anchor.at_targets": 1,
+              "director.puffs": 2, "director.crystals": 3, "director.trail": 12, "director.shards": 16,
+              "director.damage": 27, "director.end": 45, "flash.out_start": 37}
+    program = write_program(description, tmp_path / "effect_350.fxprog", values)
+    vanilla, _log = record(tmp_path, 173, "vanilla", "native=1")
+    new, log = record(tmp_path, 350, "new", f"program={program}")
+    assert "program: Arctic_Wind" in log and "faulted" not in log
+    drawn = lambda lines: {int(line.split()[1]) for line in lines if line.startswith("P ") and len(line.split()) >= 11}
+    assert drawn(vanilla) >= {1, 2, 3, 4, 5, 6, 7} and drawn(new) & {1, 2, 3} == set() and drawn(new) >= {4, 5, 6, 7}
+    assert [line.split()[1] for line in new if line.startswith("N ")] == ["27"]      # the damage
+    # the ice trail where the target is, not where Squall is: its mean screen x moved from the vanilla's
+    def trail_x(lines):
+        xs = []
+        for line in lines:
+            words = [int(word, 16) for word in line.split()[11:]] if line.startswith("P 6 ") else []   # (after its length)
+            if words and words[0] >> 24 in (0x34, 0x35, 0x36, 0x37):            # its gouraud textured triangles
+                xs += [(words[k] & 0xFFFF) - (0x10000 if words[k] & 0x8000 else 0) for k in (1, 4, 7)]
+        assert xs
+        return sum(xs) / len(xs)
+    assert abs(trail_x(new) - trail_x(vanilla)) > 50
 
 
 def test_ice_breath_description_compiles():
