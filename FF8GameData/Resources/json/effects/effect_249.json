@@ -162,5 +162,872 @@
    "address": "0x185E9C4",
    "size": 1312
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag248_b.00",
+  "param": "files.file00",
+  "size": 7764,
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When things happen, and the camera. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 0,
+    "key": "muzzle",
+    "title": "Muzzle",
+    "paths": [],
+    "doc": "Where the three shots leave the caster"
+   },
+   {
+    "id": 292,
+    "key": "burst",
+    "title": "Muzzle flash",
+    "paths": [],
+    "doc": "The round flash of each shot"
+   },
+   {
+    "id": 370,
+    "key": "star",
+    "title": "Muzzle star",
+    "paths": [],
+    "doc": "The star of light of each shot"
+   },
+   {
+    "id": 434,
+    "key": "ring",
+    "title": "Muzzle ring",
+    "paths": [],
+    "doc": "The ring of each shot"
+   },
+   {
+    "id": 476,
+    "key": "spark",
+    "title": "Hit spark",
+    "paths": [],
+    "doc": "A flat spark where each shot hits (its place: Hits tab). Its picture and blend are in its sprite (Textures tab, Sections)"
+   },
+   {
+    "id": 518,
+    "key": "hits",
+    "title": "Hits",
+    "paths": [
+     66054
+    ],
+    "doc": "The flash on the target where each shot hits"
+   }
+  ],
+  "groups": [
+   {
+    "key": "script.timing.end",
+    "label": "Ends",
+    "doc": "How long the effect lasts after the damage: these four waits added up (the game: 27 ticks)"
+   },
+   {
+    "key": "script.burst.colour",
+    "label": "Colour",
+    "doc": "All three flashes: the first tick, then the second (128 = as is)"
+   }
+  ],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x5c",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x5c": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x5c": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.hit",
+    "part": "timing",
+    "label": "Damage after",
+    "doc": "Ticks from the start (the first shot leaves at once)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 10,
+    "inst": "0x8c",
+    "code": "0x9",
+    "at": "0x8c",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.w1",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 6,
+    "inst": "0x90",
+    "code": "0x9",
+    "at": "0x90",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.w2",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x96",
+    "code": "0x9",
+    "at": "0x96",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.w3",
+    "part": "timing",
+    "label": "Wait 3",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x98",
+    "code": "0x9",
+    "at": "0x98",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.w4",
+    "part": "timing",
+    "label": "Wait 4",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 1,
+    "inst": "0x9e",
+    "code": "0x9",
+    "at": "0x9e",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.shot2",
+    "part": "timing",
+    "label": "Second shot after",
+    "doc": "Ticks after the first",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0xc8",
+    "code": "0x9",
+    "at": "0xc8",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.shot3",
+    "part": "timing",
+    "label": "Third shot after",
+    "doc": "Ticks after the second",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0xce",
+    "code": "0x9",
+    "at": "0xce",
+    "form": "op"
+   },
+   {
+    "key": "script.muzzle.height",
+    "part": "muzzle",
+    "label": "Height",
+    "doc": "Over the caster's place (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -448,
+    "inst": "0xf4",
+    "code": "0x10",
+    "at": "0xf8",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.distance",
+    "part": "muzzle",
+    "label": "Distance",
+    "doc": "In front of that place, towards the camera",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1856,
+    "inst": "0x106",
+    "code": "0xa",
+    "at": "0x10c",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.turn",
+    "part": "muzzle",
+    "label": "Turned at random",
+    "doc": "Each shot's flash, at random (4096 = a whole turn)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x116",
+    "code": "0x12",
+    "at": "0x118",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.life",
+    "part": "muzzle",
+    "label": "Lasts for",
+    "doc": "Ticks each shot's flashes last",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0x120",
+    "code": "0x9",
+    "at": "0x120",
+    "form": "op"
+   },
+   {
+    "key": "script.burst.texture",
+    "part": "burst",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 1,
+    "inst": "0x12c",
+    "code": "0x52",
+    "at": "0x12e",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.blend",
+    "part": "burst",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x13e",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x13e": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x13e": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x13e": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x13e": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.burst.size",
+    "part": "burst",
+    "label": "Size",
+    "doc": "4096 = its model's own size x 16",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 72,
+    "inst": "0x136",
+    "code": "0xd",
+    "at": "0x138",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.grow",
+    "part": "burst",
+    "label": "Grows by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 6144,
+    "inst": "0x13a",
+    "code": "0xe",
+    "at": "0x13c",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.life",
+    "part": "burst",
+    "label": "Lasts for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0x146",
+    "code": "0x9",
+    "at": "0x146",
+    "form": "op"
+   },
+   {
+    "key": "script.star.texture",
+    "part": "star",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 4,
+    "inst": "0x17e",
+    "code": "0x52",
+    "at": "0x180",
+    "form": "s16"
+   },
+   {
+    "key": "script.star.blend",
+    "part": "star",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x188",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x188": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x188": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x188": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x188": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.star.size",
+    "part": "star",
+    "label": "Size",
+    "doc": "4096 = its model's own size x 16",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 48,
+    "inst": "0x18a",
+    "code": "0xd",
+    "at": "0x18c",
+    "form": "s16"
+   },
+   {
+    "key": "script.star.grow",
+    "part": "star",
+    "label": "Grows by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x18e",
+    "code": "0xe",
+    "at": "0x190",
+    "form": "s16"
+   },
+   {
+    "key": "script.star.life",
+    "part": "star",
+    "label": "Lasts for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0x198",
+    "code": "0x9",
+    "at": "0x198",
+    "form": "op"
+   },
+   {
+    "key": "script.star.turn",
+    "part": "star",
+    "label": "Turned at random",
+    "doc": "4096 = a whole turn",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x164",
+    "code": "0x12",
+    "at": "0x166",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.texture",
+    "part": "ring",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x1be",
+    "code": "0x52",
+    "at": "0x1c0",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.blend",
+    "part": "ring",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x1c8",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x1c8": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x1c8": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x1c8": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x1c8": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.ring.size",
+    "part": "ring",
+    "label": "Size",
+    "doc": "4096 = its model's own size x 16",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 48,
+    "inst": "0x1ca",
+    "code": "0xd",
+    "at": "0x1cc",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.grow",
+    "part": "ring",
+    "label": "Grows by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x1ce",
+    "code": "0xe",
+    "at": "0x1d0",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.life",
+    "part": "ring",
+    "label": "Lasts for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0x1d8",
+    "code": "0x9",
+    "at": "0x1d8",
+    "form": "op"
+   },
+   {
+    "key": "script.ring.height",
+    "part": "ring",
+    "label": "Height",
+    "doc": "Under the muzzle (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 448,
+    "inst": "0x1a0",
+    "code": "0xa",
+    "at": "0x1a2",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.turn",
+    "part": "ring",
+    "label": "Turned at random",
+    "doc": "4096 = a whole turn",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x1a4",
+    "code": "0x12",
+    "at": "0x1a6",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.colour.first_r",
+    "part": "burst",
+    "label": "Red, first tick",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x14a",
+    "code": "0xd4",
+    "at": "0x14c",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.colour.first_g",
+    "part": "burst",
+    "label": "Green, first tick",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x14a",
+    "code": "0xd4",
+    "at": "0x14e",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.colour.first_b",
+    "part": "burst",
+    "label": "Blue, first tick",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x14a",
+    "code": "0xd4",
+    "at": "0x150",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.colour.second_r",
+    "part": "burst",
+    "label": "Red, second tick",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x154",
+    "code": "0xd4",
+    "at": "0x156",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.colour.second_g",
+    "part": "burst",
+    "label": "Green, second tick",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x154",
+    "code": "0xd4",
+    "at": "0x158",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.colour.second_b",
+    "part": "burst",
+    "label": "Blue, second tick",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x154",
+    "code": "0xd4",
+    "at": "0x15a",
+    "form": "s16"
+   },
+   {
+    "key": "script.hits.height",
+    "part": "hits",
+    "label": "Spark height",
+    "doc": "Of the hit spark over the target's place (negative: up); the flash stays on the ground",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -640,
+    "inst": "0x1dc",
+    "code": "0x5f",
+    "at": "0x1e0",
+    "form": "s16"
+   },
+   {
+    "key": "script.hits.spread_x",
+    "part": "hits",
+    "label": "Spread X",
+    "doc": "How far from there, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x1e4",
+    "code": "0x12",
+    "at": "0x1e6",
+    "form": "s16"
+   },
+   {
+    "key": "script.hits.spread_y",
+    "part": "hits",
+    "label": "Spread Y",
+    "doc": "How far from there, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x1e4",
+    "code": "0x12",
+    "at": "0x1e8",
+    "form": "s16"
+   },
+   {
+    "key": "script.hits.spread_z",
+    "part": "hits",
+    "label": "Spread Z",
+    "doc": "How far from there, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x1e4",
+    "code": "0x12",
+    "at": "0x1ea",
+    "form": "s16"
+   },
+   {
+    "key": "script.hits.texture",
+    "part": "hits",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x20a",
+    "code": "0x52",
+    "at": "0x20c",
+    "form": "s16"
+   },
+   {
+    "key": "script.hits.blend",
+    "part": "hits",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x218",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x218": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x218": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x218": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x218": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.hits.size",
+    "part": "hits",
+    "label": "Size",
+    "doc": "4096 = its model's own size x 16",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x21a",
+    "code": "0xd",
+    "at": "0x21c",
+    "form": "s16"
+   },
+   {
+    "key": "script.hits.life",
+    "part": "hits",
+    "label": "Lasts for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x224",
+    "code": "0x9",
+    "at": "0x224",
+    "form": "op"
+   },
+   {
+    "key": "script.hits.flash",
+    "part": "hits",
+    "label": "Flash",
+    "doc": "Its brightness on the first tick (128 = as is)",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 192,
+    "inst": "0x228",
+    "code": "0xd4",
+    "at": "0x22a",
+    "form": "s16"
+   },
+   {
+    "key": "script.hits.flash2",
+    "part": "hits",
+    "label": "Then",
+    "doc": "Its brightness on the second tick, then it fades",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 240,
+    "inst": "0x22e",
+    "code": "0xd4",
+    "at": "0x230",
+    "form": "s16"
+   },
+   {
+    "key": "script.spark.size_x",
+    "part": "spark",
+    "label": "Width",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 96,
+    "inst": "0x1f8",
+    "code": "0xa",
+    "at": "0x1fa",
+    "form": "s16"
+   },
+   {
+    "key": "script.spark.size_y",
+    "part": "spark",
+    "label": "Height",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 96,
+    "inst": "0x1f8",
+    "code": "0xa",
+    "at": "0x1fc",
+    "form": "s16"
+   },
+   {
+    "key": "script.spark.life",
+    "part": "spark",
+    "label": "Lasts for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x202",
+    "code": "0x9",
+    "at": "0x202",
+    "form": "op"
+   }
+  ]
+ }
 }
