@@ -669,6 +669,28 @@
    "unit": "plain"
   },
   {
+   "part": "cones",
+   "key": "cones.spin",
+   "label": "Spin",
+   "doc": "Its turn about y a tick (4096 a turn; 0: none, the game). On each target a cone stands on the floor under its target, upright, its table angle its first turn",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "part": "cones",
+   "key": "cones.rise",
+   "label": "Rise",
+   "doc": "It rises this much a tick (0: the game)",
+   "type": "i16",
+   "min": -400,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
    "key": "glow.size",
    "part": "glow",
    "label": "Size",
