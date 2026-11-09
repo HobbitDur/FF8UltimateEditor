@@ -1,0 +1,1221 @@
+{
+ "format": 1,
+ "effect": 173,
+ "name": "Ice Breath",
+ "doc": "Ice Breath (the Snow Lion's attack; the Cronos mod's item Arctic Wind): the root and the director - the caster's mouth blowing a frost swirl, a glow and breath cones, then frost puffs and spinning crystal layouts along a sweep toward the targets, an ice trail on the floor that grows and shatters into flying triangles, ice shards round the midpoint, the screen flash, the sounds; the damage. Its tasks are the port's code (FFNx mag173_ice_breath.cpp) run on the program's memory (its particle table, polygon states and queues in the module, its crystal players and packets in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5D7490",
+   "setup": "0x5D74B0",
+   "root": "0x5D9BF0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 173,
+  "from": "0x2397278",
+  "size": "0x3668"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xD61D84",
+   "size": 4
+  },
+  "sounds.blast": {
+   "kind": "sound",
+   "address": "0xD61D88",
+   "size": 4
+  },
+  "trail_meshes.mesh0": {
+   "kind": "model",
+   "address": "0xD5FB00",
+   "size": 4092,
+   "vertices": 76
+  },
+  "trail_meshes.mesh1": {
+   "kind": "model",
+   "address": "0xD60AFC",
+   "size": 1424,
+   "vertices": 26
+  },
+  "trail_meshes.mesh2": {
+   "kind": "model",
+   "address": "0xD6108C",
+   "size": 1424,
+   "vertices": 26
+  },
+  "trail_meshes.mesh3": {
+   "kind": "model",
+   "address": "0xD6161C",
+   "size": 604,
+   "vertices": 11
+  },
+  "trail_meshes.mesh4": {
+   "kind": "model",
+   "address": "0xD61878",
+   "size": 604,
+   "vertices": 11
+  },
+  "seqs.swirl": {
+   "kind": "seq",
+   "address": "0xD5EAA4",
+   "size": 636,
+   "frames": 24
+  },
+  "seqs.puff": {
+   "kind": "seq",
+   "address": "0xD5E74C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.shard": {
+   "kind": "seq",
+   "address": "0xD5E8F8",
+   "size": 428,
+   "frames": 16
+  },
+  "layouts.crystal": {
+   "kind": "layout",
+   "address": "0xD61AD4",
+   "size": 688,
+   "capacity": 64
+  },
+  "models.cone": {
+   "kind": "model",
+   "address": "0xD5ED20",
+   "size": 2544,
+   "vertices": 73
+  },
+  "models.glow": {
+   "kind": "model",
+   "address": "0xD5F710",
+   "size": 1008,
+   "vertices": 33
+  },
+  "tables.cone_delays": {
+   "kind": "table",
+   "address": "0xD61D90",
+   "size": 16,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "delay",
+    "pad"
+   ]
+  },
+  "tables.cone_angles": {
+   "kind": "table",
+   "address": "0xD61DA0",
+   "size": 16,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "angle",
+    "pad"
+   ]
+  },
+  "tables.puff_colours": {
+   "kind": "table",
+   "address": "0xD61DB0",
+   "size": 64,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
+  },
+  "tables.crystal_flags": {
+   "kind": "table",
+   "address": "0xD61E18",
+   "size": 4,
+   "format": "I",
+   "columns": 1,
+   "labels": [
+    "flags"
+   ]
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xD61E1C",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xD5E67C",
+   "size": 208
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5D74B0",
+  "file_loader": "0x5D7490",
+  "root": "0x5D9BF0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The timeline: when each part starts, the mouth anchor (the caster's bone 0xF0 and an offset, retaken every tick), the screen flash in and out, the sounds; the damage"
+  },
+  {
+   "id": 1,
+   "key": "swirl",
+   "title": "Mouth swirl",
+   "doc": "Frost sprites swirling about the caster's mouth: a few a tick, each on a random axis, its radius shrinking as it spins; cleared at its end"
+  },
+  {
+   "id": 2,
+   "key": "cones",
+   "title": "Breath cones",
+   "doc": "Cone models blown from the mouth along the caster's facing, each after its delay and turned on its z axis, shrinking, fading at their end"
+  },
+  {
+   "id": 3,
+   "key": "glow",
+   "title": "Mouth glow",
+   "doc": "A glow model at the mouth facing the camera, growing (faster from a tick), fading at its end"
+  },
+  {
+   "id": 4,
+   "key": "puffs",
+   "title": "Breath puffs",
+   "doc": "Frost puffs blown from the mouth along a sweep of the way to the targets, growing, slowing, falling to a floor, coloured by frame"
+  },
+  {
+   "id": 5,
+   "key": "crystals",
+   "title": "Crystals",
+   "doc": "Crystal layouts (prim-model players) placed along a sweep of the breath, one a tick, each spun and scaled at random"
+  },
+  {
+   "id": 6,
+   "key": "trail",
+   "title": "Ice trail",
+   "doc": "Five ice meshes on the floor from the caster toward the targets: their triangles appear outward, then fly apart spinning and darkening"
+  },
+  {
+   "id": 7,
+   "key": "shards",
+   "title": "Ice shards",
+   "doc": "Shard sprites around the midpoint flying away from the mouth, stretched along their way"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The start, the blast"
+  },
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "Its colour, up to a tick its level rising by a step, from a tick falling by a step to the director's end"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "At the director's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.blast",
+   "part": "director",
+   "label": "Blast",
+   "doc": "At the director's blast tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.blast",
+   "unit": "plain"
+  },
+  {
+   "key": "director.swirl",
+   "part": "director",
+   "label": "Swirl tick",
+   "doc": "The mouth swirl starts at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "director.glow",
+   "part": "director",
+   "label": "Glow tick",
+   "doc": "The mouth glow starts at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "director.cones",
+   "part": "director",
+   "label": "Cones tick",
+   "doc": "The breath cones start at this tick (at the mouth of then)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "director.puffs",
+   "part": "director",
+   "label": "Puffs tick",
+   "doc": "The breath puffs start at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 37,
+   "unit": "plain"
+  },
+  {
+   "key": "director.crystals",
+   "part": "director",
+   "label": "Crystals tick",
+   "doc": "The crystal spawner starts at this tick (from 1: their pool is made at tick 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 38,
+   "unit": "plain"
+  },
+  {
+   "key": "director.trail",
+   "part": "director",
+   "label": "Trail tick",
+   "doc": "The ice trail starts at this tick (at the mouth of then, turned away from the caster's facing)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 70,
+   "unit": "plain"
+  },
+  {
+   "key": "director.shards",
+   "part": "director",
+   "label": "Shards tick",
+   "doc": "The ice shards start at this tick (flying away from the mouth of then)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 74,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage (every target of the action) at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 85,
+   "unit": "plain"
+  },
+  {
+   "key": "director.blast",
+   "part": "director",
+   "label": "Blast tick",
+   "doc": "The blast sound at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "director.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The director's last tick (the screen flash fades out toward it; the effect ends once every part has)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 95,
+   "unit": "plain"
+  },
+  {
+   "key": "anchor.mouth",
+   "part": "director",
+   "label": "Mouth offset",
+   "doc": "The mouth: this far along the caster's facing (its z, negative = ahead) from its bone 0xF0",
+   "type": "i16",
+   "min": -4000,
+   "max": 4000,
+   "default": -150,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.colour",
+   "part": "director",
+   "label": "Colour",
+   "doc": "The screen flash's colour (0xBBGGRR)",
+   "type": "i32",
+   "min": 0,
+   "max": 16777215,
+   "default": 5251104,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.in_end",
+   "part": "director",
+   "label": "Rise until",
+   "doc": "The flash level rises up to this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.in_step",
+   "part": "director",
+   "label": "Rise step",
+   "doc": "Its level: the tick x this (4096 = full)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 192,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.out_start",
+   "part": "director",
+   "label": "Fall from",
+   "doc": "From this tick the level falls",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 87,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.out_step",
+   "part": "director",
+   "label": "Fall step",
+   "doc": "Its level: (the end tick - the tick) x this",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 384,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.spawn_last",
+   "part": "swirl",
+   "label": "Last spawn tick",
+   "doc": "Sprites spawn from its tick 0 to this one",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.per_tick",
+   "part": "swirl",
+   "label": "A tick",
+   "doc": "How many spawn a tick (100 particles at most, shared with the puffs and the shards)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.life",
+   "part": "swirl",
+   "label": "End tick",
+   "doc": "At this tick of its own the swirl ends (its sprites cleared)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.size_min",
+   "part": "swirl",
+   "label": "Size",
+   "doc": "A sprite's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.size_rand",
+   "part": "swirl",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.radius_min",
+   "part": "swirl",
+   "label": "Radius",
+   "doc": "Its distance from the mouth: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 400,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.radius_rand",
+   "part": "swirl",
+   "label": "Radius random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1200,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.shrink_min",
+   "part": "swirl",
+   "label": "Shrink divisor",
+   "doc": "Its radius shrinks a tick by the radius / (this + a random below the next)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.shrink_rand",
+   "part": "swirl",
+   "label": "Shrink random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.spin_min",
+   "part": "swirl",
+   "label": "Spin",
+   "doc": "Its angle about its axis a tick: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 25,
+   "unit": "angle"
+  },
+  {
+   "key": "swirl.spin_rand",
+   "part": "swirl",
+   "label": "Spin random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 50,
+   "unit": "angle"
+  },
+  {
+   "key": "cones.count",
+   "part": "cones",
+   "label": "Count",
+   "doc": "How many cones (their delays and z angles: the tables, 4 at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "cones.size",
+   "part": "cones",
+   "label": "Size",
+   "doc": "A cone's starting size (4096 = its model's)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 5120,
+   "unit": "scale"
+  },
+  {
+   "key": "cones.shrink",
+   "part": "cones",
+   "label": "Shrink",
+   "doc": "Its size shrinks a tick by this (which loses 1/20 a tick)",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 365,
+   "unit": "plain"
+  },
+  {
+   "key": "cones.fade_from",
+   "part": "cones",
+   "label": "Fade from",
+   "doc": "From this tick of its own it fades (1024 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "cones.life",
+   "part": "cones",
+   "label": "Life",
+   "doc": "A cone ends at this tick of its own (after its delay)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.size",
+   "part": "glow",
+   "label": "Size",
+   "doc": "The glow's starting size (4096 = its model's)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 640,
+   "unit": "scale"
+  },
+  {
+   "key": "glow.growth",
+   "part": "glow",
+   "label": "Growth",
+   "doc": "Its size grows a tick by this",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 160,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.speedup_from",
+   "part": "glow",
+   "label": "Faster from",
+   "doc": "From this tick of its own the growth speeds up ((growth + 32) x 4 / 3 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.fade_from",
+   "part": "glow",
+   "label": "Fade from",
+   "doc": "From this tick of its own it fades (1024 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.life",
+   "part": "glow",
+   "label": "Life",
+   "doc": "The glow ends at this tick of its own",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.spawn_last",
+   "part": "puffs",
+   "label": "Last spawn tick",
+   "doc": "Puffs spawn from its tick 0 to this one",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.per_tick",
+   "part": "puffs",
+   "label": "A tick",
+   "doc": "How many spawn a tick (100 particles at most, shared)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.size_min",
+   "part": "puffs",
+   "label": "Size",
+   "doc": "A puff's size: this + a random below the next (it grows 1/16 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2560,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.size_rand",
+   "part": "puffs",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.spread",
+   "part": "puffs",
+   "label": "Spread",
+   "doc": "Where it starts: the mouth + a random below this (x, z: centred; y: minus 4 a tick of its own)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.speed_min",
+   "part": "puffs",
+   "label": "Speed",
+   "doc": "Its speed along the swept way: this + a random below the next (losing 1/32 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 290,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.speed_rand",
+   "part": "puffs",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 150,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.rise_rand",
+   "part": "puffs",
+   "label": "Fall random",
+   "doc": "Its downward speed: a random below this (+ the way's)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 120,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.sweep_start",
+   "part": "puffs",
+   "label": "Sweep start",
+   "doc": "The way to the targets turned about y by this at its tick 0",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 512,
+   "unit": "angle"
+  },
+  {
+   "key": "puffs.sweep_step",
+   "part": "puffs",
+   "label": "Sweep step",
+   "doc": "and by this more each tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -34,
+   "unit": "angle"
+  },
+  {
+   "key": "puffs.floor",
+   "part": "puffs",
+   "label": "Floor",
+   "doc": "A puff moves up or down only while above this height (y, negative = up)",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": -300,
+   "unit": "plain"
+  },
+  {
+   "key": "crystals.spawn_last",
+   "part": "crystals",
+   "label": "Last spawn tick",
+   "doc": "One crystal a tick from its tick 0 to this one",
+   "type": "i16",
+   "min": -1,
+   "max": 63,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "crystals.sweep_start",
+   "part": "crystals",
+   "label": "Sweep start",
+   "doc": "The swept breath way turned about y by this at its tick 0",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 416,
+   "unit": "angle"
+  },
+  {
+   "key": "crystals.sweep_step",
+   "part": "crystals",
+   "label": "Sweep step",
+   "doc": "and by this more each tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -16,
+   "unit": "angle"
+  },
+  {
+   "key": "crystals.dist_min",
+   "part": "crystals",
+   "label": "Distance",
+   "doc": "How far along it: (this + a random below the next) x twice the mouth-to-midpoint length / 4096",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 768,
+   "unit": "plain"
+  },
+  {
+   "key": "crystals.dist_rand",
+   "part": "crystals",
+   "label": "Distance random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "crystals.offset",
+   "part": "crystals",
+   "label": "Offset",
+   "doc": "Moved by a random below this on each axis (centred)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 800,
+   "unit": "plain"
+  },
+  {
+   "key": "crystals.spin_rand",
+   "part": "crystals",
+   "label": "Spin random",
+   "doc": "Its z spin a frame: a random below this",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 1024,
+   "unit": "angle"
+  },
+  {
+   "key": "crystals.scale_min",
+   "part": "crystals",
+   "label": "Scale",
+   "doc": "Its scale: this + a random below the next (4096 = the layout's)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "crystals.scale_rand",
+   "part": "crystals",
+   "label": "Scale random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2560,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.size",
+   "part": "trail",
+   "label": "Size",
+   "doc": "The meshes' scale (4096 = theirs)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "trail.grow_ticks",
+   "part": "trail",
+   "label": "Appear ticks",
+   "doc": "Its triangles appear for this many ticks (each by its distance), then fly apart",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.full",
+   "part": "trail",
+   "label": "All shown at",
+   "doc": "While appearing, from this tick every triangle is shown",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.speed_min",
+   "part": "trail",
+   "label": "Speed",
+   "doc": "A flying triangle's speed outward: this + a random below the next (losing 1/16 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 90,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.speed_rand",
+   "part": "trail",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 170,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.spawn_last",
+   "part": "shards",
+   "label": "Last spawn tick",
+   "doc": "Shards spawn from its tick 0 to this one",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.per_tick",
+   "part": "shards",
+   "label": "A tick",
+   "doc": "How many spawn a tick (100 particles at most, shared)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.size_min",
+   "part": "shards",
+   "label": "Size",
+   "doc": "A shard's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.size_rand",
+   "part": "shards",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.spread_x",
+   "part": "shards",
+   "label": "Spread x",
+   "doc": "Around the midpoint: a random below this on x (centred)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 5400,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.spread_z",
+   "part": "shards",
+   "label": "Spread z",
+   "doc": "and below this on z (centred)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2700,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.speed_min",
+   "part": "shards",
+   "label": "Speed",
+   "doc": "Its speed away from the mouth: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.speed_rand",
+   "part": "shards",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 70,
+   "unit": "plain"
+  },
+  {
+   "key": "trail_meshes.mesh0",
+   "part": "trail",
+   "label": "Mesh 0",
+   "doc": "The ice trail's mesh 0 (a prim model: an edited one keeps its vertices and has only gouraud textured triangles, no more than the game's)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@trail_meshes.mesh0",
+   "unit": "plain"
+  },
+  {
+   "key": "trail_meshes.mesh1",
+   "part": "trail",
+   "label": "Mesh 1",
+   "doc": "The ice trail's mesh 1 (a prim model: an edited one keeps its vertices and has only gouraud textured triangles, no more than the game's)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@trail_meshes.mesh1",
+   "unit": "plain"
+  },
+  {
+   "key": "trail_meshes.mesh2",
+   "part": "trail",
+   "label": "Mesh 2",
+   "doc": "The ice trail's mesh 2 (a prim model: an edited one keeps its vertices and has only gouraud textured triangles, no more than the game's)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@trail_meshes.mesh2",
+   "unit": "plain"
+  },
+  {
+   "key": "trail_meshes.mesh3",
+   "part": "trail",
+   "label": "Mesh 3",
+   "doc": "The ice trail's mesh 3 (a prim model: an edited one keeps its vertices and has only gouraud textured triangles, no more than the game's)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@trail_meshes.mesh3",
+   "unit": "plain"
+  },
+  {
+   "key": "trail_meshes.mesh4",
+   "part": "trail",
+   "label": "Mesh 4",
+   "doc": "The ice trail's mesh 4 (a prim model: an edited one keeps its vertices and has only gouraud textured triangles, no more than the game's)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@trail_meshes.mesh4",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.swirl",
+   "part": "swirl",
+   "label": "Swirl",
+   "doc": "The sprite sequence swirl (a flipbook of 24 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.swirl",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.puff",
+   "part": "puffs",
+   "label": "Puff",
+   "doc": "The sprite sequence puff (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.puff",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.shard",
+   "part": "shards",
+   "label": "Shard",
+   "doc": "The sprite sequence shard (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.shard",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.crystal",
+   "part": "crystals",
+   "label": "Crystal",
+   "doc": "The prim-model layout crystal (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.crystal",
+   "unit": "plain"
+  },
+  {
+   "key": "models.cone",
+   "part": "cones",
+   "label": "Cone model",
+   "doc": "The prim model cone (a mesh of 73 vertices, 72 primitives: an edited one keeps at least as many vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.cone",
+   "unit": "plain"
+  },
+  {
+   "key": "models.glow",
+   "part": "glow",
+   "label": "Glow model",
+   "doc": "The prim model glow (a mesh of 33 vertices, 32 primitives: an edited one keeps at least as many vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.cone_delays",
+   "part": "cones",
+   "label": "Cone delays",
+   "doc": "Each breath cone's delay (ticks before it shows and starts its clock) (16 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.cone_delays",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.cone_angles",
+   "part": "cones",
+   "label": "Cone z angles",
+   "doc": "Each breath cone's turn about its z axis (4096 = a full turn) (16 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.cone_angles",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.puff_colours",
+   "part": "puffs",
+   "label": "Puff colours",
+   "doc": "A breath puff's colour words by its frame (red, green, blue, the GPU code byte) (64 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.puff_colours",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.crystal_flags",
+   "part": "crystals",
+   "label": "Crystal flags",
+   "doc": "The crystal layout's object flag word (0x10000000: its position through the camera; its draw flags, the semi-transparency bit forced on) (4 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.crystal_flags",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.trail_meshes",
+   "label": "Trail meshes",
+   "doc": "The five trail mesh pointers (the meshes themselves are parameters: Ice trail)",
+   "address": "0xD61DF0",
+   "size": 20
+  }
+ ]
+}

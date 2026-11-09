@@ -2096,6 +2096,22 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`GastricJuice169Params`): the sound, the damage tick. Data: the sound, "mag168.tim".
      - *Tests:* the cycle test casts it from Grat (slot 3) on Squall (`CYCLE_CASTS`).
      - *Fujin:* its tab (Director); no + menu family.
+   - **Ice Breath (173)** (FFNx 62e957df; the Snow Lion's attack, the Cronos mod's item Arctic Wind; a port root,
+     Ray-Bomb's kind): the caster's mouth (its bone 0xF0, retaken every tick) blowing a frost swirl, a glow and four
+     breath cones, then frost puffs and spinning crystal layouts along a sweep toward the targets, five ice meshes on
+     the floor that grow outward and shatter into flying triangles, ice shards round the midpoint, the screen flash,
+     the sounds; the damage at tick 85.
+     - *Inputs* (`IceBreathParams`, 89): the sounds, the director's ticks (each part's start, the damage, the blast
+       sound, the end), the mouth offset, the screen flash (colour, rise, fall), per part its spawn ticks and counts,
+       sizes, radii, spreads, speeds, sweeps, lives and fade ticks. Data: the sounds, the three flipbooks (swirl,
+       puff, shard), the cone and glow meshes, the five trail meshes (only gouraud textured triangles, no more than the
+       game's: the code keeps a state per triangle), the crystal layout, the cone delays and z angles, the puff
+       colours, the crystal flag word, "mag172.tim", the camera track.
+     - *Port:* the trail's polygon state tables are module words the exe table 0xD61E04 points at (read through
+       own::R); its eight parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Squall on the c0m009 monster (the Cronos item's way: a party caster).
+     - *Fujin:* its tabs (Director, Mouth swirl, Breath cones, Mouth glow, Breath puffs, Crystals, Ice trail, Ice
+       shards); no + menu family.
    - **Holy (175)** (FFNx 834e6a7f; the spell; a port director, Ray-Bomb's kind): one director an action - the
      screen shattered into flying triangles (the stage captured), the side faded, the sparkles, orbits and
      motes, the rings and waves, the light pillars, the beam, the disks, the flash, the screen flash, the
