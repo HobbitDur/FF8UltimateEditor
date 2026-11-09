@@ -1046,7 +1046,7 @@
    "part": "trail",
    "key": "trail.each",
    "label": "On each target",
-   "doc": "With On each target (Director): 1 = the ice drawn on every target, its middle (the next value) on it, at the target's own height - a flying monster's too; 0: once, from the anchor (the game)",
+   "doc": "With On each target (Director): 1 = the ice drawn on every target, its middle (the next value) on it, on the floor - taller under a flying monster (Reach); 0: once, from the anchor (the game)",
    "type": "i16",
    "min": 0,
    "max": 1,
@@ -1073,6 +1073,17 @@
    "min": 0,
    "max": 5,
    "default": 5,
+   "unit": "plain"
+  },
+  {
+   "part": "trail",
+   "key": "trail.reach",
+   "label": "Reach",
+   "doc": "On each target: under a flying monster the ice grows taller (pointier), its tip this far above the monster's lowest point (its bones' lowest end); a monster standing keeps its size",
+   "type": "i16",
+   "min": -4000,
+   "max": 4000,
+   "default": 0,
    "unit": "plain"
   },
   {
