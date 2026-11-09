@@ -289,8 +289,8 @@
    },
    {
     "key": "script.swirl_a.size",
-    "label": "Size",
-    "doc": "It grows, holds, then shrinks; its brightness follows its size"
+    "label": "Brightness",
+    "doc": "It lights up, holds, then fades (128 = its texture as it is)"
    },
    {
     "key": "script.swirl_a.around",
@@ -299,8 +299,8 @@
    },
    {
     "key": "script.swirl_b.size",
-    "label": "Size",
-    "doc": "It grows, holds, then shrinks; its brightness follows its size"
+    "label": "Brightness",
+    "doc": "It lights up, holds, then fades (128 = its texture as it is)"
    },
    {
     "key": "script.swirl_b.around",
@@ -319,18 +319,18 @@
    },
    {
     "key": "script.wisps.size",
-    "label": "Size",
-    "doc": "Each grows, holds, then shrinks; its brightness follows its size"
+    "label": "Brightness",
+    "doc": "Each lights up, holds, then fades (128 = its texture as it is)"
    },
    {
     "key": "script.wisps.tilt",
-    "label": "Tilt",
-    "doc": "Each one's angle (4096 = a whole turn)"
+    "label": "Size",
+    "doc": "Each one's size along each axis (256 = the model's own size)"
    },
    {
     "key": "script.wisps.spin",
-    "label": "Spin",
-    "doc": "Around itself, per tick"
+    "label": "Grows",
+    "doc": "Along X and Z, per tick (Y does not grow)"
    }
   ],
   "fields": [
@@ -1834,8 +1834,8 @@
    {
     "key": "script.swirl_a.size.grow",
     "part": "swirl_a",
-    "label": "Grows by",
-    "doc": "Size per tick",
+    "label": "Brightens by",
+    "doc": "Per tick",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1848,7 +1848,7 @@
    {
     "key": "script.swirl_a.size.grow_for",
     "part": "swirl_a",
-    "label": "Grows for",
+    "label": "Brightens for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -1876,8 +1876,8 @@
    {
     "key": "script.swirl_a.size.shrink",
     "part": "swirl_a",
-    "label": "Shrinks by",
-    "doc": "Size per tick (negative)",
+    "label": "Fades by",
+    "doc": "Per tick (negative)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1890,7 +1890,7 @@
    {
     "key": "script.swirl_a.size.shrink_for",
     "part": "swirl_a",
-    "label": "Shrinks for",
+    "label": "Fades for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -1946,8 +1946,8 @@
    {
     "key": "script.swirl_a.tilt_x",
     "part": "swirl_a",
-    "label": "Tilt X",
-    "doc": "Its angle (4096 = a whole turn)",
+    "label": "Size X",
+    "doc": "256 = the model's own size",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1960,8 +1960,8 @@
    {
     "key": "script.swirl_a.tilt_y",
     "part": "swirl_a",
-    "label": "Tilt Y",
-    "doc": "Its angle (4096 = a whole turn)",
+    "label": "Size Y",
+    "doc": "256 = the model's own size",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1974,8 +1974,8 @@
    {
     "key": "script.swirl_a.tilt_z",
     "part": "swirl_a",
-    "label": "Tilt Z",
-    "doc": "Its angle (4096 = a whole turn)",
+    "label": "Size Z",
+    "doc": "256 = the model's own size",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1988,8 +1988,8 @@
    {
     "key": "script.swirl_a.spin",
     "part": "swirl_a",
-    "label": "Spin",
-    "doc": "Around itself, per tick",
+    "label": "Grows in Y by",
+    "doc": "Per tick (taller and taller)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -2003,7 +2003,7 @@
     "key": "script.swirl_a.life_first",
     "part": "swirl_a",
     "label": "Lives for",
-    "doc": "Ticks, with the next: keep them past its size's own times",
+    "doc": "Ticks, with the next: keep them past its brightness' own times",
     "type": "int",
     "min": 0,
     "max": 127,
@@ -2096,8 +2096,8 @@
    {
     "key": "script.swirl_b.size.grow",
     "part": "swirl_b",
-    "label": "Grows by",
-    "doc": "Size per tick",
+    "label": "Brightens by",
+    "doc": "Per tick",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -2110,7 +2110,7 @@
    {
     "key": "script.swirl_b.size.grow_for",
     "part": "swirl_b",
-    "label": "Grows for",
+    "label": "Brightens for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -2138,8 +2138,8 @@
    {
     "key": "script.swirl_b.size.shrink",
     "part": "swirl_b",
-    "label": "Shrinks by",
-    "doc": "Size per tick (negative)",
+    "label": "Fades by",
+    "doc": "Per tick (negative)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -2152,7 +2152,7 @@
    {
     "key": "script.swirl_b.size.shrink_for",
     "part": "swirl_b",
-    "label": "Shrinks for",
+    "label": "Fades for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -2208,8 +2208,8 @@
    {
     "key": "script.swirl_b.spin",
     "part": "swirl_b",
-    "label": "Spin",
-    "doc": "Around itself, per tick, all axes",
+    "label": "Grows by",
+    "doc": "Per tick, all axes (it starts with no size)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -2222,8 +2222,8 @@
    {
     "key": "script.swirl_b.spin_for",
     "part": "swirl_b",
-    "label": "Spins for",
-    "doc": "Ticks. It lives for this and the next: keep them past its size's own times",
+    "label": "Grows for",
+    "doc": "Ticks. It lives for this and the next: keep them past its brightness' own times",
     "type": "int",
     "min": 0,
     "max": 127,
@@ -2237,7 +2237,7 @@
     "key": "script.swirl_b.life_then",
     "part": "swirl_b",
     "label": "Then lives for",
-    "doc": "Ticks, no longer spinning",
+    "doc": "Ticks, no longer growing",
     "type": "int",
     "min": 0,
     "max": 127,
@@ -2348,8 +2348,8 @@
    {
     "key": "script.wisps.size.grow",
     "part": "wisps",
-    "label": "Grows by",
-    "doc": "Size per tick",
+    "label": "Brightens by",
+    "doc": "Per tick",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -2362,7 +2362,7 @@
    {
     "key": "script.wisps.size.grow_for",
     "part": "wisps",
-    "label": "Grows for",
+    "label": "Brightens for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -2390,8 +2390,8 @@
    {
     "key": "script.wisps.size.shrink",
     "part": "wisps",
-    "label": "Shrinks by",
-    "doc": "Size per tick (negative)",
+    "label": "Fades by",
+    "doc": "Per tick (negative)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -2404,7 +2404,7 @@
    {
     "key": "script.wisps.size.shrink_for",
     "part": "wisps",
-    "label": "Shrinks for",
+    "label": "Fades for",
     "doc": "",
     "type": "int",
     "min": 0,

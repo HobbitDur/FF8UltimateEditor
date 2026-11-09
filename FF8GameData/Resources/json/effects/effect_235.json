@@ -270,8 +270,8 @@
    },
    {
     "key": "script.rings.size",
-    "label": "Size",
-    "doc": "Each grows, holds, then shrinks"
+    "label": "Brightness",
+    "doc": "Each lights up, holds, then fades (128 = its texture as it is)"
    },
    {
     "key": "script.rings.tilt",
@@ -285,13 +285,13 @@
    },
    {
     "key": "script.wave.size",
-    "label": "Size",
-    "doc": "It grows, holds, then shrinks; its brightness follows its size"
+    "label": "Brightness",
+    "doc": "It lights up, holds, then fades (128 = its texture as it is)"
    },
    {
     "key": "script.flames.size",
-    "label": "Size",
-    "doc": "It grows, holds, then shrinks; its brightness follows its size"
+    "label": "Brightness",
+    "doc": "It lights up, holds, then fades (128 = its texture as it is)"
    }
   ],
   "fields": [
@@ -1196,8 +1196,8 @@
    {
     "key": "script.rings.size.grow",
     "part": "rings",
-    "label": "Grows by",
-    "doc": "Size per tick",
+    "label": "Brightens by",
+    "doc": "Per tick",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1210,7 +1210,7 @@
    {
     "key": "script.rings.size.grow_for",
     "part": "rings",
-    "label": "Grows for",
+    "label": "Brightens for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -1238,8 +1238,8 @@
    {
     "key": "script.rings.size.shrink",
     "part": "rings",
-    "label": "Shrinks by",
-    "doc": "Size per tick (negative)",
+    "label": "Fades by",
+    "doc": "Per tick (negative)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1252,7 +1252,7 @@
    {
     "key": "script.rings.size.shrink_for",
     "part": "rings",
-    "label": "Shrinks for",
+    "label": "Fades for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -1346,8 +1346,8 @@
    {
     "key": "script.rings.tilt.z",
     "part": "rings",
-    "label": "Z",
-    "doc": "",
+    "label": "Size",
+    "doc": "At first (256 = the model's own size)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1388,8 +1388,8 @@
    {
     "key": "script.rings.spin",
     "part": "rings",
-    "label": "Spin",
-    "doc": "Around itself, per tick",
+    "label": "Grows by",
+    "doc": "Per tick",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1612,8 +1612,8 @@
    {
     "key": "script.wave.size.grow",
     "part": "wave",
-    "label": "Grows by",
-    "doc": "Size per tick",
+    "label": "Brightens by",
+    "doc": "Per tick",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1626,7 +1626,7 @@
    {
     "key": "script.wave.size.grow_for",
     "part": "wave",
-    "label": "Grows for",
+    "label": "Brightens for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -1654,8 +1654,8 @@
    {
     "key": "script.wave.size.shrink",
     "part": "wave",
-    "label": "Shrinks by",
-    "doc": "Size per tick (negative)",
+    "label": "Fades by",
+    "doc": "Per tick (negative)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1668,7 +1668,7 @@
    {
     "key": "script.wave.size.shrink_for",
     "part": "wave",
-    "label": "Shrinks for",
+    "label": "Fades for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -1682,8 +1682,8 @@
    {
     "key": "script.wave.tilt_x",
     "part": "wave",
-    "label": "Tilt X",
-    "doc": "Its angle (4096 = a whole turn)",
+    "label": "Size X",
+    "doc": "256 = the model's own size",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1696,8 +1696,8 @@
    {
     "key": "script.wave.tilt_y",
     "part": "wave",
-    "label": "Tilt Y",
-    "doc": "Its angle (4096 = a whole turn)",
+    "label": "Size Y",
+    "doc": "256 = the model's own size",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1710,8 +1710,8 @@
    {
     "key": "script.wave.tilt_z",
     "part": "wave",
-    "label": "Tilt Z",
-    "doc": "Its angle (4096 = a whole turn)",
+    "label": "Size Z",
+    "doc": "256 = the model's own size",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1724,8 +1724,8 @@
    {
     "key": "script.wave.spin",
     "part": "wave",
-    "label": "Spin",
-    "doc": "Around itself, per tick",
+    "label": "Grows in Y by",
+    "doc": "Per tick (taller and taller)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1739,7 +1739,7 @@
     "key": "script.wave.life",
     "part": "wave",
     "label": "Lives for",
-    "doc": "Ticks: keep it past its size's own times",
+    "doc": "Ticks: keep it past its brightness' own times",
     "type": "int",
     "min": 0,
     "max": 127,
@@ -1818,8 +1818,8 @@
    {
     "key": "script.flames.size.grow",
     "part": "flames",
-    "label": "Grows by",
-    "doc": "Size per tick",
+    "label": "Brightens by",
+    "doc": "Per tick",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1832,7 +1832,7 @@
    {
     "key": "script.flames.size.grow_for",
     "part": "flames",
-    "label": "Grows for",
+    "label": "Brightens for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -1860,8 +1860,8 @@
    {
     "key": "script.flames.size.shrink",
     "part": "flames",
-    "label": "Shrinks by",
-    "doc": "Size per tick (negative)",
+    "label": "Fades by",
+    "doc": "Per tick (negative)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1874,7 +1874,7 @@
    {
     "key": "script.flames.size.shrink_for",
     "part": "flames",
-    "label": "Shrinks for",
+    "label": "Fades for",
     "doc": "",
     "type": "int",
     "min": 0,
@@ -1888,8 +1888,8 @@
    {
     "key": "script.flames.tilt_x",
     "part": "flames",
-    "label": "Tilt X",
-    "doc": "Its angle (4096 = a whole turn)",
+    "label": "Size X",
+    "doc": "256 = the model's own size",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1902,8 +1902,8 @@
    {
     "key": "script.flames.tilt_y",
     "part": "flames",
-    "label": "Tilt Y",
-    "doc": "Its angle (4096 = a whole turn)",
+    "label": "Size Y",
+    "doc": "256 = the model's own size",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1916,8 +1916,8 @@
    {
     "key": "script.flames.tilt_z",
     "part": "flames",
-    "label": "Tilt Z",
-    "doc": "Its angle (4096 = a whole turn)",
+    "label": "Size Z",
+    "doc": "256 = the model's own size",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1930,8 +1930,8 @@
    {
     "key": "script.flames.spin",
     "part": "flames",
-    "label": "Spin",
-    "doc": "Around itself, per tick",
+    "label": "Grows in Y by",
+    "doc": "Per tick (taller and taller)",
     "type": "int",
     "min": -32768,
     "max": 32767,
@@ -1945,7 +1945,7 @@
     "key": "script.flames.life",
     "part": "flames",
     "label": "Lives for",
-    "doc": "Ticks: keep it past its size's own times",
+    "doc": "Ticks: keep it past its brightness' own times",
     "type": "int",
     "min": 0,
     "max": 127,
