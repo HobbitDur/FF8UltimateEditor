@@ -162,5 +162,1254 @@
    "address": "0x1876338",
    "size": 1312
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag074_b.00",
+  "param": "files.file00",
+  "size": 51924,
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When things happen, and the camera. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 306,
+    "key": "circle",
+    "title": "Magic circle",
+    "paths": [],
+    "doc": "The ornate disc over the target: a wave of coloured light spreads over it from its centre (its colours: the palette of the file's texture 3)"
+   },
+   {
+    "id": 504,
+    "key": "ribbons",
+    "title": "Ribbons",
+    "paths": [],
+    "doc": "The ribbons of light twisting over the target, their colour cycling from purple to blue to red"
+   },
+   {
+    "id": 748,
+    "key": "beams",
+    "title": "Beams",
+    "paths": [
+     66284
+    ],
+    "doc": "The orange beams of light coming down around the circle, one after another"
+   },
+   {
+    "id": 848,
+    "key": "fire",
+    "title": "Wall of fire",
+    "paths": [],
+    "doc": "The ring of flames rising from the circle"
+   },
+   {
+    "id": 950,
+    "key": "shatter",
+    "title": "Shattering",
+    "paths": [],
+    "doc": "The magic circle breaking into flying pieces (each polygon of its model)"
+   }
+  ],
+  "groups": [
+   {
+    "key": "script.timing.end",
+    "label": "Ends after",
+    "doc": "Ticks after the ribbons start fading: these two waits added up (the game: 20)"
+   },
+   {
+    "key": "script.ribbons.colour",
+    "label": "Colour",
+    "doc": "Its colour cycles (red / green / blue, 128 = as it is)"
+   }
+  ],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x54",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x54": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x54": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.ribbons",
+    "part": "timing",
+    "label": "Ribbons start after",
+    "doc": "Ticks after the magic circle starts",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x8c",
+    "code": "0x9",
+    "at": "0x8c",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.beams",
+    "part": "timing",
+    "label": "Beams start after",
+    "doc": "Ticks after the ribbons start",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x92",
+    "code": "0x9",
+    "at": "0x92",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.fire",
+    "part": "timing",
+    "label": "Fire appears after",
+    "doc": "Ticks after the beams start",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 20,
+    "inst": "0x98",
+    "code": "0x9",
+    "at": "0x98",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.shatter",
+    "part": "timing",
+    "label": "Circle shatters after",
+    "doc": "Ticks after the fire appears",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x9e",
+    "code": "0x9",
+    "at": "0x9e",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.hit",
+    "part": "timing",
+    "label": "Damage after",
+    "doc": "Ticks after the circle shatters: the fire fades then",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0xa4",
+    "code": "0x9",
+    "at": "0xa4",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.fade",
+    "part": "timing",
+    "label": "Ribbons fade after",
+    "doc": "Ticks after the damage: the beams stop then",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0xac",
+    "code": "0x9",
+    "at": "0xac",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.first",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0xb6",
+    "code": "0x9",
+    "at": "0xb6",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.second",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0xb8",
+    "code": "0x9",
+    "at": "0xb8",
+    "form": "op"
+   },
+   {
+    "key": "script.circle.scale",
+    "part": "circle",
+    "label": "Size",
+    "doc": "x the model's own size (16 = as it is)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x13e",
+    "code": "0x43",
+    "at": "0x146",
+    "form": "s16"
+   },
+   {
+    "key": "script.circle.bright",
+    "part": "circle",
+    "label": "Brightest",
+    "doc": "Most light a point takes (256: full; above Light changes nothing)",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x13e",
+    "code": "0x43",
+    "at": "0x14c",
+    "form": "s16"
+   },
+   {
+    "key": "script.circle.colours",
+    "part": "circle",
+    "label": "Colours used",
+    "doc": "How many colours of its palette the wave runs through",
+    "type": "int",
+    "min": 1,
+    "max": 32,
+    "default": 32,
+    "inst": "0x13e",
+    "code": "0x43",
+    "at": "0x14a",
+    "form": "s16"
+   },
+   {
+    "key": "script.circle.start",
+    "part": "circle",
+    "label": "Starts at",
+    "doc": "The wave's reach at first (units from the centre)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x152",
+    "code": "0xa",
+    "at": "0x154",
+    "form": "s16"
+   },
+   {
+    "key": "script.circle.strength",
+    "part": "circle",
+    "label": "Light",
+    "doc": "How bright the wave is (256: as the palette)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x152",
+    "code": "0xa",
+    "at": "0x156",
+    "form": "s16"
+   },
+   {
+    "key": "script.circle.shift",
+    "part": "circle",
+    "label": "Colour start",
+    "doc": "Where in its palette the colours start",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 16384,
+    "inst": "0x152",
+    "code": "0xa",
+    "at": "0x158",
+    "form": "s16"
+   },
+   {
+    "key": "script.circle.speed",
+    "part": "circle",
+    "label": "Spreads by",
+    "doc": "Reach added each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x15a",
+    "code": "0x11",
+    "at": "0x15c",
+    "form": "s16"
+   },
+   {
+    "key": "script.circle.speed_for",
+    "part": "circle",
+    "label": "Spreads for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 48,
+    "inst": "0x162",
+    "code": "0x9",
+    "at": "0x162",
+    "form": "op"
+   },
+   {
+    "key": "script.circle.scroll",
+    "part": "circle",
+    "label": "Colours scroll by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -256,
+    "inst": "0x15e",
+    "code": "0xb",
+    "at": "0x160",
+    "form": "s16"
+   },
+   {
+    "key": "script.circle.blend",
+    "part": "circle",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x150",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x150": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x150": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x150": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x150": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.ribbons.spin",
+    "part": "ribbons",
+    "label": "Turning",
+    "doc": "Around the circle's axis, each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 8192,
+    "inst": "0x1a2",
+    "code": "0xb",
+    "at": "0x1a4",
+    "form": "s16"
+   },
+   {
+    "key": "script.ribbons.size_x",
+    "part": "ribbons",
+    "label": "Width",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x1fc",
+    "code": "0xa",
+    "at": "0x1fe",
+    "form": "s16"
+   },
+   {
+    "key": "script.ribbons.size_z",
+    "part": "ribbons",
+    "label": "Depth",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x1fc",
+    "code": "0xa",
+    "at": "0x202",
+    "form": "s16"
+   },
+   {
+    "key": "script.ribbons.spin_self",
+    "part": "ribbons",
+    "label": "Spinning",
+    "doc": "Around itself at first, each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x204",
+    "code": "0xb",
+    "at": "0x206",
+    "form": "s16"
+   },
+   {
+    "key": "script.ribbons.spin_self_for",
+    "part": "ribbons",
+    "label": "Spins for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x208",
+    "code": "0x9",
+    "at": "0x208",
+    "form": "op"
+   },
+   {
+    "key": "script.ribbons.fade_in",
+    "part": "ribbons",
+    "label": "Lights up by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x1b4",
+    "code": "0xb",
+    "at": "0x1b6",
+    "form": "s16"
+   },
+   {
+    "key": "script.ribbons.fade_in_for",
+    "part": "ribbons",
+    "label": "Lights up for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x1b8",
+    "code": "0x9",
+    "at": "0x1b8",
+    "form": "op"
+   },
+   {
+    "key": "script.ribbons.fade_out",
+    "part": "ribbons",
+    "label": "Fades by",
+    "doc": "Each tick once it fades (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x1c2",
+    "code": "0xb",
+    "at": "0x1c4",
+    "form": "s16"
+   },
+   {
+    "key": "script.ribbons.fade_out_for",
+    "part": "ribbons",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x1c6",
+    "code": "0x9",
+    "at": "0x1c6",
+    "form": "op"
+   },
+   {
+    "key": "script.ribbons.colour.start",
+    "part": "ribbons",
+    "label": "Red at first",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x1ce",
+    "code": "0xa",
+    "at": "0x1d0",
+    "form": "s16"
+   },
+   {
+    "key": "script.ribbons.colour.speed",
+    "part": "ribbons",
+    "label": "Cycles by",
+    "doc": "How fast its colour changes",
+    "type": "choice",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x1d6",
+    "code": "0xb",
+    "options": [
+     {
+      "label": "None",
+      "bytes": {
+       "0x1dc": "0000",
+       "0x1e2": "0000",
+       "0x1ec": "0000",
+       "0x1f0": "0000"
+      }
+     },
+     {
+      "label": "Slow",
+      "bytes": {
+       "0x1dc": "0004",
+       "0x1e2": "00fc",
+       "0x1ec": "0004",
+       "0x1f0": "00fc"
+      }
+     },
+     {
+      "label": "The game",
+      "bytes": {
+       "0x1dc": "0008",
+       "0x1e2": "00f8",
+       "0x1ec": "0008",
+       "0x1f0": "00f8"
+      }
+     },
+     {
+      "label": "Fast",
+      "bytes": {
+       "0x1dc": "0010",
+       "0x1e2": "00f0",
+       "0x1ec": "0010",
+       "0x1f0": "00f0"
+      }
+     },
+     {
+      "label": "Very fast",
+      "bytes": {
+       "0x1dc": "0020",
+       "0x1e2": "00e0",
+       "0x1ec": "0020",
+       "0x1f0": "00e0"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.ribbons.colour.every",
+    "part": "ribbons",
+    "label": "Changes every",
+    "doc": "Ticks",
+    "type": "choice",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x1de",
+    "code": "0x9",
+    "options": [
+     {
+      "label": "4",
+      "bytes": {
+       "0x1de": "0908",
+       "0x1e8": "0908",
+       "0x1f2": "0908"
+      }
+     },
+     {
+      "label": "8",
+      "bytes": {
+       "0x1de": "0910",
+       "0x1e8": "0910",
+       "0x1f2": "0910"
+      }
+     },
+     {
+      "label": "16",
+      "bytes": {
+       "0x1de": "0920",
+       "0x1e8": "0920",
+       "0x1f2": "0920"
+      }
+     },
+     {
+      "label": "32",
+      "bytes": {
+       "0x1de": "0940",
+       "0x1e8": "0940",
+       "0x1f2": "0940"
+      }
+     },
+     {
+      "label": "64",
+      "bytes": {
+       "0x1de": "0980",
+       "0x1e8": "0980",
+       "0x1f2": "0980"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.ribbons.blend",
+    "part": "ribbons",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x196",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x196": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x196": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x196": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x196": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.beams.every",
+    "part": "beams",
+    "label": "Then one every",
+    "doc": "Ticks, after the first four (5, 4, 3, 2 ticks apart)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 1,
+    "inst": "0x2ae",
+    "code": "0x9",
+    "at": "0x2ae",
+    "form": "op"
+   },
+   {
+    "key": "script.beams.spread_x",
+    "part": "beams",
+    "label": "Spread X",
+    "doc": "How far from the target, at random",
+    "type": "int",
+    "min": 0,
+    "max": 16383,
+    "default": 1792,
+    "inst": "0x2c6",
+    "code": "0x12",
+    "at": "0x2c8",
+    "form": "s16"
+   },
+   {
+    "key": "script.beams.spread_z",
+    "part": "beams",
+    "label": "Spread Z",
+    "doc": "How far from the target, at random",
+    "type": "int",
+    "min": 0,
+    "max": 16383,
+    "default": 1792,
+    "inst": "0x2c6",
+    "code": "0x12",
+    "at": "0x2cc",
+    "form": "s16"
+   },
+   {
+    "key": "script.beams.fade_in",
+    "part": "beams",
+    "label": "Lights up by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 8192,
+    "inst": "0x2de",
+    "code": "0xe",
+    "at": "0x2e0",
+    "form": "s16"
+   },
+   {
+    "key": "script.beams.fade_in_for",
+    "part": "beams",
+    "label": "Lights up for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x2e2",
+    "code": "0x9",
+    "at": "0x2e2",
+    "form": "op"
+   },
+   {
+    "key": "script.beams.fade_out",
+    "part": "beams",
+    "label": "Fades by",
+    "doc": "Each tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x2e4",
+    "code": "0xe",
+    "at": "0x2e6",
+    "form": "s16"
+   },
+   {
+    "key": "script.beams.fade_out_for",
+    "part": "beams",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x2e8",
+    "code": "0x9",
+    "at": "0x2e8",
+    "form": "op"
+   },
+   {
+    "key": "script.beams.width",
+    "part": "beams",
+    "label": "Size",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x302",
+    "code": "0xa",
+    "at": "0x304",
+    "form": "s16"
+   },
+   {
+    "key": "script.beams.size_random",
+    "part": "beams",
+    "label": "Size, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x30a",
+    "code": "0x16",
+    "at": "0x30c",
+    "form": "s16"
+   },
+   {
+    "key": "script.beams.spin",
+    "part": "beams",
+    "label": "Spinning",
+    "doc": "Each tick at first",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 16384,
+    "inst": "0x312",
+    "code": "0xb",
+    "at": "0x314",
+    "form": "s16"
+   },
+   {
+    "key": "script.beams.slowing",
+    "part": "beams",
+    "label": "Slows by",
+    "doc": "Taken off each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -512,
+    "inst": "0x316",
+    "code": "0xc",
+    "at": "0x318",
+    "form": "s16"
+   },
+   {
+    "key": "script.beams.blend",
+    "part": "beams",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x2fe",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x2fe": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x2fe": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x2fe": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x2fe": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.fire.fade_in",
+    "part": "fire",
+    "label": "Lights up by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x338",
+    "code": "0xe",
+    "at": "0x33a",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.fade_in_for",
+    "part": "fire",
+    "label": "Lights up for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x33c",
+    "code": "0x9",
+    "at": "0x33c",
+    "form": "op"
+   },
+   {
+    "key": "script.fire.fade_out",
+    "part": "fire",
+    "label": "Fades by",
+    "doc": "Each tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -2048,
+    "inst": "0x344",
+    "code": "0xe",
+    "at": "0x346",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.fade_out_for",
+    "part": "fire",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x348",
+    "code": "0x9",
+    "at": "0x348",
+    "form": "op"
+   },
+   {
+    "key": "script.fire.width",
+    "part": "fire",
+    "label": "Width",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x36a",
+    "code": "0xa",
+    "at": "0x36c",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.height",
+    "part": "fire",
+    "label": "Height",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x36a",
+    "code": "0xa",
+    "at": "0x370",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.spin",
+    "part": "fire",
+    "label": "Turning",
+    "doc": "Each tick at first",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2816,
+    "inst": "0x372",
+    "code": "0xb",
+    "at": "0x374",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.spin_for",
+    "part": "fire",
+    "label": "Turns for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x376",
+    "code": "0x9",
+    "at": "0x376",
+    "form": "op"
+   },
+   {
+    "key": "script.fire.slowing",
+    "part": "fire",
+    "label": "Then slows by",
+    "doc": "Taken off each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -176,
+    "inst": "0x378",
+    "code": "0xc",
+    "at": "0x37a",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.blend",
+    "part": "fire",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x366",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x366": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x366": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x366": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x366": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.shatter.life",
+    "part": "shatter",
+    "label": "Pieces last",
+    "doc": "Draws each flying piece lasts (its colour table holds 15)",
+    "type": "int",
+    "min": 0,
+    "max": 15,
+    "default": 15,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3c6",
+    "form": "u8"
+   },
+   {
+    "key": "script.shatter.reach",
+    "part": "shatter",
+    "label": "Breaks up to",
+    "doc": "Pieces closer than this to the centre fly off (past the circle's size: all of them, as the game)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2560,
+    "inst": "0x404",
+    "code": "0xa",
+    "at": "0x406",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.strength",
+    "part": "shatter",
+    "label": "Strength",
+    "doc": "Every speed, fall and spin below x this / 256",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x3f6",
+    "code": "0xa",
+    "at": "0x3fa",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.up",
+    "part": "shatter",
+    "label": "Speed up/down",
+    "doc": "Each piece's (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1280,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3d6",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.up_random",
+    "part": "shatter",
+    "label": "Speed up/down, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 1024,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3d8",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.x",
+    "part": "shatter",
+    "label": "Speed X",
+    "doc": "Each piece's, sideways",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3ce",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.x_random",
+    "part": "shatter",
+    "label": "Speed X, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3d0",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.z",
+    "part": "shatter",
+    "label": "Speed Z",
+    "doc": "Each piece's, sideways",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3de",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.z_random",
+    "part": "shatter",
+    "label": "Speed Z, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3e0",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.fall",
+    "part": "shatter",
+    "label": "Falls by",
+    "doc": "Speed added each tick (pulls down)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 16,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3da",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.fall_random",
+    "part": "shatter",
+    "label": "Falls by, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 8,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3dc",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.spin_x",
+    "part": "shatter",
+    "label": "Spin X, random",
+    "doc": "Each piece turns by up to this, each tick",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 4,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3e8",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.spin_y",
+    "part": "shatter",
+    "label": "Spin Y, random",
+    "doc": "Each piece turns by up to this, each tick",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 4,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3ec",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.spin_z",
+    "part": "shatter",
+    "label": "Spin Z, random",
+    "doc": "Each piece turns by up to this, each tick",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 4,
+    "inst": "0x3ba",
+    "code": "0x44",
+    "at": "0x3f0",
+    "form": "s16"
+   },
+   {
+    "key": "script.shatter.blend",
+    "part": "shatter",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x402",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x402": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x402": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x402": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x402": "2306"
+      }
+     }
+    ]
+   }
+  ]
+ }
 }

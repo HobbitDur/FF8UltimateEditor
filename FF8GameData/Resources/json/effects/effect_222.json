@@ -162,5 +162,2180 @@
    "address": "0x186CCFC",
    "size": 1312
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag221_b.00",
+  "param": "files.file00",
+  "size": 96668,
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When things happen, and the camera. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 0,
+    "key": "stage",
+    "title": "Stage tint",
+    "paths": [],
+    "doc": "A colour mixed over the stage while the sphere is there (the game: dark grey), then the stage's own back"
+   },
+   {
+    "id": 652,
+    "key": "bubbles",
+    "title": "Small bubbles",
+    "paths": [
+     66188
+    ],
+    "doc": "The small bubbles drawn in to the target before the sphere forms, two per tick. Their picture and blend are in their sprites (Textures tab, Sections)"
+   },
+   {
+    "id": 958,
+    "key": "sphere",
+    "title": "Water sphere",
+    "paths": [
+     66494
+    ],
+    "doc": "The ball of water around the target: it rises, wobbles, then bursts"
+   },
+   {
+    "id": 1024,
+    "key": "inner",
+    "title": "Inner layer",
+    "paths": [],
+    "doc": "The grey layer inside the sphere, same shape: it brightens as the sphere holds"
+   },
+   {
+    "id": 1248,
+    "key": "shimmer",
+    "title": "Shimmer",
+    "paths": [],
+    "doc": "A faint light shell turning inside the sphere"
+   },
+   {
+    "id": 1290,
+    "key": "foam",
+    "title": "Burst foam",
+    "doc": "The white foam sprayed up from the target's feet when the sphere bursts. Their picture and blend are in their sprites (Textures tab, Sections)"
+   },
+   {
+    "id": 1378,
+    "key": "rising",
+    "title": "Burst bubbles",
+    "doc": "The bubbles that rise from the target when the sphere bursts. Their picture and blend are in their sprites (Textures tab, Sections)"
+   },
+   {
+    "id": 1542,
+    "key": "drops",
+    "title": "Big bubbles",
+    "paths": [
+     67078
+    ],
+    "doc": "The big bubbles thrown out by the burst: each one falls and splashes where it lands. Their picture and blend are in their sprites (Textures tab, Sections)"
+   },
+   {
+    "id": 1674,
+    "key": "ring",
+    "title": "Splash rings",
+    "paths": [],
+    "doc": "The ring of water where a big bubble lands"
+   },
+   {
+    "id": 1732,
+    "key": "splash",
+    "title": "Splash spray",
+    "doc": "The drops and spray where a big bubble lands. Their picture and blend are in their sprites (Textures tab, Sections)"
+   }
+  ],
+  "groups": [
+   {
+    "key": "script.timing.bob",
+    "label": "Sphere rises after",
+    "doc": "Ticks after it appears: these two waits added up (the game: 9)"
+   },
+   {
+    "key": "script.timing.burst",
+    "label": "Sphere bursts after",
+    "doc": "Ticks after the small bubbles stop: these two waits added up (the game: 16). The splashes start then"
+   },
+   {
+    "key": "script.stage.colour",
+    "label": "Colour",
+    "doc": "The colour mixed over the stage (the game: 48, a dark grey)"
+   },
+   {
+    "key": "script.bubbles.where",
+    "label": "Where they come from",
+    "doc": "Around the sphere's centre"
+   },
+   {
+    "key": "script.sphere.rise",
+    "label": "Rising",
+    "doc": "The sphere rises, holds, comes back down (the small bubbles follow it)"
+   },
+   {
+    "key": "script.sphere.burst",
+    "label": "Burst",
+    "doc": "When it bursts"
+   },
+   {
+    "key": "script.foam.one",
+    "label": "Each one",
+    "doc": "One splash of foam"
+   },
+   {
+    "key": "script.rising.one",
+    "label": "Each one",
+    "doc": "One bubble"
+   },
+   {
+    "key": "script.rising.one.colour",
+    "label": "Colour over its life",
+    "doc": "It starts at this colour, brightens, then fades (128 = the picture as it is)"
+   },
+   {
+    "key": "script.splash.drop",
+    "label": "Drops",
+    "doc": "The small drops"
+   },
+   {
+    "key": "script.splash.drop.colour",
+    "label": "Colour over its life",
+    "doc": "It starts at this colour, brightens, then fades (128 = the picture as it is)"
+   },
+   {
+    "key": "script.splash.puff",
+    "label": "Puffs",
+    "doc": "The bigger puffs of spray"
+   }
+  ],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x5c",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x5c": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x5c": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.sphere",
+    "part": "timing",
+    "label": "Sphere appears after",
+    "doc": "Ticks after the start (the small bubbles gather meanwhile)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x8e",
+    "code": "0x9",
+    "at": "0x8e",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.bob.first",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x94",
+    "code": "0x9",
+    "at": "0x94",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.bob.second",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 1,
+    "inst": "0x9a",
+    "code": "0x9",
+    "at": "0x9a",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.bubbles_stop",
+    "part": "timing",
+    "label": "Small bubbles stop after",
+    "doc": "Ticks after the sphere starts rising",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0xa0",
+    "code": "0x9",
+    "at": "0xa0",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.burst.first",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0xa6",
+    "code": "0x9",
+    "at": "0xa6",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.burst.second",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0xa8",
+    "code": "0x9",
+    "at": "0xa8",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.hit",
+    "part": "timing",
+    "label": "Damage after",
+    "doc": "Ticks after the burst",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 1,
+    "inst": "0xae",
+    "code": "0x9",
+    "at": "0xae",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.light",
+    "part": "timing",
+    "label": "Stage tint goes after",
+    "doc": "Ticks after the damage: the stage gets its own colour back. The end reloads the file the splashes read: a splash still drawn then crashes the game, keep it past the last one",
+    "type": "int",
+    "min": 20,
+    "max": 127,
+    "default": 31,
+    "inst": "0xb2",
+    "code": "0x9",
+    "at": "0xb2",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end",
+    "part": "timing",
+    "label": "Ends after",
+    "doc": "Ticks after the stage tint goes: the splashes still running stop and the effect ends. The end reloads the file the splashes read: a splash still drawn then crashes the game, keep it past the last one",
+    "type": "int",
+    "min": 8,
+    "max": 127,
+    "default": 16,
+    "inst": "0xb8",
+    "code": "0x9",
+    "at": "0xb8",
+    "form": "op"
+   },
+   {
+    "key": "script.stage.dark",
+    "part": "stage",
+    "label": "Comes in by",
+    "doc": "Each tick (4096: at once)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x16a",
+    "code": "0xb",
+    "at": "0x16c",
+    "form": "s16"
+   },
+   {
+    "key": "script.stage.dark_for",
+    "part": "stage",
+    "label": "Comes in for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x16e",
+    "code": "0x9",
+    "at": "0x16e",
+    "form": "op"
+   },
+   {
+    "key": "script.stage.light",
+    "part": "stage",
+    "label": "Goes by",
+    "doc": "Each tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x176",
+    "code": "0xb",
+    "at": "0x178",
+    "form": "s16"
+   },
+   {
+    "key": "script.stage.light_for",
+    "part": "stage",
+    "label": "Goes for",
+    "doc": "Ticks (the effect ends 16 ticks after it starts going: longer changes nothing)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x17a",
+    "code": "0x9",
+    "at": "0x17a",
+    "form": "op"
+   },
+   {
+    "key": "script.stage.colour.r",
+    "part": "stage",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 48,
+    "inst": "0x160",
+    "code": "0xa",
+    "at": "0x164",
+    "form": "s16"
+   },
+   {
+    "key": "script.stage.colour.g",
+    "part": "stage",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 48,
+    "inst": "0x160",
+    "code": "0xa",
+    "at": "0x166",
+    "form": "s16"
+   },
+   {
+    "key": "script.stage.colour.b",
+    "part": "stage",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 48,
+    "inst": "0x160",
+    "code": "0xa",
+    "at": "0x168",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.where.up",
+    "part": "bubbles",
+    "label": "Angle up",
+    "doc": "4096 = a whole turn",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x278",
+    "code": "0xa",
+    "at": "0x27a",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.where.up_random",
+    "part": "bubbles",
+    "label": "Angle up, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4096,
+    "default": 512,
+    "inst": "0x280",
+    "code": "0x12",
+    "at": "0x282",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.where.around_random",
+    "part": "bubbles",
+    "label": "Angle around, random",
+    "doc": "Added at random (4096: from every side)",
+    "type": "int",
+    "min": 0,
+    "max": 4096,
+    "default": 4096,
+    "inst": "0x280",
+    "code": "0x12",
+    "at": "0x284",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.distance",
+    "part": "bubbles",
+    "label": "Start distance",
+    "doc": "How far from the centre they start",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 3072,
+    "inst": "0x2a8",
+    "code": "0xa",
+    "at": "0x2aa",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.distance_random",
+    "part": "bubbles",
+    "label": "Start distance, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 16383,
+    "default": 4096,
+    "inst": "0x2b0",
+    "code": "0x12",
+    "at": "0x2b2",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.speed",
+    "part": "bubbles",
+    "label": "Speed in",
+    "doc": "Towards the centre, each tick (negative: in)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -192,
+    "inst": "0x2c4",
+    "code": "0x11",
+    "at": "0x2c6",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.drift",
+    "part": "bubbles",
+    "label": "Drift",
+    "doc": "Sideways, each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 32,
+    "inst": "0x2c4",
+    "code": "0x11",
+    "at": "0x2ca",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.width",
+    "part": "bubbles",
+    "label": "Width",
+    "doc": "Size of each bubble",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 40,
+    "inst": "0x2b4",
+    "code": "0xa",
+    "at": "0x2b6",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.height",
+    "part": "bubbles",
+    "label": "Height",
+    "doc": "Size of each bubble",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 40,
+    "inst": "0x2b4",
+    "code": "0xa",
+    "at": "0x2b8",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.size_random",
+    "part": "bubbles",
+    "label": "Size, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 16,
+    "inst": "0x2bc",
+    "code": "0x16",
+    "at": "0x2be",
+    "form": "s16"
+   },
+   {
+    "key": "script.bubbles.life",
+    "part": "bubbles",
+    "label": "Lives for",
+    "doc": "Ticks each bubble is drawn",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0x2d2",
+    "code": "0x9",
+    "at": "0x2d2",
+    "form": "op"
+   },
+   {
+    "key": "script.sphere.size",
+    "part": "sphere",
+    "label": "Size",
+    "doc": "x the target's size",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 28,
+    "inst": "0x45c",
+    "code": "0x75",
+    "at": "0x45e",
+    "form": "s16"
+   },
+   {
+    "key": "script.sphere.texture",
+    "part": "sphere",
+    "label": "Texture",
+    "doc": "Which of the file's five textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 3,
+    "inst": "0x44c",
+    "code": "0x52",
+    "at": "0x44e",
+    "form": "s16"
+   },
+   {
+    "key": "script.sphere.blend",
+    "part": "sphere",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it (the inner layer and the shimmer too)",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x454",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x454": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x454": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x454": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x454": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.sphere.spin",
+    "part": "sphere",
+    "label": "Turning",
+    "doc": "Around the target, each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x32c",
+    "code": "0xb",
+    "at": "0x330",
+    "form": "s16"
+   },
+   {
+    "key": "script.sphere.roll",
+    "part": "sphere",
+    "label": "Rolls by",
+    "doc": "Each tick at first",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x36a",
+    "code": "0xb",
+    "at": "0x36c",
+    "form": "s16"
+   },
+   {
+    "key": "script.sphere.roll_for",
+    "part": "sphere",
+    "label": "Rolls for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x36e",
+    "code": "0x9",
+    "at": "0x36e",
+    "form": "op"
+   },
+   {
+    "key": "script.sphere.wobble",
+    "part": "sphere",
+    "label": "Wobble",
+    "doc": "How far it sways back and forth (the shimmer too)",
+    "type": "choice",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x380",
+    "code": "0xb",
+    "options": [
+     {
+      "label": "None",
+      "bytes": {
+       "0x386": "0000",
+       "0x390": "0000"
+      }
+     },
+     {
+      "label": "Small",
+      "bytes": {
+       "0x386": "80fe",
+       "0x390": "8001"
+      }
+     },
+     {
+      "label": "The game",
+      "bytes": {
+       "0x386": "00fd",
+       "0x390": "0003"
+      }
+     },
+     {
+      "label": "Large",
+      "bytes": {
+       "0x386": "00fa",
+       "0x390": "0006"
+      }
+     },
+     {
+      "label": "Very large",
+      "bytes": {
+       "0x386": "00f4",
+       "0x390": "000c"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.sphere.pulse",
+    "part": "sphere",
+    "label": "Pulse",
+    "doc": "How much it swells and shrinks",
+    "type": "choice",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x3ae",
+    "code": "0xf",
+    "options": [
+     {
+      "label": "None",
+      "bytes": {
+       "0x3b0": "0000",
+       "0x3b6": "0000"
+      }
+     },
+     {
+      "label": "Small",
+      "bytes": {
+       "0x3b0": "0002",
+       "0x3b6": "00fe"
+      }
+     },
+     {
+      "label": "The game",
+      "bytes": {
+       "0x3b0": "0004",
+       "0x3b6": "00fc"
+      }
+     },
+     {
+      "label": "Large",
+      "bytes": {
+       "0x3b0": "0008",
+       "0x3b6": "00f8"
+      }
+     },
+     {
+      "label": "Very large",
+      "bytes": {
+       "0x3b0": "0010",
+       "0x3b6": "00f0"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.sphere.ripple",
+    "part": "sphere",
+    "label": "Ripples change every",
+    "doc": "Ticks: its surface moves between four shapes (the inner layer too)",
+    "type": "choice",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x428",
+    "code": "0x9",
+    "options": [
+     {
+      "label": "4",
+      "bytes": {
+       "0x428": "0908",
+       "0x432": "0908",
+       "0x43c": "0908",
+       "0x446": "0908"
+      }
+     },
+     {
+      "label": "8",
+      "bytes": {
+       "0x428": "0910",
+       "0x432": "0910",
+       "0x43c": "0910",
+       "0x446": "0910"
+      }
+     },
+     {
+      "label": "16",
+      "bytes": {
+       "0x428": "0920",
+       "0x432": "0920",
+       "0x43c": "0920",
+       "0x446": "0920"
+      }
+     },
+     {
+      "label": "32",
+      "bytes": {
+       "0x428": "0940",
+       "0x432": "0940",
+       "0x43c": "0940",
+       "0x446": "0940"
+      }
+     },
+     {
+      "label": "64",
+      "bytes": {
+       "0x428": "0980",
+       "0x432": "0980",
+       "0x43c": "0980",
+       "0x446": "0980"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.sphere.rise.up",
+    "part": "sphere",
+    "label": "Rises by",
+    "doc": "Speed added each tick (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x1e0",
+    "code": "0xc",
+    "at": "0x1e2",
+    "form": "s16"
+   },
+   {
+    "key": "script.sphere.rise.up_for",
+    "part": "sphere",
+    "label": "Speeds up for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x1e4",
+    "code": "0x9",
+    "at": "0x1e4",
+    "form": "op"
+   },
+   {
+    "key": "script.sphere.rise.hold",
+    "part": "sphere",
+    "label": "Then for",
+    "doc": "Ticks at the speed reached",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x1ea",
+    "code": "0x9",
+    "at": "0x1ea",
+    "form": "op"
+   },
+   {
+    "key": "script.sphere.rise.down",
+    "part": "sphere",
+    "label": "Then slows by",
+    "doc": "Speed taken off each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x1ec",
+    "code": "0xc",
+    "at": "0x1ee",
+    "form": "s16"
+   },
+   {
+    "key": "script.sphere.rise.down_for",
+    "part": "sphere",
+    "label": "Slows for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x1f0",
+    "code": "0x9",
+    "at": "0x1f0",
+    "form": "op"
+   },
+   {
+    "key": "script.sphere.burst.roll",
+    "part": "sphere",
+    "label": "Rolls by",
+    "doc": "Each tick as it bursts",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -16384,
+    "inst": "0x378",
+    "code": "0xb",
+    "at": "0x37a",
+    "form": "s16"
+   },
+   {
+    "key": "script.sphere.burst.grow",
+    "part": "sphere",
+    "label": "Grows by",
+    "doc": "As it bursts",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 32,
+    "inst": "0x3da",
+    "code": "0x87",
+    "at": "0x3dc",
+    "form": "s16"
+   },
+   {
+    "key": "script.sphere.burst.for",
+    "part": "sphere",
+    "label": "Lasts",
+    "doc": "Ticks before it is gone",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x3e0",
+    "code": "0x9",
+    "at": "0x3e0",
+    "form": "op"
+   },
+   {
+    "key": "script.inner.texture",
+    "part": "inner",
+    "label": "Texture",
+    "doc": "Which of the file's five textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 0,
+    "inst": "0x408",
+    "code": "0x52",
+    "at": "0x40a",
+    "form": "s16"
+   },
+   {
+    "key": "script.inner.fade",
+    "part": "inner",
+    "label": "Brightens by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1024,
+    "inst": "0x3ec",
+    "code": "0xe",
+    "at": "0x3ee",
+    "form": "s16"
+   },
+   {
+    "key": "script.inner.fade_for",
+    "part": "inner",
+    "label": "Brightens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x3f0",
+    "code": "0x9",
+    "at": "0x3f0",
+    "form": "op"
+   },
+   {
+    "key": "script.inner.burst",
+    "part": "inner",
+    "label": "Fades by",
+    "doc": "Each tick as the sphere bursts (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -8192,
+    "inst": "0x3f8",
+    "code": "0xe",
+    "at": "0x3fa",
+    "form": "s16"
+   },
+   {
+    "key": "script.shimmer.spin",
+    "part": "shimmer",
+    "label": "Turning",
+    "doc": "Each tick at first",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 7168,
+    "inst": "0x4be",
+    "code": "0xb",
+    "at": "0x4c0",
+    "form": "s16"
+   },
+   {
+    "key": "script.shimmer.spin_for",
+    "part": "shimmer",
+    "label": "Turns for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x4c2",
+    "code": "0x9",
+    "at": "0x4c2",
+    "form": "op"
+   },
+   {
+    "key": "script.shimmer.spin_then",
+    "part": "shimmer",
+    "label": "Then turning",
+    "doc": "Each tick once the sphere rises",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -2048,
+    "inst": "0x4cc",
+    "code": "0xb",
+    "at": "0x4ce",
+    "form": "s16"
+   },
+   {
+    "key": "script.shimmer.spin_then_for",
+    "part": "shimmer",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0x4d0",
+    "code": "0x9",
+    "at": "0x4d0",
+    "form": "op"
+   },
+   {
+    "key": "script.foam.height",
+    "part": "foam",
+    "label": "Height",
+    "doc": "Where it is released, from the target's feet (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -256,
+    "inst": "0x510",
+    "code": "0xa",
+    "at": "0x512",
+    "form": "s16"
+   },
+   {
+    "key": "script.foam.count",
+    "part": "foam",
+    "label": "Released at once",
+    "doc": "",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 12,
+    "inst": "0x51e",
+    "code": "0x1e",
+    "at": "0x520",
+    "form": "s16"
+   },
+   {
+    "key": "script.foam.then",
+    "part": "foam",
+    "label": "Then 2 per tick for",
+    "doc": "Ticks (at most 48: foam still drawn when the effect ends crashes the game)",
+    "type": "int",
+    "min": 1,
+    "max": 48,
+    "default": 8,
+    "inst": "0x52a",
+    "code": "0x1e",
+    "at": "0x52c",
+    "form": "s16"
+   },
+   {
+    "key": "script.foam.one.frames",
+    "part": "foam",
+    "label": "Picture",
+    "doc": "Which picture of its sprite (0 or 1)",
+    "type": "int",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x540",
+    "code": "0x7",
+    "at": "0x541",
+    "form": "hi"
+   },
+   {
+    "key": "script.foam.one.size",
+    "part": "foam",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x542",
+    "code": "0x4",
+    "at": "0x544",
+    "form": "s16"
+   },
+   {
+    "key": "script.foam.one.size_random",
+    "part": "foam",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x546",
+    "code": "0x5",
+    "at": "0x548",
+    "form": "s16"
+   },
+   {
+    "key": "script.foam.one.spread",
+    "part": "foam",
+    "label": "Spread",
+    "doc": "How far around where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 16383,
+    "default": 5120,
+    "inst": "0x54a",
+    "code": "0x12",
+    "at": "0x54c",
+    "form": "s16"
+   },
+   {
+    "key": "script.foam.one.rise",
+    "part": "foam",
+    "label": "Speed up/down",
+    "doc": "Height units / 16 per tick (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -256,
+    "inst": "0x54e",
+    "code": "0x4",
+    "at": "0x550",
+    "form": "s16"
+   },
+   {
+    "key": "script.foam.one.rise_random",
+    "part": "foam",
+    "label": "Speed, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x552",
+    "code": "0x5",
+    "at": "0x556",
+    "form": "s16"
+   },
+   {
+    "key": "script.foam.one.slowing",
+    "part": "foam",
+    "label": "Slowing",
+    "doc": "Taken off its speed each tick (negative: speeds up going up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -64,
+    "inst": "0x55a",
+    "code": "0x4",
+    "at": "0x55c",
+    "form": "s16"
+   },
+   {
+    "key": "script.foam.one.life",
+    "part": "foam",
+    "label": "Lives for",
+    "doc": "Ticks: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x55e",
+    "code": "0x1",
+    "at": "0x55f",
+    "form": "hi"
+   },
+   {
+    "key": "script.rising.height",
+    "part": "rising",
+    "label": "Height",
+    "doc": "Where they are released, from the target's feet (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -512,
+    "inst": "0x568",
+    "code": "0xa",
+    "at": "0x56a",
+    "form": "s16"
+   },
+   {
+    "key": "script.rising.count",
+    "part": "rising",
+    "label": "Released at once",
+    "doc": "",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x57a",
+    "code": "0x1e",
+    "at": "0x57c",
+    "form": "s16"
+   },
+   {
+    "key": "script.rising.then",
+    "part": "rising",
+    "label": "Then 2 per tick for",
+    "doc": "Ticks (at most 24: bubbles still drawn when the effect ends crash the game)",
+    "type": "int",
+    "min": 1,
+    "max": 24,
+    "default": 16,
+    "inst": "0x586",
+    "code": "0x1e",
+    "at": "0x588",
+    "form": "s16"
+   },
+   {
+    "key": "script.rising.one.frames",
+    "part": "rising",
+    "label": "Picture",
+    "doc": "Which picture of its sprite (0 or 1)",
+    "type": "int",
+    "min": 0,
+    "max": 1,
+    "default": 1,
+    "inst": "0x59c",
+    "code": "0x7",
+    "at": "0x59d",
+    "form": "hi"
+   },
+   {
+    "key": "script.rising.one.size",
+    "part": "rising",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x59e",
+    "code": "0x4",
+    "at": "0x5a0",
+    "form": "s16"
+   },
+   {
+    "key": "script.rising.one.size_random",
+    "part": "rising",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x5a2",
+    "code": "0x5",
+    "at": "0x5a4",
+    "form": "s16"
+   },
+   {
+    "key": "script.rising.one.spread",
+    "part": "rising",
+    "label": "Spread",
+    "doc": "How far around where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 16383,
+    "default": 5120,
+    "inst": "0x5a6",
+    "code": "0x12",
+    "at": "0x5a8",
+    "form": "s16"
+   },
+   {
+    "key": "script.rising.one.rise",
+    "part": "rising",
+    "label": "Speed up/down",
+    "doc": "Height units / 16 per tick (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1024,
+    "inst": "0x5aa",
+    "code": "0x4",
+    "at": "0x5ac",
+    "form": "s16"
+   },
+   {
+    "key": "script.rising.one.rise_random",
+    "part": "rising",
+    "label": "Speed, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x5ae",
+    "code": "0x5",
+    "at": "0x5b2",
+    "form": "s16"
+   },
+   {
+    "key": "script.rising.one.colour.r",
+    "part": "rising",
+    "label": "Red at first",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 0,
+    "inst": "0x5b6",
+    "code": "0xb",
+    "at": "0x5b7",
+    "form": "hi"
+   },
+   {
+    "key": "script.rising.one.colour.g",
+    "part": "rising",
+    "label": "Green at first",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 0,
+    "inst": "0x5b6",
+    "code": "0xb",
+    "at": "0x5b8",
+    "form": "u8"
+   },
+   {
+    "key": "script.rising.one.colour.b",
+    "part": "rising",
+    "label": "Blue at first",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 0,
+    "inst": "0x5b6",
+    "code": "0xb",
+    "at": "0x5b9",
+    "form": "u8"
+   },
+   {
+    "key": "script.rising.one.colour.in_r",
+    "part": "rising",
+    "label": "Red brightening",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": 32,
+    "inst": "0x5ba",
+    "code": "0xc",
+    "at": "0x5bb",
+    "form": "s8"
+   },
+   {
+    "key": "script.rising.one.colour.in_g",
+    "part": "rising",
+    "label": "Green brightening",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": 32,
+    "inst": "0x5ba",
+    "code": "0xc",
+    "at": "0x5bc",
+    "form": "s8"
+   },
+   {
+    "key": "script.rising.one.colour.in_b",
+    "part": "rising",
+    "label": "Blue brightening",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": 32,
+    "inst": "0x5ba",
+    "code": "0xc",
+    "at": "0x5bd",
+    "form": "s8"
+   },
+   {
+    "key": "script.rising.one.colour.in_for",
+    "part": "rising",
+    "label": "Brightens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 4,
+    "inst": "0x5be",
+    "code": "0x1",
+    "at": "0x5bf",
+    "form": "hi"
+   },
+   {
+    "key": "script.rising.one.colour.out_r",
+    "part": "rising",
+    "label": "Red fading",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": -8,
+    "inst": "0x5c0",
+    "code": "0xc",
+    "at": "0x5c1",
+    "form": "s8"
+   },
+   {
+    "key": "script.rising.one.colour.out_g",
+    "part": "rising",
+    "label": "Green fading",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": -8,
+    "inst": "0x5c0",
+    "code": "0xc",
+    "at": "0x5c2",
+    "form": "s8"
+   },
+   {
+    "key": "script.rising.one.colour.out_b",
+    "part": "rising",
+    "label": "Blue fading",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": -9,
+    "inst": "0x5c0",
+    "code": "0xc",
+    "at": "0x5c3",
+    "form": "s8"
+   },
+   {
+    "key": "script.rising.one.colour.out_for",
+    "part": "rising",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 16,
+    "inst": "0x5c4",
+    "code": "0x1",
+    "at": "0x5c5",
+    "form": "hi"
+   },
+   {
+    "key": "script.drops.count",
+    "part": "drops",
+    "label": "Thrown at once",
+    "doc": "",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 6,
+    "inst": "0x5ce",
+    "code": "0x1e",
+    "at": "0x5d0",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.then",
+    "part": "drops",
+    "label": "Then one per tick for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 2,
+    "inst": "0x5da",
+    "code": "0x1e",
+    "at": "0x5dc",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.spread",
+    "part": "drops",
+    "label": "Spread",
+    "doc": "How far around the target they start, at random",
+    "type": "int",
+    "min": 0,
+    "max": 16383,
+    "default": 5120,
+    "inst": "0x5f6",
+    "code": "0x76",
+    "at": "0x5f8",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.width",
+    "part": "drops",
+    "label": "Width",
+    "doc": "Size of each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x61c",
+    "code": "0xa",
+    "at": "0x61e",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.height",
+    "part": "drops",
+    "label": "Height",
+    "doc": "Size of each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x61c",
+    "code": "0xa",
+    "at": "0x620",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.size_random",
+    "part": "drops",
+    "label": "Size, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 24,
+    "inst": "0x624",
+    "code": "0x16",
+    "at": "0x626",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.out",
+    "part": "drops",
+    "label": "Speed out",
+    "doc": "Away from the target, each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 64,
+    "inst": "0x62c",
+    "code": "0x11",
+    "at": "0x62e",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.up",
+    "part": "drops",
+    "label": "Speed up",
+    "doc": "Each tick (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -256,
+    "inst": "0x630",
+    "code": "0x11",
+    "at": "0x632",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.out_random",
+    "part": "drops",
+    "label": "Speed out, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 32,
+    "inst": "0x634",
+    "code": "0x15",
+    "at": "0x636",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.up_random",
+    "part": "drops",
+    "label": "Speed up, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x634",
+    "code": "0x15",
+    "at": "0x638",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.fall",
+    "part": "drops",
+    "label": "Falls by",
+    "doc": "Speed added each tick (pulls it down). At least 3584: slower, they land as the effect ends and crash the game",
+    "type": "int",
+    "min": 3584,
+    "max": 32767,
+    "default": 6144,
+    "inst": "0x63c",
+    "code": "0xc",
+    "at": "0x63e",
+    "form": "s16"
+   },
+   {
+    "key": "script.drops.land",
+    "part": "drops",
+    "label": "Lands at",
+    "doc": "The height where it splashes (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -256,
+    "inst": "0x642",
+    "code": "0xe7",
+    "at": "0x646",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.size",
+    "part": "ring",
+    "label": "Size",
+    "doc": "When it appears",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x698",
+    "code": "0xd",
+    "at": "0x69a",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.size_random",
+    "part": "ring",
+    "label": "Size, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 24,
+    "inst": "0x69c",
+    "code": "0x16",
+    "at": "0x69e",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.grow",
+    "part": "ring",
+    "label": "Grows by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x6a8",
+    "code": "0xe",
+    "at": "0x6aa",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.blend",
+    "part": "ring",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x6a4",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x6a4": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x6a4": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x6a4": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x6a4": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.ring.life",
+    "part": "ring",
+    "label": "Lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x6b2",
+    "code": "0x1e",
+    "at": "0x6b4",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.height",
+    "part": "splash",
+    "label": "Height",
+    "doc": "Where it is released, from where the bubble landed (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -256,
+    "inst": "0x6ce",
+    "code": "0xa",
+    "at": "0x6d0",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.count",
+    "part": "splash",
+    "label": "Released at once",
+    "doc": "One drop and one puff each",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 6,
+    "inst": "0x6dc",
+    "code": "0x1e",
+    "at": "0x6de",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.then",
+    "part": "splash",
+    "label": "Then one each per tick for",
+    "doc": "Ticks (at most 24: spray still drawn when the effect ends crashes the game)",
+    "type": "int",
+    "min": 1,
+    "max": 24,
+    "default": 2,
+    "inst": "0x6ec",
+    "code": "0x1e",
+    "at": "0x6ee",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.drop.frames",
+    "part": "splash",
+    "label": "Picture",
+    "doc": "Which picture of its sprite (0 or 1)",
+    "type": "int",
+    "min": 0,
+    "max": 1,
+    "default": 1,
+    "inst": "0x710",
+    "code": "0x7",
+    "at": "0x711",
+    "form": "hi"
+   },
+   {
+    "key": "script.splash.drop.size",
+    "part": "splash",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x714",
+    "code": "0x4",
+    "at": "0x716",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.drop.size_random",
+    "part": "splash",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 8,
+    "inst": "0x718",
+    "code": "0x5",
+    "at": "0x71a",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.drop.spread_x",
+    "part": "splash",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x71c",
+    "code": "0x5",
+    "at": "0x71e",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.drop.spread_y",
+    "part": "splash",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x71c",
+    "code": "0x5",
+    "at": "0x720",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.drop.spread_z",
+    "part": "splash",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x71c",
+    "code": "0x5",
+    "at": "0x722",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.drop.rise",
+    "part": "splash",
+    "label": "Speed up/down",
+    "doc": "Height units / 16 per tick (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -512,
+    "inst": "0x724",
+    "code": "0x4",
+    "at": "0x726",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.drop.rise_random",
+    "part": "splash",
+    "label": "Speed, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x728",
+    "code": "0x5",
+    "at": "0x72c",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.drop.colour.r",
+    "part": "splash",
+    "label": "Red at first",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 0,
+    "inst": "0x730",
+    "code": "0xb",
+    "at": "0x731",
+    "form": "hi"
+   },
+   {
+    "key": "script.splash.drop.colour.g",
+    "part": "splash",
+    "label": "Green at first",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 0,
+    "inst": "0x730",
+    "code": "0xb",
+    "at": "0x732",
+    "form": "u8"
+   },
+   {
+    "key": "script.splash.drop.colour.b",
+    "part": "splash",
+    "label": "Blue at first",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 0,
+    "inst": "0x730",
+    "code": "0xb",
+    "at": "0x733",
+    "form": "u8"
+   },
+   {
+    "key": "script.splash.drop.colour.in_r",
+    "part": "splash",
+    "label": "Red brightening",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": 32,
+    "inst": "0x734",
+    "code": "0xc",
+    "at": "0x735",
+    "form": "s8"
+   },
+   {
+    "key": "script.splash.drop.colour.in_g",
+    "part": "splash",
+    "label": "Green brightening",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": 32,
+    "inst": "0x734",
+    "code": "0xc",
+    "at": "0x736",
+    "form": "s8"
+   },
+   {
+    "key": "script.splash.drop.colour.in_b",
+    "part": "splash",
+    "label": "Blue brightening",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": 32,
+    "inst": "0x734",
+    "code": "0xc",
+    "at": "0x737",
+    "form": "s8"
+   },
+   {
+    "key": "script.splash.drop.colour.in_for",
+    "part": "splash",
+    "label": "Brightens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 4,
+    "inst": "0x738",
+    "code": "0x1",
+    "at": "0x739",
+    "form": "hi"
+   },
+   {
+    "key": "script.splash.drop.colour.out_r",
+    "part": "splash",
+    "label": "Red fading",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": -8,
+    "inst": "0x73a",
+    "code": "0xc",
+    "at": "0x73b",
+    "form": "s8"
+   },
+   {
+    "key": "script.splash.drop.colour.out_g",
+    "part": "splash",
+    "label": "Green fading",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": -8,
+    "inst": "0x73a",
+    "code": "0xc",
+    "at": "0x73c",
+    "form": "s8"
+   },
+   {
+    "key": "script.splash.drop.colour.out_b",
+    "part": "splash",
+    "label": "Blue fading",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": -9,
+    "inst": "0x73a",
+    "code": "0xc",
+    "at": "0x73d",
+    "form": "s8"
+   },
+   {
+    "key": "script.splash.drop.colour.out_for",
+    "part": "splash",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 16,
+    "inst": "0x73e",
+    "code": "0x1",
+    "at": "0x73f",
+    "form": "hi"
+   },
+   {
+    "key": "script.splash.puff.frames",
+    "part": "splash",
+    "label": "Picture",
+    "doc": "Which picture of its sprite (0 or 1)",
+    "type": "int",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x744",
+    "code": "0x7",
+    "at": "0x745",
+    "form": "hi"
+   },
+   {
+    "key": "script.splash.puff.size",
+    "part": "splash",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x746",
+    "code": "0x4",
+    "at": "0x748",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.puff.size_random",
+    "part": "splash",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x74a",
+    "code": "0x5",
+    "at": "0x74c",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.puff.spread_x",
+    "part": "splash",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x74e",
+    "code": "0x5",
+    "at": "0x750",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.puff.spread_y",
+    "part": "splash",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x74e",
+    "code": "0x5",
+    "at": "0x752",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.puff.spread_z",
+    "part": "splash",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x74e",
+    "code": "0x5",
+    "at": "0x754",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.puff.rise",
+    "part": "splash",
+    "label": "Speed up/down",
+    "doc": "Height units / 16 per tick (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x756",
+    "code": "0x4",
+    "at": "0x758",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.puff.rise_random",
+    "part": "splash",
+    "label": "Speed, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x75a",
+    "code": "0x5",
+    "at": "0x75e",
+    "form": "s16"
+   },
+   {
+    "key": "script.splash.puff.life",
+    "part": "splash",
+    "label": "Lives for",
+    "doc": "Ticks: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x762",
+    "code": "0x1",
+    "at": "0x763",
+    "form": "hi"
+   }
+  ]
+ }
 }

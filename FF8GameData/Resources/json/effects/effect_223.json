@@ -162,5 +162,2142 @@
    "address": "0x186C314",
    "size": 1312
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag222_b.00",
+  "param": "files.file00",
+  "size": 59012,
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When things happen, and the camera. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 1678,
+    "key": "streaks",
+    "title": "Light streaks",
+    "paths": [],
+    "doc": "The yellow lines flying out from the middle of the screen as the caster flies into space"
+   },
+   {
+    "id": 980,
+    "key": "hole",
+    "title": "Dark hole",
+    "paths": [],
+    "doc": "The dark spiky shape that grows in the middle of the screen before space appears"
+   },
+   {
+    "id": 1204,
+    "key": "space",
+    "title": "Space",
+    "paths": [],
+    "doc": "The nebula all around while the meteors fall"
+   },
+   {
+    "id": 1290,
+    "key": "stars",
+    "title": "Stars",
+    "paths": [],
+    "doc": "The coloured stars in front of space, their colours cycling"
+   },
+   {
+    "id": 1916,
+    "key": "rocks",
+    "title": "Meteors",
+    "paths": [
+     67452
+    ],
+    "doc": "The rocks falling on the target"
+   },
+   {
+    "id": 2206,
+    "key": "trails",
+    "title": "Trails",
+    "paths": [],
+    "doc": "The faint red trail behind each meteor"
+   },
+   {
+    "id": 2424,
+    "key": "fire",
+    "title": "Fireballs",
+    "paths": [
+     67960
+    ],
+    "doc": "The fire where a meteor lands, and the fire bursting on the target"
+   },
+   {
+    "id": 2460,
+    "key": "rings",
+    "title": "Fire rings",
+    "paths": [],
+    "doc": "The white rings of fire around each fireball"
+   },
+   {
+    "id": 814,
+    "key": "flash",
+    "title": "Screen flashes",
+    "paths": [],
+    "doc": "White flashes of the whole screen as the meteors hit, then the white screen at the end"
+   },
+   {
+    "id": 2694,
+    "key": "picture",
+    "title": "Picture fade",
+    "paths": [],
+    "doc": "The battle picture taken at the start, laid over the screen when the battle comes back, then faded out"
+   }
+  ],
+  "groups": [
+   {
+    "key": "script.timing.space",
+    "label": "Space appears after",
+    "doc": "Ticks from the start: these four waits added up (the game: 50). The streaks and the dark hole come first"
+   },
+   {
+    "key": "script.timing.fall",
+    "label": "Meteors fall for",
+    "doc": "Ticks: these two waits added up (the game: 112). The screen then turns white"
+   },
+   {
+    "key": "script.timing.back",
+    "label": "Battle back after",
+    "doc": "Ticks after space goes: these two waits added up (the game: 4). The last meteors' fire stops then"
+   },
+   {
+    "key": "script.timing.end",
+    "label": "Ends after",
+    "doc": "Ticks after the battle is back: these two waits added up (the game: 26)"
+   },
+   {
+    "key": "script.streaks.length",
+    "label": "Length",
+    "doc": "Each streak stretches, holds, then shrinks"
+   },
+   {
+    "key": "script.hole.dark",
+    "label": "Darkness",
+    "doc": "It darkens in, then fades when space appears"
+   },
+   {
+    "key": "script.hole.size",
+    "label": "Size",
+    "doc": "It grows faster and faster"
+   },
+   {
+    "key": "script.rocks.spin",
+    "label": "Spin",
+    "doc": "How it tumbles, each tick"
+   },
+   {
+    "key": "script.trails.light",
+    "label": "Brightness",
+    "doc": "It lights up, holds, then fades"
+   },
+   {
+    "key": "script.fire.light",
+    "label": "Brightness",
+    "doc": "Fireballs and rings light up, hold, then fade"
+   },
+   {
+    "key": "script.fire.target",
+    "label": "Fire on the target",
+    "doc": "More fire bursts on the target itself, once the meteors fall"
+   },
+   {
+    "key": "script.flash.gap",
+    "label": "Then after",
+    "doc": "Ticks between the next four flashes"
+   },
+   {
+    "key": "script.flash.white",
+    "label": "White screen",
+    "doc": "When the meteors stop the screen turns white, then clears as the battle comes back"
+   }
+  ],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x70",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x70": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x70": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.space.w1",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0xb6",
+    "code": "0x9",
+    "at": "0xb6",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.space.w2",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0xb8",
+    "code": "0x9",
+    "at": "0xb8",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.space.w3",
+    "part": "timing",
+    "label": "Wait 3",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0xbe",
+    "code": "0x9",
+    "at": "0xbe",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.space.w4",
+    "part": "timing",
+    "label": "Wait 4",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0xc4",
+    "code": "0x9",
+    "at": "0xc4",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.streaks_stop",
+    "part": "timing",
+    "label": "Streaks slow down after",
+    "doc": "Ticks after space appears: the light streaks thin out and stop",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0xd8",
+    "code": "0x9",
+    "at": "0xd8",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.meteors",
+    "part": "timing",
+    "label": "Meteors start after",
+    "doc": "Ticks after the streaks slow down",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0xde",
+    "code": "0x9",
+    "at": "0xde",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.fall.first",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 48,
+    "inst": "0xe4",
+    "code": "0x9",
+    "at": "0xe4",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.fall.second",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 64,
+    "inst": "0xe6",
+    "code": "0x9",
+    "at": "0xe6",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.hit",
+    "part": "timing",
+    "label": "Damage starts after",
+    "doc": "Ticks after the meteors start",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 48,
+    "inst": "0xaf6",
+    "code": "0x9",
+    "at": "0xaf6",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.hit_spread",
+    "part": "timing",
+    "label": "Damage spread over",
+    "doc": "Ticks: each target's damage comes in turn over these (one target: halfway). At most 64, the time it is given",
+    "type": "int",
+    "min": 1,
+    "max": 64,
+    "default": 64,
+    "inst": "0xaf8",
+    "code": "0x44",
+    "at": "0xafe",
+    "form": "s16"
+   },
+   {
+    "key": "script.timing.space_goes",
+    "part": "timing",
+    "label": "Space goes after",
+    "doc": "Ticks after the meteors stop",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0xec",
+    "code": "0x9",
+    "at": "0xec",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.back.first",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0xfa",
+    "code": "0x9",
+    "at": "0xfa",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.back.second",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0xfc",
+    "code": "0x9",
+    "at": "0xfc",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.first",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0x108",
+    "code": "0x9",
+    "at": "0x108",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.second",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0x10a",
+    "code": "0x9",
+    "at": "0x10a",
+    "form": "op"
+   },
+   {
+    "key": "script.streaks.distance",
+    "part": "streaks",
+    "label": "Distance",
+    "doc": "How far in front of the camera they fly out from",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 18432,
+    "inst": "0x5b4",
+    "code": "0xa",
+    "at": "0x5ba",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.angle",
+    "part": "streaks",
+    "label": "Angle",
+    "doc": "How far they lean towards the camera (4096 = a whole turn)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x66e",
+    "code": "0xa",
+    "at": "0x670",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.angle_random",
+    "part": "streaks",
+    "label": "Angle, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4096,
+    "default": 128,
+    "inst": "0x676",
+    "code": "0x12",
+    "at": "0x678",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.around_random",
+    "part": "streaks",
+    "label": "Around, random",
+    "doc": "Added at random (4096: all around)",
+    "type": "int",
+    "min": 0,
+    "max": 4096,
+    "default": 4096,
+    "inst": "0x676",
+    "code": "0x12",
+    "at": "0x67c",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.turn",
+    "part": "streaks",
+    "label": "Turning",
+    "doc": "Around the centre, each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 5120,
+    "inst": "0x67e",
+    "code": "0xb",
+    "at": "0x680",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.turn_random",
+    "part": "streaks",
+    "label": "Turning, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x682",
+    "code": "0x13",
+    "at": "0x684",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.turn_faster",
+    "part": "streaks",
+    "label": "Speeds up by",
+    "doc": "Turning added each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x686",
+    "code": "0xc",
+    "at": "0x688",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.life",
+    "part": "streaks",
+    "label": "Lives for",
+    "doc": "Ticks each streak is drawn",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x68a",
+    "code": "0x9",
+    "at": "0x68a",
+    "form": "op"
+   },
+   {
+    "key": "script.streaks.start",
+    "part": "streaks",
+    "label": "Starts at",
+    "doc": "Distance from the centre (negative: out)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -2048,
+    "inst": "0x69e",
+    "code": "0xa",
+    "at": "0x6a2",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.speed",
+    "part": "streaks",
+    "label": "Speed out",
+    "doc": "Each tick (negative: out)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -512,
+    "inst": "0x6b2",
+    "code": "0x11",
+    "at": "0x6b4",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.width",
+    "part": "streaks",
+    "label": "Width",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 96,
+    "inst": "0x6a6",
+    "code": "0xa",
+    "at": "0x6a8",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.thickness",
+    "part": "streaks",
+    "label": "Thickness",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 96,
+    "inst": "0x6a6",
+    "code": "0xa",
+    "at": "0x6ac",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.blend",
+    "part": "streaks",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x6ae",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x6ae": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x6ae": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x6ae": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x6ae": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.streaks.length.grow",
+    "part": "streaks",
+    "label": "Stretches by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 16384,
+    "inst": "0x6b6",
+    "code": "0xb",
+    "at": "0x6b8",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.length.grow_for",
+    "part": "streaks",
+    "label": "Stretches for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x6ba",
+    "code": "0x9",
+    "at": "0x6ba",
+    "form": "op"
+   },
+   {
+    "key": "script.streaks.length.hold",
+    "part": "streaks",
+    "label": "Holds for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x6c0",
+    "code": "0x9",
+    "at": "0x6c0",
+    "form": "op"
+   },
+   {
+    "key": "script.streaks.length.shrink",
+    "part": "streaks",
+    "label": "Shrinks by",
+    "doc": "Each tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -16384,
+    "inst": "0x6c2",
+    "code": "0xb",
+    "at": "0x6c4",
+    "form": "s16"
+   },
+   {
+    "key": "script.streaks.length.shrink_for",
+    "part": "streaks",
+    "label": "Shrinks for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x6c6",
+    "code": "0x9",
+    "at": "0x6c6",
+    "form": "op"
+   },
+   {
+    "key": "script.hole.distance",
+    "part": "hole",
+    "label": "Distance",
+    "doc": "How far in front of the camera",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 10240,
+    "inst": "0x396",
+    "code": "0xa",
+    "at": "0x39c",
+    "form": "s16"
+   },
+   {
+    "key": "script.hole.spin",
+    "part": "hole",
+    "label": "Turning",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 8,
+    "inst": "0x3a2",
+    "code": "0x11",
+    "at": "0x3a4",
+    "form": "s16"
+   },
+   {
+    "key": "script.hole.texture",
+    "part": "hole",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 6,
+    "default": 6,
+    "inst": "0x3dc",
+    "code": "0x52",
+    "at": "0x3de",
+    "form": "s16"
+   },
+   {
+    "key": "script.hole.blend",
+    "part": "hole",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 2,
+    "inst": "0x3fa",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x3fa": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x3fa": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x3fa": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x3fa": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.hole.dark.in",
+    "part": "hole",
+    "label": "Darkens by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x3bc",
+    "code": "0xe",
+    "at": "0x3be",
+    "form": "s16"
+   },
+   {
+    "key": "script.hole.dark.in_for",
+    "part": "hole",
+    "label": "Darkens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x3c0",
+    "code": "0x9",
+    "at": "0x3c0",
+    "form": "op"
+   },
+   {
+    "key": "script.hole.dark.out",
+    "part": "hole",
+    "label": "Fades by",
+    "doc": "Each tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x3cc",
+    "code": "0xe",
+    "at": "0x3ce",
+    "form": "s16"
+   },
+   {
+    "key": "script.hole.size.grow",
+    "part": "hole",
+    "label": "Grows by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x3fc",
+    "code": "0xe",
+    "at": "0x3fe",
+    "form": "s16"
+   },
+   {
+    "key": "script.hole.size.faster",
+    "part": "hole",
+    "label": "Then faster by",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 16,
+    "inst": "0x400",
+    "code": "0xf",
+    "at": "0x402",
+    "form": "s16"
+   },
+   {
+    "key": "script.hole.size.faster_for",
+    "part": "hole",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0x404",
+    "code": "0x9",
+    "at": "0x404",
+    "form": "op"
+   },
+   {
+    "key": "script.hole.size.fastest",
+    "part": "hole",
+    "label": "Then faster by",
+    "doc": "Added each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1024,
+    "inst": "0x406",
+    "code": "0xf",
+    "at": "0x408",
+    "form": "s16"
+   },
+   {
+    "key": "script.hole.size.fastest_for",
+    "part": "hole",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0x40a",
+    "code": "0x9",
+    "at": "0x40a",
+    "form": "op"
+   },
+   {
+    "key": "script.space.distance",
+    "part": "space",
+    "label": "Distance",
+    "doc": "How far in front of the camera",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 28672,
+    "inst": "0x47e",
+    "code": "0xa",
+    "at": "0x484",
+    "form": "s16"
+   },
+   {
+    "key": "script.space.spin_x",
+    "part": "space",
+    "label": "Turning X",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -3072,
+    "inst": "0x490",
+    "code": "0xb",
+    "at": "0x492",
+    "form": "s16"
+   },
+   {
+    "key": "script.space.spin_y",
+    "part": "space",
+    "label": "Turning Y",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1536,
+    "inst": "0x490",
+    "code": "0xb",
+    "at": "0x494",
+    "form": "s16"
+   },
+   {
+    "key": "script.space.spin_z",
+    "part": "space",
+    "label": "Turning Z",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x490",
+    "code": "0xb",
+    "at": "0x496",
+    "form": "s16"
+   },
+   {
+    "key": "script.space.fade",
+    "part": "space",
+    "label": "Brightens by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x4a6",
+    "code": "0xe",
+    "at": "0x4a8",
+    "form": "s16"
+   },
+   {
+    "key": "script.space.fade_for",
+    "part": "space",
+    "label": "Brightens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x4aa",
+    "code": "0x9",
+    "at": "0x4aa",
+    "form": "op"
+   },
+   {
+    "key": "script.space.texture",
+    "part": "space",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 6,
+    "default": 0,
+    "inst": "0x4bc",
+    "code": "0x52",
+    "at": "0x4be",
+    "form": "s16"
+   },
+   {
+    "key": "script.space.size",
+    "part": "space",
+    "label": "Size",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x4c8",
+    "code": "0xd",
+    "at": "0x4ca",
+    "form": "s16"
+   },
+   {
+    "key": "script.space.blend",
+    "part": "space",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x4cc",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x4cc": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x4cc": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x4cc": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x4cc": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.stars.distance",
+    "part": "stars",
+    "label": "Distance",
+    "doc": "How far in front of the camera",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 16384,
+    "inst": "0x4ea",
+    "code": "0xa",
+    "at": "0x4f0",
+    "form": "s16"
+   },
+   {
+    "key": "script.stars.spin",
+    "part": "stars",
+    "label": "Turning",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -16,
+    "inst": "0x4fa",
+    "code": "0x11",
+    "at": "0x4fc",
+    "form": "s16"
+   },
+   {
+    "key": "script.stars.texture",
+    "part": "stars",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 6,
+    "default": 1,
+    "inst": "0x50e",
+    "code": "0x52",
+    "at": "0x510",
+    "form": "s16"
+   },
+   {
+    "key": "script.stars.size_x",
+    "part": "stars",
+    "label": "Size X",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x516",
+    "code": "0xa",
+    "at": "0x518",
+    "form": "s16"
+   },
+   {
+    "key": "script.stars.size_y",
+    "part": "stars",
+    "label": "Size Y",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x516",
+    "code": "0xa",
+    "at": "0x51a",
+    "form": "s16"
+   },
+   {
+    "key": "script.stars.size_z",
+    "part": "stars",
+    "label": "Depth",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 1024,
+    "inst": "0x516",
+    "code": "0xa",
+    "at": "0x51c",
+    "form": "s16"
+   },
+   {
+    "key": "script.stars.blend",
+    "part": "stars",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x51e",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x51e": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x51e": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x51e": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x51e": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.stars.colours",
+    "part": "stars",
+    "label": "Colours change by",
+    "doc": "How fast their colours cycle (their palette is tinted again each tick)",
+    "type": "choice",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x56e",
+    "code": "0xb",
+    "options": [
+     {
+      "label": "None",
+      "bytes": {
+       "0x570": "0000",
+       "0x57a": "0000",
+       "0x57c": "0000",
+       "0x586": "0000",
+       "0x588": "0000",
+       "0x58e": "0000",
+       "0x592": "0000"
+      }
+     },
+     {
+      "label": "Slow",
+      "bytes": {
+       "0x570": "80fe",
+       "0x57a": "8001",
+       "0x57c": "80fe",
+       "0x586": "8001",
+       "0x588": "80fe",
+       "0x58e": "80fe",
+       "0x592": "8001"
+      }
+     },
+     {
+      "label": "The game",
+      "bytes": {
+       "0x570": "00fd",
+       "0x57a": "0003",
+       "0x57c": "00fd",
+       "0x586": "0003",
+       "0x588": "00fd",
+       "0x58e": "00fd",
+       "0x592": "0003"
+      }
+     },
+     {
+      "label": "Fast",
+      "bytes": {
+       "0x570": "00fa",
+       "0x57a": "0006",
+       "0x57c": "00fa",
+       "0x586": "0006",
+       "0x588": "00fa",
+       "0x58e": "00fa",
+       "0x592": "0006"
+      }
+     },
+     {
+      "label": "Very fast",
+      "bytes": {
+       "0x570": "00f4",
+       "0x57a": "000c",
+       "0x57c": "00f4",
+       "0x586": "000c",
+       "0x588": "00f4",
+       "0x58e": "00f4",
+       "0x592": "000c"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.stars.colours_every",
+    "part": "stars",
+    "label": "Colours turn every",
+    "doc": "Ticks",
+    "type": "choice",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x576",
+    "code": "0x9",
+    "options": [
+     {
+      "label": "2",
+      "bytes": {
+       "0x576": "0904",
+       "0x580": "0904",
+       "0x58a": "0904",
+       "0x594": "0904"
+      }
+     },
+     {
+      "label": "4",
+      "bytes": {
+       "0x576": "0908",
+       "0x580": "0908",
+       "0x58a": "0908",
+       "0x594": "0908"
+      }
+     },
+     {
+      "label": "8",
+      "bytes": {
+       "0x576": "0910",
+       "0x580": "0910",
+       "0x58a": "0910",
+       "0x594": "0910"
+      }
+     },
+     {
+      "label": "16",
+      "bytes": {
+       "0x576": "0920",
+       "0x580": "0920",
+       "0x58a": "0920",
+       "0x594": "0920"
+      }
+     },
+     {
+      "label": "32",
+      "bytes": {
+       "0x576": "0940",
+       "0x580": "0940",
+       "0x58a": "0940",
+       "0x594": "0940"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.rocks.every",
+    "part": "rocks",
+    "label": "One every",
+    "doc": "Ticks, after the first five (20, 16, 12 and 8 ticks apart)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 6,
+    "inst": "0x6fc",
+    "code": "0x9",
+    "at": "0x6fc",
+    "form": "op"
+   },
+   {
+    "key": "script.rocks.height",
+    "part": "rocks",
+    "label": "Starts at",
+    "doc": "Height over the target (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -16384,
+    "inst": "0x70e",
+    "code": "0xa",
+    "at": "0x710",
+    "form": "s16"
+   },
+   {
+    "key": "script.rocks.angle_x",
+    "part": "rocks",
+    "label": "Angle X, random",
+    "doc": "How far from straight down, at random",
+    "type": "int",
+    "min": 0,
+    "max": 4096,
+    "default": 128,
+    "inst": "0x724",
+    "code": "0x12",
+    "at": "0x726",
+    "form": "s16"
+   },
+   {
+    "key": "script.rocks.angle_z",
+    "part": "rocks",
+    "label": "Angle Z, random",
+    "doc": "How far from straight down, at random",
+    "type": "int",
+    "min": 0,
+    "max": 4096,
+    "default": 128,
+    "inst": "0x724",
+    "code": "0x12",
+    "at": "0x72a",
+    "form": "s16"
+   },
+   {
+    "key": "script.rocks.texture",
+    "part": "rocks",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 6,
+    "default": 4,
+    "inst": "0x784",
+    "code": "0x52",
+    "at": "0x786",
+    "form": "s16"
+   },
+   {
+    "key": "script.rocks.spin.x",
+    "part": "rocks",
+    "label": "X",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 224,
+    "inst": "0x7a0",
+    "code": "0x11",
+    "at": "0x7a2",
+    "form": "s16"
+   },
+   {
+    "key": "script.rocks.spin.y",
+    "part": "rocks",
+    "label": "Y",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x7a0",
+    "code": "0x11",
+    "at": "0x7a4",
+    "form": "s16"
+   },
+   {
+    "key": "script.rocks.spin.z",
+    "part": "rocks",
+    "label": "Z",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 12,
+    "inst": "0x7a0",
+    "code": "0x11",
+    "at": "0x7a6",
+    "form": "s16"
+   },
+   {
+    "key": "script.rocks.fall_from",
+    "part": "rocks",
+    "label": "Falls from",
+    "doc": "Distance along its way (with the trail)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 3072,
+    "inst": "0x772",
+    "code": "0xa",
+    "at": "0x774",
+    "form": "s16"
+   },
+   {
+    "key": "script.rocks.fall",
+    "part": "rocks",
+    "label": "Fall speed",
+    "doc": "Each tick (with the trail)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1536,
+    "inst": "0x776",
+    "code": "0x11",
+    "at": "0x778",
+    "form": "s16"
+   },
+   {
+    "key": "script.trails.texture",
+    "part": "trails",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 6,
+    "default": 5,
+    "inst": "0x8a6",
+    "code": "0x52",
+    "at": "0x8a8",
+    "form": "s16"
+   },
+   {
+    "key": "script.trails.blend",
+    "part": "trails",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x8d2",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x8d2": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x8d2": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x8d2": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x8d2": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.trails.width",
+    "part": "trails",
+    "label": "Width",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 3264,
+    "inst": "0x8d4",
+    "code": "0xa",
+    "at": "0x8d6",
+    "form": "s16"
+   },
+   {
+    "key": "script.trails.behind",
+    "part": "trails",
+    "label": "Behind by",
+    "doc": "How far behind the meteor it starts",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x884",
+    "code": "0x10",
+    "at": "0x886",
+    "form": "s16"
+   },
+   {
+    "key": "script.trails.light.in",
+    "part": "trails",
+    "label": "Lights up by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 7168,
+    "inst": "0x862",
+    "code": "0xb",
+    "at": "0x864",
+    "form": "s16"
+   },
+   {
+    "key": "script.trails.light.in_for",
+    "part": "trails",
+    "label": "Lights up for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x86a",
+    "code": "0x9",
+    "at": "0x86a",
+    "form": "op"
+   },
+   {
+    "key": "script.trails.light.hold",
+    "part": "trails",
+    "label": "Holds for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0x86e",
+    "code": "0x9",
+    "at": "0x86e",
+    "form": "op"
+   },
+   {
+    "key": "script.trails.light.out",
+    "part": "trails",
+    "label": "Fades by",
+    "doc": "Each tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -7168,
+    "inst": "0x870",
+    "code": "0xb",
+    "at": "0x872",
+    "form": "s16"
+   },
+   {
+    "key": "script.trails.light.out_for",
+    "part": "trails",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x878",
+    "code": "0x9",
+    "at": "0x878",
+    "form": "op"
+   },
+   {
+    "key": "script.fire.spread",
+    "part": "fire",
+    "label": "Height, random",
+    "doc": "Where it bursts, at random over the impact point",
+    "type": "int",
+    "min": 0,
+    "max": 16383,
+    "default": 1024,
+    "inst": "0x906",
+    "code": "0x12",
+    "at": "0x908",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.light.in",
+    "part": "fire",
+    "label": "Lights up by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 8192,
+    "inst": "0x966",
+    "code": "0xe",
+    "at": "0x968",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.light.in_for",
+    "part": "fire",
+    "label": "Lights up for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x96a",
+    "code": "0x9",
+    "at": "0x96a",
+    "form": "op"
+   },
+   {
+    "key": "script.fire.light.hold",
+    "part": "fire",
+    "label": "Holds for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x96e",
+    "code": "0x9",
+    "at": "0x96e",
+    "form": "op"
+   },
+   {
+    "key": "script.fire.light.out",
+    "part": "fire",
+    "label": "Fades by",
+    "doc": "Each tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x970",
+    "code": "0xe",
+    "at": "0x972",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.light.out_for",
+    "part": "fire",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x974",
+    "code": "0x9",
+    "at": "0x974",
+    "form": "op"
+   },
+   {
+    "key": "script.fire.texture",
+    "part": "fire",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 6,
+    "default": 2,
+    "inst": "0x97c",
+    "code": "0x52",
+    "at": "0x97e",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.blend",
+    "part": "fire",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x984",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x984": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x984": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x984": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x984": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.fire.size",
+    "part": "fire",
+    "label": "Size",
+    "doc": "When it appears",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x98a",
+    "code": "0xd",
+    "at": "0x98c",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.grow",
+    "part": "fire",
+    "label": "Grows by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x98e",
+    "code": "0xe",
+    "at": "0x990",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.target.first",
+    "part": "fire",
+    "label": "First after",
+    "doc": "Ticks after the meteors start",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 48,
+    "inst": "0x9cc",
+    "code": "0x9",
+    "at": "0x9cc",
+    "form": "op"
+   },
+   {
+    "key": "script.fire.target.every",
+    "part": "fire",
+    "label": "Then one every",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 12,
+    "inst": "0x9ea",
+    "code": "0x9",
+    "at": "0x9ea",
+    "form": "op"
+   },
+   {
+    "key": "script.fire.target.every_random",
+    "part": "fire",
+    "label": "Every, random",
+    "doc": "Ticks added at random",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 2,
+    "inst": "0x9ec",
+    "code": "0xb0",
+    "at": "0x9ee",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.target.spread_x",
+    "part": "fire",
+    "label": "Spread X",
+    "doc": "How far from the target, at random",
+    "type": "int",
+    "min": 0,
+    "max": 16383,
+    "default": 2048,
+    "inst": "0x9fc",
+    "code": "0x12",
+    "at": "0x9fe",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.target.spread_y",
+    "part": "fire",
+    "label": "Spread Y",
+    "doc": "How far from the target, at random",
+    "type": "int",
+    "min": 0,
+    "max": 16383,
+    "default": 1024,
+    "inst": "0x9fc",
+    "code": "0x12",
+    "at": "0xa00",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.target.spread_z",
+    "part": "fire",
+    "label": "Spread Z",
+    "doc": "How far from the target, at random",
+    "type": "int",
+    "min": 0,
+    "max": 16383,
+    "default": 2048,
+    "inst": "0x9fc",
+    "code": "0x12",
+    "at": "0xa02",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.texture",
+    "part": "rings",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 6,
+    "default": 3,
+    "inst": "0x9a4",
+    "code": "0x52",
+    "at": "0x9a6",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.blend",
+    "part": "rings",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x9ac",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x9ac": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x9ac": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x9ac": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x9ac": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.rings.size",
+    "part": "rings",
+    "label": "Size",
+    "doc": "When it appears",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x9b4",
+    "code": "0xd",
+    "at": "0x9b6",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.grow",
+    "part": "rings",
+    "label": "Grows by",
+    "doc": "Each tick at first",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 6144,
+    "inst": "0x9b8",
+    "code": "0xe",
+    "at": "0x9ba",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.grow_for",
+    "part": "rings",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x9bc",
+    "code": "0x9",
+    "at": "0x9bc",
+    "form": "op"
+   },
+   {
+    "key": "script.rings.slowing",
+    "part": "rings",
+    "label": "Then slows by",
+    "doc": "Taken off each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -384,
+    "inst": "0x9be",
+    "code": "0xf",
+    "at": "0x9c0",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.first",
+    "part": "flash",
+    "label": "First after",
+    "doc": "Ticks after the meteors start",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 48,
+    "inst": "0x32e",
+    "code": "0x9",
+    "at": "0x32e",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.gap.w1",
+    "part": "flash",
+    "label": "Flash 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x338",
+    "code": "0x9",
+    "at": "0x338",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.gap.w2",
+    "part": "flash",
+    "label": "Flash 3",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 20,
+    "inst": "0x340",
+    "code": "0x9",
+    "at": "0x340",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.gap.w3",
+    "part": "flash",
+    "label": "Flash 4",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x348",
+    "code": "0x9",
+    "at": "0x348",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.gap.w4",
+    "part": "flash",
+    "label": "Flash 5",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x350",
+    "code": "0x9",
+    "at": "0x350",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.bright",
+    "part": "flash",
+    "label": "Brightness",
+    "doc": "Each flash's (255: white)",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 192,
+    "inst": "0x37a",
+    "code": "0xd",
+    "at": "0x37c",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.fade",
+    "part": "flash",
+    "label": "Fades by",
+    "doc": "Each tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -6144,
+    "inst": "0x37e",
+    "code": "0xe",
+    "at": "0x380",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.fade_for",
+    "part": "flash",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x382",
+    "code": "0x9",
+    "at": "0x382",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.white.in",
+    "part": "flash",
+    "label": "Whitens by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x35e",
+    "code": "0xe",
+    "at": "0x360",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.white.in_for",
+    "part": "flash",
+    "label": "Whitens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x362",
+    "code": "0x9",
+    "at": "0x362",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.white.out",
+    "part": "flash",
+    "label": "Clears by",
+    "doc": "Each tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x36e",
+    "code": "0xe",
+    "at": "0x370",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.white.out_for",
+    "part": "flash",
+    "label": "Clears for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x372",
+    "code": "0x9",
+    "at": "0x372",
+    "form": "op"
+   },
+   {
+    "key": "script.picture.bright",
+    "part": "picture",
+    "label": "Brightness",
+    "doc": "The battle picture taken at the start, laid over the screen (128: as it was)",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 80,
+    "inst": "0xa78",
+    "code": "0xd",
+    "at": "0xa7a",
+    "form": "s16"
+   },
+   {
+    "key": "script.picture.hold",
+    "part": "picture",
+    "label": "Holds for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0xa7c",
+    "code": "0x9",
+    "at": "0xa7c",
+    "form": "op"
+   },
+   {
+    "key": "script.picture.fade",
+    "part": "picture",
+    "label": "Fades by",
+    "doc": "Each tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -2560,
+    "inst": "0xa7e",
+    "code": "0xe",
+    "at": "0xa80",
+    "form": "s16"
+   },
+   {
+    "key": "script.picture.fade_for",
+    "part": "picture",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0xa82",
+    "code": "0x9",
+    "at": "0xa82",
+    "form": "op"
+   }
+  ]
+ }
 }
