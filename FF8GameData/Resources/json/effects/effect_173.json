@@ -1043,6 +1043,39 @@
    "unit": "plain"
   },
   {
+   "part": "trail",
+   "key": "trail.each",
+   "label": "On each target",
+   "doc": "With On each target (Director): 1 = the ice drawn on every target, its middle (the next value) on it, at the target's own height - a flying monster's too; 0: once, from the anchor (the game)",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "part": "trail",
+   "key": "trail.back",
+   "label": "Middle",
+   "doc": "On each target: the meshes moved back this far along their length (in their units) so their middle sits on the target (0: their start)",
+   "type": "i16",
+   "min": -8000,
+   "max": 8000,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "part": "trail",
+   "key": "trail.count",
+   "label": "Meshes",
+   "doc": "How many of the five ice meshes (the first ones: mesh 0 is the big one; 5: the game)",
+   "type": "i16",
+   "min": 0,
+   "max": 5,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
    "key": "shards.spawn_last",
    "part": "shards",
    "label": "Last spawn tick",
