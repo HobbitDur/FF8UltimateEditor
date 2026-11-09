@@ -2399,9 +2399,10 @@ Potion's description is the same with its own sequences and sound.
      The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
      port's tick; the file loader ProgramFiles'.
      - *Inputs* (`ProgramFiles<250>`): the two script files (empty: the game's).
-     - *Tests:* the program against the port (both recordings alike); an edited .00 copy (0x4000..) read by the port's
-       file loader and the program's alike. The port parts from the exe's code at tick 50 (its ribbon and sprite
-       packets shifted on screen, same shapes, whoever casts it): a strict xfail test until FFNx fixes it.
+     - *Tests:* the program against the exe's code (both recordings alike), the port against the exe's code; an edited
+       .00 copy (0x4000..) read by the port's file loader and the program's alike. Its ribbon's tail-retire tick (50)
+       reads a GTE V0 it never writes (0xB1ADD0): the lab's part places must leave the GTE as they found it
+       (FFNx e319638a), or the lab draws the ribbon elsewhere.
    - **Twin Homing Laser (253)** (FFNx 4443c7a8; Mobile Type 8's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
      engine's clone run from its two script files (mag252_b.00 / .01) - its bones, prims, sprites and particles, the action results.
      The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the

@@ -3303,13 +3303,12 @@ def test_beam_cannon_description_compiles():
                      "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
                      "extracted_files/battle/c0m009.dat")
 def test_beam_cannon_runs_from_its_description(tmp_path):
-    """Beam Cannon from its description: what the port records (FFNx mag250_beam_cannon.cpp; it parts from the exe's
-    code at tick 50, test_beam_cannon_port_draws_what_the_exe_does); a script file of its own (an edited .00 copy)
+    """Beam Cannon from its description: what the exe's code records; a script file of its own (an edited .00 copy)
     read by the port's file loader and the program's alike; as effect 225, itself again."""
     program = write_program(load_description(250), tmp_path / "effect.fxprog")
-    game, _log = record(tmp_path, 250, "game", "native=1")
+    game, _log = record(tmp_path, 250, "game")
     described, log = record(tmp_path, 250, "described", f"program={program}")
-    assert "0 tasks, 2 params" in log and untag(described) == untag(game) and len(game) > 10000
+    assert "0 tasks, 2 params" in log and untag(described) == game and len(game) > 10000
     files = tmp_path / "files"
     files.mkdir()
     script = bytearray((MAGIC / "MAG249_B.00").read_bytes())
@@ -3326,16 +3325,15 @@ def test_beam_cannon_runs_from_its_description(tmp_path):
     description["effect"], description["name"] = 225, "New beam_cannon"
     del description["copy"]["functions"]
     new, log = record(tmp_path, 225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
-    assert "program: New_beam_cannon" in log and untag(new) == untag(game)
+    assert "program: New_beam_cannon" in log and untag(new) == game
 
 
-@pytest.mark.xfail(strict=True, reason="FFNx mag250_beam_cannon.cpp: from tick 50 its ribbon / sprite packets stand "
-                                       "elsewhere on screen than the exe's (same shapes, x / y shifted)")
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG249_B.00", "extracted_files/magic/MAG249_B.01",
                      "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
                      "extracted_files/battle/c0m009.dat")
 def test_beam_cannon_port_draws_what_the_exe_does(tmp_path):
-    """Beam Cannon's port against the exe's code: the same packets (it isn't yet: they part at tick 50)."""
+    """Beam Cannon's port against the exe's code: the same packets. From tick 50 (its ribbon's tail retires: 0xB1ADD0
+    reads a VXY0 it never writes) they parted while the lab's part places left the GTE changed (FFNx e319638a)."""
     original, _log = record(tmp_path, 250, "original")
     game, _log = record(tmp_path, 250, "game", "native=1")
     assert untag(game) == original
