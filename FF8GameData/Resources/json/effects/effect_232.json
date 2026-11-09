@@ -162,5 +162,2423 @@
    "address": "0x1869118",
    "size": 1312
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag231_b.00",
+  "param": "files.file00",
+  "size": 16816,
+  "camera": {
+   "at": "0x8f0",
+   "size": "0x194"
+  },
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When things happen, and the camera. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 0,
+    "key": "dark",
+    "title": "Darkness",
+    "paths": [],
+    "doc": "The battle's stage darkens while the ghost breathes, and lifts once the swirls start (the stage only: the models and the effect stay as they are)"
+   },
+   {
+    "id": 492,
+    "key": "ghost",
+    "title": "Ghost",
+    "paths": [
+     66028
+    ],
+    "doc": "A blue copy of the caster (its own model and animations, drawn with the model's own blend) that comes out of it, breathes, flies to the target and sinks. The purple line is the way it goes"
+   },
+   {
+    "id": 566,
+    "key": "breath",
+    "title": "Dark breath",
+    "doc": "The black smoke: breathed by the caster, then by the ghost. Its darkening blend is in its sprite (Textures tab, Sections)"
+   },
+   {
+    "id": 1284,
+    "key": "sparks",
+    "title": "Gathering sparks",
+    "doc": "The sparks that rise from the caster before the ghost comes out. Their blend is in their sprite (Textures tab, Sections)"
+   },
+   {
+    "id": 956,
+    "key": "swirl_a",
+    "title": "Swirl 1 (pink)",
+    "paths": [
+     66492
+    ],
+    "doc": "The pink spiral: a model turning around the target's feet"
+   },
+   {
+    "id": 1080,
+    "key": "swirl_b",
+    "title": "Swirl 2 (dark)",
+    "paths": [
+     66616
+    ],
+    "doc": "The dark disc: a second model turning around the target's feet"
+   },
+   {
+    "id": 1222,
+    "key": "wisps",
+    "title": "Blue wisps",
+    "paths": [
+     66758
+    ],
+    "doc": "The blue streaks that rise around the target, one after another"
+   }
+  ],
+  "groups": [
+   {
+    "key": "script.timing.swirls",
+    "label": "Swirls start",
+    "doc": "When the swirls around the target start, after the ghost: these three waits added up (the game: 72 ticks). The darkness then lifts"
+   },
+   {
+    "key": "script.dark.colour",
+    "label": "Colour",
+    "doc": "The colour the battle fades to"
+   },
+   {
+    "key": "script.ghost.way",
+    "label": "Flight",
+    "doc": "From the caster to the target"
+   },
+   {
+    "key": "script.ghost.anim",
+    "label": "Animations",
+    "doc": "Played one after another"
+   },
+   {
+    "key": "script.ghost.colour",
+    "label": "Colour",
+    "doc": "Its tint (128 = the model as it is) and how bright it gets"
+   },
+   {
+    "key": "script.breath.mouth",
+    "label": "From the caster",
+    "doc": "Released from the caster's mouth first, 1 puff per tick"
+   },
+   {
+    "key": "script.breath.mouth.colour",
+    "label": "Colour",
+    "doc": "128 = the picture as it is"
+   },
+   {
+    "key": "script.breath.ghost",
+    "label": "From the ghost",
+    "doc": "Then breathed by the ghost, 1 puff per tick"
+   },
+   {
+    "key": "script.breath.ghost.colour",
+    "label": "Colour",
+    "doc": "128 = the picture as it is"
+   },
+   {
+    "key": "script.sparks.one",
+    "label": "Each spark",
+    "doc": "One spark's own values"
+   },
+   {
+    "key": "script.swirl_a.size",
+    "label": "Size",
+    "doc": "It grows, holds, then shrinks; its brightness follows its size"
+   },
+   {
+    "key": "script.swirl_a.around",
+    "label": "Around the target",
+    "doc": "How fast it turns around the target"
+   },
+   {
+    "key": "script.swirl_b.size",
+    "label": "Size",
+    "doc": "It grows, holds, then shrinks; its brightness follows its size"
+   },
+   {
+    "key": "script.swirl_b.around",
+    "label": "Around the target",
+    "doc": "How fast it turns around the target"
+   },
+   {
+    "key": "script.wisps.column",
+    "label": "Column",
+    "doc": "One wisp every few ticks, each higher than the last"
+   },
+   {
+    "key": "script.wisps.around",
+    "label": "Around the target",
+    "doc": "Each wisp turns around the target"
+   },
+   {
+    "key": "script.wisps.size",
+    "label": "Size",
+    "doc": "Each grows, holds, then shrinks; its brightness follows its size"
+   },
+   {
+    "key": "script.wisps.tilt",
+    "label": "Tilt",
+    "doc": "Each one's angle (4096 = a whole turn)"
+   },
+   {
+    "key": "script.wisps.spin",
+    "label": "Spin",
+    "doc": "Around itself, per tick"
+   }
+  ],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x52",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x52": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x52": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.start",
+    "part": "timing",
+    "label": "Ghost starts after",
+    "doc": "Ticks before the ghost and the breath start (the sparks gather meanwhile)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 35,
+    "inst": "0x84",
+    "code": "0x9",
+    "at": "0x84",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.swirls.first",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x8e",
+    "code": "0x9",
+    "at": "0x8e",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.swirls.second",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x90",
+    "code": "0x9",
+    "at": "0x90",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.swirls.third",
+    "part": "timing",
+    "label": "Wait 3",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0x92",
+    "code": "0x9",
+    "at": "0x92",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.hit",
+    "part": "timing",
+    "label": "Damage after",
+    "doc": "Ticks after the swirls start (the game: 32)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x98",
+    "code": "0x9",
+    "at": "0x98",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end",
+    "part": "timing",
+    "label": "Ends after",
+    "doc": "With 1 tick more, how long the effect lasts after the damage (the game: 16). Keep it past the swirls",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x9c",
+    "code": "0x9",
+    "at": "0x9c",
+    "form": "op"
+   },
+   {
+    "key": "script.dark.colour.r",
+    "part": "dark",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 48,
+    "inst": "0xfe",
+    "code": "0xa",
+    "at": "0x102",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.colour.g",
+    "part": "dark",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 48,
+    "inst": "0xfe",
+    "code": "0xa",
+    "at": "0x104",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.colour.b",
+    "part": "dark",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0xfe",
+    "code": "0xa",
+    "at": "0x106",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.in_speed",
+    "part": "dark",
+    "label": "Darkens by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x108",
+    "code": "0xb",
+    "at": "0x10a",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.in_for",
+    "part": "dark",
+    "label": "Darkens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x10c",
+    "code": "0x9",
+    "at": "0x10c",
+    "form": "op"
+   },
+   {
+    "key": "script.dark.lift_after",
+    "part": "dark",
+    "label": "Lifts after",
+    "doc": "Ticks after the swirls start",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x116",
+    "code": "0x9",
+    "at": "0x116",
+    "form": "op"
+   },
+   {
+    "key": "script.dark.out_speed",
+    "part": "dark",
+    "label": "Lifts by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x118",
+    "code": "0xb",
+    "at": "0x11a",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.out_for",
+    "part": "dark",
+    "label": "Lifts for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x11c",
+    "code": "0x9",
+    "at": "0x11c",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.way.wait",
+    "part": "ghost",
+    "label": "Flies after",
+    "doc": "Ticks it stays on the caster first, breathing",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x170",
+    "code": "0x9",
+    "at": "0x170",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.way.radius",
+    "part": "ghost",
+    "label": "Stops short by",
+    "doc": "How far from the target it stops",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 2048,
+    "inst": "0x166",
+    "code": "0x1a",
+    "at": "0x16e",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.way.speed",
+    "part": "ghost",
+    "label": "Flight speed",
+    "doc": "4096 goes the whole way in 16 ticks",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x172",
+    "code": "0xe",
+    "at": "0x174",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.way.for",
+    "part": "ghost",
+    "label": "Flies for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x176",
+    "code": "0x9",
+    "at": "0x176",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.way.hold",
+    "part": "ghost",
+    "label": "Then stays for",
+    "doc": "Ticks before it sinks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 20,
+    "inst": "0x17a",
+    "code": "0x9",
+    "at": "0x17a",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.way.sink",
+    "part": "ghost",
+    "label": "Then sinks at",
+    "doc": "Height speed (positive: down, negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 8192,
+    "inst": "0x17c",
+    "code": "0xb",
+    "at": "0x17e",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.size",
+    "part": "ghost",
+    "label": "Size",
+    "doc": "256 = the caster's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x202",
+    "code": "0xd",
+    "at": "0x204",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.anim.first",
+    "part": "ghost",
+    "label": "Animation",
+    "doc": "One of the caster's own animations (Blood Soul has 29: 0-28); a number its model lacks crashes",
+    "type": "int",
+    "min": 0,
+    "max": 28,
+    "default": 26,
+    "inst": "0x20a",
+    "code": "0x44",
+    "at": "0x210",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.anim.second",
+    "part": "ghost",
+    "label": "Next animation",
+    "doc": "One of the caster's own animations (Blood Soul has 29: 0-28); a number its model lacks crashes",
+    "type": "int",
+    "min": 0,
+    "max": 28,
+    "default": 27,
+    "inst": "0x214",
+    "code": "0x44",
+    "at": "0x21a",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.anim.third",
+    "part": "ghost",
+    "label": "Last animation",
+    "doc": "One of the caster's own animations (Blood Soul has 29: 0-28); a number its model lacks crashes",
+    "type": "int",
+    "min": 0,
+    "max": 28,
+    "default": 28,
+    "inst": "0x21e",
+    "code": "0x44",
+    "at": "0x224",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.anim.first_for",
+    "part": "ghost",
+    "label": "First for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x212",
+    "code": "0x9",
+    "at": "0x212",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.anim.second_for",
+    "part": "ghost",
+    "label": "Second for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x21c",
+    "code": "0x9",
+    "at": "0x21c",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.anim.third_for",
+    "part": "ghost",
+    "label": "Third for",
+    "doc": "With the next, before it disappears",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 20,
+    "inst": "0x226",
+    "code": "0x9",
+    "at": "0x226",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.anim.last_for",
+    "part": "ghost",
+    "label": "Then for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x228",
+    "code": "0x9",
+    "at": "0x228",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.colour.r",
+    "part": "ghost",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 32,
+    "inst": "0x1b0",
+    "code": "0xa",
+    "at": "0x1b2",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.colour.g",
+    "part": "ghost",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 32,
+    "inst": "0x1b0",
+    "code": "0xa",
+    "at": "0x1b4",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.colour.b",
+    "part": "ghost",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x1b0",
+    "code": "0xa",
+    "at": "0x1b6",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.colour.start",
+    "part": "ghost",
+    "label": "Brightness at first",
+    "doc": "256 = the tint as it is",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x1b8",
+    "code": "0xa",
+    "at": "0x1ba",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.colour.in",
+    "part": "ghost",
+    "label": "Brightens by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x1bc",
+    "code": "0xb",
+    "at": "0x1be",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.colour.in_for",
+    "part": "ghost",
+    "label": "Brightens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x1c0",
+    "code": "0x9",
+    "at": "0x1c0",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.colour.out",
+    "part": "ghost",
+    "label": "Fades by",
+    "doc": "Per tick (negative), once its animations are nearly over",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -8192,
+    "inst": "0x1cc",
+    "code": "0xb",
+    "at": "0x1ce",
+    "form": "s16"
+   },
+   {
+    "key": "script.ghost.colour.out_for",
+    "part": "ghost",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x1d0",
+    "code": "0x9",
+    "at": "0x1d0",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.colour.hold",
+    "part": "ghost",
+    "label": "Fades after",
+    "doc": "With 32 ticks more, how long it stays bright",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 20,
+    "inst": "0x1ca",
+    "code": "0x9",
+    "at": "0x1ca",
+    "form": "op"
+   },
+   {
+    "key": "script.ghost.flicker",
+    "part": "ghost",
+    "label": "Flicker",
+    "doc": "Its green and blue go up and down, one against the other, every 4 ticks",
+    "type": "choice",
+    "min": 0,
+    "max": 2,
+    "default": 1,
+    "inst": "0x1d4",
+    "code": "0xb",
+    "options": [
+     {
+      "label": "None",
+      "bytes": {
+       "0x1d6": "000000000000",
+       "0x1e0": "000000000000"
+      }
+     },
+     {
+      "label": "The game's",
+      "bytes": {
+       "0x1d6": "0000000400fc",
+       "0x1e0": "000000fc0004"
+      }
+     },
+     {
+      "label": "Twice as strong",
+      "bytes": {
+       "0x1d6": "0000000800f8",
+       "0x1e0": "000000f80008"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.breath.mouth.for",
+    "part": "breath",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0x250",
+    "code": "0x9",
+    "at": "0x250",
+    "form": "op"
+   },
+   {
+    "key": "script.breath.mouth.joint",
+    "part": "breath",
+    "label": "Point of the model",
+    "doc": "Which point of the caster's model they come from",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 36,
+    "inst": "0x272",
+    "code": "0x60",
+    "at": "0x274",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.height",
+    "part": "breath",
+    "label": "Height",
+    "doc": "From that point (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -256,
+    "inst": "0x276",
+    "code": "0x10",
+    "at": "0x278",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.frames",
+    "part": "breath",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 2,
+    "default": 1,
+    "inst": "0x2a0",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x2a0": "0700"
+      }
+     },
+     {
+      "label": "The dark puff",
+      "bytes": {
+       "0x2a0": "0701"
+      }
+     },
+     {
+      "label": "The spark",
+      "bytes": {
+       "0x2a0": "0705"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.breath.mouth.size",
+    "part": "breath",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x2a2",
+    "code": "0x4",
+    "at": "0x2a4",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.size_random",
+    "part": "breath",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x2a6",
+    "code": "0x5",
+    "at": "0x2a8",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.spread_x",
+    "part": "breath",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x2aa",
+    "code": "0x5",
+    "at": "0x2ac",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.spread_y",
+    "part": "breath",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x2aa",
+    "code": "0x5",
+    "at": "0x2ae",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.spread_z",
+    "part": "breath",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x2aa",
+    "code": "0x5",
+    "at": "0x2b0",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.offset_x",
+    "part": "breath",
+    "label": "Offset X",
+    "doc": "From where it is released (positive Y: down)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x2b2",
+    "code": "0x6",
+    "at": "0x2b4",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.offset_y",
+    "part": "breath",
+    "label": "Offset Y",
+    "doc": "From where it is released (positive Y: down)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x2b2",
+    "code": "0x6",
+    "at": "0x2b6",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.offset_z",
+    "part": "breath",
+    "label": "Offset Z",
+    "doc": "From where it is released (positive Y: down)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x2b2",
+    "code": "0x6",
+    "at": "0x2b8",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.speed_x",
+    "part": "breath",
+    "label": "Speed X",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x2ba",
+    "code": "0x4",
+    "at": "0x2bc",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.speed_y",
+    "part": "breath",
+    "label": "Speed Y",
+    "doc": "Height units / 16 per tick (negative: up)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": -256,
+    "inst": "0x2ba",
+    "code": "0x4",
+    "at": "0x2be",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.speed_z",
+    "part": "breath",
+    "label": "Speed Z",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x2ba",
+    "code": "0x4",
+    "at": "0x2c0",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.speed_x_random",
+    "part": "breath",
+    "label": "Speed X, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x2c2",
+    "code": "0x5",
+    "at": "0x2c4",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.speed_y_random",
+    "part": "breath",
+    "label": "Speed Y, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x2c2",
+    "code": "0x5",
+    "at": "0x2c6",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.speed_z_random",
+    "part": "breath",
+    "label": "Speed Z, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x2c2",
+    "code": "0x5",
+    "at": "0x2c8",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.mouth.colour.r",
+    "part": "breath",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x2ca",
+    "code": "0xb",
+    "at": "0x2cb",
+    "form": "hi"
+   },
+   {
+    "key": "script.breath.mouth.colour.g",
+    "part": "breath",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x2ca",
+    "code": "0xb",
+    "at": "0x2cc",
+    "form": "u8"
+   },
+   {
+    "key": "script.breath.mouth.colour.b",
+    "part": "breath",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x2ca",
+    "code": "0xb",
+    "at": "0x2cd",
+    "form": "u8"
+   },
+   {
+    "key": "script.breath.mouth.life",
+    "part": "breath",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x2ce",
+    "code": "0x1",
+    "at": "0x2cf",
+    "form": "hi"
+   },
+   {
+    "key": "script.breath.ghost.after",
+    "part": "breath",
+    "label": "After",
+    "doc": "Ticks after the caster's breath, with the next",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 19,
+    "inst": "0x254",
+    "code": "0x9",
+    "at": "0x254",
+    "form": "op"
+   },
+   {
+    "key": "script.breath.ghost.for",
+    "part": "breath",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 15,
+    "inst": "0x25e",
+    "code": "0x9",
+    "at": "0x25e",
+    "form": "op"
+   },
+   {
+    "key": "script.breath.ghost.again",
+    "part": "breath",
+    "label": "Again for",
+    "doc": "Ticks, after 1 tick off",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x26a",
+    "code": "0x9",
+    "at": "0x26a",
+    "form": "op"
+   },
+   {
+    "key": "script.breath.ghost.ahead",
+    "part": "breath",
+    "label": "Ahead of it",
+    "doc": "How far in front of the ghost",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x28a",
+    "code": "0x10",
+    "at": "0x28c",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.frames",
+    "part": "breath",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 2,
+    "default": 1,
+    "inst": "0x2d2",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x2d2": "0700"
+      }
+     },
+     {
+      "label": "The dark puff",
+      "bytes": {
+       "0x2d2": "0701"
+      }
+     },
+     {
+      "label": "The spark",
+      "bytes": {
+       "0x2d2": "0705"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.breath.ghost.size",
+    "part": "breath",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x2d4",
+    "code": "0x4",
+    "at": "0x2d6",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.size_random",
+    "part": "breath",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x2d8",
+    "code": "0x5",
+    "at": "0x2da",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.spread_x",
+    "part": "breath",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x2dc",
+    "code": "0x5",
+    "at": "0x2de",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.spread_y",
+    "part": "breath",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x2dc",
+    "code": "0x5",
+    "at": "0x2e0",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.spread_z",
+    "part": "breath",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 32,
+    "inst": "0x2dc",
+    "code": "0x5",
+    "at": "0x2e2",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.speed_x",
+    "part": "breath",
+    "label": "Speed X",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x2e4",
+    "code": "0x4",
+    "at": "0x2e6",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.speed_y",
+    "part": "breath",
+    "label": "Speed Y",
+    "doc": "Height units / 16 per tick (negative: up)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x2e4",
+    "code": "0x4",
+    "at": "0x2e8",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.speed_z",
+    "part": "breath",
+    "label": "Speed Z",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x2e4",
+    "code": "0x4",
+    "at": "0x2ea",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.speed_x_random",
+    "part": "breath",
+    "label": "Speed X, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x2ec",
+    "code": "0x5",
+    "at": "0x2ee",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.speed_y_random",
+    "part": "breath",
+    "label": "Speed Y, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x2ec",
+    "code": "0x5",
+    "at": "0x2f0",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.speed_z_random",
+    "part": "breath",
+    "label": "Speed Z, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x2ec",
+    "code": "0x5",
+    "at": "0x2f2",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.ghost.colour.r",
+    "part": "breath",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x2f4",
+    "code": "0xb",
+    "at": "0x2f5",
+    "form": "hi"
+   },
+   {
+    "key": "script.breath.ghost.colour.g",
+    "part": "breath",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x2f4",
+    "code": "0xb",
+    "at": "0x2f6",
+    "form": "u8"
+   },
+   {
+    "key": "script.breath.ghost.colour.b",
+    "part": "breath",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x2f4",
+    "code": "0xb",
+    "at": "0x2f7",
+    "form": "u8"
+   },
+   {
+    "key": "script.breath.ghost.life",
+    "part": "breath",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x2f8",
+    "code": "0x1",
+    "at": "0x2f9",
+    "form": "hi"
+   },
+   {
+    "key": "script.sparks.for",
+    "part": "sparks",
+    "label": "Released for",
+    "doc": "Ticks, 1 per tick",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x51c",
+    "code": "0x9",
+    "at": "0x51c",
+    "form": "op"
+   },
+   {
+    "key": "script.sparks.joint",
+    "part": "sparks",
+    "label": "Point of the model",
+    "doc": "Which of the caster's two points they start from",
+    "type": "int",
+    "min": 240,
+    "max": 241,
+    "default": 241,
+    "inst": "0x524",
+    "code": "0x60",
+    "at": "0x526",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.frames",
+    "part": "sparks",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 2,
+    "default": 2,
+    "inst": "0x532",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x532": "0700"
+      }
+     },
+     {
+      "label": "The dark puff",
+      "bytes": {
+       "0x532": "0701"
+      }
+     },
+     {
+      "label": "The spark",
+      "bytes": {
+       "0x532": "0705"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.sparks.one.size",
+    "part": "sparks",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x534",
+    "code": "0x4",
+    "at": "0x536",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.size_random",
+    "part": "sparks",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x538",
+    "code": "0x5",
+    "at": "0x53a",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.spread_x",
+    "part": "sparks",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x53c",
+    "code": "0x5",
+    "at": "0x53e",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.spread_y",
+    "part": "sparks",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x53c",
+    "code": "0x5",
+    "at": "0x540",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.spread_z",
+    "part": "sparks",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x53c",
+    "code": "0x5",
+    "at": "0x542",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.speed_x",
+    "part": "sparks",
+    "label": "Speed X",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x544",
+    "code": "0x4",
+    "at": "0x546",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.speed_y",
+    "part": "sparks",
+    "label": "Speed Y",
+    "doc": "Height units / 16 per tick (negative: up)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": -256,
+    "inst": "0x544",
+    "code": "0x4",
+    "at": "0x548",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.speed_z",
+    "part": "sparks",
+    "label": "Speed Z",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x544",
+    "code": "0x4",
+    "at": "0x54a",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.speed_x_random",
+    "part": "sparks",
+    "label": "Speed X, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x54c",
+    "code": "0x5",
+    "at": "0x54e",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.speed_y_random",
+    "part": "sparks",
+    "label": "Speed Y, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x54c",
+    "code": "0x5",
+    "at": "0x550",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.speed_z_random",
+    "part": "sparks",
+    "label": "Speed Z, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x54c",
+    "code": "0x5",
+    "at": "0x552",
+    "form": "s16"
+   },
+   {
+    "key": "script.sparks.one.life",
+    "part": "sparks",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 11,
+    "inst": "0x554",
+    "code": "0x1",
+    "at": "0x555",
+    "form": "hi"
+   },
+   {
+    "key": "script.swirl_a.height",
+    "part": "swirl_a",
+    "label": "Height",
+    "doc": "From the ground under the target (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x37e",
+    "code": "0xa",
+    "at": "0x380",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_a.texture",
+    "part": "swirl_a",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 3,
+    "default": 3,
+    "inst": "0x3c4",
+    "code": "0x52",
+    "at": "0x3c6",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_a.blend",
+    "part": "swirl_a",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x3d8",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x3d8": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x3d8": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x3d8": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x3d8": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.swirl_a.size.grow",
+    "part": "swirl_a",
+    "label": "Grows by",
+    "doc": "Size per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x3a6",
+    "code": "0xe",
+    "at": "0x3a8",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_a.size.grow_for",
+    "part": "swirl_a",
+    "label": "Grows for",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x3aa",
+    "code": "0x9",
+    "at": "0x3aa",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_a.size.hold",
+    "part": "swirl_a",
+    "label": "Holds for",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x3ae",
+    "code": "0x9",
+    "at": "0x3ae",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_a.size.shrink",
+    "part": "swirl_a",
+    "label": "Shrinks by",
+    "doc": "Size per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x3b0",
+    "code": "0xe",
+    "at": "0x3b2",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_a.size.shrink_for",
+    "part": "swirl_a",
+    "label": "Shrinks for",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x3b4",
+    "code": "0x9",
+    "at": "0x3b4",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_a.around.speed",
+    "part": "swirl_a",
+    "label": "Turning",
+    "doc": "Per tick (4096 = a whole turn)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x390",
+    "code": "0x11",
+    "at": "0x392",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_a.around.first",
+    "part": "swirl_a",
+    "label": "At first for",
+    "doc": "Ticks at that speed",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x394",
+    "code": "0x9",
+    "at": "0x394",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_a.around.speed_up",
+    "part": "swirl_a",
+    "label": "Then speeds up by",
+    "doc": "Each tick after that",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x396",
+    "code": "0xc",
+    "at": "0x398",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_a.tilt_x",
+    "part": "swirl_a",
+    "label": "Tilt X",
+    "doc": "Its angle (4096 = a whole turn)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 48,
+    "inst": "0x3d0",
+    "code": "0xa",
+    "at": "0x3d2",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_a.tilt_y",
+    "part": "swirl_a",
+    "label": "Tilt Y",
+    "doc": "Its angle (4096 = a whole turn)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 16,
+    "inst": "0x3d0",
+    "code": "0xa",
+    "at": "0x3d4",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_a.tilt_z",
+    "part": "swirl_a",
+    "label": "Tilt Z",
+    "doc": "Its angle (4096 = a whole turn)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 48,
+    "inst": "0x3d0",
+    "code": "0xa",
+    "at": "0x3d6",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_a.spin",
+    "part": "swirl_a",
+    "label": "Spin",
+    "doc": "Around itself, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x3e2",
+    "code": "0xb",
+    "at": "0x3e4",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_a.life_first",
+    "part": "swirl_a",
+    "label": "Lives for",
+    "doc": "Ticks, with the next: keep them past its size's own times",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x3e6",
+    "code": "0x9",
+    "at": "0x3e6",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_a.life_then",
+    "part": "swirl_a",
+    "label": "Then for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x3e8",
+    "code": "0x9",
+    "at": "0x3e8",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_b.height",
+    "part": "swirl_b",
+    "label": "Height",
+    "doc": "From the ground under the target (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x3fa",
+    "code": "0xa",
+    "at": "0x3fc",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_b.texture",
+    "part": "swirl_b",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 3,
+    "default": 2,
+    "inst": "0x444",
+    "code": "0x52",
+    "at": "0x446",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_b.blend",
+    "part": "swirl_b",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 2,
+    "inst": "0x454",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x454": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x454": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x454": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x454": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.swirl_b.size.grow",
+    "part": "swirl_b",
+    "label": "Grows by",
+    "doc": "Size per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x422",
+    "code": "0xe",
+    "at": "0x424",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_b.size.grow_for",
+    "part": "swirl_b",
+    "label": "Grows for",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x426",
+    "code": "0x9",
+    "at": "0x426",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_b.size.hold",
+    "part": "swirl_b",
+    "label": "Holds for",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x42a",
+    "code": "0x9",
+    "at": "0x42a",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_b.size.shrink",
+    "part": "swirl_b",
+    "label": "Shrinks by",
+    "doc": "Size per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x42c",
+    "code": "0xe",
+    "at": "0x42e",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_b.size.shrink_for",
+    "part": "swirl_b",
+    "label": "Shrinks for",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x430",
+    "code": "0x9",
+    "at": "0x430",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_b.around.speed",
+    "part": "swirl_b",
+    "label": "Turning",
+    "doc": "Per tick (4096 = a whole turn)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x40c",
+    "code": "0x11",
+    "at": "0x40e",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_b.around.first",
+    "part": "swirl_b",
+    "label": "At first for",
+    "doc": "Ticks at that speed",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x410",
+    "code": "0x9",
+    "at": "0x410",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_b.around.speed_up",
+    "part": "swirl_b",
+    "label": "Then speeds up by",
+    "doc": "Each tick after that",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x412",
+    "code": "0xc",
+    "at": "0x414",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_b.spin",
+    "part": "swirl_b",
+    "label": "Spin",
+    "doc": "Around itself, per tick, all axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 768,
+    "inst": "0x45e",
+    "code": "0xe",
+    "at": "0x460",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl_b.spin_for",
+    "part": "swirl_b",
+    "label": "Spins for",
+    "doc": "Ticks. It lives for this and the next: keep them past its size's own times",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x462",
+    "code": "0x9",
+    "at": "0x462",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl_b.life_then",
+    "part": "swirl_b",
+    "label": "Then lives for",
+    "doc": "Ticks, no longer spinning",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x466",
+    "code": "0x9",
+    "at": "0x466",
+    "form": "op"
+   },
+   {
+    "key": "script.wisps.column.speed",
+    "part": "wisps",
+    "label": "Rises at",
+    "doc": "Height speed of the column (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -14336,
+    "inst": "0x47c",
+    "code": "0xb",
+    "at": "0x47e",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.column.for",
+    "part": "wisps",
+    "label": "Rises for",
+    "doc": "Ticks: wisps are released meanwhile",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0x480",
+    "code": "0x9",
+    "at": "0x480",
+    "form": "op"
+   },
+   {
+    "key": "script.wisps.column.every",
+    "part": "wisps",
+    "label": "One every",
+    "doc": "Ticks (at least 1: 0 never lets the effect go on)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 4,
+    "inst": "0x48c",
+    "code": "0x9",
+    "at": "0x48c",
+    "form": "op"
+   },
+   {
+    "key": "script.wisps.height_random",
+    "part": "wisps",
+    "label": "Height, random",
+    "doc": "Added at random to each one's height",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x492",
+    "code": "0x12",
+    "at": "0x494",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.around.speed",
+    "part": "wisps",
+    "label": "Turning",
+    "doc": "Per tick (4096 = a whole turn)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x4a0",
+    "code": "0x11",
+    "at": "0x4a2",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.around.random",
+    "part": "wisps",
+    "label": "Turning, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 32,
+    "inst": "0x4a4",
+    "code": "0x15",
+    "at": "0x4a6",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.life",
+    "part": "wisps",
+    "label": "Lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0x4a8",
+    "code": "0x9",
+    "at": "0x4a8",
+    "form": "op"
+   },
+   {
+    "key": "script.wisps.size.grow",
+    "part": "wisps",
+    "label": "Grows by",
+    "doc": "Size per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x4b4",
+    "code": "0xe",
+    "at": "0x4b6",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.size.grow_for",
+    "part": "wisps",
+    "label": "Grows for",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x4b8",
+    "code": "0x9",
+    "at": "0x4b8",
+    "form": "op"
+   },
+   {
+    "key": "script.wisps.size.hold",
+    "part": "wisps",
+    "label": "Holds for",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x4bc",
+    "code": "0x9",
+    "at": "0x4bc",
+    "form": "op"
+   },
+   {
+    "key": "script.wisps.size.shrink",
+    "part": "wisps",
+    "label": "Shrinks by",
+    "doc": "Size per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x4be",
+    "code": "0xe",
+    "at": "0x4c0",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.size.shrink_for",
+    "part": "wisps",
+    "label": "Shrinks for",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x4c2",
+    "code": "0x9",
+    "at": "0x4c2",
+    "form": "op"
+   },
+   {
+    "key": "script.wisps.blend",
+    "part": "wisps",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x4d8",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x4d8": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x4d8": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x4d8": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x4d8": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.wisps.tilt.x",
+    "part": "wisps",
+    "label": "X",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 64,
+    "inst": "0x4e0",
+    "code": "0xa",
+    "at": "0x4e2",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.tilt.y",
+    "part": "wisps",
+    "label": "Y",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 96,
+    "inst": "0x4e0",
+    "code": "0xa",
+    "at": "0x4e4",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.tilt.z",
+    "part": "wisps",
+    "label": "Z",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 64,
+    "inst": "0x4e0",
+    "code": "0xa",
+    "at": "0x4e6",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.tilt.random",
+    "part": "wisps",
+    "label": "Random",
+    "doc": "Added at random to each axis",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x4e8",
+    "code": "0x16",
+    "at": "0x4ea",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.spin.x",
+    "part": "wisps",
+    "label": "X",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1024,
+    "inst": "0x4ec",
+    "code": "0xb",
+    "at": "0x4ee",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.spin.z",
+    "part": "wisps",
+    "label": "Z",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1024,
+    "inst": "0x4ec",
+    "code": "0xb",
+    "at": "0x4f2",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.spin.x_random",
+    "part": "wisps",
+    "label": "X, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x4f4",
+    "code": "0x13",
+    "at": "0x4f6",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.spin.z_random",
+    "part": "wisps",
+    "label": "Z, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x4f4",
+    "code": "0x13",
+    "at": "0x4fa",
+    "form": "s16"
+   },
+   {
+    "key": "script.wisps.model_life",
+    "part": "wisps",
+    "label": "Shown for",
+    "doc": "Ticks each one is drawn",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0x500",
+    "code": "0x9",
+    "at": "0x500",
+    "form": "op"
+   }
+  ]
+ }
 }
