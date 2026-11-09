@@ -467,7 +467,7 @@ CYCLES = {
     28: ("mag027-051.tim", 10, "emitter.flash 10\nmaster.wait 20\nfade.step 64\nactors.length 30\n"),
     27: ("mag026.tim", 9, "actors.length 30\nmaster.wait 20\nfade.step 64\nemitter.release 25\n"),
     26: ("mag025.tim", 19, "bursts.sparks 4\nknock.gravity 64\nemitter.dust 2\nbursts.radius 512\n"),
-    25: ("mag024-050.tim", 20, "glow.sparks 4\naura.second 1024\nemitter.heal 40\nsparkles.spread 1024\n"),
+    25: ("mag024-050.tim", 22, "glow.sparks 4\naura.second 1024\nemitter.heal 40\nsparkles.spread 1024\n"),
     24: ("mag023-066.tim", 9, "actors.length 30\nmaster.wait 30\nwobble.step 64\nemitter.release 25\n"),
     22: ("mag021.tim", 26, "emitter.blob 40\nblob.cycles 3\nemitter.pools_every 3\nblob.spin -100\n"),
     21: ("mag020.tim", 27, "runes.every 5\nrunes.spin 300\nmotes.until 3\nemitter.release 40\n"),

@@ -111,6 +111,18 @@
    "size": 60,
    "format": "h",
    "columns": 10
+  },
+  "layouts.aura": {
+   "kind": "layout",
+   "address": "0x1611C20",
+   "size": 6756,
+   "capacity": 100
+  },
+  "layouts.ring": {
+   "kind": "layout",
+   "address": "0x161194C",
+   "size": 724,
+   "capacity": 52
   }
  },
  "resources": {
@@ -400,6 +412,28 @@
    "max": 2147483647,
    "default": "@tables.particles",
    "unit": "plain"
+  },
+  {
+   "key": "layouts.aura",
+   "part": "emitter",
+   "label": "Aura model",
+   "doc": "The prim-model layout of the aura players (the rings on the ground and the band, their animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.aura",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ring",
+   "part": "emitter",
+   "label": "Ring model",
+   "doc": "The prim-model layout of the ring players (the two crossed blades, their animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ring",
+   "unit": "plain"
   }
  ],
  "tasks": [
@@ -411,22 +445,6 @@
    "code": "0x889F40",
    "native": "0x889F40",
    "doc": "One per action: the module's own emitter (the port's task): its sound, the glow, the aura players, the spawners, the light, the target overlay, the particle emitter, the heal."
-  }
- ],
- "not_editable": [
-  {
-   "key": "not_editable.layout_ring",
-   "label": "Layout ring",
-   "doc": "Data its code reads",
-   "address": "0x161194C",
-   "size": 724
-  },
-  {
-   "key": "not_editable.layout_aura",
-   "label": "Layout aura",
-   "doc": "Data its code reads",
-   "address": "0x1611C20",
-   "size": 4096
   }
  ]
 }
