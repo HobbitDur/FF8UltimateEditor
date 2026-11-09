@@ -688,3 +688,26 @@ def test_choreography_says_why_a_port_has_no_part_tabs(qapp, monkeypatch, tmp_pa
     assert effectparts._SCHEMAS == {}                     # not kept: choosing it again asks again
     fujin.select_effect(1)                                # not described as a port: nothing to say
     assert fujin.parts_note.isHidden()
+
+
+def test_fujin_is_as_tall_as_its_shown_tab(qapp):
+    """Fujin needs the height of the tab shown, not of its tallest one (the MAG script page held every tab: with the
+    header, the window outgrew a 1080p screen and the Camera tab's bottom was cut); the camera editor no longer keeps
+    the height of the preview Fujin takes out of it."""
+    from Fujin.fujinwidget import FujinWidget
+    fujin = FujinWidget()
+    fujin.resize(1600, 900)
+    fujin.show()
+    fujin.tabs.setCurrentIndex(2)
+    fujin.choreography.setCurrentIndex(0)                    # MAG script / playback
+    qapp.processEvents()
+    tall = fujin.minimumSizeHint().height()
+    fujin.tabs.setCurrentIndex(0)                            # Overview
+    qapp.processEvents()
+    assert fujin.minimumSizeHint().height() < tall - 100
+    fujin.tabs.setCurrentIndex(1)                            # Camera
+    qapp.processEvents()
+    editor = fujin.camera_editor
+    assert editor.minimumSizeHint().height() < editor.preview.minimumSizeHint().height()
+    assert fujin.minimumSizeHint().height() < tall
+    fujin.close()

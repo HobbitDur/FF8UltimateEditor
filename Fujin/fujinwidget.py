@@ -11,7 +11,7 @@ from PyQt6.QtCore import Qt, QSignalBlocker, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon, QFont
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget,
     QListWidgetItem, QTabWidget, QPlainTextEdit, QComboBox, QSplitter, QTextBrowser,
-    QFileDialog, QMessageBox, QPushButton)
+    QFileDialog, QMessageBox, QPushButton, QSizePolicy)
 from Common.autoimport import AutoImportSource
 from Common.battlesidefiles import BattleSideFiles
 from Common.filebinding import FileBinding
@@ -57,6 +57,29 @@ PROGRAM_CAMERA_TIP = ("The camera track this new effect starts when it is cast (
                       "Characters' spells frame the target from the party's side: Bio's (022) suits a spell on one "
                       "monster. A cinematic's own track (Timing part, Camera) plays too unless it is set to None.")
 USERS_SHOWN = 24    # entries listed per kind in the Overview's Used by (effect 0 has hundreds)
+
+
+def size_by_shown_page(tabs):
+    """Make a tab widget as tall as its shown page needs, not its tallest one: a QTabWidget's minimum is every page's,
+    shown or not (the MAG script page's held the Camera tab too, and with the header the window outgrew a 1080p screen,
+    its bottom cut). The other pages are Ignored, as the main window does for its tools. Returns the function to call
+    again when pages are added."""
+    policies = {}
+
+    def update(_index=None):
+        current = tabs.currentWidget()
+        pages = [tabs.widget(i) for i in range(tabs.count())]
+        for page in pages:
+            policy = policies.setdefault(page, page.sizePolicy())
+            page.setSizePolicy(policy if page is current else QSizePolicy(QSizePolicy.Policy.Ignored,
+                                                                           QSizePolicy.Policy.Ignored))
+        for page in [page for page in policies if page not in pages]:      # pages gone (an effect's part tabs)
+            del policies[page]
+        tabs.updateGeometry()
+
+    tabs.currentChanged.connect(update)
+    update()
+    return update
 
 
 class FujinWidget(QWidget):
@@ -169,7 +192,10 @@ class FujinWidget(QWidget):
         camera_layout.addWidget(self.camera_note)
         camera_splitter = QSplitter()
         camera_splitter.addWidget(self.camera_sources)
+        editor_splitter = self.camera_editor.preview.parentWidget()
         camera_splitter.addWidget(self.camera_editor.preview)
+        # the camera editor's splitter kept the preview's minimum height (551 px) once it was taken out
+        editor_splitter.updateGeometry()
         camera_splitter.setStretchFactor(0, 1)
         camera_splitter.setStretchFactor(1, 1)
         camera_layout.addWidget(camera_splitter, 1)
@@ -246,6 +272,8 @@ class FujinWidget(QWidget):
         self.tabs.addTab(self.sound, "Sound")
         self.changes = QTextBrowser()
         self.tabs.addTab(self.changes, "Pending changes")
+        size_by_shown_page(self.tabs)
+        self._size_choreography = size_by_shown_page(self.choreography)
         self.component_views = (self.mag_camera, self.native_camera, self.models, self.textures, self.sound,
                                 self.workspace)
         for view in self.component_views:
@@ -1427,6 +1455,7 @@ class FujinWidget(QWidget):
             self.choreography.setTabToolTip(index, part["doc"])
             if part["key"] == shown_key:
                 self.choreography.setCurrentWidget(tab)
+        self._size_choreography()
         self._sync_script_parts()
 
     def _recorder_built(self):
