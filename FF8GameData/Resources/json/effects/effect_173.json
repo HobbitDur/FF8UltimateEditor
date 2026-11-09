@@ -1109,6 +1109,50 @@
    "unit": "plain"
   },
   {
+   "key": "shards.swirl",
+   "part": "shards",
+   "label": "Tornado turn",
+   "doc": "On each target: 0 = the shards fly straight away from it (the game); else they turn round it this much a tick (4096 a turn; negative: the other way), a small tornado",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.rise",
+   "part": "shards",
+   "label": "Tornado rise",
+   "doc": "A tornado's shards rise this much a tick",
+   "type": "i16",
+   "min": -400,
+   "max": 400,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.widen",
+   "part": "shards",
+   "label": "Tornado widening",
+   "doc": "A tornado's radius grows by this / 4096 a tick (0: a column)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.ground",
+   "part": "shards",
+   "label": "Tornado from the ground",
+   "doc": "A tornado's shards: 1 = start on the floor under their target and rise from there; 0 = start at the target's point",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
    "key": "trail_meshes.mesh0",
    "part": "trail",
    "label": "Mesh 0",

@@ -351,7 +351,7 @@ CYCLES = {
     176: ("mag175.tim", 5, "sounds.wind 22311280\nsounds.land 22311276\n"),
     175: ("mag174.tim", 16, "sound 22311280\ndirector.damage 90\n"),
     169: ("mag168.tim", 9, "sound 22311280\ndirector.damage 30\n"),
-    173: ("mag172.tim", 97, "sounds.start 22311280\ndirector.damage 60\nswirl.per_tick 6\ntrail.speed_min 300\n"),
+    173: ("mag172.tim", 101, "sounds.start 22311280\ndirector.damage 60\nswirl.per_tick 6\ntrail.speed_min 300\n"),
     168: ("mag167.tim", 6, "sound 22311280\ndirector.damage 50\n"),
     165: ("mag164.tim", 30, "sounds.a 22311280\nsounds.d 22311276\n"),
     164: ("mag163.tim", 30, "sounds.raise 22311280\nsounds.blast 22311276\ndirector.damage 280\n"),
