@@ -26,7 +26,7 @@ from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
 from Fujin.texturepictureview import TexturePictureView, TimTexture, sheet_in_tim, tim_blocks
 from FF8GameData.psxgpu.texuse import texture_sheets
-from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, defaults as schema_defaults, effect_schema,
+from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, no_parts_reason, defaults as schema_defaults, effect_schema,
                                recorder_has_ports)
 from Fujin.nativepreview import NativePreviewView, gl_renderer
 from Fujin.scriptparts import apply_script_values, edits, is_script_key, script_matches, script_values, with_script_parts
@@ -1444,10 +1444,13 @@ class FujinWidget(QWidget):
         self._record_parts()
 
     def _show_parts_note(self):
-        """Why there are no part tabs: the recorder is being built, or lacks FFNx's effect sources."""
+        """Why there are no part tabs: the recorder is being built, lacks FFNx's effect sources, or has none for this
+        ported effect (built before its port, or it did not answer)."""
         building = recorder_build().building
-        self.parts_note.setText("" if self._parts_schema is not None else
-                                PORTS_BUILDING if building else "" if recorder_has_ports() else PORTS_MISSING)
+        effect = self.current_effect
+        self.parts_note.setText("" if self._parts_schema is not None else PORTS_BUILDING if building else
+                                PORTS_MISSING if not recorder_has_ports() else
+                                (no_parts_reason(effect, self.description(effect)) if effect is not None else None) or "")
         self.parts_note.setVisible(bool(self.parts_note.text()))
 
     def _locate_texture(self, sheet, pieces, label):

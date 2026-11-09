@@ -38,12 +38,30 @@ PATH_COLOUR = QColor(190, 90, 255, 200)     # the part's sprite paths
 TICKS_PER_SECOND = 15
 
 _SCHEMAS = {}                       # (recorder build, effect) -> schema or None
+_SCHEMA_FAILED = {}                 # effect -> why the recorder gave no table (not kept: asked again next time)
 _PORTS = {}                         # recorder build -> whether it has FFNx's effect ports
 PORTS_MISSING = ("Part tabs (an effect part by part, with its parameters - Cure, Potion, Hypnotize) need FFNx's effect "
                  "sources: tick the FFNx button in the header's External program bar, then Update (it downloads "
                  "them and builds Fujin's effect recorder with them; Visual Studio's C++ tools are needed when "
                  "running from source).")
 PORTS_BUILDING = "Fujin's effect recorder is being built: the part tabs come when it is ready."
+
+
+def no_parts_reason(effect_id, description):
+    """Why an effect Fujin describes as a C++ port (its description names its module) has no part tabs, in
+    words, or None (not a port: nothing to say). Asked after effect_schema gave None."""
+    if not (description or {}).get("module"):
+        return None
+    failed = _SCHEMA_FAILED.get(effect_id)
+    if failed:
+        return (f"Fujin's effect recorder ({RECORDER}) did not give this effect's parameters: {failed}. "
+                "Choose the effect again to ask it again.")
+    source = ffnx_sources()
+    built = (f"FFNx's effect sources {source[1]} (commit {source[2][:10]})" if source else
+             "FFNx's effect sources")
+    return (f"Fujin's effect recorder has no parameters for this effect: it was built with {built}, from before "
+            "this effect's port had them. Tick the FFNx button in the header's External program bar, then "
+            "Update: it downloads the latest and builds the recorder again.")
 
 
 def recorder_has_ports():
@@ -83,17 +101,27 @@ def effect_schema(effect_id):
         return None
     key = (build, effect_id)
     if key not in _SCHEMAS:
-        schema = None
+        schema, failed = None, None
         with tempfile.TemporaryDirectory(prefix="fujin_schema_") as folder:
             path = os.path.join(folder, "schema.json")
             try:
-                subprocess.run([str(RECORDER), str(effect_id), f"schema={path}"], cwd=str(RECORDER.parent),
-                               capture_output=True, timeout=30,
-                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-                with open(path, encoding="utf-8") as file:
-                    schema = json.load(file)
-            except (OSError, ValueError, subprocess.SubprocessError):
-                schema = None
+                run = subprocess.run([str(RECORDER), str(effect_id), f"schema={path}"], cwd=str(RECORDER.parent),
+                                     capture_output=True, text=True, errors="replace", timeout=30,
+                                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                try:
+                    with open(path, encoding="utf-8") as file:
+                        schema = json.load(file)
+                except (OSError, ValueError):
+                    lines = [line.strip() for line in (run.stdout + run.stderr).splitlines() if line.strip()]
+                    failed = f"it ended with code {run.returncode}" + (f" ({lines[-1]})" if lines else "")
+            except subprocess.TimeoutExpired:
+                failed = "it did not answer within 30 seconds (an antivirus scanning it?)"
+            except (OSError, subprocess.SubprocessError) as error:
+                failed = f"it could not be run ({error})"
+        if failed:                      # not kept: the next look asks again
+            _SCHEMA_FAILED[effect_id] = failed
+            return None
+        _SCHEMA_FAILED.pop(effect_id, None)
         _SCHEMAS[key] = schema if schema and schema.get("parts") else None
     return _SCHEMAS[key]
 

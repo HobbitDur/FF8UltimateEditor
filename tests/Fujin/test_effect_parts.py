@@ -651,3 +651,40 @@ def test_part_tab_shows_what_cant_be_edited(qapp):
     assert camera.text() == camera_address and camera.value() == int(camera_address, 16)
     fujin.data_view.select(rows[0]["key"])
     assert rows[0]["address"].removeprefix("0x") in fujin.data_view.fixed_bytes.toPlainText()
+
+
+def test_choreography_says_why_a_port_has_no_part_tabs(qapp, monkeypatch, tmp_path):
+    """A recorder with FFNx's ports but none for an effect Fujin describes as one (Ice Breath, 173): built
+    from sources older than its port, or it did not answer. Choreography says which, never nothing."""
+    import subprocess
+    from Fujin import effectparts, fujinwidget
+    monkeypatch.setattr(fujinwidget, "recorder_has_ports", lambda: True)
+    monkeypatch.setattr(effectparts, "ffnx_sources", lambda: ("https://github.com/HobbitDur/FFNx", "VanillaDecompiledStructRework",
+                                                              "0123456789abcdef"))
+    recorder = tmp_path / "fxrecorder.exe"
+    recorder.write_bytes(b"x")
+    monkeypatch.setattr(effectparts, "RECORDER", recorder)
+    monkeypatch.setattr(effectparts, "_SCHEMAS", {})
+    monkeypatch.setattr(effectparts, "_SCHEMA_FAILED", {})
+
+    def old_recorder(arguments, **_options):          # built before 173's port had parameters
+        path = arguments[2].split("=", 1)[1]
+        with open(path, "w", encoding="utf-8") as file:
+            file.write('{"effect": 173, "parts": [], "fields": []}')
+        return subprocess.CompletedProcess(arguments, 0, "no parameters for effect 173\n", "")
+    monkeypatch.setattr(effectparts.subprocess, "run", old_recorder)
+    fujin = fujinwidget.FujinWidget()
+    fujin.select_effect(173)
+    assert fujin.part_tabs == [] and not fujin.parts_note.isHidden()
+    assert "0123456789" in fujin.parts_note.text() and "FFNx button" in fujin.parts_note.text()
+
+    def slow_recorder(arguments, **_options):
+        raise subprocess.TimeoutExpired(arguments, 30)
+    monkeypatch.setattr(effectparts.subprocess, "run", slow_recorder)
+    monkeypatch.setattr(effectparts, "_SCHEMAS", {})
+    fujin.select_effect(1)
+    fujin.select_effect(173)
+    assert "did not answer" in fujin.parts_note.text()
+    assert effectparts._SCHEMAS == {}                     # not kept: choosing it again asks again
+    fujin.select_effect(1)                                # not described as a port: nothing to say
+    assert fujin.parts_note.isHidden()
