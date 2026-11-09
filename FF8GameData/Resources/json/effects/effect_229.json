@@ -169,5 +169,2792 @@
    "address": "0x188062C",
    "size": 256
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag228_b.00",
+  "param": "files.file00",
+  "size": 10084,
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When things happen, and the camera. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 0,
+    "key": "fade",
+    "title": "Darkening",
+    "paths": [],
+    "doc": "The battle stage (ground and sky) fades to a dark colour while she charges, and back after the damage. The models are not darkened"
+   },
+   {
+    "id": 474,
+    "key": "glow",
+    "title": "Glow in her hand",
+    "paths": [
+     66010
+    ],
+    "doc": "The big ball of light on the caster, from the start until after the lasers leave"
+   },
+   {
+    "id": 816,
+    "key": "charge",
+    "title": "Glows on her body",
+    "paths": [
+     66352
+    ],
+    "doc": "Six small balls of light on her hands, arms and head: each one is where a laser starts"
+   },
+   {
+    "id": 1196,
+    "key": "flash",
+    "title": "Flashes",
+    "paths": [
+     66732
+    ],
+    "doc": "The spinning discs where the lasers leave her"
+   },
+   {
+    "id": 1670,
+    "key": "lasers",
+    "title": "Lasers",
+    "paths": [
+     67118
+    ],
+    "doc": "The six lasers' way: each one curves, then homes on the target. The purple lines are their tips"
+   },
+   {
+    "id": 1670,
+    "key": "beam",
+    "title": "Laser beams",
+    "paths": [
+     67118
+    ],
+    "doc": "The trail each laser leaves behind"
+   },
+   {
+    "id": 1582,
+    "key": "tip",
+    "title": "Laser tips",
+    "paths": [
+     67118
+    ],
+    "doc": "The bright head of each laser; it opens when the laser bursts on the target"
+   },
+   {
+    "id": 1740,
+    "key": "smoke",
+    "title": "Impact smoke",
+    "paths": [],
+    "doc": "The bright puffs that rise where a laser bursts. Their picture and blend are in their sprite (Textures tab, Sections)"
+   },
+   {
+    "id": 1870,
+    "key": "ring",
+    "title": "Impact ring",
+    "paths": [
+     67406
+    ],
+    "doc": "The orange ring that opens where a laser bursts"
+   },
+   {
+    "id": 1934,
+    "key": "flare",
+    "title": "Impact flash",
+    "paths": [
+     67470
+    ],
+    "doc": "The orange star of light where a laser bursts"
+   }
+  ],
+  "groups": [
+   {
+    "key": "script.timing.fire",
+    "label": "Lasers fire",
+    "doc": "When the lasers leave, after the glows start: these two waits added up (the game: 18 ticks)"
+   },
+   {
+    "key": "script.timing.hit",
+    "label": "Damage",
+    "doc": "When the damage shows, after the lasers leave: these two waits added up (the game: 20 ticks)"
+   },
+   {
+    "key": "script.timing.end",
+    "label": "Ends",
+    "doc": "How long the effect lasts after that: these two waits added up (the game: 17 ticks)"
+   },
+   {
+    "key": "script.fade.colour",
+    "label": "Colour",
+    "doc": "The colour the stage fades to"
+   },
+   {
+    "key": "script.glow.colour",
+    "label": "Brightness",
+    "doc": "It brightens while the glows charge, then keeps the brightness it reached (its flash and fade in the script end with their bone, unseen)"
+   },
+   {
+    "key": "script.glow.size",
+    "label": "Size",
+    "doc": "4096 = its model's own size x 16"
+   },
+   {
+    "key": "script.charge.colour",
+    "label": "Brightness",
+    "doc": "Each one brightens while it charges, flashes when its laser leaves, then fades"
+   },
+   {
+    "key": "script.charge.size",
+    "label": "Size",
+    "doc": "4096 = its model's own size x 16"
+   },
+   {
+    "key": "script.charge.left_hand",
+    "label": "Left hand",
+    "doc": "Where this glow and its laser start"
+   },
+   {
+    "key": "script.charge.right_hand",
+    "label": "Right hand",
+    "doc": "Where this glow and its laser start"
+   },
+   {
+    "key": "script.charge.left_arm",
+    "label": "Left arm",
+    "doc": "Where this glow and its laser start"
+   },
+   {
+    "key": "script.charge.right_arm",
+    "label": "Right arm",
+    "doc": "Where this glow and its laser start"
+   },
+   {
+    "key": "script.charge.head_left",
+    "label": "Head, left",
+    "doc": "Where this glow and its laser start"
+   },
+   {
+    "key": "script.charge.head_right",
+    "label": "Head, right",
+    "doc": "Where this glow and its laser start"
+   },
+   {
+    "key": "script.flash.colour",
+    "label": "Brightness",
+    "doc": ""
+   },
+   {
+    "key": "script.flash.size",
+    "label": "Size",
+    "doc": "4096 = its model's own size x 16"
+   },
+   {
+    "key": "script.lasers.aim",
+    "label": "Where they hit",
+    "doc": "Two points jump at random around the target, every tick; each laser homes on one"
+   },
+   {
+    "key": "script.lasers.left_hand",
+    "label": "From the left hand",
+    "doc": "Its curve: a first speed, a bend towards a point, then it homes on the target"
+   },
+   {
+    "key": "script.lasers.right_hand",
+    "label": "From the right hand",
+    "doc": "Its curve: a first speed, a bend towards a point, then it homes on the target"
+   },
+   {
+    "key": "script.lasers.left_arm",
+    "label": "From the left arm",
+    "doc": "Its curve: a first speed, a bend towards a point, then it homes on the target"
+   },
+   {
+    "key": "script.lasers.right_arm",
+    "label": "From the right arm",
+    "doc": "Its curve: a first speed, a bend towards a point, then it homes on the target"
+   },
+   {
+    "key": "script.lasers.head_left",
+    "label": "From the head, left",
+    "doc": "Its curve: a first speed, a bend towards a point, then it homes on the target"
+   },
+   {
+    "key": "script.lasers.head_right",
+    "label": "From the head, right",
+    "doc": "Its curve: a first speed, a bend towards a point, then it homes on the target"
+   },
+   {
+    "key": "script.beam.flicker",
+    "label": "Brightness",
+    "doc": "It flickers between these two, one tick each"
+   },
+   {
+    "key": "script.tip.flicker",
+    "label": "Brightness",
+    "doc": "It flickers between these two, one tick each"
+   },
+   {
+    "key": "script.tip.size",
+    "label": "Size",
+    "doc": "4096 = its model's own size x 16"
+   },
+   {
+    "key": "script.ring.colour",
+    "label": "Brightness",
+    "doc": "It brightens fast, then fades"
+   },
+   {
+    "key": "script.ring.size",
+    "label": "Size",
+    "doc": "4096 = its model's own size x 16"
+   },
+   {
+    "key": "script.flare.colour",
+    "label": "Brightness",
+    "doc": "It brightens fast, then fades"
+   },
+   {
+    "key": "script.flare.size",
+    "label": "Size",
+    "doc": "4096 = its model's own size x 16"
+   }
+  ],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x64",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x64": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x64": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.start",
+    "part": "timing",
+    "label": "Glows start after",
+    "doc": "Ticks before the glows on her appear (and the sound plays)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0xa2",
+    "code": "0x9",
+    "at": "0xa2",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.fire.first",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0xb0",
+    "code": "0x9",
+    "at": "0xb0",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.fire.second",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0xb6",
+    "code": "0x9",
+    "at": "0xb6",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.hit.first",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0xc0",
+    "code": "0x9",
+    "at": "0xc0",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.hit.second",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0xc2",
+    "code": "0x9",
+    "at": "0xc2",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.light",
+    "part": "timing",
+    "label": "Stage lightens after",
+    "doc": "Ticks after the damage before the stage gets its light back",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0xc8",
+    "code": "0x9",
+    "at": "0xc8",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.first",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0xce",
+    "code": "0x9",
+    "at": "0xce",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.second",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 1,
+    "inst": "0xd0",
+    "code": "0x9",
+    "at": "0xd0",
+    "form": "op"
+   },
+   {
+    "key": "script.fade.colour.r",
+    "part": "fade",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 48,
+    "inst": "0x142",
+    "code": "0xa",
+    "at": "0x146",
+    "form": "s16"
+   },
+   {
+    "key": "script.fade.colour.g",
+    "part": "fade",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 48,
+    "inst": "0x142",
+    "code": "0xa",
+    "at": "0x148",
+    "form": "s16"
+   },
+   {
+    "key": "script.fade.colour.b",
+    "part": "fade",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 80,
+    "inst": "0x142",
+    "code": "0xa",
+    "at": "0x14a",
+    "form": "s16"
+   },
+   {
+    "key": "script.fade.start",
+    "part": "fade",
+    "label": "Starts at",
+    "doc": "How dark it is at first (0: not at all)",
+    "type": "int",
+    "min": 0,
+    "max": 4096,
+    "default": 0,
+    "inst": "0x142",
+    "code": "0xa",
+    "at": "0x144",
+    "form": "s16"
+   },
+   {
+    "key": "script.fade.speed",
+    "part": "fade",
+    "label": "Darkens by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x14c",
+    "code": "0xb",
+    "at": "0x14e",
+    "form": "s16"
+   },
+   {
+    "key": "script.fade.for",
+    "part": "fade",
+    "label": "Darkens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x150",
+    "code": "0x9",
+    "at": "0x150",
+    "form": "op"
+   },
+   {
+    "key": "script.fade.back",
+    "part": "fade",
+    "label": "Lightens by",
+    "doc": "Per tick, once the screen lightens (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 0,
+    "default": -4096,
+    "inst": "0x158",
+    "code": "0xb",
+    "at": "0x15a",
+    "form": "s16"
+   },
+   {
+    "key": "script.fade.back_for",
+    "part": "fade",
+    "label": "Lightens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x15c",
+    "code": "0x9",
+    "at": "0x15c",
+    "form": "op"
+   },
+   {
+    "key": "script.glow.joint",
+    "part": "glow",
+    "label": "Point of the model",
+    "doc": "Which point of the caster it sits on",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 240,
+    "inst": "0x1b2",
+    "code": "0xad",
+    "at": "0x1b4",
+    "form": "s16"
+   },
+   {
+    "key": "script.glow.colour.start",
+    "part": "glow",
+    "label": "Starts at",
+    "doc": "128 = the model's colour as it is",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 0,
+    "inst": "0x1c4",
+    "code": "0xd",
+    "at": "0x1c6",
+    "form": "s16"
+   },
+   {
+    "key": "script.glow.colour.up",
+    "part": "glow",
+    "label": "Brightens by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x1c8",
+    "code": "0xe",
+    "at": "0x1ca",
+    "form": "s16"
+   },
+   {
+    "key": "script.glow.blend",
+    "part": "glow",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x1f0",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x1f0": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x1f0": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x1f0": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x1f0": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.glow.size.start",
+    "part": "glow",
+    "label": "Starts at",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x1f2",
+    "code": "0xd",
+    "at": "0x1f4",
+    "form": "s16"
+   },
+   {
+    "key": "script.glow.size.grow",
+    "part": "glow",
+    "label": "Grows by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x1f8",
+    "code": "0xe",
+    "at": "0x1fa",
+    "form": "s16"
+   },
+   {
+    "key": "script.glow.follow",
+    "part": "glow",
+    "label": "Follows her for",
+    "doc": "Ticks after the lasers leave; then it stays where it is",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x1a6",
+    "code": "0x9",
+    "at": "0x1a6",
+    "form": "op"
+   },
+   {
+    "key": "script.glow.life",
+    "part": "glow",
+    "label": "Lives for",
+    "doc": "Ticks after the lasers leave",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x200",
+    "code": "0x9",
+    "at": "0x200",
+    "form": "op"
+   },
+   {
+    "key": "script.charge.colour.start",
+    "part": "charge",
+    "label": "Starts at",
+    "doc": "128 = the model's colour as it is",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 0,
+    "inst": "0x318",
+    "code": "0xd",
+    "at": "0x31a",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.colour.up",
+    "part": "charge",
+    "label": "Brightens by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x31c",
+    "code": "0xe",
+    "at": "0x31e",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.colour.flash",
+    "part": "charge",
+    "label": "Flash",
+    "doc": "Its brightness when the laser leaves",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 256,
+    "inst": "0x324",
+    "code": "0xd",
+    "at": "0x326",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.colour.down",
+    "part": "charge",
+    "label": "Then fades by",
+    "doc": "Per tick, in 1/256 (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 0,
+    "default": -4096,
+    "inst": "0x328",
+    "code": "0xe",
+    "at": "0x32a",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.blend",
+    "part": "charge",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x34a",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x34a": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x34a": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x34a": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x34a": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.charge.size.start",
+    "part": "charge",
+    "label": "Starts at",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 4,
+    "inst": "0x34e",
+    "code": "0xd",
+    "at": "0x350",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.size.grow",
+    "part": "charge",
+    "label": "Grows by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x352",
+    "code": "0xe",
+    "at": "0x354",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.colour.down_for",
+    "part": "charge",
+    "label": "Fades for",
+    "doc": "Ticks; then it keeps the brightness reached",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x32c",
+    "code": "0x9",
+    "at": "0x32c",
+    "form": "op"
+   },
+   {
+    "key": "script.charge.life",
+    "part": "charge",
+    "label": "Lives for",
+    "doc": "Ticks after the lasers leave",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x35a",
+    "code": "0x9",
+    "at": "0x35a",
+    "form": "op"
+   },
+   {
+    "key": "script.charge.left_hand.joint",
+    "part": "charge",
+    "label": "Point of the model",
+    "doc": "Which of the caster's joints",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 25,
+    "inst": "0x222",
+    "code": "0xad",
+    "at": "0x224",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.left_hand.offset",
+    "part": "charge",
+    "label": "Offset",
+    "doc": "From that joint, along each of the joint's own axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x21e",
+    "code": "0xd",
+    "at": "0x220",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.right_hand.joint",
+    "part": "charge",
+    "label": "Point of the model",
+    "doc": "Which of the caster's joints",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 26,
+    "inst": "0x24e",
+    "code": "0xad",
+    "at": "0x250",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.right_hand.offset",
+    "part": "charge",
+    "label": "Offset",
+    "doc": "From that joint, along each of the joint's own axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x24a",
+    "code": "0xd",
+    "at": "0x24c",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.left_arm.joint",
+    "part": "charge",
+    "label": "Point of the model",
+    "doc": "Which of the caster's joints",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 8,
+    "inst": "0x27a",
+    "code": "0xad",
+    "at": "0x27c",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.left_arm.offset",
+    "part": "charge",
+    "label": "Offset",
+    "doc": "From that joint, along each of the joint's own axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x276",
+    "code": "0xd",
+    "at": "0x278",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.right_arm.joint",
+    "part": "charge",
+    "label": "Point of the model",
+    "doc": "Which of the caster's joints",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 10,
+    "inst": "0x2a6",
+    "code": "0xad",
+    "at": "0x2a8",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.right_arm.offset",
+    "part": "charge",
+    "label": "Offset",
+    "doc": "From that joint, along each of the joint's own axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x2a2",
+    "code": "0xd",
+    "at": "0x2a4",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.head_left.joint",
+    "part": "charge",
+    "label": "Point of the model",
+    "doc": "Which of the caster's joints",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 20,
+    "inst": "0x2d6",
+    "code": "0xad",
+    "at": "0x2d8",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.head_left.offset_x",
+    "part": "charge",
+    "label": "Offset X",
+    "doc": "From that joint, along the joint's own axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x2ce",
+    "code": "0xa",
+    "at": "0x2d0",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.head_left.offset_y",
+    "part": "charge",
+    "label": "Offset Y",
+    "doc": "From that joint, along the joint's own axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x2ce",
+    "code": "0xa",
+    "at": "0x2d2",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.head_left.offset_z",
+    "part": "charge",
+    "label": "Offset Z",
+    "doc": "From that joint, along the joint's own axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x2ce",
+    "code": "0xa",
+    "at": "0x2d4",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.head_right.joint",
+    "part": "charge",
+    "label": "Point of the model",
+    "doc": "Which of the caster's joints",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 21,
+    "inst": "0x306",
+    "code": "0xad",
+    "at": "0x308",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.head_right.offset_x",
+    "part": "charge",
+    "label": "Offset X",
+    "doc": "From that joint, along the joint's own axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x2fe",
+    "code": "0xa",
+    "at": "0x300",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.head_right.offset_y",
+    "part": "charge",
+    "label": "Offset Y",
+    "doc": "From that joint, along the joint's own axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x2fe",
+    "code": "0xa",
+    "at": "0x302",
+    "form": "s16"
+   },
+   {
+    "key": "script.charge.head_right.offset_z",
+    "part": "charge",
+    "label": "Offset Z",
+    "doc": "From that joint, along the joint's own axes",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x2fe",
+    "code": "0xa",
+    "at": "0x304",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.left_hand.joint",
+    "part": "flash",
+    "label": "Joint: left hand",
+    "doc": "Which of the caster's joints this flash follows",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 25,
+    "inst": "0x37c",
+    "code": "0x5b",
+    "at": "0x380",
+    "form": "u8"
+   },
+   {
+    "key": "script.flash.right_hand.joint",
+    "part": "flash",
+    "label": "Joint: right hand",
+    "doc": "Which of the caster's joints this flash follows",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 26,
+    "inst": "0x3de",
+    "code": "0x5b",
+    "at": "0x3e2",
+    "form": "u8"
+   },
+   {
+    "key": "script.flash.left_arm.joint",
+    "part": "flash",
+    "label": "Joint: left arm",
+    "doc": "Which of the caster's joints this flash follows",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 8,
+    "inst": "0x40a",
+    "code": "0x5b",
+    "at": "0x40e",
+    "form": "u8"
+   },
+   {
+    "key": "script.flash.right_arm.joint",
+    "part": "flash",
+    "label": "Joint: right arm",
+    "doc": "Which of the caster's joints this flash follows",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 10,
+    "inst": "0x436",
+    "code": "0x5b",
+    "at": "0x43a",
+    "form": "u8"
+   },
+   {
+    "key": "script.flash.head_left.joint",
+    "part": "flash",
+    "label": "Joint: head, left",
+    "doc": "Which of the caster's joints this flash follows",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 20,
+    "inst": "0x462",
+    "code": "0x5b",
+    "at": "0x466",
+    "form": "u8"
+   },
+   {
+    "key": "script.flash.head_right.joint",
+    "part": "flash",
+    "label": "Joint: head, right",
+    "doc": "Which of the caster's joints this flash follows",
+    "type": "int",
+    "min": 0,
+    "max": 26,
+    "default": 21,
+    "inst": "0x48e",
+    "code": "0x5b",
+    "at": "0x492",
+    "form": "u8"
+   },
+   {
+    "key": "script.flash.follow",
+    "part": "flash",
+    "label": "Follows the joint for",
+    "doc": "Ticks; then it goes on alone",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0x370",
+    "code": "0x9",
+    "at": "0x370",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.speed",
+    "part": "flash",
+    "label": "Moves by",
+    "doc": "Along the joint's own Z, per tick (negative: forward)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -256,
+    "inst": "0x398",
+    "code": "0x11",
+    "at": "0x39a",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.spin",
+    "part": "flash",
+    "label": "Spin",
+    "doc": "Per tick (4096 = a whole turn)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 32,
+    "inst": "0x3a4",
+    "code": "0x11",
+    "at": "0x3a6",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.colour.start",
+    "part": "flash",
+    "label": "Starts at",
+    "doc": "128 = the model's colour as it is",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 128,
+    "inst": "0x4a0",
+    "code": "0xd",
+    "at": "0x4a2",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.colour.down",
+    "part": "flash",
+    "label": "Fades by",
+    "doc": "Per tick, in 1/256 (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 0,
+    "default": -2048,
+    "inst": "0x4a4",
+    "code": "0xe",
+    "at": "0x4a6",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.blend",
+    "part": "flash",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it (on this model 50% draws as Added)",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x4c2",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x4c2": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x4c2": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x4c2": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x4c2": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.flash.size.start",
+    "part": "flash",
+    "label": "Starts at",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x4c6",
+    "code": "0xd",
+    "at": "0x4c8",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.size.grow",
+    "part": "flash",
+    "label": "Grows by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 12288,
+    "inst": "0x4ca",
+    "code": "0xe",
+    "at": "0x4cc",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.move_for",
+    "part": "flash",
+    "label": "Moves for",
+    "doc": "Ticks; then it stops moving, turning and fading",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x3ac",
+    "code": "0x9",
+    "at": "0x3ac",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.life",
+    "part": "flash",
+    "label": "Lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x4ce",
+    "code": "0x9",
+    "at": "0x4ce",
+    "form": "op"
+   },
+   {
+    "key": "script.lasers.aim.spread_x",
+    "part": "lasers",
+    "label": "Spread X",
+    "doc": "How far from the target, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 1280,
+    "inst": "0x186",
+    "code": "0x12",
+    "at": "0x188",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.aim.spread_y",
+    "part": "lasers",
+    "label": "Spread Y",
+    "doc": "How far from the target, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x186",
+    "code": "0x12",
+    "at": "0x18a",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.aim.spread_z",
+    "part": "lasers",
+    "label": "Spread Z",
+    "doc": "How far from the target, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 1280,
+    "inst": "0x186",
+    "code": "0x12",
+    "at": "0x18c",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_hand.speed_x",
+    "part": "lasers",
+    "label": "Speed X",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 64,
+    "inst": "0x4e6",
+    "code": "0x11",
+    "at": "0x4e8",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_hand.speed_y",
+    "part": "lasers",
+    "label": "Speed Y",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x4e6",
+    "code": "0x11",
+    "at": "0x4ea",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_hand.speed_z",
+    "part": "lasers",
+    "label": "Speed Z",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 32,
+    "inst": "0x4e6",
+    "code": "0x11",
+    "at": "0x4ec",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_hand.bend_for",
+    "part": "lasers",
+    "label": "Bends in",
+    "doc": "Ticks to reach the bend's point",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 6,
+    "inst": "0x4f6",
+    "code": "0xac",
+    "at": "0x4f8",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_hand.bend_x",
+    "part": "lasers",
+    "label": "Bends to X",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x4f6",
+    "code": "0xac",
+    "at": "0x4fa",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_hand.bend_y",
+    "part": "lasers",
+    "label": "Bends to Y",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1024,
+    "inst": "0x4f6",
+    "code": "0xac",
+    "at": "0x4fc",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_hand.bend_z",
+    "part": "lasers",
+    "label": "Bends to Z",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x4f6",
+    "code": "0xac",
+    "at": "0x4fe",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_hand.bend_wait",
+    "part": "lasers",
+    "label": "Homes after",
+    "doc": "Ticks of bending before it turns to the target",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x500",
+    "code": "0x9",
+    "at": "0x500",
+    "form": "op"
+   },
+   {
+    "key": "script.lasers.left_hand.home_for",
+    "part": "lasers",
+    "label": "Reaches the target in",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 6,
+    "inst": "0x502",
+    "code": "0xac",
+    "at": "0x504",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_hand.hit",
+    "part": "lasers",
+    "label": "Bursts after",
+    "doc": "Ticks after it turns to the target (also the right hand's)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 6,
+    "inst": "0x508",
+    "code": "0x9",
+    "at": "0x508",
+    "form": "op"
+   },
+   {
+    "key": "script.lasers.right_hand.speed_x",
+    "part": "lasers",
+    "label": "Speed X",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -64,
+    "inst": "0x51c",
+    "code": "0x11",
+    "at": "0x51e",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_hand.speed_y",
+    "part": "lasers",
+    "label": "Speed Y",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x51c",
+    "code": "0x11",
+    "at": "0x520",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_hand.speed_z",
+    "part": "lasers",
+    "label": "Speed Z",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 32,
+    "inst": "0x51c",
+    "code": "0x11",
+    "at": "0x522",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_hand.bend_for",
+    "part": "lasers",
+    "label": "Bends in",
+    "doc": "Ticks to reach the bend's point",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 6,
+    "inst": "0x52c",
+    "code": "0xac",
+    "at": "0x52e",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_hand.bend_x",
+    "part": "lasers",
+    "label": "Bends to X",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -512,
+    "inst": "0x52c",
+    "code": "0xac",
+    "at": "0x530",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_hand.bend_y",
+    "part": "lasers",
+    "label": "Bends to Y",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1024,
+    "inst": "0x52c",
+    "code": "0xac",
+    "at": "0x532",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_hand.bend_z",
+    "part": "lasers",
+    "label": "Bends to Z",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x52c",
+    "code": "0xac",
+    "at": "0x534",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_hand.bend_wait",
+    "part": "lasers",
+    "label": "Homes after",
+    "doc": "Ticks of bending before it turns to the target",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x536",
+    "code": "0x9",
+    "at": "0x536",
+    "form": "op"
+   },
+   {
+    "key": "script.lasers.right_hand.home_for",
+    "part": "lasers",
+    "label": "Reaches the target in",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 6,
+    "inst": "0x538",
+    "code": "0xac",
+    "at": "0x53a",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_arm.speed_x",
+    "part": "lasers",
+    "label": "Speed X",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 64,
+    "inst": "0x546",
+    "code": "0x11",
+    "at": "0x548",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_arm.speed_y",
+    "part": "lasers",
+    "label": "Speed Y",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x546",
+    "code": "0x11",
+    "at": "0x54a",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_arm.speed_z",
+    "part": "lasers",
+    "label": "Speed Z",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 32,
+    "inst": "0x546",
+    "code": "0x11",
+    "at": "0x54c",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_arm.bend_for",
+    "part": "lasers",
+    "label": "Bends in",
+    "doc": "Ticks to reach the bend's point",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 6,
+    "inst": "0x556",
+    "code": "0xac",
+    "at": "0x558",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_arm.bend_x",
+    "part": "lasers",
+    "label": "Bends to X",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x556",
+    "code": "0xac",
+    "at": "0x55a",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_arm.bend_y",
+    "part": "lasers",
+    "label": "Bends to Y",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1024,
+    "inst": "0x556",
+    "code": "0xac",
+    "at": "0x55c",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_arm.bend_z",
+    "part": "lasers",
+    "label": "Bends to Z",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x556",
+    "code": "0xac",
+    "at": "0x55e",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_arm.bend_wait",
+    "part": "lasers",
+    "label": "Homes after",
+    "doc": "Ticks of bending before it turns to the target",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 10,
+    "inst": "0x560",
+    "code": "0x9",
+    "at": "0x560",
+    "form": "op"
+   },
+   {
+    "key": "script.lasers.left_arm.home_for",
+    "part": "lasers",
+    "label": "Reaches the target in",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 8,
+    "inst": "0x562",
+    "code": "0xac",
+    "at": "0x564",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.left_arm.hit",
+    "part": "lasers",
+    "label": "Bursts after",
+    "doc": "Ticks after it turns to the target (also the right arm's)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x568",
+    "code": "0x9",
+    "at": "0x568",
+    "form": "op"
+   },
+   {
+    "key": "script.lasers.right_arm.speed_x",
+    "part": "lasers",
+    "label": "Speed X",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -64,
+    "inst": "0x57c",
+    "code": "0x11",
+    "at": "0x57e",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_arm.speed_y",
+    "part": "lasers",
+    "label": "Speed Y",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x57c",
+    "code": "0x11",
+    "at": "0x580",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_arm.speed_z",
+    "part": "lasers",
+    "label": "Speed Z",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 32,
+    "inst": "0x57c",
+    "code": "0x11",
+    "at": "0x582",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_arm.bend_for",
+    "part": "lasers",
+    "label": "Bends in",
+    "doc": "Ticks to reach the bend's point",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 6,
+    "inst": "0x58c",
+    "code": "0xac",
+    "at": "0x58e",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_arm.bend_x",
+    "part": "lasers",
+    "label": "Bends to X",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -512,
+    "inst": "0x58c",
+    "code": "0xac",
+    "at": "0x590",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_arm.bend_y",
+    "part": "lasers",
+    "label": "Bends to Y",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1024,
+    "inst": "0x58c",
+    "code": "0xac",
+    "at": "0x592",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_arm.bend_z",
+    "part": "lasers",
+    "label": "Bends to Z",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x58c",
+    "code": "0xac",
+    "at": "0x594",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.right_arm.bend_wait",
+    "part": "lasers",
+    "label": "Homes after",
+    "doc": "Ticks of bending before it turns to the target",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 10,
+    "inst": "0x596",
+    "code": "0x9",
+    "at": "0x596",
+    "form": "op"
+   },
+   {
+    "key": "script.lasers.right_arm.home_for",
+    "part": "lasers",
+    "label": "Reaches the target in",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 8,
+    "inst": "0x598",
+    "code": "0xac",
+    "at": "0x59a",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_left.speed_x",
+    "part": "lasers",
+    "label": "Speed X",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x5a6",
+    "code": "0x11",
+    "at": "0x5a8",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_left.speed_y",
+    "part": "lasers",
+    "label": "Speed Y",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -64,
+    "inst": "0x5a6",
+    "code": "0x11",
+    "at": "0x5aa",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_left.speed_z",
+    "part": "lasers",
+    "label": "Speed Z",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 32,
+    "inst": "0x5a6",
+    "code": "0x11",
+    "at": "0x5ac",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_left.bend_for",
+    "part": "lasers",
+    "label": "Bends in",
+    "doc": "Ticks to reach the bend's point",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 6,
+    "inst": "0x5b6",
+    "code": "0xac",
+    "at": "0x5b8",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_left.bend_x",
+    "part": "lasers",
+    "label": "Bends to X",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1536,
+    "inst": "0x5b6",
+    "code": "0xac",
+    "at": "0x5ba",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_left.bend_y",
+    "part": "lasers",
+    "label": "Bends to Y",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -512,
+    "inst": "0x5b6",
+    "code": "0xac",
+    "at": "0x5bc",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_left.bend_z",
+    "part": "lasers",
+    "label": "Bends to Z",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x5b6",
+    "code": "0xac",
+    "at": "0x5be",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_left.bend_wait",
+    "part": "lasers",
+    "label": "Homes after",
+    "doc": "Ticks of bending before it turns to the target",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 6,
+    "inst": "0x5c0",
+    "code": "0x9",
+    "at": "0x5c0",
+    "form": "op"
+   },
+   {
+    "key": "script.lasers.head_left.home_for",
+    "part": "lasers",
+    "label": "Reaches the target in",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 8,
+    "inst": "0x5c2",
+    "code": "0xac",
+    "at": "0x5c4",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_left.hit",
+    "part": "lasers",
+    "label": "Bursts after",
+    "doc": "Ticks after it turns to the target (also the head, right's)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x5c8",
+    "code": "0x9",
+    "at": "0x5c8",
+    "form": "op"
+   },
+   {
+    "key": "script.lasers.head_right.speed_x",
+    "part": "lasers",
+    "label": "Speed X",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x5dc",
+    "code": "0x11",
+    "at": "0x5de",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_right.speed_y",
+    "part": "lasers",
+    "label": "Speed Y",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -64,
+    "inst": "0x5dc",
+    "code": "0x11",
+    "at": "0x5e0",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_right.speed_z",
+    "part": "lasers",
+    "label": "Speed Z",
+    "doc": "Its first speed, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 32,
+    "inst": "0x5dc",
+    "code": "0x11",
+    "at": "0x5e2",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_right.bend_for",
+    "part": "lasers",
+    "label": "Bends in",
+    "doc": "Ticks to reach the bend's point",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 6,
+    "inst": "0x5ec",
+    "code": "0xac",
+    "at": "0x5ee",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_right.bend_x",
+    "part": "lasers",
+    "label": "Bends to X",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1536,
+    "inst": "0x5ec",
+    "code": "0xac",
+    "at": "0x5f0",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_right.bend_y",
+    "part": "lasers",
+    "label": "Bends to Y",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -512,
+    "inst": "0x5ec",
+    "code": "0xac",
+    "at": "0x5f2",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_right.bend_z",
+    "part": "lasers",
+    "label": "Bends to Z",
+    "doc": "The point it bends towards",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x5ec",
+    "code": "0xac",
+    "at": "0x5f4",
+    "form": "s16"
+   },
+   {
+    "key": "script.lasers.head_right.bend_wait",
+    "part": "lasers",
+    "label": "Homes after",
+    "doc": "Ticks of bending before it turns to the target",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 6,
+    "inst": "0x5f6",
+    "code": "0x9",
+    "at": "0x5f6",
+    "form": "op"
+   },
+   {
+    "key": "script.lasers.head_right.home_for",
+    "part": "lasers",
+    "label": "Reaches the target in",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 8,
+    "inst": "0x5f8",
+    "code": "0xac",
+    "at": "0x5fa",
+    "form": "s16"
+   },
+   {
+    "key": "script.beam.flicker.a",
+    "part": "beam",
+    "label": "Brightness 1",
+    "doc": "128 = as is",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 224,
+    "inst": "0x666",
+    "code": "0xd",
+    "at": "0x668",
+    "form": "s16"
+   },
+   {
+    "key": "script.beam.flicker.b",
+    "part": "beam",
+    "label": "Brightness 2",
+    "doc": "128 = as is",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 240,
+    "inst": "0x674",
+    "code": "0xd",
+    "at": "0x676",
+    "form": "s16"
+   },
+   {
+    "key": "script.beam.blend",
+    "part": "beam",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x6b0",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x6b0": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x6b0": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x6b0": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x6b0": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.beam.life",
+    "part": "beam",
+    "label": "Lasts for",
+    "doc": "Ticks from when the laser leaves",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0x6b8",
+    "code": "0x9",
+    "at": "0x6b8",
+    "form": "op"
+   },
+   {
+    "key": "script.tip.flicker.a",
+    "part": "tip",
+    "label": "Brightness 1",
+    "doc": "128 = as is",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 128,
+    "inst": "0x61e",
+    "code": "0xd",
+    "at": "0x620",
+    "form": "s16"
+   },
+   {
+    "key": "script.tip.flicker.b",
+    "part": "tip",
+    "label": "Brightness 2",
+    "doc": "128 = as is",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 144,
+    "inst": "0x624",
+    "code": "0xd",
+    "at": "0x626",
+    "form": "s16"
+   },
+   {
+    "key": "script.tip.fade",
+    "part": "tip",
+    "label": "Fades by",
+    "doc": "Per tick once it bursts (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 0,
+    "default": -8192,
+    "inst": "0x616",
+    "code": "0xb",
+    "at": "0x618",
+    "form": "s16"
+   },
+   {
+    "key": "script.tip.blend",
+    "part": "tip",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it (on this model 50% draws as Added)",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x64c",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x64c": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x64c": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x64c": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x64c": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.tip.size.start",
+    "part": "tip",
+    "label": "Size",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 96,
+    "inst": "0x64e",
+    "code": "0xd",
+    "at": "0x650",
+    "form": "s16"
+   },
+   {
+    "key": "script.tip.size.grow",
+    "part": "tip",
+    "label": "Grows by",
+    "doc": "Per tick once it bursts, in 1/256",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 3072,
+    "inst": "0x65a",
+    "code": "0xe",
+    "at": "0x65c",
+    "form": "s16"
+   },
+   {
+    "key": "script.tip.life",
+    "part": "tip",
+    "label": "Lasts for",
+    "doc": "Ticks once it bursts",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x65e",
+    "code": "0x9",
+    "at": "0x65e",
+    "form": "op"
+   },
+   {
+    "key": "script.smoke.every",
+    "part": "smoke",
+    "label": "One every",
+    "doc": "Ticks between two puffs",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 2,
+    "inst": "0x6f0",
+    "code": "0x9",
+    "at": "0x6f0",
+    "form": "op"
+   },
+   {
+    "key": "script.smoke.for",
+    "part": "smoke",
+    "label": "Released for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x6e4",
+    "code": "0x9",
+    "at": "0x6e4",
+    "form": "op"
+   },
+   {
+    "key": "script.smoke.size",
+    "part": "smoke",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x6fa",
+    "code": "0x4",
+    "at": "0x6fc",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.size_random",
+    "part": "smoke",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x6fe",
+    "code": "0x5",
+    "at": "0x700",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.spread_x",
+    "part": "smoke",
+    "label": "Spread X",
+    "doc": "How far from the impact, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x702",
+    "code": "0x5",
+    "at": "0x704",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.spread_y",
+    "part": "smoke",
+    "label": "Spread Y",
+    "doc": "How far from the impact, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x702",
+    "code": "0x5",
+    "at": "0x706",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.spread_z",
+    "part": "smoke",
+    "label": "Spread Z",
+    "doc": "How far from the impact, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x702",
+    "code": "0x5",
+    "at": "0x708",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.rise",
+    "part": "smoke",
+    "label": "Speed up/down",
+    "doc": "Per tick (negative: up)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": -512,
+    "inst": "0x70a",
+    "code": "0x4",
+    "at": "0x70e",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.rise_random",
+    "part": "smoke",
+    "label": "Speed, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x712",
+    "code": "0x5",
+    "at": "0x716",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.gravity",
+    "part": "smoke",
+    "label": "Slowing",
+    "doc": "Added to that speed each tick (negative: up)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": -64,
+    "inst": "0x71a",
+    "code": "0x4",
+    "at": "0x71e",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.life",
+    "part": "smoke",
+    "label": "Lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x722",
+    "code": "0x1",
+    "at": "0x723",
+    "form": "hi"
+   },
+   {
+    "key": "script.ring.colour.start",
+    "part": "ring",
+    "label": "Starts at",
+    "doc": "128 = the model's colour as it is",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 0,
+    "inst": "0x738",
+    "code": "0xd",
+    "at": "0x73a",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.colour.up",
+    "part": "ring",
+    "label": "Brightens by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 8192,
+    "inst": "0x740",
+    "code": "0xe",
+    "at": "0x742",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.colour.up_for",
+    "part": "ring",
+    "label": "Brightens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x744",
+    "code": "0x9",
+    "at": "0x744",
+    "form": "op"
+   },
+   {
+    "key": "script.ring.colour.down",
+    "part": "ring",
+    "label": "Then fades by",
+    "doc": "Per tick, in 1/256 (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 0,
+    "default": -4096,
+    "inst": "0x746",
+    "code": "0xe",
+    "at": "0x748",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.colour.down_for",
+    "part": "ring",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x74a",
+    "code": "0x9",
+    "at": "0x74a",
+    "form": "op"
+   },
+   {
+    "key": "script.ring.blend",
+    "part": "ring",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it (on this model 50% draws as Added)",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x760",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x760": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x760": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x760": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x760": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.ring.size.start",
+    "part": "ring",
+    "label": "Starts at",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x768",
+    "code": "0xd",
+    "at": "0x76a",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.size.grow_x",
+    "part": "ring",
+    "label": "Grows by (X)",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x76c",
+    "code": "0xb",
+    "at": "0x76e",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.size.grow_y",
+    "part": "ring",
+    "label": "Grows by (Y)",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -512,
+    "inst": "0x76c",
+    "code": "0xb",
+    "at": "0x770",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.size.grow_z",
+    "part": "ring",
+    "label": "Grows by (Z)",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x76c",
+    "code": "0xb",
+    "at": "0x772",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.life",
+    "part": "ring",
+    "label": "Lasts for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0x774",
+    "code": "0x9",
+    "at": "0x774",
+    "form": "op"
+   },
+   {
+    "key": "script.flare.colour.start",
+    "part": "flare",
+    "label": "Starts at",
+    "doc": "128 = the model's colour as it is",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 0,
+    "inst": "0x77c",
+    "code": "0xd",
+    "at": "0x77e",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.colour.up",
+    "part": "flare",
+    "label": "Brightens by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 8192,
+    "inst": "0x780",
+    "code": "0xe",
+    "at": "0x782",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.colour.up_for",
+    "part": "flare",
+    "label": "Brightens for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x784",
+    "code": "0x9",
+    "at": "0x784",
+    "form": "op"
+   },
+   {
+    "key": "script.flare.colour.down",
+    "part": "flare",
+    "label": "Then fades by",
+    "doc": "Per tick, in 1/256 (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 0,
+    "default": -4096,
+    "inst": "0x786",
+    "code": "0xe",
+    "at": "0x788",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.colour.down_for",
+    "part": "flare",
+    "label": "Fades for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x78a",
+    "code": "0x9",
+    "at": "0x78a",
+    "form": "op"
+   },
+   {
+    "key": "script.flare.blend",
+    "part": "flare",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it (on this model 50% draws as Added)",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x79c",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x79c": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x79c": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x79c": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x79c": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.flare.size.start",
+    "part": "flare",
+    "label": "Starts at",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 96,
+    "inst": "0x7a4",
+    "code": "0xd",
+    "at": "0x7a6",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.size.grow",
+    "part": "flare",
+    "label": "Grows by",
+    "doc": "Per tick, in 1/256",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 6144,
+    "inst": "0x7a8",
+    "code": "0xe",
+    "at": "0x7aa",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.life",
+    "part": "flare",
+    "label": "Lasts for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0x7ac",
+    "code": "0x9",
+    "at": "0x7ac",
+    "form": "op"
+   }
+  ]
+ }
 }

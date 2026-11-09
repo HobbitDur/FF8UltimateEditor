@@ -162,5 +162,975 @@
    "address": "0x185AED8",
    "size": 1312
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag255_b.00",
+  "param": "files.file00",
+  "size": 2764,
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When things happen, and the camera. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 0,
+    "key": "shake",
+    "title": "Shaking",
+    "paths": [],
+    "doc": "The camera jolts left and right, softly, then harder, then softly again, and jumps up and down at random"
+   },
+   {
+    "id": 502,
+    "key": "haze",
+    "title": "Screen veil",
+    "paths": [],
+    "doc": "A grey veil over the whole screen (five strips), gone at the damage: its bone ends then, so the fade in the script is never seen"
+   },
+   {
+    "id": 542,
+    "key": "low",
+    "title": "Low sand",
+    "paths": [],
+    "doc": "Sand that hangs low over the ground. Its picture and blend are in its sprite (Textures tab, Sections)"
+   },
+   {
+    "id": 616,
+    "key": "plume",
+    "title": "Sand plumes",
+    "paths": [],
+    "doc": "Sand thrown high into the air, falling back. Its picture and blend are in its sprite (Textures tab, Sections)"
+   }
+  ],
+  "groups": [],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x3c",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x3c": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x3c": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.start",
+    "part": "timing",
+    "label": "Sand starts after",
+    "doc": "Ticks before the sand rises (and the sound plays)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x6c",
+    "code": "0x9",
+    "at": "0x6c",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.plume",
+    "part": "timing",
+    "label": "Sand plumes stop after",
+    "doc": "Ticks after the sand starts",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x76",
+    "code": "0x9",
+    "at": "0x76",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.haze",
+    "part": "timing",
+    "label": "Low sand stops after",
+    "doc": "Ticks after the plumes stop",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x7c",
+    "code": "0x9",
+    "at": "0x7c",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.hit",
+    "part": "timing",
+    "label": "Damage after",
+    "doc": "Ticks after the low sand stops (the screen veil goes then)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x82",
+    "code": "0x9",
+    "at": "0x82",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end",
+    "part": "timing",
+    "label": "Ends after",
+    "doc": "Ticks after the damage",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x8e",
+    "code": "0x9",
+    "at": "0x8e",
+    "form": "op"
+   },
+   {
+    "key": "script.shake.soft",
+    "part": "shake",
+    "label": "Soft jolts",
+    "doc": "How far the camera jolts left and right (it ends where it started)",
+    "type": "choice",
+    "min": 0,
+    "max": 10,
+    "default": 2,
+    "inst": "0x136",
+    "code": "0x11",
+    "options": [
+     {
+      "label": "0",
+      "bytes": {
+       "0x138": "0000",
+       "0x13e": "0000",
+       "0x144": "0000"
+      }
+     },
+     {
+      "label": "16",
+      "bytes": {
+       "0x138": "1000",
+       "0x13e": "f0ff",
+       "0x144": "1000"
+      }
+     },
+     {
+      "label": "32",
+      "bytes": {
+       "0x138": "2000",
+       "0x13e": "e0ff",
+       "0x144": "2000"
+      }
+     },
+     {
+      "label": "48",
+      "bytes": {
+       "0x138": "3000",
+       "0x13e": "d0ff",
+       "0x144": "3000"
+      }
+     },
+     {
+      "label": "64",
+      "bytes": {
+       "0x138": "4000",
+       "0x13e": "c0ff",
+       "0x144": "4000"
+      }
+     },
+     {
+      "label": "96",
+      "bytes": {
+       "0x138": "6000",
+       "0x13e": "a0ff",
+       "0x144": "6000"
+      }
+     },
+     {
+      "label": "128",
+      "bytes": {
+       "0x138": "8000",
+       "0x13e": "80ff",
+       "0x144": "8000"
+      }
+     },
+     {
+      "label": "160",
+      "bytes": {
+       "0x138": "a000",
+       "0x13e": "60ff",
+       "0x144": "a000"
+      }
+     },
+     {
+      "label": "192",
+      "bytes": {
+       "0x138": "c000",
+       "0x13e": "40ff",
+       "0x144": "c000"
+      }
+     },
+     {
+      "label": "256",
+      "bytes": {
+       "0x138": "0001",
+       "0x13e": "00ff",
+       "0x144": "0001"
+      }
+     },
+     {
+      "label": "384",
+      "bytes": {
+       "0x138": "8001",
+       "0x13e": "80fe",
+       "0x144": "8001"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.shake.middle",
+    "part": "shake",
+    "label": "Middle jolts",
+    "doc": "How far the camera jolts left and right (it ends where it started)",
+    "type": "choice",
+    "min": 0,
+    "max": 10,
+    "default": 5,
+    "inst": "0x186",
+    "code": "0x11",
+    "options": [
+     {
+      "label": "0",
+      "bytes": {
+       "0x188": "0000",
+       "0x18e": "0000",
+       "0x194": "0000"
+      }
+     },
+     {
+      "label": "16",
+      "bytes": {
+       "0x188": "1000",
+       "0x18e": "f0ff",
+       "0x194": "1000"
+      }
+     },
+     {
+      "label": "32",
+      "bytes": {
+       "0x188": "2000",
+       "0x18e": "e0ff",
+       "0x194": "2000"
+      }
+     },
+     {
+      "label": "48",
+      "bytes": {
+       "0x188": "3000",
+       "0x18e": "d0ff",
+       "0x194": "3000"
+      }
+     },
+     {
+      "label": "64",
+      "bytes": {
+       "0x188": "4000",
+       "0x18e": "c0ff",
+       "0x194": "4000"
+      }
+     },
+     {
+      "label": "96",
+      "bytes": {
+       "0x188": "6000",
+       "0x18e": "a0ff",
+       "0x194": "6000"
+      }
+     },
+     {
+      "label": "128",
+      "bytes": {
+       "0x188": "8000",
+       "0x18e": "80ff",
+       "0x194": "8000"
+      }
+     },
+     {
+      "label": "160",
+      "bytes": {
+       "0x188": "a000",
+       "0x18e": "60ff",
+       "0x194": "a000"
+      }
+     },
+     {
+      "label": "192",
+      "bytes": {
+       "0x188": "c000",
+       "0x18e": "40ff",
+       "0x194": "c000"
+      }
+     },
+     {
+      "label": "256",
+      "bytes": {
+       "0x188": "0001",
+       "0x18e": "00ff",
+       "0x194": "0001"
+      }
+     },
+     {
+      "label": "384",
+      "bytes": {
+       "0x188": "8001",
+       "0x18e": "80fe",
+       "0x194": "8001"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.shake.hard",
+    "part": "shake",
+    "label": "Hard jolts",
+    "doc": "How far the camera jolts left and right (it ends where it started)",
+    "type": "choice",
+    "min": 0,
+    "max": 10,
+    "default": 6,
+    "inst": "0x1ae",
+    "code": "0x11",
+    "options": [
+     {
+      "label": "0",
+      "bytes": {
+       "0x1b0": "0000",
+       "0x1b6": "0000",
+       "0x1bc": "0000"
+      }
+     },
+     {
+      "label": "16",
+      "bytes": {
+       "0x1b0": "1000",
+       "0x1b6": "f0ff",
+       "0x1bc": "1000"
+      }
+     },
+     {
+      "label": "32",
+      "bytes": {
+       "0x1b0": "2000",
+       "0x1b6": "e0ff",
+       "0x1bc": "2000"
+      }
+     },
+     {
+      "label": "48",
+      "bytes": {
+       "0x1b0": "3000",
+       "0x1b6": "d0ff",
+       "0x1bc": "3000"
+      }
+     },
+     {
+      "label": "64",
+      "bytes": {
+       "0x1b0": "4000",
+       "0x1b6": "c0ff",
+       "0x1bc": "4000"
+      }
+     },
+     {
+      "label": "96",
+      "bytes": {
+       "0x1b0": "6000",
+       "0x1b6": "a0ff",
+       "0x1bc": "6000"
+      }
+     },
+     {
+      "label": "128",
+      "bytes": {
+       "0x1b0": "8000",
+       "0x1b6": "80ff",
+       "0x1bc": "8000"
+      }
+     },
+     {
+      "label": "160",
+      "bytes": {
+       "0x1b0": "a000",
+       "0x1b6": "60ff",
+       "0x1bc": "a000"
+      }
+     },
+     {
+      "label": "192",
+      "bytes": {
+       "0x1b0": "c000",
+       "0x1b6": "40ff",
+       "0x1bc": "c000"
+      }
+     },
+     {
+      "label": "256",
+      "bytes": {
+       "0x1b0": "0001",
+       "0x1b6": "00ff",
+       "0x1bc": "0001"
+      }
+     },
+     {
+      "label": "384",
+      "bytes": {
+       "0x1b0": "8001",
+       "0x1b6": "80fe",
+       "0x1bc": "8001"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.shake.hardest",
+    "part": "shake",
+    "label": "Hardest jolts",
+    "doc": "How far the camera jolts left and right (it ends where it started)",
+    "type": "choice",
+    "min": 0,
+    "max": 10,
+    "default": 8,
+    "inst": "0x1c2",
+    "code": "0x11",
+    "options": [
+     {
+      "label": "0",
+      "bytes": {
+       "0x1c4": "0000",
+       "0x1ca": "0000",
+       "0x1d0": "0000"
+      }
+     },
+     {
+      "label": "16",
+      "bytes": {
+       "0x1c4": "1000",
+       "0x1ca": "f0ff",
+       "0x1d0": "1000"
+      }
+     },
+     {
+      "label": "32",
+      "bytes": {
+       "0x1c4": "2000",
+       "0x1ca": "e0ff",
+       "0x1d0": "2000"
+      }
+     },
+     {
+      "label": "48",
+      "bytes": {
+       "0x1c4": "3000",
+       "0x1ca": "d0ff",
+       "0x1d0": "3000"
+      }
+     },
+     {
+      "label": "64",
+      "bytes": {
+       "0x1c4": "4000",
+       "0x1ca": "c0ff",
+       "0x1d0": "4000"
+      }
+     },
+     {
+      "label": "96",
+      "bytes": {
+       "0x1c4": "6000",
+       "0x1ca": "a0ff",
+       "0x1d0": "6000"
+      }
+     },
+     {
+      "label": "128",
+      "bytes": {
+       "0x1c4": "8000",
+       "0x1ca": "80ff",
+       "0x1d0": "8000"
+      }
+     },
+     {
+      "label": "160",
+      "bytes": {
+       "0x1c4": "a000",
+       "0x1ca": "60ff",
+       "0x1d0": "a000"
+      }
+     },
+     {
+      "label": "192",
+      "bytes": {
+       "0x1c4": "c000",
+       "0x1ca": "40ff",
+       "0x1d0": "c000"
+      }
+     },
+     {
+      "label": "256",
+      "bytes": {
+       "0x1c4": "0001",
+       "0x1ca": "00ff",
+       "0x1d0": "0001"
+      }
+     },
+     {
+      "label": "384",
+      "bytes": {
+       "0x1c4": "8001",
+       "0x1ca": "80fe",
+       "0x1d0": "8001"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.shake.bounce",
+    "part": "shake",
+    "label": "Up and down",
+    "doc": "How far it jumps at random, at first and at the end",
+    "type": "int",
+    "min": 0,
+    "max": 4096,
+    "default": 32,
+    "inst": "0x102",
+    "code": "0x12",
+    "at": "0x104",
+    "form": "s16"
+   },
+   {
+    "key": "script.shake.bounce_hard",
+    "part": "shake",
+    "label": "Up and down, hard",
+    "doc": "How far it jumps at random in the middle",
+    "type": "int",
+    "min": 0,
+    "max": 4096,
+    "default": 64,
+    "inst": "0x110",
+    "code": "0x12",
+    "at": "0x112",
+    "form": "s16"
+   },
+   {
+    "key": "script.haze.brightness",
+    "part": "haze",
+    "label": "Brightness",
+    "doc": "Grey, all three colours (128 = as is)",
+    "type": "int",
+    "min": 0,
+    "max": 1024,
+    "default": 144,
+    "inst": "0x1de",
+    "code": "0xd",
+    "at": "0x1e0",
+    "form": "s16"
+   },
+   {
+    "key": "script.low.height",
+    "part": "low",
+    "label": "Height",
+    "doc": "Over the ground (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -256,
+    "inst": "0x226",
+    "code": "0x10",
+    "at": "0x228",
+    "form": "s16"
+   },
+   {
+    "key": "script.low.size",
+    "part": "low",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x254",
+    "code": "0x4",
+    "at": "0x256",
+    "form": "s16"
+   },
+   {
+    "key": "script.low.size_random",
+    "part": "low",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x258",
+    "code": "0x5",
+    "at": "0x25a",
+    "form": "s16"
+   },
+   {
+    "key": "script.low.pos_random_x",
+    "part": "low",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 3072,
+    "inst": "0x25c",
+    "code": "0x5",
+    "at": "0x25e",
+    "form": "s16"
+   },
+   {
+    "key": "script.low.pos_random_y",
+    "part": "low",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 256,
+    "inst": "0x25c",
+    "code": "0x5",
+    "at": "0x260",
+    "form": "s16"
+   },
+   {
+    "key": "script.low.pos_random_z",
+    "part": "low",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 4096,
+    "inst": "0x25c",
+    "code": "0x5",
+    "at": "0x262",
+    "form": "s16"
+   },
+   {
+    "key": "script.low.life",
+    "part": "low",
+    "label": "Lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x264",
+    "code": "0x1",
+    "at": "0x265",
+    "form": "hi"
+   },
+   {
+    "key": "script.low.linger",
+    "part": "low",
+    "label": "Lingers for",
+    "doc": "Ticks after it stops",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x240",
+    "code": "0x9",
+    "at": "0x240",
+    "form": "op"
+   },
+   {
+    "key": "script.plume.at_x",
+    "part": "plume",
+    "label": "Where X",
+    "doc": "Around the middle of the battle (negative Y: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x26c",
+    "code": "0xa",
+    "at": "0x26e",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.at_y",
+    "part": "plume",
+    "label": "Where Y",
+    "doc": "Around the middle of the battle (negative Y: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1536,
+    "inst": "0x26c",
+    "code": "0xa",
+    "at": "0x270",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.at_z",
+    "part": "plume",
+    "label": "Where Z",
+    "doc": "Around the middle of the battle (negative Y: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x26c",
+    "code": "0xa",
+    "at": "0x272",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.frames",
+    "part": "plume",
+    "label": "Animation speed",
+    "doc": "How fast its pictures change (the game: 0)",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 0,
+    "inst": "0x278",
+    "code": "0xbc",
+    "at": "0x27a",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.size",
+    "part": "plume",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 16,
+    "inst": "0x2aa",
+    "code": "0x4",
+    "at": "0x2ac",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.pos_random_x",
+    "part": "plume",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 3072,
+    "inst": "0x2ae",
+    "code": "0x5",
+    "at": "0x2b0",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.pos_random_y",
+    "part": "plume",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 1536,
+    "inst": "0x2ae",
+    "code": "0x5",
+    "at": "0x2b2",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.pos_random_z",
+    "part": "plume",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 6144,
+    "inst": "0x2ae",
+    "code": "0x5",
+    "at": "0x2b4",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.speed_set_x",
+    "part": "plume",
+    "label": "Speed X",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 0,
+    "inst": "0x2b6",
+    "code": "0x4",
+    "at": "0x2b8",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.speed_set_y",
+    "part": "plume",
+    "label": "Speed Y",
+    "doc": "Per tick (negative: up)",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": -512,
+    "inst": "0x2b6",
+    "code": "0x4",
+    "at": "0x2ba",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.speed_set_z",
+    "part": "plume",
+    "label": "Speed Z",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 0,
+    "inst": "0x2b6",
+    "code": "0x4",
+    "at": "0x2bc",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.speed_random_x",
+    "part": "plume",
+    "label": "Speed X, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 128,
+    "inst": "0x2be",
+    "code": "0x5",
+    "at": "0x2c0",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.speed_random_y",
+    "part": "plume",
+    "label": "Speed Y, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 128,
+    "inst": "0x2be",
+    "code": "0x5",
+    "at": "0x2c2",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.speed_random_z",
+    "part": "plume",
+    "label": "Speed Z, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 128,
+    "inst": "0x2be",
+    "code": "0x5",
+    "at": "0x2c4",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.change_set_x",
+    "part": "plume",
+    "label": "Speed change X",
+    "doc": "Added to the speed each tick",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 0,
+    "inst": "0x2c6",
+    "code": "0x4",
+    "at": "0x2c8",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.change_set_y",
+    "part": "plume",
+    "label": "Speed change Y",
+    "doc": "Added to the speed each tick (negative: up)",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": -16,
+    "inst": "0x2c6",
+    "code": "0x4",
+    "at": "0x2ca",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.change_set_z",
+    "part": "plume",
+    "label": "Speed change Z",
+    "doc": "Added to the speed each tick",
+    "type": "int",
+    "min": -16384,
+    "max": 16383,
+    "default": 0,
+    "inst": "0x2c6",
+    "code": "0x4",
+    "at": "0x2cc",
+    "form": "s16"
+   },
+   {
+    "key": "script.plume.life",
+    "part": "plume",
+    "label": "Lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 32,
+    "inst": "0x2ce",
+    "code": "0x1",
+    "at": "0x2cf",
+    "form": "hi"
+   },
+   {
+    "key": "script.plume.linger",
+    "part": "plume",
+    "label": "Lingers for",
+    "doc": "Ticks after it stops",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x28e",
+    "code": "0x9",
+    "at": "0x28e",
+    "form": "op"
+   }
+  ]
+ }
 }
