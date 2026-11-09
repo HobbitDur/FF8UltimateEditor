@@ -823,6 +823,28 @@
    "unit": "plain"
   },
   {
+   "key": "puffs.ahead",
+   "part": "puffs",
+   "label": "Ahead",
+   "doc": "Where they start: this far from the anchor along the way to the targets (0: at the anchor, the game; a new effect on the targets: onto them)",
+   "type": "i16",
+   "min": -8000,
+   "max": 8000,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.depth",
+   "part": "puffs",
+   "label": "Depth",
+   "doc": "Their spread along z, for the spread's (4096 = the same as x and y, the game; less: a thinner cloud toward the caster)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
    "key": "crystals.spawn_last",
    "part": "crystals",
    "label": "Last spawn tick",
