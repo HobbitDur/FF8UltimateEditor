@@ -13,6 +13,7 @@ import pytest
 from FF8GameData.dat import dat30
 from FF8GameData.dat.animsplitter import rewrite_sequence_list_for_split
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+from FF8GameData.dat.seqframeratio import end_frame_ratio_movements
 from FF8GameData.dat.seqrewrite30 import rewrite_sequence_dict
 from FF8GameData.dat.sequencevm import entity_sequence_vm
 from FF8GameData.monsterdata import AnimationSection
@@ -57,6 +58,12 @@ def _verify_file(vm, original_path, converted_path, frames=None, anim_alias=None
     sequence_15, sequence_30 = read_sequence_dict(original), read_sequence_dict(converted)
     frame_15 = frames[0] if frames else read_frame_count_list(original)
     frame_30 = frames[1] if frames else read_frame_count_list(converted)
+    # A way back the conversion makes reach its end (seqframeratio) is compared with the same
+    # way back ending in vanilla: everything else must still match the original exactly.
+    reference = {'seq_animation_data': [{'id': seq_id, 'data': bytearray(data)}
+                                        for seq_id, data in sequence_15.items()]}
+    end_frame_ratio_movements(vm, reference, lambda anim_id: frame_15[anim_id] if anim_id < len(frame_15) else 0)
+    sequence_15 = {sequence['id']: bytes(sequence['data']) for sequence in reference['seq_animation_data']}
     problem = {}
     for seq_id, data in sequence_15.items():
         if data:
@@ -186,6 +193,63 @@ class TestMonster:
         nb = int.from_bytes(sequence[:2], "little")
         offset_list = [int.from_bytes(sequence[2 + 2 * i:4 + 2 * i], "little") for i in range(nb)]
         assert min(o for o in offset_list if o) == 2 + 2 * nb
+
+
+class TestChainedCut:
+    """An animation the sequences always cut to another one ends toward that one's first frame
+    (FF8GameData/dat/animchain.py), not back toward its own start nor on a held pose."""
+
+    def test_the_followers_are_read_from_the_sequences(self, manager):
+        from FF8GameData.dat.animchain import analyse_animation_chain
+        ward = _load(manager, BATTLE_PATH / "daw039.dat")
+        ward.origin_path = str(BATTLE_PATH / "daw039.dat")
+        chain = analyse_animation_chain(manager.game_data, ward)
+        assert chain[29] == 30          # the attack: 29 (A0, back from the target) -> 30 (landing)
+        assert 0 not in chain           # the idle loops
+        assert 30 not in chain          # the attack ends (A2): the next sequence is the battle's
+        selphie = _load(manager, BATTLE_PATH / "d5w028.dat")
+        selphie.origin_path = str(BATTLE_PATH / "d5w028.dat")
+        # her wind-up 8 leads to 9, 23 and 29 (same first pose) but also to 18
+        assert 8 not in analyse_animation_chain(manager.game_data, selphie)
+        # a body reads its weapon's sequences and takes the same decisions (single followers only:
+        # Ward's 10 is followed by 1 or by others starting like it in the weapon, not in the body)
+        assert 10 not in chain
+        body = _load(manager, BATTLE_PATH / "dac021.dat")
+        body.origin_path = str(BATTLE_PATH / "dac021.dat")
+        assert analyse_animation_chain(manager.game_data, body) == chain
+
+    def test_ward_lands_without_swinging_back(self, manager, tmp_path):
+        vanilla = _load(manager, BATTLE_PATH / "dac021.dat").animation_data.animations
+        body, weapon = _copy(tmp_path, "dac021.dat", "daw039.dat")
+        report_list = manager.convert_file_list_to_fps([body, weapon], 30)
+        assert [r['error'] for r in report_list] == ["", ""]
+        converted = _load(manager, body).animation_data.animations
+        root = lambda frame: [p.get_pos_raw() for p in frame.position]
+        frames = converted[29].frames
+        assert len(frames) == 2 * len(vanilla[29].frames)
+        assert root(frames[-2]) == root(vanilla[29].frames[-1])
+        # half-way to the landing's first frame: [-143, -835, -1900] -> [-191, -757, -210]
+        middle = [(a + b) / 2 for a, b in zip(root(vanilla[29].frames[-1]), root(vanilla[30].frames[0]))]
+        assert all(abs(a - b) <= 1 for a, b in zip(root(frames[-1]), middle))
+        # a one-shot the sequence ends on still holds its last pose
+        assert root(converted[30].frames[-1]) == root(vanilla[30].frames[-1])
+
+    def test_ward_ends_his_way_back_on_his_spot(self, manager, tmp_path):
+        """The way back is `start * (1 - current_frame / total_frames)` over anim 29's frames: once
+        converted it divides by total_frames - 1 (seqframeratio), so the last tick is home."""
+        from FF8GameData.dat.sequencebake import BattleContext, bake_sequence, sequence_dict_from_section
+        body, weapon = _copy(tmp_path, "dac021.dat", "daw039.dat")
+        report_list = manager.convert_file_list_to_fps([body, weapon], 30)
+        assert report_list[0]['ratio_list'] == []
+        # sequences 13 (attack) and 25, each at its D3 0A after the A0 1D: D2 07 (8 frames - 1)
+        assert [(seq, anim, divisor) for seq, _address, anim, divisor in report_list[1]['ratio_list']] == \
+            [(13, 29, 7), (25, 29, 7)]
+        weapon_data = _load(manager, weapon)
+        frame_count = [len(a.frames) for a in _load(manager, body).animation_data.animations]
+        result = bake_sequence(manager.game_data, sequence_dict_from_section(weapon_data.seq_animation_data),
+                               13, frame_count, BattleContext(is_monster=False), follow_chain=False)
+        way_back = [frame.position[2] for frame in result.frame_list if frame.anim_id == 29]
+        assert way_back[0] < 0 and way_back[-1] == 0
 
 
 class TestCharacterFamily:

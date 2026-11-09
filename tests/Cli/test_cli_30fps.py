@@ -48,7 +48,8 @@ def test_ifrit_convert_fps_ffnx_chunks_rebuild_the_converted_file(tmp_path, caps
     assert tool.execute(parser.parse_args(["convert-fps", "-i", str(C0M001), "-o", str(tmp_path / "full")])) == 0
     assert tool.execute(parser.parse_args(["convert-fps", "-i", str(C0M001), "-o", str(tmp_path / "whole"),
                                            "--ffnx-chunks", str(tmp_path / "chunks")])) == 0
-    assert "[chunks] c0m001.dat: section(s) 3, 6" in capsys.readouterr().out
+    # 5: the move of sequence 14 now reaches its end (seqframeratio: D3 0A -> D2 n-1)
+    assert "[chunks] c0m001.dat: section(s) 3, 5, 6" in capsys.readouterr().out
     assert not (tmp_path / "whole" / "c0m001.dat").exists()
     assert sorted(p.name for p in (tmp_path / "chunks").iterdir())[0] == "c0m001.dat.chunk.3"
     full = (tmp_path / "full" / "c0m001.dat").read_bytes()

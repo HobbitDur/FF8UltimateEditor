@@ -17,6 +17,7 @@ from FF8GameData.dat.monsteranalyser import GarbageFileError, MonsterAnalyser
 from FF8GameData.dat import interpolation
 from FF8GameData.dat.animdiff import NEUTRAL_SCALE, ROW_POSITION
 from FF8GameData.dat.animloopdetector import analyse_animation_usage, is_looping, ANIM_UNUSED
+from FF8GameData.dat.animchain import analyse_animation_chain
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
                                           get_max_frame_for_animation, get_nb_part_needed,
                                           can_split_animation, MAX_ANIMATION_ID, MAX_ANIMATION_FRAME)
@@ -535,10 +536,12 @@ class IfritManager:
             return report  # one animation cannot make it: the whole file is left untouched
 
         # 2. apply
+        chain_frames = dat30.chain_frame_dict(monster.animation_data.animations,
+                                              analyse_animation_chain(self.game_data, monster))
         for anim_id, smooth_loop, max_frame, needs_split in plan_list:
             if not needs_split:
                 monster.animation_data.animations[anim_id].create_interpolated_frames(
-                    bones, factor, smooth_loop, mode=mode)
+                    bones, factor, smooth_loop, mode=mode, chain_frame=chain_frames.get(anim_id))
                 report['nb_converted'] += 1
                 continue
             nb_frame = len(monster.animation_data.animations[anim_id].frames)
@@ -562,7 +565,7 @@ class IfritManager:
         return {'file': os.path.basename(str(file_path)), 'name': "", 'nb_converted': 0,
                 'split_list': [], 'skipped_list': [], 'error': "", 'source': "",
                 'real30': True, 'sequence_report': None, 'nb_extra': 0, 'warning_list': [],
-                'camera_report': None}
+                'camera_report': None, 'ratio_list': []}
 
     def _group_families(self, file_list) -> list:
         """The files of file_list grouped so a character body and its weapons are converted
@@ -704,7 +707,7 @@ class IfritManager:
                              and monster.bone_data.bones)
         if not has_animation and not has_sequence:
             return self._NO_MODEL_MESSAGE
-        kind_dict = {}
+        kind_dict, chain_dict = {}, {}
         if has_animation:
             usage = analyse_animation_usage(self.game_data, monster)
             report['source'] = usage['source']
@@ -712,7 +715,8 @@ class IfritManager:
             if not kind_dict:
                 return ("the looping animations cannot be detected: no animation sequence "
                         "section, and no weapon file of this character next to it")
-            if dat30.looks_already_converted(monster, kind_dict):
+            chain_dict = analyse_animation_chain(self.game_data, monster)
+            if dat30.looks_already_converted(monster, kind_dict, chain_dict):
                 report['warning_list'].append(
                     "looks already converted (every animation has an even frame count and its "
                     "one-shot animations end on a held pose): converting twice doubles again")
@@ -724,13 +728,38 @@ class IfritManager:
         allow_split = split_when_too_long and not self.is_character_family_file(origin)
         try:
             result = dat30.convert_monster_to_real30(self.game_data, monster, kind_dict,
-                                                     allow_split, mode)
+                                                     allow_split, mode, chain_dict,
+                                                     self._driver_frame_count(monster, origin))
         except Exception as e:
             return f"the conversion failed ({type(e).__name__}: {e})"
         for key in ('nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra',
-                    'camera_report'):
+                    'camera_report', 'ratio_list'):
             report[key] = result[key]
         return ""
+
+    def _driver_frame_count(self, monster, origin):
+        """Vanilla frame counts of the animations a sequence's `C3 0A` reads: a character weapon's
+        sequences run on its body (the first body file next to it), anything else on itself.
+        None to let the converter use the file's own."""
+        name = os.path.basename(str(origin)).lower()
+        if not (len(name) > 2 and name[0] == 'd' and name[2] == 'w'):
+            return None
+        folder = os.path.dirname(str(origin)) or "."
+        for body_name in sorted(os.listdir(folder)):
+            lower = body_name.lower()
+            if lower.startswith(name[:2] + 'c') and lower.endswith('.dat'):
+                try:
+                    body = MonsterAnalyser(self.game_data)
+                    body.load_file_data(os.path.join(folder, body_name), self.game_data)
+                    body.analyse_loaded_data(self.game_data)
+                except Exception:
+                    continue
+                # still the file being converted from: a family is saved only once all of it is
+                # converted (_write_real30_group)
+                count_list = [len(animation.frames) for animation in body.animation_data.animations]
+                if count_list:
+                    return count_list
+        return None
 
     def _get_no_split_reason(self, monster, anim_id, nb_frame, factor, smooth_loop, max_frame,
                              allow_split, is_family) -> str:

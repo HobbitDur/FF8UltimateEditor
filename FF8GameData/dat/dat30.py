@@ -10,13 +10,17 @@ d7c016, reduced weapon d1w/d9w):
 
 1. Section 3 (animations): an n-frame animation holds the VM for exactly n ticks, so it gets
    exactly 2n frames (Animation.create_interpolated_frames: in-betweens, then the last pose
-   held once more for a one-shot animation, or the in-between back to frame 0 for a loop). A
-   single-pose animation gets its pose twice. The frame count is a byte: an animation over
+   held once more for a one-shot animation, the in-between back to frame 0 for a loop, or the
+   in-between toward the first frame of the animation the sequences always cut to next -
+   animchain). A single-pose animation gets its pose twice. The frame count is a byte: an animation over
    127 frames is split with the animsplitter (monsters only - a character body and its
    weapons share the animation ids, see IfritManager). The Slow-safe limit of 128 frames no
    longer applies: on a converted model FFNx emulates Slow by holding each frame for two
    host frames instead of letting the engine double the frame count in a byte.
-2. The sequences (seqrewrite30): every tick count x2, every per-tick step /2...
+2. The sequences (seqrewrite30): every tick count x2, every per-tick step /2... Then a movement
+   written as `current_frame / total_frames` of an A0 animation divides by total_frames - 1, so
+   it reaches its end on its last tick instead of leaving the model one step short until the
+   sequence ends and puts it back in one frame (seqframeratio).
 3. The extra single-animation block (character body section 7, weapon section 8, Edea
    section 10): the battle-entry animation, swapped in at battle start
    (initAnimationSequenceAtStartBattle 0x5029A8/0x5029C9) and played by sequence 8 - doubled
@@ -47,6 +51,7 @@ from . import interpolation
 from .animloopdetector import is_looping, ANIM_UNUSED
 from .animsplitter import (MAX_ANIMATION_FRAME, can_split_animation, get_nb_part_needed,
                            split_and_convert_animation)
+from .seqframeratio import end_frame_ratio_movements
 from .seqrewrite30 import rewrite_seq_animation_data
 from . import camera30
 
@@ -119,7 +124,7 @@ def _same_pose(frame_a, frame_b) -> bool:
     return True
 
 
-def looks_already_converted(monster, kind_dict=None) -> bool:
+def looks_already_converted(monster, kind_dict=None, chain_dict=None) -> bool:
     """A guess, for a warning only: does this file look like it was already converted?
 
     A converted file has an even frame count on every animation, and its one-shot animations
@@ -133,7 +138,7 @@ def looks_already_converted(monster, kind_dict=None) -> bool:
     if any(len(animation.frames) % 2 for animation in animation_list):
         return False
     one_shot = [animation for anim_id, animation in enumerate(monster.animation_data.animations)
-                if len(animation.frames) >= 2
+                if len(animation.frames) >= 2 and anim_id not in (chain_dict or {})
                 and not is_looping((kind_dict or {}).get(anim_id, ANIM_UNUSED))]
     if not one_shot:
         return True
@@ -142,14 +147,24 @@ def looks_already_converted(monster, kind_dict=None) -> bool:
     return nb_held * 2 >= len(one_shot)
 
 
-def _double_animation(animation, bones, smooth_loop, mode):
+def _double_animation(animation, bones, smooth_loop, mode, chain_frame=None):
     """2n frames for n (n >= 1)."""
     if len(animation.frames) == 1:
         animation.frames.append(copy.deepcopy(animation.frames[0]))
         animation._recompute_frame_storage_types()
         animation.original_tail = b""
         return
-    animation.create_interpolated_frames(bones, FACTOR, smooth_loop, mode=mode)
+    animation.create_interpolated_frames(bones, FACTOR, smooth_loop, mode=mode, chain_frame=chain_frame)
+
+
+def chain_frame_dict(animation_list, chain_dict) -> dict:
+    """{animation id: copy of the first frame of the animation it is cut to} (animchain),
+    taken before anything is converted."""
+    frame_dict = {}
+    for anim_id, next_id in (chain_dict or {}).items():
+        if 0 <= next_id < len(animation_list) and animation_list[next_id].frames:
+            frame_dict[anim_id] = copy.deepcopy(animation_list[next_id].frames[0])
+    return frame_dict
 
 
 def double_animation(animation, bones, smooth_loop: bool = False, mode=interpolation.LINEAR):
@@ -216,18 +231,25 @@ def convert_extra_animation_block(monster, mode=interpolation.LINEAR) -> int:
 
 
 def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: bool = True,
-                              mode=interpolation.LINEAR) -> dict:
+                              mode=interpolation.LINEAR, chain_dict: dict = None,
+                              driver_frame_count: list = None) -> dict:
     """Convert one loaded MonsterAnalyser in memory. Nothing is touched when an animation
     cannot make it ('skipped_list' not empty).
 
     kind_dict: {anim id: loop kind} read from the sequences that drive this model (the weapon's
     for a character body), BEFORE anything is rewritten.
+    chain_dict: {anim id: anim id} the sequences always cut to after its last frame
+    (animchain.analyse_animation_chain), also read before: its last frames go toward that one.
+    driver_frame_count: the vanilla frame counts of the animations the sequences time themselves
+    on (`C3 0A`: the character body's for a weapon); this model's own when omitted.
     Returns {'nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra',
     'camera_report'}. A camera that cannot be converted is listed in 'skipped_list' as
     ('camera', reason), and nothing is touched either.
     """
     report = {'nb_converted': 0, 'split_list': [], 'skipped_list': [], 'sequence_report': None,
-              'nb_extra': 0, 'camera_report': None}
+              'nb_extra': 0, 'camera_report': None, 'ratio_list': []}
+    if driver_frame_count is None:
+        driver_frame_count = [len(animation.frames) for animation in monster.animation_data.animations]
     camera_problem = plan_camera(monster)
     if camera_problem:
         report['skipped_list'].append(('camera', camera_problem))
@@ -247,10 +269,11 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
 
     # 2. the animations (a split inserts the part ids into the rewritten sequences)
     bones = monster.bone_data.bones if has_animation else []
+    chain_frames = chain_frame_dict(monster.animation_data.animations, chain_dict) if has_animation else {}
     for anim_id, smooth_loop, needs_split in plan_list:
         animation = monster.animation_data.animations[anim_id]
         if not needs_split:
-            _double_animation(animation, bones, smooth_loop, mode)
+            _double_animation(animation, bones, smooth_loop, mode, chain_frames.get(anim_id))
             report['nb_converted'] += 1
             continue
         nb_frame = len(animation.frames)
@@ -260,6 +283,14 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
         report['split_list'].append((anim_id, nb_frame, split_report['nb_part'],
                                      split_report['new_id_list']))
         report['nb_converted'] += split_report['nb_part']
+
+    # 2b. movements on current_frame / total_frames reach their end (vanilla counts x2: an A0
+    # animation is never split)
+    if sequence_list:
+        def converted_count(anim_id):
+            return FACTOR * driver_frame_count[anim_id] if 0 <= anim_id < len(driver_frame_count) else 0
+        report['ratio_list'] = end_frame_ratio_movements(game_data, monster.seq_animation_data,
+                                                         converted_count)
 
     # 3. the battle-entry block
     if has_animation:

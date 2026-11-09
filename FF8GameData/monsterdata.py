@@ -1454,7 +1454,8 @@ class Animation:
 
     def create_interpolated_frames(self, bones: List[Bone], factor: int = 4, smooth_loop: bool = False,
                                    wrap_frame: 'AnimationFrame' = None,
-                                   mode: str = interpolation.LINEAR):
+                                   mode: str = interpolation.LINEAR,
+                                   chain_frame: 'AnimationFrame' = None):
         """
         Insert (factor - 1) interpolated frames between each pair of consecutive frames.
         With factor = 4, an animation made for 15 fps becomes a 60 fps animation.
@@ -1471,11 +1472,17 @@ class Animation:
         frame of its FIRST part (see FF8GameData/dat/animsplitter.py).
         mode is the curve the inserted frames follow (see FF8GameData/dat/interpolation.py);
         the original frames are never touched, whichever one is used.
+        chain_frame is the first frame of the animation the sequences always cut to right after
+        this one's last frame (FF8GameData/dat/animchain.py): the frames after the last one go
+        toward it instead, so the cut is split like every other step (Ward's attack, anim 29 ->
+        30). The animation then neither loops nor holds its last pose.
         """
         if len(self.frames) < 2:
             return
 
         source_frames = self.frames
+        if chain_frame is not None:
+            smooth_loop = False
         if smooth_loop and not Animation._wraps_cleanly(
                 source_frames, wrap_frame if wrap_frame is not None else source_frames[0]):
             # The sequences loop it, but its end does not meet the pose it wraps to: it is in fact
@@ -1488,6 +1495,13 @@ class Animation:
             new_frames.append(frame)
 
             is_last_frame = (frame_index == len(source_frames) - 1)
+            if is_last_frame and chain_frame is not None:
+                before = self._neighbour_frame(source_frames, frame_index - 1, False)
+                for step_index in range(1, factor):
+                    new_frames.append(self._create_frame_between(frame, chain_frame, step_index / factor,
+                                                                 bones, mode=mode, frame_before=before,
+                                                                 frame_after=None))
+                continue
             if is_last_frame and not smooth_loop:
                 # Hold the last pose for the rest of its tick (see the docstring)
                 new_frames.extend(copy.deepcopy(frame) for _ in range(factor - 1))
