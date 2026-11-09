@@ -3089,3 +3089,477 @@ def test_moomba_description_compiles():
     lines = compile_program(load_description(338)).splitlines()
     for line in ['director port -1', 'port 0x6EBD50 0x0 0x6EBE20', 'module 338 0x25561C8 0x8C']:
         assert line in lines, line
+
+
+def record_self(tmp_path, effect, monster, tag, *extra):
+    """A monster's death as its AI casts it: the monster (slot 3) on itself."""
+    lines, log = record(tmp_path, effect, tag, f"slot3={BATTLE / (monster + '.dat')}", "caster=3", "target=3", *extra)
+    assert "faulted" not in log, log[-500:]
+    return lines, log
+
+
+def record_edea(tmp_path, effect, tag, *extra):
+    """Ice Strike as Edea (d7c016, slot 0: her limit's animation set bound to her) casts it on c0m009 - Squall's body
+    under her animation set records differently each run."""
+    return record(tmp_path, effect, tag, f"slot0={BATTLE / 'd7c016.dat'}", *extra)
+
+
+def test_light_pillar_description_compiles():
+    """Light Pillar: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(220)).splitlines()
+    for line in ['director port -1', 'port 0xAB3320 0xAB32F0 0xAB3990 exe', 'module 220 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG219_B.00", "extracted_files/magic/MAG219_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_light_pillar_runs_from_its_description(tmp_path):
+    """Light Pillar from its description: what the exe's code records; a script file of its own (an edited .00
+    copy) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(220), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 220, "original")
+    described, log = record(tmp_path, 220, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG219_B.00").read_bytes())
+    for k in range(0x912, 0x952, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c220.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c220.00\n")
+    native, _log = record(tmp_path, 220, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 220, "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(220))
+    description["effect"], description["name"] = 225, "New light_pillar"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 220, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_light_pillar" in log and untag(new) == original
+
+
+def test_ice_strike_edea_description_compiles():
+    """Ice Strike (Edea): Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(228)).splitlines()
+    for line in ['director port -1', 'port 0xA855C0 0xA85590 0xA85C30 exe', 'module 228 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG227_B.00", "extracted_files/magic/MAG227_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat", "extracted_files/battle/d7c016.dat")
+def test_ice_strike_edea_runs_from_its_description(tmp_path):
+    """Ice Strike (Edea) from its description, Edea (d7c016) casting it on c0m009: what the exe's code records; a
+    script file of its own (an edited .00 copy) read by the port's file loader and the program's alike; as effect 225,
+    itself again."""
+    program = write_program(load_description(228), tmp_path / "effect.fxprog")
+    original, _log = record_edea(tmp_path, 228, "original")
+    described, log = record_edea(tmp_path, 228, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG227_B.00").read_bytes())
+    for k in range(0xE1C, 0xE5C, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c228.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c228.00\n")
+    native, _log = record_edea(tmp_path, 228, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record_edea(tmp_path, 228, "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(228))
+    description["effect"], description["name"] = 225, "New ice_strike_edea"
+    del description["copy"]["functions"]
+    new, log = record_edea(tmp_path, 228, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_ice_strike_edea" in log and untag(new) == original
+
+
+def test_bgh_turret_explosion_description_compiles():
+    """BGH251F2 turret explosion: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(244)).splitlines()
+    for line in ['director port -1', 'port 0x9E5810 0x9E57E0 0x9E5E80 exe', 'module 244 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG243_B.00", "extracted_files/magic/MAG243_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_bgh_turret_explosion_runs_from_its_description(tmp_path):
+    """BGH251F2 turret explosion from its description: what the exe's code records; a script file of its own (an edited .00
+    copy) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(244), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 244, "original")
+    described, log = record(tmp_path, 244, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG243_B.00").read_bytes())
+    for k in range(0x376, 0x3B6, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c244.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c244.00\n")
+    native, _log = record(tmp_path, 244, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 244, "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(244))
+    description["effect"], description["name"] = 225, "New bgh_turret_explosion"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 244, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_bgh_turret_explosion" in log and untag(new) == original
+
+
+def test_effect_248_description_compiles():
+    """Effect 248: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(248)).splitlines()
+    for line in ['director port -1', 'port 0x9C08D0 0x9C08A0 0x9C0F40 exe', 'module 248 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG247_B.00", "extracted_files/magic/MAG247_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_effect_248_runs_from_its_description(tmp_path):
+    """Effect 248 from its description: what the exe's code records; a script file of its own (an edited .00
+    copy) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(248), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 248, "original")
+    described, log = record(tmp_path, 248, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG247_B.00").read_bytes())
+    for k in range(0xC32, 0xC72, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c248.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c248.00\n")
+    native, _log = record(tmp_path, 248, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 248, "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(248))
+    description["effect"], description["name"] = 225, "New effect_248"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 248, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_effect_248" in log and untag(new) == original
+
+
+def test_bgh_attack_description_compiles():
+    """Attack (BGH251F2): Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(249)).splitlines()
+    for line in ['director port -1', 'port 0x9B7380 0x9B7350 0x9B79F0 exe', 'module 249 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG248_B.00", "extracted_files/magic/MAG248_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_bgh_attack_runs_from_its_description(tmp_path):
+    """Attack (BGH251F2) from its description: what the exe's code records; a script file of its own (an edited .00
+    copy) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(249), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 249, "original")
+    described, log = record(tmp_path, 249, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG248_B.00").read_bytes())
+    for k in range(0x2AC, 0x2EC, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c249.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c249.00\n")
+    native, _log = record(tmp_path, 249, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 249, "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(249))
+    description["effect"], description["name"] = 225, "New bgh_attack"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 249, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_bgh_attack" in log and untag(new) == original
+
+
+def test_beam_cannon_description_compiles():
+    """Beam Cannon: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(250)).splitlines()
+    for line in ['director port -1', 'port 0x9ABFF0 0x9ABFC0 0x9AC660 exe', 'module 250 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG249_B.00", "extracted_files/magic/MAG249_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_beam_cannon_runs_from_its_description(tmp_path):
+    """Beam Cannon from its description: what the port records (FFNx mag250_beam_cannon.cpp; it parts from the exe's
+    code at tick 50, test_beam_cannon_port_draws_what_the_exe_does); a script file of its own (an edited .00 copy)
+    read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(250), tmp_path / "effect.fxprog")
+    game, _log = record(tmp_path, 250, "game", "native=1")
+    described, log = record(tmp_path, 250, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == untag(game) and len(game) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG249_B.00").read_bytes())
+    for k in range(0x4000, 0x4040, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c250.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c250.00\n")
+    native, _log = record(tmp_path, 250, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 250, "described_params", f"program={program}", f"params={params}",
+                            f"overrides={files}")
+    assert "1 set" in log and described == native and native != game
+    description = copy.deepcopy(load_description(250))
+    description["effect"], description["name"] = 225, "New beam_cannon"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 225, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_beam_cannon" in log and untag(new) == untag(game)
+
+
+@pytest.mark.xfail(strict=True, reason="FFNx mag250_beam_cannon.cpp: from tick 50 its ribbon / sprite packets stand "
+                                       "elsewhere on screen than the exe's (same shapes, x / y shifted)")
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG249_B.00", "extracted_files/magic/MAG249_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_beam_cannon_port_draws_what_the_exe_does(tmp_path):
+    """Beam Cannon's port against the exe's code: the same packets (it isn't yet: they part at tick 50)."""
+    original, _log = record(tmp_path, 250, "original")
+    game, _log = record(tmp_path, 250, "game", "native=1")
+    assert untag(game) == original
+
+
+def test_twin_homing_laser_description_compiles():
+    """Twin Homing Laser: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(253)).splitlines()
+    for line in ['director port -1', 'port 0x997D10 0x997CE0 0x998380 exe', 'module 253 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG252_B.00", "extracted_files/magic/MAG252_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_twin_homing_laser_runs_from_its_description(tmp_path):
+    """Twin Homing Laser from its description: what the exe's code records; a script file of its own (an edited .00
+    copy) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(253), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 253, "original")
+    described, log = record(tmp_path, 253, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG252_B.00").read_bytes())
+    for k in range(0x846, 0x886, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c253.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c253.00\n")
+    native, _log = record(tmp_path, 253, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 253, "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(253))
+    description["effect"], description["name"] = 225, "New twin_homing_laser"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 253, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_twin_homing_laser" in log and untag(new) == original
+
+
+def test_homing_laser_right_probe_description_compiles():
+    """Homing Laser (Right Probe): Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(254)).splitlines()
+    for line in ['director port -1', 'port 0x98D1B0 0x98D180 0x98D820 exe', 'module 254 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG253_B.00", "extracted_files/magic/MAG253_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_homing_laser_right_probe_runs_from_its_description(tmp_path):
+    """Homing Laser (Right Probe) from its description: what the exe's code records; a script file of its own (an edited .00
+    copy) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(254), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 254, "original")
+    described, log = record(tmp_path, 254, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG253_B.00").read_bytes())
+    for k in range(0x4A2, 0x4E2, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c254.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c254.00\n")
+    native, _log = record(tmp_path, 254, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 254, "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(254))
+    description["effect"], description["name"] = 225, "New homing_laser_right_probe"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 254, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_homing_laser_right_probe" in log and untag(new) == original
+
+
+def test_homing_laser_left_probe_description_compiles():
+    """Homing Laser (Left Probe): Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(255)).splitlines()
+    for line in ['director port -1', 'port 0x982650 0x982620 0x982CC0 exe', 'module 255 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG254_B.00", "extracted_files/magic/MAG254_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m009.dat")
+def test_homing_laser_left_probe_runs_from_its_description(tmp_path):
+    """Homing Laser (Left Probe) from its description: what the exe's code records; a script file of its own (an edited .00
+    copy) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(255), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 255, "original")
+    described, log = record(tmp_path, 255, "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG254_B.00").read_bytes())
+    for k in range(0x4A8, 0x4E8, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c255.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c255.00\n")
+    native, _log = record(tmp_path, 255, "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record(tmp_path, 255, "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(255))
+    description["effect"], description["name"] = 225, "New homing_laser_left_probe"
+    del description["copy"]["functions"]
+    new, log = record(tmp_path, 255, "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_homing_laser_left_probe" in log and untag(new) == original
+
+
+def test_tiamat_death_description_compiles():
+    """Tiamat death: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(266)).splitlines()
+    for line in ['director port -1', 'port 0x91F5E0 0x91F5B0 0x91FC50 exe', 'module 266 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG265_B.00", "extracted_files/magic/MAG265_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m132.dat")
+def test_tiamat_death_runs_from_its_description(tmp_path):
+    """Tiamat death from its description, Tiamat (c0m132) casting it on itself: what the exe's code records; a
+    script file of its own (an edited .00 copy) read by the port's file loader and the program's alike; as effect
+    225, itself again."""
+    program = write_program(load_description(266), tmp_path / "effect.fxprog")
+    original, _log = record_self(tmp_path, 266, "c0m132", "original")
+    described, log = record_self(tmp_path, 266, "c0m132", "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG265_B.00").read_bytes())
+    for k in range(0x146A, 0x14AA, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c266.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c266.00\n")
+    native, _log = record_self(tmp_path, 266, "c0m132", "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record_self(tmp_path, 266, "c0m132", "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(266))
+    description["effect"], description["name"] = 225, "New tiamat_death"
+    del description["copy"]["functions"]
+    new, log = record_self(tmp_path, 266, "c0m132", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_tiamat_death" in log and untag(new) == original
+
+
+def test_tri_point_death_description_compiles():
+    """Tri-Point death: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(268)).splitlines()
+    for line in ['director port -1', 'port 0x904A00 0x9049D0 0x905070 exe', 'module 268 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG267_B.00", "extracted_files/magic/MAG267_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m030.dat")
+def test_tri_point_death_runs_from_its_description(tmp_path):
+    """Tri-Point death from its description, Tri-Point (c0m030) casting it on itself: what the exe's code records; a
+    script file of its own (an edited .00 copy) read by the port's file loader and the program's alike; as effect
+    225, itself again."""
+    program = write_program(load_description(268), tmp_path / "effect.fxprog")
+    original, _log = record_self(tmp_path, 268, "c0m030", "original")
+    described, log = record_self(tmp_path, 268, "c0m030", "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG267_B.00").read_bytes())
+    for k in range(0xC46, 0xC86, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c268.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c268.00\n")
+    native, _log = record_self(tmp_path, 268, "c0m030", "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record_self(tmp_path, 268, "c0m030", "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(268))
+    description["effect"], description["name"] = 225, "New tri_point_death"
+    del description["copy"]["functions"]
+    new, log = record_self(tmp_path, 268, "c0m030", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_tri_point_death" in log and untag(new) == original
+
+
+def test_ultima_weapon_death_description_compiles():
+    """Ultima Weapon death: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(270)).splitlines()
+    for line in ['director port -1', 'port 0x8E9C30 0x8E9C00 0x8EA2A0 exe', 'module 270 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG269_B.00", "extracted_files/magic/MAG269_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m090.dat")
+def test_ultima_weapon_death_runs_from_its_description(tmp_path):
+    """Ultima Weapon death from its description, Ultima Weapon (c0m090) casting it on itself: what the exe's code records; a
+    script file of its own (an edited .00 copy) read by the port's file loader and the program's alike; as effect
+    225, itself again."""
+    program = write_program(load_description(270), tmp_path / "effect.fxprog")
+    original, _log = record_self(tmp_path, 270, "c0m090", "original")
+    described, log = record_self(tmp_path, 270, "c0m090", "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG269_B.00").read_bytes())
+    for k in range(0x1466, 0x14A6, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c270.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c270.00\n")
+    native, _log = record_self(tmp_path, 270, "c0m090", "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record_self(tmp_path, 270, "c0m090", "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(270))
+    description["effect"], description["name"] = 225, "New ultima_weapon_death"
+    del description["copy"]["functions"]
+    new, log = record_self(tmp_path, 270, "c0m090", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_ultima_weapon_death" in log and untag(new) == original

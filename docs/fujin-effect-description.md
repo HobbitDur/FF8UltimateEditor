@@ -2272,6 +2272,12 @@ Potion's description is the same with its own sequences and sound.
      and hit, the two flash envelopes, the camera's moves, the sound; the action result.
      - *Inputs* (`DifferentBeatParams`): the sound. Data: the sound, "mag215.tim".
      - *Fujin:* its tab (Director); no + menu family.
+   - **Light Pillar (220)** (FFNx 4443c7a8; Omega Weapon's and Ultima Weapon's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag219_b.00 / .01) - its bones, prims, sprites and particles, the action results.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<220>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy (0x912..) read by the port's file loader and the program's alike.
    - **Water (222)** (FFNx 106434cc; the spell; a cinematic clone, Elvoret's death's kind): the GF cinematic
      engine's clone run from its two script files (mag221_b.00 / .01) - its bones, prims, sprites and
      particles, the action results. The program calls the clone's own setup (the engine's shared state block),
@@ -2292,6 +2298,14 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`WhiteWind226Params`): the sound. Data: the sound, "mag296.tim".
      - *Tests:* the cycle test casts it from Adamantoise (slot 3) on itself (`CYCLE_CASTS`).
      - *Fujin:* its tab (Scene); no + menu family.
+   - **Ice Strike (Edea) (228)** (FFNx 8e3d4fb0; Edea's limit break, disc 1; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag227_b.00 / .01) - its bones, prims, sprites and particles, the action results.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<228>`): the two script files (empty: the game's).
+     - *Tests:* cast by Edea (d7c016, slot 0: the clone binds her limit's animation set to the caster; under Squall's
+       body it records differently each run) on c0m009; an edited .00 copy (0xE1C..) read by the port's file loader
+       and the program's alike.
    - **Homing Laser (Quistis) (229)** (FFNx 83496e67; Quistis' Blue Magic; a cinematic clone, Elvoret's death's kind): the GF cinematic
      engine's clone run from its two script files (mag228_b.00 / .01) - its bones, prims, sprites
      and particles, the action results. The program calls the clone's own setup (the engine's shared state
@@ -2346,6 +2360,50 @@ Potion's description is the same with its own sequences and sound.
      block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
      - *Inputs* (`ProgramFiles<240>`): the two script files (empty: the game's).
      - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
+   - **BGH251F2 turret explosion (244)** (FFNx 4443c7a8; BGH251F2's second turret exploding, enemy attacks 141 / 148; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag243_b.00 / .01) - its bones, prims, sprites and particles, the action results.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<244>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy (0x376..) read by the port's file loader and the program's alike.
+   - **Effect 248 (248)** (FFNx 8e3d4fb0; no kernel.bin attack; the shared list's soldiers' entrance after BGH251F2's death; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag247_b.00 / .01) - its bones, prims, sprites and particles, the action results.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<248>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy (0xC32..) read by the port's file loader and the program's alike.
+   - **Attack (BGH251F2) (249)** (FFNx 8e3d4fb0; BGH251F2's attack, damaged form; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag248_b.00 / .01) - its bones, prims, sprites and particles, the action results.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<249>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy (0x2AC..) read by the port's file loader and the program's alike.
+   - **Beam Cannon (250)** (FFNx 8e3d4fb0; BGH251F2's attack, damaged form; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag249_b.00 / .01) - its bones, prims, sprites and particles, the action results.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<250>`): the two script files (empty: the game's).
+     - *Tests:* the program against the port (both recordings alike); an edited .00 copy (0x4000..) read by the port's
+       file loader and the program's alike. The port parts from the exe's code at tick 50 (its ribbon and sprite
+       packets shifted on screen, same shapes, whoever casts it): a strict xfail test until FFNx fixes it.
+   - **Twin Homing Laser (253)** (FFNx 4443c7a8; Mobile Type 8's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag252_b.00 / .01) - its bones, prims, sprites and particles, the action results.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<253>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy (0x846..) read by the port's file loader and the program's alike.
+   - **Homing Laser (Right Probe) (254)** (FFNx 4443c7a8; Mobile Type 8's Right Probe's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag253_b.00 / .01) - its bones, prims, sprites and particles, the action results.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<254>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy (0x4A2..) read by the port's file loader and the program's alike.
+   - **Homing Laser (Left Probe) (255)** (FFNx 4443c7a8; Mobile Type 8's Left Probe's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag254_b.00 / .01) - its bones, prims, sprites and particles, the action results.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<255>`): the two script files (empty: the game's).
+     - *Tests:* an edited .00 copy (0x4A8..) read by the port's file loader and the program's alike.
    - **Sand Shake (256)** (FFNx e7e1fde4; Abyss Worm's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
      engine's clone run from its two script files (mag255_b.00 / .01) - its bones, prims, sprites
      and particles, the action results. The program calls the clone's own setup (the engine's shared state
@@ -2388,6 +2446,24 @@ Potion's description is the same with its own sequences and sound.
      shards, the screen flashes and fade, the sounds (ticks 0, 80, 170); the action results at tick 252.
      - *Inputs* (`Pulsar260Params`): the three sounds, the damage tick. Data: the sounds, "mag069-259.tim".
      - *Fujin:* its tab (Master); no + menu family.
+   - **Tiamat death (266)** (FFNx 8e3d4fb0; Tiamat's AI at its death; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag265_b.00 / .01) - the caster's model falling apart polygon by polygon - its pieces, dots and particles.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<266>`): the two script files (empty: the game's).
+     - *Tests:* cast by Tiamat (c0m132) on itself, as Elvoret's death is; an edited .00 copy (0x146A..) read by the port's file loader and the program's alike.
+   - **Tri-Point death (268)** (FFNx 8e3d4fb0; Tri-Point's AI at its death; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag267_b.00 / .01) - the caster's model falling apart polygon by polygon - its pieces, dots and particles.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<268>`): the two script files (empty: the game's).
+     - *Tests:* cast by Tri-Point (c0m030) on itself, as Elvoret's death is; an edited .00 copy (0xC46..) read by the port's file loader and the program's alike.
+   - **Ultima Weapon death (270)** (FFNx 8e3d4fb0; Ultima Weapon's and Omega Weapon's AI at their death; a cinematic clone, Elvoret's death's kind): the GF cinematic
+     engine's clone run from its two script files (mag269_b.00 / .01) - the caster's model falling apart polygon by polygon - its pieces, dots and particles.
+     The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
+     port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<270>`): the two script files (empty: the game's).
+     - *Tests:* cast by Ultima Weapon (c0m090) on itself, as Elvoret's death is; an edited .00 copy (0x1466..) read by the port's file loader and the program's alike.
    - **LV Up (271)** (FFNx 2bc3601e; the command; a port root, Ray-Bomb's kind): the level-up layout on the target (its
      morphing model, the target measured), the sound; the action result when it ends.
      - *Inputs* (`LvUpParams`): the sound. Data: the sound, "mag270.tim".

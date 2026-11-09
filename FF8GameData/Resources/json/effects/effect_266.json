@@ -1,0 +1,166 @@
+{
+ "format": 1,
+ "effect": 266,
+ "name": "Tiamat death",
+ "doc": "Tiamat death (enemy attack 306, Tiamat's AI at its death): the GF cinematic engine's clone run from the two script files (mag265_b.00 / .01, its parameters) - the caster's model falling apart polygon by polygon - its pieces, dots and particles. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag266_tiamat_death.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x91F5B0",
+   "root": "0x91FC50"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 266,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x91F5E0",
+  "file_loader": "0x91F5B0",
+  "root": "0x91FC50",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.18558c8",
+   "label": "Data",
+   "doc": "Draw_table - 0x360 (read by 0x91F730)",
+   "address": "0x18558C8",
+   "size": 332
+  },
+  {
+   "key": "not_editable.1855a3c",
+   "label": "Data",
+   "doc": "MAG_266 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x1855A3C",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1855a84",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x1855A84",
+   "size": 240
+  },
+  {
+   "key": "not_editable.1855b74",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x1855B74",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1855b88",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x1855B88",
+   "size": 44
+  },
+  {
+   "key": "not_editable.1855bb4",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x1855BB4",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1855bc8",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x1855BC8",
+   "size": 96
+  },
+  {
+   "key": "not_editable.1855c28",
+   "label": "Data",
+   "doc": "MAG_266 DrawHandlerTable",
+   "address": "0x1855C28",
+   "size": 362
+  },
+  {
+   "key": "not_editable.1855d92",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1855D92",
+   "size": 26
+  },
+  {
+   "key": "not_editable.1855dac",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1855DAC",
+   "size": 2
+  },
+  {
+   "key": "not_editable.1855dae",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1855DAE",
+   "size": 14
+  },
+  {
+   "key": "not_editable.1855dbc",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1855DBC",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1855dc4",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1855DC4",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1855dcc",
+   "label": "Data",
+   "doc": "MAG_266 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x1855DCC",
+   "size": 1312
+  }
+ ]
+}

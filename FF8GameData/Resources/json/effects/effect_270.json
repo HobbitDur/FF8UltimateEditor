@@ -1,0 +1,166 @@
+{
+ "format": 1,
+ "effect": 270,
+ "name": "Ultima Weapon death",
+ "doc": "Ultima Weapon death (enemy attack 312, Ultima Weapon's and Omega Weapon's AI at their death): the GF cinematic engine's clone run from the two script files (mag269_b.00 / .01, its parameters) - the caster's model falling apart polygon by polygon - its pieces, dots and particles. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag270_ultima_weapon_death.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x8E9C00",
+   "root": "0x8EA2A0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 270,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x8E9C30",
+  "file_loader": "0x8E9C00",
+  "root": "0x8EA2A0",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.1852fd0",
+   "label": "Data",
+   "doc": "Draw_table - 0x360 (read by 0x8E9D80)",
+   "address": "0x1852FD0",
+   "size": 332
+  },
+  {
+   "key": "not_editable.1853144",
+   "label": "Data",
+   "doc": "MAG_270 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x1853144",
+   "size": 72
+  },
+  {
+   "key": "not_editable.185318c",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x185318C",
+   "size": 240
+  },
+  {
+   "key": "not_editable.185327c",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x185327C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1853290",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x1853290",
+   "size": 44
+  },
+  {
+   "key": "not_editable.18532bc",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x18532BC",
+   "size": 20
+  },
+  {
+   "key": "not_editable.18532d0",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x18532D0",
+   "size": 96
+  },
+  {
+   "key": "not_editable.1853330",
+   "label": "Data",
+   "doc": "MAG_270 DrawHandlerTable",
+   "address": "0x1853330",
+   "size": 362
+  },
+  {
+   "key": "not_editable.185349a",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185349A",
+   "size": 26
+  },
+  {
+   "key": "not_editable.18534b4",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18534B4",
+   "size": 2
+  },
+  {
+   "key": "not_editable.18534b6",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18534B6",
+   "size": 14
+  },
+  {
+   "key": "not_editable.18534c4",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18534C4",
+   "size": 8
+  },
+  {
+   "key": "not_editable.18534cc",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18534CC",
+   "size": 8
+  },
+  {
+   "key": "not_editable.18534d4",
+   "label": "Data",
+   "doc": "MAG_270 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x18534D4",
+   "size": 1312
+  }
+ ]
+}

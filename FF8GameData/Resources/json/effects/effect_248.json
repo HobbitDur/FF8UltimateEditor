@@ -1,0 +1,166 @@
+{
+ "format": 1,
+ "effect": 248,
+ "name": "Effect 248",
+ "doc": "Effect 248 (no kernel.bin attack uses it; the shared list calls it the soldiers' entrance after BGH251F2's death): the GF cinematic engine's clone run from the two script files (mag247_b.00 / .01, its parameters) - its bones, prims, sprites and particles, the action results. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag248_unknown_248.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x9C08A0",
+   "root": "0x9C0F40"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 248,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x9C08D0",
+  "file_loader": "0x9C08A0",
+  "root": "0x9C0F40",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.185eefc",
+   "label": "Data",
+   "doc": "Draw_table - 0x2C4 (read by 0x9C0A20)",
+   "address": "0x185EEFC",
+   "size": 176
+  },
+  {
+   "key": "not_editable.185efd4",
+   "label": "Data",
+   "doc": "MAG_248 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x185EFD4",
+   "size": 72
+  },
+  {
+   "key": "not_editable.185f01c",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x185F01C",
+   "size": 240
+  },
+  {
+   "key": "not_editable.185f10c",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x185F10C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.185f120",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x185F120",
+   "size": 44
+  },
+  {
+   "key": "not_editable.185f14c",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x185F14C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.185f160",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x185F160",
+   "size": 96
+  },
+  {
+   "key": "not_editable.185f1c0",
+   "label": "Data",
+   "doc": "MAG_248 DrawHandlerTable",
+   "address": "0x185F1C0",
+   "size": 362
+  },
+  {
+   "key": "not_editable.185f32a",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185F32A",
+   "size": 26
+  },
+  {
+   "key": "not_editable.185f344",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185F344",
+   "size": 2
+  },
+  {
+   "key": "not_editable.185f346",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185F346",
+   "size": 14
+  },
+  {
+   "key": "not_editable.185f354",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185F354",
+   "size": 8
+  },
+  {
+   "key": "not_editable.185f35c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185F35C",
+   "size": 8
+  },
+  {
+   "key": "not_editable.185f364",
+   "label": "Data",
+   "doc": "MAG_248 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x185F364",
+   "size": 1312
+  }
+ ]
+}

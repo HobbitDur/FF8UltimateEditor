@@ -1,0 +1,166 @@
+{
+ "format": 1,
+ "effect": 253,
+ "name": "Twin Homing Laser",
+ "doc": "Twin Homing Laser (enemy attack 283, Mobile Type 8's): the GF cinematic engine's clone run from the two script files (mag252_b.00 / .01, its parameters) - its bones, prims, sprites and particles, the action results. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag253_twin_homing_laser.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x997CE0",
+   "root": "0x998380"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 253,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x997D10",
+  "file_loader": "0x997CE0",
+  "root": "0x998380",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.185c7d0",
+   "label": "Data",
+   "doc": "Draw_table - 0x314 (read by 0x997E60)",
+   "address": "0x185C7D0",
+   "size": 256
+  },
+  {
+   "key": "not_editable.185c8f8",
+   "label": "Data",
+   "doc": "MAG_253 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x185C8F8",
+   "size": 72
+  },
+  {
+   "key": "not_editable.185c940",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x185C940",
+   "size": 240
+  },
+  {
+   "key": "not_editable.185ca30",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x185CA30",
+   "size": 20
+  },
+  {
+   "key": "not_editable.185ca44",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x185CA44",
+   "size": 44
+  },
+  {
+   "key": "not_editable.185ca70",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x185CA70",
+   "size": 20
+  },
+  {
+   "key": "not_editable.185ca84",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x185CA84",
+   "size": 96
+  },
+  {
+   "key": "not_editable.185cae4",
+   "label": "Data",
+   "doc": "MAG_253 DrawHandlerTable",
+   "address": "0x185CAE4",
+   "size": 362
+  },
+  {
+   "key": "not_editable.185cc4e",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185CC4E",
+   "size": 26
+  },
+  {
+   "key": "not_editable.185cc68",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185CC68",
+   "size": 2
+  },
+  {
+   "key": "not_editable.185cc6a",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185CC6A",
+   "size": 14
+  },
+  {
+   "key": "not_editable.185cc78",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185CC78",
+   "size": 8
+  },
+  {
+   "key": "not_editable.185cc80",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185CC80",
+   "size": 8
+  },
+  {
+   "key": "not_editable.185cc88",
+   "label": "Data",
+   "doc": "MAG_253 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x185CC88",
+   "size": 1312
+  }
+ ]
+}
