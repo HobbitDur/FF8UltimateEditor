@@ -416,6 +416,28 @@
    "unit": "plain"
   },
   {
+   "key": "anchor.each_target",
+   "part": "director",
+   "label": "On each target",
+   "doc": "On the targets: 1 = the puffs, the crystals and the ice shards around each target's effect point (the next value), cycling through the targets - a flying monster's height too; the floor ice stays under them",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "anchor.bone",
+   "part": "director",
+   "label": "Target point",
+   "doc": "On each target: which point of it (0xF1: its body; 0xF0 and up: the model's named points, below: a bone)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 241,
+   "unit": "plain"
+  },
+  {
    "key": "flash.colour",
    "part": "director",
    "label": "Colour",
