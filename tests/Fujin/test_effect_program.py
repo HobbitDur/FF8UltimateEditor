@@ -4131,8 +4131,8 @@ def test_catoblepas_death_runs_from_its_description(tmp_path):
     assert "program: New_catoblepas_death" in log and untag(new) == original
 
 
-def test_gargantua_s_attack_description_compiles():
-    """Gargantua's attack: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+def test_gargantua_death_description_compiles():
+    """Gargantua death: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
     state block), its root re-pointed; its two script files the parameters."""
     lines = compile_program(load_description(269)).splitlines()
     for line in ['director port -1', 'port 0x8F7220 0x8F71F0 0x8F7890 exe', 'module 269 0x2796E00 0x1E40']:
@@ -4142,12 +4142,12 @@ def test_gargantua_s_attack_description_compiles():
 @pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG268_B.00", "extracted_files/magic/MAG268_B.01",
                      "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
                      "extracted_files/battle/c0m094.dat")
-def test_gargantua_s_attack_runs_from_its_description(tmp_path):
-    """Gargantua's attack from its description (c0m094 casting it): what the exe's code records; a script file of its own (an
+def test_gargantua_death_runs_from_its_description(tmp_path):
+    """Gargantua death from its description (c0m094 on itself): what the exe's code records; a script file of its own (an
     edited .00 copy: vertices of a mesh moved) read by the port's file loader and the program's alike; as effect 225, itself again."""
     program = write_program(load_description(269), tmp_path / "effect.fxprog")
-    original, _log = record_monster(tmp_path, 269, "c0m094", "original")
-    described, log = record_monster(tmp_path, 269, "c0m094", "described", f"program={program}")
+    original, _log = record_self(tmp_path, 269, "c0m094", "original")
+    described, log = record_self(tmp_path, 269, "c0m094", "described", f"program={program}")
     assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
     files = tmp_path / "files"
     files.mkdir()
@@ -4157,15 +4157,15 @@ def test_gargantua_s_attack_runs_from_its_description(tmp_path):
     (files / "c269.00").write_bytes(script)
     params = tmp_path / "params.txt"
     params.write_text("files.file00 c269.00\n")
-    native, _log = record_monster(tmp_path, 269, "c0m094", "native", "native=1", f"params={params}", f"overrides={files}")
-    described, log = record_monster(tmp_path, 269, "c0m094", "described_params", f"program={program}", f"params={params}",
+    native, _log = record_self(tmp_path, 269, "c0m094", "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record_self(tmp_path, 269, "c0m094", "described_params", f"program={program}", f"params={params}",
                      f"overrides={files}")
     assert "1 set" in log and described == native and native != original
     description = copy.deepcopy(load_description(269))
-    description["effect"], description["name"] = 225, "New gargantua_s_attack"
+    description["effect"], description["name"] = 225, "New gargantua_death"
     del description["copy"]["functions"]
-    new, log = record_monster(tmp_path, 269, "c0m094", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
-    assert "program: New_gargantua_s_attack" in log and untag(new) == original
+    new, log = record_self(tmp_path, 269, "c0m094", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_gargantua_death" in log and untag(new) == original
 
 
 def test_effect_331_description_compiles():

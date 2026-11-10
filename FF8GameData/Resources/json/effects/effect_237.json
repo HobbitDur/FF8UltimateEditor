@@ -162,5 +162,2889 @@
    "address": "0x186602C",
    "size": 1312
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag236_b.00",
+  "param": "files.file00",
+  "size": 22016,
+  "camera": {
+   "at": "0xd34",
+   "size": "0x10C"
+  },
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When things happen, and the camera. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 0,
+    "key": "dark",
+    "title": "Battle colour",
+    "paths": [],
+    "doc": "The battle darkens while the gas is out (the stage's own tint: a preview without the stage shows no change)"
+   },
+   {
+    "id": 542,
+    "key": "stream",
+    "title": "Gas stream",
+    "paths": [
+     66078
+    ],
+    "doc": "The gas puffs flying from the monster's mouth to the targets"
+   },
+   {
+    "id": 684,
+    "key": "cloud_a",
+    "title": "Gas clouds",
+    "doc": "Grey gas puffs swelling on the targets"
+   },
+   {
+    "id": 748,
+    "key": "cloud_b",
+    "title": "Gas rings",
+    "doc": "Yellow rings of gas over the targets"
+   },
+   {
+    "id": 806,
+    "key": "cloud_c",
+    "title": "Sparkles",
+    "doc": "Small yellow sparkles on each target"
+   },
+   {
+    "id": 962,
+    "key": "roll",
+    "title": "Dark gas",
+    "paths": [],
+    "doc": "Dark gas clouds rolling over the targets"
+   },
+   {
+    "id": 1122,
+    "key": "spark",
+    "title": "Fuse line",
+    "paths": [],
+    "doc": "The dark line snaking from the monster's mouth to the targets, burning away as the fire runs along it"
+   },
+   {
+    "id": 1200,
+    "key": "trail",
+    "title": "Running fire",
+    "doc": "The flames the spark leaves behind as it runs to the targets"
+   },
+   {
+    "id": 1576,
+    "key": "burst",
+    "title": "Mouth glow",
+    "paths": [],
+    "doc": "The glow at the monster's mouth as the gas lights up"
+   },
+   {
+    "id": 1654,
+    "key": "ring",
+    "title": "Mouth ring",
+    "paths": [],
+    "doc": "The yellow dome of light opening at the mouth"
+   },
+   {
+    "id": 1778,
+    "key": "flares",
+    "title": "Mouth flares",
+    "paths": [],
+    "doc": "Red streaks flashing at the monster's mouth"
+   },
+   {
+    "id": 1310,
+    "key": "smoke",
+    "title": "Explosion smoke",
+    "doc": "The smoke clouds and glows of the explosion on the targets"
+   },
+   {
+    "id": 1436,
+    "key": "fire",
+    "title": "Embers",
+    "doc": "Red embers flying out of the explosion"
+   },
+   {
+    "id": 1554,
+    "key": "flash",
+    "title": "Screen flashes",
+    "paths": [],
+    "doc": "The red flash as it explodes, then two white ones"
+   }
+  ],
+  "groups": [
+   {
+    "key": "script.dark.end",
+    "label": "Darkens to",
+    "doc": "The battle's colour while the gas is out"
+   },
+   {
+    "key": "script.cloud_a.puff",
+    "label": "Each puff",
+    "doc": ""
+   },
+   {
+    "key": "script.cloud_a.puff.colour",
+    "label": "Colour",
+    "doc": "128 = the picture as it is"
+   },
+   {
+    "key": "script.cloud_b.puff",
+    "label": "Each puff",
+    "doc": ""
+   },
+   {
+    "key": "script.cloud_c.puff",
+    "label": "Each puff",
+    "doc": ""
+   },
+   {
+    "key": "script.roll.light",
+    "label": "Brightness",
+    "doc": "Each lights up, then fades (128 = its texture as it is)"
+   },
+   {
+    "key": "script.trail.flame",
+    "label": "Each flame",
+    "doc": ""
+   },
+   {
+    "key": "script.burst.glow",
+    "label": "Glow",
+    "doc": ""
+   },
+   {
+    "key": "script.burst.glow.colour",
+    "label": "Colour",
+    "doc": "128 = the picture as it is"
+   },
+   {
+    "key": "script.smoke.cloud",
+    "label": "Each cloud",
+    "doc": ""
+   },
+   {
+    "key": "script.smoke.glow",
+    "label": "Each glow",
+    "doc": ""
+   },
+   {
+    "key": "script.smoke.glow.colour",
+    "label": "Colour",
+    "doc": "128 = the picture as it is"
+   },
+   {
+    "key": "script.fire.puff",
+    "label": "Each puff",
+    "doc": ""
+   },
+   {
+    "key": "script.flash.red",
+    "label": "Red flash",
+    "doc": "As it explodes"
+   },
+   {
+    "key": "script.flash.white",
+    "label": "White flashes",
+    "doc": "Two, after the red one"
+   }
+  ],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x64",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x64": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x64": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.start",
+    "part": "timing",
+    "label": "Gas starts after",
+    "doc": "Ticks before the gas leaves the mouth",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 6,
+    "inst": "0x8c",
+    "code": "0x9",
+    "at": "0x8c",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.clouds",
+    "part": "timing",
+    "label": "Clouds after",
+    "doc": "Ticks after the gas starts: the clouds swell on the targets",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x9e",
+    "code": "0x9",
+    "at": "0x9e",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.fire",
+    "part": "timing",
+    "label": "Fuse after",
+    "doc": "Ticks after the clouds start: the gas stops, the dark fuse line snakes to the targets",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0xa4",
+    "code": "0x9",
+    "at": "0xa4",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.blast",
+    "part": "timing",
+    "label": "Mouth flash after",
+    "doc": "Ticks after the fuse starts (4 more first)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 10,
+    "inst": "0xb0",
+    "code": "0x9",
+    "at": "0xb0",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.trail",
+    "part": "timing",
+    "label": "Fire runs after",
+    "doc": "Ticks after the mouth flash: the clouds stop, the fire runs along the fuse",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 10,
+    "inst": "0xb6",
+    "code": "0x9",
+    "at": "0xb6",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.boom",
+    "part": "timing",
+    "label": "Explodes after",
+    "doc": "Ticks after the fire starts running: the explosion",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0xc0",
+    "code": "0x9",
+    "at": "0xc0",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.hit",
+    "part": "timing",
+    "label": "Hits after",
+    "doc": "Ticks after the explosion (8 more follow)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0xca",
+    "code": "0x9",
+    "at": "0xca",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end",
+    "part": "timing",
+    "label": "Ends after",
+    "doc": "Ticks after the hit",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0xd0",
+    "code": "0x9",
+    "at": "0xd0",
+    "form": "op"
+   },
+   {
+    "key": "script.dark.end.r",
+    "part": "dark",
+    "label": "Red",
+    "doc": "128 = as it is",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x18c",
+    "code": "0xa",
+    "at": "0x190",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.end.g",
+    "part": "dark",
+    "label": "Green",
+    "doc": "128 = as it is",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x18c",
+    "code": "0xa",
+    "at": "0x192",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.end.b",
+    "part": "dark",
+    "label": "Blue",
+    "doc": "128 = as it is",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x18c",
+    "code": "0xa",
+    "at": "0x194",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.speed",
+    "part": "dark",
+    "label": "Darkens by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x196",
+    "code": "0xb",
+    "at": "0x198",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.for",
+    "part": "dark",
+    "label": "Over",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x19a",
+    "code": "0x9",
+    "at": "0x19a",
+    "form": "op"
+   },
+   {
+    "key": "script.dark.after",
+    "part": "dark",
+    "label": "Comes back after",
+    "doc": "Ticks after the explosion",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x1a2",
+    "code": "0x9",
+    "at": "0x1a2",
+    "form": "op"
+   },
+   {
+    "key": "script.dark.lift",
+    "part": "dark",
+    "label": "Comes back by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x1a4",
+    "code": "0xb",
+    "at": "0x1a6",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.lift_for",
+    "part": "dark",
+    "label": "Over",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x1a8",
+    "code": "0x9",
+    "at": "0x1a8",
+    "form": "op"
+   },
+   {
+    "key": "script.stream.every",
+    "part": "stream",
+    "label": "Two every",
+    "doc": "Ticks, until the gas stops (Timing)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 1,
+    "inst": "0x214",
+    "code": "0x9",
+    "at": "0x214",
+    "form": "op"
+   },
+   {
+    "key": "script.stream.picture",
+    "part": "stream",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "int",
+    "min": 0,
+    "max": 6,
+    "default": 6,
+    "inst": "0x22e",
+    "code": "0x73",
+    "at": "0x230",
+    "form": "s16"
+   },
+   {
+    "key": "script.stream.size",
+    "part": "stream",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x22e",
+    "code": "0x73",
+    "at": "0x232",
+    "form": "s16"
+   },
+   {
+    "key": "script.stream.start",
+    "part": "stream",
+    "label": "Starts along",
+    "doc": "How far along the way it starts (4096 = at the targets)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 16,
+    "inst": "0x240",
+    "code": "0xa",
+    "at": "0x246",
+    "form": "s16"
+   },
+   {
+    "key": "script.stream.start_random",
+    "part": "stream",
+    "label": "Starts along, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 16,
+    "inst": "0x248",
+    "code": "0x12",
+    "at": "0x24a",
+    "form": "s16"
+   },
+   {
+    "key": "script.stream.speed",
+    "part": "stream",
+    "label": "Speed",
+    "doc": "Along the way, per tick (1/16)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4352,
+    "inst": "0x24c",
+    "code": "0xb",
+    "at": "0x24e",
+    "form": "s16"
+   },
+   {
+    "key": "script.stream.rise",
+    "part": "stream",
+    "label": "Swerve",
+    "doc": "Away from the way, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x250",
+    "code": "0x11",
+    "at": "0x252",
+    "form": "s16"
+   },
+   {
+    "key": "script.stream.rise_random",
+    "part": "stream",
+    "label": "Swerve, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x254",
+    "code": "0x15",
+    "at": "0x256",
+    "form": "s16"
+   },
+   {
+    "key": "script.stream.spin",
+    "part": "stream",
+    "label": "Turned, random",
+    "doc": "Its angle, at random (4096 = a whole turn)",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 192,
+    "inst": "0x258",
+    "code": "0x12",
+    "at": "0x25a",
+    "form": "s16"
+   },
+   {
+    "key": "script.stream.straight",
+    "part": "stream",
+    "label": "Swerves for",
+    "doc": "Ticks (and up to 2 more at random): then it bends back",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 6,
+    "inst": "0x25c",
+    "code": "0x9",
+    "at": "0x25c",
+    "form": "op"
+   },
+   {
+    "key": "script.stream.bend",
+    "part": "stream",
+    "label": "Bends back by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -8192,
+    "inst": "0x262",
+    "code": "0xc",
+    "at": "0x264",
+    "form": "s16"
+   },
+   {
+    "key": "script.stream.life",
+    "part": "stream",
+    "label": "Then lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x266",
+    "code": "0x9",
+    "at": "0x266",
+    "form": "op"
+   },
+   {
+    "key": "script.cloud_a.every",
+    "part": "cloud_a",
+    "label": "One every",
+    "doc": "Ticks, until they stop (Timing)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 1,
+    "inst": "0x2c6",
+    "code": "0x9",
+    "at": "0x2c6",
+    "form": "op"
+   },
+   {
+    "key": "script.cloud_a.texture",
+    "part": "cloud_a",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 7,
+    "default": 5,
+    "inst": "0x2b6",
+    "code": "0x52",
+    "at": "0x2b8",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_a.blend",
+    "part": "cloud_a",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 3,
+    "inst": "0x2be",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x2be": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x2be": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x2be": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x2be": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.cloud_a.puff.frames",
+    "part": "cloud_a",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 5,
+    "default": 5,
+    "inst": "0x2d2",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The smoke cloud",
+      "bytes": {
+       "0x2d2": "0700"
+      }
+     },
+     {
+      "label": "The glow",
+      "bytes": {
+       "0x2d2": "0701"
+      }
+     },
+     {
+      "label": "The ember",
+      "bytes": {
+       "0x2d2": "0703"
+      }
+     },
+     {
+      "label": "The sparkle",
+      "bytes": {
+       "0x2d2": "0704"
+      }
+     },
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x2d2": "0705"
+      }
+     },
+     {
+      "label": "The gas puff",
+      "bytes": {
+       "0x2d2": "0706"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.cloud_a.puff.size",
+    "part": "cloud_a",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x2d4",
+    "code": "0x4",
+    "at": "0x2d6",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_a.puff.size_random",
+    "part": "cloud_a",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x2d8",
+    "code": "0x5",
+    "at": "0x2da",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_a.puff.spread_x",
+    "part": "cloud_a",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 1536,
+    "inst": "0x2dc",
+    "code": "0x5",
+    "at": "0x2de",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_a.puff.spread_y",
+    "part": "cloud_a",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x2dc",
+    "code": "0x5",
+    "at": "0x2e0",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_a.puff.spread_z",
+    "part": "cloud_a",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 1536,
+    "inst": "0x2dc",
+    "code": "0x5",
+    "at": "0x2e2",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_a.puff.colour.r",
+    "part": "cloud_a",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 240,
+    "inst": "0x2e4",
+    "code": "0xb",
+    "at": "0x2e5",
+    "form": "hi"
+   },
+   {
+    "key": "script.cloud_a.puff.colour.g",
+    "part": "cloud_a",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 240,
+    "inst": "0x2e4",
+    "code": "0xb",
+    "at": "0x2e6",
+    "form": "u8"
+   },
+   {
+    "key": "script.cloud_a.puff.colour.b",
+    "part": "cloud_a",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 240,
+    "inst": "0x2e4",
+    "code": "0xb",
+    "at": "0x2e7",
+    "form": "u8"
+   },
+   {
+    "key": "script.cloud_a.puff.life",
+    "part": "cloud_a",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x2e8",
+    "code": "0x1",
+    "at": "0x2e9",
+    "form": "hi"
+   },
+   {
+    "key": "script.cloud_b.every",
+    "part": "cloud_b",
+    "label": "One every",
+    "doc": "Ticks, until they stop (Timing)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 1,
+    "inst": "0x304",
+    "code": "0x9",
+    "at": "0x304",
+    "form": "op"
+   },
+   {
+    "key": "script.cloud_b.puff.frames",
+    "part": "cloud_b",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 5,
+    "default": 4,
+    "inst": "0x310",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The smoke cloud",
+      "bytes": {
+       "0x310": "0700"
+      }
+     },
+     {
+      "label": "The glow",
+      "bytes": {
+       "0x310": "0701"
+      }
+     },
+     {
+      "label": "The ember",
+      "bytes": {
+       "0x310": "0703"
+      }
+     },
+     {
+      "label": "The sparkle",
+      "bytes": {
+       "0x310": "0704"
+      }
+     },
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x310": "0705"
+      }
+     },
+     {
+      "label": "The gas puff",
+      "bytes": {
+       "0x310": "0706"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.cloud_b.puff.size",
+    "part": "cloud_b",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x312",
+    "code": "0x4",
+    "at": "0x314",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_b.puff.size_random",
+    "part": "cloud_b",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x316",
+    "code": "0x5",
+    "at": "0x318",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_b.puff.spread_x",
+    "part": "cloud_b",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 1536,
+    "inst": "0x31a",
+    "code": "0x5",
+    "at": "0x31c",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_b.puff.spread_y",
+    "part": "cloud_b",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x31a",
+    "code": "0x5",
+    "at": "0x31e",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_b.puff.spread_z",
+    "part": "cloud_b",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 1536,
+    "inst": "0x31a",
+    "code": "0x5",
+    "at": "0x320",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_b.puff.life",
+    "part": "cloud_b",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 12,
+    "inst": "0x322",
+    "code": "0x1",
+    "at": "0x323",
+    "form": "hi"
+   },
+   {
+    "key": "script.cloud_c.every",
+    "part": "cloud_c",
+    "label": "One every",
+    "doc": "Ticks, until they stop (Timing)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 2,
+    "inst": "0x338",
+    "code": "0x9",
+    "at": "0x338",
+    "form": "op"
+   },
+   {
+    "key": "script.cloud_c.puff.frames",
+    "part": "cloud_c",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 5,
+    "default": 3,
+    "inst": "0x344",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The smoke cloud",
+      "bytes": {
+       "0x344": "0700"
+      }
+     },
+     {
+      "label": "The glow",
+      "bytes": {
+       "0x344": "0701"
+      }
+     },
+     {
+      "label": "The ember",
+      "bytes": {
+       "0x344": "0703"
+      }
+     },
+     {
+      "label": "The sparkle",
+      "bytes": {
+       "0x344": "0704"
+      }
+     },
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x344": "0705"
+      }
+     },
+     {
+      "label": "The gas puff",
+      "bytes": {
+       "0x344": "0706"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.cloud_c.puff.size",
+    "part": "cloud_c",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x346",
+    "code": "0x4",
+    "at": "0x348",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_c.puff.size_random",
+    "part": "cloud_c",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x34a",
+    "code": "0x5",
+    "at": "0x34c",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_c.puff.spread_x",
+    "part": "cloud_c",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x34e",
+    "code": "0x5",
+    "at": "0x350",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_c.puff.spread_y",
+    "part": "cloud_c",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x34e",
+    "code": "0x5",
+    "at": "0x352",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_c.puff.spread_z",
+    "part": "cloud_c",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x34e",
+    "code": "0x5",
+    "at": "0x354",
+    "form": "s16"
+   },
+   {
+    "key": "script.cloud_c.puff.life",
+    "part": "cloud_c",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 10,
+    "inst": "0x356",
+    "code": "0x1",
+    "at": "0x357",
+    "form": "hi"
+   },
+   {
+    "key": "script.roll.every",
+    "part": "roll",
+    "label": "One every",
+    "doc": "Ticks, until the explosion (1 runs out of bones and crashes)",
+    "type": "int",
+    "min": 2,
+    "max": 127,
+    "default": 8,
+    "inst": "0x35e",
+    "code": "0x9",
+    "at": "0x35e",
+    "form": "op"
+   },
+   {
+    "key": "script.roll.speed_x",
+    "part": "roll",
+    "label": "Speed X, random",
+    "doc": "Per tick, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 4096,
+    "inst": "0x370",
+    "code": "0x13",
+    "at": "0x372",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.speed_y",
+    "part": "roll",
+    "label": "Speed Y, random",
+    "doc": "Per tick, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 2048,
+    "inst": "0x370",
+    "code": "0x13",
+    "at": "0x374",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.speed_z",
+    "part": "roll",
+    "label": "Speed Z, random",
+    "doc": "Per tick, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 3072,
+    "inst": "0x370",
+    "code": "0x13",
+    "at": "0x376",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.drift",
+    "part": "roll",
+    "label": "Drifts for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 32,
+    "inst": "0x378",
+    "code": "0x9",
+    "at": "0x378",
+    "form": "op"
+   },
+   {
+    "key": "script.roll.light.r",
+    "part": "roll",
+    "label": "Red up by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 768,
+    "inst": "0x384",
+    "code": "0xb",
+    "at": "0x386",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.light.g",
+    "part": "roll",
+    "label": "Green up by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 768,
+    "inst": "0x384",
+    "code": "0xb",
+    "at": "0x388",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.light.b",
+    "part": "roll",
+    "label": "Blue up by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 768,
+    "inst": "0x384",
+    "code": "0xb",
+    "at": "0x38a",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.light.for_a",
+    "part": "roll",
+    "label": "Lights up for",
+    "doc": "Ticks (half of them)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x392",
+    "code": "0x9",
+    "at": "0x392",
+    "form": "op"
+   },
+   {
+    "key": "script.roll.light.for_b",
+    "part": "roll",
+    "label": "Others light up for",
+    "doc": "Ticks (the other half)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x3aa",
+    "code": "0x9",
+    "at": "0x3aa",
+    "form": "op"
+   },
+   {
+    "key": "script.roll.texture",
+    "part": "roll",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 7,
+    "default": 1,
+    "inst": "0x3d0",
+    "code": "0x52",
+    "at": "0x3d2",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.blend",
+    "part": "roll",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 2,
+    "inst": "0x3d4",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x3d4": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x3d4": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x3d4": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x3d4": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.roll.size",
+    "part": "roll",
+    "label": "Size",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 80,
+    "inst": "0x3e8",
+    "code": "0xd",
+    "at": "0x3ea",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.spread_x",
+    "part": "roll",
+    "label": "Spread X",
+    "doc": "How far from the targets, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 1280,
+    "inst": "0x3f0",
+    "code": "0x12",
+    "at": "0x3f2",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.spread_y",
+    "part": "roll",
+    "label": "Spread Y",
+    "doc": "How far from the targets, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x3f0",
+    "code": "0x12",
+    "at": "0x3f4",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.spread_z",
+    "part": "roll",
+    "label": "Spread Z",
+    "doc": "How far from the targets, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 1280,
+    "inst": "0x3f0",
+    "code": "0x12",
+    "at": "0x3f6",
+    "form": "s16"
+   },
+   {
+    "key": "script.roll.life",
+    "part": "roll",
+    "label": "Lives for",
+    "doc": "Ticks (or until the explosion)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 32,
+    "inst": "0x3f8",
+    "code": "0x1e",
+    "at": "0x3fa",
+    "form": "s16"
+   },
+   {
+    "key": "script.spark.from",
+    "part": "spark",
+    "label": "Away from the mouth",
+    "doc": "Where it starts, toward the targets",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x41c",
+    "code": "0xa",
+    "at": "0x41e",
+    "form": "s16"
+   },
+   {
+    "key": "script.spark.grow",
+    "part": "spark",
+    "label": "Grows by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x456",
+    "code": "0xe",
+    "at": "0x458",
+    "form": "s16"
+   },
+   {
+    "key": "script.spark.grow_for",
+    "part": "spark",
+    "label": "Grows for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x45a",
+    "code": "0x9",
+    "at": "0x45a",
+    "form": "op"
+   },
+   {
+    "key": "script.spark.size_x",
+    "part": "spark",
+    "label": "Width",
+    "doc": "256 = its own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x492",
+    "code": "0xa",
+    "at": "0x494",
+    "form": "s16"
+   },
+   {
+    "key": "script.spark.blend",
+    "part": "spark",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 2,
+    "inst": "0x482",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x482": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x482": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x482": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x482": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.spark.start",
+    "part": "spark",
+    "label": "Runs from",
+    "doc": "Where along the way it starts once the fire runs",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x4a2",
+    "code": "0xa",
+    "at": "0x4a4",
+    "form": "s16"
+   },
+   {
+    "key": "script.spark.speed",
+    "part": "spark",
+    "label": "Runs by",
+    "doc": "Per tick, along the way",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x4a6",
+    "code": "0x11",
+    "at": "0x4a8",
+    "form": "s16"
+   },
+   {
+    "key": "script.trail.start",
+    "part": "trail",
+    "label": "Starts at",
+    "doc": "Where along the way it starts",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x4d8",
+    "code": "0xa",
+    "at": "0x4da",
+    "form": "s16"
+   },
+   {
+    "key": "script.trail.speed",
+    "part": "trail",
+    "label": "Runs by",
+    "doc": "Per tick, along the way",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x4dc",
+    "code": "0x11",
+    "at": "0x4de",
+    "form": "s16"
+   },
+   {
+    "key": "script.trail.for",
+    "part": "trail",
+    "label": "Runs for",
+    "doc": "Ticks (47 and more crash the game as the effect ends)",
+    "type": "int",
+    "min": 0,
+    "max": 46,
+    "default": 31,
+    "inst": "0x4e0",
+    "code": "0x9",
+    "at": "0x4e0",
+    "form": "op"
+   },
+   {
+    "key": "script.trail.count",
+    "part": "trail",
+    "label": "Flames for",
+    "doc": "Ticks, two flames per tick",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 30,
+    "inst": "0x4ea",
+    "code": "0x1e",
+    "at": "0x4ec",
+    "form": "s16"
+   },
+   {
+    "key": "script.trail.flame.frames",
+    "part": "trail",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 5,
+    "default": 1,
+    "inst": "0x502",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The smoke cloud",
+      "bytes": {
+       "0x502": "0700"
+      }
+     },
+     {
+      "label": "The glow",
+      "bytes": {
+       "0x502": "0701"
+      }
+     },
+     {
+      "label": "The ember",
+      "bytes": {
+       "0x502": "0703"
+      }
+     },
+     {
+      "label": "The sparkle",
+      "bytes": {
+       "0x502": "0704"
+      }
+     },
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x502": "0705"
+      }
+     },
+     {
+      "label": "The gas puff",
+      "bytes": {
+       "0x502": "0706"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.trail.flame.size",
+    "part": "trail",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x504",
+    "code": "0x4",
+    "at": "0x506",
+    "form": "s16"
+   },
+   {
+    "key": "script.trail.flame.size_random",
+    "part": "trail",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 16,
+    "inst": "0x508",
+    "code": "0x5",
+    "at": "0x50a",
+    "form": "s16"
+   },
+   {
+    "key": "script.trail.flame.spread_x",
+    "part": "trail",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 96,
+    "inst": "0x50c",
+    "code": "0x5",
+    "at": "0x50e",
+    "form": "s16"
+   },
+   {
+    "key": "script.trail.flame.spread_y",
+    "part": "trail",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 32,
+    "inst": "0x50c",
+    "code": "0x5",
+    "at": "0x510",
+    "form": "s16"
+   },
+   {
+    "key": "script.trail.flame.spread_z",
+    "part": "trail",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 96,
+    "inst": "0x50c",
+    "code": "0x5",
+    "at": "0x512",
+    "form": "s16"
+   },
+   {
+    "key": "script.trail.flame.speed_s",
+    "part": "trail",
+    "label": "Speed S",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": -128,
+    "inst": "0x516",
+    "code": "0x4",
+    "at": "0x518",
+    "form": "s16"
+   },
+   {
+    "key": "script.trail.flame.life",
+    "part": "trail",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 12,
+    "inst": "0x51a",
+    "code": "0x1",
+    "at": "0x51b",
+    "form": "hi"
+   },
+   {
+    "key": "script.burst.glow.frames",
+    "part": "burst",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 5,
+    "default": 1,
+    "inst": "0x64a",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The smoke cloud",
+      "bytes": {
+       "0x64a": "0700"
+      }
+     },
+     {
+      "label": "The glow",
+      "bytes": {
+       "0x64a": "0701"
+      }
+     },
+     {
+      "label": "The ember",
+      "bytes": {
+       "0x64a": "0703"
+      }
+     },
+     {
+      "label": "The sparkle",
+      "bytes": {
+       "0x64a": "0704"
+      }
+     },
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x64a": "0705"
+      }
+     },
+     {
+      "label": "The gas puff",
+      "bytes": {
+       "0x64a": "0706"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.burst.glow.size",
+    "part": "burst",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x64c",
+    "code": "0x4",
+    "at": "0x64e",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.glow.spread_x",
+    "part": "burst",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 32,
+    "inst": "0x650",
+    "code": "0x5",
+    "at": "0x652",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.glow.spread_y",
+    "part": "burst",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 32,
+    "inst": "0x650",
+    "code": "0x5",
+    "at": "0x654",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.glow.spread_z",
+    "part": "burst",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 32,
+    "inst": "0x650",
+    "code": "0x5",
+    "at": "0x656",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.glow.colour.r",
+    "part": "burst",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x658",
+    "code": "0xb",
+    "at": "0x659",
+    "form": "hi"
+   },
+   {
+    "key": "script.burst.glow.colour.g",
+    "part": "burst",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x658",
+    "code": "0xb",
+    "at": "0x65a",
+    "form": "u8"
+   },
+   {
+    "key": "script.burst.glow.colour.b",
+    "part": "burst",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 192,
+    "inst": "0x658",
+    "code": "0xb",
+    "at": "0x65b",
+    "form": "u8"
+   },
+   {
+    "key": "script.burst.glow.speed_s",
+    "part": "burst",
+    "label": "Speed S",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": -112,
+    "inst": "0x65c",
+    "code": "0x4",
+    "at": "0x65e",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.glow.life",
+    "part": "burst",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x660",
+    "code": "0x1",
+    "at": "0x661",
+    "form": "hi"
+   },
+   {
+    "key": "script.ring.size",
+    "part": "ring",
+    "label": "Size",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 1024,
+    "inst": "0x688",
+    "code": "0xd",
+    "at": "0x68a",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.blend",
+    "part": "ring",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x686",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x686": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x686": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x686": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x686": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.flares.first",
+    "part": "flares",
+    "label": "First flares",
+    "doc": "All at once",
+    "type": "int",
+    "min": 1,
+    "max": 32,
+    "default": 6,
+    "inst": "0x6ba",
+    "code": "0x1e",
+    "at": "0x6bc",
+    "form": "s16"
+   },
+   {
+    "key": "script.flares.then",
+    "part": "flares",
+    "label": "Then",
+    "doc": "One every few ticks",
+    "type": "int",
+    "min": 1,
+    "max": 32,
+    "default": 4,
+    "inst": "0x6c6",
+    "code": "0x1e",
+    "at": "0x6c8",
+    "form": "s16"
+   },
+   {
+    "key": "script.flares.every",
+    "part": "flares",
+    "label": "Every",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 2,
+    "inst": "0x6ce",
+    "code": "0x9",
+    "at": "0x6ce",
+    "form": "op"
+   },
+   {
+    "key": "script.flares.second",
+    "part": "flares",
+    "label": "Second burst after",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x6ae",
+    "code": "0x9",
+    "at": "0x6ae",
+    "form": "op"
+   },
+   {
+    "key": "script.flares.size",
+    "part": "flares",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x702",
+    "code": "0xd",
+    "at": "0x704",
+    "form": "s16"
+   },
+   {
+    "key": "script.flares.size_random",
+    "part": "flares",
+    "label": "Size, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x706",
+    "code": "0x16",
+    "at": "0x708",
+    "form": "s16"
+   },
+   {
+    "key": "script.flares.life",
+    "part": "flares",
+    "label": "Lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x70e",
+    "code": "0x9",
+    "at": "0x70e",
+    "form": "op"
+   },
+   {
+    "key": "script.smoke.first",
+    "part": "smoke",
+    "label": "First puffs",
+    "doc": "All at once, a cloud and a glow each",
+    "type": "int",
+    "min": 1,
+    "max": 32,
+    "default": 8,
+    "inst": "0x53e",
+    "code": "0x1e",
+    "at": "0x540",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.then",
+    "part": "smoke",
+    "label": "Then for",
+    "doc": "Ticks, three puffs per two ticks",
+    "type": "int",
+    "min": 1,
+    "max": 64,
+    "default": 8,
+    "inst": "0x54e",
+    "code": "0x1e",
+    "at": "0x550",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.cloud.frames",
+    "part": "smoke",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 5,
+    "default": 0,
+    "inst": "0x568",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The smoke cloud",
+      "bytes": {
+       "0x568": "0700"
+      }
+     },
+     {
+      "label": "The glow",
+      "bytes": {
+       "0x568": "0701"
+      }
+     },
+     {
+      "label": "The ember",
+      "bytes": {
+       "0x568": "0703"
+      }
+     },
+     {
+      "label": "The sparkle",
+      "bytes": {
+       "0x568": "0704"
+      }
+     },
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x568": "0705"
+      }
+     },
+     {
+      "label": "The gas puff",
+      "bytes": {
+       "0x568": "0706"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.smoke.cloud.size",
+    "part": "smoke",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 320,
+    "inst": "0x56a",
+    "code": "0x4",
+    "at": "0x56c",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.cloud.size_random",
+    "part": "smoke",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x56e",
+    "code": "0x5",
+    "at": "0x570",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.cloud.spread_x",
+    "part": "smoke",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 2048,
+    "inst": "0x572",
+    "code": "0x5",
+    "at": "0x574",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.cloud.spread_y",
+    "part": "smoke",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 1024,
+    "inst": "0x572",
+    "code": "0x5",
+    "at": "0x576",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.cloud.spread_z",
+    "part": "smoke",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 2048,
+    "inst": "0x572",
+    "code": "0x5",
+    "at": "0x578",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.cloud.life",
+    "part": "smoke",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 19,
+    "inst": "0x57e",
+    "code": "0x1",
+    "at": "0x57f",
+    "form": "hi"
+   },
+   {
+    "key": "script.smoke.glow.frames",
+    "part": "smoke",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 5,
+    "default": 1,
+    "inst": "0x582",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The smoke cloud",
+      "bytes": {
+       "0x582": "0700"
+      }
+     },
+     {
+      "label": "The glow",
+      "bytes": {
+       "0x582": "0701"
+      }
+     },
+     {
+      "label": "The ember",
+      "bytes": {
+       "0x582": "0703"
+      }
+     },
+     {
+      "label": "The sparkle",
+      "bytes": {
+       "0x582": "0704"
+      }
+     },
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x582": "0705"
+      }
+     },
+     {
+      "label": "The gas puff",
+      "bytes": {
+       "0x582": "0706"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.smoke.glow.size",
+    "part": "smoke",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 256,
+    "inst": "0x584",
+    "code": "0x4",
+    "at": "0x586",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.glow.size_random",
+    "part": "smoke",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x588",
+    "code": "0x5",
+    "at": "0x58a",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.glow.spread_x",
+    "part": "smoke",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 2048,
+    "inst": "0x58c",
+    "code": "0x5",
+    "at": "0x58e",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.glow.spread_y",
+    "part": "smoke",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 1024,
+    "inst": "0x58c",
+    "code": "0x5",
+    "at": "0x590",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.glow.spread_z",
+    "part": "smoke",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 2048,
+    "inst": "0x58c",
+    "code": "0x5",
+    "at": "0x592",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.glow.colour.r",
+    "part": "smoke",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 160,
+    "inst": "0x594",
+    "code": "0xb",
+    "at": "0x595",
+    "form": "hi"
+   },
+   {
+    "key": "script.smoke.glow.colour.g",
+    "part": "smoke",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 160,
+    "inst": "0x594",
+    "code": "0xb",
+    "at": "0x596",
+    "form": "u8"
+   },
+   {
+    "key": "script.smoke.glow.colour.b",
+    "part": "smoke",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 160,
+    "inst": "0x594",
+    "code": "0xb",
+    "at": "0x597",
+    "form": "u8"
+   },
+   {
+    "key": "script.smoke.glow.life",
+    "part": "smoke",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x598",
+    "code": "0x1",
+    "at": "0x599",
+    "form": "hi"
+   },
+   {
+    "key": "script.fire.first",
+    "part": "fire",
+    "label": "First puffs",
+    "doc": "All at once",
+    "type": "int",
+    "min": 1,
+    "max": 32,
+    "default": 16,
+    "inst": "0x5bc",
+    "code": "0x1e",
+    "at": "0x5be",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.then",
+    "part": "fire",
+    "label": "Then for",
+    "doc": "Ticks, two puffs per tick",
+    "type": "int",
+    "min": 1,
+    "max": 64,
+    "default": 20,
+    "inst": "0x5c8",
+    "code": "0x1e",
+    "at": "0x5ca",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.frames",
+    "part": "fire",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 5,
+    "default": 2,
+    "inst": "0x5de",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The smoke cloud",
+      "bytes": {
+       "0x5de": "0700"
+      }
+     },
+     {
+      "label": "The glow",
+      "bytes": {
+       "0x5de": "0701"
+      }
+     },
+     {
+      "label": "The ember",
+      "bytes": {
+       "0x5de": "0703"
+      }
+     },
+     {
+      "label": "The sparkle",
+      "bytes": {
+       "0x5de": "0704"
+      }
+     },
+     {
+      "label": "The ring",
+      "bytes": {
+       "0x5de": "0705"
+      }
+     },
+     {
+      "label": "The gas puff",
+      "bytes": {
+       "0x5de": "0706"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.fire.puff.size",
+    "part": "fire",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 384,
+    "inst": "0x5e0",
+    "code": "0x4",
+    "at": "0x5e2",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.size_random",
+    "part": "fire",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x5e4",
+    "code": "0x5",
+    "at": "0x5e6",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.radius",
+    "part": "fire",
+    "label": "Away from the middle",
+    "doc": "Its distance from the middle",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1536,
+    "inst": "0x5ec",
+    "code": "0x4",
+    "at": "0x5ee",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.height",
+    "part": "fire",
+    "label": "Height",
+    "doc": "Positive: down",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x5ec",
+    "code": "0x4",
+    "at": "0x5f0",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.around",
+    "part": "fire",
+    "label": "Around",
+    "doc": "Its angle around the middle",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x5ec",
+    "code": "0x4",
+    "at": "0x5f2",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.radius_random",
+    "part": "fire",
+    "label": "Away from the middle, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 768,
+    "inst": "0x5f4",
+    "code": "0x5",
+    "at": "0x5f6",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.height_random",
+    "part": "fire",
+    "label": "Height, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 768,
+    "inst": "0x5f4",
+    "code": "0x5",
+    "at": "0x5f8",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.around_random",
+    "part": "fire",
+    "label": "Around, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x5f4",
+    "code": "0x5",
+    "at": "0x5fa",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.out",
+    "part": "fire",
+    "label": "Outward speed",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1024,
+    "inst": "0x5fc",
+    "code": "0x4",
+    "at": "0x5fe",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.up",
+    "part": "fire",
+    "label": "Speed up/down",
+    "doc": "Per tick (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1024,
+    "inst": "0x5fc",
+    "code": "0x4",
+    "at": "0x600",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.turn",
+    "part": "fire",
+    "label": "Turning",
+    "doc": "Around the middle, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x5fc",
+    "code": "0x4",
+    "at": "0x602",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.out_random",
+    "part": "fire",
+    "label": "Outward speed, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x604",
+    "code": "0x5",
+    "at": "0x606",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.up_random",
+    "part": "fire",
+    "label": "Speed up/down, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 768,
+    "inst": "0x604",
+    "code": "0x5",
+    "at": "0x608",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.turn_random",
+    "part": "fire",
+    "label": "Turning, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x604",
+    "code": "0x5",
+    "at": "0x60a",
+    "form": "s16"
+   },
+   {
+    "key": "script.fire.puff.life",
+    "part": "fire",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 10,
+    "inst": "0x60e",
+    "code": "0x1",
+    "at": "0x60f",
+    "form": "hi"
+   },
+   {
+    "key": "script.flash.red.r",
+    "part": "flash",
+    "label": "Red",
+    "doc": "Brightness (more than 255 holds)",
+    "type": "int",
+    "min": 0,
+    "max": 1023,
+    "default": 288,
+    "inst": "0x614",
+    "code": "0xa",
+    "at": "0x616",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.red.g",
+    "part": "flash",
+    "label": "Green",
+    "doc": "Brightness (more than 255 holds)",
+    "type": "int",
+    "min": 0,
+    "max": 1023,
+    "default": 144,
+    "inst": "0x614",
+    "code": "0xa",
+    "at": "0x618",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.red.b",
+    "part": "flash",
+    "label": "Blue",
+    "doc": "Brightness (more than 255 holds)",
+    "type": "int",
+    "min": 0,
+    "max": 1023,
+    "default": 144,
+    "inst": "0x614",
+    "code": "0xa",
+    "at": "0x61a",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.red.r_fade",
+    "part": "flash",
+    "label": "Red fades by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -8192,
+    "inst": "0x61c",
+    "code": "0xb",
+    "at": "0x61e",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.red.g_fade",
+    "part": "flash",
+    "label": "Green fades by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x61c",
+    "code": "0xb",
+    "at": "0x620",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.red.b_fade",
+    "part": "flash",
+    "label": "Blue fades by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x61c",
+    "code": "0xb",
+    "at": "0x622",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.red.for",
+    "part": "flash",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 9,
+    "inst": "0x624",
+    "code": "0x9",
+    "at": "0x624",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.white.white",
+    "part": "flash",
+    "label": "White",
+    "doc": "Brightness (more than 255 holds white)",
+    "type": "int",
+    "min": 0,
+    "max": 1023,
+    "default": 256,
+    "inst": "0x714",
+    "code": "0xd",
+    "at": "0x716",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.white.fade",
+    "part": "flash",
+    "label": "Fades by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -8192,
+    "inst": "0x718",
+    "code": "0xe",
+    "at": "0x71a",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.white.for",
+    "part": "flash",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x71c",
+    "code": "0x9",
+    "at": "0x71c",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.white.gap",
+    "part": "flash",
+    "label": "Second after",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 5,
+    "inst": "0x720",
+    "code": "0x9",
+    "at": "0x720",
+    "form": "op"
+   },
+   {
+    "key": "script.flash.white.white2",
+    "part": "flash",
+    "label": "Second: white",
+    "doc": "Brightness (more than 255 holds white)",
+    "type": "int",
+    "min": 0,
+    "max": 1023,
+    "default": 256,
+    "inst": "0x722",
+    "code": "0xd",
+    "at": "0x724",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.white.fade2",
+    "part": "flash",
+    "label": "Second: fades by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -8192,
+    "inst": "0x726",
+    "code": "0xe",
+    "at": "0x728",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.white.for2",
+    "part": "flash",
+    "label": "Second: for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x72a",
+    "code": "0x9",
+    "at": "0x72a",
+    "form": "op"
+   }
+  ]
+ }
 }

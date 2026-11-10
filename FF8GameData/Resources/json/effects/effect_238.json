@@ -162,5 +162,1812 @@
    "address": "0x1865630",
    "size": 1312
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag237_b.00",
+  "param": "files.file00",
+  "size": 23564,
+  "camera": {
+   "at": "0xbd4",
+   "size": "0x144"
+  },
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When things happen, and the camera. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 0,
+    "key": "dark",
+    "title": "Battle colour",
+    "paths": [],
+    "doc": "The battle darkens while it breathes (the stage's own tint: a preview without the stage shows no change)"
+   },
+   {
+    "id": 0,
+    "key": "sweep",
+    "title": "Aim",
+    "paths": [],
+    "doc": "Where the breath aims: it sweeps across the party, and each target burns once it is reached"
+   },
+   {
+    "id": 574,
+    "key": "ball",
+    "title": "Fireball",
+    "paths": [],
+    "doc": "The fireball swelling in the dragon's mouth"
+   },
+   {
+    "id": 742,
+    "key": "rings",
+    "title": "Light spikes",
+    "paths": [],
+    "doc": "Spikes of light shooting out of the fireball before the breath"
+   },
+   {
+    "id": 846,
+    "key": "swirl",
+    "title": "Mouth glow",
+    "paths": [],
+    "doc": "The big yellow glow spreading from the mouth"
+   },
+   {
+    "id": 914,
+    "key": "breath",
+    "title": "Breath",
+    "paths": [
+     66450
+    ],
+    "doc": "The stream of fire flying from the mouth to the aim"
+   },
+   {
+    "id": 970,
+    "key": "flames",
+    "title": "Breath trail",
+    "paths": [],
+    "doc": "The flickering flame trail under the breath"
+   },
+   {
+    "id": 1284,
+    "key": "bursts",
+    "title": "Fire rings",
+    "paths": [],
+    "doc": "Rings of fire rippling out of the mouth while it breathes"
+   },
+   {
+    "id": 1016,
+    "key": "burn",
+    "title": "Fire on targets",
+    "doc": "Fire puffs rising on each target the breath reaches. Their blend is in their sprite"
+   },
+   {
+    "id": 1094,
+    "key": "smoke",
+    "title": "Smoke on targets",
+    "doc": "Smoke rising on each target"
+   },
+   {
+    "id": 432,
+    "key": "flash",
+    "title": "Screen flash",
+    "paths": [],
+    "doc": "The white flash as the breath starts"
+   }
+  ],
+  "groups": [
+   {
+    "key": "script.dark.end",
+    "label": "Darkens to",
+    "doc": "The battle's colour while it breathes"
+   },
+   {
+    "key": "script.ball.light",
+    "label": "Brightness",
+    "doc": "It lights up (128 = its texture as it is)"
+   },
+   {
+    "key": "script.rings.light",
+    "label": "Brightness",
+    "doc": "Each lights up, then fades (128 = its texture as it is)"
+   },
+   {
+    "key": "script.swirl.light",
+    "label": "Brightness",
+    "doc": "It lights up (128 = the model's colours as they are)"
+   },
+   {
+    "key": "script.bursts.light",
+    "label": "Brightness",
+    "doc": "Each lights up, then fades (128 = its texture as it is)"
+   },
+   {
+    "key": "script.burn.puff",
+    "label": "Each puff",
+    "doc": ""
+   },
+   {
+    "key": "script.smoke.puff",
+    "label": "Each puff",
+    "doc": ""
+   }
+  ],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x6c",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x6c": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x6c": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.glow",
+    "part": "timing",
+    "label": "Mouth glow after",
+    "doc": "Ticks after the fireball shows: the glow at the mouth",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0xa4",
+    "code": "0x9",
+    "at": "0xa4",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.fire",
+    "part": "timing",
+    "label": "Fireball stops after",
+    "doc": "Ticks after the mouth glow: it stops growing",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0xaa",
+    "code": "0x9",
+    "at": "0xaa",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.breath",
+    "part": "timing",
+    "label": "Breath after",
+    "doc": "Ticks after the fireball: the breath, the flash, the sweep",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0xb0",
+    "code": "0x9",
+    "at": "0xb0",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.fade",
+    "part": "timing",
+    "label": "Battle comes back after",
+    "doc": "Ticks after the breath starts (16 + 16 more first)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 20,
+    "inst": "0xbe",
+    "code": "0x9",
+    "at": "0xbe",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end",
+    "part": "timing",
+    "label": "Ends after",
+    "doc": "Ticks after the battle's colour comes back",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0xc4",
+    "code": "0x9",
+    "at": "0xc4",
+    "form": "op"
+   },
+   {
+    "key": "script.dark.end.r",
+    "part": "dark",
+    "label": "Red",
+    "doc": "128 = as it is",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x132",
+    "code": "0xa",
+    "at": "0x136",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.end.g",
+    "part": "dark",
+    "label": "Green",
+    "doc": "128 = as it is",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 48,
+    "inst": "0x132",
+    "code": "0xa",
+    "at": "0x138",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.end.b",
+    "part": "dark",
+    "label": "Blue",
+    "doc": "128 = as it is",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 48,
+    "inst": "0x132",
+    "code": "0xa",
+    "at": "0x13a",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.speed",
+    "part": "dark",
+    "label": "Darkens by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x13c",
+    "code": "0xb",
+    "at": "0x13e",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.for",
+    "part": "dark",
+    "label": "Over",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x140",
+    "code": "0x9",
+    "at": "0x140",
+    "form": "op"
+   },
+   {
+    "key": "script.dark.lift",
+    "part": "dark",
+    "label": "Comes back by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x14a",
+    "code": "0xb",
+    "at": "0x14c",
+    "form": "s16"
+   },
+   {
+    "key": "script.dark.lift_for",
+    "part": "dark",
+    "label": "Over",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x14e",
+    "code": "0x9",
+    "at": "0x14e",
+    "form": "op"
+   },
+   {
+    "key": "script.sweep.ahead",
+    "part": "sweep",
+    "label": "Ahead",
+    "doc": "Its aim from the party's middle, along Z",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1024,
+    "inst": "0x15e",
+    "code": "0x10",
+    "at": "0x160",
+    "form": "s16"
+   },
+   {
+    "key": "script.sweep.side",
+    "part": "sweep",
+    "label": "To the side at first",
+    "doc": "Its aim from the party's middle, along X",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -2048,
+    "inst": "0x162",
+    "code": "0x10",
+    "at": "0x164",
+    "form": "s16"
+   },
+   {
+    "key": "script.sweep.speed",
+    "part": "sweep",
+    "label": "Sweeps by",
+    "doc": "Per tick, along X (1/16)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x16a",
+    "code": "0x11",
+    "at": "0x16c",
+    "form": "s16"
+   },
+   {
+    "key": "script.sweep.for",
+    "part": "sweep",
+    "label": "Sweeps for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x16e",
+    "code": "0x9",
+    "at": "0x16e",
+    "form": "op"
+   },
+   {
+    "key": "script.sweep.reach",
+    "part": "sweep",
+    "label": "Reaches a target within",
+    "doc": "Distance from the aim (XZ) that sets a target on fire",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x180",
+    "code": "0x94",
+    "at": "0x184",
+    "form": "s16"
+   },
+   {
+    "key": "script.sweep.wait",
+    "part": "sweep",
+    "label": "Waits at most",
+    "doc": "Ticks a target waits for the aim, then burns anyway",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 16,
+    "inst": "0x17c",
+    "code": "0x1e",
+    "at": "0x17e",
+    "form": "s16"
+   },
+   {
+    "key": "script.sweep.burn",
+    "part": "sweep",
+    "label": "Burns after",
+    "doc": "Ticks after it is reached: its fire and smoke (with Hit after, keep under about 60: later the damage misses the effect's end)",
+    "type": "int",
+    "min": 0,
+    "max": 48,
+    "default": 12,
+    "inst": "0x190",
+    "code": "0x9",
+    "at": "0x190",
+    "form": "op"
+   },
+   {
+    "key": "script.sweep.hit",
+    "part": "sweep",
+    "label": "Hit after",
+    "doc": "Ticks after it burns: its damage (see Burns after)",
+    "type": "int",
+    "min": 0,
+    "max": 40,
+    "default": 8,
+    "inst": "0x1a8",
+    "code": "0x9",
+    "at": "0x1a8",
+    "form": "op"
+   },
+   {
+    "key": "script.ball.back",
+    "part": "ball",
+    "label": "Pulls back by",
+    "doc": "Per tick, along Z until it fires (Timing)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x208",
+    "code": "0xb",
+    "at": "0x20a",
+    "form": "s16"
+   },
+   {
+    "key": "script.ball.texture",
+    "part": "ball",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 7,
+    "default": 0,
+    "inst": "0x246",
+    "code": "0x52",
+    "at": "0x248",
+    "form": "s16"
+   },
+   {
+    "key": "script.ball.blend",
+    "part": "ball",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x264",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x264": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x264": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x264": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x264": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.ball.size",
+    "part": "ball",
+    "label": "Size at first",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x258",
+    "code": "0xd",
+    "at": "0x25a",
+    "form": "s16"
+   },
+   {
+    "key": "script.ball.grow",
+    "part": "ball",
+    "label": "Grows by",
+    "doc": "Per tick, until it fires (Timing)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x25c",
+    "code": "0xe",
+    "at": "0x25e",
+    "form": "s16"
+   },
+   {
+    "key": "script.ball.light.up",
+    "part": "ball",
+    "label": "Brightens by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x232",
+    "code": "0xe",
+    "at": "0x234",
+    "form": "s16"
+   },
+   {
+    "key": "script.ball.light.for",
+    "part": "ball",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x236",
+    "code": "0x9",
+    "at": "0x236",
+    "form": "op"
+   },
+   {
+    "key": "script.ball.scroll",
+    "part": "ball",
+    "label": "Texture scroll",
+    "doc": "How fast its texture runs, per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x280",
+    "code": "0xb",
+    "at": "0x282",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.every",
+    "part": "rings",
+    "label": "One every",
+    "doc": "Ticks, until the breath",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 4,
+    "inst": "0x1f4",
+    "code": "0x9",
+    "at": "0x1f4",
+    "form": "op"
+   },
+   {
+    "key": "script.rings.ahead",
+    "part": "rings",
+    "label": "Ahead",
+    "doc": "Out of the mouth, along Z",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1792,
+    "inst": "0x292",
+    "code": "0xa",
+    "at": "0x298",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.tilt",
+    "part": "rings",
+    "label": "Tilt",
+    "doc": "4096 = a whole turn",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x29a",
+    "code": "0xa",
+    "at": "0x29c",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.tilt_random",
+    "part": "rings",
+    "label": "Tilt, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x2a2",
+    "code": "0x12",
+    "at": "0x2a4",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.spin_random",
+    "part": "rings",
+    "label": "Spin, random",
+    "doc": "Per tick, at random",
+    "type": "int",
+    "min": 0,
+    "max": 32767,
+    "default": 16384,
+    "inst": "0x2aa",
+    "code": "0x13",
+    "at": "0x2ac",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.life",
+    "part": "rings",
+    "label": "Lives for",
+    "doc": "Ticks (or until the breath)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 16,
+    "inst": "0x2b4",
+    "code": "0x1e",
+    "at": "0x2b6",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.light.up",
+    "part": "rings",
+    "label": "Brightens by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x2d8",
+    "code": "0xe",
+    "at": "0x2da",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.light.up_for",
+    "part": "rings",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x2dc",
+    "code": "0x9",
+    "at": "0x2dc",
+    "form": "op"
+   },
+   {
+    "key": "script.rings.light.down",
+    "part": "rings",
+    "label": "Then fades by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x2de",
+    "code": "0xe",
+    "at": "0x2e0",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.blend",
+    "part": "rings",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x2f8",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x2f8": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x2f8": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x2f8": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x2f8": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.rings.height",
+    "part": "rings",
+    "label": "Height",
+    "doc": "From the mouth (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1024,
+    "inst": "0x2fc",
+    "code": "0xa",
+    "at": "0x2fe",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.size",
+    "part": "rings",
+    "label": "Size at first",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 512,
+    "inst": "0x300",
+    "code": "0xd",
+    "at": "0x302",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.size_random",
+    "part": "rings",
+    "label": "Size, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x304",
+    "code": "0x16",
+    "at": "0x306",
+    "form": "s16"
+   },
+   {
+    "key": "script.rings.grow",
+    "part": "rings",
+    "label": "Grows by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x308",
+    "code": "0xe",
+    "at": "0x30a",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl.light.up",
+    "part": "swirl",
+    "label": "Brightens by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x342",
+    "code": "0xe",
+    "at": "0x344",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl.light.for",
+    "part": "swirl",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x346",
+    "code": "0x9",
+    "at": "0x346",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl.size",
+    "part": "swirl",
+    "label": "Size",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 1024,
+    "inst": "0x368",
+    "code": "0xd",
+    "at": "0x36a",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl.blend",
+    "part": "swirl",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x36c",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x36c": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x36c": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x36c": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x36c": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.swirl.spin",
+    "part": "swirl",
+    "label": "Spin",
+    "doc": "Per tick (4096 = a whole turn)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -15360,
+    "inst": "0x36e",
+    "code": "0xe",
+    "at": "0x370",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl.spin_for",
+    "part": "swirl",
+    "label": "Spins for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x372",
+    "code": "0x9",
+    "at": "0x372",
+    "form": "op"
+   },
+   {
+    "key": "script.swirl.grow",
+    "part": "swirl",
+    "label": "Then grows by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x374",
+    "code": "0x11",
+    "at": "0x376",
+    "form": "s16"
+   },
+   {
+    "key": "script.swirl.life",
+    "part": "swirl",
+    "label": "Then lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x37c",
+    "code": "0x9",
+    "at": "0x37c",
+    "form": "op"
+   },
+   {
+    "key": "script.breath.count",
+    "part": "breath",
+    "label": "Puffs",
+    "doc": "How many, one per few ticks",
+    "type": "int",
+    "min": 1,
+    "max": 64,
+    "default": 16,
+    "inst": "0x382",
+    "code": "0x1e",
+    "at": "0x384",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.every",
+    "part": "breath",
+    "label": "One every",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 1,
+    "inst": "0x38a",
+    "code": "0x9",
+    "at": "0x38a",
+    "form": "op"
+   },
+   {
+    "key": "script.breath.speed",
+    "part": "breath",
+    "label": "Speed",
+    "doc": "Toward the aim, per tick (0 crashes)",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x3a2",
+    "code": "0x82",
+    "at": "0x3a6",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.size",
+    "part": "breath",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 128,
+    "inst": "0x3b2",
+    "code": "0xd",
+    "at": "0x3b4",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.size_random",
+    "part": "breath",
+    "label": "Size, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x3b6",
+    "code": "0x16",
+    "at": "0x3b8",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.grow",
+    "part": "breath",
+    "label": "Grows by",
+    "doc": "Per tick (1/16)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 8192,
+    "inst": "0x3be",
+    "code": "0xb",
+    "at": "0x3c0",
+    "form": "s16"
+   },
+   {
+    "key": "script.breath.life",
+    "part": "breath",
+    "label": "Lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x3c6",
+    "code": "0x9",
+    "at": "0x3c6",
+    "form": "op"
+   },
+   {
+    "key": "script.flames.life",
+    "part": "flames",
+    "label": "Lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 11,
+    "inst": "0x3de",
+    "code": "0x9",
+    "at": "0x3de",
+    "form": "op"
+   },
+   {
+    "key": "script.bursts.for",
+    "part": "bursts",
+    "label": "For",
+    "doc": "Ticks, one burst every few ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x4b2",
+    "code": "0x9",
+    "at": "0x4b2",
+    "form": "op"
+   },
+   {
+    "key": "script.bursts.every",
+    "part": "bursts",
+    "label": "One every",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 3,
+    "inst": "0x4cc",
+    "code": "0x9",
+    "at": "0x4cc",
+    "form": "op"
+   },
+   {
+    "key": "script.bursts.light.up",
+    "part": "bursts",
+    "label": "Brightens by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 8192,
+    "inst": "0x4f6",
+    "code": "0xe",
+    "at": "0x4f8",
+    "form": "s16"
+   },
+   {
+    "key": "script.bursts.light.up_for",
+    "part": "bursts",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x4fa",
+    "code": "0x9",
+    "at": "0x4fa",
+    "form": "op"
+   },
+   {
+    "key": "script.bursts.light.down",
+    "part": "bursts",
+    "label": "Then fades by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x4fc",
+    "code": "0xe",
+    "at": "0x4fe",
+    "form": "s16"
+   },
+   {
+    "key": "script.bursts.light.down_for",
+    "part": "bursts",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x500",
+    "code": "0x9",
+    "at": "0x500",
+    "form": "op"
+   },
+   {
+    "key": "script.bursts.texture",
+    "part": "bursts",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab)",
+    "type": "int",
+    "min": 0,
+    "max": 7,
+    "default": 6,
+    "inst": "0x508",
+    "code": "0x52",
+    "at": "0x50a",
+    "form": "s16"
+   },
+   {
+    "key": "script.bursts.blend",
+    "part": "bursts",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x51a",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x51a": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x51a": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x51a": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x51a": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.bursts.spread_x",
+    "part": "bursts",
+    "label": "Spread X",
+    "doc": "At random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x51e",
+    "code": "0x12",
+    "at": "0x520",
+    "form": "s16"
+   },
+   {
+    "key": "script.bursts.spread_z",
+    "part": "bursts",
+    "label": "Spread Z",
+    "doc": "At random",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x51e",
+    "code": "0x12",
+    "at": "0x524",
+    "form": "s16"
+   },
+   {
+    "key": "script.bursts.size",
+    "part": "bursts",
+    "label": "Size at first",
+    "doc": "256 = the model's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 96,
+    "inst": "0x526",
+    "code": "0xd",
+    "at": "0x528",
+    "form": "s16"
+   },
+   {
+    "key": "script.bursts.grow_x",
+    "part": "bursts",
+    "label": "Grows X by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 112,
+    "inst": "0x52a",
+    "code": "0x11",
+    "at": "0x52c",
+    "form": "s16"
+   },
+   {
+    "key": "script.bursts.grow_y",
+    "part": "bursts",
+    "label": "Grows Y by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 112,
+    "inst": "0x52a",
+    "code": "0x11",
+    "at": "0x52e",
+    "form": "s16"
+   },
+   {
+    "key": "script.bursts.grow_z",
+    "part": "bursts",
+    "label": "Grows Z by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 160,
+    "inst": "0x52a",
+    "code": "0x11",
+    "at": "0x530",
+    "form": "s16"
+   },
+   {
+    "key": "script.bursts.life",
+    "part": "bursts",
+    "label": "Lives for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0x532",
+    "code": "0x9",
+    "at": "0x532",
+    "form": "op"
+   },
+   {
+    "key": "script.burn.height",
+    "part": "burn",
+    "label": "Height",
+    "doc": "From the target's feet (negative: up)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": -512,
+    "inst": "0x3fc",
+    "code": "0x5f",
+    "at": "0x400",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.count",
+    "part": "burn",
+    "label": "Puffs",
+    "doc": "One per tick",
+    "type": "int",
+    "min": 1,
+    "max": 64,
+    "default": 16,
+    "inst": "0x40e",
+    "code": "0x1e",
+    "at": "0x410",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.frames",
+    "part": "burn",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x420",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The fire puff",
+      "bytes": {
+       "0x420": "0702"
+      }
+     },
+     {
+      "label": "The smoke puff",
+      "bytes": {
+       "0x420": "0703"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.burn.puff.size",
+    "part": "burn",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x422",
+    "code": "0x4",
+    "at": "0x424",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.size_random",
+    "part": "burn",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 96,
+    "inst": "0x426",
+    "code": "0x5",
+    "at": "0x428",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.spread_x",
+    "part": "burn",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x42a",
+    "code": "0x5",
+    "at": "0x42c",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.spread_y",
+    "part": "burn",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x42a",
+    "code": "0x5",
+    "at": "0x42e",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.spread_z",
+    "part": "burn",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x42a",
+    "code": "0x5",
+    "at": "0x430",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.speed_x",
+    "part": "burn",
+    "label": "Speed X",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x432",
+    "code": "0x4",
+    "at": "0x434",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.speed_y",
+    "part": "burn",
+    "label": "Speed Y",
+    "doc": "Height units / 16 per tick (negative: up)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": -256,
+    "inst": "0x432",
+    "code": "0x4",
+    "at": "0x436",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.speed_z",
+    "part": "burn",
+    "label": "Speed Z",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x432",
+    "code": "0x4",
+    "at": "0x438",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.speed_x_random",
+    "part": "burn",
+    "label": "Speed X, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x43a",
+    "code": "0x5",
+    "at": "0x43c",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.speed_y_random",
+    "part": "burn",
+    "label": "Speed Y, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x43a",
+    "code": "0x5",
+    "at": "0x43e",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.speed_z_random",
+    "part": "burn",
+    "label": "Speed Z, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x43a",
+    "code": "0x5",
+    "at": "0x440",
+    "form": "s16"
+   },
+   {
+    "key": "script.burn.puff.life",
+    "part": "burn",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x442",
+    "code": "0x1",
+    "at": "0x443",
+    "form": "hi"
+   },
+   {
+    "key": "script.smoke.height",
+    "part": "smoke",
+    "label": "Height",
+    "doc": "From the target's feet (negative: up)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": -512,
+    "inst": "0x44a",
+    "code": "0x5f",
+    "at": "0x44e",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.count",
+    "part": "smoke",
+    "label": "Puffs",
+    "doc": "One per tick",
+    "type": "int",
+    "min": 1,
+    "max": 64,
+    "default": 20,
+    "inst": "0x45c",
+    "code": "0x1e",
+    "at": "0x45e",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.frames",
+    "part": "smoke",
+    "label": "Picture",
+    "doc": "Which of the file's sprites it shows (Textures tab, Sections)",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 1,
+    "inst": "0x46e",
+    "code": "0x7",
+    "options": [
+     {
+      "label": "The fire puff",
+      "bytes": {
+       "0x46e": "0702"
+      }
+     },
+     {
+      "label": "The smoke puff",
+      "bytes": {
+       "0x46e": "0703"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.smoke.puff.size",
+    "part": "smoke",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x470",
+    "code": "0x4",
+    "at": "0x472",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.size_random",
+    "part": "smoke",
+    "label": "Size, random",
+    "doc": "Added at random to each one",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x474",
+    "code": "0x5",
+    "at": "0x476",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.spread_x",
+    "part": "smoke",
+    "label": "Spread X",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x478",
+    "code": "0x5",
+    "at": "0x47a",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.spread_y",
+    "part": "smoke",
+    "label": "Spread Y",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x478",
+    "code": "0x5",
+    "at": "0x47c",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.spread_z",
+    "part": "smoke",
+    "label": "Spread Z",
+    "doc": "How far from where it is released, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x478",
+    "code": "0x5",
+    "at": "0x47e",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.speed_x",
+    "part": "smoke",
+    "label": "Speed X",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x480",
+    "code": "0x4",
+    "at": "0x482",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.speed_y",
+    "part": "smoke",
+    "label": "Speed Y",
+    "doc": "Height units / 16 per tick (negative: up)",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": -768,
+    "inst": "0x480",
+    "code": "0x4",
+    "at": "0x484",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.speed_z",
+    "part": "smoke",
+    "label": "Speed Z",
+    "doc": "Units / 16 per tick",
+    "type": "int",
+    "min": -8192,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x480",
+    "code": "0x4",
+    "at": "0x486",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.speed_x_random",
+    "part": "smoke",
+    "label": "Speed X, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x488",
+    "code": "0x5",
+    "at": "0x48a",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.speed_y_random",
+    "part": "smoke",
+    "label": "Speed Y, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x488",
+    "code": "0x5",
+    "at": "0x48c",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.speed_z_random",
+    "part": "smoke",
+    "label": "Speed Z, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 0,
+    "inst": "0x488",
+    "code": "0x5",
+    "at": "0x48e",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.accel_x",
+    "part": "smoke",
+    "label": "Speeds up X",
+    "doc": "Added to its speed each tick",
+    "type": "int",
+    "min": -4096,
+    "max": 4095,
+    "default": 0,
+    "inst": "0x490",
+    "code": "0x4",
+    "at": "0x492",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.accel_y",
+    "part": "smoke",
+    "label": "Speeds up Y",
+    "doc": "Added to its speed each tick",
+    "type": "int",
+    "min": -4096,
+    "max": 4095,
+    "default": -32,
+    "inst": "0x490",
+    "code": "0x4",
+    "at": "0x494",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.accel_z",
+    "part": "smoke",
+    "label": "Speeds up Z",
+    "doc": "Added to its speed each tick",
+    "type": "int",
+    "min": -4096,
+    "max": 4095,
+    "default": 0,
+    "inst": "0x490",
+    "code": "0x4",
+    "at": "0x496",
+    "form": "s16"
+   },
+   {
+    "key": "script.smoke.puff.life",
+    "part": "smoke",
+    "label": "Lives for",
+    "doc": "Ticks before it disappears: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 16,
+    "inst": "0x498",
+    "code": "0x1",
+    "at": "0x499",
+    "form": "hi"
+   },
+   {
+    "key": "script.flash.white",
+    "part": "flash",
+    "label": "White",
+    "doc": "Brightness (more than 255 holds white)",
+    "type": "int",
+    "min": 0,
+    "max": 1023,
+    "default": 272,
+    "inst": "0x1b2",
+    "code": "0xd",
+    "at": "0x1b4",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.fade",
+    "part": "flash",
+    "label": "Fades by",
+    "doc": "Per tick (negative)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x1b6",
+    "code": "0xe",
+    "at": "0x1b8",
+    "form": "s16"
+   },
+   {
+    "key": "script.flash.for",
+    "part": "flash",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 17,
+    "inst": "0x1ba",
+    "code": "0x9",
+    "at": "0x1ba",
+    "form": "op"
+   }
+  ]
+ }
 }
