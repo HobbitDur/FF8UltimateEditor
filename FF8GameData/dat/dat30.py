@@ -159,11 +159,22 @@ def _double_animation(animation, bones, smooth_loop, mode, chain_frame=None):
 
 def chain_frame_dict(animation_list, chain_dict) -> dict:
     """{animation id: copy of the first frame of the animation it is cut to} (animchain),
-    taken before anything is converted."""
+    taken before anything is converted.
+
+    A cut where the sequence also moves the entity (chain_dict.moved_set) keeps the root of the
+    animation's own last frame: the next animation's first root is measured from the entity's
+    new place, so blending toward it would draw the model half-way back for one tick (Squall's
+    run 32 -> 34: 896 units). The bones still turn toward the next pose."""
+    moved_set = getattr(chain_dict, 'moved_set', ())
     frame_dict = {}
     for anim_id, next_id in (chain_dict or {}).items():
         if 0 <= next_id < len(animation_list) and animation_list[next_id].frames:
-            frame_dict[anim_id] = copy.deepcopy(animation_list[next_id].frames[0])
+            frame = copy.deepcopy(animation_list[next_id].frames[0])
+            own = animation_list[anim_id].frames if 0 <= anim_id < len(animation_list) else []
+            if anim_id in moved_set and own:
+                for axis, position in enumerate(frame.position):
+                    position.set_pos_raw(own[-1].position[axis].get_pos_raw())
+            frame_dict[anim_id] = frame
     return frame_dict
 
 

@@ -251,6 +251,56 @@ class TestChainedCut:
         way_back = [frame.position[2] for frame in result.frame_list if frame.anim_id == 29]
         assert way_back[0] < 0 and way_back[-1] == 0
 
+    def test_a_cut_that_moves_the_entity_keeps_the_root(self, manager, vm):
+        """Squall's attack: the run (anim 32) carries him 2078 forward in its root, then anim 34
+        starts at root -286 while the sequence puts the entity 1756 forward on that same tick
+        (E5 0F). The cut moves the entity: a root blended toward 34's first frame drew him 896
+        back for one tick as he reached the target. The slash 36 -> 37 runs through a movement
+        loop (one more step of it, not a jump) and Ward's landing does not move him."""
+        from FF8GameData.dat.animchain import analyse_animation_chain, get_animation_chain_dict
+        from FF8GameData.dat.sequencebake import (BattleContext, bake_sequence,
+                                                  sequence_dict_from_section)
+        body = _load(manager, BATTLE_PATH / "d0c000.dat")
+        body.origin_path = str(BATTLE_PATH / "d0c000.dat")
+        chain = analyse_animation_chain(manager.game_data, body)
+        assert chain[32] == 34 and chain[36] == 37
+        assert 32 in chain.moved_set and 36 not in chain.moved_set
+        weapon = _load(manager, BATTLE_PATH / "d0w000.dat")
+        weapon.origin_path = str(BATTLE_PATH / "d0w000.dat")
+        assert analyse_animation_chain(manager.game_data, weapon).moved_set == chain.moved_set
+        ward = _load(manager, BATTLE_PATH / "daw039.dat")
+        ward.origin_path = str(BATTLE_PATH / "daw039.dat")
+        assert 29 not in analyse_animation_chain(manager.game_data, ward).moved_set
+        # a plain dict still works: no cut is known to move
+        assert dat30.chain_frame_dict(body.animation_data.animations, {32: 34})[32].position[2].get_pos_raw() == -286
+
+    def test_squall_reaches_the_target_without_a_step_back(self, manager, tmp_path):
+        """Where Squall stands (E5 0F forward offset + body root z, negative = toward the target)
+        on every 30 Hz tick of his attack never steps back as the run ends: the in-between after
+        the run's last frame keeps its root (-2078), vanilla's look for that 1/15 s."""
+        from FF8GameData.dat.sequencebake import BattleContext, bake_sequence, sequence_dict_from_section
+        vanilla = _load(manager, BATTLE_PATH / "d0c000.dat").animation_data.animations
+        body, weapon = _copy(tmp_path, "d0c000.dat", "d0w000.dat")
+        report_list = manager.convert_file_list_to_fps([body, weapon], 30)
+        assert [r['error'] for r in report_list] == ["", ""]
+        root = lambda frame: [p.get_pos_raw() for p in frame.position]
+        for path, model in ((body, "d0c000.dat"), (weapon, "d0w000.dat")):
+            vanilla_run = _load(manager, BATTLE_PATH / model).animation_data.animations[32].frames
+            run = _load(manager, path).animation_data.animations[32].frames
+            assert root(run[-1]) == root(run[-2]) == root(vanilla_run[-1])
+            angles = lambda frame: [r.get_rotate_raw() for bone in frame.rotation_vector_data for r in bone]
+            assert angles(run[-1]) != angles(run[-2])  # the bones still turn toward 34
+        animations = _load(manager, body).animation_data.animations
+        sequences = sequence_dict_from_section(_load(manager, weapon).seq_animation_data)
+        result = bake_sequence(manager.game_data, sequences, 13, [len(a.frames) for a in animations],
+                               BattleContext(is_monster=False), follow_chain=False)
+        forward = [frame.position[2] + animations[frame.anim_id].frames[frame.anim_frame].position[2].get_pos_raw()
+                   for frame in result.frame_list]
+        arrival = next(i for i, frame in enumerate(result.frame_list) if frame.anim_id == 34
+                       and result.frame_list[i - 1].anim_id == 32)
+        assert forward[arrival - 2:arrival + 1] == [-2078, -2078, -2042]
+        assert root(vanilla[34].frames[0])[2] == -286
+
 
 class TestCharacterFamily:
 

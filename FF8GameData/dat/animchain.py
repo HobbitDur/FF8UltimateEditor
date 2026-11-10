@@ -18,6 +18,15 @@ on another animation's first frame, or on the first frames of several animations
 from the same pose (Selphie's 9, 23 and 29). A sequence ending (A2: the next sequence depends on
 the battle, the idle of a weak character is not the normal one), a loop, a held pose, or
 followers starting from different poses keep the conversion's own rule.
+
+The root (skeleton position) of an animation is reset at every animation start: it is not
+where the model stands, the entity's own position is added to it. When the sequence moves the
+entity AT the cut (Squall's attack: the run, anim 32, carries him 2078 forward in its root;
+anim 34 starts at root -286 and the sequence puts the entity 1756 forward on the same tick),
+the next animation's first root is measured from a new place. Blending the root toward it
+draws the model half-way back for one tick (896 units, the "teleport" as Squall reaches the
+target). Such cuts are listed in `moved_set`: their in-betweens still turn the bones toward the
+next pose but keep the last root, which is what vanilla draws during that last 1/15 s.
 """
 from .sequencebake import (BattleContext, STOP_ERROR, STOP_HANG, background_sequence_id_set,
                            bake_sequence, sequence_dict_from_section)
@@ -39,6 +48,44 @@ _CONTEXT_LIST = (
 )
 _MAX_FRAME = 600
 
+# The entity moves AT a cut when its position changes there by more than this many units and
+# by more than twice its change on the ticks around the cut (a movement loop running through
+# the cut is one more step of that movement, not a jump: Squall's slash 36 -> 37).
+MOVE_MIN_UNIT = 16
+MOVE_AROUND_RATIO = 2
+
+
+class AnimationChain(dict):
+    """{animation id: id of the animation the sequences cut to}, plus `moved_set`: the ids whose
+    cut also moves the entity (see the module docstring). A plain dict, for every caller that
+    only needs the followers."""
+
+    def __init__(self, *args, moved_set=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.moved_set = set(moved_set)
+
+
+def _entity_position(frame):
+    """Where the sequence put the entity on that tick: its local offset (E5 0D/0E/0F) and what
+    the 9E move task carried it by."""
+    return tuple(frame.position) + tuple(frame.move_position)
+
+
+def _position_change(frame_list, index):
+    """How far the entity moved from tick index - 1 to tick index (0 outside the run)."""
+    if index < 1 or index >= len(frame_list):
+        return 0
+    before, after = _entity_position(frame_list[index - 1]), _entity_position(frame_list[index])
+    return max(abs(a - b) for a, b in zip(before, after))
+
+
+def entity_moves_at_cut(frame_list, index) -> bool:
+    """Whether the sequence moves the entity between tick `index` (an animation's last frame)
+    and the next one (the next animation's first frame) by a jump, not by a running movement."""
+    cut = _position_change(frame_list, index + 1)
+    around = max(_position_change(frame_list, index), _position_change(frame_list, index + 2))
+    return cut > max(MOVE_MIN_UNIT, MOVE_AROUND_RATIO * around)
+
 
 def _played_animation_set(vm, data: bytes) -> set:
     played = set()
@@ -52,7 +99,7 @@ def _played_animation_set(vm, data: bytes) -> set:
     return played
 
 
-def _record(frame_list, outcome_dict):
+def _record(frame_list, outcome_dict, moved_set=None):
     for index, frame in enumerate(frame_list):
         anim_id = frame.anim_id
         if anim_id is None or frame.anim_total < 1 or frame.anim_frame != frame.anim_total - 1:
@@ -72,6 +119,8 @@ def _record(frame_list, outcome_dict):
                 outcome = _END  # the sequence ended: the next one is the battle's choice
             else:
                 outcome = following.anim_id
+                if moved_set is not None and entity_moves_at_cut(frame_list, index):
+                    moved_set.add(anim_id)
         outcome_dict.setdefault(anim_id, set()).add(outcome)
 
 
@@ -90,7 +139,10 @@ def get_animation_chain_dict(vm, seq_animation_data, animation_list, group_by_po
     animation_list: the animations of the model converted: their lengths time the run, their
     first frames tell followers apart. group_by_pose False keeps only a single follower: a
     character's body and weapon are converted one at a time and must take the same decision,
-    and two animations starting alike in one of them may not in the other (Ward's 10)."""
+    and two animations starting alike in one of them may not in the other (Ward's 10).
+    Returns an AnimationChain: its `moved_set` lists the cuts where the sequence also moves the
+    entity under any of the battle contexts. It is decided on the sequences only, so a
+    character's body and weapon take the same decision there too."""
     animation_frame_count = [len(animation.frames) for animation in animation_list]
 
     def first_pose(anim_id):
@@ -103,6 +155,7 @@ def get_animation_chain_dict(vm, seq_animation_data, animation_list, group_by_po
         return {}
     background = background_sequence_id_set(vm, sequence_by_id)
     outcome_dict = {}
+    moved_set = set()
     for seq_id, data in sequence_by_id.items():
         if not data or seq_id in background:
             continue
@@ -117,13 +170,14 @@ def get_animation_chain_dict(vm, seq_animation_data, animation_list, group_by_po
                 for anim_id in _played_animation_set(vm, data):
                     outcome_dict.setdefault(anim_id, set()).add(_END)
                 break
-            _record(result.frame_list, outcome_dict)
-    chain_dict = {}
+            _record(result.frame_list, outcome_dict, moved_set)
+    chain_dict = AnimationChain()
     for anim_id, outcome_set in outcome_dict.items():
         if not all(isinstance(outcome, int) and outcome != anim_id for outcome in outcome_set):
             continue
         if len(outcome_set) == 1 or (group_by_pose and len({first_pose(outcome) for outcome in outcome_set}) == 1):
             chain_dict[anim_id] = min(outcome_set)
+    chain_dict.moved_set = moved_set & set(chain_dict)
     return chain_dict
 
 
