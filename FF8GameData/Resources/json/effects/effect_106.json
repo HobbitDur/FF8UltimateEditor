@@ -672,5 +672,14 @@
     "$rings.end_tick"
    ]
   }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.seq_beam",
+   "label": "Seq beam",
+   "doc": "Data its code reads",
+   "address": "0x12F99D4",
+   "size": 428
+  }
  ]
 }
