@@ -1,0 +1,166 @@
+{
+ "format": 1,
+ "effect": 242,
+ "name": "Beam Cannon (BGH251F2)",
+ "doc": "Beam Cannon (BGH251F2) (enemy attack 139 Beam Cannon): the GF cinematic engine's clone run from the two script files (mag241_b.00 / .01, its parameters) - its bones, prims, sprites and particles, the action results. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag242_bgh_beam_cannon.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x9F7CE0",
+   "root": "0x9F8380"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 242,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x9F7D10",
+  "file_loader": "0x9F7CE0",
+  "root": "0x9F8380",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.18629a4",
+   "label": "Data",
+   "doc": "Draw_table - 0x308 (read by 0x9F7E60)",
+   "address": "0x18629A4",
+   "size": 244
+  },
+  {
+   "key": "not_editable.1862ac0",
+   "label": "Data",
+   "doc": "MAG_242 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x1862AC0",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1862b08",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x1862B08",
+   "size": 240
+  },
+  {
+   "key": "not_editable.1862bf8",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x1862BF8",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1862c0c",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x1862C0C",
+   "size": 44
+  },
+  {
+   "key": "not_editable.1862c38",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x1862C38",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1862c4c",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x1862C4C",
+   "size": 96
+  },
+  {
+   "key": "not_editable.1862cac",
+   "label": "Data",
+   "doc": "MAG_242 DrawHandlerTable",
+   "address": "0x1862CAC",
+   "size": 362
+  },
+  {
+   "key": "not_editable.1862e16",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1862E16",
+   "size": 26
+  },
+  {
+   "key": "not_editable.1862e30",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1862E30",
+   "size": 2
+  },
+  {
+   "key": "not_editable.1862e32",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1862E32",
+   "size": 14
+  },
+  {
+   "key": "not_editable.1862e40",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1862E40",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1862e48",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1862E48",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1862e50",
+   "label": "Data",
+   "doc": "MAG_242 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x1862E50",
+   "size": 1312
+  }
+ ]
+}

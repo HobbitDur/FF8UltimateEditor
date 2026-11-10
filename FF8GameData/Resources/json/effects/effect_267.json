@@ -1,0 +1,159 @@
+{
+ "format": 1,
+ "effect": 267,
+ "name": "Catoblepas death",
+ "doc": "Catoblepas death (enemy attack 241): the GF cinematic engine's clone run from the two script files (mag266_b.00 / .01, its parameters) - the caster's model falling apart polygon by polygon - its pieces, dots and particles. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag267_catoblepas_death.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x911FC0",
+   "root": "0x912660"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 267,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x911FF0",
+  "file_loader": "0x911FC0",
+  "root": "0x912660",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.1854e84",
+   "label": "Data",
+   "doc": "Draw_table - 0x368 (read by 0x912140)",
+   "address": "0x1854E84",
+   "size": 340
+  },
+  {
+   "key": "not_editable.1855048",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x1855048",
+   "size": 240
+  },
+  {
+   "key": "not_editable.1855138",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x1855138",
+   "size": 20
+  },
+  {
+   "key": "not_editable.185514c",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x185514C",
+   "size": 44
+  },
+  {
+   "key": "not_editable.1855178",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x1855178",
+   "size": 20
+  },
+  {
+   "key": "not_editable.185518c",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x185518C",
+   "size": 96
+  },
+  {
+   "key": "not_editable.18551ec",
+   "label": "Data",
+   "doc": "MAG_267 DrawHandlerTable",
+   "address": "0x18551EC",
+   "size": 362
+  },
+  {
+   "key": "not_editable.1855356",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1855356",
+   "size": 26
+  },
+  {
+   "key": "not_editable.1855370",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1855370",
+   "size": 2
+  },
+  {
+   "key": "not_editable.1855372",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1855372",
+   "size": 14
+  },
+  {
+   "key": "not_editable.1855380",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1855380",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1855388",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1855388",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1855390",
+   "label": "Data",
+   "doc": "MAG_267 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x1855390",
+   "size": 1312
+  }
+ ]
+}

@@ -1,0 +1,166 @@
+{
+ "format": 1,
+ "effect": 331,
+ "name": "Effect 331",
+ "doc": "Effect 331 (enemy attack 313): the GF cinematic engine's clone run from the two script files (mag330_b.00 / .01, its parameters) - its bones, prims, sprites and particles, the action results. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag331_unknown_331.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x8DFF70",
+   "root": "0x8E0610"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 331,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x8DFFA0",
+  "file_loader": "0x8DFF70",
+  "root": "0x8E0610",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.185260c",
+   "label": "Data",
+   "doc": "Draw_table - 0x2E8 (read by 0x8E00F0)",
+   "address": "0x185260C",
+   "size": 212
+  },
+  {
+   "key": "not_editable.1852708",
+   "label": "Data",
+   "doc": "MAG_331 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x1852708",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1852750",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x1852750",
+   "size": 240
+  },
+  {
+   "key": "not_editable.1852840",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x1852840",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1852854",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x1852854",
+   "size": 44
+  },
+  {
+   "key": "not_editable.1852880",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x1852880",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1852894",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x1852894",
+   "size": 96
+  },
+  {
+   "key": "not_editable.18528f4",
+   "label": "Data",
+   "doc": "MAG_331 DrawHandlerTable",
+   "address": "0x18528F4",
+   "size": 362
+  },
+  {
+   "key": "not_editable.1852a5e",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1852A5E",
+   "size": 26
+  },
+  {
+   "key": "not_editable.1852a78",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1852A78",
+   "size": 2
+  },
+  {
+   "key": "not_editable.1852a7a",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1852A7A",
+   "size": 14
+  },
+  {
+   "key": "not_editable.1852a88",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1852A88",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1852a90",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1852A90",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1852a98",
+   "label": "Data",
+   "doc": "MAG_331 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x1852A98",
+   "size": 1312
+  }
+ ]
+}

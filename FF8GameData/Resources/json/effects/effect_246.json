@@ -1,0 +1,166 @@
+{
+ "format": 1,
+ "effect": 246,
+ "name": "BGH251F2 4th turret explosion",
+ "doc": "BGH251F2 4th turret explosion (enemy attack 143, enemy attack 150): the GF cinematic engine's clone run from the two script files (mag245_b.00 / .01, its parameters) - its bones, prims, sprites and particles, the action results. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag246_bgh_turret4_explode.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x9D32E0",
+   "root": "0x9D3980"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 246,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x9D3310",
+  "file_loader": "0x9D32E0",
+  "root": "0x9D3980",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.1860294",
+   "label": "Data",
+   "doc": "Draw_table - 0x2E8 (read by 0x9D3460)",
+   "address": "0x1860294",
+   "size": 212
+  },
+  {
+   "key": "not_editable.1860390",
+   "label": "Data",
+   "doc": "MAG_246 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x1860390",
+   "size": 72
+  },
+  {
+   "key": "not_editable.18603d8",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x18603D8",
+   "size": 240
+  },
+  {
+   "key": "not_editable.18604c8",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x18604C8",
+   "size": 20
+  },
+  {
+   "key": "not_editable.18604dc",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x18604DC",
+   "size": 44
+  },
+  {
+   "key": "not_editable.1860508",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x1860508",
+   "size": 20
+  },
+  {
+   "key": "not_editable.186051c",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x186051C",
+   "size": 96
+  },
+  {
+   "key": "not_editable.186057c",
+   "label": "Data",
+   "doc": "MAG_246 DrawHandlerTable",
+   "address": "0x186057C",
+   "size": 362
+  },
+  {
+   "key": "not_editable.18606e6",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18606E6",
+   "size": 26
+  },
+  {
+   "key": "not_editable.1860700",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1860700",
+   "size": 2
+  },
+  {
+   "key": "not_editable.1860702",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1860702",
+   "size": 14
+  },
+  {
+   "key": "not_editable.1860710",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1860710",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1860718",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1860718",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1860720",
+   "label": "Data",
+   "doc": "MAG_246 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x1860720",
+   "size": 1312
+  }
+ ]
+}

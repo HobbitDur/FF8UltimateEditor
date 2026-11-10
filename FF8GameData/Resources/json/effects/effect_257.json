@@ -1,0 +1,166 @@
+{
+ "format": 1,
+ "effect": 257,
+ "name": "Mega Flare (Bahamut)",
+ "doc": "Mega Flare (Bahamut) (enemy attack 234 Mega Flare): the GF cinematic engine's clone run from the two script files (mag256_b.00 / .01, its parameters) - its bones, prims, sprites and particles, the action results. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag257_mega_flare.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x96F260",
+   "root": "0x96F900"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 257,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x96F290",
+  "file_loader": "0x96F260",
+  "root": "0x96F900",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.185a064",
+   "label": "Data",
+   "doc": "Draw_table - 0x35C (read by 0x96F3E0)",
+   "address": "0x185A064",
+   "size": 328
+  },
+  {
+   "key": "not_editable.185a1d4",
+   "label": "Data",
+   "doc": "MAG_257 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x185A1D4",
+   "size": 72
+  },
+  {
+   "key": "not_editable.185a21c",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x185A21C",
+   "size": 240
+  },
+  {
+   "key": "not_editable.185a30c",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x185A30C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.185a320",
+   "label": "Data",
+   "doc": "Bone_table + 0x14C",
+   "address": "0x185A320",
+   "size": 44
+  },
+  {
+   "key": "not_editable.185a34c",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x185A34C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.185a360",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x185A360",
+   "size": 96
+  },
+  {
+   "key": "not_editable.185a3c0",
+   "label": "Data",
+   "doc": "MAG_257 DrawHandlerTable",
+   "address": "0x185A3C0",
+   "size": 362
+  },
+  {
+   "key": "not_editable.185a52a",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185A52A",
+   "size": 26
+  },
+  {
+   "key": "not_editable.185a544",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185A544",
+   "size": 2
+  },
+  {
+   "key": "not_editable.185a546",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185A546",
+   "size": 14
+  },
+  {
+   "key": "not_editable.185a554",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185A554",
+   "size": 8
+  },
+  {
+   "key": "not_editable.185a55c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185A55C",
+   "size": 8
+  },
+  {
+   "key": "not_editable.185a564",
+   "label": "Data",
+   "doc": "MAG_257 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x185A564",
+   "size": 1312
+  }
+ ]
+}
