@@ -251,7 +251,7 @@ class TestChainedCut:
         way_back = [frame.position[2] for frame in result.frame_list if frame.anim_id == 29]
         assert way_back[0] < 0 and way_back[-1] == 0
 
-    def test_a_cut_that_moves_the_entity_keeps_the_root(self, manager, vm):
+    def test_a_cut_that_moves_the_entity_is_recorded_with_its_move(self, manager, vm):
         """Squall's attack: the run (anim 32) carries him 2078 forward in its root, then anim 34
         starts at root -286 while the sequence puts the entity 1756 forward on that same tick
         (E5 0F). The cut moves the entity: a root blended toward 34's first frame drew him 896
@@ -265,6 +265,7 @@ class TestChainedCut:
         chain = analyse_animation_chain(manager.game_data, body)
         assert chain[32] == 34 and chain[36] == 37
         assert 32 in chain.moved_set and 36 not in chain.moved_set
+        assert chain.moved_dict[32] == (0, 0, -1756)
         weapon = _load(manager, BATTLE_PATH / "d0w000.dat")
         weapon.origin_path = str(BATTLE_PATH / "d0w000.dat")
         assert analyse_animation_chain(manager.game_data, weapon).moved_set == chain.moved_set
@@ -273,11 +274,19 @@ class TestChainedCut:
         assert 29 not in analyse_animation_chain(manager.game_data, ward).moved_set
         # a plain dict still works: no cut is known to move
         assert dat30.chain_frame_dict(body.animation_data.animations, {32: 34})[32].position[2].get_pos_raw() == -286
+        # the move, in the skeleton's units (scale 175): 34's first root seen from the run's place
+        frame = dat30.chain_frame_dict(body.animation_data.animations, chain, body.bone_data.unknown00)[32]
+        assert body.bone_data.unknown00 == 175
+        assert frame.position[2].get_pos_raw() == -286 + round(-1756 * 256 / 175)
+        # scale unknown: the run's own last root is kept, never a step back
+        frame = dat30.chain_frame_dict(body.animation_data.animations, chain)[32]
+        assert frame.position[2].get_pos_raw() == -2078
 
     def test_squall_reaches_the_target_without_a_step_back(self, manager, tmp_path):
-        """Where Squall stands (E5 0F forward offset + body root z, negative = toward the target)
-        on every 30 Hz tick of his attack never steps back as the run ends: the in-between after
-        the run's last frame keeps its root (-2078), vanilla's look for that 1/15 s."""
+        """Where Squall stands (E5 0F forward offset + body root z * 175 / 256, negative = toward
+        the target) on every 30 Hz tick of his attack: as the run ends he goes on toward the
+        target, the in-between after the run's last frame half-way through the 531-unit jump
+        vanilla makes in one 1/15 s step (no step back, no standstill before the whole jump)."""
         from FF8GameData.dat.sequencebake import BattleContext, bake_sequence, sequence_dict_from_section
         vanilla = _load(manager, BATTLE_PATH / "d0c000.dat").animation_data.animations
         body, weapon = _copy(tmp_path, "d0c000.dat", "d0w000.dat")
@@ -287,7 +296,7 @@ class TestChainedCut:
         for path, model in ((body, "d0c000.dat"), (weapon, "d0w000.dat")):
             vanilla_run = _load(manager, BATTLE_PATH / model).animation_data.animations[32].frames
             run = _load(manager, path).animation_data.animations[32].frames
-            assert root(run[-1]) == root(run[-2]) == root(vanilla_run[-1])
+            assert root(run[-2]) == root(vanilla_run[-1])
             angles = lambda frame: [r.get_rotate_raw() for bone in frame.rotation_vector_data for r in bone]
             assert angles(run[-1]) != angles(run[-2])  # the bones still turn toward 34
         animations = _load(manager, body).animation_data.animations
@@ -295,10 +304,12 @@ class TestChainedCut:
         result = bake_sequence(manager.game_data, sequences, 13, [len(a.frames) for a in animations],
                                BattleContext(is_monster=False), follow_chain=False)
         forward = [frame.position[2] + animations[frame.anim_id].frames[frame.anim_frame].position[2].get_pos_raw()
-                   for frame in result.frame_list]
+                   * 175 / 256 for frame in result.frame_list]
         arrival = next(i for i, frame in enumerate(result.frame_list) if frame.anim_id == 34
                        and result.frame_list[i - 1].anim_id == 32)
-        assert forward[arrival - 2:arrival + 1] == [-2078, -2078, -2042]
+        run_end, between, landed = forward[arrival - 2:arrival + 1]
+        assert round(run_end) == -1421 and round(landed) == -1952
+        assert abs(between - (run_end + landed) / 2) < 1
         assert root(vanilla[34].frames[0])[2] == -286
 
 

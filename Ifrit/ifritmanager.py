@@ -537,7 +537,8 @@ class IfritManager:
 
         # 2. apply
         chain_frames = dat30.chain_frame_dict(monster.animation_data.animations,
-                                              analyse_animation_chain(self.game_data, monster))
+                                              analyse_animation_chain(self.game_data, monster),
+                                              monster.bone_data.unknown00)
         for anim_id, smooth_loop, max_frame, needs_split in plan_list:
             if not needs_split:
                 monster.animation_data.animations[anim_id].create_interpolated_frames(

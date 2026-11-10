@@ -157,23 +157,31 @@ def _double_animation(animation, bones, smooth_loop, mode, chain_frame=None):
     animation.create_interpolated_frames(bones, FACTOR, smooth_loop, mode=mode, chain_frame=chain_frame)
 
 
-def chain_frame_dict(animation_list, chain_dict) -> dict:
+def chain_frame_dict(animation_list, chain_dict, model_scale: int = 0) -> dict:
     """{animation id: copy of the first frame of the animation it is cut to} (animchain),
     taken before anything is converted.
 
-    A cut where the sequence also moves the entity (chain_dict.moved_set) keeps the root of the
-    animation's own last frame: the next animation's first root is measured from the entity's
-    new place, so blending toward it would draw the model half-way back for one tick (Squall's
-    run 32 -> 34: 896 units). The bones still turn toward the next pose."""
-    moved_set = getattr(chain_dict, 'moved_set', ())
+    A cut where the sequence also moves the entity (chain_dict.moved_dict) measures the next
+    animation's first root from the entity's new place, so blending toward it would draw the
+    model half-way back for one tick (Squall's run 32 -> 34). The move is added to that root,
+    in the skeleton's units (the engine draws a root at raw * model_scale / 256, model_scale =
+    skeleton header +0x02): the in-between then draws the model half-way through the jump, as
+    the bones are half-way through the turn. When the move or the scale is unknown, the root of
+    the animation's own last frame is kept (no step back, the jump all on the next tick)."""
+    moved_dict = getattr(chain_dict, 'moved_dict', {})
     frame_dict = {}
     for anim_id, next_id in (chain_dict or {}).items():
         if 0 <= next_id < len(animation_list) and animation_list[next_id].frames:
             frame = copy.deepcopy(animation_list[next_id].frames[0])
             own = animation_list[anim_id].frames if 0 <= anim_id < len(animation_list) else []
-            if anim_id in moved_set and own:
+            if anim_id in moved_dict and own:
+                move = moved_dict[anim_id]
                 for axis, position in enumerate(frame.position):
-                    position.set_pos_raw(own[-1].position[axis].get_pos_raw())
+                    if move is not None and model_scale > 0 and axis < len(move):
+                        root = position.get_pos_raw() + round(move[axis] * 256 / model_scale)
+                    else:
+                        root = own[-1].position[axis].get_pos_raw()
+                    position.set_pos_raw(max(-32768, min(32767, root)))
             frame_dict[anim_id] = frame
     return frame_dict
 
@@ -280,7 +288,8 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
 
     # 2. the animations (a split inserts the part ids into the rewritten sequences)
     bones = monster.bone_data.bones if has_animation else []
-    chain_frames = chain_frame_dict(monster.animation_data.animations, chain_dict) if has_animation else {}
+    chain_frames = (chain_frame_dict(monster.animation_data.animations, chain_dict, monster.bone_data.unknown00)
+                    if has_animation else {})
     for anim_id, smooth_loop, needs_split in plan_list:
         animation = monster.animation_data.animations[anim_id]
         if not needs_split:
