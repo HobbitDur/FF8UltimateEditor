@@ -161,6 +161,9 @@ def _double_animation(animation, bones, smooth_loop, mode, chain_frame=None):
 # teleport, not a move carried on (Squall's leap 2.8x, his weapons 3.8x; the lunges reach 6x, the
 # teleports start at 8.8x): its in-between keeps the old root instead of drawing a ghost half-way
 TELEPORT_RATIO = 7
+# below this many engine units a jump is a nudge, not a teleport, even from a standstill (c0m015
+# 16 -> 17 moves 56): it blends
+TELEPORT_MIN_JUMP = 64
 
 
 def chain_frame_dict(animation_list, chain_dict, model_scale: int = 0) -> dict:
@@ -173,9 +176,10 @@ def chain_frame_dict(animation_list, chain_dict, model_scale: int = 0) -> dict:
     in the skeleton's units (the engine draws a root at raw * model_scale / 256, model_scale =
     skeleton header +0x02): the in-between then draws the model half-way through the jump, as
     the bones are half-way through the turn. When the move or the scale is unknown, or the jump
-    is a teleport (more than TELEPORT_RATIO times the animation's own last root step: c0m106
-    stands still then lands 2853 units away), the root of the animation's own last frame is kept:
-    no step back, no ghost half-way, the jump all on the next tick as at 15 fps."""
+    is a teleport (over TELEPORT_MIN_JUMP units and TELEPORT_RATIO times the animation's own last
+    root step: c0m106 stands still then lands 2853 units away), the root of the animation's own
+    last frame is kept: no step back, no ghost half-way, the jump all on the next tick as at
+    15 fps."""
     moved_dict = getattr(chain_dict, 'moved_dict', {})
     frame_dict = {}
     for anim_id, next_id in (chain_dict or {}).items():
@@ -192,7 +196,7 @@ def chain_frame_dict(animation_list, chain_dict, model_scale: int = 0) -> dict:
                     previous = [p.get_pos_raw() for p in own[-2].position] if len(own) > 1 else last
                     jump = max((abs(t - l) for t, l in zip(target, last)), default=0)
                     step = max((abs(l - b) for l, b in zip(last, previous)), default=0)
-                    if jump > TELEPORT_RATIO * step:
+                    if jump > TELEPORT_RATIO * step and jump * model_scale / 256 > TELEPORT_MIN_JUMP:
                         target = list(last)
                 for axis, position in enumerate(frame.position):
                     position.set_pos_raw(max(-32768, min(32767, target[axis])))
