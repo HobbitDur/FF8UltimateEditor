@@ -861,14 +861,31 @@
    "fallthrough": true
   },
   "0x035": {
-   "name": "NullNoAdvance",
-   "length": "2",
-   "operands": [],
-   "high_bits": "unused",
+   "name": "VramReadback",
+   "length": "10 if (op & 0x8000) == 0 else 6",
+   "operands": [
+    {
+     "name": "bit15 clear: VRAM rect x / bit15 set: rect offset (from the instruction)",
+     "type": "s16"
+    },
+    {
+     "name": "bit15 clear: VRAM rect y / bit15 set: texture slot",
+     "type": "s16"
+    },
+    {
+     "name": "VRAM rect width (only when bit15 clear)",
+     "type": "s16"
+    },
+    {
+     "name": "VRAM rect height (only when bit15 clear)",
+     "type": "s16"
+    }
+   ],
+   "high_bits": "bit15 clear: the 8-byte RECT follows the opcode; bit15 set: s16 offset to a RECT (from the instruction) + s16 slot",
    "flow": "none",
-   "semantics": "nullsub: does not advance the cursor nor set a wait -> infinite loop if executed. Unused.",
+   "semantics": "Queues a VRAM -> memory readback (0xB66F90 -> Battle_QueueVramReadback_Type2 0x505E70) through the 16-slot rect ring. bit15 clear: an arena block of w*h*2 bytes becomes the bone's palette (bone+0xC4), read later by draw 47 PaletteHsvShift. bit15 set: into MAGIC_TEXTURE_BUFFER_PTR + slot*16.",
    "confidence": "high",
-   "notes": "Length unknown/irrelevant (never used).",
+   "notes": "Not a nullsub in every clone: Meteor 223 (0xA996A0), Adel's death 211 (0xAD5E80) and effect 269 carry the readback (FFNx gfc_palshift.inc op_035_VramReadback). Where a clone has no readback the slot is a nullsub (never used there).",
    "refs": [],
    "fallthrough": true
   },
