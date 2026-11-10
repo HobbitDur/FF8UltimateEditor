@@ -162,5 +162,1494 @@
    "address": "0x185D600",
    "size": 1312
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag251_b.00",
+  "param": "files.file00",
+  "size": 11308,
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When each part comes, the damage. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 362,
+    "key": "rays",
+    "title": "Sun rays",
+    "paths": [],
+    "doc": "The red and yellow rays turning around the sun"
+   },
+   {
+    "id": 488,
+    "key": "sun",
+    "title": "Sun",
+    "paths": [],
+    "doc": "The sun's white glow, growing, then swelling"
+   },
+   {
+    "id": 544,
+    "key": "white",
+    "title": "White screen",
+    "paths": [],
+    "doc": "The screen turning white, then fading back"
+   },
+   {
+    "id": 694,
+    "key": "upright",
+    "title": "Halos",
+    "paths": [],
+    "doc": "The purple and yellow halos closing in on the sun: what both kinds share, and the upright ones'"
+   },
+   {
+    "id": 678,
+    "key": "flat",
+    "title": "Flat halos",
+    "paths": [],
+    "doc": "The flat halos, between the upright ones (their look: Halos tab)"
+   },
+   {
+    "id": 816,
+    "key": "flare",
+    "title": "Lens flare",
+    "paths": [],
+    "doc": "The circles of the lens flare. Their texture and blend are in their sprite (Textures tab, Sections)"
+   }
+  ],
+  "groups": [
+   {
+    "key": "script.rays.light",
+    "label": "Brightness",
+    "doc": "It lights up, then fades (128 = as it is)"
+   },
+   {
+    "key": "script.sun.swell",
+    "label": "Then swells",
+    "doc": "Per tick on each axis, once it swells (Timing tab)"
+   },
+   {
+    "key": "script.upright.tip",
+    "label": "Brightness",
+    "doc": "Both kinds: they light up, hold, then dim"
+   },
+   {
+    "key": "script.upright.light",
+    "label": "Colour",
+    "doc": "Both kinds: it flickers between these two greys, one per tick (128 = as it is)"
+   },
+   {
+    "key": "script.upright.shrink",
+    "label": "Shrinks",
+    "doc": "Both kinds"
+   },
+   {
+    "key": "script.flare.line",
+    "label": "The line",
+    "doc": "How the circles' line turns (4096 = a whole turn)"
+   },
+   {
+    "key": "script.flare.light",
+    "label": "Brightness",
+    "doc": "All the circles: they light up, hold, then fade (the colour changes per tick)"
+   },
+   {
+    "key": "script.flare.c1",
+    "label": "Circle 1",
+    "doc": ""
+   },
+   {
+    "key": "script.flare.c2",
+    "label": "Circle 2",
+    "doc": ""
+   },
+   {
+    "key": "script.flare.c3",
+    "label": "Circle 3",
+    "doc": ""
+   },
+   {
+    "key": "script.flare.c4",
+    "label": "Circle 4",
+    "doc": ""
+   },
+   {
+    "key": "script.flare.c5",
+    "label": "Circle 5",
+    "doc": ""
+   },
+   {
+    "key": "script.flare.c6",
+    "label": "Circle 6",
+    "doc": ""
+   },
+   {
+    "key": "script.flare.c7",
+    "label": "Circle 7",
+    "doc": ""
+   }
+  ],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x3c",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x3c": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x3c": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.rays",
+    "part": "timing",
+    "label": "Rays start after",
+    "doc": "Ticks (the sound starts with them)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0x6e",
+    "code": "0x9",
+    "at": "0x6e",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.halos",
+    "part": "timing",
+    "label": "Halos and sun after",
+    "doc": "Ticks after the rays",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x78",
+    "code": "0x9",
+    "at": "0x78",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.flare",
+    "part": "timing",
+    "label": "Lens flare after",
+    "doc": "Ticks after the halos",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x82",
+    "code": "0x9",
+    "at": "0x82",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.whiten",
+    "part": "timing",
+    "label": "Screen whitens after",
+    "doc": "Ticks after the lens flare",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 2,
+    "inst": "0xce",
+    "code": "0x9",
+    "at": "0xce",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.swell",
+    "part": "timing",
+    "label": "Sun swells after",
+    "doc": "Ticks after the lens flare",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x88",
+    "code": "0x9",
+    "at": "0x88",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.damage",
+    "part": "timing",
+    "label": "Damage after",
+    "doc": "Ticks after the sun swells: everything but the white screen ends then",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x8e",
+    "code": "0x9",
+    "at": "0x8e",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end",
+    "part": "timing",
+    "label": "Ends after",
+    "doc": "Ticks after the damage",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 24,
+    "inst": "0x9a",
+    "code": "0x9",
+    "at": "0x9a",
+    "form": "op"
+   },
+   {
+    "key": "script.rays.every",
+    "part": "rays",
+    "label": "One every",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 4,
+    "inst": "0x108",
+    "code": "0x9",
+    "at": "0x108",
+    "form": "op"
+   },
+   {
+    "key": "script.rays.tilt",
+    "part": "rays",
+    "label": "Tilt",
+    "doc": "4096 = a whole turn",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x11e",
+    "code": "0xa",
+    "at": "0x120",
+    "form": "s16"
+   },
+   {
+    "key": "script.rays.tilt_random",
+    "part": "rays",
+    "label": "Tilt, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x126",
+    "code": "0x12",
+    "at": "0x128",
+    "form": "s16"
+   },
+   {
+    "key": "script.rays.turn",
+    "part": "rays",
+    "label": "Turned at random",
+    "doc": "Around the sun (4096 = a whole turn)",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 4096,
+    "inst": "0x126",
+    "code": "0x12",
+    "at": "0x12c",
+    "form": "s16"
+   },
+   {
+    "key": "script.rays.spin_random",
+    "part": "rays",
+    "label": "Spins, random",
+    "doc": "Per tick, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x12e",
+    "code": "0x15",
+    "at": "0x130",
+    "form": "s16"
+   },
+   {
+    "key": "script.rays.lives",
+    "part": "rays",
+    "label": "Lives for",
+    "doc": "Ticks (fewer when the damage comes)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 16,
+    "inst": "0x138",
+    "code": "0x1e",
+    "at": "0x13a",
+    "form": "s16"
+   },
+   {
+    "key": "script.rays.light.up",
+    "part": "rays",
+    "label": "Lights up by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x15c",
+    "code": "0xe",
+    "at": "0x15e",
+    "form": "s16"
+   },
+   {
+    "key": "script.rays.light.up_for",
+    "part": "rays",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x160",
+    "code": "0x9",
+    "at": "0x160",
+    "form": "op"
+   },
+   {
+    "key": "script.rays.light.down",
+    "part": "rays",
+    "label": "Then fades by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x162",
+    "code": "0xe",
+    "at": "0x164",
+    "form": "s16"
+   },
+   {
+    "key": "script.rays.blend",
+    "part": "rays",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x17c",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x17c": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x17c": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x17c": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x17c": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.rays.size",
+    "part": "rays",
+    "label": "Size",
+    "doc": "Of its model (4096 = the model's own size)",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x180",
+    "code": "0xd",
+    "at": "0x182",
+    "form": "s16"
+   },
+   {
+    "key": "script.rays.size_random",
+    "part": "rays",
+    "label": "Size, random",
+    "doc": "Added at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x184",
+    "code": "0x16",
+    "at": "0x186",
+    "form": "s16"
+   },
+   {
+    "key": "script.rays.grow",
+    "part": "rays",
+    "label": "Grows by",
+    "doc": "Per tick (negative: shrinks)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -256,
+    "inst": "0x188",
+    "code": "0xe",
+    "at": "0x18a",
+    "form": "s16"
+   },
+   {
+    "key": "script.sun.spin",
+    "part": "sun",
+    "label": "Lights up by",
+    "doc": "Per tick (its brightness, carried by bone 0x1BE)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x1cc",
+    "code": "0xb",
+    "at": "0x1ce",
+    "form": "s16"
+   },
+   {
+    "key": "script.sun.spin_for",
+    "part": "sun",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x1d0",
+    "code": "0x9",
+    "at": "0x1d0",
+    "form": "op"
+   },
+   {
+    "key": "script.sun.spin_then",
+    "part": "sun",
+    "label": "Then by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x1d2",
+    "code": "0xb",
+    "at": "0x1d4",
+    "form": "s16"
+   },
+   {
+    "key": "script.sun.light",
+    "part": "sun",
+    "label": "Colour",
+    "doc": "Grey level (128 = as it is)",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x1dc",
+    "code": "0xd",
+    "at": "0x1de",
+    "form": "s16"
+   },
+   {
+    "key": "script.sun.blend",
+    "part": "sun",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x202",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x202": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x202": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x202": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x202": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.sun.size",
+    "part": "sun",
+    "label": "Size",
+    "doc": "Of its model (4096 = the model's own size)",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 64,
+    "inst": "0x1fe",
+    "code": "0xd",
+    "at": "0x200",
+    "form": "s16"
+   },
+   {
+    "key": "script.sun.grow",
+    "part": "sun",
+    "label": "Grows by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 4096,
+    "inst": "0x20a",
+    "code": "0xe",
+    "at": "0x20c",
+    "form": "s16"
+   },
+   {
+    "key": "script.sun.swell.x",
+    "part": "sun",
+    "label": "X",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x212",
+    "code": "0x11",
+    "at": "0x214",
+    "form": "s16"
+   },
+   {
+    "key": "script.sun.swell.y",
+    "part": "sun",
+    "label": "Y",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x212",
+    "code": "0x11",
+    "at": "0x216",
+    "form": "s16"
+   },
+   {
+    "key": "script.sun.swell.z",
+    "part": "sun",
+    "label": "Z",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 256,
+    "inst": "0x212",
+    "code": "0x11",
+    "at": "0x218",
+    "form": "s16"
+   },
+   {
+    "key": "script.white.whiten",
+    "part": "white",
+    "label": "Whitens by",
+    "doc": "Per tick, until the damage",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x226",
+    "code": "0xe",
+    "at": "0x228",
+    "form": "s16"
+   },
+   {
+    "key": "script.white.light",
+    "part": "white",
+    "label": "Then white at",
+    "doc": "At the damage (255 = white)",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 272,
+    "inst": "0x22e",
+    "code": "0xd",
+    "at": "0x230",
+    "form": "s16"
+   },
+   {
+    "key": "script.white.fade",
+    "part": "white",
+    "label": "Fades by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -4096,
+    "inst": "0x232",
+    "code": "0xe",
+    "at": "0x234",
+    "form": "s16"
+   },
+   {
+    "key": "script.white.fade_for",
+    "part": "white",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 17,
+    "inst": "0x236",
+    "code": "0x9",
+    "at": "0x236",
+    "form": "op"
+   },
+   {
+    "key": "script.upright.next",
+    "part": "upright",
+    "label": "Next flat halo after",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 3,
+    "inst": "0x248",
+    "code": "0x9",
+    "at": "0x248",
+    "form": "op"
+   },
+   {
+    "key": "script.flat.next",
+    "part": "flat",
+    "label": "Next upright halo after",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 3,
+    "inst": "0x24e",
+    "code": "0x9",
+    "at": "0x24e",
+    "form": "op"
+   },
+   {
+    "key": "script.upright.ahead",
+    "part": "upright",
+    "label": "Ahead",
+    "doc": "Of the sun (both kinds)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x266",
+    "code": "0xa",
+    "at": "0x268",
+    "form": "s16"
+   },
+   {
+    "key": "script.upright.holder",
+    "part": "upright",
+    "label": "Held for",
+    "doc": "Ticks (both kinds)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 16,
+    "inst": "0x26a",
+    "code": "0x9",
+    "at": "0x26a",
+    "form": "op"
+   },
+   {
+    "key": "script.upright.tip.speed",
+    "part": "upright",
+    "label": "Lights up by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 8192,
+    "inst": "0x284",
+    "code": "0xb",
+    "at": "0x286",
+    "form": "s16"
+   },
+   {
+    "key": "script.upright.tip.for",
+    "part": "upright",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x288",
+    "code": "0x9",
+    "at": "0x288",
+    "form": "op"
+   },
+   {
+    "key": "script.upright.tip.hold",
+    "part": "upright",
+    "label": "Then holds",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x28c",
+    "code": "0x9",
+    "at": "0x28c",
+    "form": "op"
+   },
+   {
+    "key": "script.upright.tip.back",
+    "part": "upright",
+    "label": "Then dims by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -8192,
+    "inst": "0x28e",
+    "code": "0xb",
+    "at": "0x290",
+    "form": "s16"
+   },
+   {
+    "key": "script.upright.tip.back_for",
+    "part": "upright",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x292",
+    "code": "0x9",
+    "at": "0x292",
+    "form": "op"
+   },
+   {
+    "key": "script.upright.light.a",
+    "part": "upright",
+    "label": "Bright",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x296",
+    "code": "0xd",
+    "at": "0x298",
+    "form": "s16"
+   },
+   {
+    "key": "script.upright.light.b",
+    "part": "upright",
+    "label": "Dim",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x29c",
+    "code": "0xd",
+    "at": "0x29e",
+    "form": "s16"
+   },
+   {
+    "key": "script.upright.blend",
+    "part": "upright",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it (both kinds)",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x2c8",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x2c8": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x2c8": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x2c8": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x2c8": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.upright.size",
+    "part": "upright",
+    "label": "Size",
+    "doc": "Of its model (4096 = the model's own size) (both kinds)",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 256,
+    "inst": "0x2d2",
+    "code": "0xd",
+    "at": "0x2d4",
+    "form": "s16"
+   },
+   {
+    "key": "script.upright.lives",
+    "part": "upright",
+    "label": "Lives for",
+    "doc": "Ticks (both kinds; fewer when the damage comes)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 16,
+    "inst": "0x2d6",
+    "code": "0x1e",
+    "at": "0x2d8",
+    "form": "s16"
+   },
+   {
+    "key": "script.upright.shrink.speed",
+    "part": "upright",
+    "label": "By",
+    "doc": "Per tick (negative: shrinks)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -8192,
+    "inst": "0x2e8",
+    "code": "0xe",
+    "at": "0x2ea",
+    "form": "s16"
+   },
+   {
+    "key": "script.upright.shrink.slow",
+    "part": "upright",
+    "label": "Slowing by",
+    "doc": "Each tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x2ec",
+    "code": "0xf",
+    "at": "0x2ee",
+    "form": "s16"
+   },
+   {
+    "key": "script.upright.shrink.for",
+    "part": "upright",
+    "label": "For",
+    "doc": "Ticks (with 8 more)",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 8,
+    "inst": "0x2f0",
+    "code": "0x9",
+    "at": "0x2f0",
+    "form": "op"
+   },
+   {
+    "key": "script.flare.line.x",
+    "part": "flare",
+    "label": "Tilt",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0x308",
+    "code": "0xa",
+    "at": "0x30a",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.line.y",
+    "part": "flare",
+    "label": "Turn",
+    "doc": "",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x308",
+    "code": "0xa",
+    "at": "0x30c",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.line.spin_x",
+    "part": "flare",
+    "label": "Tilts by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -2048,
+    "inst": "0x310",
+    "code": "0xb",
+    "at": "0x312",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.line.spin_y",
+    "part": "flare",
+    "label": "Turns by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -3584,
+    "inst": "0x310",
+    "code": "0xb",
+    "at": "0x314",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.light.up_r",
+    "part": "flare",
+    "label": "Lights up: red",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": 16,
+    "inst": "0x37c",
+    "code": "0xc",
+    "at": "0x37d",
+    "form": "s8"
+   },
+   {
+    "key": "script.flare.light.up_g",
+    "part": "flare",
+    "label": "Lights up: green",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": 16,
+    "inst": "0x37c",
+    "code": "0xc",
+    "at": "0x37e",
+    "form": "s8"
+   },
+   {
+    "key": "script.flare.light.up_b",
+    "part": "flare",
+    "label": "Lights up: blue",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": 16,
+    "inst": "0x37c",
+    "code": "0xc",
+    "at": "0x37f",
+    "form": "s8"
+   },
+   {
+    "key": "script.flare.light.up_for",
+    "part": "flare",
+    "label": "For",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 8,
+    "inst": "0x380",
+    "code": "0x1",
+    "at": "0x381",
+    "form": "hi"
+   },
+   {
+    "key": "script.flare.light.hold",
+    "part": "flare",
+    "label": "Holds",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 255,
+    "default": 4,
+    "inst": "0x386",
+    "code": "0x1",
+    "at": "0x387",
+    "form": "hi"
+   },
+   {
+    "key": "script.flare.light.down_r",
+    "part": "flare",
+    "label": "Fades: red",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": -8,
+    "inst": "0x388",
+    "code": "0xc",
+    "at": "0x389",
+    "form": "s8"
+   },
+   {
+    "key": "script.flare.light.down_g",
+    "part": "flare",
+    "label": "Fades: green",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": -8,
+    "inst": "0x388",
+    "code": "0xc",
+    "at": "0x38a",
+    "form": "s8"
+   },
+   {
+    "key": "script.flare.light.down_b",
+    "part": "flare",
+    "label": "Fades: blue",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -128,
+    "max": 127,
+    "default": -9,
+    "inst": "0x388",
+    "code": "0xc",
+    "at": "0x38b",
+    "form": "s8"
+   },
+   {
+    "key": "script.flare.c1.size",
+    "part": "flare",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x368",
+    "code": "0x4",
+    "at": "0x36a",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c1.place",
+    "part": "flare",
+    "label": "Place on the line",
+    "doc": "From the sun (negative: the other way)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2560,
+    "inst": "0x36c",
+    "code": "0x4",
+    "at": "0x372",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c1.speed",
+    "part": "flare",
+    "label": "Moves by",
+    "doc": "Per tick, along the line",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 768,
+    "inst": "0x374",
+    "code": "0x4",
+    "at": "0x376",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c2.picture",
+    "part": "flare",
+    "label": "Picture",
+    "doc": "Which picture of its sprite (0-4)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 1,
+    "inst": "0x392",
+    "code": "0x10",
+    "at": "0x393",
+    "form": "hi"
+   },
+   {
+    "key": "script.flare.c2.size",
+    "part": "flare",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x394",
+    "code": "0x4",
+    "at": "0x396",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c2.place",
+    "part": "flare",
+    "label": "Place on the line",
+    "doc": "From the sun (negative: the other way)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 2048,
+    "inst": "0x398",
+    "code": "0x4",
+    "at": "0x39e",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c2.speed",
+    "part": "flare",
+    "label": "Moves by",
+    "doc": "Per tick, along the line",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 320,
+    "inst": "0x3a0",
+    "code": "0x4",
+    "at": "0x3a2",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c3.picture",
+    "part": "flare",
+    "label": "Picture",
+    "doc": "Which picture of its sprite (0-4)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x3aa",
+    "code": "0x10",
+    "at": "0x3ab",
+    "form": "hi"
+   },
+   {
+    "key": "script.flare.c3.size",
+    "part": "flare",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x3ac",
+    "code": "0x4",
+    "at": "0x3ae",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c3.place",
+    "part": "flare",
+    "label": "Place on the line",
+    "doc": "From the sun (negative: the other way)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1536,
+    "inst": "0x3b0",
+    "code": "0x4",
+    "at": "0x3b6",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c3.speed",
+    "part": "flare",
+    "label": "Moves by",
+    "doc": "Per tick, along the line",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 224,
+    "inst": "0x3b8",
+    "code": "0x4",
+    "at": "0x3ba",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c4.picture",
+    "part": "flare",
+    "label": "Picture",
+    "doc": "Which picture of its sprite (0-4)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 4,
+    "inst": "0x3c2",
+    "code": "0x10",
+    "at": "0x3c3",
+    "form": "hi"
+   },
+   {
+    "key": "script.flare.c4.size",
+    "part": "flare",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x3c4",
+    "code": "0x4",
+    "at": "0x3c6",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c4.place",
+    "part": "flare",
+    "label": "Place on the line",
+    "doc": "From the sun (negative: the other way)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 1024,
+    "inst": "0x3c8",
+    "code": "0x4",
+    "at": "0x3ce",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c4.speed",
+    "part": "flare",
+    "label": "Moves by",
+    "doc": "Per tick, along the line",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 128,
+    "inst": "0x3d0",
+    "code": "0x4",
+    "at": "0x3d2",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c5.picture",
+    "part": "flare",
+    "label": "Picture",
+    "doc": "Which picture of its sprite (0-4)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 3,
+    "inst": "0x3da",
+    "code": "0x10",
+    "at": "0x3db",
+    "form": "hi"
+   },
+   {
+    "key": "script.flare.c5.size",
+    "part": "flare",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x3dc",
+    "code": "0x4",
+    "at": "0x3de",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c5.place",
+    "part": "flare",
+    "label": "Place on the line",
+    "doc": "From the sun (negative: the other way)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 512,
+    "inst": "0x3e0",
+    "code": "0x4",
+    "at": "0x3e6",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c5.speed",
+    "part": "flare",
+    "label": "Moves by",
+    "doc": "Per tick, along the line",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 64,
+    "inst": "0x3e8",
+    "code": "0x4",
+    "at": "0x3ea",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c6.picture",
+    "part": "flare",
+    "label": "Picture",
+    "doc": "Which picture of its sprite (0-4)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 3,
+    "inst": "0x3f2",
+    "code": "0x10",
+    "at": "0x3f3",
+    "form": "hi"
+   },
+   {
+    "key": "script.flare.c6.size",
+    "part": "flare",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x3f4",
+    "code": "0x4",
+    "at": "0x3f6",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c6.place",
+    "part": "flare",
+    "label": "Place on the line",
+    "doc": "From the sun (negative: the other way)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -512,
+    "inst": "0x3f8",
+    "code": "0x4",
+    "at": "0x3fe",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c6.speed",
+    "part": "flare",
+    "label": "Moves by",
+    "doc": "Per tick, along the line",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -64,
+    "inst": "0x400",
+    "code": "0x4",
+    "at": "0x402",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c7.picture",
+    "part": "flare",
+    "label": "Picture",
+    "doc": "Which picture of its sprite (0-4)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 1,
+    "inst": "0x40a",
+    "code": "0x10",
+    "at": "0x40b",
+    "form": "hi"
+   },
+   {
+    "key": "script.flare.c7.size",
+    "part": "flare",
+    "label": "Size",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 192,
+    "inst": "0x40c",
+    "code": "0x4",
+    "at": "0x40e",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c7.place",
+    "part": "flare",
+    "label": "Place on the line",
+    "doc": "From the sun (negative: the other way)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1024,
+    "inst": "0x410",
+    "code": "0x4",
+    "at": "0x416",
+    "form": "s16"
+   },
+   {
+    "key": "script.flare.c7.speed",
+    "part": "flare",
+    "label": "Moves by",
+    "doc": "Per tick, along the line",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -128,
+    "inst": "0x418",
+    "code": "0x4",
+    "at": "0x41a",
+    "form": "s16"
+   }
+  ]
+ }
 }

@@ -162,5 +162,950 @@
    "address": "0x1863830",
    "size": 1312
   }
- ]
+ ],
+ "script": {
+  "doc": "The MAG script's values, part by part: edited in the file named by `param` (empty: `file`). A part's id is its bone's program offset (FX_PART, tag_parts in the port)",
+  "file": "mag240_b.00",
+  "param": "files.file00",
+  "size": 7756,
+  "parts": [
+   {
+    "id": 0,
+    "key": "timing",
+    "title": "Timing",
+    "paths": [],
+    "doc": "When the damage comes, how long the gun fires, one shot every. Sound: Sound tab; pictures: Textures tab"
+   },
+   {
+    "id": 284,
+    "key": "muzzle",
+    "title": "Muzzle glow",
+    "paths": [],
+    "doc": "The round glow at the gun's end, one per shot; also where the gun's end is and the colour of the three muzzle pieces"
+   },
+   {
+    "id": 362,
+    "key": "ring",
+    "title": "Muzzle star",
+    "paths": [],
+    "doc": "The spinning star of streaks at the gun's end, one per shot"
+   },
+   {
+    "id": 426,
+    "key": "side",
+    "title": "Muzzle streak",
+    "paths": [],
+    "doc": "The flat streak of light under the gun's end, one per shot"
+   },
+   {
+    "id": 468,
+    "key": "hit",
+    "title": "Hit explosions",
+    "paths": [
+     66004
+    ],
+    "doc": "The flash and fireball where each shot hits, around the target. Its texture and blend are in its sprite (Textures tab, Sections)"
+   },
+   {
+    "id": 510,
+    "key": "burst",
+    "title": "Floor glow",
+    "paths": [],
+    "doc": "The flat glow on the floor under each hit, flaring then fading"
+   }
+  ],
+  "groups": [
+   {
+    "key": "script.timing.end",
+    "label": "Ends",
+    "doc": "Ticks after the gun stops: these two waits added up (the game: 20)"
+   },
+   {
+    "key": "script.muzzle.gun",
+    "label": "Gun's end",
+    "doc": "Where the shots leave from, turned with the caster"
+   },
+   {
+    "key": "script.muzzle.first",
+    "label": "Colour, first tick",
+    "doc": "Of the three muzzle pieces (128 = their texture as it is)"
+   },
+   {
+    "key": "script.muzzle.then",
+    "label": "Colour, second tick",
+    "doc": "Of the three muzzle pieces"
+   },
+   {
+    "key": "script.burst.light",
+    "label": "Brightness each tick",
+    "doc": "It flares up then fades (128 = its texture as it is)"
+   }
+  ],
+  "fields": [
+   {
+    "key": "script.timing.camera",
+    "part": "timing",
+    "label": "Camera",
+    "doc": "The camera track in its file (Camera tab, MAG track), or none: the view stays as the cast left it",
+    "type": "choice",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "inst": "0x5c",
+    "code": "0x39",
+    "options": [
+     {
+      "label": "Its camera track",
+      "bytes": {
+       "0x5c": "3910"
+      }
+     },
+     {
+      "label": "None: the battle's view stays",
+      "bytes": {
+       "0x5c": "3930"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.timing.damage",
+    "part": "timing",
+    "label": "Damage after",
+    "doc": "Ticks after the gun starts firing",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x8c",
+    "code": "0x9",
+    "at": "0x8c",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.stops",
+    "part": "timing",
+    "label": "Stops firing after",
+    "doc": "Ticks after the damage",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 12,
+    "inst": "0x90",
+    "code": "0x9",
+    "at": "0x90",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.a",
+    "part": "timing",
+    "label": "Wait 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 16,
+    "inst": "0x96",
+    "code": "0x9",
+    "at": "0x96",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.end.b",
+    "part": "timing",
+    "label": "Wait 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 127,
+    "default": 4,
+    "inst": "0x98",
+    "code": "0x9",
+    "at": "0x98",
+    "form": "op"
+   },
+   {
+    "key": "script.timing.every",
+    "part": "timing",
+    "label": "One shot every",
+    "doc": "Ticks: a muzzle flash and a hit each time",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 1,
+    "inst": "0xcc",
+    "code": "0x9",
+    "at": "0xcc",
+    "form": "op"
+   },
+   {
+    "key": "script.muzzle.gun.x",
+    "part": "muzzle",
+    "label": "X",
+    "doc": "From the caster",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0xec",
+    "code": "0x10",
+    "at": "0xee",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.gun.y",
+    "part": "muzzle",
+    "label": "Y",
+    "doc": "From the caster (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -448,
+    "inst": "0xec",
+    "code": "0x10",
+    "at": "0xf0",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.gun.z",
+    "part": "muzzle",
+    "label": "Z",
+    "doc": "From the caster",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 0,
+    "inst": "0xec",
+    "code": "0x10",
+    "at": "0xf2",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.gun.ahead",
+    "part": "muzzle",
+    "label": "Ahead by",
+    "doc": "How far in front of the gun the flashes are (negative: forward)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -1856,
+    "inst": "0xfe",
+    "code": "0xa",
+    "at": "0x104",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.turn",
+    "part": "muzzle",
+    "label": "Turned at random",
+    "doc": "Around the barrel (4096 = a whole turn)",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 4096,
+    "inst": "0x10e",
+    "code": "0x12",
+    "at": "0x110",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.texture",
+    "part": "muzzle",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab, 0-4)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 1,
+    "inst": "0x124",
+    "code": "0x52",
+    "at": "0x126",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.size",
+    "part": "muzzle",
+    "label": "Size",
+    "doc": "Of its model, on each axis (4096 = the model's own size)",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x12e",
+    "code": "0xd",
+    "at": "0x130",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.grow",
+    "part": "muzzle",
+    "label": "Grows by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 6144,
+    "inst": "0x132",
+    "code": "0xe",
+    "at": "0x134",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.blend",
+    "part": "muzzle",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x136",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x136": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x136": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x136": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x136": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.muzzle.lasts",
+    "part": "muzzle",
+    "label": "Lasts for",
+    "doc": "Ticks (each shot's glow)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 2,
+    "inst": "0x13e",
+    "code": "0x9",
+    "at": "0x13e",
+    "form": "op"
+   },
+   {
+    "key": "script.muzzle.first.r",
+    "part": "muzzle",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x142",
+    "code": "0xd4",
+    "at": "0x144",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.then.r",
+    "part": "muzzle",
+    "label": "Red",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x14c",
+    "code": "0xd4",
+    "at": "0x14e",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.first.g",
+    "part": "muzzle",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x142",
+    "code": "0xd4",
+    "at": "0x146",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.then.g",
+    "part": "muzzle",
+    "label": "Green",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x14c",
+    "code": "0xd4",
+    "at": "0x150",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.first.b",
+    "part": "muzzle",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 128,
+    "inst": "0x142",
+    "code": "0xd4",
+    "at": "0x148",
+    "form": "s16"
+   },
+   {
+    "key": "script.muzzle.then.b",
+    "part": "muzzle",
+    "label": "Blue",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x14c",
+    "code": "0xd4",
+    "at": "0x152",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.turn",
+    "part": "ring",
+    "label": "Turned at random",
+    "doc": "Around the barrel (4096 = a whole turn)",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 128,
+    "inst": "0x15c",
+    "code": "0x12",
+    "at": "0x15e",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.texture",
+    "part": "ring",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab, 0-4)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 4,
+    "inst": "0x176",
+    "code": "0x52",
+    "at": "0x178",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.size",
+    "part": "ring",
+    "label": "Size",
+    "doc": "Of its model, on each axis (4096 = the model's own size)",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x182",
+    "code": "0xd",
+    "at": "0x184",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.grow",
+    "part": "ring",
+    "label": "Grows by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 6144,
+    "inst": "0x186",
+    "code": "0xe",
+    "at": "0x188",
+    "form": "s16"
+   },
+   {
+    "key": "script.ring.blend",
+    "part": "ring",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x180",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x180": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x180": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x180": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x180": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.ring.lasts",
+    "part": "ring",
+    "label": "Lasts for",
+    "doc": "Ticks (each shot's star)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 2,
+    "inst": "0x190",
+    "code": "0x9",
+    "at": "0x190",
+    "form": "op"
+   },
+   {
+    "key": "script.side.height",
+    "part": "side",
+    "label": "Height",
+    "doc": "Under the gun's end (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 448,
+    "inst": "0x198",
+    "code": "0xa",
+    "at": "0x19a",
+    "form": "s16"
+   },
+   {
+    "key": "script.side.turn",
+    "part": "side",
+    "label": "Turned at random",
+    "doc": "Around the barrel (4096 = a whole turn)",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 4096,
+    "inst": "0x19c",
+    "code": "0x12",
+    "at": "0x19e",
+    "form": "s16"
+   },
+   {
+    "key": "script.side.texture",
+    "part": "side",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab, 0-4)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x1b6",
+    "code": "0x52",
+    "at": "0x1b8",
+    "form": "s16"
+   },
+   {
+    "key": "script.side.size",
+    "part": "side",
+    "label": "Size",
+    "doc": "Of its model, on each axis (4096 = the model's own size)",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 64,
+    "inst": "0x1c2",
+    "code": "0xd",
+    "at": "0x1c4",
+    "form": "s16"
+   },
+   {
+    "key": "script.side.grow",
+    "part": "side",
+    "label": "Grows by",
+    "doc": "Per tick",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": 6144,
+    "inst": "0x1c6",
+    "code": "0xe",
+    "at": "0x1c8",
+    "form": "s16"
+   },
+   {
+    "key": "script.side.blend",
+    "part": "side",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x1c0",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x1c0": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x1c0": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x1c0": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x1c0": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.side.lasts",
+    "part": "side",
+    "label": "Lasts for",
+    "doc": "Ticks (each shot's streak)",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 2,
+    "inst": "0x1d0",
+    "code": "0x9",
+    "at": "0x1d0",
+    "form": "op"
+   },
+   {
+    "key": "script.hit.height",
+    "part": "hit",
+    "label": "Height",
+    "doc": "On the target (negative: up)",
+    "type": "int",
+    "min": -32768,
+    "max": 32767,
+    "default": -640,
+    "inst": "0x1d4",
+    "code": "0x5f",
+    "at": "0x1d8",
+    "form": "s16"
+   },
+   {
+    "key": "script.hit.spread_x",
+    "part": "hit",
+    "label": "Spread X",
+    "doc": "How far from that point, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x1dc",
+    "code": "0x12",
+    "at": "0x1de",
+    "form": "s16"
+   },
+   {
+    "key": "script.hit.spread_y",
+    "part": "hit",
+    "label": "Spread Y",
+    "doc": "How far from that point, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x1dc",
+    "code": "0x12",
+    "at": "0x1e0",
+    "form": "s16"
+   },
+   {
+    "key": "script.hit.spread_z",
+    "part": "hit",
+    "label": "Spread Z",
+    "doc": "How far from that point, at random",
+    "type": "int",
+    "min": 0,
+    "max": 8191,
+    "default": 512,
+    "inst": "0x1dc",
+    "code": "0x12",
+    "at": "0x1e2",
+    "form": "s16"
+   },
+   {
+    "key": "script.hit.width",
+    "part": "hit",
+    "label": "Width",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 96,
+    "inst": "0x1f0",
+    "code": "0xa",
+    "at": "0x1f2",
+    "form": "s16"
+   },
+   {
+    "key": "script.hit.height_size",
+    "part": "hit",
+    "label": "Height of the picture",
+    "doc": "256 = its picture's own size",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 96,
+    "inst": "0x1f0",
+    "code": "0xa",
+    "at": "0x1f4",
+    "form": "s16"
+   },
+   {
+    "key": "script.hit.lasts",
+    "part": "hit",
+    "label": "Lasts for",
+    "doc": "Ticks: shorter cuts it, longer changes nothing once its animation is over",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 16,
+    "inst": "0x1fa",
+    "code": "0x9",
+    "at": "0x1fa",
+    "form": "op"
+   },
+   {
+    "key": "script.burst.texture",
+    "part": "burst",
+    "label": "Texture",
+    "doc": "Which of the file's textures it draws with (Textures tab, 0-4)",
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 2,
+    "inst": "0x202",
+    "code": "0x52",
+    "at": "0x204",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.size",
+    "part": "burst",
+    "label": "Size",
+    "doc": "Of its model, on each axis (4096 = the model's own size)",
+    "type": "int",
+    "min": 0,
+    "max": 4095,
+    "default": 32,
+    "inst": "0x212",
+    "code": "0xd",
+    "at": "0x214",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.blend",
+    "part": "burst",
+    "label": "Blend",
+    "doc": "How it mixes with what is behind it",
+    "type": "choice",
+    "min": 0,
+    "max": 3,
+    "default": 1,
+    "inst": "0x210",
+    "code": "0x23",
+    "options": [
+     {
+      "label": "50% (half and half)",
+      "bytes": {
+       "0x210": "2300"
+      }
+     },
+     {
+      "label": "Added to the picture",
+      "bytes": {
+       "0x210": "2302"
+      }
+     },
+     {
+      "label": "Taken from the picture (darkens)",
+      "bytes": {
+       "0x210": "2304"
+      }
+     },
+     {
+      "label": "A quarter added",
+      "bytes": {
+       "0x210": "2306"
+      }
+     }
+    ]
+   },
+   {
+    "key": "script.burst.lasts",
+    "part": "burst",
+    "label": "Lasts for",
+    "doc": "Ticks",
+    "type": "int",
+    "min": 1,
+    "max": 127,
+    "default": 8,
+    "inst": "0x21c",
+    "code": "0x9",
+    "at": "0x21c",
+    "form": "op"
+   },
+   {
+    "key": "script.burst.light.t1",
+    "part": "burst",
+    "label": "Tick 1",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 192,
+    "inst": "0x220",
+    "code": "0xd4",
+    "at": "0x222",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.light.t2",
+    "part": "burst",
+    "label": "Tick 2",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 240,
+    "inst": "0x226",
+    "code": "0xd4",
+    "at": "0x228",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.light.t3",
+    "part": "burst",
+    "label": "Tick 3",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 96,
+    "inst": "0x22c",
+    "code": "0xd4",
+    "at": "0x22e",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.light.t4",
+    "part": "burst",
+    "label": "Tick 4",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 80,
+    "inst": "0x232",
+    "code": "0xd4",
+    "at": "0x234",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.light.t5",
+    "part": "burst",
+    "label": "Tick 5",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 64,
+    "inst": "0x238",
+    "code": "0xd4",
+    "at": "0x23a",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.light.t6",
+    "part": "burst",
+    "label": "Tick 6",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 48,
+    "inst": "0x23e",
+    "code": "0xd4",
+    "at": "0x240",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.light.t7",
+    "part": "burst",
+    "label": "Tick 7",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 32,
+    "inst": "0x244",
+    "code": "0xd4",
+    "at": "0x246",
+    "form": "s16"
+   },
+   {
+    "key": "script.burst.light.t8",
+    "part": "burst",
+    "label": "Tick 8",
+    "doc": "",
+    "type": "int",
+    "min": 0,
+    "max": 255,
+    "default": 16,
+    "inst": "0x24a",
+    "code": "0xd4",
+    "at": "0x24c",
+    "form": "s16"
+   }
+  ]
+ }
 }
