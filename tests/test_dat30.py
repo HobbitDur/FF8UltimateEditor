@@ -312,6 +312,26 @@ class TestChainedCut:
         assert abs(between - (run_end + landed) / 2) < 1
         assert root(vanilla[34].frames[0])[2] == -286
 
+    def test_a_teleport_cut_snaps_instead_of_a_ghost_half_way(self, manager):
+        """c0m106 anim 28 -> 29: the sequence moves the entity 2853 units on the cut tick after a
+        last root step of 8 (a teleport, far more than TELEPORT_RATIO times the step): the
+        in-between keeps 28's own last root, the jump all on the next tick as at 15 fps, instead
+        of drawing the monster half-way where it never is. Squall's leap (2.8x) still blends."""
+        from FF8GameData.dat.animchain import analyse_animation_chain
+        monster = _load(manager, BATTLE_PATH / "c0m106.dat")
+        monster.origin_path = str(BATTLE_PATH / "c0m106.dat")
+        chain = analyse_animation_chain(manager.game_data, monster)
+        assert chain[28] == 29 and chain.moved_dict.get(28) is not None
+        animations = monster.animation_data.animations
+        frame = dat30.chain_frame_dict(animations, chain, monster.bone_data.unknown00)[28]
+        root = lambda f: [p.get_pos_raw() for p in f.position]
+        assert root(frame) == root(animations[28].frames[-1])
+        body = _load(manager, BATTLE_PATH / "d0c000.dat")
+        body.origin_path = str(BATTLE_PATH / "d0c000.dat")
+        squall = dat30.chain_frame_dict(body.animation_data.animations,
+                                        analyse_animation_chain(manager.game_data, body), 175)[32]
+        assert squall.position[2].get_pos_raw() == -286 + round(-1756 * 256 / 175)
+
 
 class TestCharacterFamily:
 

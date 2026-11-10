@@ -157,6 +157,12 @@ def _double_animation(animation, bones, smooth_loop, mode, chain_frame=None):
     animation.create_interpolated_frames(bones, FACTOR, smooth_loop, mode=mode, chain_frame=chain_frame)
 
 
+# a moved cut whose jump is more than this many times the animation's own last root step is a
+# teleport, not a move carried on (Squall's leap 2.8x, his weapons 3.8x; the lunges reach 6x, the
+# teleports start at 8.8x): its in-between keeps the old root instead of drawing a ghost half-way
+TELEPORT_RATIO = 7
+
+
 def chain_frame_dict(animation_list, chain_dict, model_scale: int = 0) -> dict:
     """{animation id: copy of the first frame of the animation it is cut to} (animchain),
     taken before anything is converted.
@@ -166,8 +172,10 @@ def chain_frame_dict(animation_list, chain_dict, model_scale: int = 0) -> dict:
     model half-way back for one tick (Squall's run 32 -> 34). The move is added to that root,
     in the skeleton's units (the engine draws a root at raw * model_scale / 256, model_scale =
     skeleton header +0x02): the in-between then draws the model half-way through the jump, as
-    the bones are half-way through the turn. When the move or the scale is unknown, the root of
-    the animation's own last frame is kept (no step back, the jump all on the next tick)."""
+    the bones are half-way through the turn. When the move or the scale is unknown, or the jump
+    is a teleport (more than TELEPORT_RATIO times the animation's own last root step: c0m106
+    stands still then lands 2853 units away), the root of the animation's own last frame is kept:
+    no step back, no ghost half-way, the jump all on the next tick as at 15 fps."""
     moved_dict = getattr(chain_dict, 'moved_dict', {})
     frame_dict = {}
     for anim_id, next_id in (chain_dict or {}).items():
@@ -176,12 +184,18 @@ def chain_frame_dict(animation_list, chain_dict, model_scale: int = 0) -> dict:
             own = animation_list[anim_id].frames if 0 <= anim_id < len(animation_list) else []
             if anim_id in moved_dict and own:
                 move = moved_dict[anim_id]
+                last = [p.get_pos_raw() for p in own[-1].position]
+                target = list(last)
+                if move is not None and model_scale > 0:
+                    target = [p.get_pos_raw() + (round(move[axis] * 256 / model_scale) if axis < len(move) else 0)
+                              for axis, p in enumerate(frame.position)]
+                    previous = [p.get_pos_raw() for p in own[-2].position] if len(own) > 1 else last
+                    jump = max((abs(t - l) for t, l in zip(target, last)), default=0)
+                    step = max((abs(l - b) for l, b in zip(last, previous)), default=0)
+                    if jump > TELEPORT_RATIO * step:
+                        target = list(last)
                 for axis, position in enumerate(frame.position):
-                    if move is not None and model_scale > 0 and axis < len(move):
-                        root = position.get_pos_raw() + round(move[axis] * 256 / model_scale)
-                    else:
-                        root = own[-1].position[axis].get_pos_raw()
-                    position.set_pos_raw(max(-32768, min(32767, root)))
+                    position.set_pos_raw(max(-32768, min(32767, target[axis])))
             frame_dict[anim_id] = frame
     return frame_dict
 
