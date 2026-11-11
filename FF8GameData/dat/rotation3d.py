@@ -91,8 +91,12 @@ def matrix_to_euler_raw(matrix, near=(0, 0, 0)) -> list:
     return best[1]
 
 
-def slerp_matrix(matrix_a, matrix_b, ratio: float) -> list:
+def slerp_matrix(matrix_a, matrix_b, ratio: float, long_way: bool = False) -> list:
     """The rotation `ratio` of the way from `matrix_a` to `matrix_b`, turning around one axis.
+
+    long_way turns the other way round instead (the same axis reversed, a full turn minus the
+    short angle): a bone spinning half a turn per frame, where only the motion around the step
+    says which way it goes (Animation.create_interpolated_frames).
 
     ratio 0 gives back matrix_a and 1 gives matrix_b; in between, the bone turns at a constant
     speed around the single axis that takes one pose to the other, the short way round (a turn is
@@ -103,7 +107,36 @@ def slerp_matrix(matrix_a, matrix_b, ratio: float) -> list:
     axis, angle = _axis_angle(relative)
     if angle < _EPSILON:
         return [row[:] for row in matrix_a]
+    if long_way:
+        axis, angle = tuple(-value for value in axis), 2.0 * math.pi - angle
     return _multiply(matrix_a, _rotation_around(axis, angle * ratio))
+
+
+def turn_vector(matrix_a, matrix_b) -> tuple:
+    """The short turn from one rotation to the other as one vector: its axis in the space both
+    rotations are expressed in, times the angle in degrees."""
+    axis, angle = _axis_angle(_multiply(_transpose(matrix_a), matrix_b))
+    degrees = math.degrees(angle)
+    return tuple(sum(matrix_a[row][k] * axis[k] for k in range(3)) * degrees for row in range(3))
+
+
+def multiply(left, right) -> list:
+    """left . right: a child bone's rotation in the model is its parent's times its own."""
+    return _multiply(left, right)
+
+
+def transpose(matrix) -> list:
+    """The inverse of a rotation."""
+    return _transpose(matrix)
+
+
+def turn_vector_raw(rotation_a, rotation_b) -> tuple:
+    """The short turn from one pose to the other as one vector: the axis, in the space of the
+    bone's parent (so two steps of one bone can be compared), times the angle in degrees."""
+    matrix_a = euler_raw_to_matrix(rotation_a)
+    axis, angle = _axis_angle(_multiply(_transpose(matrix_a), euler_raw_to_matrix(rotation_b)))
+    degrees = math.degrees(angle)
+    return tuple(sum(matrix_a[row][k] * axis[k] for k in range(3)) * degrees for row in range(3))
 
 
 def angle_between_raw(rotation_a, rotation_b) -> float:
@@ -113,13 +146,13 @@ def angle_between_raw(rotation_a, rotation_b) -> float:
     return math.degrees(_axis_angle(relative)[1])
 
 
-def blend_euler_raw(rotation_a, rotation_b, ratio: float) -> list:
+def blend_euler_raw(rotation_a, rotation_b, ratio: float, long_way: bool = False) -> list:
     """The three raw angles `ratio` of the way from one pose to the other, turning the short way.
 
     The one call the frame builder needs: the poses go in as the triples the file holds and the
     answer comes back in the same form, written near the first pose (see matrix_to_euler_raw).
     """
-    matrix = slerp_matrix(euler_raw_to_matrix(rotation_a), euler_raw_to_matrix(rotation_b), ratio)
+    matrix = slerp_matrix(euler_raw_to_matrix(rotation_a), euler_raw_to_matrix(rotation_b), ratio, long_way)
     return matrix_to_euler_raw(matrix, rotation_a)
 
 

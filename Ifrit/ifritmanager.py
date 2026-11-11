@@ -596,14 +596,18 @@ class IfritManager:
         index = 0
         for group in self._group_families(file_list):
             group_report = []
+            hold_step_dict = self._family_hold_step_dict(group)
             for file_path in group:
                 if progress_callback and progress_callback(index, os.path.basename(str(file_path))) is False:
                     for report in group_report:
                         report.pop('_monster', None)
                     return report_list
                 index += 1
+                # the weapons only: the body keeps blending (holding it too was filmed as a stutter
+                # of the whole character, 32 held images in Selphie's seq 26)
+                is_weapon = os.path.basename(str(file_path)).lower()[2:3] == 'w'
                 group_report.append(self._convert_one_file_to_real30(file_path, split_when_too_long,
-                                                                     mode))
+                                                                     mode, hold_step_dict if is_weapon else None))
             self._write_real30_group(group_report)
             report_list.extend(group_report)
         return report_list
@@ -664,8 +668,36 @@ class IfritManager:
             worst = max(pairs, key=lambda pair: battlememory.party_bytes(pair[1]) if pair[1] else 0)
             report['warning_list'].extend(battlememory.pair_warning_list(body_name, body, *worst))
 
+    def _family_hold_step_dict(self, group) -> dict:
+        """{anim id: frames whose step every weapon of a character holds whole}: the snaps
+        (Animation.snap_step_set) of every file of the family, merged. A weapon draws on its
+        body's animation and frame and hangs from its hand: its snapped bones held on their own are
+        still carried round by the hand (Selphie's nunchaku, d5w028 anim 29 frames 31 and 33,
+        filmed going round the far side). Held whole, the weapon stays rigid in her hand for the
+        in-between, as vanilla shows it, while the body goes on blending. {} for a monster (its
+        own snaps hold the snapping bones only)."""
+        if len(group) < 2 and not any(self.is_character_family_file(path) for path in group):
+            return {}
+        hold_step_dict = {}
+        for file_path in group:
+            if not self.is_character_family_file(file_path):
+                continue
+            try:
+                model = MonsterAnalyser(self.game_data)
+                model.load_file_data(str(file_path), self.game_data)
+                model.analyse_loaded_data(self.game_data)
+            except Exception:
+                continue
+            if not (model.bone_data and model.bone_data.bones):
+                continue
+            for anim_id, animation in enumerate(model.animation_data.animations):
+                step_set = animation.snap_step_set(model.bone_data.bones)
+                if step_set:
+                    hold_step_dict.setdefault(anim_id, set()).update(step_set)
+        return hold_step_dict
+
     def _convert_one_file_to_real30(self, file_path, split_when_too_long: bool,
-                                    mode: str = interpolation.LINEAR) -> dict:
+                                    mode: str = interpolation.LINEAR, hold_step_dict: dict = None) -> dict:
         """Convert one file IN MEMORY. The report carries the analyser under '_monster' for
         _write_real30_group, which saves the family or nothing."""
         report = self._new_fps_report(file_path)
@@ -684,7 +716,8 @@ class IfritManager:
             return report
         report['name'] = str(monster.info_stat_data.get('monster_name', "") or "")
         report['_monster'] = monster
-        message = self.convert_loaded_monster_to_real30(monster, split_when_too_long, mode, report)
+        message = self.convert_loaded_monster_to_real30(monster, split_when_too_long, mode, report,
+                                                        hold_step_dict)
         if message:
             report['error'] = message
             report.pop('_monster', None)
@@ -697,7 +730,8 @@ class IfritManager:
     _NO_MODEL_MESSAGE = "no animation and no sequence in this file"
 
     def convert_loaded_monster_to_real30(self, monster, split_when_too_long: bool = True,
-                                         mode: str = interpolation.LINEAR, report: dict = None) -> str:
+                                         mode: str = interpolation.LINEAR, report: dict = None,
+                                         hold_step_dict: dict = None) -> str:
         """Convert a loaded analyser to real 30 fps in memory (nothing saved). Fills `report`
         (see _new_fps_report) and returns an error message, or "" when it worked or when an
         animation cannot make it (then 'skipped_list' says which, and nothing was touched)."""
@@ -730,7 +764,8 @@ class IfritManager:
         try:
             result = dat30.convert_monster_to_real30(self.game_data, monster, kind_dict,
                                                      allow_split, mode, chain_dict,
-                                                     self._driver_frame_count(monster, origin))
+                                                     self._driver_frame_count(monster, origin),
+                                                     hold_step_dict)
         except Exception as e:
             return f"the conversion failed ({type(e).__name__}: {e})"
         for key in ('nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra',

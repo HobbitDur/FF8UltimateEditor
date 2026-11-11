@@ -147,14 +147,15 @@ def looks_already_converted(monster, kind_dict=None, chain_dict=None) -> bool:
     return nb_held * 2 >= len(one_shot)
 
 
-def _double_animation(animation, bones, smooth_loop, mode, chain_frame=None):
+def _double_animation(animation, bones, smooth_loop, mode, chain_frame=None, hold_step_set=frozenset()):
     """2n frames for n (n >= 1)."""
     if len(animation.frames) == 1:
         animation.frames.append(copy.deepcopy(animation.frames[0]))
         animation._recompute_frame_storage_types()
         animation.original_tail = b""
         return
-    animation.create_interpolated_frames(bones, FACTOR, smooth_loop, mode=mode, chain_frame=chain_frame)
+    animation.create_interpolated_frames(bones, FACTOR, smooth_loop, mode=mode, chain_frame=chain_frame,
+                                         hold_step_set=hold_step_set)
 
 
 # a moved cut whose jump is more than this many times the animation's own last root step is a
@@ -269,7 +270,7 @@ def convert_extra_animation_block(monster, mode=interpolation.LINEAR) -> int:
 
 def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: bool = True,
                               mode=interpolation.LINEAR, chain_dict: dict = None,
-                              driver_frame_count: list = None) -> dict:
+                              driver_frame_count: list = None, hold_step_dict: dict = None) -> dict:
     """Convert one loaded MonsterAnalyser in memory. Nothing is touched when an animation
     cannot make it ('skipped_list' not empty).
 
@@ -279,6 +280,8 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
     (animchain.analyse_animation_chain), also read before: its last frames go toward that one.
     driver_frame_count: the vanilla frame counts of the animations the sequences time themselves
     on (`C3 0A`: the character body's for a weapon); this model's own when omitted.
+    hold_step_dict: {anim id: frames whose step is held whole} (a character family's snaps,
+    Animation.snap_step_set over the body and all its weapons).
     Returns {'nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra',
     'camera_report'}. A camera that cannot be converted is listed in 'skipped_list' as
     ('camera', reason), and nothing is touched either.
@@ -311,7 +314,8 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
     for anim_id, smooth_loop, needs_split in plan_list:
         animation = monster.animation_data.animations[anim_id]
         if not needs_split:
-            _double_animation(animation, bones, smooth_loop, mode, chain_frames.get(anim_id))
+            _double_animation(animation, bones, smooth_loop, mode, chain_frames.get(anim_id),
+                              (hold_step_dict or {}).get(anim_id, frozenset()))
             report['nb_converted'] += 1
             continue
         nb_frame = len(animation.frames)

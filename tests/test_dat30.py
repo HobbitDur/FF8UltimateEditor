@@ -396,6 +396,83 @@ class TestCharacterFamily:
         assert pathlib.Path(body).read_bytes() != (BATTLE_PATH / "d0c000.dat").read_bytes()
 
 
+    @staticmethod
+    def _model_rotations(model):
+        """{anim id: [[rotation in the model's space of each bone] per frame]} and the bones' parents."""
+        from FF8GameData.monsterdata import Animation
+        parent_list = [None if bone.parent_id == 0xFFFF else bone.parent_id for bone in model.bone_data.bones]
+        return {anim_id: [Animation._model_rotation_list(frame, parent_list) for frame in animation.frames]
+                for anim_id, animation in enumerate(model.animation_data.animations)}
+
+    def test_selphie_nunchaku_stay_on_their_path(self, manager, tmp_path):
+        """Selphie's nunchaku bones undo each other's turns (d5w028 anim 14: bone 1 turns 176 deg,
+        its child bone 3 turns 178 deg back, the stick does not move): blended each on its own,
+        the stick went round for 1/30 s and the chain stretched ("teleports in her hand"). Blended
+        in the model's space, no in-between leaves the way from one pose to the next by more than
+        30 deg, except a fast spin carried on the long way round (a turn of 120 deg or more)."""
+        import math
+        from FF8GameData.dat import rotation3d
+        paths = _copy(tmp_path, "d5c011.dat", "d5w028.dat")
+        report_list = manager.convert_file_list_to_fps(list(paths), 30)
+        assert [r['error'] for r in report_list] == ["", ""]
+        vanilla = _load(manager, BATTLE_PATH / "d5w028.dat").animation_data.animations
+        angle = lambda a, b: math.degrees(rotation3d._axis_angle(rotation3d.multiply(rotation3d.transpose(a), b))[1])
+        off_path = []
+        for anim_id, frame_list in self._model_rotations(_load(manager, paths[1])).items():
+            for index in range(len(vanilla[anim_id].frames) - 1):
+                a, mid, b = frame_list[2 * index], frame_list[2 * index + 1], frame_list[2 * index + 2]
+                for bone, (rot_a, rot_mid, rot_b) in enumerate(zip(a, mid, b)):
+                    turn = angle(rot_a, rot_b)
+                    if turn < 120 and angle(rot_a, rot_mid) + angle(rot_mid, rot_b) - turn > 30:
+                        off_path.append((anim_id, index, bone))
+        assert off_path == []
+
+    def test_selphie_catch_snaps_like_vanilla(self, manager, tmp_path):
+        """d5w028 anim 29: the whirl slows to 24 deg a step, then the whole chain folds back into her
+        hand in one step (frame 15 -> 16: 160, 174, 134 deg). No in-between of that is right (the
+        launched stick went round the far side): the chain keeps frame 15's place, then jumps."""
+        import math
+        from FF8GameData.dat import rotation3d
+        paths = _copy(tmp_path, "d5c011.dat", "d5w028.dat")
+        manager.convert_file_list_to_fps(list(paths), 30)
+        converted = self._model_rotations(_load(manager, paths[1]))[29]
+        vanilla = self._model_rotations(_load(manager, BATTLE_PATH / "d5w028.dat"))[29]
+        angle = lambda a, b: math.degrees(rotation3d._axis_angle(rotation3d.multiply(rotation3d.transpose(a), b))[1])
+        # the chain and the launched stick (bones 1, 3-6); the stick in her hand (2) spins on
+        assert all(angle(converted[31][bone], vanilla[15][bone]) < 1 for bone in (1, 3, 4, 5, 6))
+
+    def test_selphie_weapon_holds_the_family_snaps(self, manager, tmp_path):
+        """Selphie's nunchaku draw on her body's frame and hang from her hand: at the launch
+        (anim 29, frames 15 -> 16 -> 17) the chain folds back and the free stick flips 158 deg,
+        and an in-between of either showed the stick folded flat or round the far side. Every
+        weapon holds those steps whole (shown again, then the next frame); the body goes on
+        blending (holding it too showed as a stutter of the whole character)."""
+        paths = _copy(tmp_path, "d5c011.dat", "d5w028.dat", "d5w029.dat")
+        assert [r['error'] for r in manager.convert_file_list_to_fps(list(paths), 30)] == ["", "", ""]
+        pose = lambda frame: ([[r.get_rotate_raw() for r in bone] for bone in frame.rotation_vector_data],
+                              [p.get_pos_raw() for p in frame.position])
+        for weapon in paths[1:]:
+            frames = _load(manager, weapon).animation_data.animations[29].frames
+            assert pose(frames[31]) == pose(frames[30]) and pose(frames[33]) == pose(frames[32])
+        body = _load(manager, paths[0]).animation_data.animations[29].frames
+        assert pose(body[31]) != pose(body[30])
+
+    def test_bite_bug_wings_keep_their_strokes(self, manager, tmp_path):
+        """Bite Bug's wings (c0m028 bones 13 and 15) swing 90 deg up then down on every frame: the
+        in-between was the middle, the wing level, half the time - they looked fixed. A bone that
+        flaps at the frame rate keeps its pose for the in-between: up, up, down, down."""
+        from FF8GameData.dat import rotation3d
+        path = _copy(tmp_path, "c0m028.dat")[0]
+        assert manager.convert_file_list_to_fps([path], 30)[0]['error'] == ""
+        vanilla = _load(manager, BATTLE_PATH / "c0m028.dat").animation_data.animations[0].frames
+        converted = _load(manager, path).animation_data.animations[0].frames
+        pose = lambda frame, bone: [frame.rotation_vector_data[bone][axis].get_rotate_raw() for axis in range(3)]
+        for index in range(len(vanilla) - 1):
+            for bone in (13, 15):
+                assert rotation3d.angle_between_raw(pose(vanilla[index], bone), pose(vanilla[index + 1], bone)) > 80
+                assert pose(converted[2 * index + 1], bone) == pose(vanilla[index], bone)
+
+
 class TestIfrit3DMenu:
     """The Ifrit3D 'Convert ALL animations' entry at 30 fps runs the same conversion on the
     open file (a monster), and sends a character to the batch conversion."""

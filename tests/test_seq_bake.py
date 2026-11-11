@@ -73,11 +73,14 @@ class TestTiming:
         result = _bake(game_data, [[0xA1, 0xA1, 0xA1, 0xA9]])
         assert result.nb_frame == 4
 
-    def test_b9_waits_its_parameter_minus_one_frames(self, game_data):
-        # B9 05 A9: the next op code runs 4 frames later, so A9 lands on frame 4.
+    def test_b9_waits_its_parameter_frames(self, game_data):
+        # B9 05 A9: the next op code runs 5 frames later, so A9 lands on frame 5. FF8_EN.exe:
+        # the B9 handler (0x504C4B) stores 05 - 1 in delayBeforeNextAnimation on frame 0, and
+        # AnimSeq_UpdateEntityPerFrame (0x504290) counts it down on frames 1-4 instead of running
+        # the sequence, which runs again on frame 5.
         result = _bake(game_data, [[0xB9, 0x05, 0xA9]])
-        assert result.nb_frame == 5
-        assert result.frame_list[4].command_list[0].op_code == 0xA9
+        assert result.nb_frame == 6
+        assert result.frame_list[5].command_list[0].op_code == 0xA9
 
     def test_b9_always_pauses_at_least_the_current_frame(self, game_data):
         # B9 01 would be "wait 0 frames", but the op code pauses the interpreter, so the

@@ -1455,7 +1455,8 @@ class Animation:
     def create_interpolated_frames(self, bones: List[Bone], factor: int = 4, smooth_loop: bool = False,
                                    wrap_frame: 'AnimationFrame' = None,
                                    mode: str = interpolation.LINEAR,
-                                   chain_frame: 'AnimationFrame' = None):
+                                   chain_frame: 'AnimationFrame' = None,
+                                   hold_step_set=frozenset()):
         """
         Insert (factor - 1) interpolated frames between each pair of consecutive frames.
         With factor = 4, an animation made for 15 fps becomes a 60 fps animation.
@@ -1476,6 +1477,9 @@ class Animation:
         this one's last frame (FF8GameData/dat/animchain.py): the frames after the last one go
         toward it instead, so the cut is split like every other step (Ward's attack, anim 29 ->
         30). The animation then neither loops nor holds its last pose.
+        hold_step_set: the frames (indexes) whose step to the next frame is not blended at all:
+        the frame is shown again in its place, then the next one (a character weapon's snaps,
+        decided over the body and all its weapons: snap_step_set).
         """
         if len(self.frames) < 2:
             return
@@ -1491,16 +1495,23 @@ class Animation:
             # the model half-way there for one frame; holding the last pose is what vanilla shows.
             smooth_loop = False
         new_frames = []
+        # {bone: True} for the bones the step before turned the long way (_step_plan)
+        last_long_way_dict = {}
         for frame_index, frame in enumerate(source_frames):
             new_frames.append(frame)
 
             is_last_frame = (frame_index == len(source_frames) - 1)
+            if frame_index in hold_step_set and not is_last_frame:
+                new_frames.extend(copy.deepcopy(frame) for _ in range(factor - 1))
+                last_long_way_dict.clear()
+                continue
             if is_last_frame and chain_frame is not None:
                 before = self._neighbour_frame(source_frames, frame_index - 1, False)
+                plan = self._step_plan(before, frame, chain_frame, None, bones, last_long_way_dict)
                 for step_index in range(1, factor):
                     new_frames.append(self._create_frame_between(frame, chain_frame, step_index / factor,
                                                                  bones, mode=mode, frame_before=before,
-                                                                 frame_after=None))
+                                                                 frame_after=None, plan=plan))
                 continue
             if is_last_frame and not smooth_loop:
                 # Hold the last pose for the rest of its tick (see the docstring)
@@ -1516,11 +1527,12 @@ class Animation:
             # two ends, and every mode falls back to the segment alone there.
             before = self._neighbour_frame(source_frames, frame_index - 1, smooth_loop)
             after = self._neighbour_frame(source_frames, frame_index + 2, smooth_loop)
+            plan = self._step_plan(before, frame, next_frame, after, bones, last_long_way_dict)
             for step_index in range(1, factor):
                 step = step_index / factor
                 new_frames.append(self._create_frame_between(frame, next_frame, step, bones,
                                                              mode=mode, frame_before=before,
-                                                             frame_after=after))
+                                                             frame_after=after, plan=plan))
 
         self.frames = new_frames
         self._recompute_frame_storage_types()
@@ -1534,6 +1546,201 @@ class Animation:
     # 56 deg steps mid-way, 8 and 3 at its two ends, and a 109 deg jump back to its start).
     WRAP_MIN_DEGREES = 20.0
     WRAP_SEAM_STEPS = 2
+
+    # A bone that turns at least this far in one step is blended where it really is, in the
+    # model's space, with every bone below it: the turn of a bone is often undone by its child.
+    # Selphie's nunchaku (d5w028 anim 14): bone 1 turns 176 deg, its child bone 3 turns 178 deg
+    # back, and the stick does not move. Blending each bone on its own sent the stick round for
+    # 1/30 s (the "teleport in her hand"); in the model's space the in-between stays put.
+    WORLD_BLEND_DEGREES = 90.0
+    # A bone that turns at least this far in one step (in the model's space) could as well have
+    # gone the other way round: half a turn either way ends on the same pose. The way kept is the
+    # one that changes the bone's spin the least from the step before (on the first step, from
+    # the step after, if that one is clear). Selphie's nunchaku spin 170 then 130 deg (a 230
+    # going on). That takes a bone already spinning that fast (SPIN_REFERENCE_DEGREES the step
+    # before): otherwise the turn is a snap and no in-between of it is right - Selphie's whirl
+    # slows to 24 deg a step, then the chain folds back into her hand in one step (d5w028 anim 29
+    # frame 15 -> 16: 160, 174, 134 deg), then the free stick flips 158 deg (16 -> 17) after
+    # 73: the chain from that bone down keeps its pose, then jumps, as vanilla shows it (filmed:
+    # a blend of either way showed the stick folded flat or the chain stretched for 1/30 s).
+    SPIN_AMBIGUOUS_DEGREES = 120.0
+    SPIN_REFERENCE_DEGREES = 120.0
+    # A bone that swings between two poses on every frame flaps at the frame rate: Bite Bug's wings
+    # (c0m028 bones 13 and 15) go 90 deg up, 90 deg down, on every frame of every animation. The
+    # middle of such a swing is the wing level, so half the 30 fps images showed level wings and
+    # they looked fixed. A flapping bone keeps its pose for the in-between (up, up, down, down):
+    # the full strokes vanilla shows, each for the same 1/15 s.
+    FLAP_MIN_DEGREES = 30.0
+    # how near the pose two frames away must come back (fraction of the swing) to be a flap
+    FLAP_RETURN_RATIO = 0.25
+
+    @staticmethod
+    def _bone_pose_raw(frame: 'AnimationFrame', bone_index: int):
+        if frame is None or bone_index >= len(frame.rotation_vector_data):
+            return None
+        return [int(frame.rotation_vector_data[bone_index][axis].get_rotate_raw()) for axis in range(3)]
+
+    @staticmethod
+    def _largest_change_raw(pose_a, pose_b) -> int:
+        """The sum of the three angle changes: a turn is never more than that (each angle is a
+        turn around one axis), so below it no matrix is worth computing."""
+        return sum(abs(rotation3d.unwrap_raw(a, b) - a) for a, b in zip(pose_a, pose_b))
+
+    @staticmethod
+    def _model_rotation_list(frame: 'AnimationFrame', parent_list) -> list:
+        """Each bone's rotation in the model's space (its parents' turns times its own)."""
+        rotation_list = []
+        for bone_index, parent in enumerate(parent_list):
+            local = rotation3d.euler_raw_to_matrix(Animation._bone_pose_raw(frame, bone_index))
+            rotation_list.append(local if parent is None else rotation3d.multiply(rotation_list[parent], local))
+        return rotation_list
+
+    @staticmethod
+    def _flap_bone_set(frame_before, frame_a, frame_b, frame_after, nb_bone) -> set:
+        """The bones swinging from frame_a to frame_b that swing straight back on the steps on
+        either side (FLAP_MIN_DEGREES), on every side there is: a bone flapping at the frame rate."""
+        flap_set = set()
+        check_raw = round(Animation.FLAP_MIN_DEGREES * 4096 / 360)
+        for bone_index in range(nb_bone):
+            pose_a = Animation._bone_pose_raw(frame_a, bone_index)
+            pose_b = Animation._bone_pose_raw(frame_b, bone_index)
+            if Animation._largest_change_raw(pose_a, pose_b) < check_raw:
+                continue
+            swing = rotation3d.angle_between_raw(pose_a, pose_b)
+            if swing < Animation.FLAP_MIN_DEGREES:
+                continue
+            limit = swing * Animation.FLAP_RETURN_RATIO
+            pose_before = Animation._bone_pose_raw(frame_before, bone_index)
+            pose_after = Animation._bone_pose_raw(frame_after, bone_index)
+            side_list = []
+            if pose_before is not None:
+                side_list.append(rotation3d.angle_between_raw(pose_before, pose_b) <= limit)
+            if pose_after is not None:
+                side_list.append(rotation3d.angle_between_raw(pose_after, pose_a) <= limit)
+            if side_list and all(side_list):
+                flap_set.add(bone_index)
+        return flap_set
+
+    @staticmethod
+    def _step_plan(frame_before, frame_a, frame_b, frame_after, bones, last_long_way_dict):
+        """How the in-betweens of one step blend the bones that turn far, or None when every bone
+        is blended on its own: {'held': flapping bones (keep frame_a's pose), 'world': bones
+        blended in the model's space, 'long': those turning the long way round, 'frozen': those of
+        'world' keeping frame_a's place in the model (a snap), 'rotation_a' / 'rotation_b': every
+        bone's rotation in the model's space}. last_long_way_dict carries the
+        long-way choices from one step to the next."""
+        nb_bone = min(len(frame_a.rotation_vector_data), len(frame_b.rotation_vector_data), len(bones))
+        held_set = Animation._flap_bone_set(frame_before, frame_a, frame_b, frame_after, nb_bone)
+        parent_list = []
+        for bone_index in range(nb_bone):
+            parent = bones[bone_index].parent_id
+            if parent == 0xFFFF:
+                parent_list.append(None)
+            elif 0 <= parent < bone_index:
+                parent_list.append(parent)
+            else:
+                parent_list = None  # not stored parents first: blend every bone on its own
+                break
+        world_set = set()
+        rotation_a = rotation_b = None
+        if parent_list is not None:
+            check_raw = round(Animation.WORLD_BLEND_DEGREES * 4096 / 360)
+            # The turns of a chain add up: no bone of it may turn 90 deg on its own while its end
+            # does in the model (Selphie's d5w028 anim 29 frame 16 -> 17: 63 deg at most each, the
+            # free stick 168 deg). The sum of the angle changes from the root is the most a bone
+            # can turn in the model: past the threshold, its real turn is looked at.
+            reach_list = []
+            for bone_index in range(nb_bone):
+                parent = parent_list[bone_index]
+                pose_a = Animation._bone_pose_raw(frame_a, bone_index)
+                pose_b = Animation._bone_pose_raw(frame_b, bone_index)
+                change = Animation._largest_change_raw(pose_a, pose_b)
+                reach_list.append(change + (reach_list[parent] if parent is not None else 0))
+                if bone_index in held_set:
+                    continue
+                if parent is not None and parent in world_set:
+                    world_set.add(bone_index)
+                    continue
+                if change >= check_raw and rotation3d.angle_between_raw(pose_a, pose_b) >= Animation.WORLD_BLEND_DEGREES:
+                    world_set.add(bone_index)
+                elif reach_list[bone_index] >= check_raw:
+                    if rotation_a is None:
+                        rotation_a = Animation._model_rotation_list(frame_a, parent_list)
+                        rotation_b = Animation._model_rotation_list(frame_b, parent_list)
+                    turn = rotation3d.turn_vector(rotation_a[bone_index], rotation_b[bone_index])
+                    if math.sqrt(sum(value * value for value in turn)) >= Animation.WORLD_BLEND_DEGREES:
+                        world_set.add(bone_index)
+        if not world_set:
+            last_long_way_dict.clear()
+            return {'held': held_set, 'world': set(), 'long': set()} if held_set else None
+        if rotation_a is None:
+            rotation_a = Animation._model_rotation_list(frame_a, parent_list)
+            rotation_b = Animation._model_rotation_list(frame_b, parent_list)
+        rotation_before = rotation_after = None
+        long_set = set()
+        snap_set = set()
+        norm = lambda vector: math.sqrt(sum(value * value for value in vector))
+        for bone_index in sorted(world_set):
+            turn = rotation3d.turn_vector(rotation_a[bone_index], rotation_b[bone_index])
+            angle = norm(turn)
+            if angle < Animation.SPIN_AMBIGUOUS_DEGREES:
+                continue
+            reference = None
+            if frame_before is not None and len(frame_before.rotation_vector_data) >= nb_bone:
+                if rotation_before is None:
+                    rotation_before = Animation._model_rotation_list(frame_before, parent_list)
+                reference = rotation3d.turn_vector(rotation_before[bone_index], rotation_a[bone_index])
+                if last_long_way_dict.get(bone_index):
+                    size = norm(reference)
+                    if size > 1e-6:
+                        reference = tuple(-value * (360.0 - size) / size for value in reference)
+            elif frame_after is not None and len(frame_after.rotation_vector_data) >= nb_bone:
+                if rotation_after is None:
+                    rotation_after = Animation._model_rotation_list(frame_after, parent_list)
+                after_turn = rotation3d.turn_vector(rotation_b[bone_index], rotation_after[bone_index])
+                if norm(after_turn) < Animation.SPIN_AMBIGUOUS_DEGREES:
+                    reference = after_turn
+            if reference is None or norm(reference) < Animation.SPIN_REFERENCE_DEGREES:
+                snap_set.add(bone_index)
+                continue
+            other = tuple(-value * (360.0 - angle) / angle for value in turn)
+            if math.dist(other, reference) < math.dist(turn, reference):
+                long_set.add(bone_index)
+        frozen_set = set()
+        if snap_set:
+            # The snapping bone's chain holds where it is in the model (its parent may move: held
+            # in its own angles it would be carried round), from the top of the bones blended
+            # with it down
+            for bone_index in snap_set:
+                while parent_list[bone_index] is not None and parent_list[bone_index] in world_set:
+                    bone_index = parent_list[bone_index]
+                frozen_set.add(bone_index)
+            for bone_index in range(nb_bone):
+                parent = parent_list[bone_index]
+                if parent is not None and parent in frozen_set and bone_index in world_set:
+                    frozen_set.add(bone_index)
+            long_set -= frozen_set
+        last_long_way_dict.clear()
+        last_long_way_dict.update({bone_index: True for bone_index in long_set})
+        return {'held': held_set, 'world': world_set, 'long': long_set, 'frozen': frozen_set, 'parent': parent_list,
+                'rotation_a': rotation_a, 'rotation_b': rotation_b}
+
+    def snap_step_set(self, bones: List[Bone]) -> set:
+        """The frames (indexes) whose step to the next one snaps a bone (_step_plan 'frozen': a
+        turn of SPIN_AMBIGUOUS_DEGREES or more that does not carry a spin on). A character's
+        weapon hangs from its body's hand, which blends on: held in the weapon alone, the snapped
+        bones are still carried round (Selphie d5w028 anim 29 frames 15 -> 17). Every weapon of
+        the character then holds these steps whole (IfritManager._family_hold_step_dict)."""
+        step_set = set()
+        last_long_way_dict = {}
+        frames = self.frames
+        for index in range(len(frames) - 1):
+            before = frames[index - 1] if index > 0 else None
+            after = frames[index + 2] if index + 2 < len(frames) else None
+            plan = Animation._step_plan(before, frames[index], frames[index + 1], after, bones, last_long_way_dict)
+            if plan is not None and plan.get('frozen'):
+                step_set.add(index)
+        return step_set
 
     @staticmethod
     def _wraps_cleanly(frames: List['AnimationFrame'], wrap_frame: 'AnimationFrame') -> bool:
@@ -1661,8 +1868,14 @@ class Animation:
     def _create_frame_between(frame_a: 'AnimationFrame', frame_b: 'AnimationFrame', step: float,
                               bones: List[Bone], mode: str = interpolation.LINEAR,
                               frame_before: 'AnimationFrame' = None,
-                              frame_after: 'AnimationFrame' = None) -> 'AnimationFrame':
+                              frame_after: 'AnimationFrame' = None,
+                              plan: dict = None) -> 'AnimationFrame':
         """Create a new frame interpolated between frame_a (step=0.0) and frame_b (step=1.0).
+
+        plan (create_interpolated_frames, _step_plan): the bones that flap at the frame rate keep
+        frame_a's pose; the bones that turn far, and every bone below them, are blended in the
+        model's space (one 3D turn each, the long way round where the plan says so) and written
+        back as the angles the file stores.
 
         `mode` picks the curve (FF8GameData/dat/interpolation.py). frame_before/frame_after are
         the frames just outside the segment, used by the curves that flow through the keyframes;
@@ -1703,6 +1916,9 @@ class Animation:
                 new_frame.rotation_vector_data[bone_index] = Animation._blend_bone_in_arc(
                     frame_a, frame_b, bone_index, arc_ratio)
 
+        if plan is not None:
+            Animation._apply_step_plan(new_frame, frame_a, plan, interpolation.shaped_step(step, mode))
+
         # Bone scales (squash-and-stretch), same curve on the raw values.
         # A frame without the mode bit is entirely neutral (1024 raw).
         if frame_a.mode_bit == 1 or frame_b.mode_bit == 1:
@@ -1724,6 +1940,33 @@ class Animation:
 
         new_frame.set_all_bones_matrix(bones)
         return new_frame
+
+    @staticmethod
+    def _apply_step_plan(new_frame: 'AnimationFrame', frame_a: 'AnimationFrame', plan: dict, ratio: float):
+        """Rewrite the in-between's bones as _step_plan says (see _create_frame_between)."""
+        for bone_index in plan['held']:
+            if bone_index < len(new_frame.rotation_vector_data):
+                new_frame.rotation_vector_data[bone_index] = [
+                    RotationType(True, 0, raw) for raw in Animation._bone_pose_raw(frame_a, bone_index)]
+        if not plan['world']:
+            return
+        parent_list = plan['parent']
+        model_list = []
+        for bone_index, parent in enumerate(parent_list):
+            if bone_index in plan['world']:
+                if bone_index in plan['frozen']:
+                    model = plan['rotation_a'][bone_index]
+                else:
+                    model = rotation3d.slerp_matrix(plan['rotation_a'][bone_index], plan['rotation_b'][bone_index],
+                                                    ratio, bone_index in plan['long'])
+                local = model if parent is None else rotation3d.multiply(
+                    rotation3d.transpose(model_list[parent]), model)
+                pose = rotation3d.matrix_to_euler_raw(local, Animation._bone_pose_raw(frame_a, bone_index))
+                new_frame.rotation_vector_data[bone_index] = [RotationType(True, 0, raw) for raw in pose]
+            else:
+                local = rotation3d.euler_raw_to_matrix(Animation._bone_pose_raw(new_frame, bone_index))
+                model = local if parent is None else rotation3d.multiply(model_list[parent], local)
+            model_list.append(model)
 
     def _recompute_frame_storage_types(self):
         """

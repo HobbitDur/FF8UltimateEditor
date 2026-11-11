@@ -789,10 +789,12 @@ class _Interpreter:
             return next_address, True
         elif op_code == _PAUSE_YIELD:             # A1
             return next_address, True
-        elif op_code == _PAUSE_WAIT and parameters:  # B9: wait its parameter - 1 frames
-            # The op code always pauses at least the frame it runs on, so the documented
-            # "XX - 1 frames" is floored at one frame of wait.
-            self.wait_frame = max(parameters[0] - 1, 1) - 1
+        elif op_code == _PAUSE_WAIT and parameters:  # B9: the sequence goes on XX frames later
+            # FF8_EN.exe: the B9 handler (0x504C4B) pauses the frame it runs on and stores XX - 1
+            # in delayBeforeNextAnimation; AnimSeq_UpdateEntityPerFrame (0x504290) decrements it
+            # on each later frame while it is not 0 and runs the sequence again once it is: the
+            # next op code runs XX frames after the B9 (B9 01 on the next frame, B9 00 = 256).
+            self.wait_frame = (parameters[0] - 1) & 0xFF
             return next_address, True
         elif op_code == 0xBA:                     # advance the animation one frame
             self._advance_animation()
