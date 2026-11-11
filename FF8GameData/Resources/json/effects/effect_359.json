@@ -1,0 +1,226 @@
+{
+ "format": 1,
+ "effect": 359,
+ "name": "Reflect breaks",
+ "doc": "Reflect breaking (Cronos's OneShotReflect: the first spell it bounces ends it): the bounce flash's green dome shown whole on the reflector, then broken like glass - each of its polygons a shard flying out from the centre, spinning, falling and fading. Drawn as the game draws its Reflect / Shell / Protect bounce flash (0x570650: a battle model of the exe table 0xC81678 on the battle's resident texture page; each shard a one-polygon model made from it), so it loads no file, uploads no texture, uses no magic buffer and starts no camera: it plays while the bounced spell's effect runs. The game plays it through FujinEffects_PlayOnEntity (the battle's hit-effect queue); cast as a spell, it plays on each target (FujinEffects fxshatter.h).",
+ "copy": {
+  "doc": "A new effect: no exe function stands in for it.",
+  "functions": {},
+  "memory": {}
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "shatter",
+  "doc": "The shatter: the whole model for a few ticks, then its shards (no tasks: the host's code)"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "Its sounds"
+  },
+  {
+   "id": 1,
+   "key": "whole",
+   "title": "Whole",
+   "doc": "The model shown whole on the fighter before it breaks"
+  },
+  {
+   "id": 2,
+   "key": "pieces",
+   "title": "Shards",
+   "doc": "Its polygons once it breaks, each a shard: how they fly out, spin, fall and fade"
+  },
+  {
+   "id": 3,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "A flash of another model at the centre when it breaks, growing and fading (none by default)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "timing.sound",
+   "part": "timing",
+   "label": "Sound",
+   "doc": "The sound when it appears (a system sound id; 114 = Reflect's bounce, -1: none)",
+   "type": "i32",
+   "min": -1,
+   "max": 1023,
+   "default": 114,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.break_sound",
+   "part": "timing",
+   "label": "Break sound",
+   "doc": "The sound when it breaks (a system sound id; -1: none)",
+   "type": "i32",
+   "min": -1,
+   "max": 1023,
+   "default": -1,
+   "unit": "plain"
+  },
+  {
+   "key": "whole.model",
+   "part": "whole",
+   "label": "Model",
+   "doc": "The battle model (0x570650's table: 8 Reflect's dome, 9 Shell's, 10 Protect's, 0-7 others); its polygons are the shards",
+   "type": "i16",
+   "min": 0,
+   "max": 10,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "whole.scale",
+   "part": "whole",
+   "label": "Size",
+   "doc": "Its size, shards included (4096 = the model's own; the bounce flash's: 5120)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 5120,
+   "unit": "plain"
+  },
+  {
+   "key": "whole.turn",
+   "part": "whole",
+   "label": "Turn",
+   "doc": "Added to the fighter's facing (4096 = a whole turn)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "whole.ticks",
+   "part": "whole",
+   "label": "Breaks after",
+   "doc": "Ticks shown whole before it breaks (the first fading in; 0: breaks at once)",
+   "type": "i16",
+   "min": 0,
+   "max": 60,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "pieces.speed",
+   "part": "pieces",
+   "label": "Speed",
+   "doc": "How fast the shards fly out from the centre (per tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 2000,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "pieces.speed_random",
+   "part": "pieces",
+   "label": "Speed, random",
+   "doc": "Up to this much faster, each its own",
+   "type": "i16",
+   "min": 0,
+   "max": 2000,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "pieces.rise",
+   "part": "pieces",
+   "label": "Rise",
+   "doc": "How fast they first go up (per tick; below 0: down)",
+   "type": "i16",
+   "min": -2000,
+   "max": 2000,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "pieces.gravity",
+   "part": "pieces",
+   "label": "Gravity",
+   "doc": "Taken off their rise each tick (below 0: they float up)",
+   "type": "i16",
+   "min": -200,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "pieces.spin",
+   "part": "pieces",
+   "label": "Spin",
+   "doc": "Their turning speed about their own middle, at most (per tick; 4096 = a whole turn)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 160,
+   "unit": "plain"
+  },
+  {
+   "key": "pieces.life",
+   "part": "pieces",
+   "label": "Lives for",
+   "doc": "Ticks the shards last",
+   "type": "i16",
+   "min": 1,
+   "max": 120,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "pieces.fade_after",
+   "part": "pieces",
+   "label": "Fades after",
+   "doc": "Ticks before they start fading out (in 4 steps until they end)",
+   "type": "i16",
+   "min": 0,
+   "max": 120,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.model",
+   "part": "burst",
+   "label": "Model",
+   "doc": "The battle model flashed when it breaks (0-10; 4: an icy burst)",
+   "type": "i16",
+   "min": 0,
+   "max": 10,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.scale",
+   "part": "burst",
+   "label": "Size",
+   "doc": "Its size when it breaks (4096 = the model's own); it grows by a quarter each tick",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.ticks",
+   "part": "burst",
+   "label": "Lasts for",
+   "doc": "Ticks the burst lasts (solid, then fading out; 0: none)",
+   "type": "i16",
+   "min": 0,
+   "max": 60,
+   "default": 0,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

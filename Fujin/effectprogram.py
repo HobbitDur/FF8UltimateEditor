@@ -417,7 +417,9 @@ def compile_program(description, values=None):
         arena_a, arena_b = buffer["arenas"]
         lines.append(f"magic_buffer 0x{_number(arena_a):X} 0x{_number(arena_b):X} 0x{_number(buffer['morph']):X}")
     director = description["director"]
-    if director.get("kind") == "port":   # the port's file loader, setup and root (Ray Bomb's kind: a port module's)
+    if director.get("kind") == "shatter":   # a resident model broken into pieces (fxshatter.h: Reflect breaking), no tasks
+        lines.append("director shatter -1")
+    elif director.get("kind") == "port":   # the port's file loader, setup and root (Ray Bomb's kind: a port module's)
         if not module:
             raise DescriptionError("director: a port director runs a port module's code (\"module\")")
         lines.append("director port -1")

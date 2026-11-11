@@ -119,7 +119,7 @@ namespace fxprog
 		uint32_t before = 0;                          // a module function the master calls before this queue runs (Stare's view axes)
 		std::vector<std::string> before_args;         // its arguments: numbers, @memory names (a copy's moved)
 	};
-	enum Director { PER_ACTION, MASTER, CYCLE, CHAIN, PORT };
+	enum Director { PER_ACTION, MASTER, CYCLE, CHAIN, PORT, SHATTER };   // SHATTER: fxshatter.h (a resident model broken into pieces)
 	// a value written into data before every cast (an actor definition's field: the act family's)
 	struct Patch { uint32_t at = 0; int type = 0; Val value; };
 	enum DrawOnlyKind { NO_DRAW_ONLY, DRAW_ONLY_SKIP, DRAW_ONLY_DRAWS };
@@ -2116,9 +2116,16 @@ namespace fxprog
 		return g_program->director == MASTER ? MasterDirector(n) : PerActionDirector(n);
 	}
 
+}
+
+#include "fxshatter.h"
+
+namespace fxprog
+{
 	inline uint32_t __cdecl FileLoader()
 	{
 		Program &g = *g_program;
+		if (g.director == SHATTER) return 0;   // (it loads nothing: the battle's resident models)
 		if (g.director == PORT)
 		{
 			UseModule();
@@ -2239,6 +2246,7 @@ namespace fxprog
 		Program &g = *g_program;
 		ApplyPatches();
 		g_params_of = nullptr;   // (at each cast: the program's values as they are now)
+		if (g.director == SHATTER) return shatter::CastSetup(g, ctx);
 		if (g.director == PORT)
 		{
 			UseModule();
@@ -2586,6 +2594,7 @@ namespace fxprog
 					g.director_place = ParseStep(w, 4, &error);
 				}
 				else if (w[1] == "port") g.director = PORT;
+				else if (w[1] == "shatter") g.director = SHATTER;
 				else if (w[1] == "per_action")
 				{
 					g.director_short = w.size() > 3 && w[3] == "short";
@@ -2699,7 +2708,7 @@ namespace fxprog
 			else if (error.empty()) error = "line " + std::to_string(number) + ": unknown " + d;
 		}
 		if (error.empty() && (int)g.tasks.size() > (int)(sizeof(THUNKS) / sizeof(THUNKS[0]))) error = "too many tasks";
-		if (error.empty() && g.director != PORT && (g.director_spawns < 0 || g.director_spawns >= (int)g.tasks.size())) error = "the director spawns no task";
+		if (error.empty() && g.director != PORT && g.director != SHATTER && (g.director_spawns < 0 || g.director_spawns >= (int)g.tasks.size())) error = "the director spawns no task";
 		if (error.empty() && g.director == CHAIN && (g.director_single < 0 || g.director_single >= (int)g.tasks.size())) error = "the chain has no lone target's director";
 		if (error.empty() && !g_parse_error.empty()) error = g_parse_error;
 		g_parsing = nullptr;

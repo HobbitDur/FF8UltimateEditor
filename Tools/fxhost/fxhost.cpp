@@ -197,6 +197,20 @@ extern "C" __declspec(dllexport) int __cdecl FujinEffects_Install(const wchar_t 
 	return Install(folder);
 }
 
+// a program played on one fighter outside the magic dispatch (Cronos's OneShotReflect: Reflect breaking,
+// called from ApplyActionResultToTarget 0x506690 instead of the bounce flash 0x26, while the bounced spell's
+// effect runs): 1 when it started, 0 when there is no such program or it cannot play there (then the caller
+// plays the game's flash). Only a "shatter" program plays this way (fxshatter.h: resident models, no file,
+// no magic buffer, no camera); game thread only.
+extern "C" __declspec(dllexport) int __cdecl FujinEffects_PlayOnEntity(int effect_id, void *entity)
+{
+	InstallOnce();   // (the programs install at the first effect the game dispatches: a bounce comes after one)
+	if (effect_id < 1 || effect_id > SLOTS || !entity) return 0;
+	fxprog::Program *program = g_slots[effect_id - 1];
+	if (!program || program->director != fxprog::SHATTER) return 0;
+	return fxprog::shatter::PlayOnEntity(*program, (uint8_t *)entity) ? 1 : 0;
+}
+
 BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID)
 {
 	if (reason != DLL_PROCESS_ATTACH) return TRUE;

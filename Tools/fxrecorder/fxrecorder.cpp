@@ -58,7 +58,9 @@
 // its description (Fujin/effectprogram.py compiles it, Tools/fxhost/fxprogram.h runs it), params=
 // setting its parameters; it stands in for the exe's functions it names, or takes the effect's slot]
 // [host=<FujinEffects.dll> hostdir=<folder>: the game's host of Fujin's effects (Tools/fxhost)
-// installs the programs of <folder>/FujinEffects, as in the game]. Each primitive a port draws carries
+// installs the programs of <folder>/FujinEffects, as in the game] [playon=ID:SLOT:TICK: with host=, at the
+// effect's tick TICK the host's FujinEffects_PlayOnEntity(ID, slot SLOT's entity), as Cronos's OneShotReflect
+// calls it when Reflect breaks mid-spell (its shatter in the hit-effect queue: needs sequences=1)]. Each primitive a port draws carries
 // the part it belongs to (FX_PART): the P lines' first number. [keepparts=1: with actors=0, what a
 // part draws stays even in an actor's texture (Cure's overlay redraws its target): only the actors'
 // own drawing goes] [actors=2: only the effect's targets are drawn (the effect against one monster, no
@@ -111,6 +113,7 @@ struct Opt
 	std::string params, schema;       // params=<file>: its parameters / schema=<file>: write their table
 	std::string program;              // program=<file>: the effect run from its description (Tools/fxhost)
 	std::string host, hostdir;        // host=<FujinEffects.dll> hostdir=<folder>: it installs <folder>'s programs
+	int playon_id = -1, playon_slot = 0, playon_tick = 0;   // playon=ID:SLOT:TICK (the host's FujinEffects_PlayOnEntity)
 	// poke=ADDR:b,b,..: bytes written after the setup - what the battle's AnimSeq VM (not run here) would have written
 	// (Renzokuken's stage durations, AnimSeq opcode AB: 0x1D98214 = n, then n + 1 frame counts)
 	std::vector<std::pair<uint32_t, std::vector<uint8_t>>> pokes;
@@ -1245,6 +1248,8 @@ static void set_camera(int t)
 
 // ---------------------------------------------------------------- run
 static uint32_t g_setup_fn = 0;   // the effect's setup (Magic_GetIDLoad's), called again by recall=
+typedef int (__cdecl *PlayOnFn)(int, void *);
+static PlayOnFn g_play_on = nullptr;   // the host's FujinEffects_PlayOnEntity (playon=)
 static bool run_setup()
 {
 	__try
@@ -1310,6 +1315,7 @@ static bool parse(int argc, char **argv)
 		else if (k == "program") O.program = v;
 		else if (k == "host") O.host = v;
 		else if (k == "hostdir") O.hostdir = v;
+		else if (k == "playon") sscanf(v.c_str(), "%d:%d:%d", &O.playon_id, &O.playon_slot, &O.playon_tick);
 		else if (k == "schema") O.schema = v;
 		else if (k == "model") O.model = atoi(v.c_str());
 		else if (k == "stage") O.stage = atoi(v.c_str());
@@ -1672,6 +1678,8 @@ int main(int argc, char **argv)
 		if (!install) { printf("host: cannot load %s\n", O.host.c_str()); return 4; }
 		const std::wstring folder(O.hostdir.begin(), O.hostdir.end());
 		printf("host: %d programs installed\n", install(folder.c_str()));
+		g_play_on = (PlayOnFn)GetProcAddress(dll, "FujinEffects_PlayOnEntity");
+		if (O.playon_id >= 0 && !g_play_on) printf("host: no FujinEffects_PlayOnEntity\n");
 	}
 	if (!O.program.empty())
 	{
@@ -1823,6 +1831,9 @@ int main(int argc, char **argv)
 				printf("tick %d: recall faulted %08lX at eip %08lX addr %08lX\n", t, g_fault_code, g_fault_eip, g_fault_addr);
 				ok = false;
 			}
+		if (ok && g_play_on && O.playon_id >= 0 && t - cast_ticks == O.playon_tick)
+			printf("tick %d: playon %d on slot %d: %d\n", t, O.playon_id, O.playon_slot,
+			       g_play_on(O.playon_id, (void *)(0x1D972C0 + 0x9C * O.playon_slot)));
 		if (ok) ok = run_tick(&r);
 		if (ok) render_actors();
 		spend_plan();
