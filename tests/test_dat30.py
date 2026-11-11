@@ -441,12 +441,12 @@ class TestCharacterFamily:
         # the chain and the launched stick (bones 1, 3-6); the stick in her hand (2) spins on
         assert all(angle(converted[31][bone], vanilla[15][bone]) < 1 for bone in (1, 3, 4, 5, 6))
 
-    def test_selphie_weapon_holds_the_family_snaps(self, manager, tmp_path):
+    def test_selphie_holds_the_family_snaps(self, manager, tmp_path):
         """Selphie's nunchaku draw on her body's frame and hang from her hand: at the launch
         (anim 29, frames 15 -> 16 -> 17) the chain folds back and the free stick flips 158 deg,
-        and an in-between of either showed the stick folded flat or round the far side. Every
-        weapon holds those steps whole (shown again, then the next frame); the body goes on
-        blending (holding it too showed as a stutter of the whole character)."""
+        and an in-between of either showed the stick folded flat or round the far side. Her body
+        and every weapon hold those steps whole (shown again, then the next frame): the weapon
+        alone held left her hands missing the nunchaku."""
         paths = _copy(tmp_path, "d5c011.dat", "d5w028.dat", "d5w029.dat")
         assert [r['error'] for r in manager.convert_file_list_to_fps(list(paths), 30)] == ["", "", ""]
         pose = lambda frame: ([[r.get_rotate_raw() for r in bone] for bone in frame.rotation_vector_data],
@@ -455,7 +455,8 @@ class TestCharacterFamily:
             frames = _load(manager, weapon).animation_data.animations[29].frames
             assert pose(frames[31]) == pose(frames[30]) and pose(frames[33]) == pose(frames[32])
         body = _load(manager, paths[0]).animation_data.animations[29].frames
-        assert pose(body[31]) != pose(body[30])
+        assert pose(body[31]) == pose(body[30]) and pose(body[33]) == pose(body[32])
+        assert pose(body[35]) != pose(body[34])   # the step after the launch is blended
 
     def test_bite_bug_wings_keep_their_strokes(self, manager, tmp_path):
         """Bite Bug's wings (c0m028 bones 13 and 15) swing 90 deg up then down on every frame: the

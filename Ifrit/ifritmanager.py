@@ -603,11 +603,8 @@ class IfritManager:
                         report.pop('_monster', None)
                     return report_list
                 index += 1
-                # the weapons only: the body keeps blending (holding it too was filmed as a stutter
-                # of the whole character, 32 held images in Selphie's seq 26)
-                is_weapon = os.path.basename(str(file_path)).lower()[2:3] == 'w'
                 group_report.append(self._convert_one_file_to_real30(file_path, split_when_too_long,
-                                                                     mode, hold_step_dict if is_weapon else None))
+                                                                     mode, hold_step_dict))
             self._write_real30_group(group_report)
             report_list.extend(group_report)
         return report_list
@@ -669,13 +666,13 @@ class IfritManager:
             report['warning_list'].extend(battlememory.pair_warning_list(body_name, body, *worst))
 
     def _family_hold_step_dict(self, group) -> dict:
-        """{anim id: frames whose step every weapon of a character holds whole}: the snaps
-        (Animation.snap_step_set) of every file of the family, merged. A weapon draws on its
-        body's animation and frame and hangs from its hand: its snapped bones held on their own are
-        still carried round by the hand (Selphie's nunchaku, d5w028 anim 29 frames 31 and 33,
-        filmed going round the far side). Held whole, the weapon stays rigid in her hand for the
-        in-between, as vanilla shows it, while the body goes on blending. {} for a monster (its
-        own snaps hold the snapping bones only)."""
+        """{anim id: frames whose step the body and every weapon of a character hold whole}:
+        the snaps (Animation.snap_step_set) of every file of the family, merged. A weapon draws on
+        its body's animation and frame and hangs from its hand: its snapped bones held on their
+        own are still carried round by the hand (Selphie's nunchaku, d5w028 anim 29 frames 31 and
+        33, filmed going round the far side). The whole character holds those steps, as vanilla
+        shows them: holding the weapon alone left the hands missing the nunchaku (user, filmed).
+        {} for a monster (its own snaps hold the snapping bones only)."""
         if len(group) < 2 and not any(self.is_character_family_file(path) for path in group):
             return {}
         hold_step_dict = {}

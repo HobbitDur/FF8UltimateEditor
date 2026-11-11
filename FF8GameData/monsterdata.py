@@ -1478,8 +1478,8 @@ class Animation:
         toward it instead, so the cut is split like every other step (Ward's attack, anim 29 ->
         30). The animation then neither loops nor holds its last pose.
         hold_step_set: the frames (indexes) whose step to the next frame is not blended at all:
-        the frame is shown again in its place, then the next one (a character weapon's snaps,
-        decided over the body and all its weapons: snap_step_set).
+        the frame is shown again in its place, then the next one (a character's snaps, decided
+        over the body and all its weapons: snap_step_set).
         """
         if len(self.frames) < 2:
             return
@@ -1729,8 +1729,8 @@ class Animation:
         """The frames (indexes) whose step to the next one snaps a bone (_step_plan 'frozen': a
         turn of SPIN_AMBIGUOUS_DEGREES or more that does not carry a spin on). A character's
         weapon hangs from its body's hand, which blends on: held in the weapon alone, the snapped
-        bones are still carried round (Selphie d5w028 anim 29 frames 15 -> 17). Every weapon of
-        the character then holds these steps whole (IfritManager._family_hold_step_dict)."""
+        bones are still carried round (Selphie d5w028 anim 29 frames 15 -> 17). The body and every
+        weapon of the character then hold these steps whole (IfritManager._family_hold_step_dict)."""
         step_set = set()
         last_long_way_dict = {}
         frames = self.frames
