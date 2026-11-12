@@ -548,6 +548,29 @@ Potion's description is the same with its own sequences and sound.
        sound, the two layouts, four flipbooks, three meshes, "mag212.tim", the camera track.
      - *Tests:* `test_ports_P.py` casts it from Elnoyle (c0m131, slot 3) on Squall.
      - *Fujin:* its tabs (Timing, Stream, Sparks, Mist and rings); no + menu family.
+   - **Mega Spark (279)** (FFNx 5ebbbd7f; Tri-Point's attack; a port root, Ray-Bomb's kind): the caster moves toward the
+     targets leaning forward (and back at the end), a ring layout at each of three anchor points of its skeleton, electric
+     arcs over its body (from triangles of its skeleton to the anchors: screen-space ribbons, jittered), then the orb
+     layout at its orb point and arcs from the anchors to it, 15 lightning bolts from the orb to the targets in turn
+     (ribbons of points drifting and jumping on the module's LCG, growing branches, their points fading), a strike layout
+     where a striking bolt ends, a hit layout or a spark where a branch does, three screen fades, the sound; the damage at
+     tick 58.
+     - *Inputs* (`MegaSparkParams`, 102; the arcs and their ribbon read as Mega Pulse Cannon's): the sound, the main
+       task's ticks (sound, damage, end), the three fades (tick and ScreenFadeTask's four values), the approach (ticks,
+       back ticks, stop short, lean), the rings' and orb's windows and depths, the arcs (body arcs every / until / bend,
+       orb arcs from / until / every / bend / jitter, brightness, fade, ribbon width), the ribbon quads' texture (palette,
+       page, u, v), the bolts (first tick, count, strikes from, speed, branches, steps, start velocity, drift, jumps,
+       bend, branch rules and spreads, width), their points' brightness (start, rise, hold, fall), the hits' depth and
+       scale, the sparks' life and camera. Data: the sound, the ring, orb, strike and hit layouts, the spark flipbook,
+       the anchor points, the orb point, the 24 triangle rows, "mag278.tim", the camera track. Not editable: the
+       distance, square-root and sine tables (math).
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup (with the module LCG's seed) and
+       loader ported; six parts tagged (FX_PART). The main task's windows (approach, rings, body arcs, orb, orb arcs,
+       bolts, fades) are independent, in the game's order.
+     - *Tests:* `tests/Fujin/test_ports_U.py` - cast by Tri-Point (c0m030) on the party, against FFNx's port with the game's
+       values: the exe's own run is no reference in the recorder (its bolt ribbons read never-written stack words, the
+       executor's residues the port models; it faults at tick 45).
+     - *Fujin:* its tabs (Director, Rings, Orb, Arcs, Bolts, Strikes and hits, Sparks); no + menu family.
    - **Micro Missiles (284)** (FFNx 4e353867; GIM52A's attack; a port root, Ray-Bomb's kind; Micro Missiles 299's code
      with other numbers): six missiles launched at once from in front of the caster on half-circle paths to random
      bones of the target (two miss) with their trails, hits, flashes and sparks, the sound; the action result once
@@ -557,6 +580,51 @@ Potion's description is the same with its own sequences and sound.
        sparks per impact).
      - *Tests:* `test_ports_P.py` casts it from GIM52A (c0m001, slot 3) on Squall.
      - *Fujin:* its tab (Master); no + menu family.
+   - **Thunder Summon (285)** (FFNx 5c70243e; Catoblepas' attack; a port root, Ray-Bomb's kind): sparks at two points of
+     the caster's skeleton (bursts round them for three ticks), the camera moving from the caster and orbiting down, the
+     cut to the bolt layout high above the stage (the fighters hidden), a white tile, the cut to the ground layout at the
+     targets' mean depth with the camera swaying (the fighters shown, a white tile), the screen flash's level, three
+     screen fades, two sounds; the damage at tick 110; at the end the camera words put back and a stream load.
+     - *Inputs* (`ThunderSummonParams`, 89): the two sounds and their ticks, the damage and end ticks, the flash (in, out,
+       step, level), the bolt's and ground's windows, depths, place and scroll, the tiles' tick, colour and level, the
+       sparks (until, bursts, spread, life, camera), the camera (its first move's ticks and four points from the caster,
+       the orbit, the cut's look-at and eye, the sway's window, shift, scale and points), the fades. Data: the sounds,
+       the bolt and ground layouts, the spark flipbook, the spark points, "mag284.tim". Its camera is code: no camera
+       track.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; four parts
+       tagged (FX_PART).
+     - *Tests:* `tests/Fujin/test_ports_U.py` - cast by Catoblepas (c0m133) on the party, with the game's camera (gamecamera=1:
+       its bolt is in view only then).
+     - *Fujin:* its tabs (Director, Bolt, Ground, White tiles, Sparks, Camera); no + menu family.
+   - **Mini Pulse Cannon (286)** (FFNx c70cbe3b; Droma's attack; a port root, Ray-Bomb's kind): the muzzle layout at a point
+     on the caster's skeleton, turned with it, two charge sparks a tick flying into it, the beam layout from it to the
+     target (aiming down, then level, stretched, its texture scrolling), the impact and ground layouts at the target, the
+     sound; the damage at tick 53.
+     - *Inputs* (`MiniPulseParams`, 38; the charge sparks read as Mega Pulse Cannon's): the sound, the main task's ticks
+       (sound, beam and its ticks, impact and its ticks, damage, end), the beam (depth, drop, stretch, scroll), the ground
+       layout's depth, the charge sparks (ticks, count, life, camera distance, angles, radius, depth). Data: the sound, the
+       muzzle, beam, impact and ground layouts, the spark flipbook, the muzzle point, "mag285.tim", the camera track.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; four parts
+       tagged (FX_PART).
+     - *Tests:* `tests/Fujin/test_ports_U.py` - cast by Droma (c0m110) on the party.
+     - *Fujin:* its tabs (Director, Muzzle, Beam, Impact, Charge sparks); no + menu family.
+   - **Mega Pulse Cannon (287)** (FFNx 91e314f8; Trauma's attack; a port root, Ray-Bomb's kind; not a twin of 286: Mega
+     Spark's arcs and Mini Pulse Cannon's charge sparks in one module): an arc a tick over the caster's body to a muzzle
+     point on its skeleton, four charge sparks a tick flying into it, the cannon and beam layouts there (textures
+     scrolling both ways), falling sparks at the tips of six of its bones, rocks thrown up round it, the screen flash,
+     spot layouts at up to three targets, the sound, a stream load; the damage at tick 65.
+     - *Inputs* (`MegaPulseParams`, 84): the sound, the main task's ticks (sound, stream, damage, end), the flash (from,
+       ramp, step, level, out), the cannon (follow, depth, scroll), the arcs (until, rows, clear, bend, brightness, fade,
+       width; Mega Spark's keys), the ribbon quads' texture, the charge sparks (Mini Pulse Cannon's keys), the falling
+       sparks (window, count, first bone, fall, life, camera), the rocks (window, every, angle, radius, ahead, rise,
+       gravity, speed, spin, life), the spots (from, every, count, back, depth). Data: the sound, the cannon, beam and
+       spot layouts, the rock mesh, the charge and spark flipbooks, the muzzle point, the spots' targets, the 13 triangle
+       rows, its two TIMs (exe data: it has no file), the camera track. Not editable: the distance and square-root tables
+       (math).
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup ported (no loader); seven parts
+       tagged (FX_PART).
+     - *Tests:* `tests/Fujin/test_ports_U.py` - cast by Trauma (c0m109) on the party.
+     - *Fujin:* its tabs (Director, Cannon, Beam, Arcs, Charge sparks, Falling sparks, Rocks, Spots); no + menu family.
    - **Antidote (294)** (FFNx 736a2d6c, 522e7ac4, 9b2e6c15), the first of the five status-cure item modules (292 Soft,
      293 Eye Drops, 294 Antidote, 295 Echo Screen, 296 Holy Water: one source built five times with
      different options). One prim layout played on the target; the target takes the result when
@@ -2896,3 +2964,14 @@ Potion's description is the same with its own sequences and sound.
      - *Tests:* `test_ports_Q.py` casts it from Squall on Griever (the sequences run: `sequences=1`); no damage
        number.
      - *Fujin:* its tab (Controller); no + menu family.
+   - **Final Battle Music (344)** (FFNx 6286cc56; Griever's attack 368, its only user; a port root): it draws nothing - a
+     cue task's 36-tick script: the music's volume transition at tick 0, the final battle music block handed to the
+     victory fanfare player at 30 and a wait for it at 31, the camera track and the caster's chain transformation 0x14 at
+     32, the music channel volume and the damage (action 0's first target) at 34, the end after 35.
+     - *Inputs* (`Griever368Params`, 14): the cue ticks (volume, fanfare, wait, camera, channel volume, damage, end), the
+       two music commands' values, the chain transformation, the camera track. Not editable: the music block (an exe
+       block of 140 KB: a sample bank and an AKAO score, song id 0x5B).
+     - *Port:* the module globals through own::R (its packet arenas included: 0x10E5C bytes), the spawns through
+       own::Fn; setup ported (its loader is the engine's empty one); no part tagged.
+     - *Tests:* `tests/Fujin/test_ports_U.py` - cast by Griever (c0m122) on the party.
+     - *Fujin:* its tab (Cues); no + menu family.

@@ -1,0 +1,1388 @@
+{
+ "format": 1,
+ "effect": 279,
+ "name": "Mega Spark",
+ "doc": "Mega Spark (Tri-Point's enemy attack): the master and its tasks - the caster moves toward the targets leaning forward, rings at three anchor points of its skeleton, electric arcs over its body to them, then the orb layout and arcs from the anchors to it, lightning bolts from the orb to the targets in turn (ribbons of points drifting and branching), strike and hit layouts and sparks where they end, the screen fades, the sound; the damage, the caster back in place. Its tasks are the port's code (FFNx mag279_mega_spark.cpp) run on the program's memory (its pools, bolt points and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x67EFE0",
+   "setup": "0x67EFD0",
+   "root": "0x67F090"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 279,
+  "from": "0x2508070",
+  "size": "0xA0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0x10B1B9C",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x10B6F88",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x10B1A2C",
+   "size": 368
+  },
+  "layouts.ring": {
+   "kind": "layout",
+   "address": "0x10AEC64",
+   "size": 4732,
+   "capacity": 328
+  },
+  "tables.anchors": {
+   "kind": "table",
+   "address": "0x10B6D28",
+   "size": 24,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  },
+  "layouts.orb": {
+   "kind": "layout",
+   "address": "0x10AB23C",
+   "size": 14888,
+   "capacity": 1844
+  },
+  "tables.orb_point": {
+   "kind": "table",
+   "address": "0x10B6F80",
+   "size": 8,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  },
+  "tables.triangles": {
+   "kind": "table",
+   "address": "0x10B6D40",
+   "size": 576,
+   "format": "h",
+   "columns": 12,
+   "labels": [
+    "x0",
+    "y0",
+    "z0",
+    "bone0",
+    "x1",
+    "y1",
+    "z1",
+    "bone1",
+    "x2",
+    "y2",
+    "z2",
+    "bone2"
+   ]
+  },
+  "layouts.strike": {
+   "kind": "layout",
+   "address": "0x10AFEE0",
+   "size": 3368,
+   "capacity": 272
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0x10B0C08",
+   "size": 3620,
+   "capacity": 136
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x10AB138",
+   "size": 260,
+   "frames": 8
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x67EFD0",
+  "file_loader": "0x67EFE0",
+  "root": "0x67F090"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The main task's timeline: the caster moves toward the targets leaning forward and back at the end, the sound, the screen fades, the damage (every target of action 0), the end"
+  },
+  {
+   "id": 1,
+   "key": "rings",
+   "title": "Rings",
+   "doc": "A ring layout at each of the caster's three anchor points, leaning with it"
+  },
+  {
+   "id": 2,
+   "key": "orb",
+   "title": "Orb",
+   "doc": "The orb layout at the caster's orb point"
+  },
+  {
+   "id": 3,
+   "key": "arcs",
+   "title": "Arcs",
+   "doc": "Electric arcs (screen-space ribbons, jittered): over the caster's body from triangles of its skeleton to the anchor points, then from the anchor points to the orb point; each fades out after a while"
+  },
+  {
+   "id": 4,
+   "key": "bolts",
+   "title": "Bolts",
+   "doc": "Lightning bolts from the orb point to the targets in turn: a ribbon of points drifting and jumping at random, growing branches, its points fading"
+  },
+  {
+   "id": 5,
+   "key": "hits",
+   "title": "Strikes and hits",
+   "doc": "A strike layout where a striking bolt ends, a hit layout where a branch ends at or below the ground"
+  },
+  {
+   "id": 6,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "A spark where a branch ends above the ground"
+  }
+ ],
+ "groups": [
+  {
+   "key": "fades.flash",
+   "label": "Flash",
+   "doc": "A screen fade with the first bolt"
+  },
+  {
+   "key": "fades.white",
+   "label": "Fade",
+   "doc": "A screen fade"
+  },
+  {
+   "key": "fades.dim",
+   "label": "Fade out",
+   "doc": "A screen fade"
+  },
+  {
+   "key": "bolts.vel_x",
+   "label": "Velocity x",
+   "doc": "A bolt's start velocity's x, at random"
+  },
+  {
+   "key": "bolts.vel_z",
+   "label": "Velocity z",
+   "doc": "A bolt's start velocity's z, at random"
+  },
+  {
+   "key": "bolts.drift",
+   "label": "Drift",
+   "doc": "Added to a bolt's velocity each step, at random"
+  },
+  {
+   "key": "bolts.jump",
+   "label": "Jump",
+   "doc": "A jump aside, at random"
+  },
+  {
+   "key": "bolts.bend",
+   "label": "Bend",
+   "doc": "The points' drift, at random"
+  },
+  {
+   "key": "bolts.branch_x",
+   "label": "Branch end x",
+   "doc": "A branch's end x, at random"
+  },
+  {
+   "key": "bolts.branch_y",
+   "label": "Branch end y",
+   "doc": "A branch's end y, at random"
+  },
+  {
+   "key": "bolts.branch_z",
+   "label": "Branch end z",
+   "doc": "A branch's end z, at random"
+  },
+  {
+   "key": "bolts.branch_vel",
+   "label": "Branch velocity",
+   "doc": "A branch's velocity, at random"
+  },
+  {
+   "key": "hits.scale",
+   "label": "Hit scale",
+   "doc": "A hit's size, at random"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the main task's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "The sound at this tick of the main task",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage (every target of action 0) at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 58,
+   "unit": "plain"
+  },
+  {
+   "key": "director.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The main task's last tick + 1: the caster is back in place (the effect ends once its arcs have too)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 85,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.flash.tick",
+   "part": "director",
+   "label": "Flash tick",
+   "doc": "A screen fade at this tick (with the first bolt)",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.flash.a",
+   "part": "director",
+   "label": "Flash: first",
+   "doc": "ScreenFadeTask's first value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.flash.b",
+   "part": "director",
+   "label": "Flash: second",
+   "doc": "Its second value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.flash.c",
+   "part": "director",
+   "label": "Flash: third",
+   "doc": "Its third value (the game's mode)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.flash.d",
+   "part": "director",
+   "label": "Flash: level",
+   "doc": "Its fourth value (the game's level, 128 = full)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.white.tick",
+   "part": "director",
+   "label": "Fade tick",
+   "doc": "A screen fade at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.white.a",
+   "part": "director",
+   "label": "Fade: first",
+   "doc": "ScreenFadeTask's first value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.white.b",
+   "part": "director",
+   "label": "Fade: second",
+   "doc": "Its second value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.white.c",
+   "part": "director",
+   "label": "Fade: third",
+   "doc": "Its third value (the game's mode)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.white.d",
+   "part": "director",
+   "label": "Fade: level",
+   "doc": "Its fourth value (the game's level, 128 = full)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.dim.tick",
+   "part": "director",
+   "label": "Fade out tick",
+   "doc": "A screen fade at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.dim.a",
+   "part": "director",
+   "label": "Fade out: first",
+   "doc": "ScreenFadeTask's first value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.dim.b",
+   "part": "director",
+   "label": "Fade out: second",
+   "doc": "Its second value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.dim.c",
+   "part": "director",
+   "label": "Fade out: third",
+   "doc": "Its third value (the game's mode)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.dim.d",
+   "part": "director",
+   "label": "Fade out: level",
+   "doc": "Its fourth value (the game's level, 128 = full)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "approach.ticks",
+   "part": "director",
+   "label": "Approach ticks",
+   "doc": "On the main task's first ticks the caster moves toward the targets and leans forward",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "approach.back_ticks",
+   "part": "director",
+   "label": "Back ticks",
+   "doc": "On its last ticks it moves back and straightens",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "approach.stop",
+   "part": "director",
+   "label": "Stop short",
+   "doc": "It stops this far short of the targets' mean depth",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 5000,
+   "unit": "plain"
+  },
+  {
+   "key": "approach.tilt",
+   "part": "director",
+   "label": "Lean",
+   "doc": "Its lean (an x angle) when it is there (4096 = a full turn)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 128,
+   "unit": "angle"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ring",
+   "part": "rings",
+   "label": "Ring",
+   "doc": "The prim-model layout ring at each of the caster's three anchor points, leaning with it (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "rings.from",
+   "part": "rings",
+   "label": "From",
+   "doc": "From this tick of the main task (the layout starts over then)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.until",
+   "part": "rings",
+   "label": "Until",
+   "doc": "Until this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.depth",
+   "part": "rings",
+   "label": "Depth",
+   "doc": "Their depth offset (the prim header's +0x18)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.anchors",
+   "part": "rings",
+   "label": "Anchor points",
+   "doc": "The caster's three anchor points: an offset (x, y, z) on a bone each (24 bytes: x, y, z, bone; an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.anchors",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.orb",
+   "part": "orb",
+   "label": "Orb",
+   "doc": "The prim-model layout orb at the caster's orb point (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.orb",
+   "unit": "plain"
+  },
+  {
+   "key": "orb.from",
+   "part": "orb",
+   "label": "From",
+   "doc": "From this tick of the main task (the layout starts then)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.until",
+   "part": "orb",
+   "label": "Until",
+   "doc": "Until this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 59,
+   "unit": "plain"
+  },
+  {
+   "key": "orb.depth",
+   "part": "orb",
+   "label": "Depth",
+   "doc": "Its depth offset",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.orb_point",
+   "part": "orb",
+   "label": "Orb point",
+   "doc": "The orb point: an offset (x, y, z) on a bone of the caster - the bolts start there (8 bytes: x, y, z, bone; an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.orb_point",
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.every",
+   "part": "arcs",
+   "label": "Body arcs every",
+   "doc": "Three arcs over the caster's body (from a triangle of each set to its anchor point) every this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.until",
+   "part": "arcs",
+   "label": "Body arcs until",
+   "doc": "Up to this tick (each next one takes the next triangle row of its set: 8 rows)",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 31,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.amp_shift",
+   "part": "arcs",
+   "label": "Body arcs bend",
+   "doc": "How far a body arc bows out: its length >> this",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.orb_from",
+   "part": "arcs",
+   "label": "Orb arcs from",
+   "doc": "Three arcs from the anchor points to the orb point from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.orb_until",
+   "part": "arcs",
+   "label": "Orb arcs until",
+   "doc": "Until this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 59,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.orb_every",
+   "part": "arcs",
+   "label": "Orb arcs every",
+   "doc": "Every this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.orb_amp_shift",
+   "part": "arcs",
+   "label": "Orb arcs bend",
+   "doc": "Kept on each orb arc, never read: an orb arc is straight, its jitter is Orb arcs jitter (no change shows)",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.anchor_amp",
+   "part": "arcs",
+   "label": "Orb arcs jitter",
+   "doc": "The orb arcs' jitter size (a body arc's is its length)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.bright",
+   "part": "arcs",
+   "label": "Brightness",
+   "doc": "An arc's brightness when it starts (128 = the texture's)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.fade_from",
+   "part": "arcs",
+   "label": "Fade from",
+   "doc": "From this tick of its own an arc fades (its ends faster) and ends when one point is left lit",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.fade_base",
+   "part": "arcs",
+   "label": "Fade",
+   "doc": "A point's fade a tick: (this - its profile) >> Fade shift",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 5120,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.fade_shift",
+   "part": "arcs",
+   "label": "Fade shift",
+   "doc": "(the game's 7)",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.width",
+   "part": "arcs",
+   "label": "Width",
+   "doc": "The ribbon's half width on screen: this / (depth + Width depth)",
+   "type": "i32",
+   "min": 0,
+   "max": 2147483647,
+   "default": 8320,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.width_depth",
+   "part": "arcs",
+   "label": "Width depth",
+   "doc": "(its depth offset)",
+   "type": "i32",
+   "min": -32768,
+   "max": 2147483647,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.clut",
+   "part": "arcs",
+   "label": "Ribbon palette",
+   "doc": "The arcs' and bolts' ribbon quads: their palette (CLUT word)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 15764,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.tpage",
+   "part": "arcs",
+   "label": "Ribbon page",
+   "doc": "Their texture page word",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 182,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.u_left",
+   "part": "arcs",
+   "label": "Ribbon u left",
+   "doc": "The texture's u across the ribbon: on its one side",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 72,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.u_right",
+   "part": "arcs",
+   "label": "Ribbon u right",
+   "doc": "On its other side",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 120,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.v_from",
+   "part": "arcs",
+   "label": "Ribbon v from",
+   "doc": "The texture's v at a quad's first point",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.v_to",
+   "part": "arcs",
+   "label": "Ribbon v to",
+   "doc": "At its next point",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.triangles",
+   "part": "arcs",
+   "label": "Triangle rows",
+   "doc": "The body arcs' starts: three sets of 8 triangles on the caster's bones, each three offsets (x, y, z, bone) - an arc leaves its centre along its normal (576 bytes; an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.triangles",
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.first",
+   "part": "bolts",
+   "label": "First tick",
+   "doc": "A bolt a tick from the orb point to the targets in turn from this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.count",
+   "part": "bolts",
+   "label": "Count",
+   "doc": "This many (48 at most at once, branches included)",
+   "type": "i16",
+   "min": 0,
+   "max": 48,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.strike_from",
+   "part": "bolts",
+   "label": "Strikes from",
+   "doc": "The bolts from this one on (as many as the targets, + 1) strike each target's effect point and leave a strike layout; the others a random bone of it",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.dt",
+   "part": "bolts",
+   "label": "Speed",
+   "doc": "Its progress a step (4096 = there)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branches",
+   "part": "bolts",
+   "label": "Branches",
+   "doc": "How many branches it may grow (a branch grows none)",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.steps",
+   "part": "bolts",
+   "label": "Steps a tick",
+   "doc": "Its steps (points) a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.rise",
+   "part": "bolts",
+   "label": "Rise",
+   "doc": "Its start velocity's y: -this - a random below Rise random",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.rise_rand",
+   "part": "bolts",
+   "label": "Rise random",
+   "doc": "(the random's span)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.vel_x.min",
+   "part": "bolts",
+   "label": "Velocity x",
+   "doc": "Its start velocity's x, at random: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.vel_x.max",
+   "part": "bolts",
+   "label": "Velocity x to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 127,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.vel_z.min",
+   "part": "bolts",
+   "label": "Velocity z",
+   "doc": "Its start velocity's z, at random: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.vel_z.max",
+   "part": "bolts",
+   "label": "Velocity z to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 127,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.drift.min",
+   "part": "bolts",
+   "label": "Drift",
+   "doc": "Added to its velocity each step on each axis, at random (the module's LCG): from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -64,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.drift.max",
+   "part": "bolts",
+   "label": "Drift to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 63,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.jump_chance",
+   "part": "bolts",
+   "label": "Jump chance",
+   "doc": "A step jumps aside when the LCG (0..32767) is below this",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.jump.min",
+   "part": "bolts",
+   "label": "Jump",
+   "doc": "The jump on each axis, at random: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -256,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.jump.max",
+   "part": "bolts",
+   "label": "Jump to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.bend.min",
+   "part": "bolts",
+   "label": "Bend",
+   "doc": "Its points' drift (x the sine of its progress), at random on each axis: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.bend.max",
+   "part": "bolts",
+   "label": "Bend to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 127,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_until",
+   "part": "bolts",
+   "label": "Branch until",
+   "doc": "A step may grow a branch until its progress reaches this (4096 = there)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3072,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_chance",
+   "part": "bolts",
+   "label": "Branch chance",
+   "doc": "When the LCG (0..32767) is below this x its branches left",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 8192,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_x.min",
+   "part": "bolts",
+   "label": "Branch end x",
+   "doc": "A branch's end: the bolt's end + a random on x: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -2048,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_x.max",
+   "part": "bolts",
+   "label": "Branch end x to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2047,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_y.min",
+   "part": "bolts",
+   "label": "Branch end y",
+   "doc": "On y: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -1024,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_y.max",
+   "part": "bolts",
+   "label": "Branch end y to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1023,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_z.min",
+   "part": "bolts",
+   "label": "Branch end z",
+   "doc": "On z: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_z.max",
+   "part": "bolts",
+   "label": "Branch end z to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 767,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_vel.min",
+   "part": "bolts",
+   "label": "Branch velocity",
+   "doc": "Its velocity: the bolt's + a random on each axis: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -256,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_vel.max",
+   "part": "bolts",
+   "label": "Branch velocity to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.branch_dt",
+   "part": "bolts",
+   "label": "Branch speed",
+   "doc": "A branch's progress a step",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.width",
+   "part": "bolts",
+   "label": "Width",
+   "doc": "The ribbon's half width on screen: this / (depth + Width depth)",
+   "type": "i32",
+   "min": 0,
+   "max": 2147483647,
+   "default": 8000,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.width_depth",
+   "part": "bolts",
+   "label": "Width depth",
+   "doc": "(its depth offset)",
+   "type": "i32",
+   "min": -32768,
+   "max": 2147483647,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "points.bright",
+   "part": "bolts",
+   "label": "Point brightness",
+   "doc": "A new point's brightness (x 16: 2048 = the texture's)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "points.rise",
+   "part": "bolts",
+   "label": "Point rise",
+   "doc": "Added a tick, while it lasts",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 768,
+   "unit": "plain"
+  },
+  {
+   "key": "points.hold",
+   "part": "bolts",
+   "label": "Point hold",
+   "doc": "Its ticks at full brightness once it stops rising",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "points.fall",
+   "part": "bolts",
+   "label": "Point fall",
+   "doc": "Then its step falls by this a tick",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 320,
+   "unit": "plain"
+  },
+  {
+   "key": "points.fall_min",
+   "part": "bolts",
+   "label": "Point fall to",
+   "doc": "Down to this step",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -384,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.strike",
+   "part": "hits",
+   "label": "Strike",
+   "doc": "The prim-model layout strike where a striking bolt ends (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.strike",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "hits",
+   "label": "Hit",
+   "doc": "The prim-model layout hit where a branch ends at or below the ground; above it a spark (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "hits.depth",
+   "part": "hits",
+   "label": "Depth",
+   "doc": "Their depth offset",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.scale.min",
+   "part": "hits",
+   "label": "Hit scale",
+   "doc": "A hit's size, at random: from (4096 = the layout's)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2048,
+   "unit": "scale"
+  },
+  {
+   "key": "hits.scale.max",
+   "part": "hits",
+   "label": "Hit scale to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 6143,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 8 frames: an edited one keeps as many; a spark holds its last past it)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "A spark's ticks (a frame a tick)",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.shadow",
+   "part": "sparks",
+   "label": "Distance",
+   "doc": "Its sprite's camera (the shadow-rotation camera): its distance",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.shadow_y",
+   "part": "sparks",
+   "label": "Height",
+   "doc": "Its height",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -512,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.distances",
+   "label": "Distances",
+   "doc": "The ribbons' screen distance of (|dx|, |dy|), 128 x 128 bytes (a math table; its first 4096 bytes shown)",
+   "address": "0x10B1BA0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.square_roots",
+   "label": "Square roots",
+   "doc": "The arcs' u16 square-root table (a math table)",
+   "address": "0x10B5B20",
+   "size": 512
+  },
+  {
+   "key": "not_editable.sine_table",
+   "label": "Sine table",
+   "doc": "The bolts' s16 sine, 4096 entries (a math table; its first 4096 bytes shown)",
+   "address": "0x10B5D20",
+   "size": 4096
+  }
+ ]
+}

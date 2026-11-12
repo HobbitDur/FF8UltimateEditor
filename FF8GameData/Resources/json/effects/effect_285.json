@@ -1,0 +1,1160 @@
+{
+ "format": 1,
+ "effect": 285,
+ "name": "Thunder Summon",
+ "doc": "Thunder Summon (Catoblepas' enemy attack): the master and the main task - sparks at two points of the caster's skeleton, the camera moving from it and orbiting down, the cut to a bolt layout high above the stage, white tiles, the cut to the ground layout at the targets with the camera swaying, the screen flash and fades, the sounds; the damage, the camera put back, a stream load. Its tasks are the port's code (FFNx mag285_thunder_summon.cpp) run on the program's memory (its pools and packet arenas in the magic buffer); its camera moves are code (no camera track).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x67A870",
+   "setup": "0x67A860",
+   "root": "0x67A900"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 285,
+  "from": "0x2507D08",
+  "size": "0xA4"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x108FAA8",
+   "size": 4
+  },
+  "sounds.bolt": {
+   "kind": "sound",
+   "address": "0x108FAAC",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x108FAC0",
+   "size": 12
+  },
+  "layouts.bolt": {
+   "kind": "layout",
+   "address": "0x1084BBC",
+   "size": 20292,
+   "capacity": 2372
+  },
+  "layouts.ground": {
+   "kind": "layout",
+   "address": "0x1089B00",
+   "size": 24488,
+   "capacity": 3172
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x1084AF8",
+   "size": 196,
+   "frames": 7
+  },
+  "tables.points": {
+   "kind": "table",
+   "address": "0x108FAB0",
+   "size": 16,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x67A860",
+  "file_loader": "0x67A870",
+  "root": "0x67A900"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The main task's timeline: the sounds, the screen flash's level, the damage (every target of action 0), the end (the camera words put back, a stream load)"
+  },
+  {
+   "id": 1,
+   "key": "bolt",
+   "title": "Bolt",
+   "doc": "The bolt layout high above the stage, seen by the cut camera"
+  },
+  {
+   "id": 2,
+   "key": "ground",
+   "title": "Ground",
+   "doc": "The ground layout at the targets' mean depth, its texture scrolling"
+  },
+  {
+   "id": 4,
+   "key": "tiles",
+   "title": "White tiles",
+   "doc": "A full-screen tile during the bolt, another when the camera cuts to the ground"
+  },
+  {
+   "id": 3,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sparks at two points of the caster's skeleton on the first ticks, with bursts round them for a few"
+  },
+  {
+   "id": 0,
+   "key": "camera",
+   "title": "Camera",
+   "doc": "The camera's moves (code, no camera track): from the caster's start to its end, an orbit sinking, the cut to the bolt, the cut to the ground and its sway; the screen fades"
+  }
+ ],
+ "groups": [
+  {
+   "key": "bolt.pos",
+   "label": "Place",
+   "doc": "Where the bolt plays"
+  },
+  {
+   "key": "sparks.spread",
+   "label": "Burst spread",
+   "doc": "A burst spark's offset, at random"
+  },
+  {
+   "key": "camera.look_from",
+   "label": "Look-at from",
+   "doc": "The camera's look-at at the start (from the caster)"
+  },
+  {
+   "key": "camera.look_to",
+   "label": "Look-at to",
+   "doc": "At the end of its move"
+  },
+  {
+   "key": "camera.eye_from",
+   "label": "Eye from",
+   "doc": "The camera's eye at the start (from the caster)"
+  },
+  {
+   "key": "camera.eye_to",
+   "label": "Eye to",
+   "doc": "At the end of its move"
+  },
+  {
+   "key": "cut.look",
+   "label": "Cut look-at",
+   "doc": "The bolt's fixed view: its look-at"
+  },
+  {
+   "key": "cut.eye",
+   "label": "Cut eye",
+   "doc": "Its eye"
+  },
+  {
+   "key": "fades.a",
+   "label": "Fade 1",
+   "doc": "A screen fade"
+  },
+  {
+   "key": "fades.b",
+   "label": "Fade 2",
+   "doc": "A screen fade"
+  },
+  {
+   "key": "fades.c",
+   "label": "Fade 3",
+   "doc": "A screen fade"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start sound",
+   "doc": "At the main task's start sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.bolt",
+   "part": "director",
+   "label": "Bolt sound",
+   "doc": "At its bolt sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.bolt",
+   "unit": "plain"
+  },
+  {
+   "key": "director.start_sound",
+   "part": "director",
+   "label": "Start sound tick",
+   "doc": "The start sound at this tick of the main task",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "director.bolt_sound",
+   "part": "director",
+   "label": "Bolt sound tick",
+   "doc": "The bolt sound at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage (every target of action 0) at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "director.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The main task's last tick + 1: the camera words are put back, the next stream load starts (the effect ends once it is done)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 135,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.in",
+   "part": "director",
+   "label": "Flash in",
+   "doc": "The screen flash brightens on the first ticks, up to this one (its level: the tick x Flash step)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.out",
+   "part": "director",
+   "label": "Flash out",
+   "doc": "After this tick it fades: (Flash out to - the tick) x Flash step",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 127,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.out_to",
+   "part": "director",
+   "label": "Flash out to",
+   "doc": "(its level is 0 at this tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 135,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.step",
+   "part": "director",
+   "label": "Flash step",
+   "doc": "(its level a tick)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 300,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "director",
+   "label": "Flash level",
+   "doc": "In between, this level (4096 = white)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2400,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.bolt",
+   "part": "bolt",
+   "label": "Bolt",
+   "doc": "The prim-model layout bolt high above the stage, seen through the cut camera (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.bolt",
+   "unit": "plain"
+  },
+  {
+   "key": "bolt.from",
+   "part": "bolt",
+   "label": "From",
+   "doc": "From this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "bolt.ticks",
+   "part": "bolt",
+   "label": "Ticks",
+   "doc": "For this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "bolt.depth",
+   "part": "bolt",
+   "label": "Depth",
+   "doc": "Its depth offset (the prim header's +0x18)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "bolt.pos.x",
+   "part": "bolt",
+   "label": "Place x",
+   "doc": "Where it plays (the stage's coordinates)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "bolt.pos.y",
+   "part": "bolt",
+   "label": "Place y",
+   "doc": "(y)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -10000,
+   "unit": "plain"
+  },
+  {
+   "key": "bolt.pos.z",
+   "part": "bolt",
+   "label": "Place z",
+   "doc": "(z)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ground",
+   "part": "ground",
+   "label": "Ground",
+   "doc": "The prim-model layout ground at the targets' mean depth, its object 0's texture scrolling (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ground",
+   "unit": "plain"
+  },
+  {
+   "key": "ground.from",
+   "part": "ground",
+   "label": "From",
+   "doc": "From this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 86,
+   "unit": "plain"
+  },
+  {
+   "key": "ground.ticks",
+   "part": "ground",
+   "label": "Ticks",
+   "doc": "For this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "ground.depth",
+   "part": "ground",
+   "label": "Depth",
+   "doc": "Its depth offset",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -256,
+   "unit": "plain"
+  },
+  {
+   "key": "ground.scroll",
+   "part": "ground",
+   "label": "Texture scroll",
+   "doc": "Its object 0 scrolls its texture by this x (-tick & 3)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.first",
+   "part": "tiles",
+   "label": "First tick",
+   "doc": "A full-screen tile at this tick of the main task (the second one comes with the sway camera)",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 82,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.r",
+   "part": "tiles",
+   "label": "Red",
+   "doc": "The tiles' colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.g",
+   "part": "tiles",
+   "label": "Green",
+   "doc": "(green)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.b",
+   "part": "tiles",
+   "label": "Blue",
+   "doc": "(blue)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.level",
+   "part": "tiles",
+   "label": "Level",
+   "doc": "Their level (4096 = full)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 7 frames: an edited one keeps as many; a spark holds its last past it)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.points",
+   "part": "sparks",
+   "label": "Spark points",
+   "doc": "The two points on the caster's bones the sparks start at: an offset (x, y, z) and a bone each, the second one first (16 bytes; an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.points",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.until",
+   "part": "sparks",
+   "label": "Until",
+   "doc": "A spark at each point every tick of the main task up to this one",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 23,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.burst_from",
+   "part": "sparks",
+   "label": "Burst from",
+   "doc": "From this tick each spark comes with a burst of more round it",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.burst_until",
+   "part": "sparks",
+   "label": "Burst until",
+   "doc": "Until this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.burst",
+   "part": "sparks",
+   "label": "Burst",
+   "doc": "How many in a burst (64 sparks at most at once)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.spread.min",
+   "part": "sparks",
+   "label": "Burst spread",
+   "doc": "A burst spark's offset on each axis, at random: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -256,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.spread.max",
+   "part": "sparks",
+   "label": "Burst spread to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "A spark's ticks (a frame a tick)",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.shadow",
+   "part": "sparks",
+   "label": "Distance",
+   "doc": "Its sprite's camera (the shadow-rotation camera): its distance",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.shadow_y",
+   "part": "sparks",
+   "label": "Height",
+   "doc": "Its height",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.track_ticks",
+   "part": "camera",
+   "label": "Move ticks",
+   "doc": "On its first ticks the camera moves from its start to its end (from the caster's position; the battle camera returns afterwards)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.look_from.x",
+   "part": "camera",
+   "label": "Look-at from x",
+   "doc": "Its look-at at the start, from the caster",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -704,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.look_from.y",
+   "part": "camera",
+   "label": "Look-at from y",
+   "doc": "(y)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -1775,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.look_from.z",
+   "part": "camera",
+   "label": "Look-at from z",
+   "doc": "(z)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2285,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.look_to.x",
+   "part": "camera",
+   "label": "Look-at to x",
+   "doc": "At the end",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.look_to.y",
+   "part": "camera",
+   "label": "Look-at to y",
+   "doc": "(y)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -2898,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.look_to.z",
+   "part": "camera",
+   "label": "Look-at to z",
+   "doc": "(z)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2387,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.eye_from.x",
+   "part": "camera",
+   "label": "Eye from x",
+   "doc": "Its eye at the start, from the caster",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -1270,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.eye_from.y",
+   "part": "camera",
+   "label": "Eye from y",
+   "doc": "(y)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -17,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.eye_from.z",
+   "part": "camera",
+   "label": "Eye from z",
+   "doc": "(z)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 5028,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.eye_to.x",
+   "part": "camera",
+   "label": "Eye to x",
+   "doc": "At the end",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 636,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.eye_to.y",
+   "part": "camera",
+   "label": "Eye to y",
+   "doc": "(y)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2386,
+   "unit": "plain"
+  },
+  {
+   "key": "camera.eye_to.z",
+   "part": "camera",
+   "label": "Eye to z",
+   "doc": "(z)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 6749,
+   "unit": "plain"
+  },
+  {
+   "key": "orbit.from",
+   "part": "camera",
+   "label": "Orbit from",
+   "doc": "From this tick the eye orbits the look-at and both sink",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "orbit.ticks",
+   "part": "camera",
+   "label": "Orbit ticks",
+   "doc": "For this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "orbit.spin",
+   "part": "camera",
+   "label": "Orbit spin",
+   "doc": "Its turn: this x its tick (4096 = a full turn)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "angle"
+  },
+  {
+   "key": "orbit.look_sink",
+   "part": "camera",
+   "label": "Look-at sink",
+   "doc": "The look-at's y taken: this x its tick",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "orbit.eye_sink",
+   "part": "camera",
+   "label": "Eye sink",
+   "doc": "The eye's y taken: this x its tick",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "cut.tick",
+   "part": "camera",
+   "label": "Cut tick",
+   "doc": "At this tick the camera cuts to the bolt's fixed view (the fighters hidden)",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "cut.look.x",
+   "part": "camera",
+   "label": "Cut look-at x",
+   "doc": "Its look-at (the stage's coordinates)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "cut.look.y",
+   "part": "camera",
+   "label": "Cut look-at y",
+   "doc": "(y)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -10000,
+   "unit": "plain"
+  },
+  {
+   "key": "cut.look.z",
+   "part": "camera",
+   "label": "Cut look-at z",
+   "doc": "(z)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "cut.eye.x",
+   "part": "camera",
+   "label": "Cut eye x",
+   "doc": "Its eye",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 312,
+   "unit": "plain"
+  },
+  {
+   "key": "cut.eye.y",
+   "part": "camera",
+   "label": "Cut eye y",
+   "doc": "(y)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -9481,
+   "unit": "plain"
+  },
+  {
+   "key": "cut.eye.z",
+   "part": "camera",
+   "label": "Cut eye z",
+   "doc": "(z)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -403,
+   "unit": "plain"
+  },
+  {
+   "key": "sway.from",
+   "part": "camera",
+   "label": "Sway from",
+   "doc": "From this tick the camera cuts to the ground (the fighters shown, a white tile) and sways",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 86,
+   "unit": "plain"
+  },
+  {
+   "key": "sway.ticks",
+   "part": "camera",
+   "label": "Sway ticks",
+   "doc": "For this many ticks (half a sine over them)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "sway.shift",
+   "part": "camera",
+   "label": "Sway shift",
+   "doc": "The sway's turn: the sine >> this",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "sway.scale",
+   "part": "camera",
+   "label": "Sway scale",
+   "doc": "The eye's distance x this a tick (4096 = kept)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 4040,
+   "unit": "scale"
+  },
+  {
+   "key": "sway.eye_back",
+   "part": "camera",
+   "label": "Eye back",
+   "doc": "Its eye's z: the targets' mean depth + this",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 5400,
+   "unit": "plain"
+  },
+  {
+   "key": "sway.look.x",
+   "part": "camera",
+   "label": "Sway look-at x",
+   "doc": "Its look-at's x (its z: the targets' mean depth)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "sway.look.y",
+   "part": "camera",
+   "label": "Sway look-at y",
+   "doc": "(y)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -877,
+   "unit": "plain"
+  },
+  {
+   "key": "sway.eye.x",
+   "part": "camera",
+   "label": "Sway eye x",
+   "doc": "Its eye's x",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -1500,
+   "unit": "plain"
+  },
+  {
+   "key": "sway.eye.y",
+   "part": "camera",
+   "label": "Sway eye y",
+   "doc": "(y)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -1500,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.a.tick",
+   "part": "camera",
+   "label": "Fade 1 tick",
+   "doc": "A screen fade at this tick of the main task",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 87,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.a.a",
+   "part": "camera",
+   "label": "Fade 1: first",
+   "doc": "ScreenFadeTask's first value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.a.b",
+   "part": "camera",
+   "label": "Fade 1: second",
+   "doc": "Its second value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.a.c",
+   "part": "camera",
+   "label": "Fade 1: third",
+   "doc": "Its third value (the game's mode)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.a.d",
+   "part": "camera",
+   "label": "Fade 1: level",
+   "doc": "Its fourth value (the game's level, 128 = full)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.b.tick",
+   "part": "camera",
+   "label": "Fade 2 tick",
+   "doc": "A screen fade at this tick of the main task",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 94,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.b.a",
+   "part": "camera",
+   "label": "Fade 2: first",
+   "doc": "ScreenFadeTask's first value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.b.b",
+   "part": "camera",
+   "label": "Fade 2: second",
+   "doc": "Its second value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.b.c",
+   "part": "camera",
+   "label": "Fade 2: third",
+   "doc": "Its third value (the game's mode)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.b.d",
+   "part": "camera",
+   "label": "Fade 2: level",
+   "doc": "Its fourth value (the game's level, 128 = full)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.c.tick",
+   "part": "camera",
+   "label": "Fade 3 tick",
+   "doc": "A screen fade at this tick of the main task",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 96,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.c.a",
+   "part": "camera",
+   "label": "Fade 3: first",
+   "doc": "ScreenFadeTask's first value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.c.b",
+   "part": "camera",
+   "label": "Fade 3: second",
+   "doc": "Its second value",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.c.c",
+   "part": "camera",
+   "label": "Fade 3: third",
+   "doc": "Its third value (the game's mode)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fades.c.d",
+   "part": "camera",
+   "label": "Fade 3: level",
+   "doc": "Its fourth value (the game's level, 128 = full)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 96,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

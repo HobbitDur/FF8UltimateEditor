@@ -1,0 +1,212 @@
+{
+ "format": 1,
+ "effect": 344,
+ "name": "Final Battle Music",
+ "doc": "Final Battle Music (Griever's enemy attack 368, its only user): it draws nothing - a cue task's 36-tick script: the music's volume transition, the final battle music (an exe block: a sample bank and an AKAO score) handed to the victory fanfare player and a wait for it, the camera track and the caster's chain transformation, the music channel volume, the damage. Its tasks are the port's code (FFNx mag344_griever_368.cpp) run on the program's memory (its queues, pools and packet arenas in the module); it has no file (its loader is the engine's empty one).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x62A650",
+   "root": "0x62A7A0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 344,
+  "from": "0x24DFD70",
+  "size": "0x10E5C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xE106D8",
+   "size": 520
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x62A650",
+  "file_loader": "0x0",
+  "root": "0x62A7A0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "cues",
+   "title": "Cues",
+   "doc": "It draws nothing: a cue task's script - the music's volume transition at its first tick, the final battle music handed to the victory fanfare player (an exe block: a sample bank and an AKAO score, song id 0x5B), a wait for it, the camera track and the caster's chain transformation, the music channel volume command and the damage (the first target of action 0), the end"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "cues.volume",
+   "part": "cues",
+   "label": "Volume tick",
+   "doc": "The music's volume transition (Music_SetVolumeTrans) at this tick of the cue task",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "cues.fanfare",
+   "part": "cues",
+   "label": "Fanfare tick",
+   "doc": "The fanfare block handed to the victory fanfare player (BS_R0win_QueueVictoryFanfare) at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "cues.wait",
+   "part": "cues",
+   "label": "Wait tick",
+   "doc": "At this tick the cue task waits (its counter kept) until the fanfare player is done",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 31,
+   "unit": "plain"
+  },
+  {
+   "key": "cues.camera",
+   "part": "cues",
+   "label": "Camera tick",
+   "doc": "The camera track and the caster's chain transformation at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "cues.channel",
+   "part": "cues",
+   "label": "Channel volume tick",
+   "doc": "The music channel volume command (BS_Music_SetChannelVolumeCommand) at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 34,
+   "unit": "plain"
+  },
+  {
+   "key": "cues.damage",
+   "part": "cues",
+   "label": "Damage tick",
+   "doc": "The action result of action 0's first target at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 34,
+   "unit": "plain"
+  },
+  {
+   "key": "cues.end",
+   "part": "cues",
+   "label": "End tick",
+   "doc": "The cue task's last tick (the effect ends with it)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 35,
+   "unit": "plain"
+  },
+  {
+   "key": "volume.a",
+   "part": "cues",
+   "label": "Volume: first",
+   "doc": "Music_SetVolumeTrans 0x46BBC0's first argument",
+   "type": "i32",
+   "min": 0,
+   "max": 65535,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "volume.b",
+   "part": "cues",
+   "label": "Volume: second",
+   "doc": "Its second argument (the game's 120)",
+   "type": "i32",
+   "min": 0,
+   "max": 65535,
+   "default": 120,
+   "unit": "plain"
+  },
+  {
+   "key": "volume.c",
+   "part": "cues",
+   "label": "Volume: third",
+   "doc": "Its third argument",
+   "type": "i32",
+   "min": 0,
+   "max": 65535,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "channel.a",
+   "part": "cues",
+   "label": "Channel: first",
+   "doc": "BS_Music_SetChannelVolumeCommand 0x501B10's first argument",
+   "type": "i32",
+   "min": 0,
+   "max": 65535,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "channel.b",
+   "part": "cues",
+   "label": "Channel: volume",
+   "doc": "Its second argument: the volume (the game's 127)",
+   "type": "i32",
+   "min": 0,
+   "max": 65535,
+   "default": 127,
+   "unit": "plain"
+  },
+  {
+   "key": "chain",
+   "part": "cues",
+   "label": "Chain transformation",
+   "doc": "The caster's chain transformation (its animation sequence) queued at the camera tick",
+   "type": "i32",
+   "min": 0,
+   "max": 255,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "cues",
+   "label": "Camera track",
+   "doc": "The camera track played at the camera tick (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.final_battle_music",
+   "label": "Final battle music",
+   "doc": "The block handed to the victory fanfare player: {2, offsets, end} - a sample bank (AKAO) and the score (AKAO, song id 0x5B: the music the PC plays), 140 KB: its first 4096 bytes shown",
+   "address": "0xDEE388",
+   "size": 4096
+  }
+ ]
+}

@@ -1,0 +1,565 @@
+{
+ "format": 1,
+ "effect": 286,
+ "name": "Mini Pulse Cannon",
+ "doc": "Mini Pulse Cannon (Droma's enemy attack): the master and the main task - a muzzle layout at a point on the caster's skeleton with charge sparks flying into it, the beam layout from it to the target (aiming down, then level, stretched, its texture scrolling), the impact and ground layouts at the target, the sound; the damage. Its tasks are the port's code (FFNx mag286_mini_pulse_cannon.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x679E20",
+   "setup": "0x679E10",
+   "root": "0x679EC0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 286,
+  "from": "0x2507CA8",
+  "size": "0x5C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0x10847AC",
+   "size": 4
+  },
+  "layouts.muzzle": {
+   "kind": "layout",
+   "address": "0x107DD94",
+   "size": 11352,
+   "capacity": 556
+  },
+  "tables.muzzle": {
+   "kind": "table",
+   "address": "0x1084AE0",
+   "size": 8,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  },
+  "layouts.beam": {
+   "kind": "layout",
+   "address": "0x10809EC",
+   "size": 15808,
+   "capacity": 344
+  },
+  "layouts.impact": {
+   "kind": "layout",
+   "address": "0x1078BC8",
+   "size": 17468,
+   "capacity": 676
+  },
+  "layouts.ground": {
+   "kind": "layout",
+   "address": "0x107D004",
+   "size": 3472,
+   "capacity": 144
+  },
+  "seqs.charge": {
+   "kind": "seq",
+   "address": "0x10789A8",
+   "size": 272,
+   "frames": 10
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x1084AE8",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x10847B0",
+   "size": 812
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x679E10",
+  "file_loader": "0x679E20",
+  "root": "0x679EC0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The main task's timeline: the sound, the muzzle and the beam for a number of ticks, the impact layouts, the damage (action 0's first target), the end"
+  },
+  {
+   "id": 1,
+   "key": "muzzle",
+   "title": "Muzzle",
+   "doc": "A layout at the muzzle point (an offset on a bone of the caster), turned with the caster"
+  },
+  {
+   "id": 2,
+   "key": "beam",
+   "title": "Beam",
+   "doc": "A layout from the muzzle point to the target: it aims down at first, then levels off, stretched along its way, its texture scrolling"
+  },
+  {
+   "id": 3,
+   "key": "impact",
+   "title": "Impact",
+   "doc": "Two layouts at the target facing the muzzle: one at its effect point, one at its height"
+  },
+  {
+   "id": 4,
+   "key": "charge",
+   "title": "Charge sparks",
+   "doc": "Sparks round the muzzle point on the beam's first ticks, flying back into it"
+  }
+ ],
+ "groups": [
+  {
+   "key": "charge.angle",
+   "label": "Angle random",
+   "doc": "A random angle added to each spark's"
+  },
+  {
+   "key": "charge.radius",
+   "label": "Radius",
+   "doc": "Its distance from the muzzle point, at random"
+  },
+  {
+   "key": "charge.depth",
+   "label": "Depth",
+   "doc": "Its offset along the muzzle's axis, at random"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the main task's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "The sound at this tick of the main task",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "director.beam",
+   "part": "director",
+   "label": "Beam tick",
+   "doc": "The muzzle and the beam from this tick of the main task (their ticks count from it)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "director.beam_ticks",
+   "part": "director",
+   "label": "Beam ticks",
+   "doc": "For this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 42,
+   "unit": "plain"
+  },
+  {
+   "key": "director.impact",
+   "part": "director",
+   "label": "Impact tick",
+   "doc": "The impact layouts from this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 49,
+   "unit": "plain"
+  },
+  {
+   "key": "director.impact_ticks",
+   "part": "director",
+   "label": "Impact ticks",
+   "doc": "For this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage (action 0's first target) at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 53,
+   "unit": "plain"
+  },
+  {
+   "key": "director.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The main task's last tick + 1 (the effect ends once its sparks have too)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 69,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.muzzle",
+   "part": "muzzle",
+   "label": "Muzzle",
+   "doc": "The prim-model layout muzzle at the muzzle point, turned with the caster (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.muzzle",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.muzzle",
+   "part": "muzzle",
+   "label": "Muzzle point",
+   "doc": "The muzzle point: an offset (x, y, z) on a bone of the caster (8 bytes: x, y, z, bone; an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.muzzle",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.beam",
+   "part": "beam",
+   "label": "Beam",
+   "doc": "The prim-model layout beam from the muzzle point to the target, stretched along its way (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.beam",
+   "unit": "plain"
+  },
+  {
+   "key": "beam.depth",
+   "part": "beam",
+   "label": "Depth",
+   "doc": "The muzzle's and the beam's depth offset (their prim header's +0x18)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -32,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.drop_from",
+   "part": "beam",
+   "label": "Drop from",
+   "doc": "The beam aims from the muzzle at the target's height until this beam tick, then levels off",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.drop_until",
+   "part": "beam",
+   "label": "Drop until",
+   "doc": "Level at this beam tick (after Drop from)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.stretch_from",
+   "part": "beam",
+   "label": "Stretch from",
+   "doc": "From this beam tick the beam's length is the distance / 2^Stretch shift (before: its model's)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.stretch_shift",
+   "part": "beam",
+   "label": "Stretch shift",
+   "doc": "(the game's 2: a quarter)",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.long_from",
+   "part": "beam",
+   "label": "Long from",
+   "doc": "From this beam tick the distance / 2^Long shift",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.long_shift",
+   "part": "beam",
+   "label": "Long shift",
+   "doc": "(the game's 1: a half)",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.scroll",
+   "part": "beam",
+   "label": "Texture scroll",
+   "doc": "Its objects 0 / 1 scroll their texture by this x (beam tick & 3)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.impact",
+   "part": "impact",
+   "label": "Impact",
+   "doc": "The prim-model layout impact at the target, facing the muzzle (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.impact",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ground",
+   "part": "impact",
+   "label": "Ground",
+   "doc": "The prim-model layout ground, the same at the target's height (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ground",
+   "unit": "plain"
+  },
+  {
+   "key": "impact.ground_depth",
+   "part": "impact",
+   "label": "Ground depth",
+   "doc": "The ground layout's depth offset",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.charge",
+   "part": "charge",
+   "label": "Spark",
+   "doc": "The sprite sequence of a charge spark (a flipbook of 10 frames: an edited one keeps as many; a spark holds its last past it)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.charge",
+   "unit": "plain"
+  },
+  {
+   "key": "charge.ticks",
+   "part": "charge",
+   "label": "Ticks",
+   "doc": "Charge sparks on the beam's first ticks, up to this one",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.count",
+   "part": "charge",
+   "label": "A tick",
+   "doc": "How many a tick (32 at most at once)",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.life",
+   "part": "charge",
+   "label": "Life",
+   "doc": "A spark's ticks: it flies back to the muzzle point in as many",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.shadow",
+   "part": "charge",
+   "label": "Distance",
+   "doc": "Its sprite's camera distance (the shadow-rotation camera: this and -this / 4)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1200,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.angle_start",
+   "part": "charge",
+   "label": "Angle",
+   "doc": "The first spark's angle round the muzzle at beam tick 0 (4096 = a full turn)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 4096,
+   "unit": "angle"
+  },
+  {
+   "key": "charge.angle_tick",
+   "part": "charge",
+   "label": "Angle a tick",
+   "doc": "Added each beam tick",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 256,
+   "unit": "angle"
+  },
+  {
+   "key": "charge.angle_step",
+   "part": "charge",
+   "label": "Angle step",
+   "doc": "Added for each next spark of the tick",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -2048,
+   "unit": "angle"
+  },
+  {
+   "key": "charge.angle.min",
+   "part": "charge",
+   "label": "Angle random",
+   "doc": "A random angle added: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -32,
+   "unit": "angle"
+  },
+  {
+   "key": "charge.angle.max",
+   "part": "charge",
+   "label": "Angle random to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 31,
+   "unit": "angle"
+  },
+  {
+   "key": "charge.radius.min",
+   "part": "charge",
+   "label": "Radius",
+   "doc": "Its distance from the muzzle point: from",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.radius.max",
+   "part": "charge",
+   "label": "Radius to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1535,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.depth.min",
+   "part": "charge",
+   "label": "Depth",
+   "doc": "Its offset along the muzzle's axis: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.depth.max",
+   "part": "charge",
+   "label": "Depth to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 127,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

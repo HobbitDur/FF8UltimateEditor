@@ -1,0 +1,1157 @@
+{
+ "format": 1,
+ "effect": 287,
+ "name": "Mega Pulse Cannon",
+ "doc": "Mega Pulse Cannon (Trauma's enemy attack): the master and its tasks - electric arcs over the caster's body to a muzzle point on its skeleton (as Mega Spark's), charge sparks flying into it, the cannon and beam layouts there, falling sparks at the tips of its bones, rocks thrown up round it, the screen flash, spot layouts at the targets, the sound, a stream load; the damage. Its tasks are the port's code (FFNx mag287_mega_pulse_cannon.cpp) run on the program's memory (its pools and packet arenas in the magic buffer); it has no file (its TIMs are exe data).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x6F2E80",
+   "root": "0x6F2F20"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 287,
+  "from": "0x25562F8",
+  "size": "0x8C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0x13FAE98",
+   "size": 4
+  },
+  "res.tim_a": {
+   "kind": "tim",
+   "address": "0x140016C",
+   "size": 168480
+  },
+  "res.tim_b": {
+   "kind": "tim",
+   "address": "0x142938C",
+   "size": 16928
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x13FABFC",
+   "size": 668
+  },
+  "layouts.cannon": {
+   "kind": "layout",
+   "address": "0x13EF924",
+   "size": 36548,
+   "capacity": 2244
+  },
+  "tables.muzzle": {
+   "kind": "table",
+   "address": "0x13FAEA0",
+   "size": 8,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  },
+  "layouts.beam": {
+   "kind": "layout",
+   "address": "0x13F87E8",
+   "size": 1908,
+   "capacity": 184
+  },
+  "tables.triangles": {
+   "kind": "table",
+   "address": "0x13FAEB0",
+   "size": 312,
+   "format": "h",
+   "columns": 12,
+   "labels": [
+    "x0",
+    "y0",
+    "z0",
+    "bone0",
+    "x1",
+    "y1",
+    "z1",
+    "bone1",
+    "x2",
+    "y2",
+    "z2",
+    "bone2"
+   ]
+  },
+  "seqs.charge": {
+   "kind": "seq",
+   "address": "0x13EF448",
+   "size": 416,
+   "frames": 14
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x13EF5E8",
+   "size": 324,
+   "frames": 12
+  },
+  "model_data.rock": {
+   "kind": "model",
+   "address": "0x13EF72C",
+   "size": 504,
+   "vertices": 12
+  },
+  "layouts.spot": {
+   "kind": "layout",
+   "address": "0x13F8F5C",
+   "size": 7328,
+   "capacity": 444
+  },
+  "tables.spot_targets": {
+   "kind": "table",
+   "address": "0x13FAEA8",
+   "size": 3,
+   "format": "B",
+   "columns": 1,
+   "labels": [
+    "target"
+   ]
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6F2E80",
+  "file_loader": "0x0",
+  "root": "0x6F2F20"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The main task's timeline: the sound, the screen flash's level, the stream load, the damage (every target of action 0), the end"
+  },
+  {
+   "id": 1,
+   "key": "cannon",
+   "title": "Cannon",
+   "doc": "The cannon layout at the muzzle point (an offset on a bone of the caster, held still after a while), turned with the caster, its texture scrolling"
+  },
+  {
+   "id": 2,
+   "key": "beam",
+   "title": "Beam",
+   "doc": "The beam layout at the muzzle point at the caster's height, its texture scrolling the other way"
+  },
+  {
+   "id": 3,
+   "key": "arcs",
+   "title": "Arcs",
+   "doc": "Electric arcs (screen-space ribbons, jittered) over the caster's body from triangles of its skeleton to the muzzle point, an arc a tick; each fades out after a while, the last ones dropped"
+  },
+  {
+   "id": 4,
+   "key": "charge",
+   "title": "Charge sparks",
+   "doc": "Sparks round the muzzle point on the first ticks, flying back into it"
+  },
+  {
+   "id": 5,
+   "key": "sparks",
+   "title": "Falling sparks",
+   "doc": "Sparks at the tips of a run of the caster's bones, falling"
+  },
+  {
+   "id": 6,
+   "key": "rocks",
+   "title": "Rocks",
+   "doc": "Rocks thrown up round the caster, bouncing on the ground"
+  },
+  {
+   "id": 7,
+   "key": "spots",
+   "title": "Spots",
+   "doc": "A layout at each of up to three targets in turn"
+  }
+ ],
+ "groups": [
+  {
+   "key": "charge.angle",
+   "label": "Angle random",
+   "doc": "A random angle added to each spark's"
+  },
+  {
+   "key": "charge.radius",
+   "label": "Radius",
+   "doc": "Its distance from the muzzle point, at random"
+  },
+  {
+   "key": "charge.depth",
+   "label": "Depth",
+   "doc": "Its offset along the muzzle's axis, at random"
+  },
+  {
+   "key": "sparks.shadow",
+   "label": "Distance",
+   "doc": "A falling spark's camera distance, at random"
+  },
+  {
+   "key": "rocks.angle",
+   "label": "Angle",
+   "doc": "Where round the caster, at random"
+  },
+  {
+   "key": "rocks.spin",
+   "label": "Spin",
+   "doc": "A rock's spin, at random"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the main task's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "The sound at this tick of the main task",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "director.stream",
+   "part": "director",
+   "label": "Stream tick",
+   "doc": "The stream load (battle file 0x168, into the magic buffer) at this tick; the effect ends once it is done",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage (every target of action 0) at this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 65,
+   "unit": "plain"
+  },
+  {
+   "key": "director.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The main task's last tick + 1 (the effect ends once its parts have and the stream is done)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 75,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.from",
+   "part": "director",
+   "label": "Flash from",
+   "doc": "The screen flash brightens from this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 33,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.ramp",
+   "part": "director",
+   "label": "Flash ramp",
+   "doc": "For this many ticks, by Flash step a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.step",
+   "part": "director",
+   "label": "Flash step",
+   "doc": "(its level a tick)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "director",
+   "label": "Flash level",
+   "doc": "Then this level (4096 = white)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.out",
+   "part": "director",
+   "label": "Flash out",
+   "doc": "It fades from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 59,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.out_ticks",
+   "part": "director",
+   "label": "Flash out ticks",
+   "doc": "Over this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.out_step",
+   "part": "director",
+   "label": "Flash out step",
+   "doc": "(its level a tick left)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim_a",
+   "part": "director",
+   "label": "TIM image a",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim_a",
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim_b",
+   "part": "director",
+   "label": "TIM image b",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim_b",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.cannon",
+   "part": "cannon",
+   "label": "Cannon",
+   "doc": "The prim-model layout cannon at the muzzle point, turned with the caster (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.cannon",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.muzzle",
+   "part": "cannon",
+   "label": "Muzzle point",
+   "doc": "The muzzle point: an offset (x, y, z) on a bone of the caster (8 bytes: x, y, z, bone; an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.muzzle",
+   "unit": "plain"
+  },
+  {
+   "key": "cannon.follow",
+   "part": "cannon",
+   "label": "Follow until",
+   "doc": "The muzzle point follows the caster's bone until this tick of the main task, then stays",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "cannon.depth",
+   "part": "cannon",
+   "label": "Depth",
+   "doc": "The cannon's and the beam's depth offset (their prim header's +0x18)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "cannon.scroll",
+   "part": "cannon",
+   "label": "Texture scroll",
+   "doc": "Their objects 0 / 1 scroll their texture by this x (tick & 3), the beam the other way",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.beam",
+   "part": "beam",
+   "label": "Beam",
+   "doc": "The prim-model layout beam at the muzzle point at the caster's height (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.beam",
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.until",
+   "part": "arcs",
+   "label": "Until",
+   "doc": "An arc a tick over the caster's body to the muzzle point (from the next triangle row) up to this tick of the main task",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 29,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.rows",
+   "part": "arcs",
+   "label": "Rows",
+   "doc": "The triangle rows taken in turn (13 at most: its table's)",
+   "type": "i16",
+   "min": 1,
+   "max": 13,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.clear",
+   "part": "arcs",
+   "label": "Clear tick",
+   "doc": "At this tick the arcs still running are dropped",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.amp_shift",
+   "part": "arcs",
+   "label": "Bend",
+   "doc": "How far an arc bows out: its length >> this",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.bright",
+   "part": "arcs",
+   "label": "Brightness",
+   "doc": "An arc's brightness when it starts (128 = the texture's)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.fade_from",
+   "part": "arcs",
+   "label": "Fade from",
+   "doc": "From this tick of its own an arc fades (its ends faster) and ends when one point is left lit",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.fade_base",
+   "part": "arcs",
+   "label": "Fade",
+   "doc": "A point's fade a tick: (this - its profile) >> Fade shift",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 5120,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.fade_shift",
+   "part": "arcs",
+   "label": "Fade shift",
+   "doc": "(the game's 7)",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.width",
+   "part": "arcs",
+   "label": "Width",
+   "doc": "The ribbon's half width on screen: this / (depth + Width depth)",
+   "type": "i32",
+   "min": 0,
+   "max": 2147483647,
+   "default": 8320,
+   "unit": "plain"
+  },
+  {
+   "key": "arcs.width_depth",
+   "part": "arcs",
+   "label": "Width depth",
+   "doc": "(its depth offset)",
+   "type": "i32",
+   "min": -32768,
+   "max": 2147483647,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.clut",
+   "part": "arcs",
+   "label": "Ribbon palette",
+   "doc": "The arcs' ribbon quads: their palette (CLUT word)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 15892,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.tpage",
+   "part": "arcs",
+   "label": "Ribbon page",
+   "doc": "Their texture page word",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 185,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.u_left",
+   "part": "arcs",
+   "label": "Ribbon u left",
+   "doc": "The texture's u across the ribbon: on its one side",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 72,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.u_right",
+   "part": "arcs",
+   "label": "Ribbon u right",
+   "doc": "On its other side",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 120,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.v_from",
+   "part": "arcs",
+   "label": "Ribbon v from",
+   "doc": "The texture's v at a quad's first point",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 192,
+   "unit": "plain"
+  },
+  {
+   "key": "ribbon.v_to",
+   "part": "arcs",
+   "label": "Ribbon v to",
+   "doc": "At its next point",
+   "type": "u8",
+   "min": 0,
+   "max": 255,
+   "default": 192,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.triangles",
+   "part": "arcs",
+   "label": "Triangle rows",
+   "doc": "The arcs' starts: 13 triangles on the caster's bones, each three offsets (x, y, z, bone) - an arc leaves its centre along its normal (312 bytes; an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.triangles",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.charge",
+   "part": "charge",
+   "label": "Spark",
+   "doc": "The sprite sequence of a charge spark (a flipbook of 14 frames: an edited one keeps as many; a spark holds its last past it)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.charge",
+   "unit": "plain"
+  },
+  {
+   "key": "charge.ticks",
+   "part": "charge",
+   "label": "Ticks",
+   "doc": "Charge sparks on the main task's first ticks, up to this one",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.count",
+   "part": "charge",
+   "label": "A tick",
+   "doc": "How many a tick (64 sparks at most at once)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.life",
+   "part": "charge",
+   "label": "Life",
+   "doc": "A spark's ticks: it flies back to the muzzle point in as many",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.shadow",
+   "part": "charge",
+   "label": "Distance",
+   "doc": "Its sprite's camera distance (the shadow-rotation camera: this and -this / 4)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2000,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.angle_start",
+   "part": "charge",
+   "label": "Angle",
+   "doc": "The first spark's angle round the muzzle at tick 0 (4096 = a full turn)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 4096,
+   "unit": "angle"
+  },
+  {
+   "key": "charge.angle_tick",
+   "part": "charge",
+   "label": "Angle a tick",
+   "doc": "Added each tick",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 128,
+   "unit": "angle"
+  },
+  {
+   "key": "charge.angle_step",
+   "part": "charge",
+   "label": "Angle step",
+   "doc": "Added for each next spark of the tick",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -1024,
+   "unit": "angle"
+  },
+  {
+   "key": "charge.angle.min",
+   "part": "charge",
+   "label": "Angle random",
+   "doc": "A random angle added: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -32,
+   "unit": "angle"
+  },
+  {
+   "key": "charge.angle.max",
+   "part": "charge",
+   "label": "Angle random to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 31,
+   "unit": "angle"
+  },
+  {
+   "key": "charge.radius.min",
+   "part": "charge",
+   "label": "Radius",
+   "doc": "Its distance from the muzzle point: from",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.radius.max",
+   "part": "charge",
+   "label": "Radius to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3071,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.depth.min",
+   "part": "charge",
+   "label": "Depth",
+   "doc": "Its offset along the muzzle's axis: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.depth.max",
+   "part": "charge",
+   "label": "Depth to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 127,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Spark",
+   "doc": "The sprite sequence of a falling spark (a flipbook of 12 frames: an edited one keeps as many; a spark holds its last past it)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.from",
+   "part": "sparks",
+   "label": "From",
+   "doc": "Falling sparks at the tips of the caster's bones from this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.until",
+   "part": "sparks",
+   "label": "Until",
+   "doc": "Until this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 37,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.count",
+   "part": "sparks",
+   "label": "A tick",
+   "doc": "How many a tick: one per bone from the first",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.bone",
+   "part": "sparks",
+   "label": "First bone",
+   "doc": "The first bone (the others follow it)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.rise",
+   "part": "sparks",
+   "label": "Fall",
+   "doc": "A spark's y velocity: -this - a random below Fall random (it does not accelerate)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.rise_rand",
+   "part": "sparks",
+   "label": "Fall random",
+   "doc": "(the random's span)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "A spark's ticks (a frame a tick)",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.shadow.min",
+   "part": "sparks",
+   "label": "Distance",
+   "doc": "Its sprite's camera distance, at random: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.shadow.max",
+   "part": "sparks",
+   "label": "Distance to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 5119,
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.rock",
+   "part": "rocks",
+   "label": "Rock",
+   "doc": "The prim model rock (a mesh of 12 vertices: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.rock",
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.from",
+   "part": "rocks",
+   "label": "From",
+   "doc": "A rock thrown up round the caster from this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.until",
+   "part": "rocks",
+   "label": "Until",
+   "doc": "Until this tick",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 59,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.every",
+   "part": "rocks",
+   "label": "Every",
+   "doc": "Every this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.angle.min",
+   "part": "rocks",
+   "label": "Angle",
+   "doc": "Where round the caster, at random: from (4096 = a full turn)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "rocks.angle.max",
+   "part": "rocks",
+   "label": "Angle to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 2047,
+   "unit": "angle"
+  },
+  {
+   "key": "rocks.radius_shift",
+   "part": "rocks",
+   "label": "Radius shift",
+   "doc": "Its distance from the caster: 4096 >> this",
+   "type": "i16",
+   "min": 0,
+   "max": 31,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.ahead",
+   "part": "rocks",
+   "label": "Ahead",
+   "doc": "Moved this far along z",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 5000,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.rise",
+   "part": "rocks",
+   "label": "Rise",
+   "doc": "Its y velocity: -this - a random below Rise random",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.rise_rand",
+   "part": "rocks",
+   "label": "Rise random",
+   "doc": "(the random's span)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.gravity",
+   "part": "rocks",
+   "label": "Gravity",
+   "doc": "Added to its y velocity a tick (it bounces off the ground)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.speed",
+   "part": "rocks",
+   "label": "Speed",
+   "doc": "Its z step a tick",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 400,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.spin.min",
+   "part": "rocks",
+   "label": "Spin",
+   "doc": "Its x spin a tick, at random: from",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 512,
+   "unit": "angle"
+  },
+  {
+   "key": "rocks.spin.max",
+   "part": "rocks",
+   "label": "Spin to",
+   "doc": "(to)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1023,
+   "unit": "angle"
+  },
+  {
+   "key": "rocks.life",
+   "part": "rocks",
+   "label": "Life",
+   "doc": "A rock's ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.spot",
+   "part": "spots",
+   "label": "Spot",
+   "doc": "The prim-model layout spot at a target (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.spot",
+   "unit": "plain"
+  },
+  {
+   "key": "spots.from",
+   "part": "spots",
+   "label": "From",
+   "doc": "A spot at a target from this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "spots.every",
+   "part": "spots",
+   "label": "Every",
+   "doc": "Every this many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "spots.count",
+   "part": "spots",
+   "label": "Count",
+   "doc": "This many (3 at most: its table's and its pool's)",
+   "type": "i16",
+   "min": 0,
+   "max": 3,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "spots.back",
+   "part": "spots",
+   "label": "Back",
+   "doc": "Moved this far back along z from the target's effect point",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 500,
+   "unit": "plain"
+  },
+  {
+   "key": "spots.depth",
+   "part": "spots",
+   "label": "Depth",
+   "doc": "Its depth offset",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.spot_targets",
+   "part": "spots",
+   "label": "Spot targets",
+   "doc": "Which target of the action each spot is on (3 bytes; a spot whose target the action does not have is left out)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.spot_targets",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.distances",
+   "label": "Distances",
+   "doc": "The arcs' screen distance of (|dx|, |dy|), 128 x 128 bytes (a math table; its first 4096 bytes shown)",
+   "address": "0x13FAFE8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.square_roots",
+   "label": "Square roots",
+   "doc": "The arcs' u16 square-root table (a math table)",
+   "address": "0x13FEF68",
+   "size": 512
+  }
+ ]
+}
