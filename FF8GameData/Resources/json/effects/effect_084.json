@@ -1,0 +1,1021 @@
+{
+ "format": 1,
+ "effect": 84,
+ "name": "Angel Wing",
+ "doc": "Angel Wing (Rinoa's limit break, the transformation; the act family, MiniMog's kind): one emitter per action - the director's cuts and the camera task's scripts: Rinoa's angel model revealed from its centre (the caster's model swapped, the other battle entities hidden), the wings' and the halo's prim plays, two glows, two feather actor systems; the angel fades out, the entities come back. Its parts are the port's code (FFNx mag084_angel_wing.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x78D790",
+   "setup": "0x78D7B0",
+   "root": "0x78D940"
+  },
+  "memory": {
+   "texture_file": "0x25C2350",
+   "packet_cursor": "0x25C2354",
+   "packet_limit": "0x25C24B4",
+   "arena_a": "0x25C9234",
+   "limit_a": "0x25C838C",
+   "arena_b": "0x25C9230",
+   "limit_b": "0x25C8388",
+   "arena_top": "0x25C9F38",
+   "init_flag_a": "0x25C9F34",
+   "init_flag_b": "0x25C3934",
+   "cam_ptr_a": "0x25C9F08",
+   "cam_ptr_b": "0x25C24B8",
+   "root_queue": "0x25C2588",
+   "root_pool": "0x25C24C0",
+   "particle_pool": "0x25C9EEC",
+   "actor_pool": "0x25C9F30",
+   "particle_next": "0x25C3930",
+   "actor_next": "0x25C9EF8",
+   "cursor_c": "0x25C9D24",
+   "cursor_d": "0x25C2358",
+   "count_a": "0x25C9F00",
+   "count_b": "0x25C9EE8"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 84,
+  "from": "0x25C2350",
+  "size": "0x7C20",
+  "pointers": [
+   [
+    2,
+    "0x15720A8"
+   ],
+   [
+    3,
+    "0x1572BAC"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1578430",
+   "size": 12
+  },
+  "angel.sound": {
+   "kind": "sound",
+   "address": "0x15720AC",
+   "size": 4
+  },
+  "res.tim": {
+   "kind": "tim",
+   "address": "0x17243F8",
+   "size": 33824
+  },
+  "res.anim": {
+   "kind": "anim_set",
+   "address": "0x1576020",
+   "size": 13328,
+   "count": 3,
+   "tail": 4096
+  },
+  "layouts.at_171f2b0": {
+   "kind": "layout",
+   "address": "0x171F2B0",
+   "size": 4800,
+   "capacity": 1184
+  },
+  "layouts.at_17217a8": {
+   "kind": "layout",
+   "address": "0x17217A8",
+   "size": 11344,
+   "capacity": 1928
+  },
+  "layouts.at_1720570": {
+   "kind": "layout",
+   "address": "0x1720570",
+   "size": 4664,
+   "capacity": 344
+  },
+  "models.at_15720b0": {
+   "kind": "model",
+   "address": "0x15720B0",
+   "size": 1888,
+   "vertices": 61
+  },
+  "models.at_1572810": {
+   "kind": "model",
+   "address": "0x1572810",
+   "size": 896,
+   "vertices": 35
+  },
+  "tables.bones": {
+   "kind": "table",
+   "address": "0x1572B90",
+   "size": 28,
+   "format": "h",
+   "columns": 1
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  }
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0xC000",
+  "release_file": true,
+  "act": {
+   "doc": "The act family's master: once its children are gone, the actor pools carved from the arena top and cleared; the actor counters cleared every tick",
+   "pools": {
+    "particle_pool": "0x1B0",
+    "actor_pool": "0x6900"
+   },
+   "zero": [
+    "particle_next",
+    "actor_next",
+    "cursor_c",
+    "cursor_d"
+   ],
+   "clear": [
+    "count_a",
+    "count_b"
+   ]
+  }
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x25C90C0",
+   "storage": "0x25C90D0",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x25C2490",
+   "storage": "0x25C23B8",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "angel",
+   "queue": "0x25C9ED8",
+   "storage": "0x25C9D80",
+   "size": 340,
+   "count": 1,
+   "keep": true,
+   "doc": "the angel model (the port's model container, its reveal draw)"
+  },
+  {
+   "key": "actors",
+   "queue": "0x25C8E20",
+   "storage": "0x25C8390",
+   "size": 676,
+   "count": 4,
+   "keep": true,
+   "doc": "the feather actor systems (the port's)"
+  },
+  {
+   "key": "camera",
+   "queue": "0x25C2598",
+   "storage": "0x25C25A8",
+   "size": 100,
+   "count": 50,
+   "keep": true,
+   "doc": "the camera task (the port's)"
+  },
+  {
+   "key": "glows",
+   "queue": "0x25C3938",
+   "storage": "0x25C6828",
+   "size": 88,
+   "count": 8,
+   "keep": true,
+   "doc": "the two glows (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x25C8378",
+   "storage": "0x25C6AE8",
+   "size": 2096,
+   "count": 3,
+   "keep": true,
+   "doc": "the prim plays (the port's)"
+  },
+  {
+   "key": "spare",
+   "queue": "0x25C90B0",
+   "storage": "0x25C8E30",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its cuts: 1 the angel, the wings, the glows (the other battle entities hidden), 2 the feathers, 3 the halo and more feathers, 4 the entities back, 5 done; the wings' TIM"
+  },
+  {
+   "id": 0,
+   "key": "angel",
+   "title": "Angel",
+   "doc": "Rinoa's angel model: revealed from its centre with its sound, the caster's model swapped, faded out at cut 4; its ground plays"
+  },
+  {
+   "id": 0,
+   "key": "plays",
+   "title": "Prim plays",
+   "doc": "The wings at the caster (cut 1), the halo (cut 3, to cut 4), the ground plays of the angel"
+  },
+  {
+   "id": 0,
+   "key": "feathers",
+   "title": "Feathers",
+   "doc": "The two feather actor systems (cuts 2 and 3: particles born at the angel model's bones; their actor data the exe's)"
+  },
+  {
+   "id": 0,
+   "key": "glows",
+   "title": "Glows",
+   "doc": "Glow A at the caster's point (camera-facing), glow B at the camera block's height (hidden from cut 3 to cut 4)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "feathers",
+   "label": "Cut 2",
+   "doc": "Its actor system at cut 2: Start tick, Ticks, Mode (0: the bones)"
+  },
+  {
+   "key": "feathers2",
+   "label": "Cut 3",
+   "doc": "Its actor system at cut 3: Start tick, Ticks, Mode"
+  },
+  {
+   "key": "glow_a",
+   "label": "Glow A",
+   "doc": "From its frame shown, faded out, held until cut 4 and this many ticks, faded in"
+  },
+  {
+   "key": "glow_b",
+   "label": "Glow B",
+   "doc": "From its frame shown, faded out, hidden at cut 3, shown at cut 4, faded in"
+  }
+ ],
+ "params": [
+  {
+   "key": "director.cut2",
+   "part": "director",
+   "label": "Cut 2 after",
+   "doc": "Cut 2 (the feathers) once cut 1 has run this many frames",
+   "type": "i16",
+   "min": 0,
+   "max": 500,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "director.cut3",
+   "part": "director",
+   "label": "Cut 3 after",
+   "doc": "Cut 3 (the halo) once cut 2 has run this many frames",
+   "type": "i16",
+   "min": 0,
+   "max": 500,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "director.cut4",
+   "part": "director",
+   "label": "Cut 4 after",
+   "doc": "Cut 4 (the entities back, the angel fading out) once cut 3 has run this many frames",
+   "type": "i16",
+   "min": 0,
+   "max": 500,
+   "default": 65,
+   "unit": "plain"
+  },
+  {
+   "key": "director.cut5",
+   "part": "director",
+   "label": "Cut 5 after",
+   "doc": "Cut 5 (done) once cut 4 has run this many frames",
+   "type": "i16",
+   "min": 0,
+   "max": 500,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim",
+   "part": "director",
+   "label": "TIM image",
+   "doc": "The TIM image it uploads as it is (a palette when the game's has one)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim",
+   "unit": "plain"
+  },
+  {
+   "key": "angel.sound",
+   "part": "angel",
+   "label": "Sound",
+   "doc": "Played every tick of its reveal",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@angel.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "angel.reveal_frame",
+   "part": "angel",
+   "label": "Reveal from frame",
+   "doc": "Its reveal grows from this frame of its animation",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 21,
+   "unit": "plain"
+  },
+  {
+   "key": "angel.reveal_step",
+   "part": "angel",
+   "label": "Reveal step",
+   "doc": "The reveal radius up by this a tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 1024,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "angel.reveal_radius",
+   "part": "angel",
+   "label": "Reveal radius",
+   "doc": "...to this",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 1280,
+   "unit": "plain"
+  },
+  {
+   "key": "angel.fade_out",
+   "part": "angel",
+   "label": "Fade out",
+   "doc": "At cut 4 it fades out by this a tick (4096: gone)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "angel.ground_a",
+   "part": "angel",
+   "label": "Ground play A",
+   "doc": "A ground play at this tick of the angel",
+   "type": "i16",
+   "min": 0,
+   "max": 500,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "angel.ground_b",
+   "part": "angel",
+   "label": "Ground play B",
+   "doc": "Another at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 500,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim",
+   "part": "angel",
+   "label": "Animation set",
+   "doc": "The animation set it binds to its caster: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim",
+   "unit": "plain"
+  },
+  {
+   "key": "wings.start",
+   "part": "plays",
+   "label": "Wings start",
+   "doc": "The wings' play from this tick of its task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "wings.y",
+   "part": "plays",
+   "label": "Wings Y",
+   "doc": "Above the caster by this (negative: up)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -1024,
+   "unit": "plain"
+  },
+  {
+   "key": "wings.z",
+   "part": "plays",
+   "label": "Wings Z",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "wings.depth",
+   "part": "plays",
+   "label": "Wings depth",
+   "doc": "Its depth (OT) offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.at_171f2b0",
+   "part": "plays",
+   "label": "Wings layout",
+   "doc": "The wings' prim-model layout (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.at_171f2b0",
+   "unit": "plain"
+  },
+  {
+   "key": "halo.turn",
+   "part": "plays",
+   "label": "Halo turn",
+   "doc": "The halo's X angle (4096: a turn)",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.at_17217a8",
+   "part": "plays",
+   "label": "Halo layout",
+   "doc": "The halo's prim-model layout (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.at_17217a8",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.at_1720570",
+   "part": "plays",
+   "label": "Ground layout",
+   "doc": "The angel's ground plays' prim-model layout (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.at_1720570",
+   "unit": "plain"
+  },
+  {
+   "key": "feathers.start",
+   "part": "feathers",
+   "label": "Start tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "feathers.length",
+   "part": "feathers",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 1000,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "feathers.mode",
+   "part": "feathers",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "feathers2.start",
+   "part": "feathers",
+   "label": "Start tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "feathers2.length",
+   "part": "feathers",
+   "label": "Ticks",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 1000,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "feathers2.mode",
+   "part": "feathers",
+   "label": "Mode",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.bones",
+   "part": "feathers",
+   "label": "Bones",
+   "doc": "The 14 bones of the angel model a feather is born at, one at random (28 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.bones",
+   "unit": "plain"
+  },
+  {
+   "key": "glow_a.frame",
+   "part": "glows",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "glow_a.fade_out",
+   "part": "glows",
+   "label": "Fade out",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "glow_a.hold",
+   "part": "glows",
+   "label": "Hold",
+   "doc": "Ticks after cut 4",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "glow_a.fade_in",
+   "part": "glows",
+   "label": "Fade in",
+   "doc": "Up by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "glow_a.depth",
+   "part": "glows",
+   "label": "Depth",
+   "doc": "Its depth (OT) offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "glow_b.frame",
+   "part": "glows",
+   "label": "From tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "glow_b.fade_out",
+   "part": "glows",
+   "label": "Fade out",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "glow_b.fade_in",
+   "part": "glows",
+   "label": "Fade in",
+   "doc": "Up by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "glow_b.depth",
+   "part": "glows",
+   "label": "Depth",
+   "doc": "Its depth (OT) offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_15720b0",
+   "part": "glows",
+   "label": "Glow A model",
+   "doc": "The prim model at 0x15720B0 (a mesh of 61 vertices, 60 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_15720b0",
+   "unit": "plain"
+  },
+  {
+   "key": "models.at_1572810",
+   "part": "glows",
+   "label": "Glow B model",
+   "doc": "The prim model at 0x1572810 (a mesh of 35 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.at_1572810",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x78DBA0",
+   "code": "0x78DBA0",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; keeps the caster and target positions in the director block and starts the director; the result once the director says so; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78DC20"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x797540"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x797580"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7975A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x7975C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x78DCE0",
+   "code": "0x78DCE0",
+   "doc": "The director: every tick the cut bookkeeping (a new cut spawns its parts: 1 the angel, the wings, the glows; 2 the feathers; 3 the halo and more feathers), then its 16 states: the TIM and the camera task, cut 1 (the other entities hidden), its frames, cuts 2 and 3, cut 4 (the entities back), cut 5 (the done flag), done.",
+   "every_tick": [
+    [
+     "call",
+     "0x78DDB0"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78DE00"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78E850"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78E8A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78E940"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78E960"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78E980"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78E9A0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78E9C0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78E9E0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78EA00"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78EA20"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78EA40"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78EAC0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78EAE0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78EB10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x78EB30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.1572bb0",
+   "label": "Model animations",
+   "doc": "The animation set its code binds to a model",
+   "address": "0x1572BB0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.1575de0",
+   "label": "Camera script",
+   "doc": "A camera script its camera task starts (the library's keyframe camera stepper reads it)",
+   "address": "0x1575DE0",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1575e28",
+   "label": "Camera script",
+   "doc": "A camera script its camera task starts (the library's keyframe camera stepper reads it)",
+   "address": "0x1575E28",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1575e70",
+   "label": "Camera script",
+   "doc": "A camera script its camera task starts (the library's keyframe camera stepper reads it)",
+   "address": "0x1575E70",
+   "size": 176
+  },
+  {
+   "key": "not_editable.1575f20",
+   "label": "Camera script",
+   "doc": "A camera script its camera task starts (the library's keyframe camera stepper reads it)",
+   "address": "0x1575F20",
+   "size": 112
+  },
+  {
+   "key": "not_editable.1575f90",
+   "label": "Camera script",
+   "doc": "A camera script its camera task starts (the library's keyframe camera stepper reads it)",
+   "address": "0x1575F90",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1575fd8",
+   "label": "Camera key",
+   "doc": "The camera key its descriptor names (G_1533D18: the library's camera stepper starts it)",
+   "address": "0x1575FD8",
+   "size": 72
+  },
+  {
+   "key": "not_editable.171de1c",
+   "label": "Actor data",
+   "doc": "The actor system's data, relocated and read by the game's own actor code",
+   "address": "0x171DE1C",
+   "size": 4096
+  }
+ ]
+}

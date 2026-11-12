@@ -1,0 +1,653 @@
+{
+ "format": 1,
+ "effect": 9,
+ "name": "Doom Activation",
+ "doc": "Doom Activation (the battle's own effect when a Doom countdown reaches 0, on the doomed one; the act family, Stare's kind with Angelo Search's master): one emitter per action - the director's phases: the stage darkening, a dark prim model at the target with a screen tint and a sound, then the target drawn by the effect sinking into the ground with a grey level fading out, a prim model and sprite particles turning round it going down with it; the KO at the fade's end, the stage back. Its parts are the port's code (FFNx mag009_doom_activation.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions and uses this memory.",
+  "functions": {
+   "file_loader": "0x8C0360",
+   "setup": "0x8C0380",
+   "root": "0x8C0500"
+  },
+  "memory": {
+   "texture_file": "0x274EFE8",
+   "packet_cursor": "0x274EFEC",
+   "packet_limit": "0x274F14C",
+   "arena_a": "0x27575C4",
+   "limit_a": "0x27571B4",
+   "arena_b": "0x27575C0",
+   "limit_b": "0x27571B0",
+   "arena_top": "0x27584CC",
+   "init_flag_a": "0x27584C8",
+   "init_flag_b": "0x274F620",
+   "cam_ptr_a": "0x27584C4",
+   "cam_ptr_b": "0x274F150",
+   "root_queue": "0x274F220",
+   "root_pool": "0x274F158"
+  }
+ },
+ "module": {
+  "doc": "The port module whose code runs (its state functions called from the phases, its parts spawned by it): its memory [from, + size) - in a copy, a block of its own - and the exe data words pointing into it (the engine's global index, the word)",
+  "effect": 9,
+  "from": "0x274EFE8",
+  "size": "0x9510",
+  "pointers": [
+   [
+    2,
+    "0x1634B7C"
+   ]
+  ]
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "texture_name": {
+   "kind": "name",
+   "address": "0x1634F10",
+   "size": 12
+  },
+  "camera": {
+   "kind": "camera",
+   "address": "0x1634CB0",
+   "size": 580
+  },
+  "director.sound": {
+   "kind": "sound",
+   "address": "0x1634B80",
+   "size": 4
+  },
+  "layouts.at_18155f0": {
+   "kind": "layout",
+   "address": "0x18155F0",
+   "size": 10488,
+   "capacity": 840
+  },
+  "layouts.at_1817ee8": {
+   "kind": "layout",
+   "address": "0x1817EE8",
+   "size": 3216,
+   "capacity": 128
+  },
+  "seqs.at_1634b84": {
+   "kind": "seq",
+   "address": "0x1634B84",
+   "size": 300,
+   "frames": 11
+  },
+  "tables.counts": {
+   "kind": "table",
+   "address": "0x1634EF4",
+   "size": 12,
+   "format": "B",
+   "columns": 1
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@texture_name"
+  },
+  "camera": "@camera"
+ },
+ "director": {
+  "kind": "per_action",
+  "spawns": "emitter",
+  "arena_size": "0x10000",
+  "release_file": true
+ },
+ "pools": [
+  {
+   "key": "emitters",
+   "queue": "0x2757450",
+   "storage": "0x2757460",
+   "size": 88,
+   "count": 4
+  },
+  {
+   "key": "director",
+   "queue": "0x274F128",
+   "storage": "0x274F050",
+   "size": 72,
+   "count": 3
+  },
+  {
+   "key": "unused",
+   "queue": "0x2758160",
+   "storage": "0x2758020",
+   "size": 320,
+   "count": 1,
+   "keep": true,
+   "doc": "run by the master, nothing spawned there"
+  },
+  {
+   "key": "phases",
+   "queue": "0x274F230",
+   "storage": "0x274F240",
+   "size": 124,
+   "count": 8,
+   "keep": true,
+   "doc": "the stage darkening in and out, the sinking target (the port's)"
+  },
+  {
+   "key": "particles",
+   "queue": "0x274F628",
+   "storage": "0x27553F8",
+   "size": 92,
+   "count": 50,
+   "keep": true,
+   "doc": "the particle spawner and its particles (the port's)"
+  },
+  {
+   "key": "prims",
+   "queue": "0x27571A0",
+   "storage": "0x27565F0",
+   "size": 996,
+   "count": 3,
+   "keep": true,
+   "doc": "the doom prim model and the sinking one (the port's)"
+  },
+  {
+   "key": "tint",
+   "queue": "0x2757440",
+   "storage": "0x27571C0",
+   "size": 64,
+   "count": 10,
+   "keep": true,
+   "doc": "the engine's screen tint"
+  }
+ ],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "Its phases: the stage darkening, the doom model and its sound, the target sinking; the frames it waits for"
+  },
+  {
+   "id": 0,
+   "key": "stage",
+   "title": "Stage darkening",
+   "doc": "The stage group darkened, held, back"
+  },
+  {
+   "id": 0,
+   "key": "doom",
+   "title": "Doom model",
+   "doc": "The doom prim model at the target's anchor and the screen tint"
+  },
+  {
+   "id": 0,
+   "key": "sink",
+   "title": "Sinking",
+   "doc": "The target drawn by the effect, sinking with a grey level fading out; the KO at its end; the prim model following it"
+  },
+  {
+   "id": 0,
+   "key": "particles",
+   "title": "Particles",
+   "doc": "Sprites turning round the sinking anchor"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "director.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "Played once phase 2 (the doom model) runs",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@director.sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.doom_frame",
+   "part": "director",
+   "label": "Doom model after",
+   "doc": "Phase 2 (the doom model, the tint) once phase 1 has run this many frames",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "director.sink_frame",
+   "part": "director",
+   "label": "Sinking after",
+   "doc": "Phase 3 (the sinking) once phase 2 has run this many frames",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.level",
+   "part": "stage",
+   "label": "Level",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step_in",
+   "part": "stage",
+   "label": "Step in",
+   "doc": "Up by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 384,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.hold",
+   "part": "stage",
+   "label": "Hold until",
+   "doc": "Back from this tick of its task (phase 4)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "darken.step_out",
+   "part": "stage",
+   "label": "Step out",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "doom.depth",
+   "part": "doom",
+   "label": "Depth offset",
+   "doc": "Its depth (OT) offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "doom.tint_delay",
+   "part": "doom",
+   "label": "Tint delay",
+   "doc": "The tint's colour script starts after this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.at_18155f0",
+   "part": "doom",
+   "label": "Layout",
+   "doc": "The doom model's prim-model layout (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.at_18155f0",
+   "unit": "plain"
+  },
+  {
+   "key": "sink.speed",
+   "part": "sink",
+   "label": "Speed",
+   "doc": "Down by this a tick",
+   "type": "i16",
+   "min": -512,
+   "max": 512,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "sink.ticks",
+   "part": "sink",
+   "label": "Ticks",
+   "doc": "It sinks this many ticks before its grey level fades",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sink.level",
+   "part": "sink",
+   "label": "Grey level",
+   "doc": "Its grey level (fading out across a band above its middle)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "sink.fade",
+   "part": "sink",
+   "label": "Fade",
+   "doc": "Then its level down by this a tick while it sinks on; at 0 the KO",
+   "type": "i16",
+   "min": 1,
+   "max": 255,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sink.after",
+   "part": "sink",
+   "label": "Ticks after",
+   "doc": "Its anchor (the prim model, the particles) sinks on this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "sink.depth",
+   "part": "sink",
+   "label": "Depth offset",
+   "doc": "Its prim model's depth (OT) offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.at_1817ee8",
+   "part": "sink",
+   "label": "Layout",
+   "doc": "The prim-model layout following the sinking anchor (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.at_1817ee8",
+   "unit": "plain"
+  },
+  {
+   "key": "particles.radius",
+   "part": "particles",
+   "label": "Distance",
+   "doc": "From the sinking anchor",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 192,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.spin",
+   "part": "particles",
+   "label": "Spin",
+   "doc": "Turned about Y by this a tick (4096: a turn)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.depth",
+   "part": "particles",
+   "label": "Depth",
+   "doc": "Their depth word",
+   "type": "i16",
+   "min": 0,
+   "max": 256,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.at_1634b84",
+   "part": "particles",
+   "label": "Flipbook",
+   "doc": "The sprite sequence at 0x1634B84 (a flipbook of 11 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.at_1634b84",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.counts",
+   "part": "particles",
+   "label": "Counts",
+   "doc": "Particles spawned at each tick of the spawner, 0xFF its end (12 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.counts",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [
+  {
+   "key": "emitter",
+   "pool": "emitters",
+   "size": 88,
+   "function": "0x8C06D0",
+   "code": "0x8C06D0",
+   "doc": "One per action (the engine's emitter, its states the port's): follows its target; sets up the director block (the target's position, the facing to it) and starts the director; the KO once the director's done flag is set; then waits for the director's end, releases the master.",
+   "every_tick": [
+    [
+     "follow_target"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C0750"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C4800"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C4840"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C4860"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C4880"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "director",
+   "pool": "director",
+   "size": 72,
+   "function": "0x8C0800",
+   "code": "0x8C0800",
+   "doc": "The director: every tick the phase bookkeeping (a new phase spawns its tasks: 1 the stage darkening, 2 the doom model and the tint, 3 the sinking, 4 the darkening out), then its states: phase 1, its frame, phase 2, the sound, its frame, phase 3, the waits for phases 3 and 4, phase 5, done.",
+   "every_tick": [
+    [
+     "call",
+     "0x8C08A0"
+    ]
+   ],
+   "phases": [
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C08F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C0940"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C0960"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C0980"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C09D0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C09F0"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C0A10"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C0A30"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C0A50"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C0A70"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    },
+    {
+     "each_tick": [
+      [
+       "call",
+       "0x8C0A90"
+      ]
+     ],
+     "wait": [
+      "never"
+     ]
+    }
+   ]
+  }
+ ],
+ "not_editable": [
+  {
+   "key": "not_editable.1634f00",
+   "label": "Tint colours",
+   "doc": "The screen tint's colour script (the engine's shared tint task reads it to its end word)",
+   "address": "0x1634F00",
+   "size": 16
+  }
+ ]
+}

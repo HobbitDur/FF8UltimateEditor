@@ -458,6 +458,34 @@ Potion's description is the same with its own sequences and sound.
    what nothing covers. Each is checked as Hypnotize is (`tests/Fujin/test_effect_program.py`): from
    its description it records exactly what the exe's code records; with parameters, exactly what
    FFNx's port records with them; as a free slot with no exe function, itself again.
+   - **Doom Activation (9)** (FFNx 87c60e4a; the battle's own effect when a Doom countdown reaches 0, on the doomed one; the
+     act family, Stare's kind with Angelo Search's master, Doom's description): one emitter per action - the director's
+     phases: the stage darkening, a dark prim model at the target with a screen tint and a sound, then the target drawn by
+     the effect sinking into the ground with a grey level fading out, a prim model and sprite particles turning round it
+     going down with it; the KO at the fade's end, the stage back.
+     - *Inputs* (`DoomActParams`, 22): Stare's director sound and stage darkening (level, steps, hold), the director's
+       two phase frames, the doom model's depth and the tint's delay, the sinking's speed, ticks, grey level, fade, ticks
+       after and its prim model's depth, the particles' distance, spin and depth. Data: the sound, the two layouts (doom
+       model, sinking model), the particle flipbook, the particle count table (read within its 12 bytes), the camera
+       track, "mag008.tim".
+     - *Port:* its memory through R(), the director block through the descriptor (G_1533010), its spawns through
+       Spawn(); its master sets its descriptor (MOD_009) and resets g_reloc.
+     - *Tests:* `tests/Fujin/test_ports_V.py` - a monster (c0m009, slot 3) on itself.
+     - *Fujin:* its tabs (Director, Stage darkening, Doom model, Sinking, Particles); no + menu family.
+   - **Angel Wing (84)** (FFNx a71be3c3; Rinoa's limit break, the transformation; the act family, MiniMog's kind, Doom's
+     description): one emitter per action - the director's cuts and the camera task's scripts: Rinoa's angel model revealed
+     from its centre (the caster's model swapped, the other battle entities hidden), the wings' and the halo's prim plays,
+     two glows, two feather actor systems; the angel fades out, the entities come back.
+     - *Inputs* (`AngelWingParams`, 39): the director's four cut frames, the angel's sound, reveal (from frame, step,
+       radius), fade out and ground plays' ticks, the wings' start, offset and depth, the halo's turn, the two feather
+       actor systems (start, ticks, mode), glow A (from tick, fades, hold, depth), glow B (from tick, fades, depth).
+       Data: the sound, the wings' TIM, the caster's animation set, three layouts (wings, halo, ground), two meshes (the
+       glows), the feathers' bone table, "mag083.tim" (no engine camera animation: its camera task's scripts; 2 exe
+       words: pointers 2 and 3).
+     - *Port:* the director block and the camera block through the descriptor (G_1533010 / G_15339D0); the reveal draw
+       context's buffers through R() (they were raw).
+     - *Tests:* `tests/Fujin/test_ports_V.py` - cast by Rinoa (d4c009, slot 0) on herself.
+     - *Fujin:* its tabs (Director, Angel, Prim plays, Feathers, Glows); no + menu family.
    - **Gatling Gun (150)** (FFNx 3b665126; SAM08G's attack; a port root, Ray-Bomb's kind; Quistis' Gatling Gun 305's
      code with Chain Gun's smoke and another timeline): the muzzle flashes at the caster's effect point, the smoke, five
      misses on the line to the target and seven hits on it with their dust and sparks, the sound; the damage at tick 30.
@@ -2975,3 +3003,12 @@ Potion's description is the same with its own sequences and sound.
        own::Fn; setup ported (its loader is the engine's empty one); no part tagged.
      - *Tests:* `tests/Fujin/test_ports_U.py` - cast by Griever (c0m122) on the party.
      - *Fujin:* its tab (Cues); no + menu family.
+   - **LV5 Death (345)** (FFNx f1adefeb; Omega Weapon's and Tonberry King's enemy attack; LV?Death's library relocated, its
+     director Death's; the act family, Death's description with `"each": "target"`): one emitter per target - a reaper
+     appears in front of it, fading in in the dark with its aura's actor system and the stage wobbling, strikes - the dark
+     actor system and dark spark bursts - and vanishes; its target's damage.
+     - *Inputs* (`Lv5DeathParams`, 15): Death's (the sounds, the reapers' fades and frames, the two actor systems, the
+       spark mesh). Data: the two sounds, the spark mesh, the reapers' two TIMs, the sparks' scale / fade table (4 x 16
+       words by tick), the camera track, "mag013-073-344.tim".
+     - *Tests:* `tests/Fujin/test_ports_V.py` - cast by Tonberry King (c0m057, slot 3) on Squall.
+     - *Fujin:* its tabs (Reaper, Actor systems); no + menu family.
