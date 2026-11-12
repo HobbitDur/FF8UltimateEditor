@@ -1,0 +1,240 @@
+{
+ "format": 1,
+ "effect": 302,
+ "name": "Snipe Laser",
+ "doc": "Snipe Laser (GIM47N's attack; a Funguar laser variant): the master and the beam tasks - two beams from two points of the caster's skeleton to each target: the aim layouts, the beams, the hit layouts and glows, beam 0's impact layout and sparks, the sound; the action results. Its tasks are the port's code (FFNx mag302_snipe_laser.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x66CA60",
+   "setup": "0x66CA50",
+   "root": "0x66CB00"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 302,
+  "from": "0x2507660",
+  "size": "0x78"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0x103BBB0",
+   "size": 4
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0x103AD7C",
+   "size": 2968,
+   "capacity": 124
+  },
+  "layouts.muzzle": {
+   "kind": "layout",
+   "address": "0x1036F60",
+   "size": 11196,
+   "capacity": 944
+  },
+  "layouts.ray": {
+   "kind": "layout",
+   "address": "0x1039B1C",
+   "size": 4704,
+   "capacity": 232
+  },
+  "layouts.impact": {
+   "kind": "layout",
+   "address": "0x1035CF4",
+   "size": 4716,
+   "capacity": 432
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x1034480",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.glow": {
+   "kind": "seq",
+   "address": "0x1034270",
+   "size": 528,
+   "frames": 16
+  },
+  "model_data.beam": {
+   "kind": "model",
+   "address": "0x103462C",
+   "size": 5832,
+   "vertices": 220
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x103BBC8",
+   "size": 16
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x103B914",
+   "size": 668
+  },
+  "tables.beam_points": {
+   "kind": "table",
+   "address": "0x103BBB8",
+   "size": 16,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x66CA50",
+  "file_loader": "0x66CA60",
+  "root": "0x66CB00"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "beam",
+   "title": "Beam",
+   "doc": "Two beams from two points of the caster's skeleton to each target: the aim layouts, the beams, the hit layouts and glows, beam 0's impact layout and sparks, the sound; the action result at beam 0's 0x2B"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "beam",
+   "label": "Sound",
+   "doc": "The master's counter 0x14",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "beam",
+   "label": "Hit",
+   "doc": "The prim-model layout hit (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.muzzle",
+   "part": "beam",
+   "label": "Muzzle",
+   "doc": "The prim-model layout muzzle (its models' animation; decoded into each beam, never played: no change shows)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.muzzle",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ray",
+   "part": "beam",
+   "label": "Ray",
+   "doc": "The prim-model layout ray (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ray",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.impact",
+   "part": "beam",
+   "label": "Impact",
+   "doc": "The prim-model layout impact (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.impact",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "beam",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.glow",
+   "part": "beam",
+   "label": "Glow",
+   "doc": "The sprite sequence glow (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "model_data.beam",
+   "part": "beam",
+   "label": "Beam model",
+   "doc": "The prim model beam (a mesh of 220 vertices, 160 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@model_data.beam",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "beam",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "beam",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.beam_points",
+   "part": "beam",
+   "label": "Beam points",
+   "doc": "Where each beam starts: a point (x, y, z) and the caster's bone it is on, beam 0 then beam 1 (16 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.beam_points",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

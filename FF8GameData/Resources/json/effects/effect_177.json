@@ -1,0 +1,343 @@
+{
+ "format": 1,
+ "effect": 177,
+ "name": "1000 Needles",
+ "doc": "1000 Needles (the Cactuar's attack): the director and the needle task - needles flying from random points of the caster to random points of the target, a spark where each one arrives, the sound; the damage. Its tasks are the port's code (FFNx mag177_1000_needles.cpp) run on the program's memory (its needle and spark tables, queues and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5CF740",
+   "setup": "0x5CF760",
+   "root": "0x5D0090"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 177,
+  "from": "0x2341948",
+  "size": "0x26C38"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0xD44E10",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xD44EA4",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xD44C5C",
+   "size": 356
+  },
+  "tables.needle_vertices": {
+   "kind": "table",
+   "address": "0xD44E14",
+   "size": 32,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ]
+  },
+  "tables.needle_triangles": {
+   "kind": "table",
+   "address": "0xD44E34",
+   "size": 80,
+   "format": "B",
+   "columns": 20,
+   "labels": [
+    "red 0",
+    "green 0",
+    "blue 0",
+    "code",
+    "vertex 0",
+    "-",
+    "vertex 1",
+    "-",
+    "vertex 2",
+    "-",
+    "pad",
+    "-",
+    "red 1",
+    "green 1",
+    "blue 1",
+    "-",
+    "red 2",
+    "green 2",
+    "blue 2",
+    "-"
+   ]
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xD44DC0",
+   "size": 40,
+   "frames": 1
+  },
+  "tables.spark_lift": {
+   "kind": "table",
+   "address": "0xD44E88",
+   "size": 28,
+   "format": "i",
+   "columns": 1,
+   "labels": [
+    "y"
+   ]
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5CF760",
+  "file_loader": "0x5CF740",
+  "root": "0x5D0090"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The timeline: the needles start at a tick with the sound, the damage (every target of the action) at a tick, the end"
+  },
+  {
+   "id": 1,
+   "key": "needles",
+   "title": "Needles",
+   "doc": "Needles fly from random effect points of the caster to random ones of the target (both moved at random), a few steps each, a flat-shaded tetrahedron turned along its way and scaled at random"
+  },
+  {
+   "id": 2,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "A spark sprite where each needle arrives, lifted by its table as its ticks run out"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's spawn tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.spawn",
+   "part": "director",
+   "label": "Needles tick",
+   "doc": "The needles start at this tick of the director (with the sound)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage (every target of the action) at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "director.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The director's last tick (the effect ends once every needle and spark has)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "needles.spawn_last",
+   "part": "needles",
+   "label": "Last spawn tick",
+   "doc": "Needles spawn from the needle task's tick 0 to this one",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "needles.per_tick",
+   "part": "needles",
+   "label": "A tick",
+   "doc": "How many spawn a tick (300 needles at most at once)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "needles.steps_min",
+   "part": "needles",
+   "label": "Steps",
+   "doc": "A needle's flight in ticks: this + a random below the next",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "needles.steps_rand",
+   "part": "needles",
+   "label": "Steps random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "needles.spread",
+   "part": "needles",
+   "label": "Spread",
+   "doc": "Its start and its end each moved by a random below this on each axis, centred",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "needles.scale_min",
+   "part": "needles",
+   "label": "Scale",
+   "doc": "Its size: this + a random below the next (4096 = the model's own)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 768,
+   "unit": "scale"
+  },
+  {
+   "key": "needles.scale_rand",
+   "part": "needles",
+   "label": "Scale random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.needle_vertices",
+   "part": "needles",
+   "label": "Needle vertices",
+   "doc": "The needle's four vertices (x, y, z; it points along -z) (32 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.needle_vertices",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.needle_triangles",
+   "part": "needles",
+   "label": "Needle triangles",
+   "doc": "The needle's four gouraud triangles: the first corner's colour and GPU code, three vertex numbers (x 2), the other two corners' colours (80 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.needle_triangles",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "A spark's ticks (its lift table holds 7 rows, read by the ticks left: 6 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 6,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size",
+   "part": "sparks",
+   "label": "Size",
+   "doc": "The spark sprite's scale (256 = the game's)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 1 frame: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.spark_lift",
+   "part": "sparks",
+   "label": "Spark lift",
+   "doc": "The spark's screen y offset by its ticks left (rows 0..6; negative = up) (28 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.spark_lift",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

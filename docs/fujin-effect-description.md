@@ -458,6 +458,39 @@ Potion's description is the same with its own sequences and sound.
    what nothing covers. Each is checked as Hypnotize is (`tests/Fujin/test_effect_program.py`): from
    its description it records exactly what the exe's code records; with parameters, exactly what
    FFNx's port records with them; as a free slot with no exe function, itself again.
+   - **Megiddo Flame (166)** (FFNx b1890b84; Omega Weapon's attack; a port root, Ray-Bomb's kind; the module shared
+     with 312, `fx_megiddo.h`): the caster's effect point (its bone 0x25 and an offset, retaken every tick) with a glow,
+     two spins and rings, six bolts round the targets (an arc model along each spline, a gouraud sheet and a ribbon),
+     the stage drawn from above into VRAM for the column at the targets' centre and its flash, the pillar, 16 flames,
+     sparks and debris, the present party members knocked down then thrown (a landing ring), the screen flashes and
+     fades, the sounds; the action results at each throw's end.
+     - *Inputs* (`MegiddoParams`, 40, one layout for 166 and 312 in `fx_megiddo.h`: each module's game values from
+       its own addresses): the sounds, the director's ticks (glow, bolts, rings from / until, column, blast, pillar,
+       sparks, end), the effect point's bone and offset, the glow's size and shrink, the spins' size and spin, the
+       rings' size, the bolts' count and spread, the flames' count and spreads. Data: the sounds, 12 meshes (glow, spin,
+       ring, arc, column, column flash, pillar, the two flames, the three debris), the spark flipbook, the sheet
+       colours, the effect point offset, "mag311.tim", the camera track.
+     - *Port:* the module globals through own::R (the descriptor's G()), the spawns through own::Fn; setup and loader
+       ported in the template; ten parts tagged (FX_PART).
+     - *Tests:* `tests/Fujin/test_ports_R.py` - cast by Omega Weapon (c0m114) on the party.
+     - *Fujin:* its tabs (Director, Glow, Spins, Rings, Bolts, Column, Pillar, Flames, Sparks, Debris, Knock-down and
+       landing); no + menu family.
+   - **1000 Needles (177)** (FFNx ddd425b3; the Cactuar's attack; a port root, Ray-Bomb's kind): 25 needles a tick
+     (a flat-shaded tetrahedron each, turned along its way, scaled at random) from random effect points of the caster
+     to random ones of the target, a spark sprite where each one arrives, lifted by its table; the sound; the damage
+     at tick 50.
+     - *Inputs* (`NeedlesParams`, 19, one layout for 177 and 178): the sound, the director's ticks (needles, damage,
+       end), the needles' last spawn tick, count a tick, steps, spread and scale, the sparks' life (6 at most: its lift
+       table's rows) and size. Data: the sound, the needle's vertices and triangles (tables: the code copies them into
+       its draw block), the spark flipbook (an edited one is drawn where it is: the game's copy holds its one frame),
+       its lift table, "mag176.tim", the camera track.
+     - *Tests:* `tests/Fujin/test_ports_R.py` - cast by the Cactuar (c0m055) on the party.
+     - *Fujin:* its tabs (Director, Needles, Sparks); no + menu family.
+   - **10,000 Needles (178)** (FFNx fdaf63e7; the Jumbo Cactuar's attack; 1000 Needles' module at other addresses):
+     as 1000 Needles, the needles from tick 36, the damage at 85, the end after 90, scaled 0x480 + up to 0x5FF.
+     - *Inputs* (`NeedlesParams`, 19): 1000 Needles' layout, its own game values and data.
+     - *Tests:* `tests/Fujin/test_ports_R.py` - cast by the Jumbo Cactuar (c0m084) on the party.
+     - *Fujin:* its tabs (Director, Needles, Sparks); no + menu family.
    - **Kamikaze (181)** (FFNx 5bf3ca75; the command ability, a party member's self-destruct; a port director, Ray-Bomb's
      kind; Suicide 180's code adapted): the caster's glow (not hidden), flares flying off it, the screen fade, the rings,
      the sparks, the smoke, the sound; the damage at tick 38.
@@ -2598,6 +2631,14 @@ Potion's description is the same with its own sequences and sound.
      screen fade, the smoke, one hit task a target, the sound; the action results.
      - *Inputs* (`BadBreath300Params`): the breath's sound. Data: the sound, "mag130-299.tim".
      - *Fujin:* its tab (Breath); no + menu family.
+   - **Snipe Laser (302)** (FFNx 26f4da68; GIM47N's attack, a Funguar laser variant; a port root, Ray-Bomb's kind): two
+     beams from two points of the caster's skeleton to each target, the aim layouts, the beams, the hit layouts and
+     glows, beam 0's impact layout and sparks, the sound at the master's tick 20; the action results.
+     - *Inputs* (`SnipeLaserParams`, 11: Funguar laser's layout and the beams' points): the sound, the hit, muzzle
+       (decoded, never played), ray and impact layouts, the spark and glow flipbooks, the beam mesh, "mag276-301.tim",
+       the camera track, the two beams' points (x, y, z and the caster's bone).
+     - *Tests:* `tests/Fujin/test_ports_R.py` - cast by GIM47N (c0m008) on the party.
+     - *Fujin:* its tab (Beam); no + menu family.
    - **Boomerang Sword (304)** (FFNx 4c826715; the Esthar Soldiers' enemy attack; a port root, Ray-Bomb's kind): the
      sword thrown from the caster's hand along the targets and back, spinning, with its trail, a hit layout and
      sparks at each target it passes, the sound; each target's action result.
@@ -2635,6 +2676,12 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`GravijaParams`): the sound. Data: the sound, "mag213-310.tim".
      - *Tests:* cast by Diablos (c0m066) on the party (`CYCLE_CASTS`).
      - *Fujin:* its tab (Main); no + menu family.
+   - **Megiddo Flame (312)** (FFNx b1890b84; Mobile Type 8's attack; 166's module at other addresses, `fx_megiddo.h`):
+     as 166, the effect point on the caster's bone 0xA, the glow, spins and rings drawn with OT shift 2.
+     - *Inputs* (`MegiddoParams`, 40): 166's layout, its own game values and data (moved by -0x989F0, its own camera
+       track).
+     - *Tests:* `tests/Fujin/test_ports_R.py` - cast by Mobile Type 8 (c0m105) on the party.
+     - *Fujin:* 166's tabs; no + menu family.
    - **Ray-Bomb (GIM52A) (313)** (FFNx 933cfdf3; GIM52A's attack; a port director, Ray-Bomb's kind; Ray-Bomb 10's code
      with another timeline): a muzzle in front of the caster charging, dust blown from it, a muzzle flash, two beams to
      the targets spinning both ways with their sparks, smoke, a shockwave ring and debris at the targets, the party

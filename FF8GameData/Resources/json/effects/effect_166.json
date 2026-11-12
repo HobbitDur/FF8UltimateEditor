@@ -1,0 +1,702 @@
+{
+ "format": 1,
+ "effect": 166,
+ "name": "Megiddo Flame",
+ "doc": "Megiddo Flame (Omega Weapon's attack): the director and its tasks - a glow, spins and rings at the caster's effect point, bolts round the targets (arcs, gouraud sheets, ribbons), the stage captured from above for the column at the centre, the pillar, flames, sparks and debris, the party knocked down and thrown, the screen flashes and fades, the sounds; the action results. Its tasks are the port's code (FFNx fx_megiddo.h, shared by 166 and 312) run on the program's memory (its pools, bolt records and queues in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5E4E70",
+   "setup": "0x5E4E90",
+   "root": "0x5E93A0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 166,
+  "from": "0x23BF038",
+  "size": "0x4240"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xD7803C",
+   "size": 4
+  },
+  "sounds.blast": {
+   "kind": "sound",
+   "address": "0xD78040",
+   "size": 4
+  },
+  "tables.point_offset": {
+   "kind": "table",
+   "address": "0xD78048",
+   "size": 8,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ]
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xD780B8",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xD716D8",
+   "size": 468
+  },
+  "models.glow": {
+   "kind": "model",
+   "address": "0xD7688C",
+   "size": 2208,
+   "vertices": 73
+  },
+  "models.spin": {
+   "kind": "model",
+   "address": "0xD767BC",
+   "size": 208,
+   "vertices": 9
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xD7712C",
+   "size": 1768,
+   "vertices": 72
+  },
+  "models.arc": {
+   "kind": "model",
+   "address": "0xD719E4",
+   "size": 1584,
+   "vertices": 65
+  },
+  "tables.sheet_colours": {
+   "kind": "table",
+   "address": "0xD78060",
+   "size": 48,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "code"
+   ]
+  },
+  "models.column": {
+   "kind": "model",
+   "address": "0xD7398C",
+   "size": 7448,
+   "vertices": 176
+  },
+  "models.column_flash": {
+   "kind": "model",
+   "address": "0xD756A4",
+   "size": 4376,
+   "vertices": 110
+  },
+  "models.pillar": {
+   "kind": "model",
+   "address": "0xD722E4",
+   "size": 5800,
+   "vertices": 192
+  },
+  "models.flame_a": {
+   "kind": "model",
+   "address": "0xD7217C",
+   "size": 360,
+   "vertices": 16
+  },
+  "models.flame_b": {
+   "kind": "model",
+   "address": "0xD72014",
+   "size": 360,
+   "vertices": 16
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xD718AC",
+   "size": 312,
+   "frames": 10
+  },
+  "models.debris0": {
+   "kind": "model",
+   "address": "0xD77814",
+   "size": 696,
+   "vertices": 12
+  },
+  "models.debris1": {
+   "kind": "model",
+   "address": "0xD77ACC",
+   "size": 696,
+   "vertices": 12
+  },
+  "models.debris2": {
+   "kind": "model",
+   "address": "0xD77D84",
+   "size": 696,
+   "vertices": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5E4E90",
+  "file_loader": "0x5E4E70",
+  "root": "0x5E93A0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The timeline: the effect point at the caster's bone and the frame toward the targets' centre (every tick), when each part starts, the stage captured from above for the column, the screen flashes and fades, the sounds"
+  },
+  {
+   "id": 1,
+   "key": "glow",
+   "title": "Glow",
+   "doc": "A glow model at the effect point, shrinking, fading at its end"
+  },
+  {
+   "id": 2,
+   "key": "spins",
+   "title": "Spins",
+   "doc": "Two models at the effect point spinning (slowing down), fading in and out"
+  },
+  {
+   "id": 3,
+   "key": "rings",
+   "title": "Rings",
+   "doc": "Ring models at the effect point every 6th tick, growing and fading"
+  },
+  {
+   "id": 4,
+   "key": "bolts",
+   "title": "Bolts",
+   "doc": "Bolts round the targets' centre (random splines): each an arc model from the effect point along it, a gouraud sheet between them and a widened ribbon on it"
+  },
+  {
+   "id": 5,
+   "key": "column",
+   "title": "Column",
+   "doc": "The column at the centre (textured with the stage drawn from above) and its flash, stretched up"
+  },
+  {
+   "id": 6,
+   "key": "pillar",
+   "title": "Pillar",
+   "doc": "The pillar model at the centre, growing up, fading"
+  },
+  {
+   "id": 7,
+   "key": "flames",
+   "title": "Flames",
+   "doc": "Flame models round the centre (two kinds, scrolled), each after a delay, spinning, fading"
+  },
+  {
+   "id": 8,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Spark sprites thrown round the centre (two a tick)"
+  },
+  {
+   "id": 9,
+   "key": "debris",
+   "title": "Debris",
+   "doc": "Debris models thrown round the centre (three a tick), falling and turning"
+  },
+  {
+   "id": 10,
+   "key": "landing",
+   "title": "Knock-down and landing",
+   "doc": "Each present party member knocked down, then thrown up, turned and landing (a ring model where it lands); the action result at the end"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The start, the blast"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "At the director's glow tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.blast",
+   "part": "director",
+   "label": "Blast",
+   "doc": "At the director's blast tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.blast",
+   "unit": "plain"
+  },
+  {
+   "key": "director.glow",
+   "part": "director",
+   "label": "Glow tick",
+   "doc": "The glow (and the start sound) at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "director.bolts",
+   "part": "director",
+   "label": "Bolts tick",
+   "doc": "The two spins and the bolts start at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "director.rings_from",
+   "part": "director",
+   "label": "Rings from",
+   "doc": "Rings start on the ticks from this one to the next (each tick whose remainder by 6 is 2)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "director.rings_to",
+   "part": "director",
+   "label": "Rings until",
+   "doc": "(the last tick a ring may start)",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "director.column",
+   "part": "director",
+   "label": "Column tick",
+   "doc": "The column, its flash and the knock-downs start at this tick (the stage is captured the tick before)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 44,
+   "unit": "plain"
+  },
+  {
+   "key": "director.blast",
+   "part": "director",
+   "label": "Blast tick",
+   "doc": "The blast sound at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "director.pillar",
+   "part": "director",
+   "label": "Pillar tick",
+   "doc": "The pillar, the flames and the throws start at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 54,
+   "unit": "plain"
+  },
+  {
+   "key": "director.sparks",
+   "part": "director",
+   "label": "Sparks tick",
+   "doc": "The sparks and the debris start at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "director.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The director's last tick (the white flash fades out from 0x5A to 0x62; the effect ends once every part has)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 98,
+   "unit": "plain"
+  },
+  {
+   "key": "point.bone",
+   "part": "director",
+   "label": "Effect point bone",
+   "doc": "The caster's bone the effect point is on (0xF0 and up: the model's named points; below: a bone)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 37,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.point_offset",
+   "part": "director",
+   "label": "Effect point offset",
+   "doc": "The effect point's offset in that bone's frame (x, y, z, pad) (8 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.point_offset",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "glow.size",
+   "part": "glow",
+   "label": "Size",
+   "doc": "Its scale at the start (4096 = the model's own)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 26624,
+   "unit": "scale"
+  },
+  {
+   "key": "glow.shrink",
+   "part": "glow",
+   "label": "Shrink",
+   "doc": "Taken from its scale on its first tick, 5/6 of that the next, and so on for 8 ticks",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 5324,
+   "unit": "plain"
+  },
+  {
+   "key": "models.glow",
+   "part": "glow",
+   "label": "Glow model",
+   "doc": "The prim model glow (a mesh of 73 vertices: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "spins.size",
+   "part": "spins",
+   "label": "Size",
+   "doc": "Their scale (4096 = the model's own)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 8192,
+   "unit": "scale"
+  },
+  {
+   "key": "spins.spin_min",
+   "part": "spins",
+   "label": "Spin",
+   "doc": "The first one's turn a tick: this + a random below the next (4096 = a full turn; 7/8 of it the next tick...; the second turns the other way by its first angle)",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 20,
+   "unit": "angle"
+  },
+  {
+   "key": "spins.spin_rand",
+   "part": "spins",
+   "label": "Spin random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "models.spin",
+   "part": "spins",
+   "label": "Spin model",
+   "doc": "The prim model spin (a mesh of 9 vertices: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.spin",
+   "unit": "plain"
+  },
+  {
+   "key": "rings.size",
+   "part": "rings",
+   "label": "Size",
+   "doc": "Its scale at the start and its first growth (5/6 of it the next tick, and so on)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 832,
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "rings",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 72 vertices: an edited one keeps its vertices; the landing rings draw it too)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.count",
+   "part": "bolts",
+   "label": "Count",
+   "doc": "How many bolts (6 records: 6 at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 6,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.spread",
+   "part": "bolts",
+   "label": "Spread",
+   "doc": "Each bolt's two ends: the centre moved by a random below this on x and z, centred",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 7400,
+   "unit": "plain"
+  },
+  {
+   "key": "models.arc",
+   "part": "bolts",
+   "label": "Arc model",
+   "doc": "The prim model arc (a mesh of 65 vertices: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.arc",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.sheet_colours",
+   "part": "bolts",
+   "label": "Sheet colours",
+   "doc": "The sheet's colour words by its tick (12, in turn: red, green, blue, the GPU code byte) (48 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.sheet_colours",
+   "unit": "plain"
+  },
+  {
+   "key": "models.column",
+   "part": "column",
+   "label": "Column model",
+   "doc": "The prim model column (a mesh of 176 vertices: an edited one keeps its vertices; its own renderer textures it with the captured stage)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.column",
+   "unit": "plain"
+  },
+  {
+   "key": "models.column_flash",
+   "part": "column",
+   "label": "Column flash model",
+   "doc": "The prim model column flash (a mesh of 110 vertices: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.column_flash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.pillar",
+   "part": "pillar",
+   "label": "Pillar model",
+   "doc": "The prim model pillar (a mesh of 192 vertices: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.pillar",
+   "unit": "plain"
+  },
+  {
+   "key": "flames.count",
+   "part": "flames",
+   "label": "Count",
+   "doc": "How many flames (each delayed by its number + a random below 4; the task pool holds 100 tasks: 64 at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.spread_x",
+   "part": "flames",
+   "label": "Spread x",
+   "doc": "A flame's place: the centre moved by a random below this on x, centred",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 5600,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.spread_z",
+   "part": "flames",
+   "label": "Spread z",
+   "doc": "... and below this on z",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2800,
+   "unit": "plain"
+  },
+  {
+   "key": "models.flame_a",
+   "part": "flames",
+   "label": "Flame model a",
+   "doc": "The prim model flame a (a mesh of 16 vertices: an edited one keeps its vertices; drawn by the shared scrolling renderer)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flame_a",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flame_b",
+   "part": "flames",
+   "label": "Flame model b",
+   "doc": "The prim model flame b (a mesh of 16 vertices: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flame_b",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "models.debris0",
+   "part": "debris",
+   "label": "Debris model 0",
+   "doc": "The prim model debris 0 (a mesh of 12 vertices: an edited one keeps its vertices; a debris piece is one of the three at random)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.debris0",
+   "unit": "plain"
+  },
+  {
+   "key": "models.debris1",
+   "part": "debris",
+   "label": "Debris model 1",
+   "doc": "The prim model debris 1 (a mesh of 12 vertices: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.debris1",
+   "unit": "plain"
+  },
+  {
+   "key": "models.debris2",
+   "part": "debris",
+   "label": "Debris model 2",
+   "doc": "The prim model debris 2 (a mesh of 12 vertices: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.debris2",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.reference_direction",
+   "label": "Reference direction",
+   "doc": "The direction (0, 0, -4096) its frames and arcs turn from (a math constant)",
+   "address": "0xD78050",
+   "size": 16
+  },
+  {
+   "key": "not_editable.debris_mesh_pointers",
+   "label": "Debris mesh pointers",
+   "doc": "The three debris mesh pointers (the meshes themselves are parameters: Debris)",
+   "address": "0xD78090",
+   "size": 12
+  },
+  {
+   "key": "not_editable.alternate_viewport",
+   "label": "Alternate viewport",
+   "doc": "The draw environment put back after the stage capture",
+   "address": "0xD780A0",
+   "size": 24
+  }
+ ]
+}
