@@ -458,6 +458,30 @@ Potion's description is the same with its own sequences and sound.
    what nothing covers. Each is checked as Hypnotize is (`tests/Fujin/test_effect_program.py`): from
    its description it records exactly what the exe's code records; with parameters, exactly what
    FFNx's port records with them; as a free slot with no exe function, itself again.
+   - **Kamikaze (181)** (FFNx 5bf3ca75; the command ability, a party member's self-destruct; a port director, Ray-Bomb's
+     kind; Suicide 180's code adapted): the caster's glow (not hidden), flares flying off it, the screen fade, the rings,
+     the sparks, the smoke, the sound; the damage at tick 38.
+     - *Inputs* (`KamikazeParams`, 14): Suicide's (the sound, the damage tick) and the flares (count, speed, size).
+       Data: the sound, the spark, smoke and flare flipbooks, the two ring meshes, "mag180.tim", the camera track.
+     - *Tests:* `test_ports_P.py` casts it from Squall on the c0m009 monster.
+     - *Fujin:* its tab (Director); no + menu family.
+   - **Storm Breath (Elnoyle) (213)** (FFNx ff499492; Elnoyle's attack; a port director, Ray-Bomb's kind; module 213 is
+     Storm Breath 11's code, plus a start sound): a breath stream from the caster's mouth sweeping its targets in turn,
+     layouts at the mouth, mist and rings blown along it, hit sparks on the targets, sparks and debris off the stream.
+     - *Inputs* (`StormParams`, 43): Storm Breath 11's (the sound and the end, the stream, the layouts at the mouth, the
+       hit sparks, the stream's sparks and debris, the mist and rings) and the start sound and its tick. Data: the
+       sound, the two layouts, four flipbooks, three meshes, "mag212.tim", the camera track.
+     - *Tests:* `test_ports_P.py` casts it from Elnoyle (c0m131, slot 3) on Squall.
+     - *Fujin:* its tabs (Timing, Stream, Sparks, Mist and rings); no + menu family.
+   - **Micro Missiles (284)** (FFNx 4e353867; GIM52A's attack; a port root, Ray-Bomb's kind; Micro Missiles 299's code
+     with other numbers): six missiles launched at once from in front of the caster on half-circle paths to random
+     bones of the target (two miss) with their trails, hits, flashes and sparks, the sound; the action result once
+     they have all ended.
+     - *Inputs* (`MicroMissiles284Params`, 15): Micro Missiles 299's data (the sound, three layouts, three flipbooks,
+       "mag283-298.tim", the camera track) and the launch (sound tick, push, height, flight ticks and their step,
+       sparks per impact).
+     - *Tests:* `test_ports_P.py` casts it from GIM52A (c0m001, slot 3) on Squall.
+     - *Fujin:* its tab (Master); no + menu family.
    - **Antidote (294)** (FFNx 736a2d6c, 522e7ac4, 9b2e6c15), the first of the five status-cure item modules (292 Soft,
      293 Eye Drops, 294 Antidote, 295 Echo Screen, 296 Holy Water: one source built five times with
      different options). One prim layout played on the target; the target takes the result when
@@ -2611,6 +2635,15 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`GravijaParams`): the sound. Data: the sound, "mag213-310.tim".
      - *Tests:* cast by Diablos (c0m066) on the party (`CYCLE_CASTS`).
      - *Fujin:* its tab (Main); no + menu family.
+   - **Ray-Bomb (GIM52A) (313)** (FFNx 933cfdf3; GIM52A's attack; a port director, Ray-Bomb's kind; Ray-Bomb 10's code
+     with another timeline): a muzzle in front of the caster charging, dust blown from it, a muzzle flash, two beams to
+     the targets spinning both ways with their sparks, smoke, a shockwave ring and debris at the targets, the party
+     thrown up and bounced back.
+     - *Inputs* (`RayBomb313Params`, 57): Ray-Bomb 10's (one sound: no blast sound) with the charge glows' scale, the
+       dust's size and the two beams' turn. Data: the sound, four flipbooks, three meshes, "mag312.tim", the camera
+       track, the dust tables (3 entries each), the puff and debris offsets.
+     - *Tests:* `test_ports_P.py` casts it from GIM52A (c0m001, slot 3) on Squall.
+     - *Fujin:* its tabs (Timing, Charge, Muzzle flash, Beam, Blast, Bounce); no + menu family.
    - **Fake President death (315)** (FFNx 883d74d1; its AI's death section; a port root, Ray-Bomb's kind): the Fake
      President melting into a puddle (drops, bubbles, rings, sparks, splashes) and Gerogero (the next entity
      slot) rising out of it, the tints, the voice and the sounds; the action result.

@@ -1,0 +1,863 @@
+{
+ "format": 1,
+ "effect": 313,
+ "name": "Ray-Bomb (GIM52A)",
+ "doc": "Ray-Bomb (GIM52A's enemy attack; module 313 is Ray-Bomb 10's code with another timeline): a muzzle in front of the caster charging, dust blown from it, a muzzle flash, two beams to the targets spinning both ways with their sparks, smoke, a shockwave ring and debris at the targets, the party thrown up and bounced back. Its tasks are the port's code (FFNx mag313_ray_bomb.cpp) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x59B0B0",
+   "setup": "0x59B0D0",
+   "root": "0x59CA20"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 313,
+  "from": "0x223B668",
+  "size": "0x1638"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound.muzzle": {
+   "kind": "sound",
+   "address": "0xCD8CE8",
+   "size": 4
+  },
+  "seqs.dust": {
+   "kind": "seq",
+   "address": "0xCD5E8C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.puff": {
+   "kind": "seq",
+   "address": "0xCD5CB8",
+   "size": 40,
+   "frames": 1
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xCD5CE0",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.charge": {
+   "kind": "seq",
+   "address": "0xCD5B0C",
+   "size": 428,
+   "frames": 16
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xCD6038",
+   "size": 5080,
+   "vertices": 144
+  },
+  "models.beam": {
+   "kind": "model",
+   "address": "0xCD82E0",
+   "size": 2568,
+   "vertices": 100
+  },
+  "models.flash": {
+   "kind": "model",
+   "address": "0xCD7C38",
+   "size": 1704,
+   "vertices": 55
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xCD8D80",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xCD59B0",
+   "size": 348
+  },
+  "tables.dust_offset": {
+   "kind": "table",
+   "address": "0xCD8D50",
+   "size": 24,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ]
+  },
+  "tables.dust_dir": {
+   "kind": "table",
+   "address": "0xCD8D68",
+   "size": 24,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ]
+  },
+  "tables.puff_x": {
+   "kind": "table",
+   "address": "0xCD8CF0",
+   "size": 20,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "x",
+    "pad"
+   ]
+  },
+  "tables.puff_z": {
+   "kind": "table",
+   "address": "0xCD8D18",
+   "size": 20,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "z",
+    "pad"
+   ]
+  },
+  "tables.debris_x": {
+   "kind": "table",
+   "address": "0xCD8D04",
+   "size": 20,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "x",
+    "pad"
+   ]
+  },
+  "tables.debris_z": {
+   "kind": "table",
+   "address": "0xCD8D2C",
+   "size": 20,
+   "format": "h",
+   "columns": 2,
+   "labels": [
+    "z",
+    "pad"
+   ]
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x59B0D0",
+  "file_loader": "0x59B0B0",
+  "root": "0x59CA20"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timing",
+   "title": "Timing",
+   "doc": "The director's timeline: its sound, the screen flash, its end (draws nothing)"
+  },
+  {
+   "id": 0,
+   "key": "charge",
+   "title": "Charge",
+   "doc": "The muzzle in front of the caster, its charge glows and the dust blown from it"
+  },
+  {
+   "id": 0,
+   "key": "flash",
+   "title": "Muzzle flash",
+   "doc": "A prim model at the muzzle, shrinking"
+  },
+  {
+   "id": 0,
+   "key": "beam",
+   "title": "Beam",
+   "doc": "The two beams from the muzzle to the targets, spinning both ways, their sparks"
+  },
+  {
+   "id": 0,
+   "key": "blast",
+   "title": "Blast",
+   "doc": "Smoke puffs, the shockwave ring and debris at the targets"
+  },
+  {
+   "id": 0,
+   "key": "bounce",
+   "title": "Bounce",
+   "doc": "The party thrown up and bounced back (the damage on the targets)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "muzzle",
+   "label": "Muzzle",
+   "doc": "From the caster's effect point, turned with it: Up, Back"
+  },
+  {
+   "key": "dust",
+   "label": "Dust",
+   "doc": "From the muzzle, ticks First to Last: Count a tick (at most 3), speed Speed + rand % Spread, size Size + rand % Size spread"
+  },
+  {
+   "key": "puffs",
+   "label": "Smoke",
+   "doc": "Ticks First to Last: 1-2 puffs at 5 spots, scale Scale + rand % Spread (the texture restored at First)"
+  },
+  {
+   "key": "debris",
+   "label": "Debris",
+   "doc": "Ticks First to Last: 2-3 pieces at 5 spots thrown up by Speed + rand % Spread"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound.muzzle",
+   "part": "timing",
+   "label": "Muzzle sound",
+   "doc": "Played at its tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound.muzzle",
+   "unit": "plain"
+  },
+  {
+   "key": "sound.muzzle_tick",
+   "part": "timing",
+   "label": "Muzzle sound tick",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "screen.in",
+   "part": "timing",
+   "label": "Flash in",
+   "doc": "The screen flashes up until this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "screen.out",
+   "part": "timing",
+   "label": "Flash out",
+   "doc": "...and down from this one to the end",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 182,
+   "unit": "plain"
+  },
+  {
+   "key": "screen.end",
+   "part": "timing",
+   "label": "End",
+   "doc": "The attack ends after this tick",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 190,
+   "unit": "plain"
+  },
+  {
+   "key": "muzzle.up",
+   "part": "charge",
+   "label": "Up",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "muzzle.back",
+   "part": "charge",
+   "label": "Back",
+   "doc": "",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -50,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.tick",
+   "part": "charge",
+   "label": "Glows tick",
+   "doc": "The charge glows start at this tick...",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.count",
+   "part": "charge",
+   "label": "Glows",
+   "doc": "...this many",
+   "type": "i16",
+   "min": 0,
+   "max": 10,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.scale",
+   "part": "charge",
+   "label": "Glow scale",
+   "doc": "Each glow's scale at its start (4096: its own size)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3072,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.scale_step",
+   "part": "charge",
+   "label": "Glow growth",
+   "doc": "Each glow grows by this a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 76,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.size",
+   "part": "charge",
+   "label": "Glow size",
+   "doc": "Its size: this + rand % Glow size spread",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 400,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.size_rand",
+   "part": "charge",
+   "label": "Glow size spread",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 8192,
+   "default": 800,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.first",
+   "part": "charge",
+   "label": "First",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.last",
+   "part": "charge",
+   "label": "Last",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.count",
+   "part": "charge",
+   "label": "Count",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 3,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.speed",
+   "part": "charge",
+   "label": "Speed",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 90,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.speed_rand",
+   "part": "charge",
+   "label": "Spread",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.scale",
+   "part": "charge",
+   "label": "Size",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2304,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.scale_rand",
+   "part": "charge",
+   "label": "Size spread",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1280,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.tick",
+   "part": "flash",
+   "label": "Tick",
+   "doc": "The muzzle flash at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 56,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.scale",
+   "part": "flash",
+   "label": "Scale",
+   "doc": "Its scale (4096: its own size)...",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 13107,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.scale_step",
+   "part": "flash",
+   "label": "Shrink",
+   "doc": "...down by this a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 468,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.tick",
+   "part": "beam",
+   "label": "Tick",
+   "doc": "The two beams at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 74,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.spin",
+   "part": "beam",
+   "label": "Spin",
+   "doc": "Their spin (4096: a turn; the second beam's the other way)...",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 70,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.spin_step",
+   "part": "beam",
+   "label": "Spin step",
+   "doc": "...up by this a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 160,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.width",
+   "part": "beam",
+   "label": "Width",
+   "doc": "Their width (4096: its own)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.turn",
+   "part": "beam",
+   "label": "Turn",
+   "doc": "The first beam's end turned by -this round the muzzle, the second's by +this (4096: a turn)",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.first",
+   "part": "blast",
+   "label": "First",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 99,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.last",
+   "part": "blast",
+   "label": "Last",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 104,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.scale",
+   "part": "blast",
+   "label": "Scale",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.scale_rand",
+   "part": "blast",
+   "label": "Spread",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 3584,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.tick",
+   "part": "blast",
+   "label": "Shockwave tick",
+   "doc": "The shockwave ring at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 121,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.width",
+   "part": "blast",
+   "label": "Shockwave width",
+   "doc": "Its width (4096: its own)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 14628,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.rise",
+   "part": "blast",
+   "label": "Shockwave rise",
+   "doc": "Its height up by this, halving a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4876,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.first",
+   "part": "blast",
+   "label": "First",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 121,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.last",
+   "part": "blast",
+   "label": "Last",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 124,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.speed",
+   "part": "blast",
+   "label": "Speed",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.speed_rand",
+   "part": "blast",
+   "label": "Spread",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 8192,
+   "default": 500,
+   "unit": "plain"
+  },
+  {
+   "key": "bounce.tick",
+   "part": "bounce",
+   "label": "Tick",
+   "doc": "The party thrown up at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 122,
+   "unit": "plain"
+  },
+  {
+   "key": "bounce.height",
+   "part": "bounce",
+   "label": "Height",
+   "doc": "Each one up by this + rand % Height spread (half for those not hit)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 2500,
+   "unit": "plain"
+  },
+  {
+   "key": "bounce.height_rand",
+   "part": "bounce",
+   "label": "Height spread",
+   "doc": "",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust",
+   "part": "timing",
+   "label": "Dust",
+   "doc": "The sprite sequence dust (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.puff",
+   "part": "timing",
+   "label": "Puff",
+   "doc": "The sprite sequence puff (a flipbook of 1 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.puff",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "timing",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.charge",
+   "part": "timing",
+   "label": "Charge",
+   "doc": "The sprite sequence charge (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.charge",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "timing",
+   "label": "Ring model",
+   "doc": "The prim model ring (a mesh of 144 vertices, 108 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.beam",
+   "part": "timing",
+   "label": "Beam model",
+   "doc": "The prim model beam (a mesh of 100 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.beam",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flash",
+   "part": "timing",
+   "label": "Flash model",
+   "doc": "The prim model flash (a mesh of 55 vertices, 54 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "timing",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "timing",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.dust_offset",
+   "part": "timing",
+   "label": "Dust offsets",
+   "doc": "Where each dust puff starts from the muzzle (x, y, z) (24 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.dust_offset",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.dust_dir",
+   "part": "timing",
+   "label": "Dust directions",
+   "doc": "Each dust puff's direction (x, y, z) (24 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.dust_dir",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.puff_x",
+   "part": "timing",
+   "label": "Puff x offsets",
+   "doc": "Each puff's x offset (+ a random 0..0x31F, - 0x190) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.puff_x",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.puff_z",
+   "part": "timing",
+   "label": "Puff z offsets",
+   "doc": "Each puff's z offset (+ a random, - 0x12C) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.puff_z",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.debris_x",
+   "part": "timing",
+   "label": "Debris x offsets",
+   "doc": "Each debris' x offset (+ a random, - 0x708) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.debris_x",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.debris_z",
+   "part": "timing",
+   "label": "Debris z offsets",
+   "doc": "Each debris' z offset (+ a random, - 0x708) (20 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.debris_z",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.table_debris_model",
+   "label": "Table debris model",
+   "doc": "2 prim models",
+   "address": "0xCD8D40",
+   "size": 16
+  }
+ ]
+}

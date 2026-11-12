@@ -1,0 +1,265 @@
+{
+ "format": 1,
+ "effect": 284,
+ "name": "Micro Missiles",
+ "doc": "Micro Missiles (GIM52A's enemy attack; module 284 is Micro Missiles 299's with other numbers): six missiles launched at once from in front of the caster on half-circle paths to random bones of the target (two miss) with their trails, hits, flashes and sparks, the sound; the action result once they have all ended. Its tasks are the port's code (FFNx mag284_micro_missiles.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x67B7B0",
+   "setup": "0x67B7A0",
+   "root": "0x67B850"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 284,
+  "from": "0x2507DB0",
+  "size": "0x6C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0x1094F98",
+   "size": 4
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0x1092478",
+   "size": 4820,
+   "capacity": 160
+  },
+  "layouts.miss": {
+   "kind": "layout",
+   "address": "0x109374C",
+   "size": 5720,
+   "capacity": 276
+  },
+  "layouts.missile": {
+   "kind": "layout",
+   "address": "0x108FEE4",
+   "size": 9620,
+   "capacity": 2020
+  },
+  "seqs.trail": {
+   "kind": "seq",
+   "address": "0x108FC14",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.flash": {
+   "kind": "seq",
+   "address": "0x108FD58",
+   "size": 396,
+   "frames": 14
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x108FAD0",
+   "size": 324,
+   "frames": 12
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x104E320",
+   "size": 16
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1094DA4",
+   "size": 500
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x67B7A0",
+  "file_loader": "0x67B7B0",
+  "root": "0x67B850"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "Six missiles launched at once from in front of the caster on half-circle paths to random bones of the target (two miss) with their trails, hits, flashes and sparks, the sound; the action result once they have all ended"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "Played at the master's Sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "master",
+   "label": "Hit",
+   "doc": "The prim-model layout hit (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.miss",
+   "part": "master",
+   "label": "Miss",
+   "doc": "The prim-model layout miss (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.miss",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.missile",
+   "part": "master",
+   "label": "Missile",
+   "doc": "The prim-model layout missile (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.missile",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.trail",
+   "part": "master",
+   "label": "Trail",
+   "doc": "The sprite sequence trail (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.trail",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flash",
+   "part": "master",
+   "label": "Flash",
+   "doc": "The sprite sequence flash (a flipbook of 14 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "master",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 12 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "master",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "master",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "launch.sound_tick",
+   "part": "master",
+   "label": "Sound tick",
+   "doc": "The sound at this master tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "launch.push",
+   "part": "master",
+   "label": "Launch push",
+   "doc": "The launch point: the caster's position moved by this along its facing (negative: in front)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -500,
+   "unit": "plain"
+  },
+  {
+   "key": "launch.height",
+   "part": "master",
+   "label": "Launch height",
+   "doc": "...and this above its feet",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "launch.ticks",
+   "part": "master",
+   "label": "Flight ticks",
+   "doc": "The first missile's flight in ticks (its step 4096 / this)...",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "launch.ticks_step",
+   "part": "master",
+   "label": "Flight ticks step",
+   "doc": "...each next one's this many more",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "launch.sparks",
+   "part": "master",
+   "label": "Sparks",
+   "doc": "Sparks at each impact (96 at most at once)",
+   "type": "i16",
+   "min": 0,
+   "max": 96,
+   "default": 16,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
