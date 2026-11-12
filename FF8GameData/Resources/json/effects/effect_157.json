@@ -1,0 +1,1104 @@
+{
+ "format": 1,
+ "effect": 157,
+ "name": "Breath",
+ "doc": "Breath (the Hexadragon's enemy attack): the root and the director - two swirls and lit breath particles at the caster's mouth, then three clouds of breath rolling toward the target, each a burst, a lit puff with its particles, a rolling cloud model pair and a ring pair, with splatter sprites on the target; the sounds; the damage. Its tasks are the port's code (FFNx mag157_breath.cpp) run on the program's memory (its particle table, frames and queues in the module, its packets in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x603E70",
+   "setup": "0x603E90",
+   "root": "0x605460"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 157,
+  "from": "0x23EB5C0",
+  "size": "0x1880"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xDB4CAC",
+   "size": 4
+  },
+  "sounds.cloud": {
+   "kind": "sound",
+   "address": "0xDB4CB0",
+   "size": 4
+  },
+  "seqs.breath": {
+   "kind": "seq",
+   "address": "0xDB0B34",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.puff": {
+   "kind": "seq",
+   "address": "0xDB0AC0",
+   "size": 116,
+   "frames": 4
+  },
+  "seqs.puff_part": {
+   "kind": "seq",
+   "address": "0xDB0CE0",
+   "size": 220,
+   "frames": 8
+  },
+  "seqs.splatter": {
+   "kind": "seq",
+   "address": "0xDB0914",
+   "size": 428,
+   "frames": 16
+  },
+  "models.swirl": {
+   "kind": "model",
+   "address": "0xDB0DBC",
+   "size": 4896,
+   "vertices": 145
+  },
+  "models.burst": {
+   "kind": "model",
+   "address": "0xDB42C4",
+   "size": 2536,
+   "vertices": 96
+  },
+  "models.cloud1": {
+   "kind": "model",
+   "address": "0xDB20DC",
+   "size": 3704,
+   "vertices": 110
+  },
+  "models.cloud2": {
+   "kind": "model",
+   "address": "0xDB2F54",
+   "size": 3208,
+   "vertices": 108
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xDB3BDC",
+   "size": 1768,
+   "vertices": 72
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xDB4CC8",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xDB0828",
+   "size": 236
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x603E90",
+  "file_loader": "0x603E70",
+  "root": "0x605460"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The timeline: the two mouths (the caster's effect point and an offset, aimed at the target), when the swirls, the breath and the three clouds start, the sounds; the damage"
+  },
+  {
+   "id": 1,
+   "key": "swirl",
+   "title": "Swirls",
+   "doc": "Two swirl models at mouth A spinning both ways, fading in and out"
+  },
+  {
+   "id": 2,
+   "key": "breath",
+   "title": "Breath",
+   "doc": "Lit particles circling the breath's axis at mouth A"
+  },
+  {
+   "id": 0,
+   "key": "cloud",
+   "title": "Clouds",
+   "doc": "Each cloud's timeline: its burst, puff, puff particles, model and ring pairs, the splatter on the target (draws nothing itself)"
+  },
+  {
+   "id": 3,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "A shrinking burst model at mouth B, fading in"
+  },
+  {
+   "id": 4,
+   "key": "puff",
+   "title": "Puff",
+   "doc": "The lit puff rolling the cloud forward and its particles"
+  },
+  {
+   "id": 5,
+   "key": "clouds",
+   "title": "Cloud models",
+   "doc": "Two cloud models rolling, growing, fading, moving forward"
+  },
+  {
+   "id": 6,
+   "key": "rings",
+   "title": "Rings",
+   "doc": "A ring model pair turning, growing, fading"
+  },
+  {
+   "id": 7,
+   "key": "splatter",
+   "title": "Splatter",
+   "doc": "Sprites around the target's effect position"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start sound",
+   "doc": "At the director's start sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.cloud",
+   "part": "director",
+   "label": "Cloud sound",
+   "doc": "At the director's cloud sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.cloud",
+   "unit": "plain"
+  },
+  {
+   "key": "director.swirl",
+   "part": "director",
+   "label": "Swirl tick",
+   "doc": "The two mouth swirls start at this tick of the director (mouth A is taken at tick 0)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "director.breath",
+   "part": "director",
+   "label": "Breath tick",
+   "doc": "The breath particles start at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "director.mouth_b",
+   "part": "director",
+   "label": "Mouth B tick",
+   "doc": "Mouth B (the clouds' frame) is taken at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 19,
+   "unit": "plain"
+  },
+  {
+   "key": "director.cloud1",
+   "part": "director",
+   "label": "Cloud 1 tick",
+   "doc": "The first cloud starts at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "director.cloud2",
+   "part": "director",
+   "label": "Cloud 2 tick",
+   "doc": "The second cloud",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "director.cloud3",
+   "part": "director",
+   "label": "Cloud 3 tick",
+   "doc": "The third cloud",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 43,
+   "unit": "plain"
+  },
+  {
+   "key": "director.start_sound",
+   "part": "director",
+   "label": "Start sound tick",
+   "doc": "The start sound at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "director.cloud_sound",
+   "part": "director",
+   "label": "Cloud sound tick",
+   "doc": "The cloud sound at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 65,
+   "unit": "plain"
+  },
+  {
+   "key": "director.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The director's last tick (the effect ends once every part has)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 70,
+   "unit": "plain"
+  },
+  {
+   "key": "mouth.a_y",
+   "part": "director",
+   "label": "Mouth A height",
+   "doc": "Mouth A (the swirls and the breath): the caster's effect point 0xF0 moved by this along its y (negative = up)...",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 550,
+   "unit": "plain"
+  },
+  {
+   "key": "mouth.a_z",
+   "part": "director",
+   "label": "Mouth A ahead",
+   "doc": "...and this along its z (negative = ahead)",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": -640,
+   "unit": "plain"
+  },
+  {
+   "key": "mouth.b_y",
+   "part": "director",
+   "label": "Mouth B height",
+   "doc": "Mouth B (the clouds): likewise",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 900,
+   "unit": "plain"
+  },
+  {
+   "key": "mouth.b_z",
+   "part": "director",
+   "label": "Mouth B ahead",
+   "doc": "",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": -1350,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.size_a",
+   "part": "swirl",
+   "label": "Size A",
+   "doc": "The first swirl's size (4096 = its model's)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 5120,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.spin_a_min",
+   "part": "swirl",
+   "label": "Spin A",
+   "doc": "Its spin a tick: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 30,
+   "unit": "angle"
+  },
+  {
+   "key": "swirl.spin_a_rand",
+   "part": "swirl",
+   "label": "Spin A random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 50,
+   "unit": "angle"
+  },
+  {
+   "key": "swirl.size_b",
+   "part": "swirl",
+   "label": "Size B",
+   "doc": "The second swirl's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3840,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.spin_b_min",
+   "part": "swirl",
+   "label": "Spin B",
+   "doc": "Its spin a tick, the other way: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 20,
+   "unit": "angle"
+  },
+  {
+   "key": "swirl.spin_b_rand",
+   "part": "swirl",
+   "label": "Spin B random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 60,
+   "unit": "angle"
+  },
+  {
+   "key": "swirl.fade_in",
+   "part": "swirl",
+   "label": "Fade in until",
+   "doc": "It fades in up to this tick of its own",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.fade_out",
+   "part": "swirl",
+   "label": "Fade out from",
+   "doc": "From this tick it fades out",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.life",
+   "part": "swirl",
+   "label": "End tick",
+   "doc": "The swirl ends at this tick of its own",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "breath.last_tick",
+   "part": "breath",
+   "label": "Last spawn tick",
+   "doc": "Particles spawn from its tick 0 to this one",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "breath.per_tick",
+   "part": "breath",
+   "label": "A tick",
+   "doc": "How many spawn a tick (100 particles at most, shared with the puffs and the splatter)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "breath.size_min",
+   "part": "breath",
+   "label": "Size",
+   "doc": "A particle's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 768,
+   "unit": "plain"
+  },
+  {
+   "key": "breath.size_rand",
+   "part": "breath",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "breath.turn_min",
+   "part": "breath",
+   "label": "Turn",
+   "doc": "It turns about the breath's axis a tick by this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 10,
+   "unit": "angle"
+  },
+  {
+   "key": "breath.turn_rand",
+   "part": "breath",
+   "label": "Turn random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 50,
+   "unit": "angle"
+  },
+  {
+   "key": "breath.depth_min",
+   "part": "breath",
+   "label": "Depth",
+   "doc": "It lies this far along the breath (toward the target) + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "breath.depth_rand",
+   "part": "breath",
+   "label": "Depth random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 600,
+   "unit": "plain"
+  },
+  {
+   "key": "breath.radius_min",
+   "part": "breath",
+   "label": "Radius",
+   "doc": "Its distance from the axis: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 300,
+   "unit": "plain"
+  },
+  {
+   "key": "breath.radius_rand",
+   "part": "breath",
+   "label": "Radius random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1300,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.burst",
+   "part": "cloud",
+   "label": "Burst tick",
+   "doc": "At this tick of each cloud its burst (the cloud's position is reset at 0)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.puff",
+   "part": "cloud",
+   "label": "Puff tick",
+   "doc": "Its puff (it sets the cloud's speed)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.puff_parts",
+   "part": "cloud",
+   "label": "Puff particles tick",
+   "doc": "Its puff particles (spread along the cloud's speed: after the puff)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.models",
+   "part": "cloud",
+   "label": "Models tick",
+   "doc": "Its cloud model pair and ring pair",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.splatter",
+   "part": "cloud",
+   "label": "Splatter tick",
+   "doc": "Its splatter on the target",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.life",
+   "part": "cloud",
+   "label": "End tick",
+   "doc": "The cloud ends at this tick of its own",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.size",
+   "part": "burst",
+   "label": "Size",
+   "doc": "The burst's starting size (4096 = its model's)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 16384,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.shrink",
+   "part": "burst",
+   "label": "Shrink",
+   "doc": "It shrinks a tick by this (which loses 1/24 a tick)",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.fade_in",
+   "part": "burst",
+   "label": "Fade in until",
+   "doc": "It fades in up to this tick of its own",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.life",
+   "part": "burst",
+   "label": "End tick",
+   "doc": "The burst ends at this tick of its own",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "puff.size",
+   "part": "puff",
+   "label": "Size",
+   "doc": "The puff sprite's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3328,
+   "unit": "plain"
+  },
+  {
+   "key": "puff.speed",
+   "part": "puff",
+   "label": "Speed",
+   "doc": "The cloud's speed: the root of the mouth-target distance x this / 64 (11: the game's)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "puff.life",
+   "part": "puff",
+   "label": "End tick",
+   "doc": "The puff ends at this tick of its own",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "puff_parts.last_tick",
+   "part": "puff",
+   "label": "Particles: last spawn tick",
+   "doc": "Puff particles spawn from their tick 0 to this one",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "puff_parts.per_tick",
+   "part": "puff",
+   "label": "Particles: a tick",
+   "doc": "How many a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "puff_parts.spread",
+   "part": "puff",
+   "label": "Particles: spread",
+   "doc": "Their spread across the breath: this + the tick x the next",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 350,
+   "unit": "plain"
+  },
+  {
+   "key": "puff_parts.spread_step",
+   "part": "puff",
+   "label": "Particles: spread step",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "puff_parts.size_min",
+   "part": "puff",
+   "label": "Particles: size",
+   "doc": "A puff particle's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "puff_parts.size_rand",
+   "part": "puff",
+   "label": "Particles: size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 896,
+   "unit": "plain"
+  },
+  {
+   "key": "clouds.roll_min",
+   "part": "clouds",
+   "label": "Roll",
+   "doc": "The cloud models' roll a tick: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 25,
+   "unit": "angle"
+  },
+  {
+   "key": "clouds.roll_rand",
+   "part": "clouds",
+   "label": "Roll random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 70,
+   "unit": "angle"
+  },
+  {
+   "key": "clouds.spin_min",
+   "part": "clouds",
+   "label": "Spin",
+   "doc": "Their spin a tick: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 25,
+   "unit": "angle"
+  },
+  {
+   "key": "clouds.spin_rand",
+   "part": "clouds",
+   "label": "Spin random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 70,
+   "unit": "angle"
+  },
+  {
+   "key": "clouds.size_min",
+   "part": "clouds",
+   "label": "Size",
+   "doc": "Their size and growth: (this + a random below the next) / 8 (the growth loses 1/8 a tick; the ring pair's too)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1792,
+   "unit": "plain"
+  },
+  {
+   "key": "clouds.size_rand",
+   "part": "clouds",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "clouds.outer",
+   "part": "clouds",
+   "label": "Outer model size",
+   "doc": "The second model's size: the first's + this",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 672,
+   "unit": "plain"
+  },
+  {
+   "key": "clouds.fade_from",
+   "part": "clouds",
+   "label": "Fade from",
+   "doc": "From this tick of its own the pair fades",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "clouds.life",
+   "part": "clouds",
+   "label": "End tick",
+   "doc": "The pair ends at this tick of its own",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.spin_min",
+   "part": "rings",
+   "label": "Spin",
+   "doc": "The ring pair's spin a tick: this + a random below the next (it loses 1/16 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 20,
+   "unit": "angle"
+  },
+  {
+   "key": "rings.spin_rand",
+   "part": "rings",
+   "label": "Spin random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 50,
+   "unit": "angle"
+  },
+  {
+   "key": "rings.size",
+   "part": "rings",
+   "label": "Size",
+   "doc": "Their size: the cloud pair's size + this",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 2560,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.fade_from",
+   "part": "rings",
+   "label": "Fade from",
+   "doc": "From this tick of its own the pair fades",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.life",
+   "part": "rings",
+   "label": "End tick",
+   "doc": "The pair ends at this tick of its own",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "splatter.last_tick",
+   "part": "splatter",
+   "label": "Last spawn tick",
+   "doc": "Splatter sprites spawn from its tick 0 to this one",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "splatter.per_tick",
+   "part": "splatter",
+   "label": "A tick",
+   "doc": "How many a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "splatter.spread",
+   "part": "splatter",
+   "label": "Spread",
+   "doc": "Around the target's effect position: a random of this width on each axis (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1200,
+   "unit": "plain"
+  },
+  {
+   "key": "splatter.size_min",
+   "part": "splatter",
+   "label": "Size",
+   "doc": "A splatter sprite's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "splatter.size_rand",
+   "part": "splatter",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2816,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.breath",
+   "part": "breath",
+   "label": "Breath flipbook",
+   "doc": "The sprite sequence of the breath particles (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.breath",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.puff",
+   "part": "puff",
+   "label": "Puff flipbook",
+   "doc": "The sprite sequence of the puff (a flipbook of 4 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.puff",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.puff_part",
+   "part": "puff",
+   "label": "Puff particle flipbook",
+   "doc": "The sprite sequence of the puff particles (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.puff_part",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splatter",
+   "part": "splatter",
+   "label": "Splatter flipbook",
+   "doc": "The sprite sequence of the splatter (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splatter",
+   "unit": "plain"
+  },
+  {
+   "key": "models.swirl",
+   "part": "swirl",
+   "label": "Swirl model",
+   "doc": "The prim model of the swirls (a mesh of 145 vertices, 144 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.swirl",
+   "unit": "plain"
+  },
+  {
+   "key": "models.burst",
+   "part": "burst",
+   "label": "Burst model",
+   "doc": "The prim model of the burst (a mesh of 96 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "models.cloud1",
+   "part": "clouds",
+   "label": "Cloud model",
+   "doc": "The prim model of the first cloud model (a mesh of 110 vertices, 120 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.cloud1",
+   "unit": "plain"
+  },
+  {
+   "key": "models.cloud2",
+   "part": "clouds",
+   "label": "Outer cloud model",
+   "doc": "The prim model of the second one (a mesh of 108 vertices, 96 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.cloud2",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "rings",
+   "label": "Ring model",
+   "doc": "The prim model of the rings (a mesh of 72 vertices, 48 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.ref_dir",
+   "label": "Reference direction",
+   "doc": "The breath frames' reference direction (0, 0, -0x1000): each frame is the rotation from it onto the mouth-target direction",
+   "address": "0xDB4CB8",
+   "size": 12
+  }
+ ]
+}

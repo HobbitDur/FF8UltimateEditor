@@ -458,6 +458,38 @@ Potion's description is the same with its own sequences and sound.
    what nothing covers. Each is checked as Hypnotize is (`tests/Fujin/test_effect_program.py`): from
    its description it records exactly what the exe's code records; with parameters, exactly what
    FFNx's port records with them; as a free slot with no exe function, itself again.
+   - **Gatling Gun (150)** (FFNx 3b665126; SAM08G's attack; a port root, Ray-Bomb's kind; Quistis' Gatling Gun 305's
+     code with Chain Gun's smoke and another timeline): the muzzle flashes at the caster's effect point, the smoke, five
+     misses on the line to the target and seven hits on it with their dust and sparks, the sound; the damage at tick 30.
+     - *Inputs* (`GatlingGun150Params`, 10): Gatling Gun 305's (the sound, the damage tick) without its animation set
+       (150 binds none). Data: the sound, three flipbooks (smoke, flash, sparks), three meshes (muzzle, impact, spark),
+       "mag149.tim", the camera track.
+     - *Tests:* `test_ports_S.py` casts it from SAM08G (c0m007, slot 3) on Squall.
+     - *Fujin:* its tab (Master); no + menu family.
+   - **Breath (157)** (FFNx 22e59fd4; the Hexadragon's attack; a port root, Ray-Bomb's kind): two swirls and lit breath
+     particles at the caster's mouth, then three clouds rolling toward the target - each a burst, a lit puff with its
+     particles, a cloud model pair and a ring pair - with splatter sprites on the target, two sounds; the damage at tick
+     65.
+     - *Inputs* (`BreathParams`, 84): the two sounds, the director's ticks (swirls, breath, mouth B, the three clouds,
+       the sounds, the damage, the end), the two mouths' offsets, per part its sizes, spins, spreads, spawn ticks and
+       counts, fades and lives, each cloud's ticks. Data: the two sounds, four flipbooks (breath, puff, puff particle,
+       splatter), five meshes (swirl, burst, the two cloud models, ring), "mag156.tim", the camera track.
+     - *Port:* a puff-particle task with no cloud depth (a cloud whose puff comes after its particles) spreads over
+       one unit instead of dividing by zero (the game's would). Its parts tagged (FX_PART).
+     - *Tests:* `test_ports_S.py` casts it from the Hexadragon (c0m024, slot 3) on Squall.
+     - *Fujin:* its tabs (Director, Swirls, Breath, Clouds, Burst, Puff, Cloud models, Rings, Splatter); no + menu
+       family.
+   - **Melt-Eye (158)** (FFNx 78208ccb; the Hexadragon's attack; a port root, Ray-Bomb's kind): fifteen beams from the
+     caster's eyes on curved paths toward the targets' centre, each with a shrinking ring at its start, a trail of
+     sprites along its path, a splash and a spinning splash model where it lands; drops flying off two eyes; the sound;
+     the damage at tick 40.
+     - *Inputs* (`MeltEyeParams`, 54): the sound, the director's ticks (beams, sound, damage, end), the beams' eyes,
+       end spread, path lifts and part ticks, per part its sizes, spins, speeds, fades and lives, the drops' eyes,
+       spawn, size, speed and scatter. Data: the sound, three flipbooks (trail, splash, drop), the ring and splash
+       meshes, the eye table (11 offsets in the caster's frame), "mag157.tim", the camera track.
+     - *Port:* its parts tagged (FX_PART).
+     - *Tests:* `test_ports_S.py` casts it from the Hexadragon (c0m024, slot 3) on Squall.
+     - *Fujin:* its tabs (Director, Beams, Ring, Trail, Splash, Drops); no + menu family.
    - **Megiddo Flame (166)** (FFNx b1890b84; Omega Weapon's attack; a port root, Ray-Bomb's kind; the module shared
      with 312, `fx_megiddo.h`): the caster's effect point (its bone 0x25 and an offset, retaken every tick) with a glow,
      two spins and rings, six bolts round the targets (an arc model along each spline, a gouraud sheet and a ribbon),
@@ -475,6 +507,16 @@ Potion's description is the same with its own sequences and sound.
      - *Tests:* `tests/Fujin/test_ports_R.py` - cast by Omega Weapon (c0m114) on the party.
      - *Fujin:* its tabs (Director, Glow, Spins, Rings, Bolts, Column, Pillar, Flames, Sparks, Debris, Knock-down and
        landing); no + menu family.
+   - **Degenerator (174)** (FFNx 8251a6c2; Gesper's attack; a port root, Ray-Bomb's kind; Quistis' Degenerator 306's
+     code with another timeline and the caster's afterimages and sparkles): the black vortex - the caster's afterimages
+     and rising sparkles, the core, pulses, flicker, screen and target rings, the other fighters faded, the target pulled
+     in and swallowed, the debris, the sound; the action result.
+     - *Inputs* (`Degenerator174Params`, 13): Degenerator 306's data without its animation set (174 binds none) and its
+       own: the sound, three flipbooks (flicker, debris, sparkles), five meshes (core, pulse, screen ring, target ring,
+       vortex), the afterimage colours (5) and the vortex colours (12: in 306 not editable), "mag173.tim", the camera
+       track.
+     - *Tests:* `test_ports_S.py` casts it from Gesper (c0m022, slot 3) on Squall.
+     - *Fujin:* its tab (Controller); no + menu family.
    - **1000 Needles (177)** (FFNx ddd425b3; the Cactuar's attack; a port root, Ray-Bomb's kind): 25 needles a tick
      (a flat-shaded tetrahedron each, turned along its way, scaled at random) from random effect points of the caster
      to random ones of the target, a spark sprite where each one arrives, lifted by its table; the sound; the damage

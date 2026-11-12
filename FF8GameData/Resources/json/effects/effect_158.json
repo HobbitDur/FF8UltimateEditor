@@ -1,0 +1,731 @@
+{
+ "format": 1,
+ "effect": 158,
+ "name": "Melt-Eye",
+ "doc": "Melt-Eye (the Hexadragon's enemy attack): the root and the director - fifteen beams leaving the caster's eyes on curved paths toward the targets' centre, each with a shrinking ring at its start, a trail of sprites running along its path and a splash and a spinning splash model where it lands; drops flying off two eyes; the sound; the damage. Its tasks are the port's code (FFNx mag158_melt_eye.cpp) run on the program's memory (its beam records, drop and spark tables, queues and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x602EB0",
+   "setup": "0x602ED0",
+   "root": "0x603E30"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 158,
+  "from": "0x23D7B08",
+  "size": "0x13AB8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0xDB07B8",
+   "size": 4
+  },
+  "seqs.trail": {
+   "kind": "seq",
+   "address": "0xDB007C",
+   "size": 220,
+   "frames": 8
+  },
+  "seqs.splash": {
+   "kind": "seq",
+   "address": "0xDAFCAC",
+   "size": 548,
+   "frames": 16
+  },
+  "seqs.drop": {
+   "kind": "seq",
+   "address": "0xDAFED0",
+   "size": 428,
+   "frames": 16
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xDB0158",
+   "size": 1008,
+   "vertices": 33
+  },
+  "models.splash": {
+   "kind": "model",
+   "address": "0xDB0548",
+   "size": 624,
+   "vertices": 25
+  },
+  "tables.eyes": {
+   "kind": "table",
+   "address": "0xDB07C0",
+   "size": 88,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ]
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xDB0818",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xDAFBF8",
+   "size": 180
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x602ED0",
+  "file_loader": "0x602EB0",
+  "root": "0x603E30"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The timeline: one beam a tick from tick 1, the drops at the two eyes, the sound; the damage"
+  },
+  {
+   "id": 0,
+   "key": "beams",
+   "title": "Beams",
+   "doc": "Each beam's path from one of the caster's eyes to near the targets' centre (a curve lifted at random) and when its ring, trail and splash start (draws nothing itself)"
+  },
+  {
+   "id": 1,
+   "key": "ring",
+   "title": "Ring",
+   "doc": "A shrinking ring model at the beam's start, turned along its path, fading at its end"
+  },
+  {
+   "id": 2,
+   "key": "trail",
+   "title": "Trail",
+   "doc": "Sprites running along the beam's path, the head slowing, sparks left behind"
+  },
+  {
+   "id": 3,
+   "key": "splash",
+   "title": "Splash",
+   "doc": "A splash sprite where the beam lands and a spinning splash model growing, fading"
+  },
+  {
+   "id": 4,
+   "key": "drops",
+   "title": "Drops",
+   "doc": "Drops flying off the caster's two eyes, shrinking, slowing"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "director.beams",
+   "part": "director",
+   "label": "Beams",
+   "doc": "One beam a tick from tick 1, this many (15 at most: the module's beam records)",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "director.sound_tick",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "The sound at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "director.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage (every target of the action) at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "director.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The director's last tick (the effect ends once every part has)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 42,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.eye_first",
+   "part": "beams",
+   "label": "First eye",
+   "doc": "A beam leaves eye (this + a random below the next) of the eye table (0-10; the caster's frame)",
+   "type": "i16",
+   "min": 0,
+   "max": 10,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.eyes",
+   "part": "beams",
+   "label": "Eyes",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 11,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.end_x",
+   "part": "beams",
+   "label": "End spread x",
+   "doc": "Its end: the targets' centre moved by a random of this width sideways (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 5200,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.end_z",
+   "part": "beams",
+   "label": "End spread z",
+   "doc": "...and of this depth (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2000,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.lift_rand",
+   "part": "beams",
+   "label": "Lift random",
+   "doc": "Its path's first control point: up from its start by a random below this (at least 1)...",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2800,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.lift_min",
+   "part": "beams",
+   "label": "Lift",
+   "doc": "...plus this",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 500,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.lift2_rand",
+   "part": "beams",
+   "label": "Second lift random",
+   "doc": "Its second control point: up from the first by a random below this (at least 1)...",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 600,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.lift2_min",
+   "part": "beams",
+   "label": "Second lift",
+   "doc": "...plus this",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.ring_tick",
+   "part": "beams",
+   "label": "Ring tick",
+   "doc": "Its ring starts at this tick of the beam (its path is made at 0)",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.trail_tick",
+   "part": "beams",
+   "label": "Trail tick",
+   "doc": "Its trail starts at this tick",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.splash_tick",
+   "part": "beams",
+   "label": "Splash tick",
+   "doc": "Its splash and splash model at this tick",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "beam.life",
+   "part": "beams",
+   "label": "End tick",
+   "doc": "The beam ends at this tick of its own",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.size_min",
+   "part": "ring",
+   "label": "Size",
+   "doc": "The ring's size: this + a random below the next (4096 = its model's)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.size_rand",
+   "part": "ring",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.shrink_div",
+   "part": "ring",
+   "label": "Shrink divisor",
+   "doc": "It shrinks a tick by its size / this (which loses 1/8 a tick)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.fade_from",
+   "part": "ring",
+   "label": "Fade from",
+   "doc": "From this tick of its own it fades...",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.fade_step",
+   "part": "ring",
+   "label": "Fade step",
+   "doc": "...by this a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 682,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.life",
+   "part": "ring",
+   "label": "End tick",
+   "doc": "The ring ends at this tick of its own",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.size_min",
+   "part": "trail",
+   "label": "Size",
+   "doc": "The trail's head sprite size: this + a random below the next (each one behind 48 smaller)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2304,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.size_rand",
+   "part": "trail",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.speed",
+   "part": "trail",
+   "label": "Speed",
+   "doc": "Path points its head runs a tick at first (one less each tick, down to 5; the path has 48)",
+   "type": "i16",
+   "min": 0,
+   "max": 48,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "splash.height_min",
+   "part": "splash",
+   "label": "Height",
+   "doc": "The splash: this high above the floor + a random below the next",
+   "type": "i16",
+   "min": -32767,
+   "max": 32767,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "splash.height_rand",
+   "part": "splash",
+   "label": "Height random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 400,
+   "unit": "plain"
+  },
+  {
+   "key": "splash.size_min",
+   "part": "splash",
+   "label": "Size",
+   "doc": "The splash sprite's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3584,
+   "unit": "plain"
+  },
+  {
+   "key": "splash.size_rand",
+   "part": "splash",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "splash_model.spin_min",
+   "part": "splash",
+   "label": "Model spin",
+   "doc": "The splash model's spin a tick: this + a random below the next (either way; it loses 1/16 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 120,
+   "unit": "angle"
+  },
+  {
+   "key": "splash_model.spin_rand",
+   "part": "splash",
+   "label": "Model spin random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 100,
+   "unit": "angle"
+  },
+  {
+   "key": "splash_model.size_min",
+   "part": "splash",
+   "label": "Model size",
+   "doc": "Its size and growth: (this + a random below the next) / 6 (its growth loses 1/8 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 8192,
+   "unit": "plain"
+  },
+  {
+   "key": "splash_model.size_rand",
+   "part": "splash",
+   "label": "Model size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "splash_model.fade_from",
+   "part": "splash",
+   "label": "Model fade from",
+   "doc": "From this tick of its own it fades...",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "splash_model.fade_step",
+   "part": "splash",
+   "label": "Model fade step",
+   "doc": "...by this a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "splash_model.life",
+   "part": "splash",
+   "label": "Model end tick",
+   "doc": "The splash model ends at this tick of its own",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "drops.last_tick",
+   "part": "drops",
+   "label": "Last spawn tick",
+   "doc": "Drops spawn from its tick 0 to this one",
+   "type": "i16",
+   "min": -1,
+   "max": 300,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "drops.per_tick",
+   "part": "drops",
+   "label": "A tick",
+   "doc": "How many spawn a tick at each eye (80 drops at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 80,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "drops.eye_a",
+   "part": "drops",
+   "label": "First eye",
+   "doc": "The first drop task's eye in the eye table (it flies along to the next entry)",
+   "type": "i16",
+   "min": 0,
+   "max": 9,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "drops.eye_b",
+   "part": "drops",
+   "label": "Second eye",
+   "doc": "The second one's",
+   "type": "i16",
+   "min": 0,
+   "max": 9,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "drops.size_min",
+   "part": "drops",
+   "label": "Size",
+   "doc": "A drop's size: this + a random below the next (4 less a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1792,
+   "unit": "plain"
+  },
+  {
+   "key": "drops.size_rand",
+   "part": "drops",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "drops.speed_min",
+   "part": "drops",
+   "label": "Speed",
+   "doc": "Its speed along its eye's direction: this + a random below the next (it loses 1/32 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "drops.speed_rand",
+   "part": "drops",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 75,
+   "unit": "plain"
+  },
+  {
+   "key": "drops.scatter",
+   "part": "drops",
+   "label": "Scatter",
+   "doc": "Plus a random of this width on each axis (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.trail",
+   "part": "trail",
+   "label": "Trail flipbook",
+   "doc": "The sprite sequence of the trail and its sparks (a flipbook of 8 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.trail",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splash",
+   "part": "splash",
+   "label": "Splash flipbook",
+   "doc": "The sprite sequence of the splash (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splash",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.drop",
+   "part": "drops",
+   "label": "Drop flipbook",
+   "doc": "The sprite sequence of the drops (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.drop",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "ring",
+   "label": "Ring model",
+   "doc": "The prim model of the ring (a mesh of 33 vertices, 32 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "models.splash",
+   "part": "splash",
+   "label": "Splash model",
+   "doc": "The prim model of the splash model (a mesh of 25 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.splash",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.eyes",
+   "part": "beams",
+   "label": "Eye table",
+   "doc": "The eye offsets in the caster's frame (11 x {x, y, z, pad}: 0 the rings', 1-6 the beams', 7-10 the drops' pairs) (88 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.eyes",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

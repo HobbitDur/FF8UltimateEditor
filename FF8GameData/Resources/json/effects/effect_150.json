@@ -1,0 +1,210 @@
+{
+ "format": 1,
+ "effect": 150,
+ "name": "Gatling Gun",
+ "doc": "Gatling Gun (SAM08G's enemy attack; module 150 is Quistis' Gatling Gun 305's code with Chain Gun's smoke and another timeline): the root and the director - the muzzle flashes at the caster's effect point, the smoke, five misses on the line to the target and seven hits on it (with their dust and sparks), the sound; the damage. Its tasks are the port's code (FFNx mag150_gatling_gun.cpp) run on the program's memory (its pools, particle arrays and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x60E320",
+   "setup": "0x60E340",
+   "root": "0x60F630"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 150,
+  "from": "0x244FD60",
+  "size": "0x12124"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0xDC2D70",
+   "size": 4
+  },
+  "seqs.smoke": {
+   "kind": "seq",
+   "address": "0xDC21A0",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.flash": {
+   "kind": "seq",
+   "address": "0xDC1FA4",
+   "size": 508,
+   "frames": 16
+  },
+  "seqs.sparks": {
+   "kind": "seq",
+   "address": "0xDC234C",
+   "size": 404,
+   "frames": 15
+  },
+  "models.muzzle": {
+   "kind": "model",
+   "address": "0xDC24E0",
+   "size": 768,
+   "vertices": 25
+  },
+  "models.impact": {
+   "kind": "model",
+   "address": "0xDC27E0",
+   "size": 712,
+   "vertices": 24
+  },
+  "models.spark": {
+   "kind": "model",
+   "address": "0xDC2AA8",
+   "size": 712,
+   "vertices": 24
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xDC2D78",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xDC1DD4",
+   "size": 464
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x60E340",
+  "file_loader": "0x60E320",
+  "root": "0x60F630"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The muzzle flashes, the smoke, five misses on the line to the target and seven hits on it (with their dust and sparks), the sound; the damage"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "At the director's tick 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "master.damage",
+   "part": "master",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 36,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.smoke",
+   "part": "master",
+   "label": "Smoke",
+   "doc": "The sprite sequence smoke (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.smoke",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flash",
+   "part": "master",
+   "label": "Flash",
+   "doc": "The sprite sequence flash (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparks",
+   "part": "master",
+   "label": "Sparks",
+   "doc": "The sprite sequence sparks (a flipbook of 15 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparks",
+   "unit": "plain"
+  },
+  {
+   "key": "models.muzzle",
+   "part": "master",
+   "label": "Muzzle model",
+   "doc": "The prim model muzzle (a mesh of 25 vertices, 24 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.muzzle",
+   "unit": "plain"
+  },
+  {
+   "key": "models.impact",
+   "part": "master",
+   "label": "Impact model",
+   "doc": "The prim model impact (a mesh of 24 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.impact",
+   "unit": "plain"
+  },
+  {
+   "key": "models.spark",
+   "part": "master",
+   "label": "Spark model",
+   "doc": "The prim model spark (a mesh of 24 vertices, 16 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "master",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "master",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
