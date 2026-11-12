@@ -242,7 +242,7 @@ def test_a_port_effects_copy_plays_its_own_layout_and_flipbooks(tmp_path):
         return [line.split(" ", 2)[2] if line.startswith("P ") else line for line in out.read_text().splitlines()
                 if line.startswith(("P ", "R "))]
 
-    original = record(128, "original")
+    original = record(128, "original", "native=1")   # (its port: FFNx draws its ribbons in PC screen units)
     assert record(224, "own", f"program={write_program(new, tmp_path / 'own.fxprog')}") == original
     data = new["data"]
     layout = parse_layout(bytes.fromhex(data["layout"]["hex"]))

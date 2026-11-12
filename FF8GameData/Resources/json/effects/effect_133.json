@@ -387,11 +387,11 @@
    "key": "main.pixels",
    "part": "main",
    "label": "PSX screen units",
-   "doc": "1: the caster's screen position in pixels as on PSX (x, y / 8; on PC it is in eighths: the layout lands far off it)",
+   "doc": "1 (FFNx's PC screen-units fix): the caster's screen position in pixels as on PSX (x, y / 8); 0: the exe's, in the PC's eighths of a pixel, so the swirl lands far off it",
    "type": "i16",
    "min": 0,
    "max": 1,
-   "default": 0,
+   "default": 1,
    "unit": "plain"
   },
   {

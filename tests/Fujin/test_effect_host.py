@@ -126,7 +126,9 @@ def test_the_host_dll_plays_the_saved_programs(tmp_path):
         return out.read_text().splitlines(), run.stdout
 
     host = (f"host={HOST_DLL}", f"hostdir={tmp_path / 'game'}")
-    cure, _log = record(1, "cure", "c0m009.dat", 0, 3)
+    # (Cure's and Hypnotize's references: their ports with the game's values - FFNx's PC screen-units fix draws them
+    # otherwise than the exe's code)
+    cure, _log = record(1, "cure", "c0m009.dat", 0, 3, "native=1")
     new, log = record(224, "new", "c0m009.dat", 0, 3, *host)
     assert "host: 4 programs installed" in log and drawing(new) == drawing(cure) and len(cure) > 10000
     assert any(line.startswith("S ") for line in new)
@@ -135,7 +137,7 @@ def test_the_host_dll_plays_the_saved_programs(tmp_path):
     native, _log = record(1, "native", "c0m009.dat", 0, 3, "native=1", f"params={params}")
     hosted, _log = record(1, "hosted", "c0m009.dat", 0, 3, *host)
     assert untag(hosted) == untag(native) and untag(hosted) != untag(cure)
-    hypnotize, _log = record(133, "hypnotize", "c0m033.dat", 3, 0)
+    hypnotize, _log = record(133, "hypnotize", "c0m033.dat", 3, 0, "native=1")
     hosted, _log = record(133, "hosted133", "c0m033.dat", 3, 0, *host)
     assert untag(hosted) == untag(hypnotize)
     new, _log = record(225, "new225", "c0m033.dat", 3, 0, *host)

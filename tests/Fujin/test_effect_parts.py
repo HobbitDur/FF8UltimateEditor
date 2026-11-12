@@ -86,7 +86,9 @@ def test_cure_port_is_the_original_and_its_parameters_change_it(tmp_path):
     original, _log = record(tmp_path, "original")
     native, log = record(tmp_path, "native", "native=1")
     assert "ported task functions for effect 1" in log
-    assert untag(native) == original and len(original) > 10000
+    # the port draws the exe's Cure and, on PC, its light too (FFNx's screen-units fix: the exe's light pass never
+    # draws there), so more than the exe's code
+    assert untag(native) != original and len(native) > len(original) > 10000
     parts = {int(line.split()[1]) for line in native if line.startswith("P ")}
     assert parts == {0, 1, 2, 3, 4, 5, 6}                         # the actors (0) and Cure's six parts
     params = tmp_path / "params.txt"
@@ -349,7 +351,9 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     ring.probe("ring.radius")
     rows = {name: (ticks, own) for name, ticks, own in ring.preview.strip.rows}
     assert rows["Ring"][1] and rows["Ring"][0] and rows["Sparkles"][0] and not rows["Sparkles"][1]
-    assert not rows["Motes"][0] and not rows["Glints"][0]
+    # (since FFNx's PC screen-units fix draws the overlay's light, a wider ring changes what the motes and glints
+    # draw too: lit, not red)
+    assert not rows["Motes"][1] and not rows["Glints"][1]
     # folding: the rows, the images / sequences / life - in every part tab at once
     ring.below_fold.header.click()
     assert tabs["sparkles"].below_fold.is_folded() and ring.below.isHidden()
@@ -386,7 +390,9 @@ def test_cure_part_tabs_show_their_sprite_sequences(qapp):
     fujin.textures.activate()
     card = fujin.textures.panel.cards[0]
     rects, rows = card.uses
-    assert len(rects) == 13 and rows == {0, 1} and "22% of the picture" in card.info.text()
+    # (the sprites' 13 rectangles and, since FFNx's PC screen-units fix draws the overlay's light, the many small
+    # pieces of the picture it projects: the same 22%)
+    assert len(rects) > 13 and rows == {0, 1} and "22% of the picture" in card.info.text()
     fujin.textures.panel.used.setChecked(False)
     assert card.uses is None
     fujin.textures.panel.used.setChecked(True)
@@ -552,8 +558,9 @@ HYPNOTIZE_FILES = ("extracted_files/FF8_EN.exe", "extracted_files/magic/mag132.t
 
 @pytest.mark.ff8data(*HYPNOTIZE_FILES)
 def test_hypnotize_port_and_its_pc_screen_units(tmp_path):
-    """Hypnotize (Gayla on Squall): the port is the original; its main layout never draws on PC (its
-    frame takes the PC's eighths of a pixel for PSX pixels), main.pixels = 1 brings it back."""
+    """Hypnotize (Gayla on Squall): its main layout never draws in the exe on PC (its frame takes the PC's
+    eighths of a pixel for PSX pixels); the port draws it (FFNx's PC screen-units fix: main.pixels, 1 by default),
+    and with main.pixels = 0 it is the original."""
     from FF8GameData.psxgpu.fxdump import parse_recording
     from Fujin.effectparts import effect_schema
     from Fujin.recorderbuild import RECORDER
@@ -561,7 +568,7 @@ def test_hypnotize_port_and_its_pc_screen_units(tmp_path):
     if schema is None:
         pytest.skip("the effect recorder is not built with FFNx's effect sources (the updater's FFNxEffects)")
     assert [part["key"] for part in schema["parts"]] == ["timing", "main", "rings", "targets", "sprites"]
-    assert {field["key"]: field["default"] for field in schema["fields"]}["main.pixels"] == 0
+    assert {field["key"]: field["default"] for field in schema["fields"]}["main.pixels"] == 1
 
     def hypnotize(tag, *extra):
         out = tmp_path / f"{tag}.txt"
@@ -573,12 +580,12 @@ def test_hypnotize_port_and_its_pc_screen_units(tmp_path):
         return out.read_text().splitlines()
 
     original, native = hypnotize("original"), hypnotize("native", "native=1")
-    assert untag(native) == original
     parts = lambda lines: set().union(*(set(tick.parts) for tick in parse_recording(lines, 133).ticks))
-    assert parts(native) == {0, 2, 3, 4}                          # no main layout on PC
+    assert 1 in parts(native) and untag(native) != original     # the main layout, drawn on PC
     params = tmp_path / "params.txt"
-    params.write_text("main.pixels 1\n")
-    assert 1 in parts(hypnotize("pixels", "native=1", f"params={params}"))
+    params.write_text("main.pixels 0\n")
+    exe_units = hypnotize("exe_units", "native=1", f"params={params}")
+    assert untag(exe_units) == original and parts(exe_units) == {0, 2, 3, 4}   # the exe's: no main layout on PC
 
 
 @pytest.mark.ff8data(*CURE_FILES)
@@ -612,7 +619,7 @@ def test_potion_shares_cures_parameters_but_keeps_its_own(tmp_path):
         return out.read_text().splitlines()
 
     potion_original, potion_native = effect(50, "original"), effect(50, "native", "native=1")
-    assert untag(potion_native) == potion_original
+    assert untag(potion_native) != potion_original and len(potion_native) > len(potion_original)   # its light on PC
     params = tmp_path / "params.txt"
     params.write_text("ring.radius.num 4\nring.radius.max 2048\n")
     assert effect(50, "wide", "native=1", f"params={params}") != potion_native
