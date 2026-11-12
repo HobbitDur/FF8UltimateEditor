@@ -1,0 +1,437 @@
+{
+ "format": 1,
+ "effect": 217,
+ "name": "Energy Bomber",
+ "doc": "Energy Bomber (Adel's attack): the root, the main task and the sparks - an energy ball forming at the caster's bone, thrown, then hopping three times to the target with a two-point trail, a burst layout at the target with sparks flying off it, the screen flash, the sound; the damage. Its tasks are the port's code (FFNx mag217_energy_bomber.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x694E70",
+   "setup": "0x694E60",
+   "root": "0x694F30"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 217,
+  "from": "0x25087F0",
+  "size": "0x80"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0x11355D0",
+   "size": 4
+  },
+  "layouts.ball": {
+   "kind": "layout",
+   "address": "0x1135CDC",
+   "size": 18688,
+   "capacity": 920
+  },
+  "layouts.burst": {
+   "kind": "layout",
+   "address": "0x113A5DC",
+   "size": 7104,
+   "capacity": 680
+  },
+  "models.trail": {
+   "kind": "model",
+   "address": "0x1135A6C",
+   "size": 624,
+   "vertices": 25
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x1135900",
+   "size": 364,
+   "frames": 12
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x113C19C",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x11355D4",
+   "size": 812
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x694E60",
+  "file_loader": "0x694E70",
+  "root": "0x694F30"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The main task's timeline: the sound, the damage, its end; the screen flash rising and falling; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "ball",
+   "title": "Energy ball",
+   "doc": "The ball layout forming at the caster's bone, thrown, then hopping three times to the target"
+  },
+  {
+   "id": 2,
+   "key": "trail",
+   "title": "Trail",
+   "doc": "Two trail meshes behind the ball once it hops (their fade words are never read: the renderer's draw mode 0x30 has no fade)"
+  },
+  {
+   "id": 3,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "The burst layout at the target"
+  },
+  {
+   "id": 4,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sparks flying off the target from the burst's first ticks, slowing"
+  }
+ ],
+ "groups": [
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "Its level, rising over the first ticks, falling over the last ones"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the main task's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "The sound at this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 78,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The main task's last tick (the screen flash falls toward it; sparks still alive then are dropped)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 86,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "director",
+   "label": "Level",
+   "doc": "The screen flash's level (4096 = full white)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2300,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.rise",
+   "part": "director",
+   "label": "Rise ticks",
+   "doc": "It rises over the main task's first ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fall",
+   "part": "director",
+   "label": "Fall ticks",
+   "doc": "It falls over its last ticks, to 0 at the end tick (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "ball.bone",
+   "part": "ball",
+   "label": "Bone",
+   "doc": "The caster's bone the ball forms at",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.lift",
+   "part": "ball",
+   "label": "Lift",
+   "doc": "The ball this much above the bone (y up)",
+   "type": "i16",
+   "min": -4000,
+   "max": 4000,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.throw_tick",
+   "part": "ball",
+   "label": "Throw tick",
+   "doc": "The ball follows the bone until this tick, then flies on along its last step",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 47,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.hop_tick",
+   "part": "ball",
+   "label": "Hop tick",
+   "doc": "From this tick three eased hops of 4 ticks each to the target (the trail from then)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.height",
+   "part": "ball",
+   "label": "Hop height",
+   "doc": "The first hop's point this high above the target",
+   "type": "i16",
+   "min": -8000,
+   "max": 8000,
+   "default": 2000,
+   "unit": "plain"
+  },
+  {
+   "key": "ball.spread",
+   "part": "ball",
+   "label": "Hop spread",
+   "doc": "The first hop's point: a random x up to this either side of the target (the second hop mirrors it; at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ball",
+   "part": "ball",
+   "label": "Ball",
+   "doc": "The prim-model layout of the ball (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ball",
+   "unit": "plain"
+  },
+  {
+   "key": "models.trail",
+   "part": "trail",
+   "label": "Trail model",
+   "doc": "The prim model of each trail point (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.trail",
+   "unit": "plain"
+  },
+  {
+   "key": "burst.tick",
+   "part": "burst",
+   "label": "Tick",
+   "doc": "The burst starts at this tick of the main task, at the target",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 63,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.ticks",
+   "part": "burst",
+   "label": "Ticks",
+   "doc": "It plays this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 23,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.burst",
+   "part": "burst",
+   "label": "Burst",
+   "doc": "The prim-model layout of the burst (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.ticks",
+   "part": "sparks",
+   "label": "Spawn ticks",
+   "doc": "Sparks spawn at the burst's ticks 1 to this",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.per_tick",
+   "part": "sparks",
+   "label": "A tick",
+   "doc": "How many a tick (64 at most alive; at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.speed",
+   "part": "sparks",
+   "label": "Speed",
+   "doc": "A spark's speed: this + a random below the next, in a random direction",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.speed_rand",
+   "part": "sparks",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.drag",
+   "part": "sparks",
+   "label": "Drag",
+   "doc": "Each tick its first speed / 2^this is taken off (4: 1/16)",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "A spark's ticks (its flipbook frame = its tick)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size",
+   "part": "sparks",
+   "label": "Size",
+   "doc": "Its sprite's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.depth",
+   "part": "sparks",
+   "label": "Depth",
+   "doc": "Its sprite's depth offset (negative = nearer)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

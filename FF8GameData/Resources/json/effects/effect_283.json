@@ -1,0 +1,316 @@
+{
+ "format": 1,
+ "effect": 283,
+ "name": "Magic Summon",
+ "doc": "Magic Summon (Sphinxara's attack): the master and the main task - a circle layout at the target's feet, the target warped away on screen as its colour fades, a summon layout at it, the screen flash in its colours, the sound. Its tasks are the port's code (FFNx mag283_magic_summon.cpp) run on the program's memory (its pool and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x67C410",
+   "setup": "0x67C400",
+   "root": "0x67C4B0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 283,
+  "from": "0x2507E20",
+  "size": "0x70"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0x1099688",
+   "size": 4
+  },
+  "tables.flash_colours": {
+   "kind": "table",
+   "address": "0x109968C",
+   "size": 32,
+   "format": "B",
+   "columns": 4,
+   "labels": [
+    "red",
+    "green",
+    "blue",
+    "-"
+   ]
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x109EAAC",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1094FC0",
+   "size": 440
+  },
+  "layouts.a": {
+   "kind": "layout",
+   "address": "0x1095178",
+   "size": 14496,
+   "capacity": 1212
+  },
+  "layouts.b": {
+   "kind": "layout",
+   "address": "0x1098A18",
+   "size": 3184,
+   "capacity": 352
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x67C400",
+  "file_loader": "0x67C410",
+  "root": "0x67C4B0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The main task's timeline: the sound, its end; the screen flash and its colours; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "circle",
+   "title": "Circle",
+   "doc": "Layout A at the target's feet, its texture scrolling"
+  },
+  {
+   "id": 2,
+   "key": "warp",
+   "title": "Warp",
+   "doc": "The target redrawn warped away from its middle on screen, its colour fading (not a parameter: the warp's tables are code)"
+  },
+  {
+   "id": 3,
+   "key": "summon",
+   "title": "Summon",
+   "doc": "Layout B at the target, from the warp's start"
+  }
+ ],
+ "groups": [
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "Its rise and fall (black), its level between them in the colours"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the main task's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "The sound at this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The main task's ticks (layout A plays until then; the flash colours span them)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "director",
+   "label": "Level",
+   "doc": "The screen flash's level between its rise and its fall (4096 = full), in the colours",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2200,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.rise",
+   "part": "director",
+   "label": "Rise ticks",
+   "doc": "It first rises over this many ticks, black (the tick x the step)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fall",
+   "part": "director",
+   "label": "Fall ticks",
+   "doc": "It falls over the last ticks, black ((the end - the tick) x the step)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.step",
+   "part": "director",
+   "label": "Step",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 275,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.flash_colours",
+   "part": "director",
+   "label": "Flash colours",
+   "doc": "The colours the flash goes through over the main task: 8 x (red, green, blue, -), blended from each to the next (32 bytes)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.flash_colours",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "circle.depth",
+   "part": "circle",
+   "label": "Depth",
+   "doc": "Layout A's depth offset (negative = nearer)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "circle.scroll",
+   "part": "circle",
+   "label": "Scroll",
+   "doc": "Its object 1's texture scrolls this much a tick (16 ticks a cycle; 0: none)",
+   "type": "i16",
+   "min": -64,
+   "max": 64,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.a",
+   "part": "circle",
+   "label": "Layout A",
+   "doc": "The prim-model layout at the target's feet (its models' animation), scaled by the target's size",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.a",
+   "unit": "plain"
+  },
+  {
+   "key": "summon.tick",
+   "part": "summon",
+   "label": "Tick",
+   "doc": "From this tick the target is warped away (20 ticks: its colour fading out, redrawn pushed from its middle on screen) and layout B plays",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "summon.ticks",
+   "part": "summon",
+   "label": "Ticks",
+   "doc": "Layout B plays this many ticks (the target is put back after the warp's 20)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "summon.depth",
+   "part": "summon",
+   "label": "Depth",
+   "doc": "Layout B's depth offset (negative = nearer)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.b",
+   "part": "summon",
+   "label": "Layout B",
+   "doc": "The prim-model layout at the target (its models' animation), scaled by the target's size",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.b",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.warp_weights",
+   "label": "Warp weights",
+   "doc": "U16 [20][128]: the offset's weight by distance (4.12), per step",
+   "address": "0x10996AC",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.warp_distance",
+   "label": "Warp distance",
+   "doc": "U8 [128][128]: the distance of (|dy|, |dx|) (row 20 of the weights)",
+   "address": "0x109AAAC",
+   "size": 4096
+  }
+ ]
+}

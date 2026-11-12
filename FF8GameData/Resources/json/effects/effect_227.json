@@ -1,0 +1,780 @@
+{
+ "format": 1,
+ "effect": 227,
+ "name": "Ultimecia's first death",
+ "doc": "Ultimecia's first death (the end of her first fight): the master, the main task and the feathers - sparks at random points of her model, her four lines, a light rising from her then down to the ground, a burst by her, a layout on the ground, feathers spinning about her, the sounds and her voice. Its tasks are the port's code (FFNx mag227_ultimecia_first_death.cpp) run on the program's memory (its pools, sparks and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6937A0",
+   "setup": "0x693790",
+   "root": "0x693840"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 227,
+  "from": "0x2508700",
+  "size": "0x6C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x112DAA0",
+   "size": 4
+  },
+  "sounds.fall": {
+   "kind": "sound",
+   "address": "0x112DAA4",
+   "size": 4
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0x112D1C8",
+   "size": 4
+  },
+  "tables.caster_point": {
+   "kind": "table",
+   "address": "0x1132018",
+   "size": 8,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x1132020",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x112D4C0",
+   "size": 1504
+  },
+  "layouts.a": {
+   "kind": "layout",
+   "address": "0x112DCF8",
+   "size": 8584,
+   "capacity": 828
+  },
+  "layouts.b": {
+   "kind": "layout",
+   "address": "0x112FE80",
+   "size": 1256,
+   "capacity": 192
+  },
+  "layouts.c": {
+   "kind": "layout",
+   "address": "0x1130368",
+   "size": 4856,
+   "capacity": 132
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x112D2E0",
+   "size": 480,
+   "frames": 18
+  },
+  "tables.points_a": {
+   "kind": "table",
+   "address": "0x1131660",
+   "size": 768,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  },
+  "tables.points_b": {
+   "kind": "table",
+   "address": "0x1131960",
+   "size": 768,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  },
+  "tables.points_c": {
+   "kind": "table",
+   "address": "0x1131C60",
+   "size": 952,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  },
+  "models.feather": {
+   "kind": "model",
+   "address": "0x112DAA8",
+   "size": 592,
+   "vertices": 24
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x693790",
+  "file_loader": "0x6937A0",
+  "root": "0x693840"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The main task's timeline: the sounds and her voice, her four lines, its end; her point, the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "rise",
+   "title": "Rising light",
+   "doc": "Layout A at her point, rising, then down to the ground point"
+  },
+  {
+   "id": 2,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "Layout B by her"
+  },
+  {
+   "id": 3,
+   "key": "ground",
+   "title": "Ground",
+   "doc": "Layout C at the ground point"
+  },
+  {
+   "id": 4,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sparks at random points of her model, rising"
+  },
+  {
+   "id": 5,
+   "key": "feathers",
+   "title": "Feathers",
+   "doc": "Feathers at her point, spinning, stretching, fading"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The start, the fall, her voice"
+  },
+  {
+   "key": "lines",
+   "label": "Her lines",
+   "doc": "Each line's tick and how long it shows"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "director",
+   "label": "Start",
+   "doc": "At the main task's tick 0",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.fall",
+   "part": "director",
+   "label": "Fall",
+   "doc": "At the main task's fall tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.fall",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.voice",
+   "part": "director",
+   "label": "Voice",
+   "doc": "Her voice: a voice slot claimed with it when the main task starts, released at its tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fall",
+   "part": "director",
+   "label": "Fall sound tick",
+   "doc": "The fall sound at this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 212,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.voice_end",
+   "part": "director",
+   "label": "Voice end tick",
+   "doc": "Her voice slot released at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 280,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The main task's last tick (her flag bit 2 set back; feathers still alive then are dropped)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 284,
+   "unit": "plain"
+  },
+  {
+   "key": "lines.first",
+   "part": "director",
+   "label": "Line 1 tick",
+   "doc": "Her first line (battle text 0 of her slot) at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 38,
+   "unit": "plain"
+  },
+  {
+   "key": "lines.first_ticks",
+   "part": "director",
+   "label": "Line 1 ticks",
+   "doc": "How long it shows",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 42,
+   "unit": "plain"
+  },
+  {
+   "key": "lines.second",
+   "part": "director",
+   "label": "Line 2 tick",
+   "doc": "Her second line at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 85,
+   "unit": "plain"
+  },
+  {
+   "key": "lines.second_ticks",
+   "part": "director",
+   "label": "Line 2 ticks",
+   "doc": "How long it shows",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "lines.third",
+   "part": "director",
+   "label": "Line 3 tick",
+   "doc": "Her third line at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 115,
+   "unit": "plain"
+  },
+  {
+   "key": "lines.third_ticks",
+   "part": "director",
+   "label": "Line 3 ticks",
+   "doc": "How long it shows",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "lines.fourth",
+   "part": "director",
+   "label": "Line 4 tick",
+   "doc": "Her fourth line at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 165,
+   "unit": "plain"
+  },
+  {
+   "key": "lines.fourth_ticks",
+   "part": "director",
+   "label": "Line 4 ticks",
+   "doc": "How long it shows",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.caster_point",
+   "part": "director",
+   "label": "Her point",
+   "doc": "The point of her model the layout A and the feathers follow: x, y, z and the bone it is on (8 bytes)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.caster_point",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "rise.tick",
+   "part": "rise",
+   "label": "Tick",
+   "doc": "Layout A starts at this tick, at her point",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 212,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.hold",
+   "part": "rise",
+   "label": "Ticks",
+   "doc": "It stays there this many ticks, then goes to the ground point in 8 ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.lift",
+   "part": "rise",
+   "label": "Lift",
+   "doc": "This much above her point (y up)",
+   "type": "i16",
+   "min": -4000,
+   "max": 4000,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.rise_ticks",
+   "part": "rise",
+   "label": "Rise ticks",
+   "doc": "Its last ticks there it rises",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.rise",
+   "part": "rise",
+   "label": "Rise",
+   "doc": "By this much a tick (from the lift, ending this much x (its last tick - its end) above her point)",
+   "type": "i16",
+   "min": -400,
+   "max": 400,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.a",
+   "part": "rise",
+   "label": "Layout A",
+   "doc": "The prim-model layout rising from her (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.a",
+   "unit": "plain"
+  },
+  {
+   "key": "burst.tick",
+   "part": "burst",
+   "label": "Tick",
+   "doc": "Layout B starts at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 260,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.ticks",
+   "part": "burst",
+   "label": "Ticks",
+   "doc": "It plays this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.x",
+   "part": "burst",
+   "label": "X",
+   "doc": "At her position + this x",
+   "type": "i16",
+   "min": -8000,
+   "max": 8000,
+   "default": 44,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.y",
+   "part": "burst",
+   "label": "Y",
+   "doc": "+ this y (negative = up)",
+   "type": "i16",
+   "min": -8000,
+   "max": 8000,
+   "default": -2286,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.z",
+   "part": "burst",
+   "label": "Z",
+   "doc": "+ this z",
+   "type": "i16",
+   "min": -8000,
+   "max": 8000,
+   "default": 410,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.b",
+   "part": "burst",
+   "label": "Layout B",
+   "doc": "The prim-model layout by her (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.b",
+   "unit": "plain"
+  },
+  {
+   "key": "ground.tick",
+   "part": "ground",
+   "label": "Tick",
+   "doc": "Layout C starts at this tick, at the ground point",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 268,
+   "unit": "plain"
+  },
+  {
+   "key": "ground.ticks",
+   "part": "ground",
+   "label": "Ticks",
+   "doc": "It plays this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "ground.z",
+   "part": "ground",
+   "label": "Z",
+   "doc": "The ground point: her x, the floor, her z + this (taken when layout A leaves her)",
+   "type": "i16",
+   "min": -8000,
+   "max": 8000,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.c",
+   "part": "ground",
+   "label": "Layout C",
+   "doc": "The prim-model layout on the ground (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.c",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.first_end",
+   "part": "sparks",
+   "label": "First until",
+   "doc": "From tick 0 to this one, sparks at points of tables A and B",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 95,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.first_per",
+   "part": "sparks",
+   "label": "First a tick",
+   "doc": "This many a tick from each of the two tables (128 sparks at most alive)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.second",
+   "part": "sparks",
+   "label": "Second tick",
+   "doc": "From this tick sparks at points of table C",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 180,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.second_ticks",
+   "part": "sparks",
+   "label": "Second ticks",
+   "doc": "For this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.second_per",
+   "part": "sparks",
+   "label": "Second a tick",
+   "doc": "This many a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size",
+   "part": "sparks",
+   "label": "Size",
+   "doc": "A spark's sprite size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "Its ticks (its flipbook played backward over them)",
+   "type": "i16",
+   "min": 1,
+   "max": 255,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.rise",
+   "part": "sparks",
+   "label": "Rise",
+   "doc": "It rises 4 x (this + a random 0..3) a tick (and drifts 4 x -2..1 in x and z)",
+   "type": "i16",
+   "min": -100,
+   "max": 100,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.points_a",
+   "part": "sparks",
+   "label": "Points A",
+   "doc": "The first table of points of her model (96 points: x, y, z, bone; an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.points_a",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.points_b",
+   "part": "sparks",
+   "label": "Points B",
+   "doc": "The second table (96 points)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.points_b",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.points_c",
+   "part": "sparks",
+   "label": "Points C",
+   "doc": "The third table (119 points)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.points_c",
+   "unit": "plain"
+  },
+  {
+   "key": "feathers.tick",
+   "part": "feathers",
+   "label": "Tick",
+   "doc": "A feather a tick from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 222,
+   "unit": "plain"
+  },
+  {
+   "key": "feathers.ticks",
+   "part": "feathers",
+   "label": "Ticks",
+   "doc": "For this many ticks (16 at most alive)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 23,
+   "unit": "plain"
+  },
+  {
+   "key": "feathers.life",
+   "part": "feathers",
+   "label": "Life",
+   "doc": "A feather's last tick (it fades in over 3 ticks, out from its tick 10)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "feathers.height",
+   "part": "feathers",
+   "label": "Height",
+   "doc": "This much above her point (y up), following it",
+   "type": "i16",
+   "min": -4000,
+   "max": 4000,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "feathers.spin_y",
+   "part": "feathers",
+   "label": "Y spin",
+   "doc": "Its turn about y a tick, either way at random",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 16,
+   "unit": "angle"
+  },
+  {
+   "key": "feathers.spin_z",
+   "part": "feathers",
+   "label": "Z spin",
+   "doc": "Its turn about z a tick: minus this minus a random below the next",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 37,
+   "unit": "angle"
+  },
+  {
+   "key": "feathers.spin_z_rand",
+   "part": "feathers",
+   "label": "Z spin random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 2048,
+   "default": 32,
+   "unit": "angle"
+  },
+  {
+   "key": "models.feather",
+   "part": "feathers",
+   "label": "Feather model",
+   "doc": "The prim model of a feather (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.feather",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

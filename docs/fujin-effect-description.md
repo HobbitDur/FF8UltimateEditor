@@ -576,6 +576,37 @@ Potion's description is the same with its own sequences and sound.
        sound, the two layouts, four flipbooks, three meshes, "mag212.tim", the camera track.
      - *Tests:* `test_ports_P.py` casts it from Elnoyle (c0m131, slot 3) on Squall.
      - *Fujin:* its tabs (Timing, Stream, Sparks, Mist and rings); no + menu family.
+   - **Energy Bomber (217)** (FFNx 9fca5160; Adel's attack; a port root, Ray-Bomb's kind): an energy ball layout forming
+     at the caster's bone 0x27 (0x200 higher), thrown along its last step at tick 47, then three eased hops to the
+     target from tick 55 (a random point above it, its mirror, the target) with a two-point trail mesh; the burst layout
+     at the target from tick 63, 16 sparks a tick off it for 4 ticks, slowing; the screen flash rising over 12 ticks and
+     falling over the last 12; the sound; the damage at tick 78.
+     - *Inputs* (`BomberParams`, 29): the sound and its tick, the damage and end ticks, the flash (level, rise, fall),
+       the ball (bone, lift, throw tick, hop tick, hop height and spread), the burst (tick, ticks), the sparks (spawn
+       ticks, count a tick, speed and its random part, drag, life, size, depth). Data: the sound, the ball and burst
+       layouts, the trail mesh, the spark flipbook, "mag216.tim", the camera track. The trail's fade words are not
+       parameters: its draw mode (0x30) never reads them.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; four parts
+       tagged (FX_PART).
+     - *Tests:* `tests/Fujin/test_ports_T.py` - cast by Adel (c0m112, slot 3) on Squall.
+     - *Fujin:* its tabs (Director, Energy ball, Trail, Burst, Sparks); no + menu family.
+   - **Ultimecia's first death (227)** (FFNx d0f23169; the end of Ultimecia's first fight; a port root, Ray-Bomb's kind):
+     sparks at random points of her model (tables A and B until tick 95, table C from tick 180), her four lines (battle
+     text of her slot), a light (layout A) at her point from tick 212 rising, then down to a ground point before her,
+     a burst (layout B) by her from tick 260, layout C on the ground from tick 268, feathers spinning about her point
+     from tick 222; the start and fall sounds and her voice. Her flag bit 2 is cleared by the setup and set back at the
+     end (tick 284); no damage.
+     - *Inputs* (`UltimeciaParams`, 53): the sounds and her voice, the fall sound / voice release / end ticks, her
+       lines (each one's tick and how long it shows), layout A (tick, ticks, lift, rise ticks and step), layout B
+       (tick, ticks, offset), layout C (tick, ticks, the ground point's z), the sparks (until / from, ticks, count a
+       tick, size, life, rise), the feathers (tick, ticks, life, height, y and z spins). Data: the three sounds, the
+       three layouts, the feather mesh, the spark flipbook, the spark point tables (96, 96, 119 points) and her point
+       (x, y, z, bone), "mag226.tim", the camera track.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; five parts
+       tagged (FX_PART).
+     - *Tests:* `tests/Fujin/test_ports_T.py` - cast by Ultimecia (c0m121, slot 3) on herself.
+     - *Fujin:* its tabs (Director, Rising light, Burst, Ground, Sparks, Feathers); no + menu family. The recorder
+       does not show her lines nor her voice.
    - **Mega Spark (279)** (FFNx 5ebbbd7f; Tri-Point's attack; a port root, Ray-Bomb's kind): the caster moves toward the
      targets leaning forward (and back at the end), a ring layout at each of three anchor points of its skeleton, electric
      arcs over its body (from triangles of its skeleton to the anchors: screen-space ribbons, jittered), then the orb
@@ -599,6 +630,32 @@ Potion's description is the same with its own sequences and sound.
        values: the exe's own run is no reference in the recorder (its bolt ribbons read never-written stack words, the
        executor's residues the port models; it faults at tick 45).
      - *Fujin:* its tabs (Director, Rings, Orb, Arcs, Bolts, Strikes and hits, Sparks); no + menu family.
+   - **Evil-Eye (282)** (FFNx 59dc6e75; Gargantua's attack; a port root, Ray-Bomb's kind): an eye layout at a point of the
+     caster (its bone 13, turned with it) from tick 2, a screen fade at tick 5, at tick 10 a hit layout on each target's
+     body with a spark rising from one of its bones every 4 frames near its end, the screen flash falling over the last
+     8 ticks; the sound at tick 2; the damage to every target at tick 49.
+     - *Inputs* (`EvilEyeParams`, 25): the sound and its tick, the fade / hits / end ticks, the flash (level, fall
+       ticks and step), the eye layout (tick, ticks, depth), the hits' sparks (under how many frames left, every so
+       many, how many) and depth, the sparks (rise, life, size, depth). Data: the sound, the eye and hit layouts, the
+       spark flipbook, the eye point (x, y, z, bone), "mag281.tim", the camera track.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; three parts
+       tagged (FX_PART).
+     - *Tests:* `tests/Fujin/test_ports_T.py` - cast by Gargantua (c0m094, slot 3) on Squall.
+     - *Fujin:* its tabs (Director, Eye, Hits, Sparks); no + menu family.
+   - **Magic Summon (283)** (FFNx ad4f39ab, bd2bcfed; Sphinxara's attack; a port root, Ray-Bomb's kind): a circle layout
+     at the target's feet (scaled by its size, its texture scrolling) for 60 ticks; from tick 24 the target redrawn warped
+     away from its middle on screen for 20 ticks as its colour fades (then put back), and a summon layout at it; the
+     screen flash rising and falling black over 8 ticks, between them in colours blended along an 8-colour table; the
+     sound at tick 10. No damage.
+     - *Inputs* (`SummonParams`, 17): the sound and its tick, the end tick, the flash (level, rise, fall, step), layout
+       A's depth and scroll, the warp's start, layout B's ticks and depth. Data: the sound, the two layouts, the flash
+       colours (8 x red, green, blue, -), "mag282.tim", the camera track. Not editable: the warp's weight and distance
+       tables (its 20 ticks read 20 weight rows, the last one in the distance table).
+     - *Port:* the module globals through own::R (the callback's flag 0x1000 matrix through an accessor), the spawns
+       through own::Fn; setup and loader ported; three parts tagged (FX_PART).
+     - *Tests:* `tests/Fujin/test_ports_T.py` - cast by Sphinxara (c0m012, slot 3) on Squall.
+     - *Fujin:* its tabs (Director, Circle, Warp, Summon); no + menu family. The recorder does not show the screen
+       flash, so its colours are checked by the port only.
    - **Micro Missiles (284)** (FFNx 4e353867; GIM52A's attack; a port root, Ray-Bomb's kind; Micro Missiles 299's code
      with other numbers): six missiles launched at once from in front of the caster on half-circle paths to random
      bones of the target (two miss) with their trails, hits, flashes and sparks, the sound; the action result once

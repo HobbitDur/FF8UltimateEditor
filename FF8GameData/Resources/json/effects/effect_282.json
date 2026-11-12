@@ -1,0 +1,394 @@
+{
+ "format": 1,
+ "effect": 282,
+ "name": "Evil-Eye",
+ "doc": "Evil-Eye (Gargantua's attack): the master, the main task, the hits and the sparks - an eye layout at a point of the caster, a screen flash and fade, a hit layout on each target with sparks rising from its bones, the sound; the damage to every target. Its tasks are the port's code (FFNx mag282_evil_eye.cpp) run on the program's memory (its pools and packet arenas in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x67D410",
+   "setup": "0x67D400",
+   "root": "0x67D4C0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 282,
+  "from": "0x2507E90",
+  "size": "0x98"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0x10A2F50",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x10A3020",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x10A2F54",
+   "size": 192
+  },
+  "tables.eye": {
+   "kind": "table",
+   "address": "0x10A3018",
+   "size": 8,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "bone"
+   ]
+  },
+  "layouts.eye": {
+   "kind": "layout",
+   "address": "0x10A0558",
+   "size": 10744,
+   "capacity": 1352
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0x109EC64",
+   "size": 6388,
+   "capacity": 384
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x109EAB8",
+   "size": 428,
+   "frames": 16
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x67D400",
+  "file_loader": "0x67D410",
+  "root": "0x67D4C0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The main task's timeline: the sound, a screen fade, the hits, the damage at its end; the screen flash; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "eye",
+   "title": "Eye",
+   "doc": "The eye layout at a point of the caster, turned with it"
+  },
+  {
+   "id": 2,
+   "key": "hits",
+   "title": "Hits",
+   "doc": "A hit layout on each target, with sparks at its bones"
+  },
+  {
+   "id": 3,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sparks rising from the targets' bones"
+  }
+ ],
+ "groups": [
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "Its level, then its fall over the last ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the main task's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "The sound at this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade",
+   "part": "director",
+   "label": "Fade tick",
+   "doc": "A screen fade at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.hits",
+   "part": "director",
+   "label": "Hits tick",
+   "doc": "A hit on each target at this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The main task's last tick: the damage (every target), the flash off",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 49,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "director",
+   "label": "Level",
+   "doc": "The screen flash's level until it falls (4096 = full white)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2200,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fall",
+   "part": "director",
+   "label": "Fall ticks",
+   "doc": "Over the last ticks it is (the end tick - the tick) x the next",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fall_step",
+   "part": "director",
+   "label": "Fall step",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 275,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "eye.tick",
+   "part": "eye",
+   "label": "Tick",
+   "doc": "The eye layout plays from this tick of the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "eye.ticks",
+   "part": "eye",
+   "label": "Ticks",
+   "doc": "For this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "eye.depth",
+   "part": "eye",
+   "label": "Depth",
+   "doc": "Its depth offset (negative = nearer)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.eye",
+   "part": "eye",
+   "label": "Eye point",
+   "doc": "Where on the caster: a point (x, y, z) and the caster's bone it is on (8 bytes)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.eye",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.eye",
+   "part": "eye",
+   "label": "Eye",
+   "doc": "The prim-model layout of the eye (its models' animation), turned with the caster",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.eye",
+   "unit": "plain"
+  },
+  {
+   "key": "hits.until",
+   "part": "hits",
+   "label": "Sparks under",
+   "doc": "While its layout has fewer frames left than this",
+   "type": "i16",
+   "min": 0,
+   "max": 1000,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.every",
+   "part": "hits",
+   "label": "Sparks every",
+   "doc": "... and a multiple of this (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.count",
+   "part": "hits",
+   "label": "Sparks",
+   "doc": "This many sparks at random bones of its target (128 at most alive)",
+   "type": "i16",
+   "min": 0,
+   "max": 128,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.depth",
+   "part": "hits",
+   "label": "Depth",
+   "doc": "Its layout's depth offset (negative = nearer)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "hits",
+   "label": "Hit",
+   "doc": "The prim-model layout of a hit (its models' animation), at its target's body",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.rise",
+   "part": "sparks",
+   "label": "Rise",
+   "doc": "A spark rises this much a tick",
+   "type": "i16",
+   "min": -1000,
+   "max": 1000,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "Its ticks (its flipbook frame = its tick)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size",
+   "part": "sparks",
+   "label": "Size",
+   "doc": "Its sprite's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.depth",
+   "part": "sparks",
+   "label": "Depth",
+   "doc": "Its sprite's depth offset (negative = nearer)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
