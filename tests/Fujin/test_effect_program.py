@@ -210,10 +210,12 @@ def test_hypnotize_description_compiles():
 
 @pytest.mark.ff8data(*HYPNOTIZE_FILES)
 def test_hypnotize_runs_from_its_description(tmp_path):
-    """Hypnotize from its description: what the exe's code records; with parameters, what FFNx's
-    port records with them; as effect 225 (a free slot, no exe function), Hypnotize again."""
+    """Hypnotize from its description: what FFNx's port records with the game's values (its swirl drawn on PC: the
+    screen-units fix, main.pixels 1); with parameters, what the port records with them; as effect 225 (a free slot,
+    no exe function), Hypnotize again."""
     program = write_program(load_description(133), tmp_path / "hypnotize.fxprog")
-    original, _log = record_hypnotize(tmp_path, 133, "original")
+    original, _log = record_hypnotize(tmp_path, 133, "original", "native=1")
+    original = untag(original)
     described, log = record_hypnotize(tmp_path, 133, "described", f"program={program}")
     assert "4 tasks, 32 params" in log and untag(described) == original and len(original) > 10000
     params = tmp_path / "params.txt"
