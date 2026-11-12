@@ -1,0 +1,379 @@
+{
+ "format": 1,
+ "effect": 336,
+ "name": "Renzokuken (vs Ultima Weapon)",
+ "doc": "Renzokuken on Ultima Weapon (Squall's limit break: the boss's own version, its info picks it): the master and the controller - Squall's and the boss's animation sets and sequences bound (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes and debris, the two caster models, the particles from its bones, the dust, the ground model and the camera shake, the screen flash and his tint, the sound. Its tasks are the port's code (FFNx mag336_renzokuken_ultima_weapon.cpp with the family's renzo_boss.inc) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x583020",
+   "setup": "0x583040",
+   "root": "0x585420"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 336,
+  "from": "0x21F15E0",
+  "size": "0x2E34"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0xE63B38",
+   "size": 4
+  },
+  "seqs.flash": {
+   "kind": "seq",
+   "address": "0xCABABC",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.debris": {
+   "kind": "seq",
+   "address": "0xCABD8C",
+   "size": 320,
+   "frames": 11
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xCABC68",
+   "size": 292,
+   "frames": 10
+  },
+  "seqs.emit": {
+   "kind": "seq",
+   "address": "0xCAB910",
+   "size": 428,
+   "frames": 16
+  },
+  "models.sparkle": {
+   "kind": "model",
+   "address": "0xE63B3C",
+   "size": 376,
+   "vertices": 18
+  },
+  "models.slash": {
+   "kind": "model",
+   "address": "0xCAC044",
+   "size": 2536,
+   "vertices": 96
+  },
+  "models.streak": {
+   "kind": "model",
+   "address": "0xCACA2C",
+   "size": 640,
+   "vertices": 21
+  },
+  "models.caster_a": {
+   "kind": "model",
+   "address": "0xCAE7BC",
+   "size": 4080,
+   "vertices": 97
+  },
+  "models.caster_b": {
+   "kind": "model",
+   "address": "0xCB047C",
+   "size": 5432,
+   "vertices": 130
+  },
+  "models.ground": {
+   "kind": "model",
+   "address": "0xCACCAC",
+   "size": 2536,
+   "vertices": 96
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xCB2760",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xE63CD4",
+   "size": 1048
+  },
+  "res.anim_sets": {
+   "kind": "anim_set",
+   "address": "0xE640EC",
+   "size": 37792,
+   "count": 2,
+   "tail": 4096
+  },
+  "tables.hit_lead": {
+   "kind": "table",
+   "address": "0xCB26D0",
+   "size": 48,
+   "format": "i",
+   "columns": 4
+  },
+  "tables.hit_offs": {
+   "kind": "table",
+   "address": "0xCB2700",
+   "size": 96,
+   "format": "h",
+   "columns": 4,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ]
+  },
+  "tables.sparkle_fade": {
+   "kind": "table",
+   "address": "0xE63CC4",
+   "size": 16,
+   "format": "H",
+   "columns": 8
+  },
+  "tables.sparkle_depth": {
+   "kind": "table",
+   "address": "0xE63CB4",
+   "size": 16,
+   "format": "H",
+   "columns": 8
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x583040",
+  "file_loader": "0x583020",
+  "root": "0x585420"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "controller",
+   "title": "Controller",
+   "doc": "Squall's Renzokuken on Ultima Weapon: both animation sets and sequences, the gunblade's trail, the sparks, the hits' slashes with their flashes and debris, the two caster models, the particles from its bones, the dust, the ground model and the camera shake, the screen flash and tint, the sound"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "controller",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flash",
+   "part": "controller",
+   "label": "Flash",
+   "doc": "The sprite sequence flash (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.debris",
+   "part": "controller",
+   "label": "Debris",
+   "doc": "The sprite sequence debris (a flipbook of 11 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "controller",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.emit",
+   "part": "controller",
+   "label": "Bone particles",
+   "doc": "The sprite sequence of the emitters' particles (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.emit",
+   "unit": "plain"
+  },
+  {
+   "key": "models.sparkle",
+   "part": "controller",
+   "label": "Sparkle model",
+   "doc": "The prim model sparkle (a mesh of 18 vertices, 8 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.sparkle",
+   "unit": "plain"
+  },
+  {
+   "key": "models.slash",
+   "part": "controller",
+   "label": "Slash model",
+   "doc": "The prim model slash (a mesh of 96 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.slash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.streak",
+   "part": "controller",
+   "label": "Streak model",
+   "doc": "The prim model streak (a mesh of 21 vertices, 20 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.streak",
+   "unit": "plain"
+  },
+  {
+   "key": "models.caster_a",
+   "part": "controller",
+   "label": "Caster model A",
+   "doc": "The prim model caster a (a mesh of 97 vertices, 96 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.caster_a",
+   "unit": "plain"
+  },
+  {
+   "key": "models.caster_b",
+   "part": "controller",
+   "label": "Caster model B",
+   "doc": "The prim model caster b (a mesh of 130 vertices, 128 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.caster_b",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ground",
+   "part": "controller",
+   "label": "Ground model",
+   "doc": "The prim model ground (a mesh of 96 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ground",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "controller",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "controller",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim_sets",
+   "part": "controller",
+   "label": "Animation sets",
+   "doc": "The animation sets it binds to Squall and to the boss: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim_sets",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.hit_lead",
+   "part": "controller",
+   "label": "Hit leads",
+   "doc": "Each hit's lead (how far ahead of its slash) (48 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.hit_lead",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.hit_offs",
+   "part": "controller",
+   "label": "Hit offsets",
+   "doc": "Where each hit lands from the caster (x, y, z) (96 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.hit_offs",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.sparkle_fade",
+   "part": "controller",
+   "label": "Sparkle fades",
+   "doc": "The finisher sparkles' fade by tick (8 ticks) (16 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.sparkle_fade",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.sparkle_depth",
+   "part": "controller",
+   "label": "Sparkle depths",
+   "doc": "The finisher sparkles' depth word by frame (8 frames) (16 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.sparkle_depth",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.spark_frames",
+   "label": "Spark frames",
+   "doc": "A table its code reads (the 24 spark flipbooks' frame pointers)",
+   "address": "0xCB2660",
+   "size": 96
+  },
+  {
+   "key": "not_editable.slash_ref",
+   "label": "Slash ref",
+   "doc": "Reference direction of the slash model",
+   "address": "0xCB26C0",
+   "size": 16
+  }
+ ]
+}

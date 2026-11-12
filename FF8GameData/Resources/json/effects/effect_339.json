@@ -1,0 +1,345 @@
+{
+ "format": 1,
+ "effect": 339,
+ "name": "Renzokuken (vs Adel)",
+ "doc": "Renzokuken on Adel (Squall's limit break: the boss's own version, its info picks it): the master and the controller - Squall's, Adel's and Rinoa's animation sets bound, the sequences started (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes and debris, three particle emitters, the two rings, the screen flash and his tint, the sound. Its tasks are the port's code (FFNx mag339_renzokuken_adel.cpp with the family's renzo_boss.inc) run on the program's memory.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x57E5B0",
+   "setup": "0x57E5D0",
+   "root": "0x580700"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 339,
+  "from": "0x21EB8B0",
+  "size": "0x2E78"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0xE55D74",
+   "size": 4
+  },
+  "seqs.flash": {
+   "kind": "seq",
+   "address": "0xC9DE9C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.debris": {
+   "kind": "seq",
+   "address": "0xC9E16C",
+   "size": 320,
+   "frames": 11
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xC9E048",
+   "size": 292,
+   "frames": 10
+  },
+  "seqs.emit": {
+   "kind": "seq",
+   "address": "0xC9DCF0",
+   "size": 428,
+   "frames": 16
+  },
+  "models.sparkle": {
+   "kind": "model",
+   "address": "0xE55D78",
+   "size": 376,
+   "vertices": 18
+  },
+  "models.slash": {
+   "kind": "model",
+   "address": "0xC9E424",
+   "size": 2536,
+   "vertices": 96
+  },
+  "models.streak": {
+   "kind": "model",
+   "address": "0xC9EE0C",
+   "size": 640,
+   "vertices": 21
+  },
+  "models.ring_a": {
+   "kind": "model",
+   "address": "0xC9FA74",
+   "size": 4392,
+   "vertices": 112
+  },
+  "models.ring_b": {
+   "kind": "model",
+   "address": "0xCA1C2C",
+   "size": 3120,
+   "vertices": 73
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xCA4AF0",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xE55F10",
+   "size": 2184
+  },
+  "res.anim_sets": {
+   "kind": "anim_set",
+   "address": "0xE56798",
+   "size": 32884,
+   "count": 3,
+   "tail": 4096
+  },
+  "tables.hit_lead": {
+   "kind": "table",
+   "address": "0xCA4AB0",
+   "size": 48,
+   "format": "i",
+   "columns": 4
+  },
+  "tables.sparkle_fade": {
+   "kind": "table",
+   "address": "0xE55F00",
+   "size": 16,
+   "format": "H",
+   "columns": 8
+  },
+  "tables.sparkle_depth": {
+   "kind": "table",
+   "address": "0xE55EF0",
+   "size": 16,
+   "format": "H",
+   "columns": 8
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x57E5D0",
+  "file_loader": "0x57E5B0",
+  "root": "0x580700"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "controller",
+   "title": "Controller",
+   "doc": "Squall's Renzokuken on Adel: the animation sets bound to Squall, Adel and Rinoa, the sequences, the gunblade's trail, the sparks, the hits' slashes with their flashes and debris, three particle emitters, the two rings, the screen flash and tint, the sound"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "sound",
+   "part": "controller",
+   "label": "Sound",
+   "doc": "",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flash",
+   "part": "controller",
+   "label": "Flash",
+   "doc": "The sprite sequence flash (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.debris",
+   "part": "controller",
+   "label": "Debris",
+   "doc": "The sprite sequence debris (a flipbook of 11 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "controller",
+   "label": "Spark",
+   "doc": "The sprite sequence spark (a flipbook of 10 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.emit",
+   "part": "controller",
+   "label": "Emitter particles",
+   "doc": "The sprite sequence of the emitters' particles (a flipbook of 16 frames: an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.emit",
+   "unit": "plain"
+  },
+  {
+   "key": "models.sparkle",
+   "part": "controller",
+   "label": "Sparkle model",
+   "doc": "The prim model sparkle (a mesh of 18 vertices, 8 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.sparkle",
+   "unit": "plain"
+  },
+  {
+   "key": "models.slash",
+   "part": "controller",
+   "label": "Slash model",
+   "doc": "The prim model slash (a mesh of 96 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.slash",
+   "unit": "plain"
+  },
+  {
+   "key": "models.streak",
+   "part": "controller",
+   "label": "Streak model",
+   "doc": "The prim model streak (a mesh of 21 vertices, 20 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.streak",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring_a",
+   "part": "controller",
+   "label": "Ring a model",
+   "doc": "The prim model ring a (a mesh of 112 vertices, 96 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring_a",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring_b",
+   "part": "controller",
+   "label": "Ring b model",
+   "doc": "The prim model ring b (a mesh of 73 vertices, 72 primitives: an edited one keeps its vertices (its code reads them by number))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring_b",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "controller",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "controller",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "res.anim_sets",
+   "part": "controller",
+   "label": "Animation sets",
+   "doc": "The animation sets it binds to Squall and to the boss and Rinoa: body animations, sequence scripts, weapon animations ({count, offsets, end}, the game's count)",
+   "type": "anim_set",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.anim_sets",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.hit_lead",
+   "part": "controller",
+   "label": "Hit leads",
+   "doc": "Each hit's lead (how far ahead of its slash) (48 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.hit_lead",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.sparkle_fade",
+   "part": "controller",
+   "label": "Sparkle fades",
+   "doc": "The finisher sparkles' fade by tick (8 ticks) (16 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.sparkle_fade",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.sparkle_depth",
+   "part": "controller",
+   "label": "Sparkle depths",
+   "doc": "The finisher sparkles' depth word by frame (8 frames) (16 bytes: an edited one keeps its length)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.sparkle_depth",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.spark_frames",
+   "label": "Spark frames",
+   "doc": "A table its code reads (the 24 spark flipbooks' frame pointers)",
+   "address": "0xCA4A40",
+   "size": 96
+  },
+  {
+   "key": "not_editable.slash_ref",
+   "label": "Slash ref",
+   "doc": "Reference direction of the slash model",
+   "address": "0xCA4AA0",
+   "size": 16
+  },
+  {
+   "key": "not_editable.ring_ref",
+   "label": "Ring ref",
+   "doc": "Reference direction of the two ring models",
+   "address": "0xCA4AE0",
+   "size": 16
+  }
+ ]
+}

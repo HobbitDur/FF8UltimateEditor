@@ -2664,6 +2664,52 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`Renzokuken333Params`): the sound. Data: the sound, "mag140-158-159-258-331-332.tim".
      - *Tests:* the cycle test pokes eight stage durations (`CYCLE_POKES`); no damage number.
      - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken (vs Bahamut) (334)** (FFNx 6f8934cb; Squall's limit break on Bahamut, the boss's own version; a
+     port controller, Ray-Bomb's kind, the family's renzo_boss.inc): Squall's and the boss's animation sets bound
+     (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes and
+     debris, the rings along the trail, the turned model, the particles from Bahamut's bone, the caster model, the
+     screen flash and his tint, the sound.
+     - *Inputs* (`RenzoBossParams`, shared by the family; 17): data only - the sound, the flash / debris / spark
+       flipbooks and the emitters' one, the sparkle / slash / streak meshes and its own (ring, turned, caster),
+       "mag333.tim", the camera track, the animation sets, the hit leads, the finisher sparkles' fade and depth
+       tables. Its hit offsets are a zero table in its module (not editable).
+     - *Tests:* `test_ports_Q.py` casts it from Squall on Bahamut (the sequences run: `sequences=1`); no damage
+       number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken (vs NORG) (335)** (FFNx 6f8934cb; Squall's limit break on NORG, the boss's own version; a port
+     controller, Ray-Bomb's kind, the family's renzo_boss.inc): Squall's and the boss's animation sets bound (the
+     hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes and debris, the
+     particles from NORG, the ring, the screen flash and his tint, the sound.
+     - *Inputs* (`RenzoBossParams`, shared by the family; 16): data only - the sound, the flash / debris / spark
+       flipbooks and the emitters' one, the sparkle / slash / streak meshes and its own (ring), "mag333.tim", the
+       camera track, the animation sets, the hit leads, the hit offsets, the finisher sparkles' fade and depth
+       tables.
+     - *Tests:* `test_ports_Q.py` casts it from Squall on NORG (the sequences run: `sequences=1`); no damage number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken (vs Ultima Weapon) (336)** (FFNx 6f8934cb; Squall's limit break on Ultima Weapon, the boss's own
+     version; a port controller, Ray-Bomb's kind, the family's renzo_boss.inc): Squall's and the boss's animation
+     sets bound (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes
+     and debris, the two caster models, the particles from its bones, the dust, the ground model and the camera
+     shake, the screen flash and his tint, the sound.
+     - *Inputs* (`RenzoBossParams`, shared by the family; 18): data only - the sound, the flash / debris / spark
+       flipbooks and the emitters' one, the sparkle / slash / streak meshes and its own (caster a, caster b, ground),
+       "mag333.tim", the camera track, the animation sets, the hit leads, the hit offsets, the finisher sparkles'
+       fade and depth tables.
+     - *Tests:* `test_ports_Q.py` casts it from Squall on Ultima Weapon (the sequences run: `sequences=1`); no damage
+       number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken (vs Sorceress) (337)** (FFNx 6f8934cb; Squall's limit break on the Sorceress, the boss's own
+     version; a port controller, Ray-Bomb's kind, the family's renzo_boss.inc): Squall's and the boss's animation
+     sets bound (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes
+     and debris, the caster model, the particles from her bone, the ring, the dust, the ground model and the camera
+     shake, the screen flash and his tint, the sound.
+     - *Inputs* (`RenzoBossParams`, shared by the family; 17): data only - the sound, the flash / debris / spark
+       flipbooks and the emitters' one, the sparkle / slash / streak meshes and its own (caster, ring, ground),
+       "mag333.tim", the camera track, the animation sets, the hit leads, the finisher sparkles' fade and depth
+       tables. Its hit offsets are a zero table in its module (not editable).
+     - *Tests:* `test_ports_Q.py` casts it from Squall on the Sorceress (the sequences run: `sequences=1`); no damage
+       number.
+     - *Fujin:* its tab (Controller); no + menu family.
    - **Moomba (338)** (FFNx 162c7380; the GF's Friendship, the timeline family; a port timeline, Ray-Bomb's kind): the
      screen flash, Moomba, the ring prim model, prim-model tasks and sparks at the target's and Moomba's
      vertices, the bursts with debris, the sprite sparks, the stream, the voice and the sound; the action result.
@@ -2671,3 +2717,60 @@ Potion's description is the same with its own sequences and sound.
      - *Module:* shared (a copy runs on the module's memory): the exe helpers the port calls by their original
        addresses read the module's words.
      - *Fujin:* its tab (Creature); no + menu family.
+   - **Renzokuken (vs Adel) (339)** (FFNx 6f8934cb; Squall's limit break on Adel, the boss's own version; a port
+     controller, Ray-Bomb's kind, the family's renzo_boss.inc): Squall's, Adel's and Rinoa's animation sets bound
+     (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes and
+     debris, three particle emitters, the two rings, the screen flash and his tint, the sound.
+     - *Inputs* (`RenzoBossParams`, shared by the family; 16): data only - the sound, the flash / debris / spark
+       flipbooks and the emitters' one, the sparkle / slash / streak meshes and its own (ring a, ring b),
+       "mag333.tim", the camera track, the animation sets, the hit leads, the finisher sparkles' fade and depth
+       tables. Its hit offsets are a zero table in its module (not editable).
+     - *Tests:* `test_ports_Q.py` casts it from Squall on Adel (Rinoa in slot 4, the sequences run: `sequences=1`);
+       no damage number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken (vs Ultimecia) (340)** (FFNx 6f8934cb; Squall's limit break on Ultimecia, the boss's own version; a
+     port controller, Ray-Bomb's kind, the family's renzo_boss.inc): Squall's and the boss's animation sets bound
+     (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes and
+     debris, the rings, the caster model at her bone and its particles, the particles at the hit point, the turned
+     model, the screen flash and his tint, the sound.
+     - *Inputs* (`RenzoBossParams`, shared by the family; 19): data only - the sound, the flash / debris / spark
+       flipbooks and the emitters' one, the sparkle / slash / streak meshes and its own (ring a, ring b, caster,
+       turned), "mag333.tim", the camera track, the animation sets, the hit leads, the hit offsets, the finisher
+       sparkles' fade and depth tables.
+     - *Tests:* `test_ports_Q.py` casts it from Squall on Ultimecia (the sequences run: `sequences=1`); no damage
+       number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken (vs Jumbo Cactuar) (341)** (FFNx 6f8934cb; Squall's limit break on Jumbo Cactuar, the boss's own
+     version; a port controller, Ray-Bomb's kind, the family's renzo_boss.inc): Squall's and the boss's animation
+     sets bound (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes
+     and debris, the ring, the dust and the camera shake, the screen flash and his tint, the sound.
+     - *Inputs* (`RenzoBossParams`, shared by the family; 14): data only - the sound, the flash / debris / spark
+       flipbooks, the sparkle / slash / streak meshes and its own (ring), "mag333.tim", the camera track, the
+       animation sets, the hit leads, the finisher sparkles' fade and depth tables. Its hit offsets are a zero table
+       in its module (not editable).
+     - *Tests:* `test_ports_Q.py` casts it from Squall on Jumbo Cactuar (the sequences run: `sequences=1`); no damage
+       number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken (vs Ultimecia and Griever) (342)** (FFNx 6f8934cb; Squall's limit break on Ultimecia and Griever,
+     the boss's own version; a port controller, Ray-Bomb's kind, the family's renzo_boss.inc): Squall's and the
+     boss's animation sets bound (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes
+     with their flashes and debris, the particles at each hit, the three facing models, the screen flash and his
+     tint, the sound.
+     - *Inputs* (`RenzoBossParams`, shared by the family; 16): data only - the sound, the flash / debris / spark
+       flipbooks and the emitters' one, the sparkle / slash / streak meshes and its own (facing), "mag333.tim", the
+       camera track, the animation sets, the hit leads, the hit offsets, the finisher sparkles' fade and depth
+       tables.
+     - *Tests:* `test_ports_Q.py` casts it from Squall on Ultimecia and Griever (the sequences run: `sequences=1`);
+       no damage number.
+     - *Fujin:* its tab (Controller); no + menu family.
+   - **Renzokuken (vs Griever) (343)** (FFNx 6f8934cb; Squall's limit break on Griever, the boss's own version; a
+     port controller, Ray-Bomb's kind, the family's renzo_boss.inc): Squall's and the boss's animation sets bound
+     (the hits are the sequence's), the gunblade's trail, the sparks, the hits' slashes with their flashes and
+     debris, two particle emitters, the closing model, the screen flash and his tint, the sound.
+     - *Inputs* (`RenzoBossParams`, shared by the family; 15): data only - the sound, the flash / debris / spark
+       flipbooks and the emitters' one, the sparkle / slash / streak meshes and its own (final), "mag333.tim", the
+       camera track, the animation sets, the hit leads, the finisher sparkles' fade and depth tables. Its hit offsets
+       are a zero table in its module (not editable).
+     - *Tests:* `test_ports_Q.py` casts it from Squall on Griever (the sequences run: `sequences=1`); no damage
+       number.
+     - *Fujin:* its tab (Controller); no + menu family.
