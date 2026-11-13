@@ -109,6 +109,18 @@ def test_ffnx_chunks_rebuild_matches_the_test_helper(tmp_path):
     assert _ffnx_rebuild(loaded, tmp_path, "d9w037.dat") == expected
 
 
+def test_ffnx_chunks_apply_from_memory_and_join():
+    """apply_chunks: rebuild with chunks given as bytes (Cronos's mod folders); join_sections packs a
+    section list back the way FFNx does, so section_list and join_sections round-trip."""
+    import struct
+    from FF8GameData.dat.ffnxchunks import apply_chunks, join_sections, section_list
+    loaded = struct.pack("<7I", 5, 28, 30, 30, 33, 34, 34) + b"ab" + b"cde" + b"f"
+    expected = struct.pack("<7I", 5, 28, 30, 34, 37, 37, 37) + b"ab" + b"XYZW" + b"cde"
+    assert apply_chunks(loaded, {2: b"XYZW", 4: b""}) == expected
+    assert apply_chunks(loaded, {}) == join_sections(section_list(loaded))
+    assert section_list(join_sections([b"ab", b"", b"cde"])) == [b"ab", b"", b"cde"]
+
+
 def test_every_30fps_command_is_registered():
     from Cli.alexander import AlexanderCliTool
     from Cli.fujin import FujinCliTool

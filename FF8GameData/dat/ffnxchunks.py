@@ -63,19 +63,31 @@ def changed_section_list(reference: bytes, modded: bytes) -> list:
     return [i + 1 for i, (a, b) in enumerate(zip(reference_list, modded_list)) if a != b]
 
 
-def rebuild(loaded: bytes, chunk_folder, file_name: str) -> bytes:
-    """What FFNx makes of `loaded` with the chunks of `chunk_folder`: each section from its chunk file
-    when there is one, else from `loaded`, packed after a fresh header with the same section count."""
-    chunk_folder = pathlib.Path(chunk_folder)
-    section_bytes = []
-    for number, section in enumerate(section_list(loaded), 1):
-        chunk = chunk_folder / f"{file_name}.chunk.{number}"
-        section_bytes.append(chunk.read_bytes() if chunk.exists() else section)
+def join_sections(section_bytes) -> bytes:
+    """A battle .dat from its sections, laid out the way FFNx rebuilds one: the section count, one offset
+    per section and the end offset, then the sections with no gap."""
     offset_list, position = [], 4 * (len(section_bytes) + 2)
     for section in section_bytes:
         offset_list.append(position)
         position += len(section)
     return struct.pack(f"<{len(section_bytes) + 2}I", len(section_bytes), *offset_list, position) + b"".join(section_bytes)
+
+
+def apply_chunks(loaded: bytes, chunks: dict) -> bytes:
+    """What FFNx makes of `loaded` with these chunks ({1-based section number: bytes}): each section from
+    its chunk when there is one, else from `loaded`, packed after a fresh header with the same section count."""
+    return join_sections([chunks.get(number, section) for number, section in enumerate(section_list(loaded), 1)])
+
+
+def rebuild(loaded: bytes, chunk_folder, file_name: str) -> bytes:
+    """apply_chunks with the chunk files of `chunk_folder` (<file_name>.chunk.K)."""
+    chunk_folder = pathlib.Path(chunk_folder)
+    chunks = {}
+    for number in range(1, len(section_list(loaded)) + 1):
+        chunk = chunk_folder / f"{file_name}.chunk.{number}"
+        if chunk.exists():
+            chunks[number] = chunk.read_bytes()
+    return apply_chunks(loaded, chunks)
 
 
 def write_chunks(file_name: str, reference: bytes, modded: bytes, folder) -> list:
