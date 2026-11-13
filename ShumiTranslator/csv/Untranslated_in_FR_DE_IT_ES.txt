@@ -1,0 +1,31 @@
+Texts the official translations left in English
+
+`Untranslated_in_FR_DE_IT_ES.csv` lists every text (with words) that the official French, German,
+Italian and Spanish versions all kept identical to the English one, from the `Default_all_*` CSVs of
+this folder. A text no official translation touched is unused in game or meant to stay as it is,
+so a new translation can skip it.
+
+Columns: Type, Section (field name, monster, kernel/mngrp section...), Text id, Kind (`sentence`:
+3+ words, quotes or final punctuation; `short`: names and labels), English text.
+
+| Type | Texts | Identical in all four: sentences | short |
+|---|---|---|---|
+| field | 20,887 | 548 | 29 |
+| world | 122 | 0 | 0 |
+| battle | 510 | 0 | 9 |
+| kernel | 1,278 | 0 | 16 |
+| mngrp | 2,542 | 0 | 22 |
+| namedic | 32 | 0 | 7 |
+| exe | 296 | 0 | 13 |
+
+What they are:
+
+- Debug fields: `test`, `test1`-`test14`, `testno` (about 540 texts), never reached in game.
+- `gfhtl1`: an unused hotel field ("1F is the restaurant, 2F is the hotel..."), cut content.
+- "Test" placeholder lines in real fields: `bghall1b`, `fewor2`, `rghang11`, `rghang2`, `tvglen3`.
+- `fepic1`: the Latin inscription "VIVIDARIUM ET INTERVIGILIUM ET VIATOR", kept on purpose.
+- Names kept in every language: characters (kernel, Wedge, Biggs, Edea...), some card names (exe),
+  places (namedic), and a few menu labels (mngrp `tkmnmes2`/`tkmnmes3`, `TextBox05`).
+
+Made by comparing the rows of each `Default_all_*_EN.csv` with the same rows (same keys; monsters by
+index, since their names are translated) of the FR, DE, IT and ES files.
