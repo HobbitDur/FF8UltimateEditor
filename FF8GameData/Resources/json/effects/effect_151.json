@@ -1,0 +1,666 @@
+{
+ "format": 1,
+ "effect": 151,
+ "name": "Cannon Blow",
+ "doc": "Cannon Blow (enemy attack 69, the Galbadian soldiers' SAM08G; the Cronos mod's item Grenade): the root and the main task - a fire ball shot on a curve from in front of the caster to near the targets' centre with its flash, burst, ring and fire trails, then an impact, its rings and debris at the targets, the camera shake; the damage at counter 30. Not the game's: the smoke grenade options (Smoke grenade 1: a canister and its smoke trail on the curve, a smoke cloud at the landing; it needs a texture with the smoke puffs and their grey row - Cronos's Smoke Grenade, 360). Its tasks are the port's code (FFNx mag151_cannon_blow.cpp) run on the program's memory (its particle tables, curve and queues in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x60C9A0",
+   "setup": "0x60C9C0",
+   "root": "0x60E270"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 151,
+  "from": "0x244D670",
+  "size": "0x26F0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.shot": {
+   "kind": "sound",
+   "address": "0xDC1DC0",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xDC1DC8",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xDBEC8C",
+   "size": 272
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x60C9C0",
+  "file_loader": "0x60C9A0",
+  "root": "0x60E270"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "shot",
+   "title": "Shot",
+   "doc": "The game's Cannon Blow: a fire ball shot on a curve from in front of the caster to near the targets' centre, its flash, burst, ring and fire trails, an impact, rings and debris at the targets, the camera shake; the damage at counter 30; its sound and texture, the camera track. The smoke grenade's switch and timing"
+  },
+  {
+   "id": 1,
+   "key": "canister",
+   "title": "Canister",
+   "doc": "Smoke grenade: a small dark canister spinning along the shot's curve in place of the fire ball"
+  },
+  {
+   "id": 2,
+   "key": "trail",
+   "title": "Smoke trail",
+   "doc": "Smoke grenade: puffs the canister leaves along its way, growing, rising and fading out"
+  },
+  {
+   "id": 3,
+   "key": "cloud",
+   "title": "Smoke cloud",
+   "doc": "Smoke grenade: puffs billowing out of the landing point, slowing, swelling, rising, then thinning out"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "The shot"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.shot",
+   "part": "shot",
+   "label": "Shot",
+   "doc": "At the main task's counter 1",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.shot",
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.on",
+   "part": "shot",
+   "label": "Smoke grenade",
+   "doc": "0: the game's Cannon Blow. 1: a smoke grenade - no fire, flash or explosion: a canister, its smoke trail, a smoke cloud at the landing (a new effect's look; the next values)",
+   "type": "i16",
+   "min": 0,
+   "max": 1,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.row",
+   "part": "shot",
+   "label": "Smoke palette row",
+   "doc": "The puffs' palette row (VRAM y): the smoke texture's grey ramp, brightness = opacity (the game's texture has no such row: row 249 of a smoke texture)",
+   "type": "i16",
+   "min": 0,
+   "max": 511,
+   "default": 249,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.hold",
+   "part": "cloud",
+   "label": "Holds for",
+   "doc": "Ticks after the landing before a cloud puff starts thinning out (+ the next random)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.thin_rand",
+   "part": "cloud",
+   "label": "Holds, random",
+   "doc": "Up to this many more ticks, each puff its own",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.thin_ticks",
+   "part": "cloud",
+   "label": "Thins out over",
+   "doc": "Ticks a puff takes to vanish",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.count",
+   "part": "cloud",
+   "label": "Puffs",
+   "doc": "How many puffs the cloud has (256 at most, shared with the trail)",
+   "type": "i16",
+   "min": 0,
+   "max": 256,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.delay",
+   "part": "cloud",
+   "label": "Released over",
+   "doc": "The puffs come out over this many ticks after the landing, at random",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.jitter",
+   "part": "cloud",
+   "label": "Start spread",
+   "doc": "Each puff starts this far (at most) from the landing point, sideways",
+   "type": "i16",
+   "min": 0,
+   "max": 4000,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.speed_min",
+   "part": "cloud",
+   "label": "Speed",
+   "doc": "Outward speed at the start (units a tick; + the next random)",
+   "type": "i16",
+   "min": 0,
+   "max": 2000,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.speed_rand",
+   "part": "cloud",
+   "label": "Speed, random",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 2000,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.rise_min",
+   "part": "cloud",
+   "label": "Rise",
+   "doc": "Upward speed at the start (units a tick; + the next random)",
+   "type": "i16",
+   "min": 0,
+   "max": 2000,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.rise_rand",
+   "part": "cloud",
+   "label": "Rise, random",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 2000,
+   "default": 170,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.brake",
+   "part": "cloud",
+   "label": "Slows by",
+   "doc": "A tick the speeds lose 1 / this of themselves (small = stops fast)",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.size_start",
+   "part": "cloud",
+   "label": "Size at the start",
+   "doc": "4096 = the puff picture's own size (64 texels x 16 units)",
+   "type": "i16",
+   "min": 0,
+   "max": 28672,
+   "default": 1280,
+   "unit": "scale"
+  },
+  {
+   "key": "cloud.size_min",
+   "part": "cloud",
+   "label": "Size",
+   "doc": "The size a puff grows to (+ the next random)",
+   "type": "i16",
+   "min": 0,
+   "max": 28672,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "cloud.size_rand",
+   "part": "cloud",
+   "label": "Size, random",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 28672,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "cloud.grow",
+   "part": "cloud",
+   "label": "Grows by",
+   "doc": "A tick a puff grows 1 / this of what it still lacks",
+   "type": "i16",
+   "min": 1,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.frame_min",
+   "part": "cloud",
+   "label": "Picture",
+   "doc": "The flipbook frame a puff shows (+ the next random; the frame stays)",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.frame_rand",
+   "part": "cloud",
+   "label": "Picture, random",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.spin",
+   "part": "cloud",
+   "label": "Spin",
+   "doc": "A puff turns up to this much a tick, either way (the trail's too)",
+   "type": "i16",
+   "min": 0,
+   "max": 1024,
+   "default": 6,
+   "unit": "angle"
+  },
+  {
+   "key": "cloud.drift_up",
+   "part": "cloud",
+   "label": "Drifts up",
+   "doc": "Once slowed, a puff still rises this much a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.turb",
+   "part": "cloud",
+   "label": "Sway",
+   "doc": "A random push sideways a tick (the cloud churning)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.swell",
+   "part": "cloud",
+   "label": "Swells",
+   "doc": "A puff keeps growing this much a tick (x 16)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.r",
+   "part": "cloud",
+   "label": "Red",
+   "doc": "The grey added (128 = the texture as it is)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 118,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.g",
+   "part": "cloud",
+   "label": "Green",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 118,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.b",
+   "part": "cloud",
+   "label": "Blue",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 120,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.sub",
+   "part": "cloud",
+   "label": "Thickness",
+   "doc": "How much of what is behind a puff it hides (x the texel / 128; at least the grey, or the puffs pile up to white)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 150,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.shade_rand",
+   "part": "cloud",
+   "label": "Shade, random",
+   "doc": "A puff is up to this much darker (256 = black)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "cloud.top_light",
+   "part": "cloud",
+   "label": "Lighter on top",
+   "doc": "A puff is this much lighter for every 1000 units over the floor (256 = twice)",
+   "type": "i16",
+   "min": 0,
+   "max": 256,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "canister.size",
+   "part": "canister",
+   "label": "Size",
+   "doc": "4096 = the puff picture's own size",
+   "type": "i16",
+   "min": 0,
+   "max": 28672,
+   "default": 1024,
+   "unit": "scale"
+  },
+  {
+   "key": "canister.spin",
+   "part": "canister",
+   "label": "Spin",
+   "doc": "Its turn a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 2048,
+   "default": 300,
+   "unit": "angle"
+  },
+  {
+   "key": "canister.shade",
+   "part": "canister",
+   "label": "Grey",
+   "doc": "Its colour (128 = the texture as it is)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "canister.sub",
+   "part": "canister",
+   "label": "Thickness",
+   "doc": "How much of what is behind it it hides",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "canister.frame",
+   "part": "canister",
+   "label": "Picture",
+   "doc": "The flipbook frame it shows",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.per_point",
+   "part": "trail",
+   "label": "Puffs a point",
+   "doc": "Puffs left at each point of the curve the canister passes",
+   "type": "i16",
+   "min": 0,
+   "max": 8,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.jitter",
+   "part": "trail",
+   "label": "Spread",
+   "doc": "Each puff this far (at most) from the curve, on each axis",
+   "type": "i16",
+   "min": 0,
+   "max": 2000,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.size",
+   "part": "trail",
+   "label": "Size",
+   "doc": "(+ the next random)",
+   "type": "i16",
+   "min": 0,
+   "max": 28672,
+   "default": 1280,
+   "unit": "scale"
+  },
+  {
+   "key": "trail.size_rand",
+   "part": "trail",
+   "label": "Size, random",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 28672,
+   "default": 768,
+   "unit": "scale"
+  },
+  {
+   "key": "trail.grow",
+   "part": "trail",
+   "label": "Grows",
+   "doc": "Its size grows this much a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 80,
+   "unit": "scale"
+  },
+  {
+   "key": "trail.life",
+   "part": "trail",
+   "label": "Lives for",
+   "doc": "Ticks; it fades out over them",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.rise",
+   "part": "trail",
+   "label": "Rise",
+   "doc": "It rises this much a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.shade",
+   "part": "trail",
+   "label": "Grey",
+   "doc": "Its colour (128 = the texture as it is)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.sub",
+   "part": "trail",
+   "label": "Thickness",
+   "doc": "How much of what is behind it it hides",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 120,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "shot",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters; a smoke grenade's: one with the smoke puffs and their grey row)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "shot",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.seq_debris",
+   "label": "Debris flipbook",
+   "doc": "The debris' flipbook (the smoke grenade's puffs: its frames on the smoke palette row)",
+   "address": "0xDBED9C",
+   "size": 428
+  },
+  {
+   "key": "not_editable.seq_trail",
+   "label": "Trail flipbook",
+   "doc": "The first fire trail's flipbook",
+   "address": "0xDBEF48",
+   "size": 428
+  },
+  {
+   "key": "not_editable.seq_trail2",
+   "label": "Dark trail flipbook",
+   "doc": "The second fire trail's flipbook (drawn subtracting: the dark edge)",
+   "address": "0xDBF0F4",
+   "size": 428
+  },
+  {
+   "key": "not_editable.seq_ball",
+   "label": "Fire ball flipbook",
+   "doc": "The fire ball's flipbook",
+   "address": "0xDBF2A0",
+   "size": 116
+  },
+  {
+   "key": "not_editable.seq_burst",
+   "label": "Burst flipbook",
+   "doc": "The burst's and the third trail's flipbook",
+   "address": "0xDBF314",
+   "size": 428
+  },
+  {
+   "key": "not_editable.model_impact",
+   "label": "Impact mesh",
+   "doc": "The impact's mesh",
+   "address": "0xDBF4C0",
+   "size": 3120
+  },
+  {
+   "key": "not_editable.model_impact_scroll",
+   "label": "Impact scroll mesh",
+   "doc": "The impact's scrolling mesh",
+   "address": "0xDC00F0",
+   "size": 2064
+  },
+  {
+   "key": "not_editable.model_ring",
+   "label": "Ring mesh",
+   "doc": "The ring's mesh, on the floor under the start",
+   "address": "0xDC0900",
+   "size": 1296
+  },
+  {
+   "key": "not_editable.model_flash",
+   "label": "Flash mesh",
+   "doc": "The flash's mesh at the start",
+   "address": "0xDC0E10",
+   "size": 1672
+  },
+  {
+   "key": "not_editable.model_impact_ring",
+   "label": "Impact ring mesh",
+   "doc": "The impact ring's mesh",
+   "address": "0xDC1498",
+   "size": 2344
+  }
+ ]
+}

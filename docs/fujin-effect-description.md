@@ -494,6 +494,21 @@ Potion's description is the same with its own sequences and sound.
        "mag149.tim", the camera track.
      - *Tests:* `test_ports_S.py` casts it from SAM08G (c0m007, slot 3) on Squall.
      - *Fujin:* its tab (Master); no + menu family.
+   - **Cannon Blow (151)** (FFNx 8a878327; SAM08G's attack, the Cronos mod's item Grenade; a port root, Ray-Bomb's
+     kind): a fire ball shot on a curve from in front of the caster to near the targets' centre with its flash, burst,
+     ring and three fire trails, then an impact, its rings and five debris a target, the camera shake; the damage at
+     counter 30.
+     - *Inputs* (`CannonBlowParams`, 46): the shot sound, "mag150.tim", the camera track, and the smoke grenade
+       options (not the game's; `smoke.on` 0 = the game's effect): 1 = no fire, flash, explosion or shake - a canister
+       spinning along the curve leaving a smoke trail, a smoke cloud billowing out of the landing point, hanging,
+       thinning out (counts, spreads, speeds, sizes, growth, sway, colours, thickness, timing). Its puffs are the debris
+       flipbook redrawn on palette row `smoke.row`: they need a texture whose cloud cells are smoke puffs and whose
+       row is a grey ramp (brightness = opacity: each puff subtracts, then adds) - Cronos's Smoke Grenade (360) ships
+       its own (smokegr.tim).
+     - *Port:* its file loader and setup ported (Fujin's programs: own::R); the puffs in static memory (one cast at a
+       time); four parts tagged (FX_PART: the game's shot untagged).
+     - *Tests:* the cycle test (Squall on the c0m009 monster); `test_cannon_blow_as_a_smoke_grenade`.
+     - *Fujin:* its tabs (Shot, Canister, Smoke trail, Smoke cloud); no + menu family.
    - **Breath (157)** (FFNx 22e59fd4; the Hexadragon's attack; a port root, Ray-Bomb's kind): two swirls and lit breath
      particles at the caster's mouth, then three clouds rolling toward the target - each a burst, a lit puff with its
      particles, a cloud model pair and a ring pair - with splatter sprites on the target, two sounds; the damage at tick
