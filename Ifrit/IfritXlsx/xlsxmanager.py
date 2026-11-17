@@ -125,6 +125,13 @@ def ref_data_list_source(ref_column: int, entry_count: int) -> str:
     return '=' + REF_DATA_SHEET_TITLE + '!$' + letter + '$2:$' + letter + '$' + str(entry_count + 1)
 
 
+def list_text(entries: list, id_: int) -> str:
+    """How a cell shows an id of a list: "<id>:<name>", or "<id>:Unknown" for an id the list does
+    not name - an item a mod added (FFNx's AddMoreItems, ids 199-255) when its kernel.bin names
+    were not loaded. The id is all that is read back, so it is kept either way."""
+    return next((f"{entry['id']}:{entry['name']}" for entry in entries if entry['id'] == id_), f"{id_}:Unknown")
+
+
 class DatToXlsx:
     def __init__(self):
         self.__file_name_list = []
@@ -588,19 +595,19 @@ class DatToXlsx:
                             worksheet.write(row_index['item'], column_index['item'], "Draw {}".format(index['draw']), self.magic_style)
                             index['draw'] += 1
                             worksheet.write(row_index['item'], col_index,
-                                            [f"{x['id']}:{x['name']}" for x in game_data.magic_data_json['magic'] if x['id'] == el2['ID']][0], self.magic_style)
+                                            list_text(game_data.magic_data_json['magic'], el2['ID']), self.magic_style)
                             worksheet.write(row_index['item'], col_index + 1, el2['value'], self.magic_style)
                         elif 'mug' in param_name:
                             worksheet.write(row_index['item'], column_index['item'], "Mug {}".format(index['mug']), self.mug_style)
                             index['mug'] += 1
                             worksheet.write(row_index['item'], col_index,
-                                            [f"{x['id']}:{x['name']}" for x in game_data.item_data_json['items'] if x['id'] == el2['ID']][0], self.mug_style)
+                                            list_text(game_data.item_data_json['items'], el2['ID']), self.mug_style)
                             worksheet.write(row_index['item'], col_index + 1, el2['value'], self.mug_style)
                         elif 'drop' in param_name:
                             worksheet.write(row_index['item'], column_index['item'], "Drop {}".format(index['drop']), self.drop_style)
                             index['drop'] += 1
                             worksheet.write(row_index['item'], col_index,
-                                            [f"{x['id']}:{x['name']}" for x in game_data.item_data_json['items'] if x['id'] == el2['ID']][0], self.drop_style)
+                                            list_text(game_data.item_data_json['items'], el2['ID']), self.drop_style)
                             worksheet.write(row_index['item'], col_index + 1, el2['value'], self.drop_style)
                         row_index['item'] += 1
                 # Misc menu
