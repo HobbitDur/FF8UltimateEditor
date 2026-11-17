@@ -51,7 +51,7 @@ for /f "usebackq delims=" %%f in ("%RSP%") do (
   findstr /m /c:"apply_lev_" %%f >nul 2>nul && set LEV=1
 )
 rem a cinematic clone borrowing Eden's draw handlers (Hell's Judgement, the final form's death: apply_eden_*) needs Eden's module
-if defined EDEN if exist "%FX%\mag_eden.cpp" echo "%FX%\mag_eden.cpp">>"%RSP%"
+if defined EDEN if exist "%FX%\mag_eden.cpp" findstr /m /c:"mag_eden.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_eden.cpp">>"%RSP%"
 rem (a cinematic clone borrowing the Brothers' handlers: Water's apply_brothers)
 if defined BROTHERS if exist "%FX%\mag_brothers.cpp" findstr /m /c:"mag_brothers.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_brothers.cpp">>"%RSP%"
 rem (a cinematic clone borrowing Bahamut's: apply_bahamut)

@@ -1228,6 +1228,14 @@ Potion's description is the same with its own sequences and sound.
      - *Fujin:* its tabs (Emitter, Sparkles, Ring, Falling sparkles, Glints); a nineteenth family
        in the + menu, "Around one target at a time, sparkles rising (Phoenix Down's kind)":
        Sparkles (the start), Ring, Falling sparkles, Glints.
+   - **Leviathan (6)** (FFNx 6dbf0a14; the GF summon, Tsunami; the GF cinematic engine's own, Elvoret's death's kind):
+     the engine run from its two script files (mag005_b.00 / .01) and the 16 parts it streams from the battle
+     folder (mag005_b.02 to .17, the game's) - the GF, its bones, prims, sprites and particles, the
+     action results. The program calls the GF's own setup (the engine's shared state block), its root
+     re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<6>`): the two script files (empty: the game's).
+     - *Tests:* `tests/Fujin/test_ports_GF.py`: Squall summons it on c0m092; an edited .00 copy (model
+       vertices at 0x2E68..) read by the port's file loader and the program's alike; as effect 225, itself again.
    - **Mega Phoenix (7)** (FFNx 997aee97; the actor/heal library's act family, Mega-Potion's kind):
      Cure's per-action director in the act family's form, one emitter per target of the action in
      turn, each spawning an actor system: the particle actors its actor data defines (flipbooks and
@@ -2537,6 +2545,58 @@ Potion's description is the same with its own sequences and sound.
        the file loader the engine's nullsub).
      - *Port:* the spawn helper `AddMain` goes through own::Fn.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Ifrit (201)** (FFNx 6dbf0a14; the GF summon, Hell Fire; the GF cinematic engine's own, Elvoret's death's kind):
+     the engine run from its two script files (mag200_b.00 / .01) and the 11 parts it streams from the battle
+     folder (mag200_b.02 to .12, the game's) - the GF, its bones, prims, sprites and particles, the
+     action results. The program calls the GF's own setup (the engine's shared state block), its root
+     re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<201>`): the two script files (empty: the game's).
+     - *Tests:* `tests/Fujin/test_ports_GF.py`: Squall summons it on c0m092; an edited .00 copy (model
+       vertices at 0x2EF8..) read by the port's file loader and the program's alike; as effect 225, itself again.
+   - **Bahamut (202)** (FFNx 6dbf0a14; the GF summon, Mega Flare; the GF cinematic engine's own, Elvoret's death's kind):
+     the engine run from its two script files (mag201_b.00 / .01) and the 38 parts it streams from the battle
+     folder (mag201_b.02 to .39, the game's) - the GF, its bones, prims, sprites and particles, the
+     action results. The program calls the GF's own setup (the engine's shared state block), its root
+     re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<202>`): the two script files (empty: the game's).
+     - *Tests:* `tests/Fujin/test_ports_GF.py`: Squall summons it on c0m092; an edited .00 copy (model
+       vertices at 0x44DC..) read by the port's file loader and the program's alike; as effect 225, itself again.
+   - **Cerberus (203)** (FFNx 6dbf0a14; the GF summon, Counter Rockets; the GF cinematic engine's own, Elvoret's death's kind):
+     the engine run from its two script files (mag202_b.00 / .01) and the 11 parts it streams from the battle
+     folder (mag202_b.02 to .12, the game's) - the GF, its bones, prims, sprites and particles, the
+     action results. The program calls the GF's own setup (the engine's shared state block), its root
+     re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<203>`): the two script files (empty: the game's).
+     - *Tests:* `tests/Fujin/test_ports_GF.py`: Squall summons it on c0m092; an edited .00 copy (model
+       vertices at 0x3328..) read by the port's file loader and the program's alike; as effect 225, itself again.
+   - **Alexander (204)** (FFNx 6dbf0a14; the GF summon, Holy Judgment; the GF cinematic engine's own, Elvoret's death's kind):
+     the engine run from its two script files (mag203_b.00 / .01) and the 14 parts it streams from the battle
+     folder (mag203_b.02 to .15, the game's) - the GF, its bones, prims, sprites and particles, the
+     action results. The program calls the GF's own setup (the engine's shared state block), its root
+     re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<204>`): the two script files (empty: the game's).
+     - *Tests:* `tests/Fujin/test_ports_GF.py`: Squall summons it on c0m092; an edited .00 copy (model
+       vertices at 0x5420..) read by the port's file loader and the program's alike; as effect 225, itself again.
+   - **Brothers (205)** (FFNx 6dbf0a14; the GF summon, Brotherly Love; the GF cinematic engine's own, Elvoret's death's kind):
+     the engine run from its two script files (mag204_b.00 / .01) and the 10 parts it streams from the battle
+     folder (mag204_b.02 to .11, the game's) - the GF, its bones, prims, sprites and particles, the
+     action results. The program calls the GF's own setup (the engine's shared state block), its root
+     re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<205>`): the two script files (empty: the game's).
+     - *Tests:* `tests/Fujin/test_ports_GF.py`: Squall summons it on c0m092; an edited .00 copy (model
+       vertices at 0xD208..) read by the port's file loader and the program's alike; as effect 225, itself again.
+   - **Eden (206)** (FFNx 6dbf0a14; the GF summon, Eternal Breath; the GF cinematic engine's own, Elvoret's death's kind):
+     the engine run from its two script files (mag205_b.00 / .01) and the 55 parts it streams from the battle
+     folder (mag205_b.02 to .56, the game's) - the GF, its bones, prims, sprites and particles, the
+     action results. The program calls the GF's own setup (the engine's shared state block), its root
+     re-pointed at the port's tick; the file loader ProgramFiles'.
+     - *Inputs* (`ProgramFiles<206>`): the two script files (empty: the game's).
+     - *Reference:* its port draws Draw 53's pixel dots in PC screen units (FFNx PR 1088): its description
+       records as the port with the game's files, not as the exe's code (from tick 923).
+     - *Lab:* a lab module itself now, so the recorder and host builds add mag_eden.cpp for a clone borrowing
+       `apply_eden_*` only when it is not listed yet (as they do the Brothers', Bahamut's and Leviathan's).
+     - *Tests:* `tests/Fujin/test_ports_GF.py`: Squall summons it on c0m092; an edited .00 copy (model
+       vertices at 0x6360..) read by the port's file loader and the program's alike; as effect 225, itself again.
    - **Burning Rave (212)** (FFNx aad96877; Zell's Duel finisher; a port root and director, Ray-Bomb's kind): his
      animation set and placement, the stage captured, the ground and burning layouts, rocks, sparks and debris,
      the targets drawn, thrown and spun, his afterimages, the camera's moves, the screen flash, the sounds
@@ -2699,6 +2759,8 @@ Potion's description is the same with its own sequences and sound.
      and particles, the action results. The program calls the clone's own setup (the engine's shared state
      block), its root re-pointed at the port's tick; the file loader ProgramFiles'.
      - *Inputs* (`ProgramFiles<258>`): the two script files (empty: the game's).
+     - *Reference:* its draw 53 is Eden's (`apply_eden_c`), its dots in PC screen units since FFNx PR 1088:
+       its description records as the port with the game's files (`SCREEN_UNITS`).
      - *Tests:* an edited .00 copy read by the port's file loader and the program's alike.
    - **Desperado (261)** (FFNx e7e1fde4; Laguna's limit break; a cinematic clone, Elvoret's death's kind): the GF cinematic
      engine's clone run from its two script files (mag260_b.00 / .01) - its bones, prims, sprites

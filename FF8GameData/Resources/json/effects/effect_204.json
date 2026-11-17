@@ -1,0 +1,166 @@
+{
+ "format": 1,
+ "effect": 204,
+ "name": "Alexander",
+ "doc": "Alexander - Holy Judgment (GF summon): the GF cinematic engine run from the two script files (mag203_b.00 / .01, its parameters) and the 14 parts it streams from the battle folder (mag203_b.02 to .15, the game's) - the GF, its bones, prims, sprites and particles, the action results. The program calls the GF's own setup (the engine's state block is shared, one at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag_alexander.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0xAFFC70",
+   "root": "0xB00310"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 204,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0xAFFCA0",
+  "file_loader": "0xAFFC70",
+  "root": "0xB00310",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.1872384",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1872384",
+   "size": 644
+  },
+  {
+   "key": "not_editable.1872630",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1872630",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1872678",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1872678",
+   "size": 240
+  },
+  {
+   "key": "not_editable.1872768",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1872768",
+   "size": 20
+  },
+  {
+   "key": "not_editable.187277c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x187277C",
+   "size": 44
+  },
+  {
+   "key": "not_editable.18727a8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18727A8",
+   "size": 20
+  },
+  {
+   "key": "not_editable.18727bc",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18727BC",
+   "size": 96
+  },
+  {
+   "key": "not_editable.187281c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x187281C",
+   "size": 362
+  },
+  {
+   "key": "not_editable.1872986",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1872986",
+   "size": 26
+  },
+  {
+   "key": "not_editable.18729a0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18729A0",
+   "size": 2
+  },
+  {
+   "key": "not_editable.18729a2",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18729A2",
+   "size": 14
+  },
+  {
+   "key": "not_editable.18729b0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18729B0",
+   "size": 8
+  },
+  {
+   "key": "not_editable.18729b8",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18729B8",
+   "size": 8
+  },
+  {
+   "key": "not_editable.18729c0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18729C0",
+   "size": 1312
+  }
+ ]
+}

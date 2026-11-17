@@ -1,0 +1,166 @@
+{
+ "format": 1,
+ "effect": 6,
+ "name": "Leviathan",
+ "doc": "Leviathan - Tsunami (GF summon): the GF cinematic engine run from the two script files (mag005_b.00 / .01, its parameters) and the 16 parts it streams from the battle folder (mag005_b.02 to .17, the game's) - the GF, its bones, prims, sprites and particles, the action results. The program calls the GF's own setup (the engine's state block is shared, one at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag_leviathan.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0xB58050",
+   "root": "0xB586F0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 6,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0xB58080",
+  "file_loader": "0xB58050",
+  "root": "0xB586F0",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.187726c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x187726C",
+   "size": 576
+  },
+  {
+   "key": "not_editable.18774d4",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18774D4",
+   "size": 72
+  },
+  {
+   "key": "not_editable.187751c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x187751C",
+   "size": 240
+  },
+  {
+   "key": "not_editable.187760c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x187760C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1877620",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1877620",
+   "size": 44
+  },
+  {
+   "key": "not_editable.187764c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x187764C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1877660",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1877660",
+   "size": 96
+  },
+  {
+   "key": "not_editable.18776c0",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x18776C0",
+   "size": 362
+  },
+  {
+   "key": "not_editable.187782a",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x187782A",
+   "size": 26
+  },
+  {
+   "key": "not_editable.1877844",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1877844",
+   "size": 2
+  },
+  {
+   "key": "not_editable.1877846",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1877846",
+   "size": 14
+  },
+  {
+   "key": "not_editable.1877854",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1877854",
+   "size": 8
+  },
+  {
+   "key": "not_editable.187785c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x187785C",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1877864",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1877864",
+   "size": 1312
+  }
+ ]
+}

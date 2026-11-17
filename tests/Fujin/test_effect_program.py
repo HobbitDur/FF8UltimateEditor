@@ -44,7 +44,7 @@ def record(tmp_path, effect, tag, *extra):
 # 71ecf278 Cure / Cura / Potion / Hi-Potion's light and Hypnotize's swirl, aad3b655 the ribbon edges): their ports
 # no longer record as the exe's code, and their descriptions, drawn by the same FFNx code, record as the port with
 # the game's values.
-SCREEN_UNITS = {1, 25, 50, 51, 133, 80, 126, 128, 129, 132, 138, 275, 276, 317}   # (Quezacotl 116's description runs
+SCREEN_UNITS = {1, 25, 50, 51, 133, 80, 126, 128, 129, 132, 138, 275, 276, 317, 258}   # (Quezacotl 116's description runs
 # the exe's own code: it records as the exe, not as its fixed port)
 
 
@@ -2752,10 +2752,11 @@ def test_mad_cow_special_description_compiles():
                      "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
                      "extracted_files/battle/c0m009.dat")
 def test_mad_cow_special_runs_from_its_description(tmp_path):
-    """Mad Cow Special from its description: what the exe's code records; a script file of its own (an edited .00 copy)
-    read by the port's file loader and the program's alike; as effect 225, itself again."""
+    """Mad Cow Special from its description: what its port records with the game's files (its draw 53 is Eden's, its
+    dots in PC screen units: FFNx PR 1088); a script file of its own (an edited .00 copy) read by the port's file loader
+    and the program's alike; as effect 225, itself again."""
     program = write_program(load_description(258), tmp_path / "effect.fxprog")
-    original, _log = record(tmp_path, 258, "original")
+    original, _log = reference(tmp_path, 258, "original")
     described, log = record(tmp_path, 258, "described", f"program={program}")
     assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
     files = tmp_path / "files"

@@ -51,7 +51,7 @@ for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_bahamut" %%f 
 for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_lev_" %%f >nul 2>nul && set LEV=1
 if defined GFC if exist "%FX%\gfc_engine.cpp" echo "%FX%\gfc_engine.cpp">>"%RSP%"
 rem (a cinematic clone borrowing Eden's handlers: Hell's Judgement's, the final form's death's apply_eden_*)
-if defined EDEN if exist "%FX%\mag_eden.cpp" echo "%FX%\mag_eden.cpp">>"%RSP%"
+if defined EDEN if exist "%FX%\mag_eden.cpp" findstr /m /c:"mag_eden.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_eden.cpp">>"%RSP%"
 rem (a cinematic clone borrowing the Brothers' handlers: Water's apply_brothers)
 if defined BROTHERS if exist "%FX%\mag_brothers.cpp" findstr /m /c:"mag_brothers.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_brothers.cpp">>"%RSP%"
 rem (a cinematic clone borrowing Bahamut's: apply_bahamut)
