@@ -1,0 +1,180 @@
+{
+ "format": 1,
+ "effect": 221,
+ "name": "Apocalypse",
+ "doc": "Apocalypse (enemy attack 373 Apocalypse): the GF cinematic engine's clone run from the two script files (mag220_b.00 / .01, its parameters) - its bones, prims, sprites and particles, the action results. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag221_apocalypse.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0xAA5530",
+   "root": "0xAA5BD0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 221,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0xAA5560",
+  "file_loader": "0xAA5530",
+  "root": "0xAA5BD0",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.186d234",
+   "label": "Table",
+   "doc": "Draw_table - 0x3DC (read by 0xAA56B0)",
+   "address": "0x186D234",
+   "size": 328
+  },
+  {
+   "key": "not_editable.186d3a4",
+   "label": "Data",
+   "doc": "MAG_221 BoneHandlerTable (draw_table - 0x26C)",
+   "address": "0x186D3A4",
+   "size": 72
+  },
+  {
+   "key": "not_editable.186d3ec",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x186D3EC",
+   "size": 240
+  },
+  {
+   "key": "not_editable.186d4dc",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x186D4DC",
+   "size": 32
+  },
+  {
+   "key": "not_editable.186d4fc",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x186D4FC",
+   "size": 20
+  },
+  {
+   "key": "not_editable.186d510",
+   "label": "Table",
+   "doc": "A table its code reads",
+   "address": "0x186D510",
+   "size": 96
+  },
+  {
+   "key": "not_editable.186d570",
+   "label": "Data",
+   "doc": "Bone_table + 0x1CC (after the 0x80 bytes of module data 0x186D4F0)",
+   "address": "0x186D570",
+   "size": 44
+  },
+  {
+   "key": "not_editable.186d59c",
+   "label": "Data",
+   "doc": "Spr_table + 0x2C",
+   "address": "0x186D59C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.186d5b0",
+   "label": "Data",
+   "doc": "Spr_table + 0x40",
+   "address": "0x186D5B0",
+   "size": 96
+  },
+  {
+   "key": "not_editable.186d610",
+   "label": "Data",
+   "doc": "MAG_221 DrawHandlerTable",
+   "address": "0x186D610",
+   "size": 362
+  },
+  {
+   "key": "not_editable.186d77a",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186D77A",
+   "size": 26
+  },
+  {
+   "key": "not_editable.186d794",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186D794",
+   "size": 2
+  },
+  {
+   "key": "not_editable.186d796",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186D796",
+   "size": 14
+  },
+  {
+   "key": "not_editable.186d7a4",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186D7A4",
+   "size": 8
+  },
+  {
+   "key": "not_editable.186d7ac",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x186D7AC",
+   "size": 8
+  },
+  {
+   "key": "not_editable.186d7b4",
+   "label": "Data",
+   "doc": "MAG_221 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x186D7B4",
+   "size": 1312
+  }
+ ]
+}

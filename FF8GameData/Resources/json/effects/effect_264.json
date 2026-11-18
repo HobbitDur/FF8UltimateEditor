@@ -1,0 +1,159 @@
+{
+ "format": 1,
+ "effect": 264,
+ "name": "Krysta death",
+ "doc": "Krysta death (enemy attack 277): the GF cinematic engine's clone run from the two script files (mag263_b.00 / .01, its parameters) - the caster's model falling apart polygon by polygon - its pieces, dots and particles. The program calls the clone's own setup (the engine's state block is shared, one clone at a time), its root re-pointed at the program's director; the tick is the port's (FFNx mag264_krysta_264.cpp), the file loader ProgramFiles' (gfc_engine.h).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x937E80",
+   "root": "0x938520"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 264,
+  "from": "0x2796E00",
+  "size": "0x1E40",
+  "shared": true
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values)."
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x937EB0",
+  "file_loader": "0x937E80",
+  "root": "0x938520",
+  "setup_exe": true
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "files",
+   "title": "Files",
+   "doc": "The cinematic's two script files in the magic folder (empty: the game's)"
+  }
+ ],
+ "groups": [],
+ "params": [
+  {
+   "key": "files.file00",
+   "part": "files",
+   "label": "Script .00",
+   "doc": "The first file (.00; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  },
+  {
+   "key": "files.file01",
+   "part": "files",
+   "label": "Script .01",
+   "doc": "The second file (.01; empty: the game's)",
+   "type": "file",
+   "min": 0,
+   "max": 15,
+   "default": ""
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.1856d48",
+   "label": "Data",
+   "doc": "Draw_table - 0x358 (read by 0x938000)",
+   "address": "0x1856D48",
+   "size": 324
+  },
+  {
+   "key": "not_editable.1856eb4",
+   "label": "Data",
+   "doc": "MAG_264 BoneHandlerTable (draw_table - 0x1EC)",
+   "address": "0x1856EB4",
+   "size": 72
+  },
+  {
+   "key": "not_editable.1856efc",
+   "label": "Data",
+   "doc": "Bone_table + 0x48",
+   "address": "0x1856EFC",
+   "size": 240
+  },
+  {
+   "key": "not_editable.1856fec",
+   "label": "Data",
+   "doc": "Bone_table + 0x138",
+   "address": "0x1856FEC",
+   "size": 20
+  },
+  {
+   "key": "not_editable.185702c",
+   "label": "Data",
+   "doc": "Bone_table + 0x178",
+   "address": "0x185702C",
+   "size": 20
+  },
+  {
+   "key": "not_editable.1857040",
+   "label": "Data",
+   "doc": "Bone_table + 0x18C",
+   "address": "0x1857040",
+   "size": 96
+  },
+  {
+   "key": "not_editable.18570a0",
+   "label": "Data",
+   "doc": "MAG_264 DrawHandlerTable",
+   "address": "0x18570A0",
+   "size": 362
+  },
+  {
+   "key": "not_editable.185720a",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185720A",
+   "size": 26
+  },
+  {
+   "key": "not_editable.1857224",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1857224",
+   "size": 2
+  },
+  {
+   "key": "not_editable.1857226",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1857226",
+   "size": 14
+  },
+  {
+   "key": "not_editable.1857234",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x1857234",
+   "size": 8
+  },
+  {
+   "key": "not_editable.185723c",
+   "label": "Data",
+   "doc": "Data its code reads",
+   "address": "0x185723C",
+   "size": 8
+  },
+  {
+   "key": "not_editable.1857244",
+   "label": "Data",
+   "doc": "MAG_264 VmOpcodeTable (draw_table + 0x1A4)",
+   "address": "0x1857244",
+   "size": 1312
+  }
+ ]
+}
