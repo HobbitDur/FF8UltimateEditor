@@ -27,6 +27,8 @@ set "FX=%~dp0..\..\ExternalTools\FFNx\fx"
 if defined FUJIN_FX set "FX=%FUJIN_FX%"
 set HELD=
 if exist "%FX%\fx_held.cpp" set HELD=/DFF8_FX_HELD "%FX%\fx_held.cpp"
+rem (the glints' held part, fx_glint_held.inc: the healing ports' 30 fps layer draws them)
+if defined HELD if exist "%FX%\fx_glint.cpp" set HELD=%HELD% "%FX%\fx_glint.cpp"
 if exist "%FX%\fx_layouts.h" goto compile
 echo FFNx's effect sources are missing (ExternalTools\FFNx\fx: the updater's FFNxEffects)
 exit /b 3

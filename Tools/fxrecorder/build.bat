@@ -68,6 +68,8 @@ rem the modules built on the GF cinematic engine (gfc_engine.h) need it compiled
 if defined GFC if exist "%FX%\gfc_engine.cpp" echo "%FX%\gfc_engine.cpp">>"%RSP%"
 set LAB=/DFF8_FX_LAB /I"%FX%" @"%RSP%"
 if exist "%FX%\fx_held.cpp" set LAB=%LAB% /DFF8_FX_HELD "%FX%\fx_held.cpp"
+rem (the glints' held part, fx_glint_held.inc: the healing ports' 30 fps layer draws them)
+if exist "%FX%\fx_held.cpp" if exist "%FX%\fx_glint.cpp" set LAB=%LAB% "%FX%\fx_glint.cpp"
 :compile
 cl /nologo /std:c++20 /EHa /W3 /O1 /MT /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS fxrecorder.cpp %LAB% /Foobj\ /Fefxrecorder.exe /link /BASE:0x10000000 /DYNAMICBASE:NO /FIXED /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%

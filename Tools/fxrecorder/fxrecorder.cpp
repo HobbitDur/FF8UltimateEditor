@@ -1445,6 +1445,7 @@ namespace ff8fx
 	// (the 30 fps layer's helpers of the battle's frame gate, FF8Battle30.dll, are not here: on a program's held frame a
 	// model keeps its pose, a layout player draws its present state without advancing - the next tick's picture)
 	void pose_midpoint(void *, void *, int, int) {}
+	void held_shake_next(const int16_t[3], unsigned) {}   // (the frame gate's shake: its own lerp stands)
 	void pose_midpoint_to(void *, const void *, int, int) {}
 	void prim::play_held(prim::Layout *l, prim::Callback cb, int arg, int, int) { prim::play(l, cb, arg, 1); }
 #endif
