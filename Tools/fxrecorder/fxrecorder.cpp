@@ -1437,17 +1437,19 @@ namespace ff8fx
 	void register_mag001_cure();
 	// the shared prim-model player: FFNx's twin (fx_primplayer.cpp) needs FFNx itself; the exe's own
 	// 0x701970 plays the same
+#ifndef FF8_FX_HELD   // (the 30 fps flavour builds FFNx's native twin, fx_primplayer.cpp: its plays noted for play_held)
 	int prim::play(prim::Layout *l, prim::Callback cb, int arg, int paused)
 	{
 		return ((int (__cdecl *)(prim::Layout *, prim::Callback, int, int))0x701970)(l, cb, arg, paused);
 	}
+#endif
 #ifdef FF8_FX_HELD
-	// (the 30 fps layer's helpers of the battle's frame gate, FF8Battle30.dll, are not here: on a program's held frame a
-	// model keeps its pose, a layout player draws its present state without advancing - the next tick's picture)
-	void pose_midpoint(void *, void *, int, int) {}
-	void held_shake_next(const int16_t[3], unsigned) {}   // (the frame gate's shake: its own lerp stands)
-	void pose_midpoint_to(void *, const void *, int, int) {}
-	void prim::play_held(prim::Layout *l, prim::Callback cb, int arg, int, int) { prim::play(l, cb, arg, 1); }
+	// the 30 fps layer's helpers of the battle's frame gate (FF8Battle30.dll): its own, handed over at each real tick
+	// (g_gate, fx_held.h HeldGate: held API 2); without it (the recorder, an older gate) a model keeps its pose on a
+	// held frame and the gate's own shake lerp stands
+	void pose_midpoint(void *h, void *c, int num, int den) { if (g_gate) g_gate->pose_midpoint(h, c, num, den); }
+	void pose_midpoint_to(void *h, const void *n, int num, int den) { if (g_gate) g_gate->pose_midpoint_to(h, n, num, den); }
+	void held_shake_next(const int16_t next[3], unsigned written) { if (g_gate) g_gate->shake_next(next, written); }
 #endif
 }
 // every module with parameters (FX_LAB_MODULE: the ones build.bat compiles in); sources older than

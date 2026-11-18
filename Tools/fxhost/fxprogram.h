@@ -505,6 +505,9 @@ namespace fxprog
 
 	inline uint32_t __cdecl RunTask(int k, TaskNode *n);
 	template<int K> uint32_t __cdecl TaskThunk(TaskNode *n) { return RunTask(K, n); }
+#ifdef FF8_FX_HELD
+	namespace described { inline void Note(int k, const Draw &d, Particle *p); }   // (30 fps: the draw log, below)
+#endif
 	inline TaskFn const THUNKS[] = {
 		TaskThunk<0>, TaskThunk<1>, TaskThunk<2>, TaskThunk<3>, TaskThunk<4>, TaskThunk<5>, TaskThunk<6>, TaskThunk<7>,
 		TaskThunk<8>, TaskThunk<9>, TaskThunk<10>, TaskThunk<11>, TaskThunk<12>, TaskThunk<13>, TaskThunk<14>, TaskThunk<15>,
@@ -1566,6 +1569,9 @@ namespace fxprog
 				if (d.limit == WITHIN && !((uint32_t)(Tick(t, n) - V(d.value)) < (uint32_t)V(d.count))) continue;
 				if (d.when.op && !Holds(d.when, n)) continue;
 				FX_PART(d.tag);
+#ifdef FF8_FX_HELD
+				if (!t.plain) described::Note(k, d, p);
+#endif
 				if (t.plain) DrawPlain(d, t, n, left);
 				else DrawOne(d, p);
 			}
@@ -2115,6 +2121,10 @@ namespace fxprog
 			void *root = ff8fx::own::find(g_program->port_root);
 			return root ? ((uint32_t (__cdecl *)(TaskNode *))root)(n) : TASK_END;
 		}
+#ifdef FF8_FX_HELD
+		// the module's 30 fps layer: its tick starts here, its own master does not run under this director
+		if (g_program->module) ff8fx::held_module_begin(g_program->module);
+#endif
 		if (g_program->director == CHAIN) return ChainRoot(n);
 		if (g_program->director == CYCLE) return CycleDirector(n);
 		return g_program->director == MASTER ? MasterDirector(n) : PerActionDirector(n);
@@ -2751,24 +2761,240 @@ namespace fxprog
 	// ------------------------------------------------------------------
 	// 30 fps: a program's held frames (the frames between two of its 15 Hz ticks) are its port module's 30 fps layer
 	// (FFNx True30FPS fx_held.h: the module's held part draws the state num / den of the way to the next tick), run on
-	// the program's memory. Only a program with a module (a port effect's: Arctic Wind on Ice Breath's, the Smoke
-	// Grenade on Cannon Blow's...) has them; the others' held frames stay the battle's (the last tick shown again).
+	// the program's memory (Arctic Wind on Ice Breath's, the Smoke Grenade on Cannon Blow's, Cura on Cura's pieces...),
+	// and the in-between state of its own effect nodes (described:: below). A program with neither (plain nodes only,
+	// the shatter) keeps the battle's held frames (the last tick shown again).
 	// ------------------------------------------------------------------
+	// A program's own tasks (no module code: Cronos's Potion 353, Greater Potion 355, Cure 356) - the Potion family's
+	// 30 fps layer (FFNx True30FPS mag050_potion_held.inc) on the program's nodes. A real tick logs every draw of an effect
+	// node in order (a plain node's layouts are not logged: the gate shows their packets of the tick) with the node as
+	// drawn, the GTE registers and the Field_Alloc scratch it started from. A held frame replays the log, each node at
+	// its state num / den of the way to the next tick:
+	//   a helix (a ring's motion)  - the exact point of the helix the next tick's sub-steps pass through;
+	//   any other node             - moved on by its last tick's motion (motes, sparkles: constant velocity); a node new
+	//                                on this tick holds;
+	//   ground flipbook            - its fading grey half way to the next tick's (held where it would wrap);
+	//   projector overlay          - the target at its in-between pose (pose_midpoint of its body and its weapon), the
+	//                                projector at the node's in-between height; its packets go to a private copy of the
+	//                                frame arena, its vertex buffer to a copy, its context put back.
+	// Flipbook frames and colours hold (15 Hz steps). A tick that only draws holds. The tasks logged are redrawn
+	// (HeldRedraws): the gate skips their real packets. One program's log at a time.
+	namespace described
+	{
+		static const uint32_t SCRATCH = 0x400, NODE_MAX = 0x100, VERTS_SIZE = 0x6400, RECS = 512;
+		struct Rec
+		{
+			int task;
+			const Draw *d;
+			const void *live;
+			bool moving;
+			int16_t vel[3];
+			alignas(4) uint8_t node[NODE_MAX];
+			uint8_t gte[GTE_DATA_SIZE + GTE_CTRL_SIZE];
+			uint8_t scratch[SCRATCH];
+		};
+		struct Prev { int16_t pos[3]; int16_t counter; int16_t vel[3]; bool moving; uint32_t tick; };
+		inline uint32_t g_tick = 0xFFFFFFFF;
+		inline Program *g_prog = nullptr;
+		inline uint32_t g_n = 0, g_tasks = 0;          // the log; bit k of g_tasks: task k drew on the tick
+		inline uint32_t g_packets = 0, g_frame_packets = 0;
+		inline bool g_draw_only = false;
+		inline Rec g_recs[RECS];
+		inline std::unordered_map<const void *, Prev> g_prev;
+		inline uint8_t g_held_packets[0x20000], g_held_frame[0x40000], g_held_verts[VERTS_SIZE];
+
+		inline void Note(int k, const Draw &d, Particle *p)
+		{
+			if (g_tick != g_real_tick)
+			{
+				g_tick = g_real_tick;
+				g_prog = g_program;
+				g_n = g_tasks = 0;
+				g_packets = PacketCursor();
+				g_frame_packets = 0;
+				g_draw_only = DrawOnly();
+				if (g_prev.size() > 4096)
+					for (auto it = g_prev.begin(); it != g_prev.end();) it = it->second.tick + 2 < g_real_tick ? g_prev.erase(it) : ++it;
+			}
+			const Task &t = g_program->tasks[k];
+			if (g_prog != g_program || g_n >= RECS || t.size > (int)NODE_MAX || k >= 32) return;
+			Rec &r = g_recs[g_n++];
+			r.task = k;
+			r.d = &d;
+			r.live = p;
+			memcpy(r.node, p, t.size);
+			memcpy(r.gte, (const void *)GTE_DATA, GTE_DATA_SIZE);
+			memcpy(r.gte + GTE_DATA_SIZE, (const void *)GTE_CTRL, GTE_CTRL_SIZE);
+			if (uint8_t *scratch = var<uint8_t *>(0x1D999C4)) memcpy(r.scratch, scratch, SCRATCH);
+			// its motion: the last tick's step (the same node: drawn on the tick before with the counter before)
+			const auto slot = g_prev.try_emplace(p);
+			Prev &pv = slot.first->second;
+			if (slot.second) pv.tick = 0xFFFFFFF0u;   // (first seen: not moving)
+			if (pv.tick != g_real_tick)
+			{
+				pv.moving = pv.tick + 1 == g_real_tick && (int16_t)(pv.counter + 1) == p->h.counter;
+				for (int c = 0; c < 3; c++) pv.vel[c] = pv.moving ? (int16_t)(p->h.pos[c] - pv.pos[c]) : 0;
+				memcpy(pv.pos, p->h.pos, sizeof(pv.pos));
+				pv.counter = p->h.counter;
+				pv.tick = g_real_tick;
+			}
+			r.moving = pv.moving;
+			memcpy(r.vel, pv.vel, sizeof(r.vel));
+			g_tasks |= 1u << k;
+			if (d.draw.op == PROJECTOR_OVERLAY && !g_frame_packets) g_frame_packets = var<uint32_t>(0x1D8E054);
+		}
+
+		inline bool Ready(const Program *p) { return p && g_tick == g_real_tick && g_prog == p && g_n > 0; }
+
+		// the gate: a node of a task logged on the tick (its function: the program's thunk or its original)
+		inline bool Redraws(uint32_t fn)
+		{
+			if (g_tick != g_real_tick || !g_prog) return false;
+			for (int k = 0; k < (int)g_prog->tasks.size() && k < 32; k++)
+				if (g_tasks & (1u << k))
+				{
+					const Task &t = g_prog->tasks[k];
+					if (fn == (t.function ? t.function : (uint32_t)THUNKS[k])) return true;
+				}
+			return false;
+		}
+
+		// the overlay's outputs on a held frame (mag050_potion_held.inc OverlayScope): frame arena packets to a copy of
+		// the real tick's, vertex buffer to a copy, context; all put back
+		struct OverlayScope
+		{
+			bool on;
+			uint32_t cursor = 0, verts = 0;
+			alignas(4) uint8_t ctx[sizeof(OverlayCtx)];
+			explicit OverlayScope(bool used) : on(used)
+			{
+				if (!on) return;
+				uint32_t &fc = var<uint32_t>(0x1D8E054);
+				cursor = fc;
+				if (g_frame_packets && cursor > g_frame_packets)
+				{
+					const uint32_t used_bytes = cursor - g_frame_packets;
+					memcpy(g_held_frame, (const void *)g_frame_packets, used_bytes < sizeof(g_held_frame) ? used_bytes : sizeof(g_held_frame));
+				}
+				fc = (uint32_t)g_held_frame;
+				memcpy(ctx, &Overlay(), sizeof(ctx));
+				uint8_t *sprite = Overlay().sprite;
+				verts = *(uint32_t *)(sprite + 4);
+				memcpy(g_held_verts, (const void *)verts, sizeof(g_held_verts));
+				*(uint32_t *)(sprite + 4) = (uint32_t)g_held_verts;
+			}
+			~OverlayScope()
+			{
+				if (!on) return;
+				*(uint32_t *)(Overlay().sprite + 4) = verts;
+				memcpy(&Overlay(), ctx, sizeof(ctx));
+				var<uint32_t>(0x1D8E054) = cursor;
+			}
+		};
+
+		// MAG_001_CURE_DrawTargetModelWithOverlay with the target at its in-between pose, then the real pose's matrices
+		inline void OverlayHeld(const Particle &m, const std::vector<Val> &a, int num, int den)
+		{
+			OverlayCtx *c = &Overlay();
+			c->offset[1] = m.h.pos[1];
+			overlay::SetOverlayTexturePage(c, m.h.pos, V(a[0]), V(a[1]), V(a[2]), V(a[3]), V(a[4]), V(a[5]));
+			uint8_t *entity = c->entity;
+			overlay::Overlay_UpdateMatrices(c, entity);
+			const bool posed = c->slot != 0xFF;   // (0xFF: the overlay advances the animation itself: the pose holds)
+			uint8_t *weapon = *(uint8_t *const *)(entity + 0x78);
+			if (posed) pose_midpoint(entity + 0x60, entity + 0x6C, num, den);
+			if (posed && weapon) pose_midpoint(weapon, weapon + 0xC, num, den);
+			ComposeAffineTransform(&Camera(), &c->world, &c->view);
+			if (!(entity[0] & 0x20)) *c->frame_cursor = BattleEntity_DrawShadow(entity, RenderOTAt(0x4040), 0x10, *c->frame_cursor);
+			overlay::Overlay_BuildProjectorMatrix(c);
+			const bool skip_back_faces = V(a[6]) != 0;
+			overlay::Overlay_RenderModel(*(const uint8_t *const *)(entity + 0x64), RenderOTAt(0x44), 4, c, skip_back_faces);
+			if (weapon) overlay::Overlay_RenderModel(*(const uint8_t *const *)(weapon + 4), RenderOTAt(0x44), 4, c, skip_back_faces);
+			if (posed) BuildBoneMatricesFromPose(entity + 0x60);
+			if (posed && weapon) BuildBoneMatricesFromPose(weapon);
+		}
+
+		inline void Draw(int num, int den)
+		{
+			Program *saved = g_program;
+			g_program = g_prog;
+			if (g_draw_only) num = 0;
+			bool overlays = false;
+			for (uint32_t i = 0; i < g_n; i++) overlays |= g_recs[i].d->draw.op == PROJECTOR_OVERLAY;
+			{
+				HeldScope scope(PacketCursor(), g_held_packets, sizeof(g_held_packets), g_packets);
+				OverlayScope overlay_scope(overlays);
+				for (uint32_t i = 0; i < g_n; i++)
+				{
+					const Rec &r = g_recs[i];
+					const Task &t = g_prog->tasks[r.task];
+					memcpy((void *)GTE_DATA, r.gte, GTE_DATA_SIZE);
+					memcpy((void *)GTE_CTRL, r.gte + GTE_DATA_SIZE, GTE_CTRL_SIZE);
+					if (uint8_t *scratch = var<uint8_t *>(0x1D999C4)) memcpy(scratch, r.scratch, SCRATCH);
+					alignas(4) uint8_t copy[NODE_MAX];
+					memcpy(copy, r.node, sizeof(copy));
+					Particle &m = *(Particle *)copy;
+					if (t.motion.op == HELIX)
+					{
+						// the step drawn (after this tick's sub-steps; draws_first: the tick before's), then num / den of a tick on
+						const int32_t substeps = V(t.motion.a[0]);
+						const int32_t drawn = t.draws_first ? m.h.counter * substeps - 1 : m.h.counter * substeps + substeps - 1;
+						if (drawn >= 0)
+							HelixPlace(m.h.pos, m.angle, m.center, m.vel[1], m.radius, (uint32_t)(uint16_t)(drawn + substeps * num / den),
+							           (int16_t)V(t.motion.a[1]));
+					}
+					else if (r.moving)
+						for (int c = 0; c < 3; c++) m.h.pos[c] = (int16_t)(m.h.pos[c] + r.vel[c] * num / den);
+					const std::vector<Val> &a = r.d->draw.a;
+					switch (r.d->draw.op)
+					{
+					case GROUND_FLIPBOOK:
+					{
+						const uint8_t g0 = (uint8_t)((uint8_t)V(a[4]) - (uint8_t)(m.h.counter * (uint8_t)V(a[5])));
+						const uint8_t g1 = (uint8_t)((uint8_t)V(a[4]) - (uint8_t)((m.h.counter + 1) * (uint8_t)V(a[5])));
+						const uint32_t grey = g1 > g0 ? g0 : (uint8_t)lerp_i(g0, g1, num, den);   // (no wrap to white)
+						const uint32_t colour = grey | grey << 8 | grey << 16 | ((uint32_t)r.live & 0xFF000000u);
+						DrawGroundFlipbook(m.h.pos, (m.h.flags & 4) != 0, fxp::sequence((uint32_t)V(a[0]), (uint32_t)G(a[0])), (int16_t)V(a[1]),
+						                   (int16_t)V(a[2]), (int16_t)V(a[3]), colour, PacketCursor());
+						break;
+					}
+					case PROJECTOR_OVERLAY: OverlayHeld(m, a, num, den); break;
+					default: DrawOne(*r.d, &m); break;
+					}
+				}
+			}
+			g_program = saved;
+		}
+	}
+
 	inline bool HeldReady(Program *p)
 	{
-		if (!p || !p->module) return false;
+		if (!p) return false;
+		if (described::Ready(p)) return true;
+		if (p->director == SHATTER) { for (const shatter::Run &r : shatter::g_runs) if (r.live && r.owner == 0) return true; return false; }
+		if (!p->module) return false;
 		g_program = p;
 		UseModule();
 		return ff8fx::held_ready(p->module);
 	}
 	inline void HeldDraw(Program *p, int num, int den)
 	{
-		if (!HeldReady(p)) return;
-		ff8fx::held_draw(p->module, num, den);
+		if (!p) return;
+		if (p->module)
+		{
+			g_program = p;
+			UseModule();
+			if (ff8fx::held_ready(p->module)) ff8fx::held_draw(p->module, num, den);
+		}
+		if (described::Ready(p)) described::Draw(num, den);
+		if (p->director == SHATTER) shatter::HeldDrawAll(0, num, den);
 	}
 	inline bool HeldCamera(Program *p, int num, int den, int16_t world[3], int16_t lookat[3])
 	{
-		return HeldReady(p) && ff8fx::held_camera(p->module, num, den, world, lookat);
+		if (!p || !p->module) return false;
+		g_program = p;
+		UseModule();
+		return ff8fx::held_ready(p->module) && ff8fx::held_camera(p->module, num, den, world, lookat);
 	}
 	// the original a node's function stands for: a program task's code, a port's original (own::note), else itself
 	inline uint32_t HeldOrigOf(uint32_t fn)
@@ -2786,7 +3012,10 @@ namespace fxprog
 		const auto it = origs.find(fn);
 		return it != origs.end() ? it->second : fn;
 	}
-	inline bool HeldRedraws(uint32_t fn) { return ff8fx::held_redraws(fn) || ff8fx::held_redraws(HeldOrigOf(fn)); }
+	inline bool HeldRedraws(uint32_t fn)
+	{
+		return fn == (uint32_t)shatter::CastTask || described::Redraws(fn) || ff8fx::held_redraws(fn) || ff8fx::held_redraws(HeldOrigOf(fn));
+	}
 	inline bool HeldKeepsEnded(uint32_t fn) { return ff8fx::keeps_ended(fn) || ff8fx::keeps_ended(HeldOrigOf(fn)); }
 	inline bool HeldKeepsDrawn(uint32_t fn) { return ff8fx::keeps_drawn(fn) || ff8fx::keeps_drawn(HeldOrigOf(fn)); }
 #endif

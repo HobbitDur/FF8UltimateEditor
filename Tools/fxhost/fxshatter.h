@@ -321,10 +321,82 @@ namespace fxprog
 			return false;
 		}
 
+#ifdef FF8_FX_HELD
+		// ---------------------------------------------------------------- 30 fps
+		// A held frame (FF8Battle30.dll's frame gate, between two 15 Hz ticks) draws each live shatter of an owner at its
+		// state num / den of the way to the next tick: the tick drew the state before its step, the runs now hold the
+		// state after it, so a shard is at (now - its step) + its step x num / den (its velocity of that step: vy before
+		// the gravity), its turns likewise; the burst grows half way; the fade counters hold (4 steps, as drawn). The
+		// whole model before the break holds. After a tick that only drew (nothing moved) everything holds. Packets go
+		// to a buffer of their own (the render list cursor 0x1D8E054 put back).
+		inline bool g_held_draw_only[2] = {};
+		inline uint8_t g_held_packets[0x20000];
+
+		inline void HeldRun(const Run &r, int num, int den, bool draw_only)
+		{
+			const Settings &s = r.s;
+			const int16_t turn = (int16_t)(r.facing + s.turn);
+			const int32_t drawn = draw_only ? r.tick : r.tick - 1;   // the tick the last real tick drew
+			if (draw_only) num = 0;
+			if (drawn < 0) return;
+			if (drawn < s.whole_ticks)
+			{
+				Draw(s.model, nullptr, r.at.x, r.at.y, r.at.z, turn, 0, s.scale, (int16_t)(drawn == 0 && s.whole_ticks > 1 ? 1 : 2));
+				return;
+			}
+			const int32_t age = drawn - s.whole_ticks;
+			if (age < s.burst_ticks)
+			{
+				const int16_t c = (int16_t)(age == 0 ? 2 : 4 + Clamp((age - 1) * 4 / (s.burst_ticks > 1 ? s.burst_ticks - 1 : 1), 0, 3));
+				const int32_t scale = s.burst_scale + (int32_t)(((int64_t)age * den + num) * s.burst_scale / (4 * den));
+				Draw(s.burst_model, nullptr, r.at.x, r.at.y, r.at.z, turn, 0, scale, c);
+			}
+			if (age < s.life && r.shards)
+			{
+				int16_t counter = 2;
+				if (age >= s.fade_after)
+				{
+					const int32_t span = s.life - s.fade_after;
+					counter = (int16_t)(4 + Clamp((age - s.fade_after) * 4 / (span > 0 ? span : 1), 0, 3));
+				}
+				const Pieces &p = PiecesOf(s.model);
+				for (int k = 0; k < r.shards; k++)
+				{
+					const Piece &q = r.pieces[k];
+					// the step the tick made (none when it only drew)
+					const int32_t vx = draw_only ? 0 : q.vx, vy = draw_only ? 0 : q.vy - (s.gravity << 4), vz = draw_only ? 0 : q.vz;
+					const int16_t vry = draw_only ? 0 : q.vry, vrz = draw_only ? 0 : q.vrz;
+					const int32_t x = q.x - vx + vx * num / den, y = q.y - vy + vy * num / den, z = q.z - vz + vz * num / den;
+					const int16_t ry = (int16_t)(q.ry - vry + vry * num / den), rz = (int16_t)(q.rz - vrz + vrz * num / den);
+					Draw(s.model, &p.blob[p.shards[k].at], r.at.x + (x >> 4), r.at.y + (y >> 4), r.at.z + (z >> 4), (int16_t)(turn + ry), rz,
+					     s.scale, counter);
+				}
+			}
+		}
+
+		// every live shatter of this owner (0: a cast's, 1: the hit-effect queue's); false: none
+		inline bool HeldDrawAll(int owner, int num, int den)
+		{
+			bool any = false;
+			for (const Run &r : g_runs) any |= r.live && r.owner == owner;
+			if (!any) return false;
+			uint32_t &cursor = var<uint32_t>(0x1D8E054);   // BATTLE_PACKET_WRITE_CURSOR (the flash draw's packets)
+			const uint32_t saved = cursor;
+			cursor = (uint32_t)g_held_packets;
+			for (const Run &r : g_runs)
+				if (r.live && r.owner == owner) HeldRun(r, num, den, g_held_draw_only[owner]);
+			cursor = saved;
+			return true;
+		}
+#endif
+
 		// every live run of this owner ticked; true while one plays
 		inline bool TickAll(int owner)
 		{
 			const bool draw_only = (UpdateFlags() & 1) != 0;
+#ifdef FF8_FX_HELD
+			g_held_draw_only[owner] = draw_only;
+#endif
 			bool any = false;
 			for (Run &r : g_runs)
 				if (r.live && r.owner == owner)

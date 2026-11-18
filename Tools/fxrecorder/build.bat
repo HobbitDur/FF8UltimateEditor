@@ -70,6 +70,8 @@ set LAB=/DFF8_FX_LAB /I"%FX%" @"%RSP%"
 if exist "%FX%\fx_held.cpp" set LAB=%LAB% /DFF8_FX_HELD "%FX%\fx_held.cpp"
 rem (the glints' held part, fx_glint_held.inc: the healing ports' 30 fps layer draws them)
 if exist "%FX%\fx_held.cpp" if exist "%FX%\fx_glint.cpp" set LAB=%LAB% "%FX%\fx_glint.cpp"
+rem (FFNx's native prim-model player: its play_held draws a layout's exact in-between records)
+if exist "%FX%\fx_held.cpp" set LAB=%LAB% "%FX%\fx_primplayer.cpp"
 :compile
 cl /nologo /std:c++20 /EHa /W3 /O1 /MT /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS fxrecorder.cpp %LAB% /Foobj\ /Fefxrecorder.exe /link /BASE:0x10000000 /DYNAMICBASE:NO /FIXED /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%
