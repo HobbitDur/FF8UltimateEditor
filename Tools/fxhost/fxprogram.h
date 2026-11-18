@@ -2996,7 +2996,8 @@ namespace fxprog
 		UseModule();
 		return ff8fx::held_ready(p->module) && ff8fx::held_camera(p->module, num, den, world, lookat);
 	}
-	// the original a node's function stands for: a program task's code, a port's original (own::note), else itself
+	// the original a node's function stands for: a program task's code, a port's original (own::note), the original
+	// an act-engine port's thunk runs (act::PortFn: Curaga's actor system), else itself
 	inline uint32_t HeldOrigOf(uint32_t fn)
 	{
 		static std::unordered_map<uint32_t, uint32_t> origs;
@@ -3010,7 +3011,12 @@ namespace fxprog
 		if (g_program)
 			if (const uint32_t o = ProgramOrigOf(fn)) return o;
 		const auto it = origs.find(fn);
-		return it != origs.end() ? it->second : fn;
+		if (it != origs.end()) return it->second;
+#ifdef FXPROG_ACTORS
+		return ff8fx::act::OrigOf(fn);
+#else
+		return fn;
+#endif
 	}
 	inline bool HeldRedraws(uint32_t fn)
 	{
