@@ -617,8 +617,13 @@ def test_shumitranslator_opens_a_tab_per_file(main_window, monkeypatch, tmp_path
 
     # Its own open/save widgets are gone; the header drives everything.
     assert not hasattr(shumi, "file_dialog_button") and not hasattr(shumi, "save_button")
-    # ONE Import entry: a single multi-select dialog for every kind, not one entry per file kind.
-    assert [label for label, _ in tb._import_entries()] == ["Open FF8 text file(s)"]
+    # One Import entry per file kind, plus the c0mxx.dat multi-select; the font is complementary.
+    assert [label for label, _ in tb._import_entries()] == [
+        "kernel.bin", "namedic.bin", "mngrp.bin", "FF8 exe", "remaster card names (.dat)", "field.fs",
+        "world.fs", "c0mxx.dat (battle text)"]
+    assert [binding.file_name for binding in tb._complementary_bindings()] == [
+        "font (.tdw)", "font texture, low res (menu/sysfnt.TEX)",
+        "font textures, high res (menu/hires/sysfld00.TEX...)"]
     assert tb.import_button.isEnabled() and tb.save_button.isEnabled() is False  # no tab yet
 
     # Open kernel.bin (on a copy - Save writes straight back) -> its own tab, compress shown.
@@ -711,10 +716,10 @@ def test_shumitranslator_does_not_build_a_pane_for_a_background_open(main_window
 
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin", "extracted_files/main/namedic.bin", "extracted_files/battle/c0m000.dat")
-def test_shumitranslator_single_multiselect_import_opens_a_tab_each(main_window, monkeypatch):
-    """One Import = one multi-select dialog covering every kind. Picking kernel.bin + namedic.bin +
-    two c0mxx.dat in a single go opens a kernel tab, a namedic tab and ONE battle-text tab (the c0m
-    set collapses), each kind detected from its name - not eight separate menu entries."""
+def test_shumitranslator_multiselect_open_opens_a_tab_each(main_window, monkeypatch):
+    """Import lists each kind (one entry each); the c0mxx.dat entry is a multi-select whose picks
+    collapse into ONE battle-text tab. open_files with several names (a drop, the auto import) still
+    opens a kernel tab, a namedic tab and that one battle-text tab, each kind detected from its name."""
     from PyQt6.QtWidgets import QFileDialog, QMessageBox
     monkeypatch.setattr(QMessageBox, "warning", lambda *a, **k: None)
     tb = main_window._file_toolbar
@@ -735,14 +740,18 @@ def test_shumitranslator_single_multiselect_import_opens_a_tab_each(main_window,
 
     def fake_dialog(parent, caption, filter="", **kwargs):
         captured["filter"] = filter
-        return (picks, "")
+        return (picks[2:], "")
     monkeypatch.setattr(QFileDialog, "getOpenFileNames", staticmethod(fake_dialog))
 
-    tb.import_button.click()  # the single Import -> open_files (one dialog, several files)
+    label, opener = tb._import_entries()[-1]
+    assert label == "c0mxx.dat (battle text)"
+    opener()  # the c0mxx.dat entry: one dialog, several files, one tab
+    assert "c0m*.dat" in captured["filter"]
+    assert [shumi.tab_widget.widget(i).file_type.name for i in range(shumi.tab_widget.count())] == ["DAT"]
+    while shumi.tab_widget.count():
+        shumi.tab_widget.tabCloseRequested.emit(0)
 
-    # The filter lists every accepted name so they are preselected in the dialog.
-    for pattern in ("*kernel*.bin", "mngrp.bin", "*.exe", "field*.fs", "c0m*.dat"):
-        assert pattern in captured["filter"]
+    shumi.open_files(picks)
 
     kinds = sorted(shumi.tab_widget.widget(i).file_type.name
                    for i in range(shumi.tab_widget.count()))

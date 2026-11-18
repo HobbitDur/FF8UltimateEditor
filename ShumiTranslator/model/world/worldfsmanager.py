@@ -22,11 +22,11 @@ class WorldFsManager:
 
     def save_csv(self, csv_path):
         if csv_path:
-            self._deling_manager.export_csv(self._file_path, csv_path)
+            self._deling_manager.export_csv(self._file_path, csv_path, self.game_data)
 
     def load_csv(self, csv_to_load):
         if csv_to_load:
-            self._deling_manager.import_csv(self._file_path, csv_to_load)
+            self._deling_manager.import_csv(self._file_path, csv_to_load, self.game_data)
 
     @staticmethod
     def delete_non_wmsetxx_obj_files(folder_path):

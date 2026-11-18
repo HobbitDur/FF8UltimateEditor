@@ -5,7 +5,7 @@ from fnmatch import fnmatch
 from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QPushButton, QFileDialog, QHBoxLayout, \
-    QMessageBox, QCheckBox, QTabWidget, QStackedWidget, QProgressDialog, QApplication
+    QMessageBox, QComboBox, QLabel, QTabWidget, QStackedWidget, QProgressDialog, QApplication
 
 from Common.filebinding import FileBinding
 from Common.autoimport import AutoImportSource
@@ -13,16 +13,18 @@ from Common.dirtytracking import DirtyState
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData, FileType
 from .shumifilepane import ShumiFilePane
+from FF8GameData.font.hiresfont import HiresFont
+from .view.fontpane import FontPane
 from .view.translatorwidget import TranslatorWidget
 
 
 class ShumiTranslator(QWidget):
     """All-text editor for seven FF8 file kinds (kernel.bin, namedic.bin, mngrp.bin, the FF8 exe,
-    the remaster's card-name .dat, field.fs, world.fs) plus c0mxx.dat battle text. Import is a
-    single multi-select dialog: its filter preselects every one of those names, you pick as many
-    files as you like at once, and each opens its own closable tab (a ShumiFilePane with its own
-    manager), its kind detected from its name. Several c0mxx.dat collapse into one battle-text tab.
-    Save / CSV / compress act on whichever tab is active.
+    the remaster's card-name .dat, field.fs, world.fs) plus c0mxx.dat battle text, and the font
+    (.tdw). The header's Import lists each kind; each file opens its own closable tab (a
+    ShumiFilePane with its own manager). Several c0mxx.dat, picked together, collapse into one
+    battle-text tab. The font is a secondary file, under Import complementary: it opens a font tab
+    (FontPane). Save / CSV / compress act on whichever tab is active.
 
     kernel.bin and the FF8 exe share their registry key with SolomonRing/Cid/CCGroup (same file);
     mngrp.bin shares its key with Shiva/Zone/Moomba/Minimog, so importing one here publishes it to
@@ -70,12 +72,23 @@ class ShumiTranslator(QWidget):
         self.uncompress_button = self.__icon_button(icon_path, 'uncompress.png', "Uncompress data", self.__uncompress_data)
         self.info_button = self.__icon_button(icon_path, 'info.png', "Show toolmaker info", self.__show_info)
 
-        # Japanese encoding toggle: flips the shared GameData codec to the 4-table JP font
-        # (2-byte lead bytes 0x19/0x1a/0x1b). Disabled if sysfnt_jp.txt is missing.
-        self.jp_checkbox = QCheckBox("日本語 (JP)")
-        self.jp_checkbox.setToolTip("Encode/decode text with the Japanese 4-table font (JP version).")
-        self.jp_checkbox.setEnabled(bool(self.game_data.jp_tables))
-        self.jp_checkbox.toggled.connect(self.__jp_encoding_toggled)
+        # Character table: which character each code is, for every tab (GameData.CHARACTER_TABLES:
+        # Latin, Japanese with its 2-byte kanji codes, Vietnamese; or a file of your own, "Custom
+        # file...", opened again each session). The files don't say which one they use, so it is chosen
+        # here; a built-in one is remembered.
+        self.table_box = QComboBox()
+        for key, (name, _file, _japanese) in GameData.CHARACTER_TABLES.items():
+            self.table_box.addItem(name, key)
+        self.table_box.addItem("Custom file...", self.PICK_TABLE)
+        self.table_box.setToolTip("Character table the texts are read and written with: which character each "
+                                  "code of the game's font is. Changing it re-reads the open files.")
+        self.table_box.setProperty("read_only_preview", True)  # choosing it is not an edit of a file
+        saved = self.__settings_value(self.TABLE_SETTING)  # the last built-in table chosen (not a custom file)
+        if saved in GameData.CHARACTER_TABLES and saved != "latin":
+            self.game_data.set_character_table(saved)
+        self.__show_table()
+        self.table_box.currentIndexChanged.connect(self.__character_table_changed)
+        table_label = QLabel("Characters:")
 
         # The Translator helper (copy/paste, no file needed) was one exclusive combo entry; it is
         # now an independent toggle, shown above the file tabs alongside whatever is open.
@@ -87,7 +100,7 @@ class ShumiTranslator(QWidget):
         self.layout_top = QHBoxLayout()
         for widget in (self.csv_save_button, self.csv_upload_button, self.compress_button,
                        self.uncompress_button, self.info_button, self.translator_toggle_button,
-                       self.jp_checkbox):
+                       table_label, self.table_box):
             self.layout_top.addWidget(widget)
         self.layout_top.addStretch(1)
 
@@ -108,13 +121,12 @@ class ShumiTranslator(QWidget):
         self.window_layout.addWidget(self.translator_widget)
         self.window_layout.addWidget(self.tab_widget, 1)
 
-        # Every FF8 text file this tool reads, as FileBindings. They are NOT offered one-by-one in
-        # the header - Import is a single multi-select dialog (see open_files). They exist so that
-        # importing one still publishes it to the registry for the other tools that share it
-        # (kernel.bin/FF8 exe with SolomonRing/Cid, mngrp.bin with Shiva/Zone...). None has a
-        # save_callback: Save is centralized
-        # (save_folder) on the active tab. c0m*.dat has no binding (no fixed name; several files
-        # collapse into one battle-text tab).
+        # Every FF8 text file this tool reads, as FileBindings: the header's Import lists them one by
+        # one (plus the c0mxx.dat multi-select, see open_files), and a file opened here is shared
+        # through the registry with the other tools reading it (kernel.bin/FF8 exe with
+        # SolomonRing/Cid, mngrp.bin with Shiva/Zone...). None has a save_callback: Save is
+        # centralized (save_folder) on the active tab. c0m*.dat has no binding (no fixed name;
+        # several files collapse into one battle-text tab).
         self.kernel_binding = FileBinding("kernel.bin", file_registry,
                                           load_callback=self._load_kernel, file_filter="*kernel*.bin")
         self.namedic_binding = FileBinding("namedic.bin", file_registry,
@@ -130,9 +142,23 @@ class ShumiTranslator(QWidget):
                                             load_callback=self._load_field_fs, file_filter="field*.fs")
         self.world_fs_binding = FileBinding("world.fs", file_registry,
                                             load_callback=self._load_world_fs, file_filter="world*.fs")
+        # A font (main/sysfnt.tdw, or a field's .tdw) opens a font tab instead of a text tab. It is
+        # a secondary file of this tool: offered by Import complementary, not Import.
+        self.font_binding = FileBinding("font (.tdw)", file_registry, load_callback=self._load_font,
+                                        file_filter="*.tdw", complementary=True)
+        # The font tab's own side files: the textures the PC game draws text with (low and high
+        # resolution). They attach to the font tab shown (see FontPane).
+        self.font_texture_binding = FileBinding("font texture, low res (menu/sysfnt.TEX)", file_registry,
+                                                load_callback=self._load_font_texture,
+                                                file_filter="sysfnt*.tex", complementary=True)
+        self.font_hires_binding = FileBinding("font textures, high res (menu/hires/sysfld00.TEX...)",
+                                              file_registry, load_callback=self._load_font_hires,
+                                              file_filter="sysfld0*.tex sysevn0*.tex sysodd0*.tex",
+                                              complementary=True)
         self._bindings = [self.kernel_binding, self.namedic_binding, self.mngrp_binding,
                           self.exe_binding, self.remaster_binding, self.field_fs_binding,
-                          self.world_fs_binding]
+                          self.world_fs_binding, self.font_binding, self.font_texture_binding,
+                          self.font_hires_binding]
 
         self.__tab_changed()  # start with everything disabled (no tab yet)
         for binding in self._bindings:
@@ -149,30 +175,53 @@ class ShumiTranslator(QWidget):
         return button
 
     # ── Shared header toolbar hooks ──────────────────────────────────────
-    # No file_bindings(): the header shows a SINGLE Import for this tool (the bindings publish to
-    # the registry but are not offered one-by-one), and Import calls open_files() below.
-    open_files_label = "Open FF8 text file(s)"
+    # Import lists every text file kind (file_bindings) plus the c0mxx.dat multi-select
+    # (open_files); Import complementary offers the font.
+    open_files_label = "c0mxx.dat (battle text)"
+
+    def file_bindings(self):
+        return list(self._bindings)
+
+    def complementary_entries(self):
+        """Import complementary: the font and its textures. The hi-res textures are several files
+        (sysfld00 + 01, or sysevn/sysodd 00-03), picked all at once."""
+        return [(self.font_binding.file_name, lambda: self.font_binding.open_remembered(self)),
+                (self.font_texture_binding.file_name, lambda: self.font_texture_binding.open_remembered(self)),
+                ("font textures, high res (menu/hires: select all of them)", self.open_hires_textures)]
+
+    def open_hires_textures(self, paths=None):
+        """Pick every hi-res font texture at once (a tile missing from the pick is taken from the same
+        folder), then attach them to the font tab."""
+        binding = self.font_hires_binding
+        if paths is None:
+            paths = QFileDialog.getOpenFileNames(
+                self, "High resolution font textures (select all of them)",
+                self.file_registry.last_folder(binding.file_name),
+                "Hi-res font textures (" + binding.file_filter + ");;All files (*)")[0]
+        if not paths:
+            return
+        textures = [path for path in paths if HiresFont.is_hires_font(path)]
+        if not textures:
+            QMessageBox.warning(self, "ShumiTranslator", "None of these files is a hi-res font texture "
+                                "(sysfld00/01.TEX, or sysevn00-03 and sysodd00-03.TEX).")
+            return
+        self.file_registry.remember_folder(binding.file_name, os.path.dirname(textures[0]))
+        binding.open_path(textures[0])  # loads them all (see HiresFont.from_path) into the font tab
 
     def auto_import_sources(self):
-        folder = self.file_registry.last_folder("ShumiTranslator text files")
-        sources = [AutoImportSource.for_binding(binding, folder) for binding in self._bindings]
-        sources.append(AutoImportSource("ShumiTranslator battle text", ("c0m[0-9][0-9][0-9].dat",),
-                                        self.open_files, selection_only=True))
-        return sources
+        """The c0mxx.dat set; the header adds one source per file binding itself."""
+        return [AutoImportSource("ShumiTranslator battle text", ("c0m[0-9][0-9][0-9].dat",),
+                                 self.open_files, selection_only=True)]
 
     def open_files(self, paths=None):
-        """The whole tool's Import: one multi-select dialog whose filter preselects every FF8 text
-        file ShumiTranslator reads, opening one tab per file picked. Several c0mxx.dat collapse into
-        a single battle-text tab; every other file gets its own tab, its kind detected by name."""
-        patterns = [binding.file_filter for binding in self._bindings] + ["c0m*.dat"]
-        name_filter = "FF8 text files (" + " ".join(patterns) + ");;All files (*)"
-        # One dialog covers every kind at once, so it can't key per file type - it keeps a single
-        # remembered folder for the whole tool (persisted across sessions).
+        """Open several files at once, one tab each, the kind of each detected by its name; several
+        c0mxx.dat collapse into a single battle-text tab. Without paths (the header's c0mxx.dat
+        entry), asks for the c0mxx.dat files."""
         key = "ShumiTranslator text files"
         if paths is None:
             paths = QFileDialog.getOpenFileNames(
-                parent=self, caption="Open FF8 text files (several at once is fine)",
-                filter=name_filter, directory=self.file_registry.last_folder(key))[0]
+                parent=self, caption="Open c0mxx.dat battle texts (several at once is fine)",
+                filter="Battle texts (c0m*.dat);;All files (*)", directory=self.file_registry.last_folder(key))[0]
         if not paths:
             return
         self.file_registry.remember_folder(key, os.path.dirname(paths[0]))
@@ -196,7 +245,7 @@ class ShumiTranslator(QWidget):
     def __binding_for(self, name):
         """The FileBinding whose file filter matches this file name, or None (e.g. a c0mxx.dat)."""
         for binding in self._bindings:
-            if fnmatch(name.lower(), binding.file_filter.lower()):
+            if any(fnmatch(name.lower(), pattern) for pattern in binding.file_filter.lower().split()):
                 return binding
         return None
 
@@ -225,6 +274,8 @@ class ShumiTranslator(QWidget):
             QMessageBox.critical(self, "ShumiTranslator", f"Could not save:\n{error}")
             return
         pane.dirty_state.clear()
+        if getattr(pane, "unsaved_after_save", lambda: False)():
+            pane.dirty_state.mark()  # e.g. the font tab's changed characters, no .txt chosen for them
         if message is not None:
             box = QMessageBox()
             box.setText(message)
@@ -232,6 +283,16 @@ class ShumiTranslator(QWidget):
             box.setWindowTitle("ShumiTranslator - Data saved")
             box.setWindowIcon(self.__shumi_icon)
             box.exec()
+
+    def undo(self):
+        """Ctrl+Z, routed here by the main window: the tab shown undoes, if it has an undo (the font tab;
+        a text field keeps its own Ctrl+Z)."""
+        pane = self.__active_pane()
+        return bool(pane is not None and callable(getattr(pane, "undo", None)) and pane.undo())
+
+    def redo(self):
+        pane = self.__active_pane()
+        return bool(pane is not None and callable(getattr(pane, "redo", None)) and pane.redo())
 
     def can_save_folder(self):
         """The shared Save button is enabled whenever a file tab is open."""
@@ -279,6 +340,35 @@ class ShumiTranslator(QWidget):
     def _load_world_fs(self, file_name):
         self.__add_pane(FileType.WORLD_FS, file_name)
 
+    def _load_font(self, file_name):
+        self.__add_pane(FileType.FONT, file_name)
+
+    def _load_font_texture(self, file_name):
+        self.__attach_to_font(file_name, "attach_texture")
+
+    def _load_font_hires(self, file_name):
+        self.__attach_to_font(file_name, "attach_hires")
+
+    def __attach_to_font(self, file_name, method):
+        """A font side file goes to the font tab shown (or the only one open)."""
+        if not self._is_active_tool():
+            return
+        pane = self.__active_pane()
+        if pane is None or pane.file_type != FileType.FONT:
+            fonts = [self.tab_widget.widget(i) for i in range(self.tab_widget.count())
+                     if self.tab_widget.widget(i).file_type == FileType.FONT]
+            pane = fonts[0] if len(fonts) == 1 else None
+        if pane is None:
+            QMessageBox.warning(self, "ShumiTranslator", "Open the font (.tdw) first, and show its tab: "
+                                f"{os.path.basename(file_name)} completes it.")
+            return
+        try:
+            getattr(pane, method)(file_name)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "ShumiTranslator", f"Could not use {os.path.basename(file_name)}:\n{error}")
+            return
+        self.tab_widget.setCurrentWidget(pane)
+
     # ── Tab management ───────────────────────────────────────────────────
     def _is_active_tool(self):
         """True when this tool is the one currently selected in the main tool stack.
@@ -300,25 +390,39 @@ class ShumiTranslator(QWidget):
     def __add_pane(self, file_type, file_loaded, mngrphd_path=""):
         if not self._is_active_tool():
             return  # a background open in another tool: don't build a heavy pane behind the scenes
-        # Same file already open -> focus its tab rather than opening a duplicate.
+        # Same file already open (imported again, or the header's Reload) -> no duplicate: its tab
+        # is read again from disk, unless it holds unsaved edits, then it is only shown.
+        replaced = None
         for index in range(self.tab_widget.count()):
             pane = self.tab_widget.widget(index)
             if pane.file_type == file_type and pane.file_loaded == file_loaded:
                 self.tab_widget.setCurrentIndex(index)
-                return
+                if pane.dirty_state.dirty:
+                    return
+                replaced = index
+                break
         # These editors are heavy (mngrp.bin builds ~2600 text boxes): show a modal loading bar,
         # driven by the pane as it builds each section, so the wait is visible instead of a freeze.
         progress = self.__loading_dialog(file_type, file_loaded)
         try:
-            pane = ShumiFilePane(self.game_data, file_type, file_loaded, mngrphd_path,
-                                 progress=self.__report_progress(progress))
+            if file_type == FileType.FONT:
+                pane = FontPane(self.game_data, file_loaded)
+            else:
+                pane = ShumiFilePane(self.game_data, file_type, file_loaded, mngrphd_path,
+                                     progress=self.__report_progress(progress))
         except Exception as error:  # noqa: BLE001 - a bad/unsupported file must not kill the tool
             progress.close()
             QMessageBox.critical(self, "ShumiTranslator", f"Could not load this file:\n{error}")
             return
         progress.close()
         self.__track_edits(pane)
-        index = self.tab_widget.addTab(pane, pane.display_name)
+        if replaced is None:
+            index = self.tab_widget.addTab(pane, pane.display_name)
+        else:
+            old = self.tab_widget.widget(replaced)
+            self.tab_widget.removeTab(replaced)
+            old.deleteLater()
+            index = self.tab_widget.insertTab(replaced, pane, pane.display_name)
         self.tab_widget.setTabToolTip(index, pane.display_name)
         self.tab_widget.setCurrentWidget(pane)
         self.file_bindings_changed.emit()  # header Save can now act
@@ -376,8 +480,9 @@ class ShumiTranslator(QWidget):
     def __tab_changed(self, _index=None):
         pane = self.__active_pane()
         has_pane = pane is not None
-        self.csv_save_button.setEnabled(has_pane)
-        self.csv_upload_button.setEnabled(has_pane)
+        has_csv = has_pane and getattr(pane, "supports_csv", True)  # a font tab has no texts
+        self.csv_save_button.setEnabled(has_csv)
+        self.csv_upload_button.setEnabled(has_csv)
         supports_compress = has_pane and pane.supports_compress
         for button in (self.compress_button, self.uncompress_button):
             button.setVisible(supports_compress)
@@ -432,13 +537,85 @@ class ShumiTranslator(QWidget):
         else:       # the texts are in the tab, not saved yet
             pane.dirty_state.mark()
 
-    def __jp_encoding_toggled(self, checked):
-        self.game_data.jp_encoding = checked
-        # Re-decode every open single-file tab with the new encoding (rebuild each pane in place;
-        # the multi-file DAT set is left as-is, it just applies on next load/save).
+    # ── Character table ──────────────────────────────────────────────────
+    TABLE_SETTING = "ShumiTranslator/character_table"
+
+    def __settings_value(self, key):
+        settings = getattr(self.file_registry, "settings", None)
+        return settings.value(key) if settings is not None else None
+
+    PICK_TABLE = "pick"     # the "Custom file..." line: asks for the file
+    CUSTOM = "custom:"      # a custom file's line: CUSTOM + its path
+
+    def __current_choice(self):
+        if self.game_data.character_table == "custom":
+            return self.CUSTOM + self.game_data.character_table_path
+        return self.game_data.character_table
+
+    def __use_table(self, choice):
+        if choice.startswith(self.CUSTOM):
+            self.game_data.set_custom_character_table(choice[len(self.CUSTOM):])
+        else:
+            self.game_data.set_character_table(choice)
+
+    def __show_table(self):
+        """Select the line of the table in use; a custom file gets its own line, before "Custom file..."."""
+        choice = self.__current_choice()
+        self.table_box.blockSignals(True)
+        for index in reversed(range(self.table_box.count())):
+            if str(self.table_box.itemData(index)).startswith(self.CUSTOM):
+                self.table_box.removeItem(index)
+        if choice.startswith(self.CUSTOM):
+            index = self.table_box.findData(self.PICK_TABLE)
+            self.table_box.insertItem(index, f"Custom: {self.game_data.character_table_name}", choice)
+            self.table_box.setItemData(index, choice[len(self.CUSTOM):], Qt.ItemDataRole.ToolTipRole)
+        self.table_box.setCurrentIndex(self.table_box.findData(choice))
+        self.table_box.blockSignals(False)
+
+    def __character_table_changed(self, _index):
+        choice = self.table_box.currentData()
+        if choice == self.PICK_TABLE:
+            folder = os.path.dirname(self.game_data.character_table_path)
+            path = QFileDialog.getOpenFileName(
+                self, "Character table file", folder,
+                "Character table (*.txt);;All files (*)")[0]
+            if not path:
+                self.__show_table()
+                return
+            choice = self.CUSTOM + path
+        if choice == self.__current_choice():
+            self.__show_table()
+            return
+        lost = [self.tab_widget.tabText(i) for i in range(self.tab_widget.count())
+                if self.tab_widget.widget(i).file_type != FileType.FONT and self.tab_widget.widget(i).dirty_state.dirty]
+        if self.game_data.character_table_modified:
+            lost.append(f"the edited {self.game_data.character_table_name} character table")
+        if lost and QMessageBox.question(
+                self, "ShumiTranslator - Character table",
+                "Changing the character table reads the open files again. Not saved, these edits will be "
+                "lost:<br>" + "<br>".join(lost) + "<br><br>Change it anyway?") != QMessageBox.StandardButton.Yes:
+            self.__show_table()
+            return
+        previous = self.__current_choice()
+        try:
+            self.__use_table(choice)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "ShumiTranslator - Character table", f"Could not use this file:<br>{error}")
+            self.__use_table(previous)
+            self.__show_table()
+            return
+        self.__show_table()
+        settings = getattr(self.file_registry, "settings", None)
+        if settings is not None and not choice.startswith(self.CUSTOM):  # a custom file is opened each time
+            settings.setValue(self.TABLE_SETTING, choice)
+        self.__reread_tabs()
+
+    def __reread_tabs(self):
+        """Every tab with texts is built again with the character table in use: no tab keeps the old one."""
         for index in range(self.tab_widget.count()):
             pane = self.tab_widget.widget(index)
-            if pane.file_type == FileType.DAT:
+            if pane.file_type == FileType.FONT:  # its glyphs don't depend on it; it shows the new characters
+                pane.character_table_changed()
                 continue
             was_current = self.tab_widget.currentIndex() == index
             progress = self.__loading_dialog(pane.file_type, pane.file_loaded)

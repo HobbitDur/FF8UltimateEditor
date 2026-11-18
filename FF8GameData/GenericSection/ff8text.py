@@ -36,6 +36,7 @@ class FF8Text(Section):
         # engine reads that offset (mngrp strings) need the \x00, or the next text shows instead.
         self._terminate_empty = terminate_empty
         self._special_value_context = special_value_context
+        self._jp_prefer = bytes(data_hex)  # Japanese glyphs present in two font tables keep their original code
         self._text_str = self._game_data.translate_hex_to_str(self._data_hex,
                                                               cursor_location_size=self._cursor_location_size, first_hex_literal=first_hex_literal,
                                                               special_value_context=special_value_context)
@@ -70,7 +71,7 @@ class FF8Text(Section):
         return self._text_str
 
     def set_str(self, text: str):
-        converted_data_list = self._game_data.translate_str_to_hex(text)
+        converted_data_list = self._game_data.translate_str_to_hex(text, jp_prefer=self._jp_prefer)
         self._data_hex = bytearray(converted_data_list)
         self._text_str = text
         if text != "" or self._terminate_empty:  # If empty don't put \x00, unless the format needs it
