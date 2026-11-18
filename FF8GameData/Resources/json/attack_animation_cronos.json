@@ -1,0 +1,15 @@
+{
+"_doc": "The Cronos mod's own battle effects (Fujin programs FujinEffects/effect_NNN.fxprog in free slots of the effect table). Shown by SolomonRing over attack_animation.json when its Cronos box is ticked. Keep it in step with Cronos (its test_fujin_effects checks every program has its name here).",
+"attack_animation": [
+	{"id":349, "name":"Bio"},
+	{"id":350, "name":"Arctic Wind"},
+	{"id":351, "name":"Tornado"},
+	{"id":353, "name":"Potion (simple)"},
+	{"id":355, "name":"Greater Potion (fountain)"},
+	{"id":356, "name":"Cure (square)"},
+	{"id":357, "name":"Cura (square)"},
+	{"id":358, "name":"Curaga (square)"},
+	{"id":359, "name":"Reflect breaks"},
+	{"id":360, "name":"Smoke Grenade"}
+]
+}

@@ -21,7 +21,16 @@ if not errorlevel 1 goto build
 echo no Visual Studio C++ build tools found (cl.exe)
 exit /b 9009
 :build
+rem the FFNx effect sources: FUJIN_FX, else the updater's FFNxEffects; sources with their 30 fps layer (fx_held.cpp: FFNx
+rem True30FPS's src\ff8\battle\fx) are built with it (FF8_FX_HELD: the programs' held frames)
 set "FX=%~dp0..\..\ExternalTools\FFNx\fx"
+if defined FUJIN_FX set "FX=%FUJIN_FX%"
+set HELD=
+if exist "%FX%\fx_held.cpp" set HELD=/DFF8_FX_HELD "%FX%\fx_held.cpp"
+rem (the glints' held part, fx_glint_held.inc: the healing ports' 30 fps layer draws them)
+if defined HELD if exist "%FX%\fx_glint.cpp" set HELD=%HELD% "%FX%\fx_glint.cpp"
+rem (FFNx's native prim-model player: its play_held draws a layout's exact in-between records)
+if defined HELD set HELD=%HELD% "%FX%\fx_primplayer.cpp"
 if exist "%FX%\fx_layouts.h" goto compile
 echo FFNx's effect sources are missing (ExternalTools\FFNx\fx: the updater's FFNxEffects)
 exit /b 3
@@ -51,7 +60,7 @@ for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_bahamut" %%f 
 for /f "usebackq delims=" %%f in ("%RSP%") do findstr /m /c:"apply_lev_" %%f >nul 2>nul && set LEV=1
 if defined GFC if exist "%FX%\gfc_engine.cpp" echo "%FX%\gfc_engine.cpp">>"%RSP%"
 rem (a cinematic clone borrowing Eden's handlers: Hell's Judgement's, the final form's death's apply_eden_*)
-if defined EDEN if exist "%FX%\mag_eden.cpp" echo "%FX%\mag_eden.cpp">>"%RSP%"
+if defined EDEN if exist "%FX%\mag_eden.cpp" findstr /m /c:"mag_eden.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_eden.cpp">>"%RSP%"
 rem (a cinematic clone borrowing the Brothers' handlers: Water's apply_brothers)
 if defined BROTHERS if exist "%FX%\mag_brothers.cpp" findstr /m /c:"mag_brothers.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_brothers.cpp">>"%RSP%"
 rem (a cinematic clone borrowing Bahamut's: apply_bahamut)
@@ -60,7 +69,7 @@ rem (a cinematic clone borrowing Leviathan's: Earthquake's apply_lev_a)
 if defined LEV if exist "%FX%\mag_leviathan.cpp" findstr /m /c:"mag_leviathan.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_leviathan.cpp">>"%RSP%"
 set PORTS=/DFF8_FX_LAB @"%RSP%"
 :host
-cl /nologo /std:c++20 /EHa /W3 /O1 /MT /LD /bigobj /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS /I"%FX%" fxhost.cpp %ACTORS% !PORTS! /Foobj\ /FeFujinEffects.dll /link /LARGEADDRESSAWARE
+cl /nologo /std:c++20 /EHa /W3 /O1 /MT /LD /bigobj /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS /I"%FX%" fxhost.cpp %ACTORS% !PORTS! !HELD! /Foobj\ /FeFujinEffects.dll /link /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%
 echo build FujinEffects.dll exit %E%
 exit /b %E%

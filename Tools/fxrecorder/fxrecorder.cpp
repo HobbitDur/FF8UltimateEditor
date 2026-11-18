@@ -129,6 +129,10 @@ struct Opt
 	// done flag (+9) cleared - what the battle's Shot window does for each trigger press (BattleActionSequence_Tick_Shot
 	// 0x50BEE0: 2 a shot, 1 the closing action)
 	std::vector<std::pair<int, int>> recalls;
+	// held=N (a build on FFNx sources with their 30 fps layer, FF8_FX_HELD): after each real tick, N - 1 in-between
+	// frames drawn by the effect's 30 fps layer, as the battle's frame gate (FF8Battle30.dll) has them drawn at 30 fps
+	// (N = 2); each recorded as a frame of its own: frame = tick x N + k
+	int held = 1;
 	bool cast() const { for (int k = 0; k < 7; k++) if (!body[k].empty()) return true; return false; }
 };
 static Opt O;
@@ -708,6 +712,7 @@ static void advance_animation(uint32_t e)
 // 0x509520 starts it again) - no sequence VM unless sequences=1 (advance_animation). The draw composes the bone matrices in place, so they
 // are rebuilt from the pose first (BattleModel_RebuildBodyAndWeaponMatrices 0x508F60), with the
 // weapon's attach transform (pre_pre_linkedToAnimationSequence 0x502CEA)
+static bool g_held_frame = false;   // an in-between frame (held=): the actors drawn as they stand, nothing advances
 static bool render_actor(uint32_t e)
 {
 	__try
@@ -722,7 +727,7 @@ static bool render_actor(uint32_t e)
 		}
 		((int (__cdecl *)(uint32_t))0x5086F0)(e);
 		((int (__cdecl *)(uint32_t))0x502D40)(e);
-		advance_animation(e);
+		if (!g_held_frame) advance_animation(e);
 		return true;
 	}
 	__except (filter(GetExceptionInformation())) { return false; }
@@ -792,22 +797,22 @@ static void update_fade(uint32_t e)
 static void render_actors()
 {
 	run_stage();
-	run_anim_tasks();
+	if (!g_held_frame) run_anim_tasks();
 	for (int k = 0; k < 7; k++)
 	{
 		if (!g_drawn_slot[k]) continue;
 		uint32_t e = 0x1D972C0 + 0x9C * k;
-		update_fade(e);
+		if (!g_held_frame) update_fade(e);
 		if (!g_actors || (g_actors == 2 && !(g_target_mask & (1 << k))))
 		{
-			if (runs_sequence(e)) advance_actor(e);      // not drawn, its sequence still runs (Renzokuken's length is its AB)
+			if (runs_sequence(e) && !g_held_frame) advance_actor(e);      // not drawn, its sequence still runs (Renzokuken's length is its AB)
 			continue;
 		}
 		uint8_t flags = *(uint8_t *)e;
 		uint16_t combat = *(uint16_t *)(e + 2);
 		bool drawn = (flags & 0x02) && !(flags & 0x04) && !(combat & (0x04 | 0x80));
 		uint32_t cur0 = *(uint32_t *)0x1CA8828, pk0 = *(uint32_t *)0x1D8E054;
-		bool ok = drawn ? render_actor(e) : advance_actor(e);
+		bool ok = drawn ? render_actor(e) : g_held_frame || advance_actor(e);
 		if (getenv("FXR_ACTORS") && g_tick < 3)
 			printf("tick %d slot %d flags %02X combat %04X drawn %d ok %d nodes +%u packets +%u\n", g_tick, k, flags, combat, drawn, ok,
 				(*(uint32_t *)0x1CA8828 - cur0) / 24, *(uint32_t *)0x1D8E054 - pk0);
@@ -1290,6 +1295,22 @@ static bool run_tick(int *ret)
 	__except (filter(GetExceptionInformation())) { return false; }
 }
 
+#ifdef FF8_FX_HELD
+// an in-between frame of the effect (held=): its 30 fps layer draws the state k / held of the way to the next tick (a
+// program's: fxprog::HeldDraw, as FujinEffects.dll for the frame gate; a native port's: ff8fx::held_draw); false: none ready
+static bool held_frame_draw(int t, int k)
+{
+	bool drawn = false;
+	__try
+	{
+		if (!O.program.empty()) { if ((drawn = fxprog::HeldReady(fxprog::g_program))) fxprog::HeldDraw(fxprog::g_program, k, O.held); }
+		else if ((drawn = ff8fx::held_ready(O.eff))) ff8fx::held_draw(O.eff, k, O.held);
+	}
+	__except (filter(GetExceptionInformation())) { printf("tick %d held %d faulted %08lX at eip %08lX\n", t, k, g_fault_code, g_fault_eip); }
+	return drawn;
+}
+#endif
+
 static bool parse(int argc, char **argv)
 {
 	if (argc < 2) return false;
@@ -1334,6 +1355,7 @@ static bool parse(int argc, char **argv)
 			if (colon != std::string::npos) O.animsets.emplace_back(strtoul(v.c_str(), nullptr, 0), v.substr(colon + 1));
 		}
 		else if (k == "ticks") O.ticks = atoi(v.c_str());
+		else if (k == "held") O.held = std::max(1, atoi(v.c_str()));
 		else if (k == "poke")
 		{
 			const size_t colon = v.find(':');
@@ -1415,10 +1437,20 @@ namespace ff8fx
 	void register_mag001_cure();
 	// the shared prim-model player: FFNx's twin (fx_primplayer.cpp) needs FFNx itself; the exe's own
 	// 0x701970 plays the same
+#ifndef FF8_FX_HELD   // (the 30 fps flavour builds FFNx's native twin, fx_primplayer.cpp: its plays noted for play_held)
 	int prim::play(prim::Layout *l, prim::Callback cb, int arg, int paused)
 	{
 		return ((int (__cdecl *)(prim::Layout *, prim::Callback, int, int))0x701970)(l, cb, arg, paused);
 	}
+#endif
+#ifdef FF8_FX_HELD
+	// the 30 fps layer's helpers of the battle's frame gate (FF8Battle30.dll): its own, handed over at each real tick
+	// (g_gate, fx_held.h HeldGate: held API 2); without it (the recorder, an older gate) a model keeps its pose on a
+	// held frame and the gate's own shake lerp stands
+	void pose_midpoint(void *h, void *c, int num, int den) { if (g_gate) g_gate->pose_midpoint(h, c, num, den); }
+	void pose_midpoint_to(void *h, const void *n, int num, int den) { if (g_gate) g_gate->pose_midpoint_to(h, n, num, den); }
+	void held_shake_next(const int16_t next[3], unsigned written) { if (g_gate) g_gate->shake_next(next, written); }
+#endif
 }
 // every module with parameters (FX_LAB_MODULE: the ones build.bat compiles in); sources older than
 // FX_LAB_MODULE name Cure only
@@ -1834,13 +1866,40 @@ int main(int argc, char **argv)
 		if (ok && g_play_on && O.playon_id >= 0 && t - cast_ticks == O.playon_tick)
 			printf("tick %d: playon %d on slot %d: %d\n", t, O.playon_id, O.playon_slot,
 			       g_play_on(O.playon_id, (void *)(0x1D972C0 + 0x9C * O.playon_slot)));
+#ifdef FF8_FX_HELD
+		ff8fx::held_next_real_tick();
+#endif
 		if (ok) ok = run_tick(&r);
 		if (ok) render_actors();
 		spend_plan();
 		g_rec = false;
 		if (!ok) { printf("tick %d faulted %08lX at eip %08lX addr %08lX\n", t, g_fault_code, g_fault_eip, g_fault_addr); break; }
 		dump_vram_queue();                 // uploads this tick queued
-		write_tick(t);
+		write_tick(O.held > 1 ? t * O.held : t);
+#ifdef FF8_FX_HELD
+		for (int k = 1; k < O.held && *(uint32_t *)C3_28; k++)
+		{
+			// what the frame gate does on a held frame of the effect (FF8Battle30 / FFNx True30FPS battle_gate.cpp): the
+			// module's held part draws the state k / held of the way to the next tick; the GTE and the scratch put back
+			env_reset();
+			if (O.gamecamera) game_camera_view();
+			else set_camera(t - cast_ticks);
+			g_ins.clear(); g_sprites.clear(); g_events.clear(); g_notes.clear(); g_places.clear();
+			static uint8_t gte_data[0x90], gte_ctrl[0xF0];
+			memcpy(gte_data, (void *)0x1CA8A10, sizeof(gte_data));
+			memcpy(gte_ctrl, (void *)0x1CA9210, sizeof(gte_ctrl));
+			g_rec = true;
+			g_held_frame = true;
+			const bool drawn = held_frame_draw(t, k);
+			render_actors();
+			g_held_frame = false;
+			g_rec = false;
+			memcpy((void *)0x1CA8A10, gte_data, sizeof(gte_data));
+			memcpy((void *)0x1CA9210, gte_ctrl, sizeof(gte_ctrl));
+			if (!drawn && t < 3) printf("tick %d: no held frame (the effect has no 30 fps layer ready)\n", t);
+			write_tick(t * O.held + k);
+		}
+#endif
 		if (O.gamecamera) update_game_camera();
 		if (getenv("FXR_CAMERA"))
 		{

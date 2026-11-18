@@ -44,7 +44,7 @@ def record(tmp_path, effect, tag, *extra):
 # 71ecf278 Cure / Cura / Potion / Hi-Potion's light and Hypnotize's swirl, aad3b655 the ribbon edges): their ports
 # no longer record as the exe's code, and their descriptions, drawn by the same FFNx code, record as the port with
 # the game's values.
-SCREEN_UNITS = {1, 25, 50, 51, 133, 80, 126, 128, 129, 132, 138, 275, 276, 317}   # (Quezacotl 116's description runs
+SCREEN_UNITS = {1, 25, 50, 51, 133, 80, 126, 128, 129, 132, 138, 275, 276, 317, 258}   # (Quezacotl 116's description runs
 # the exe's own code: it records as the exe, not as its fixed port)
 
 
@@ -383,6 +383,7 @@ CYCLES = {
     154: ("mag153.tim", 6, "sound 22311280\ncontroller.damage 30\n"),
     153: ("mag152.tim", 7, "sound 22311280\nmaster.damage 40\n"),
     152: ("mag151.tim", 10, "sound 22311280\ncontroller.damage 30\n"),
+    151: ("mag150.tim", 46, "sounds.shot 22311280\nsmoke.on 1\ncloud.count 50\n"),
     149: ("mag148.tim", 15, "sounds.start 22311280\nsounds.blast 22311276\ndirector.damage 150\n"),
     148: ("mag147.tim", 9, "sound 22311280\ndirector.damage 60\n"),
     147: ("mag146.tim", 6, "sound 22311280\ndirector.status 20\n"),
@@ -2751,10 +2752,11 @@ def test_mad_cow_special_description_compiles():
                      "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
                      "extracted_files/battle/c0m009.dat")
 def test_mad_cow_special_runs_from_its_description(tmp_path):
-    """Mad Cow Special from its description: what the exe's code records; a script file of its own (an edited .00 copy)
-    read by the port's file loader and the program's alike; as effect 225, itself again."""
+    """Mad Cow Special from its description: what its port records with the game's files (its draw 53 is Eden's, its
+    dots in PC screen units: FFNx PR 1088); a script file of its own (an edited .00 copy) read by the port's file loader
+    and the program's alike; as effect 225, itself again."""
     program = write_program(load_description(258), tmp_path / "effect.fxprog")
-    original, _log = record(tmp_path, 258, "original")
+    original, _log = reference(tmp_path, 258, "original")
     described, log = record(tmp_path, 258, "described", f"program={program}")
     assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
     files = tmp_path / "files"
@@ -3619,6 +3621,36 @@ def test_ice_breath_on_the_targets(tmp_path):
         assert xs
         return sum(xs) / len(xs)
     assert abs(trail_x(new) - trail_x(vanilla)) > 50
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/mag150.tim", "extracted_files/battle/d0c000.dat",
+                     "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
+def test_cannon_blow_as_a_smoke_grenade(tmp_path):
+    """A new effect made from Cannon Blow with its smoke grenade options on (Cronos's Smoke Grenade, effect 360): no fire
+    ball, trails, impact or debris (the game's parts, untagged), but the canister, its smoke trail and the smoke cloud drawn
+    (their parts 1, 2, 3; never in the game's); the damage still at counter 30; no camera shake."""
+    description = new_effect(load_description(151), 360, "Smoke Grenade", EXE.read_bytes())
+    program = write_program(description, tmp_path / "effect_360.fxprog", {"smoke.on": 1})
+    vanilla, _log = record(tmp_path, 151, "vanilla", "native=1")
+    new, log = record(tmp_path, 360, "new", f"program={program}")
+    assert "program: Smoke_Grenade" in log and "faulted" not in log
+    drawn = lambda lines: {int(line.split()[1]) for line in lines if line.startswith("P ") and len(line.split()) >= 11}
+    assert drawn(vanilla) == {0} and drawn(new) >= {1, 2, 3}
+    assert [line.split()[1] for line in new if line.startswith("N ")] == [line.split()[1] for line in vanilla
+                                                                         if line.startswith("N ")]
+
+
+def test_cannon_blow_description_compiles():
+    """Cannon Blow: a port root (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its
+    particle tables, curve and queues in the module); its parts the shot and the smoke grenade's canister, trail and
+    cloud; its data the shot sound, the texture name, the camera track."""
+    d = load_description(151)
+    lines = compile_program(d).splitlines()
+    for line in ['director port -1', 'port 0x60C9C0 0x60C9A0 0x60E270', 'module 151 0x244D670 0x26F0']:
+        assert line in lines, line
+    assert [p["key"] for p in d["parts"]] == ["shot", "canister", "trail", "cloud"]
+    assert sorted(e["kind"] for k, e in d["exe_data"].items() if k != "doc") == ["camera", "name", "sound"]
+    assert {p["key"]: p["default"] for p in d["params"]}["smoke.on"] == 0
 
 
 def test_ice_breath_description_compiles():

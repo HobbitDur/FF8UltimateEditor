@@ -3,6 +3,12 @@ import os
 from SolomonRing.commandtypes import command_type_options
 
 
+# The effect table's free slots (no effect of the game): a mod's new effects go there - Fujin's programs, run by
+# FujinEffects.dll (the game's dispatcher falls back to effect 0 for an empty one)
+FREE_EFFECTS = (224, 225, *range(346, 401))
+CRONOS_EFFECTS_FILE = "attack_animation_cronos.json"
+
+
 class LookupRegistry:
     """Resolves a named option list to a uniform ``{type, entries}`` structure.
 
@@ -14,6 +20,8 @@ class LookupRegistry:
 
     def __init__(self, game_data, game_data_folder="FF8GameData"):
         self.game_data = game_data
+        self.game_data_folder = game_data_folder
+        self.cronos_effects = False   # the effect lists name Cronos's own effects (set_cronos_effects)
         path = os.path.join(game_data_folder, "Resources", "json", "kernel_lookups.json")
         with open(path, encoding="utf-8") as f:
             self._lookups = json.load(f)
@@ -82,13 +90,38 @@ class LookupRegistry:
             entries.append({"value": 255, "name": "None (chosen at runtime)"})
             result = {"type": "enum", "entries": entries}
         elif name == "attack_animation":
-            result = self._enum(gd.attack_animation_data_json["attack_animation"], "id", "name")
+            result = self._attack_animations()
         elif name == "stat":
             result = self._enum(gd.stat_data_json["stat"], "id", "name")
         elif name == "card":
             result = self._enum(gd.card_data_json["card_info"], "id", "name")
         self._cache[name] = result
         return result
+
+    def cronos_effect_names(self):
+        """{effect id: name} of the Cronos mod's own effects (attack_animation_cronos.json)."""
+        path = os.path.join(self.game_data_folder, "Resources", "json", CRONOS_EFFECTS_FILE)
+        with open(path, encoding="utf-8") as f:
+            return {item["id"]: item["name"] for item in json.load(f)["attack_animation"]}
+
+    def _attack_animations(self):
+        """The battle effects a spell, item or attack can play: the game's (attack_animation.json), then the free
+        slots of the effect table up to 400 - named "Free slot N", or, with the Cronos box, by Cronos's own
+        effect there ("Smoke Grenade (Cronos)")."""
+        names = {item["id"]: str(item["name"]) for item in self.game_data.attack_animation_data_json["attack_animation"]}
+        for effect in FREE_EFFECTS:
+            if names.get(effect, "Unknown") == "Unknown":
+                names[effect] = f"Free slot {effect}"
+        if self.cronos_effects:
+            for effect, name in self.cronos_effect_names().items():
+                names[effect] = f"{name} (Cronos)"
+        return {"type": "enum", "entries": [{"value": effect, "name": names[effect]} for effect in sorted(names)]}
+
+    def set_cronos_effects(self, enabled: bool):
+        """Name Cronos's own effects in the effect lists (or show their slots as free); the caller refreshes
+        the combos built from "attack_animation"."""
+        self.cronos_effects = bool(enabled)
+        self._cache.pop("attack_animation", None)
 
     def set_dynamic(self, name: str, entries: list):
         """Inject/replace a lookup computed from the currently-loaded kernel.bin itself

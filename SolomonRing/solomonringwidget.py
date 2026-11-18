@@ -63,6 +63,7 @@ class SolomonRingWidget(QWidget):
     """kernel.bin editor with full doomtrain field parity, driven by JSON field defs."""
 
     CURRENT_TAB_KEY = "solomonring/current_tab"
+    CRONOS_KEY = "solomonring/cronos_checkbox"
     file_bindings_changed = pyqtSignal()
 
     def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None,
@@ -82,6 +83,8 @@ class SolomonRingWidget(QWidget):
 
         self.kernel_manager = KernelManager(self.game_data)
         self.registry = LookupRegistry(self.game_data, game_data_folder)
+        cronos = bool(settings.value(self.CRONOS_KEY, defaultValue=False, type=bool)) if settings is not None else False
+        self.registry.set_cronos_effects(cronos)
         self.loaded_filename = None
 
         with open(os.path.join(game_data_folder, "Resources", "json", "kernel_section_fields.json"),
@@ -117,8 +120,20 @@ class SolomonRingWidget(QWidget):
             "On: every field becomes editable, for a mod that gave those bytes/flags a purpose. "
             "This only changes what the UI lets you edit; loading and saving are identical either way.")
         self.unlock_check.toggled.connect(self._set_unlock_all)
+        # --- Cronos switch ----------------------------------------------------
+        # The effect lists (a spell's, an item's, an attack's animation) name the Cronos mod's own effects,
+        # in free slots of the effect table, from attack_animation_cronos.json (as Ifrit's Cronos box picks
+        # ai_cronos.json); off, those slots read "Free slot N".
+        self.cronos_check = QCheckBox("Cronos")
+        self.cronos_check.setToolTip(
+            "Name the Cronos mod's own battle effects in the effect lists (Bio 349, Arctic Wind 350, Smoke Grenade 360...),\n"
+            "from attack_animation_cronos.json. Off: the effect table's free slots (224, 225, 346-400) read \"Free slot N\".\n"
+            "Only names change: the values loaded and saved are the same either way.")
+        self.cronos_check.setChecked(self.registry.cronos_effects)
+        self.cronos_check.toggled.connect(self._set_cronos)
         unlock_row = QHBoxLayout()
         unlock_row.addWidget(self.unlock_check)
+        unlock_row.addWidget(self.cronos_check)
         unlock_row.addStretch(1)
         main_layout.addLayout(unlock_row)
 
@@ -168,6 +183,14 @@ class SolomonRingWidget(QWidget):
         for tab in self._section_tabs.values():
             tab.set_unlock_all(unlocked)
         self._refresh_command_data_enabled()
+
+    def _set_cronos(self, enabled):
+        """The Cronos box: the effect lists name Cronos's own effects (or show their slots as free)."""
+        self.registry.set_cronos_effects(enabled)
+        for tab in self._section_tabs.values():
+            tab.refresh_dynamic_combos(lookups=("attack_animation",))
+        if self.settings is not None:
+            self.settings.setValue(self.CRONOS_KEY, bool(enabled))
 
     def file_bindings(self):
         """kernel.bin and the read-only battle files imported for animation previews."""

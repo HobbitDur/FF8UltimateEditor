@@ -256,6 +256,96 @@ def test_a_workbook_offers_the_spells_added_to_it(game_data, tmp_path):
     assert f"ref_data!$C$2:$C${offered + 3}" in sheet   # the drop-down reaches the new rows
 
 
+def _offered_column(path, list_name: str) -> list:
+    """The texts a ref_data column offers, row by row."""
+    with zipfile.ZipFile(path) as opened:
+        sheet = opened.read(xlsxnames._ref_data_path(opened)).decode("utf8")
+        shared = opened.read(xlsxnames.SHARED_STRINGS).decode("utf8")
+    return xlsxnames._column_texts(sheet, shared, xlsxnames.column_letter(xlsxnames.REF_DATA_COLUMN[list_name]))
+
+
+def _item_texts(game_data, added: dict) -> list:
+    """The item list as main_cli's names command builds it once a kernel.bin's items are applied:
+    in id order, so the added ids come between 198 and 255."""
+    items = {entry["id"]: entry["name"] for entry in game_data.item_data_json["items"]}
+    items.update(added)
+    return [f"{id_}:{items[id_]}" for id_ in sorted(items)]
+
+
+@pytest.mark.ff8data(BATTLE_FILE)
+def test_a_workbook_offers_the_items_a_mod_adds(game_data, tmp_path):
+    """The item list is not 0, 1, 2... without a gap: it stops at 198 and then names 255. Items a
+    mod adds (FFNx's AddMoreItems, ids 199 up) are found missing by id, not by the list's length,
+    and land in id order - taking them by position skipped 199 and offered 255 twice."""
+    path = _monster_workbook(game_data, tmp_path)
+    vanilla = _offered_column(path, "item")
+    assert vanilla[-2:] == ["198:Occult Fan IV", "255:Immune"]
+    with zipfile.ZipFile(path) as opened:
+        monster_sheet = opened.read("xl/worksheets/sheet1.xml")
+
+    texts = _item_texts(game_data, {199: "Moogle Charm", 200: "Item 200"})
+    assert xlsxnames.grow_list_in_workbook(path, "item", texts) == 2
+    assert _offered_column(path, "item") == texts
+    assert xlsxnames.grow_list_in_workbook(path, "item", texts) == 0   # nothing new the second time
+
+    with zipfile.ZipFile(path) as opened:
+        sheet = opened.read("xl/worksheets/sheet1.xml").decode("utf8")
+    assert f"ref_data!$D$2:$D${len(texts) + 1}" in sheet               # the drop-downs reach 255 again
+    # The monster sheet itself only had its drop-down ranges stretched: its cells are untouched
+    assert re.sub(r"\$D\$\d+", "", monster_sheet.decode("utf8")) == re.sub(r"\$D\$\d+", "", sheet)
+
+
+@pytest.mark.ff8data(BATTLE_FILE)
+def test_a_workbook_grown_by_position_is_put_right(game_data, tmp_path):
+    """A workbook the old names command grew by position offers 200 where 199 should be and 255
+    twice. Growing it again adds 199 and keeps 255 once, the column back in id order."""
+    path = _monster_workbook(game_data, tmp_path)
+    texts = _item_texts(game_data, {199: "Moogle Charm", 200: "Item 200", 255: "Item 255"})
+    damaged = _offered_column(path, "item") + texts[200:]          # what texts[already:] appended
+    assert "199:Moogle Charm" not in damaged and damaged.count("255:Immune") == 1
+
+    with zipfile.ZipFile(path) as opened:
+        entries = [(info, opened.read(info.filename)) for info in opened.infolist()]
+        sheet_path = xlsxnames._ref_data_path(opened)
+    files = {info.filename: content for info, content in entries}
+    shared, indexes = xlsxnames._shared_strings(files[xlsxnames.SHARED_STRINGS].decode("utf8"), damaged)
+    files[xlsxnames.SHARED_STRINGS] = shared.encode("utf8")
+    files[sheet_path] = xlsxnames._write_column(files[sheet_path].decode("utf8"), "D", 2, indexes).encode("utf8")
+    xlsxnames._replace_workbook(path, entries, files)
+    assert _offered_column(path, "item") == damaged
+
+    assert xlsxnames.grow_list_in_workbook(path, "item", texts) == 1   # 199
+    repaired = _offered_column(path, "item")
+    assert [int(text.split(":")[0]) for text in repaired] == list(range(201)) + [255]
+    assert "199:Moogle Charm" in repaired and repaired[-1] == "255:Immune"   # the name is rename's job
+
+
+@pytest.mark.ff8data(BATTLE_FILE)
+def test_a_text_two_lists_offer_is_not_renamed(game_data, tmp_path):
+    """"255:Immune" is item 255 and also the card a monster never gives. A cell holds the text, so
+    renaming it for the item would relabel every card too: it is left alone and said so."""
+    path = _monster_workbook(game_data, tmp_path)
+    shared = xlsxnames.offered_by_several_lists(path, ["255:Immune", "2:Potion+"])
+    assert list(shared) == ["255:Immune"] and {"Items", "Card"} <= set(shared["255:Immune"])
+    with zipfile.ZipFile(path) as opened:
+        before = {name: opened.read(name) for name in opened.namelist()}
+
+    assert xlsxnames.rename_in_workbook(path, {"255:Immune": "255:Item 255"}) == {}
+    with zipfile.ZipFile(path) as opened:
+        assert {name: opened.read(name) for name in opened.namelist()} == before
+    assert xlsxnames.rename_in_workbook(path, {"2:Potion+": "2:Hi-Potion"}) == {"2:Potion+": 1}
+
+
+def test_an_id_a_list_does_not_name_is_written_as_unknown():
+    """An item the monster drops but the names in use do not know (a mod's item, its kernel.bin
+    names not loaded) is written with its id rather than stopping the export."""
+    from Ifrit.IfritXlsx.xlsxmanager import list_text
+
+    items = [{"id": 0, "name": "Nothing"}, {"id": 255, "name": "Immune"}]
+    assert list_text(items, 255) == "255:Immune"
+    assert list_text(items, 199) == "199:Unknown"
+
+
 @pytest.mark.ff8data(BATTLE_FILE)
 def test_a_workbook_is_written_with_the_names_in_use(game_data, tmp_path):
     """Every workbook this repository writes - the no-edit one a Cronos build produces included -

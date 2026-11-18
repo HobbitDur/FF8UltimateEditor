@@ -373,9 +373,16 @@ def _import_world_csv(gd, input_file: str, csv_file: str, output_dir: str):
 # Command Handlers
 # ---------------------------------------------------------------------------
 
+def _apply_character_table(gd, args):
+    """--table (latin, japanese, vietnamese; --jp = japanese): which character each code is."""
+    table = getattr(args, 'table', None) or ('japanese' if getattr(args, 'jp', False) else 'latin')
+    gd.set_character_table(table)
+
+
 def _cmd_export_csv(args):
     """Export a binary file to CSV."""
     gd = _load_game_data()
+    _apply_character_table(gd, args)
     file_type = args.type or _detect_type(args.input)
     output_file = args.output
 
@@ -407,6 +414,7 @@ def _cmd_export_csv(args):
 def _cmd_import_csv(args):
     """Import CSV into a binary file."""
     gd = _load_game_data()
+    _apply_character_table(gd, args)
     file_type = args.type or _detect_type(args.input)
     csv_file = args.csv
 
@@ -733,6 +741,11 @@ class ShumiTranslatorCliTool(BaseCliTool):
         p_export.add_argument("--type", "-t", choices=["kernel", "namedic", "mngrp", "exe", "dat", "remaster", "field", "world"],
                               help="File type. Auto-detected from filename if omitted.")
         p_export.add_argument("--mngrphd", help="Path to mngrphd.bin (required when --type=mngrp).")
+        p_export.add_argument("--jp", action="store_true",
+                              help="Japanese game files: read and write the text with the Japanese font.")
+        p_export.add_argument("--table", choices=["latin", "japanese", "vietnamese"],
+                              help="Character table the texts are read and written with (default latin; "
+                                   "--jp is the same as --table japanese).")
         p_export.set_defaults(func=_cmd_export_csv)
 
         # import-csv
@@ -744,6 +757,11 @@ class ShumiTranslatorCliTool(BaseCliTool):
         p_import.add_argument("--type", "-t", choices=["kernel", "namedic", "mngrp", "exe", "dat", "remaster", "field", "world"],
                               help="File type. Auto-detected if omitted.")
         p_import.add_argument("--mngrphd", help="Path to mngrphd.bin (required when --type=mngrp).")
+        p_import.add_argument("--jp", action="store_true",
+                              help="Japanese game files: read and write the text with the Japanese font.")
+        p_import.add_argument("--table", choices=["latin", "japanese", "vietnamese"],
+                              help="Character table the texts are read and written with (default latin; "
+                                   "--jp is the same as --table japanese).")
         p_import.set_defaults(func=_cmd_import_csv)
 
         # export-all-field

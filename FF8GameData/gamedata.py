@@ -1,7 +1,9 @@
+import contextlib
 import json
 import math
 import os
 import re
+import shutil
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Literal, Tuple, Optional
@@ -39,6 +41,7 @@ class FileType(Enum):
     REMASTER_DAT = 7
     FIELD_FS = 8
     WORLD_FS = 9
+    FONT = 10  # a .tdw font file (ShumiTranslator's font tab)
 
 
 class SectionType(Enum):
@@ -110,48 +113,180 @@ class GameData:
         self.camera_sequence_data_json = {}
         self.camera_script_data_json = {}
         self.ai_json_file_name = ai_file
-        # Japanese support: 4-table font (Deling sysfnt_jp.txt). Table 0 = single-byte glyphs (0x20-0xFF);
-        # tables 1/2/3 reached via 2-byte lead bytes 0x19/0x1a/0x1b. Set jp_encoding=True to author/read JP text.
+        # Character table: which character each byte code is (see CHARACTER_TABLES). Latin by default.
+        # Japanese: 4-table font (Deling sysfnt_jp.txt). Table 0 = single-byte glyphs (0x20-0xFF); tables
+        # 1/2/3 reached via 2-byte lead bytes 0x19/0x1a/0x1b. jp_encoding says whether that is in use.
         self.jp_encoding = False
         self.jp_tables = []
+        self.character_table = "latin"
+        self.character_table_modified = False
         self.__init_hex_to_str_table()
 
-
+    # The character tables ShumiTranslator can read and write texts with: key -> (name, file in
+    # Resources, Japanese). A Latin-style file lists the 256 codes from 0x00 (control codes included);
+    # the Japanese one lists 4 tables of 224 codes from 0x20. The Vietnamese one is the Latin table with
+    # the letters the Vietnamese patch drew over some glyphs (its font, not a new encoding).
+    CHARACTER_TABLES = {
+        "latin": ("Latin", "sysfnt.txt", False),
+        "japanese": ("Japanese", "sysfnt_jp.txt", True),
+        "vietnamese": ("Vietnamese", "sysfnt_viet.txt", False),
+    }
 
     def __init_hex_to_str_table(self):
         self.load_sysfnt_data()
-        with open(os.path.join(self.resource_folder, "sysfnt.txt"), "r", encoding="utf-8") as localize_file:
-            self.translate_hex_to_str_table = localize_file.read()
-            self.translate_hex_to_str_table = self.translate_hex_to_str_table.replace(',",",',
-                                                                                      ',";;;",')  # Handling the unique case of a "," character (which is also a separator)
-            self.translate_hex_to_str_table = self.translate_hex_to_str_table.replace('\n', '')
-            self.translate_hex_to_str_table = self.translate_hex_to_str_table.split(',')
-            for i in range(len(self.translate_hex_to_str_table)):
-                self.translate_hex_to_str_table[i] = self.translate_hex_to_str_table[i].replace(';;;', ',')
-                if self.translate_hex_to_str_table[i].count('"') == 2:
-                    self.translate_hex_to_str_table[i] = self.translate_hex_to_str_table[i].replace('"', '')
+        self.latin_table = self.read_character_table_file(os.path.join(self.resource_folder, "sysfnt.txt"))
+        self.translate_hex_to_str_table = list(self.latin_table)
+        self.character_table_path = os.path.join(self.resource_folder, "sysfnt.txt")
         self.__init_jp_tables()
 
-    def __init_jp_tables(self):
-        # Loads the Japanese 4-table font map (Resources/sysfnt_jp.txt). The file holds 4 blocks
-        # separated by a blank line; each block is a comma-separated list of quoted glyphs indexed
-        # from byte 0x20 (same quoting convention as sysfnt.txt). Missing file => JP support disabled.
+    @staticmethod
+    def _character_table_entries(raw: str):
+        """(start, end, comment) of each entry, in file order: start/end of its text inside the quotes,
+        and the /*comment*/ that may follow it. Entries are separated by commas; a value may be the
+        single character ',' or '"'."""
+        spans, i = [], 0
+        while True:
+            start = raw.find('"', i)
+            if start == -1:
+                return spans
+            end = start + 1
+            # the closing quote is the next one followed by a separator, a comment, a line end or the end
+            # ('""' is empty, '","' is a comma, '"""' a quote)
+            while end < len(raw) and not (raw[end] == '"' and (end + 1 >= len(raw) or raw[end + 1] in ',/\r\n')):
+                end += 1
+            comment_end = raw.find('*/', end) + 2 if raw.startswith('/*', end + 1) else end + 1
+            spans.append((start + 1, end, raw[end + 1:comment_end]))
+            i = comment_end
+
+    @classmethod
+    def _table_values(cls, raw: str):
+        # A commented entry reads as its comment (""/*Names*/ -> "/*Names*/"), as it always has: these
+        # are control codes, never printed from the table.
+        return [raw[start:end] + comment for start, end, comment in cls._character_table_entries(raw)]
+
+    @classmethod
+    def read_character_table_file(cls, path):
+        """The entries of a character table file, in order (see CHARACTER_TABLES)."""
+        with open(path, "r", encoding="utf-8", newline="") as table_file:
+            return cls._table_values(table_file.read())
+
+    @classmethod
+    def write_character_table_file(cls, path, values):
+        """Write new entries into a character table file, keeping its layout and comments."""
+        with open(path, "r", encoding="utf-8", newline="") as table_file:
+            raw = table_file.read()
+        spans = cls._character_table_entries(raw)
+        if len(values) != len(spans):
+            raise ValueError(f"{os.path.basename(path)} has {len(spans)} entries, {len(values)} given")
+        for (start, end, comment), value in reversed(list(zip(spans, values))):
+            if comment and value.endswith(comment):
+                value = value[:-len(comment)]
+            raw = raw[:start] + value + raw[end:]
+        with open(path, "w", encoding="utf-8", newline="") as table_file:
+            table_file.write(raw)
+
+    def set_character_table(self, key):
+        """Use that character table for every text from now on (see CHARACTER_TABLES)."""
+        _name, file_name, _japanese = self.CHARACTER_TABLES[key]
+        self.__load_character_table(os.path.join(self.resource_folder, file_name))
+        self.character_table = key
+
+    def set_custom_character_table(self, path):
+        """Use a character table file of your own (same format as one of CHARACTER_TABLES: 256 codes
+        Latin-style, or the 4 Japanese tables)."""
+        self.__load_character_table(path)
+        self.character_table = "custom"
+
+    def __load_character_table(self, path):
+        values = self.read_character_table_file(path)
+        if len(values) == 256:          # Latin style: every code from 0x00
+            self.__init_jp_tables()
+            self.translate_hex_to_str_table = values
+            self.jp_encoding = False
+        elif 3 * 224 < len(values) <= 4 * 224:  # Japanese: 4 tables of 224 codes from 0x20
+            self.__init_jp_tables(path)
+            self.translate_hex_to_str_table = list(self.latin_table)  # control codes and {} tags
+            self.jp_encoding = True
+        else:
+            raise ValueError(f"{os.path.basename(path)} has {len(values)} characters: a character table has 256 "
+                             "(Latin style, from code 00) or 4 tables of up to 224 (Japanese)")
+        self.character_table_path = path
+        self.character_table_modified = False
+
+    @property
+    def character_table_name(self):
+        if self.character_table == "custom":
+            return os.path.basename(self.character_table_path)
+        return self.CHARACTER_TABLES[self.character_table][0]
+
+    @contextlib.contextmanager
+    def using_latin_table(self):
+        """Read and write texts with the Latin table for a moment (Deling's own text form)."""
+        saved = (self.translate_hex_to_str_table, self.jp_encoding)
+        self.translate_hex_to_str_table, self.jp_encoding = self.latin_table, False
+        try:
+            yield
+        finally:
+            self.translate_hex_to_str_table, self.jp_encoding = saved
+
+    def table_char(self, table, index):
+        """The character of code 0x20 + index of a font table (0 = single byte, 1-3 = Japanese lead
+        bytes 0x19-0x1b) in the character table in use."""
+        if self.jp_encoding:
+            return self.caract_jp(0x20 + index, table) or ""
+        values = self.translate_hex_to_str_table
+        return values[0x20 + index] if table == 0 and 0x20 + index < len(values) else ""
+
+    def set_table_char(self, table, index, char):
+        """Change a character of the table in use, in memory only (its file stays as it was): every text
+        is read and written with it from now on. export_character_table keeps it in a file."""
+        if self.jp_encoding:
+            self.jp_tables[table][index] = char
+        elif table == 0:
+            self.translate_hex_to_str_table[0x20 + index] = char
+        else:
+            raise ValueError("the Latin-style character tables have one table only")
+        self.character_table_modified = True
+
+    def character_table_values(self):
+        """A copy of the characters of the table in use, edits included (to compare or put back)."""
+        if self.jp_encoding:
+            return tuple(tuple(table) for table in self.jp_tables)
+        return tuple(self.translate_hex_to_str_table)
+
+    def set_character_table_values(self, values, modified):
+        """Put back characters taken with character_table_values (undo), in place: whatever holds the
+        table keeps seeing it."""
+        if self.jp_encoding:
+            for table, saved in zip(self.jp_tables, values):
+                table[:] = saved
+        else:
+            self.translate_hex_to_str_table[:] = values
+        self.character_table_modified = modified
+
+    def export_character_table(self, path):
+        """Write the character table in use, edits included, to a new file (the layout of its own file).
+        Nothing else changes: the table in use stays the same one, its file untouched."""
+        if os.path.abspath(path) != os.path.abspath(self.character_table_path):
+            shutil.copyfile(self.character_table_path, path)
+        values = ([char for table in self.jp_tables for char in table] if self.jp_encoding
+                  else self.translate_hex_to_str_table)
+        self.write_character_table_file(path, values)
+        return path
+
+    def __init_jp_tables(self, jp_path=None):
+        # Loads the Japanese 4-table font map (Resources/sysfnt_jp.txt, or another file in that format).
+        # The file holds 4 blocks separated by a blank line; each block is a comma-separated list of
+        # quoted glyphs indexed from byte 0x20 (same quoting convention as sysfnt.txt). Missing file =>
+        # JP support disabled.
         self.jp_tables = []
-        jp_path = os.path.join(self.resource_folder, "sysfnt_jp.txt")
+        jp_path = jp_path or os.path.join(self.resource_folder, "sysfnt_jp.txt")
         if not os.path.exists(jp_path):
             return
         with open(jp_path, "r", encoding="utf-8") as jp_file:
             raw = jp_file.read()
         for block in re.split(r'\r?\n\s*\r?\n', raw.strip('\r\n')):
-            block = block.replace(',",",', ',";;;",')  # protect a literal ',' glyph (also the separator)
-            block = block.replace('\r', '').replace('\n', '')
-            table = []
-            for entry in block.split(','):
-                entry = entry.replace(';;;', ',')
-                if entry.count('"') == 2:
-                    entry = entry.replace('"', '')
-                table.append(entry)
-            self.jp_tables.append(table)
+            self.jp_tables.append(self._table_values(block))
 
     def caract_jp(self, ord_val, table=0):
         # Returns the glyph for a byte >= 0x20 in the given JP font table (0..3), or None if out of range.
@@ -161,16 +296,23 @@ class GameData:
                 return self.jp_tables[table][idx]
         return None
 
-    def encode_jp_char(self, char):
+    def encode_jp_char(self, char, prefer: bytes = None):
         # Reverse of caract_jp: find a character in the JP tables. Table 0 => single byte [0x20+idx];
         # tables 1/2/3 => 2-byte lead sequence [0x18+table, 0x20+idx]. Returns None if not found.
+        # A glyph drawn in two tables (記 is 0x1ac8 and 0x1ba1) takes the code found in `prefer` (the bytes the
+        # text was loaded from), so an unchanged text saves back identical.
+        candidates = []
         for table_idx, table in enumerate(self.jp_tables):
             if char in table:
                 idx = table.index(char)
-                if table_idx == 0:
-                    return [0x20 + idx]
-                return [0x18 + table_idx, 0x20 + idx]
-        return None
+                candidates.append([0x20 + idx] if table_idx == 0 else [0x18 + table_idx, 0x20 + idx])
+        if not candidates:
+            return None
+        if prefer and len(candidates) > 1:
+            for candidate in candidates:
+                if bytes(candidate) in prefer:
+                    return candidate
+        return candidates[0]
 
     @staticmethod
     def find_delimiter_from_csv_file(csv_file):
@@ -465,7 +607,7 @@ class GameData:
             card["img_remaster"] = _card_tile(atlas("cards_00_remaster.png"), 256, x, y)
             card["img_xylomod"] = _card_tile(atlas("cards_00_xylomod.png"), 256, x, y)
 
-    def translate_str_to_hex(self, string):
+    def translate_str_to_hex(self, string, jp_prefer: bytes = None):
         c = 0
         str_size = len(string)
         encode_list = []
@@ -476,9 +618,12 @@ class GameData:
                 c += 2
                 continue
             if char == '\n':  # \n{NewPage}\n,\n
-                if '{NewPage}' in string[c + 1:c + 10]:
+                if string.startswith('{NewPage}', c + 1):
+                    # Deling writes a new page as "\n{NewPage}\n": both line breaks belong to the 0x01
                     encode_list.append(0x01)
                     c += 10
+                    if c < str_size and string[c] == '\n':
+                        c += 1
                 else:
                     encode_list.append(0x02)
                     c += 1
@@ -532,10 +677,10 @@ class GameData:
                                 encode_list.extend([0x04, int(substring[-1]) + 0x30])
                         else:  # {Var0}
                             encode_list.extend([0x04, int(substring[-1]) + 0x20])
-                    elif 'Wait' in substring:  # {Wait000}
-                        encode_list.extend([0x09, int(substring[-1]) + 0x20])
-                    elif 'Jp' in substring:  # {Jp000}
-                        encode_list.extend([0x1c, int(substring[-1]) + 0x20])
+                    elif re.fullmatch(r'Wait\d{3}', substring):  # {Wait000}: the whole number, as decoded
+                        encode_list.extend([0x09, int(substring[4:]) + 0x20])
+                    elif re.fullmatch(r'Jp\d{3}', substring):  # {Jp000}: the whole number, as decoded
+                        encode_list.extend([0x1c, int(substring[2:]) + 0x20])
                     elif '{' + substring + '}' in self.translate_hex_to_str_table:  # {} at end of sysfnt
                         encode_list.append(self.translate_hex_to_str_table.index('{' + substring + '}'))
                     elif 'x' in substring and len(substring) == 5:  # {xffff}
@@ -545,12 +690,18 @@ class GameData:
                     c += len(substring) + 2  # +2 for the {}
                     continue
             if self.jp_encoding:
-                jp_encoded = self.encode_jp_char(char)
+                jp_encoded = self.encode_jp_char(char, jp_prefer)
                 if jp_encoded is not None:
                     encode_list.extend(jp_encoded)
                     c += 1
                     continue
-            encode_list.append(self.translate_hex_to_str_table.index(char))
+            code = self.translate_hex_to_str_table.index(char)
+            if jp_prefer and self.translate_hex_to_str_table.count(char) > 1:
+                # A character drawn at two codes (the Vietnamese font has two ớ and two ộ) keeps the code
+                # the text was loaded with, so an unchanged text saves back identical.
+                codes = [i for i, value in enumerate(self.translate_hex_to_str_table) if value == char]
+                code = next((i for i in codes if i in jp_prefer), code)
+            encode_list.append(code)
             c += 1
         return encode_list
 

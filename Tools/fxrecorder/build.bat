@@ -26,7 +26,10 @@ if not exist obj mkdir obj
 rem Effect lab: with FFNx's effect sources (ExternalTools\FFNx\fx, from the updater), the effect
 rem ports that have parameters are built in (native=1, params=, schema=): every module naming
 rem FX_LAB_MODULE (older sources: Cure)
+rem the FFNx effect sources: FUJIN_FX, else the updater's FFNxEffects; sources with their 30 fps layer (fx_held.cpp: FFNx
+rem True30FPS's src\ff8\battle\fx) are built with it (FF8_FX_HELD: held=N)
 set "FX=%~dp0..\..\ExternalTools\FFNx\fx"
+if defined FUJIN_FX set "FX=%FUJIN_FX%"
 set LAB=
 if not exist "%FX%\fx_params.h" goto compile
 rem (the modules listed in a response file: more of them than a command line holds)
@@ -51,7 +54,7 @@ for /f "usebackq delims=" %%f in ("%RSP%") do (
   findstr /m /c:"apply_lev_" %%f >nul 2>nul && set LEV=1
 )
 rem a cinematic clone borrowing Eden's draw handlers (Hell's Judgement, the final form's death: apply_eden_*) needs Eden's module
-if defined EDEN if exist "%FX%\mag_eden.cpp" echo "%FX%\mag_eden.cpp">>"%RSP%"
+if defined EDEN if exist "%FX%\mag_eden.cpp" findstr /m /c:"mag_eden.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_eden.cpp">>"%RSP%"
 rem (a cinematic clone borrowing the Brothers' handlers: Water's apply_brothers)
 if defined BROTHERS if exist "%FX%\mag_brothers.cpp" findstr /m /c:"mag_brothers.cpp" "%RSP%" >nul 2>nul || echo "%FX%\mag_brothers.cpp">>"%RSP%"
 rem (a cinematic clone borrowing Bahamut's: apply_bahamut)
@@ -64,6 +67,11 @@ if defined ACTORS if exist "%FX%\fx_actors.cpp" echo "%FX%\fx_actors.cpp">>"%RSP
 rem the modules built on the GF cinematic engine (gfc_engine.h) need it compiled in
 if defined GFC if exist "%FX%\gfc_engine.cpp" echo "%FX%\gfc_engine.cpp">>"%RSP%"
 set LAB=/DFF8_FX_LAB /I"%FX%" @"%RSP%"
+if exist "%FX%\fx_held.cpp" set LAB=%LAB% /DFF8_FX_HELD "%FX%\fx_held.cpp"
+rem (the glints' held part, fx_glint_held.inc: the healing ports' 30 fps layer draws them)
+if exist "%FX%\fx_held.cpp" if exist "%FX%\fx_glint.cpp" set LAB=%LAB% "%FX%\fx_glint.cpp"
+rem (FFNx's native prim-model player: its play_held draws a layout's exact in-between records)
+if exist "%FX%\fx_held.cpp" set LAB=%LAB% "%FX%\fx_primplayer.cpp"
 :compile
 cl /nologo /std:c++20 /EHa /W3 /O1 /MT /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS fxrecorder.cpp %LAB% /Foobj\ /Fefxrecorder.exe /link /BASE:0x10000000 /DYNAMICBASE:NO /FIXED /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%

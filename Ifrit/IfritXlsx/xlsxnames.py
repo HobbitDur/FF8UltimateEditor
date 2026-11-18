@@ -87,9 +87,42 @@ def _by_text(old_names: dict, new_names: dict) -> dict:
     return by_text
 
 
+def offered_by_several_lists(xlsx_file, texts) -> dict:
+    """Which of `texts` more than one ref_data column offers, as {text: [column titles]}.
+
+    A text is stored once in the workbook and every cell showing it points at that one copy, so it
+    cannot be renamed for one list and kept for another: "255:Immune" is both the card a monster
+    never gives and, in the vanilla names, item 255. A mod naming item 255 must not relabel the
+    cards."""
+    with zipfile.ZipFile(xlsx_file) as workbook:
+        sheet_path = _ref_data_path(workbook)
+        if sheet_path is None or SHARED_STRINGS not in workbook.namelist():
+            return {}
+        sheet = workbook.read(sheet_path).decode("utf8")
+        shared = workbook.read(SHARED_STRINGS).decode("utf8")
+    table = [unescape(match.group(2)) for match in TEXT_PATTERN.finditer(shared)]
+    titles = {}
+    columns = {}
+    for letter in COLUMN_LETTERS:
+        column_texts = _column_texts(sheet, shared, letter)
+        if not column_texts:
+            continue
+        title = re.search(rf"<c r=\"{letter}1\"[^>]*t=\"s\"[^>]*><v>(\d+)</v>", sheet)
+        titles[letter] = table[int(title.group(1))] if title else letter
+        for text in set(column_texts):
+            columns.setdefault(text, []).append(letter)
+    return {text: [titles[letter] for letter in columns[text]]
+            for text in texts if len(columns.get(text, ())) > 1}
+
+
 def rename_in_workbook(xlsx_file, renames: dict) -> dict:
     """Apply {shown text: new shown text} to a workbook, in place. Returns what it replaced, as
-    {shown text: how many times}. The file is left untouched when nothing matches."""
+    {shown text: how many times}. The file is left untouched when nothing matches.
+
+    A text two ref_data lists offer is left alone (see offered_by_several_lists): renaming it would
+    rename it in both."""
+    shared_texts = offered_by_several_lists(xlsx_file, renames) if renames else {}
+    renames = {text: new for text, new in renames.items() if text not in shared_texts}
     if not renames:
         return {}
     with zipfile.ZipFile(xlsx_file) as workbook:
@@ -156,7 +189,16 @@ def grow_list_in_workbook(xlsx_file, list_name: str, texts: list) -> int:
     """Offer `texts` (the whole list, as "<id>:<name>") where the workbook offers fewer of them.
 
     Returns how many were added. The ones already there are left alone - they are renamed by
-    rename_in_workbook, which is a different question from how long the list is."""
+    rename_in_workbook, which is a different question from how long the list is.
+
+    What is missing is found by id, not by how long the list is: a list is not always 0, 1, 2...
+    without a gap. The items stop at 198 and then name 255 ("Immune"), so a mod adding items
+    199-255 (FFNx's AddMoreItems) lands in the middle of it. The column is written again in id
+    order, the new names where their id puts them. That changes nothing a monster sheet holds: its
+    cells hold the text "<id>:<name>" itself, never which row of ref_data it came from.
+
+    A workbook grown by position before this (199 left out, 255 offered twice) is put right the
+    same way: the id that was missing is added, and the one offered twice is kept once."""
     letter = column_letter(REF_DATA_COLUMN[list_name])
     with zipfile.ZipFile(xlsx_file) as workbook:
         sheet_path = _ref_data_path(workbook)
@@ -164,31 +206,61 @@ def grow_list_in_workbook(xlsx_file, list_name: str, texts: list) -> int:
             return 0
         entries = [(info, workbook.read(info.filename)) for info in workbook.infolist()]
     files = {info.filename: content for info, content in entries}
+    sheet = files[sheet_path].decode("utf8")
+    shared = files[SHARED_STRINGS].decode("utf8")
 
-    already = list_length_in_workbook(xlsx_file, list_name)
-    missing = texts[already:]
-    if not missing:
+    current = _column_texts(sheet, shared, letter)
+    offered = {}
+    for text in current:
+        id_ = _text_id(text)
+        if id_ is not None:
+            offered.setdefault(id_, text)   # One shown twice is kept once, as it is shown first
+    added = 0
+    for text in texts:
+        id_ = _text_id(text)
+        if id_ is not None and id_ not in offered:
+            offered[id_] = text
+            added += 1
+    column = [offered[id_] for id_ in sorted(offered)]
+    if column == current:
         return 0
 
-    shared, indexes = _shared_strings(files[SHARED_STRINGS].decode("utf8"), missing)
+    shared, indexes = _shared_strings(shared, column)
     files[SHARED_STRINGS] = shared.encode("utf8")
-    files[sheet_path] = _write_column(files[sheet_path].decode("utf8"), letter,
-                                      already + 2, indexes).encode("utf8")
+    files[sheet_path] = _write_column(sheet, letter, 2, indexes).encode("utf8")
 
     # The drop-downs name the rows they read: every one of them now reaches the last of them.
     # Their first row is $2 in a workbook written today, a relative 2 in an older one.
-    last_row = already + 1 + len(missing)
+    last_row = 1 + len(column)
     range_pattern = re.compile(rf"({re.escape(REF_DATA_SHEET_TITLE)}!\${letter}\$?\d*:\${letter}\$)(\d+)")
     for name in list(files):
         if name.startswith("xl/worksheets/sheet") and name != sheet_path:
             text = files[name].decode("utf8")
-            grown = range_pattern.sub(lambda match: match.group(1) + str(last_row)
-                                      if int(match.group(2)) == already + 1 else match.group(0), text)
+            grown = range_pattern.sub(lambda match: match.group(1) + str(last_row), text)
             if grown != text:
                 files[name] = grown.encode("utf8")
 
     _replace_workbook(xlsx_file, entries, files)
-    return len(missing)
+    return added
+
+
+def _text_id(text: str):
+    """The id in front of "<id>:<name>", or None for a text that has none."""
+    head = text.split(":", 1)[0]
+    return int(head) if ":" in text and head.isdigit() else None
+
+
+def _column_texts(sheet: str, shared: str, letter: str) -> list:
+    """The texts a ref_data column offers, row by row from row 2 (row 1 is its title)."""
+    table = [unescape(match.group(2)) for match in TEXT_PATTERN.finditer(shared)]
+    by_row = {}
+    for match in CELL_PATTERN.finditer(sheet):
+        if match.group(1) != letter or int(match.group(2)) < 2 or 't="s"' not in match.group(0):
+            continue
+        index = re.search(r"<v>(\d+)</v>", match.group(0))
+        if index:
+            by_row[int(match.group(2))] = table[int(index.group(1))]
+    return [by_row[row] for row in sorted(by_row)]
 
 
 def _ref_data_path(workbook) -> str:
@@ -223,7 +295,8 @@ def _shared_strings(shared: str, texts: list) -> tuple:
 
 
 def _write_column(sheet: str, letter: str, first_row: int, indexes: list) -> str:
-    """Put one text per row in `letter`, from `first_row` down, keeping the cells of a row in
+    """Make `letter` hold one text per row from `first_row` down, and nothing below them: a cell
+    already there is replaced, one past the last text is removed. The cells of a row stay in
     column order (a spreadsheet reads them as they come)."""
     style = _column_style(sheet, letter)
     column = COLUMN_LETTERS.index(letter)
@@ -232,7 +305,11 @@ def _write_column(sheet: str, letter: str, first_row: int, indexes: list) -> str
         row_xml = match.group(0)
         row_number = int(match.group(1))
         place = row_number - first_row
-        if not 0 <= place < len(indexes):
+        if place < 0:
+            return row_xml
+        row_xml = re.sub(rf"<c r=\"{letter}{row_number}\"(?:\s[^>]*)?(?:/>|>.*?</c>)", "", row_xml,
+                         count=1, flags=re.S)
+        if place >= len(indexes):
             return row_xml
         cell = f"<c r=\"{letter}{row_number}\"{style} t=\"s\"><v>{indexes[place]}</v></c>"
         following = [name for name, _ in CELL_PATTERN.findall(row_xml) if COLUMN_LETTERS.index(name) > column]
@@ -241,9 +318,10 @@ def _write_column(sheet: str, letter: str, first_row: int, indexes: list) -> str
         return row_xml.replace("</row>", cell + "</row>")
 
     grown = ROW_PATTERN.sub(write_row, sheet)
-    written = grown.count(f"<c r=\"{letter}") - sheet.count(f"<c r=\"{letter}")
-    if written != len(indexes):
-        raise ValueError(f"The ref_data sheet has no room for {len(indexes) - written} more names "
+    rows = {int(row) for row in ROW_PATTERN.findall(sheet)}
+    missing_rows = [row for row in range(first_row, first_row + len(indexes)) if row not in rows]
+    if missing_rows:
+        raise ValueError(f"The ref_data sheet has no room for {len(missing_rows)} more names "
                          f"in column {letter}: it stops at row {_last_row(sheet)}")
     return grown
 
