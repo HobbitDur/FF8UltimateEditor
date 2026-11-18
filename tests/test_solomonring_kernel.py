@@ -1471,3 +1471,38 @@ def test_battle_message_texts_stay_uncompressed(qapp, tmp_path):
     reloaded = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
     reloaded.load_file(str(work))
     assert texts(reloaded, 31) == vanilla[31]
+
+
+def test_the_effect_list_names_the_free_slots_and_cronos_effects(game_data):
+    """An animation (effect) list holds the game's effects, then the effect table's free slots up to 400 - where a mod's
+    new effects go - named "Free slot N"; with the Cronos box, Cronos's own effects by name (attack_animation_cronos.json)."""
+    registry = LookupRegistry(game_data, GAME_DATA_FOLDER)
+    names = {e["value"]: e["name"] for e in registry.resolve("attack_animation")["entries"]}
+    assert set(range(346, 401)) <= set(names) and names[360] == "Free slot 360" and names[224] == "Free slot 224"
+    assert names[1] == "Cure" and max(names) == 400
+    registry.set_cronos_effects(True)
+    cronos = {e["value"]: e["name"] for e in registry.resolve("attack_animation")["entries"]}
+    assert cronos[360] == "Smoke Grenade (Cronos)" and cronos[349] == "Bio (Cronos)" and cronos[1] == "Cure"
+    assert cronos[352] == "Free slot 352"     # (no Cronos effect there)
+    registry.set_cronos_effects(False)
+    assert {e["value"]: e["name"] for e in registry.resolve("attack_animation")["entries"]} == names
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_the_cronos_box_renames_the_effect_lists(qapp, tmp_path):
+    """Ticking SolomonRing's Cronos box renames the Cronos effects in every built effect list (a spell's animation
+    here), keeps the value shown, and is remembered."""
+    from PyQt6.QtCore import QSettings
+    settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER, settings=settings)
+    widget.load_file(str(work))
+    combo = widget._section_tabs[2]._field_widgets["magic_id"][2]
+    shown = combo.currentData()
+    assert combo.itemText(combo.findData(360)) == "Free slot 360"
+    widget.cronos_check.setChecked(True)
+    assert combo.itemText(combo.findData(360)) == "Smoke Grenade (Cronos)" and combo.currentData() == shown
+    assert settings.value(SolomonRingWidget.CRONOS_KEY, type=bool)
+    again = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER, settings=settings)
+    assert again.cronos_check.isChecked()

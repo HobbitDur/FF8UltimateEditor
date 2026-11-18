@@ -1389,12 +1389,13 @@ class KernelSectionTab(QWidget):
         if self._current_index >= 0:
             self._save_entry(self._current_index)
 
-    def refresh_dynamic_combos(self):
+    def refresh_dynamic_combos(self, lookups=()):
         """Re-populate every combo built from a "dynamic_lookup" field (content computed
-        from another section's just-loaded data, e.g. Slot array's per-set summaries) with
-        the registry's current entries for that lookup, preserving the selected value."""
+        from another section's just-loaded data, e.g. Slot array's per-set summaries) - and
+        every one built from a lookup named in `lookups` (the effect list once the Cronos box
+        changed) - with the registry's current entries for it, preserving the selected value."""
         for name, (kind, field, widget) in self._field_widgets.items():
-            if kind != "enum" or not field.get("dynamic_lookup"):
+            if kind != "enum" or not (field.get("dynamic_lookup") or field.get("lookup") in lookups):
                 continue
             lookup = self.registry.resolve(field["lookup"])
             if not lookup:
