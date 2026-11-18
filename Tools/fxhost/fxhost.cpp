@@ -35,6 +35,13 @@ namespace ff8fx
 	{
 		return ((int (__cdecl *)(prim::Layout *, prim::Callback, int, int))0x701970)(l, cb, arg, paused);
 	}
+#ifdef FF8_FX_HELD
+	// (the 30 fps layer's helpers of the battle's frame gate, FF8Battle30.dll, are not here: on a program's held frame a
+	// model keeps its pose, a layout player draws its present state without advancing - the next tick's picture)
+	void pose_midpoint(void *, void *, int, int) {}
+	void pose_midpoint_to(void *, const void *, int, int) {}
+	void prim::play_held(prim::Layout *l, prim::Callback cb, int arg, int, int) { prim::play(l, cb, arg, 1); }
+#endif
 	void register_port(uint32_t, void *, const char *, int) {}
 	void *lookup(uint32_t) { return nullptr; }   // (the programs' nodes hold the ports' thunks: call the task's own function)
 #ifdef FF8_FX_LAB
@@ -210,6 +217,33 @@ extern "C" __declspec(dllexport) int __cdecl FujinEffects_PlayOnEntity(int effec
 	if (!program || program->director != fxprog::SHATTER) return 0;
 	return fxprog::shatter::PlayOnEntity(*program, (uint8_t *)entity) ? 1 : 0;
 }
+
+#ifdef FF8_FX_HELD
+// 30 fps: the held frames of the programs, for the battle's frame gate (FF8Battle30.dll / FFNx True30FPS, fx_held.h
+// HeldApi): it asks here for an effect id or a task function it has no 30 fps code for, and passes on its real ticks.
+// Only in a build on FFNx sources with their 30 fps layer (build.bat: FUJIN_FX = True30FPS's src\ff8\battle\fx).
+namespace
+{
+	fxprog::Program *HeldProgram(int effect_id) { return effect_id >= 1 && effect_id <= SLOTS ? g_slots[effect_id - 1] : nullptr; }
+	bool __cdecl HeldReadyApi(int effect_id) { return fxprog::HeldReady(HeldProgram(effect_id)); }
+	void __cdecl HeldDrawApi(int effect_id, int num, int den) { fxprog::HeldDraw(HeldProgram(effect_id), num, den); }
+	bool __cdecl HeldCameraApi(int effect_id, int num, int den, int16_t world[3], int16_t lookat[3])
+	{
+		return fxprog::HeldCamera(HeldProgram(effect_id), num, den, world, lookat);
+	}
+	bool __cdecl HeldRedrawsApi(uint32_t fn) { return fxprog::HeldRedraws(fn); }
+	bool __cdecl HeldKeepsEndedApi(uint32_t fn) { return fxprog::HeldKeepsEnded(fn); }
+	bool __cdecl HeldKeepsDrawnApi(uint32_t fn) { return fxprog::HeldKeepsDrawn(fn); }
+	void __cdecl HeldRealTickApi(uint32_t tick) { ff8fx::g_real_tick = tick; }
+	const ff8fx::HeldApi HELD_API = { ff8fx::HELD_API_VERSION, HeldReadyApi, HeldDrawApi, HeldCameraApi, HeldRedrawsApi,
+	                                  HeldKeepsEndedApi, HeldKeepsDrawnApi, HeldRealTickApi };
+}
+
+extern "C" __declspec(dllexport) const ff8fx::HeldApi *__cdecl FujinEffects_HeldApi()
+{
+	return &HELD_API;
+}
+#endif
 
 BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID)
 {

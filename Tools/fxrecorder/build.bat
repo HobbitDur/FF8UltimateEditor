@@ -26,7 +26,10 @@ if not exist obj mkdir obj
 rem Effect lab: with FFNx's effect sources (ExternalTools\FFNx\fx, from the updater), the effect
 rem ports that have parameters are built in (native=1, params=, schema=): every module naming
 rem FX_LAB_MODULE (older sources: Cure)
+rem the FFNx effect sources: FUJIN_FX, else the updater's FFNxEffects; sources with their 30 fps layer (fx_held.cpp: FFNx
+rem True30FPS's src\ff8\battle\fx) are built with it (FF8_FX_HELD: held=N)
 set "FX=%~dp0..\..\ExternalTools\FFNx\fx"
+if defined FUJIN_FX set "FX=%FUJIN_FX%"
 set LAB=
 if not exist "%FX%\fx_params.h" goto compile
 rem (the modules listed in a response file: more of them than a command line holds)
@@ -64,6 +67,7 @@ if defined ACTORS if exist "%FX%\fx_actors.cpp" echo "%FX%\fx_actors.cpp">>"%RSP
 rem the modules built on the GF cinematic engine (gfc_engine.h) need it compiled in
 if defined GFC if exist "%FX%\gfc_engine.cpp" echo "%FX%\gfc_engine.cpp">>"%RSP%"
 set LAB=/DFF8_FX_LAB /I"%FX%" @"%RSP%"
+if exist "%FX%\fx_held.cpp" set LAB=%LAB% /DFF8_FX_HELD "%FX%\fx_held.cpp"
 :compile
 cl /nologo /std:c++20 /EHa /W3 /O1 /MT /DNOMINMAX /D_CRT_SECURE_NO_WARNINGS fxrecorder.cpp %LAB% /Foobj\ /Fefxrecorder.exe /link /BASE:0x10000000 /DYNAMICBASE:NO /FIXED /LARGEADDRESSAWARE
 set E=%ERRORLEVEL%

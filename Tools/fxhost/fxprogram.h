@@ -58,6 +58,10 @@
 #include "fx_actors.h"   // the act family's actor system (FFNx sources with it: fx_actors.cpp and act_engine.cpp built in)
 #define FXPROG_ACTORS 1
 #endif
+#ifdef FF8_FX_HELD
+#include <unordered_map>
+#include "fx_held.h"   // the ports' 30 fps layer (FFNx True30FPS sources)
+#endif
 
 namespace fxprog
 {
@@ -2742,6 +2746,50 @@ namespace fxprog
 		g.file_loader = g.setup = g.root = 0;
 		for (Task &t : g.tasks) t.function = 0;
 	}
+
+#ifdef FF8_FX_HELD
+	// ------------------------------------------------------------------
+	// 30 fps: a program's held frames (the frames between two of its 15 Hz ticks) are its port module's 30 fps layer
+	// (FFNx True30FPS fx_held.h: the module's held part draws the state num / den of the way to the next tick), run on
+	// the program's memory. Only a program with a module (a port effect's: Arctic Wind on Ice Breath's, the Smoke
+	// Grenade on Cannon Blow's...) has them; the others' held frames stay the battle's (the last tick shown again).
+	// ------------------------------------------------------------------
+	inline bool HeldReady(Program *p)
+	{
+		if (!p || !p->module) return false;
+		g_program = p;
+		UseModule();
+		return ff8fx::held_ready(p->module);
+	}
+	inline void HeldDraw(Program *p, int num, int den)
+	{
+		if (!HeldReady(p)) return;
+		ff8fx::held_draw(p->module, num, den);
+	}
+	inline bool HeldCamera(Program *p, int num, int den, int16_t world[3], int16_t lookat[3])
+	{
+		return HeldReady(p) && ff8fx::held_camera(p->module, num, den, world, lookat);
+	}
+	// the original a node's function stands for: a program task's code, a port's original (own::note), else itself
+	inline uint32_t HeldOrigOf(uint32_t fn)
+	{
+		static std::unordered_map<uint32_t, uint32_t> origs;
+		static int noted = -1;
+		if (noted != ff8fx::own::g_count)
+		{
+			noted = ff8fx::own::g_count;
+			origs.clear();
+			for (int k = 0; k < ff8fx::own::g_count; k++) origs[(uint32_t)ff8fx::own::g_port[k]] = ff8fx::own::g_orig[k];
+		}
+		if (g_program)
+			if (const uint32_t o = ProgramOrigOf(fn)) return o;
+		const auto it = origs.find(fn);
+		return it != origs.end() ? it->second : fn;
+	}
+	inline bool HeldRedraws(uint32_t fn) { return ff8fx::held_redraws(fn) || ff8fx::held_redraws(HeldOrigOf(fn)); }
+	inline bool HeldKeepsEnded(uint32_t fn) { return ff8fx::keeps_ended(fn) || ff8fx::keeps_ended(HeldOrigOf(fn)); }
+	inline bool HeldKeepsDrawn(uint32_t fn) { return ff8fx::keeps_drawn(fn) || ff8fx::keeps_drawn(HeldOrigOf(fn)); }
+#endif
 
 	// the parameter `key` set to `text` (a number, or a file name); false when there is none
 	inline bool SetParam(Program &g, const char *key, const char *text)
