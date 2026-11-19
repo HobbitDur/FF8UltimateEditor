@@ -96,7 +96,7 @@
    "kind": "layout",
    "address": "0x1432448",
    "size": 3792,
-   "capacity": 324
+   "capacity": 456
   },
   "layouts.fall": {
    "kind": "layout",

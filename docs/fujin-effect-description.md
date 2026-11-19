@@ -2951,7 +2951,7 @@ Potion's description is the same with its own sequences and sound.
        .00 copy (0x4000..) read by the port's file loader and the program's alike. Its ribbon's tail-retire tick (50)
        reads a GTE V0 it never writes (0xB1ADD0): the lab's part places must leave the GTE as they found it
        (FFNx e319638a), or the lab draws the ribbon elsewhere.
-   - **Demon Slice (251)** (FFNx 73de620b; Seifer's enemy attack 314, c0m086; a port root, Cannon Blow's kind; Bloodfest
+   - **Demon Slice (251)** (FFNx 73de620b, b0c8c851; Seifer's enemy attack 314, c0m086; a port root, Cannon Blow's kind; Bloodfest
      210's twin): four flames round the target (Fire's parts) until tick 0x21; the fading opening layout at the caster's
      spawn point (0x49, 20 ticks); the caster sliding toward the target (0x53, 31 ticks); the wave layout at the spawn
      point (0x53, 95 ticks: a travelling wave on its vertices, its texture scrolling, swelling from its tick 80, from
@@ -2971,7 +2971,8 @@ Potion's description is the same with its own sequences and sound.
        (start, ticks, shorter from, length, colour), the sparkles (count, angle step, frames). Data: the three sounds,
        seven layouts, four flipbooks, the TIM (exe data: the effect has no file), the camera track. Not editable: the
        layouts' object kind tables, the wave's direction table. The wave layout's height normalisation (on the layout
-       played), the module-drawn target and the trail's spline stay code.
+       played), the module-drawn target and the trail's spline stay code. The push layout's capacity is its block's 0x1C8
+       bytes: the game decodes it with 0x144 though its player state takes 392 (the rest is the slash layout's residue).
      - *Port:* the module globals through own::R, the spawns through own::Fn; the setup ported (the file loader is the
        engine's null sub); twelve parts tagged (FX_PART).
      - *Tests:* the cycle test casts it from Seifer (c0m086, slot 3) on Squall with the scene's c0m082 in slot 4 (the
