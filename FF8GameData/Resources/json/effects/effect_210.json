@@ -1,0 +1,1252 @@
+{
+ "format": 1,
+ "effect": 210,
+ "name": "Bloodfest",
+ "doc": "Bloodfest (Seifer's enemy attack 315, c0m128): flames around the targets, afterimages of the entity after the caster with the blade trail of slot 4's bone 1, a rising layout and a mesh at the caster's bone, the stage captured into VRAM and a vortex at the targets' centre, the targets lifted spinning and drawn by the module over the burning layout with a burst of sparkles and rocks, then dropped from above under the drop layout with falling rocks (the caster hidden), put back and raised; an end layout at each target, the white flash, the screen flash, the sounds; the action results at tick 0xF3. Demon Slice 251's twin. Its tasks are the port's code (FFNx mag210_bloodfest.cpp) run on the program's memory (its pools in the magic buffer); its texture is exe data (the setup's TIM), its file loader the engine's bare ret.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x6F6800",
+   "root": "0x6F6890"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 210,
+  "from": "0x2556478",
+  "size": "0x108"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x145D4DC",
+   "size": 4
+  },
+  "sounds.ghost": {
+   "kind": "sound",
+   "address": "0x145D4E0",
+   "size": 4
+  },
+  "sounds.lift": {
+   "kind": "sound",
+   "address": "0x145D4E4",
+   "size": 4
+  },
+  "sounds.fall": {
+   "kind": "sound",
+   "address": "0x145D4E8",
+   "size": 4
+  },
+  "res.tim": {
+   "kind": "tim",
+   "address": "0x1470DC4",
+   "size": 132640
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x145D2BC",
+   "size": 544
+  },
+  "seqs.flame": {
+   "kind": "seq",
+   "address": "0x14708C0",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.glow": {
+   "kind": "seq",
+   "address": "0x1470A6C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.ember": {
+   "kind": "seq",
+   "address": "0x1470C18",
+   "size": 428,
+   "frames": 16
+  },
+  "layouts.rise": {
+   "kind": "layout",
+   "address": "0x146D8A4",
+   "size": 5256,
+   "capacity": 224
+  },
+  "models.bone": {
+   "kind": "model",
+   "address": "0x145D6AC",
+   "size": 2840,
+   "vertices": 80
+  },
+  "models.part": {
+   "kind": "model",
+   "address": "0x145E1C4",
+   "size": 8752,
+   "vertices": 279
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0x14603F4",
+   "size": 6564,
+   "vertices": 214
+  },
+  "layouts.burn": {
+   "kind": "layout",
+   "address": "0x1462010",
+   "size": 34392,
+   "capacity": 580
+  },
+  "layouts.drop": {
+   "kind": "layout",
+   "address": "0x146A668",
+   "size": 12860,
+   "capacity": 600
+  },
+  "layouts.end": {
+   "kind": "layout",
+   "address": "0x146ED2C",
+   "size": 7040,
+   "capacity": 448
+  },
+  "models.rock": {
+   "kind": "model",
+   "address": "0x1461D98",
+   "size": 632,
+   "vertices": 11
+  },
+  "seqs.sparkle": {
+   "kind": "seq",
+   "address": "0x145D4EC",
+   "size": 448,
+   "frames": 16
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6F6800",
+  "file_loader": "0x0",
+  "root": "0x6F6890"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The main task's ticks, its four sounds, the screen flash rising and falling; the TIM and the camera"
+  },
+  {
+   "id": 1,
+   "key": "flames",
+   "title": "Flames",
+   "doc": "Flames around each target (Fire's parts), each with its ground glow, embers rising and sparks drifting"
+  },
+  {
+   "id": 2,
+   "key": "ghosts",
+   "title": "Afterimages",
+   "doc": "Afterimages of the entity after the caster (the last two recorded poses, the newer brighter), in two windows"
+  },
+  {
+   "id": 3,
+   "key": "rise",
+   "title": "Rising layout",
+   "doc": "The rising layout at the caster's effect point"
+  },
+  {
+   "id": 4,
+   "key": "bone",
+   "title": "Bone model",
+   "doc": "A mesh at the caster's bone, stretched to the ground, turning, fading in"
+  },
+  {
+   "id": 5,
+   "key": "vortex",
+   "title": "Vortex",
+   "doc": "The stage captured into VRAM, then a vortex at the targets' centre (a ring pushed out and quads of the capture's texture growing in, a second one turned and rolled), fading out"
+  },
+  {
+   "id": 6,
+   "key": "targets",
+   "title": "Targets",
+   "doc": "The targets lifted spinning (a sine, then a cubic fall), then dropped from above, drawn by the module"
+  },
+  {
+   "id": 7,
+   "key": "burn",
+   "title": "Burning layout",
+   "doc": "The burning layout at the targets' centre while they are lifted (its textures scrolling); a burst of sparkles and rocks on its first ticks"
+  },
+  {
+   "id": 8,
+   "key": "drop",
+   "title": "Drop",
+   "doc": "The drop layout at the targets' centre while they fall (the caster and the next entity hidden), rocks falling a few a tick; then the targets put back and raised"
+  },
+  {
+   "id": 9,
+   "key": "end",
+   "title": "End layouts",
+   "doc": "A layout at each target's feet as the results come"
+  },
+  {
+   "id": 10,
+   "key": "white",
+   "title": "White flash",
+   "doc": "A full-screen flash (fading in, held, fading out)"
+  },
+  {
+   "id": 11,
+   "key": "trail",
+   "title": "Blade trail",
+   "doc": "The blade trail of slot 4's bone 1: a ring of its last 7 points splined, drawn as gouraud quads fading along it"
+  },
+  {
+   "id": 12,
+   "key": "rocks",
+   "title": "Rocks",
+   "doc": "Rocks (a mesh) turning, rising then falling"
+  },
+  {
+   "id": 13,
+   "key": "sparkles",
+   "title": "Sparkles",
+   "doc": "Sparkles rising from a ring round the targets' centre"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The main task's ticks"
+  },
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "The screen flash's level and slopes"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "master",
+   "label": "Start sound",
+   "doc": "At the start sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.ghost",
+   "part": "master",
+   "label": "Afterimage sound",
+   "doc": "At the afterimage sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.ghost",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.lift",
+   "part": "master",
+   "label": "Lift sound",
+   "doc": "At the lift sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.lift",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.fall",
+   "part": "master",
+   "label": "Fall sound",
+   "doc": "At the fall sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.fall",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.start",
+   "part": "master",
+   "label": "Start sound",
+   "doc": "The main task's tick of the start sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.ghost",
+   "part": "master",
+   "label": "Afterimage sound",
+   "doc": "Its tick of the afterimage sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.lift",
+   "part": "master",
+   "label": "Lift sound",
+   "doc": "Its tick of the lift sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 115,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fall",
+   "part": "master",
+   "label": "Fall sound",
+   "doc": "Its tick of the fall sound (while the targets rise back)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 241,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "master",
+   "label": "End",
+   "doc": "Its last tick: it ends once the battle files' preload is done (the screen flash falls to 0 there)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 243,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "master",
+   "label": "Flash level",
+   "doc": "The screen flash's level",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2300,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.rise",
+   "part": "master",
+   "label": "Flash rise",
+   "doc": "It rises over the first ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fall",
+   "part": "master",
+   "label": "Flash fall",
+   "doc": "It falls over the last ticks before the end (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim",
+   "part": "master",
+   "label": "TIM",
+   "doc": "The TIM its setup uploads (exe data: the effect has no file)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "master",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "flames.count",
+   "part": "flames",
+   "label": "Count",
+   "doc": "Flames around each target",
+   "type": "i16",
+   "min": 0,
+   "max": 8,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.frames",
+   "part": "flames",
+   "label": "Frames",
+   "doc": "A flame's frames (its flipbook's: 16 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 16,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.embers",
+   "part": "flames",
+   "label": "Embers",
+   "doc": "Embers rising from each flame",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.sparks",
+   "part": "flames",
+   "label": "Sparks",
+   "doc": "Sparks drifting from each flame",
+   "type": "i16",
+   "min": 0,
+   "max": 20,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.size",
+   "part": "flames",
+   "label": "Size",
+   "doc": "A flame's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3328,
+   "unit": "scale"
+  },
+  {
+   "key": "flames.size_rand",
+   "part": "flames",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.drop",
+   "part": "flames",
+   "label": "Dropped",
+   "doc": "The main task's tick every flame, ember and spark is dropped",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 33,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flame",
+   "part": "flames",
+   "label": "Flame",
+   "doc": "The flames' sprite sequence (a flipbook)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flame",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.glow",
+   "part": "flames",
+   "label": "Ground glow",
+   "doc": "Their ground glow's sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ember",
+   "part": "flames",
+   "label": "Ember",
+   "doc": "The embers' sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ember",
+   "unit": "plain"
+  },
+  {
+   "key": "ghosts.start_a",
+   "part": "ghosts",
+   "label": "First from",
+   "doc": "The main task's tick of the first window (its first tick resets the record)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "ghosts.ticks_a",
+   "part": "ghosts",
+   "label": "First ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "ghosts.rec_a",
+   "part": "ghosts",
+   "label": "First records",
+   "doc": "A pose recorded on its ticks below this (after, they fade away)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "ghosts.start_b",
+   "part": "ghosts",
+   "label": "Second from",
+   "doc": "The main task's tick of the second window",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 72,
+   "unit": "plain"
+  },
+  {
+   "key": "ghosts.ticks_b",
+   "part": "ghosts",
+   "label": "Second ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "ghosts.rec_b",
+   "part": "ghosts",
+   "label": "Second records",
+   "doc": "A pose recorded on its ticks below this",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "ghosts.bright",
+   "part": "ghosts",
+   "label": "Brightness",
+   "doc": "The newer afterimage's colour: the entity's x 1.5 x this / 0x1000",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "ghosts.fade",
+   "part": "ghosts",
+   "label": "Older",
+   "doc": "The older one's brightness is less by this",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.start",
+   "part": "rise",
+   "label": "Start",
+   "doc": "The main task's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.ticks",
+   "part": "rise",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.rise",
+   "part": "rise",
+   "label": "Layout",
+   "doc": "The prim-model layout played",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "bone.start",
+   "part": "bone",
+   "label": "Start",
+   "doc": "The main task's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 65,
+   "unit": "plain"
+  },
+  {
+   "key": "bone.ticks",
+   "part": "bone",
+   "label": "Ticks",
+   "doc": "Its ticks, fading in over them (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "bone.bone",
+   "part": "bone",
+   "label": "Bone",
+   "doc": "The caster's bone it stands at (its spawn point)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 37,
+   "unit": "plain"
+  },
+  {
+   "key": "bone.spin",
+   "part": "bone",
+   "label": "Spin",
+   "doc": "Its turn a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 256,
+   "unit": "angle"
+  },
+  {
+   "key": "models.bone",
+   "part": "bone",
+   "label": "Mesh",
+   "doc": "The mesh drawn",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bone",
+   "unit": "plain"
+  },
+  {
+   "key": "vortex.start",
+   "part": "vortex",
+   "label": "Start",
+   "doc": "The main task's tick it starts (the stage captured then)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 85,
+   "unit": "plain"
+  },
+  {
+   "key": "vortex.ticks",
+   "part": "vortex",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "vortex.second",
+   "part": "vortex",
+   "label": "Second from",
+   "doc": "Its tick the second one starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "vortex.grow",
+   "part": "vortex",
+   "label": "Grow",
+   "doc": "Each grows in over so many ticks (the ring pushed out, the quads' depth; at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "vortex.fade_from",
+   "part": "vortex",
+   "label": "Fade from",
+   "doc": "From this tick of it both fade out (the mesh drawn alone, faded)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "vortex.fade_ticks",
+   "part": "vortex",
+   "label": "Fade ticks",
+   "doc": "Over so many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "vortex.yaw_a",
+   "part": "vortex",
+   "label": "First yaw",
+   "doc": "The first one's turn",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 2048,
+   "unit": "angle"
+  },
+  {
+   "key": "vortex.yaw_b",
+   "part": "vortex",
+   "label": "Second yaw",
+   "doc": "The second one's turn",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -1024,
+   "unit": "angle"
+  },
+  {
+   "key": "vortex.roll",
+   "part": "vortex",
+   "label": "Second roll",
+   "doc": "The second ring's roll",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 512,
+   "unit": "angle"
+  },
+  {
+   "key": "vortex.scroll",
+   "part": "vortex",
+   "label": "Scroll",
+   "doc": "Their texture scroll a tick",
+   "type": "i16",
+   "min": -256,
+   "max": 256,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "models.part",
+   "part": "vortex",
+   "label": "Mesh",
+   "doc": "The vortex mesh (drawn as quads of the capture's texture, or faded)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.part",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "vortex",
+   "label": "Ring",
+   "doc": "The ring mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "lift.start",
+   "part": "targets",
+   "label": "Lift from",
+   "doc": "The main task's tick the targets are lifted (the burning layout, the burst; the sparkles', rocks' and end layouts' pools set up)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 115,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.ticks",
+   "part": "targets",
+   "label": "Lift ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.spin",
+   "part": "targets",
+   "label": "Spin",
+   "doc": "The targets' turn a tick (every other one the other way)",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 256,
+   "unit": "angle"
+  },
+  {
+   "key": "raise.ticks",
+   "part": "targets",
+   "label": "Raise ticks",
+   "doc": "After the drop, the targets put back and raised for so many ticks; then the end layouts and the results",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "raise.step",
+   "part": "targets",
+   "label": "Raise step",
+   "doc": "Raised so much a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "raise.lower",
+   "part": "targets",
+   "label": "Lowered",
+   "doc": "Put back so much lower first",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 4096,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.scroll",
+   "part": "burn",
+   "label": "Scroll",
+   "doc": "The burning layout's texture scroll a tick",
+   "type": "i16",
+   "min": -256,
+   "max": 256,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.scroll_from",
+   "part": "burn",
+   "label": "Second scroll from",
+   "doc": "Its second scroll (a square curve) from this tick of it",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 26,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.burst_ticks",
+   "part": "burn",
+   "label": "Burst ticks",
+   "doc": "Its first ticks with a burst",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.sparkles",
+   "part": "burn",
+   "label": "Burst sparkles",
+   "doc": "Sparkles a tick of the burst",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.rocks",
+   "part": "burn",
+   "label": "Burst rocks",
+   "doc": "Rocks a tick of the burst",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.radius",
+   "part": "burn",
+   "label": "Burst radius",
+   "doc": "On a ring of this + a random below 0x800 round the centre",
+   "type": "i16",
+   "min": 0,
+   "max": 28672,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.rise",
+   "part": "burn",
+   "label": "Burst rise",
+   "doc": "Rising at this + a random below 0x80 a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.burn",
+   "part": "burn",
+   "label": "Layout",
+   "doc": "The burning layout (its first model's box is the stage capture's)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.burn",
+   "unit": "plain"
+  },
+  {
+   "key": "drop.start",
+   "part": "drop",
+   "label": "Start",
+   "doc": "The main task's tick the targets drop",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 195,
+   "unit": "plain"
+  },
+  {
+   "key": "drop.ticks",
+   "part": "drop",
+   "label": "Ticks",
+   "doc": "Its ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "drop.rocks",
+   "part": "drop",
+   "label": "Rocks",
+   "doc": "Rocks a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "drop.rock_life",
+   "part": "drop",
+   "label": "Rock life",
+   "doc": "A rock's ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "drop.rock_height",
+   "part": "drop",
+   "label": "Rock height",
+   "doc": "Rocks start so high above the centre",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "drop.rock_speed",
+   "part": "drop",
+   "label": "Rock speed",
+   "doc": "Falling at this + a random below 0x80 a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "drop.depth",
+   "part": "drop",
+   "label": "Depth",
+   "doc": "The drop layout's depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.drop",
+   "part": "drop",
+   "label": "Layout",
+   "doc": "The drop layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.drop",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.end",
+   "part": "end",
+   "label": "Layout",
+   "doc": "The end layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.end",
+   "unit": "plain"
+  },
+  {
+   "key": "white.start",
+   "part": "white",
+   "label": "Start",
+   "doc": "The main task's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 227,
+   "unit": "plain"
+  },
+  {
+   "key": "white.in",
+   "part": "white",
+   "label": "In",
+   "doc": "Ticks fading in",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "white.hold",
+   "part": "white",
+   "label": "Hold",
+   "doc": "Ticks held",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "white.out",
+   "part": "white",
+   "label": "Out",
+   "doc": "Ticks fading out",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "white.r",
+   "part": "white",
+   "label": "Red",
+   "doc": "Its colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "white.g",
+   "part": "white",
+   "label": "Green",
+   "doc": "Its colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "white.b",
+   "part": "white",
+   "label": "Blue",
+   "doc": "Its colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.start",
+   "part": "trail",
+   "label": "Start",
+   "doc": "The main task's tick it starts (0x37 at least: its pool is set up then)",
+   "type": "i16",
+   "min": 55,
+   "max": 400,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.ticks",
+   "part": "trail",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 59,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.shorten",
+   "part": "trail",
+   "label": "Shorter from",
+   "doc": "From this tick of it, it keeps ticks + 1 - its tick points (7 before)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 53,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.length",
+   "part": "trail",
+   "label": "Length",
+   "doc": "Its tip's distance from the bone along the blade",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 777,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.colour",
+   "part": "trail",
+   "label": "Colour",
+   "doc": "Its colour at the blade (0xBBGGRR), fading to black along it",
+   "type": "i32",
+   "min": 0,
+   "max": 16777215,
+   "default": 1595424,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.gravity",
+   "part": "rocks",
+   "label": "Gravity",
+   "doc": "A rock's fall speed grows by this a tick",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "models.rock",
+   "part": "rocks",
+   "label": "Mesh",
+   "doc": "The rock mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.rock",
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.frames",
+   "part": "sparkles",
+   "label": "Frames",
+   "doc": "A sparkle's frames (its flipbook's: 16 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 16,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparkle",
+   "part": "sparkles",
+   "label": "Sparkle",
+   "doc": "The sparkles' sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparkle",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.kinds_plain",
+   "label": "Object kinds",
+   "doc": "The plain layouts' per-object kind bytes (how the callback draws each object: 0x31 / 0x32 / 0x33 texture windows, 0x39 depth)",
+   "address": "0x14708AC",
+   "size": 20
+  },
+  {
+   "key": "not_editable.kinds_burn",
+   "label": "Burning layout kinds",
+   "doc": "The burning layout's per-object kind bytes",
+   "address": "0x14913E4",
+   "size": 256
+  }
+ ]
+}

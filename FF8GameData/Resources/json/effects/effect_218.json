@@ -1,0 +1,1089 @@
+{
+ "format": 1,
+ "effect": 218,
+ "name": "Gilgamesh kills Seifer",
+ "doc": "Gilgamesh kills Seifer (enemy attack 330, cast by Seifer c0m128 on himself): a 580-tick timeline on Gilgamesh 327's template - a white fade, spinners, a flare row and a ring, Gilgamesh (files 0x2C1..0x2C5) descending with his sword glowing, his landing's dust, rings and camera shake, a blue tile, the battle text lines, the screen grabbed and cut into shards thrown from the target with their dust and chips, a flash, the cut on the target (his hit chain, a ground wave), the slash, the voice and the sounds; the action result at tick 383. Its tasks are the port's code (FFNx mag218_gilgamesh_kills_seifer.cpp) run on the program's memory (its model blocks and queues in the module, its pools in the magic buffer); its texture is exe data (the setup's TIM), its file loader the engine's bare ret, its camera the timeline's camera script.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x6326D0",
+   "root": "0x6374D0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 218,
+  "from": "0x24F2340",
+  "size": "0x12D8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xE257D0",
+   "size": 4
+  },
+  "sounds.sword": {
+   "kind": "sound",
+   "address": "0xE257D4",
+   "size": 4
+  },
+  "sounds.end": {
+   "kind": "sound",
+   "address": "0xE257D8",
+   "size": 4
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0xE25698",
+   "size": 4
+  },
+  "res.tim": {
+   "kind": "tim",
+   "address": "0xF1E920",
+   "size": 166432
+  },
+  "models.spinner": {
+   "kind": "model",
+   "address": "0xE21CC0",
+   "size": 2224,
+   "vertices": 81
+  },
+  "seqs.flare": {
+   "kind": "seq",
+   "address": "0xE19C14",
+   "size": 168,
+   "frames": 6
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xE1B7E0",
+   "size": 4408,
+   "vertices": 158
+  },
+  "models.sword": {
+   "kind": "model",
+   "address": "0xE254D8",
+   "size": 448,
+   "vertices": 16
+  },
+  "models.glow": {
+   "kind": "model",
+   "address": "0xE1A0F0",
+   "size": 5872,
+   "vertices": 145
+  },
+  "seqs.dust": {
+   "kind": "seq",
+   "address": "0xE19CBC",
+   "size": 428,
+   "frames": 16
+  },
+  "models.shock": {
+   "kind": "model",
+   "address": "0xE1EF08",
+   "size": 1768,
+   "vertices": 72
+  },
+  "models.rising": {
+   "kind": "model",
+   "address": "0xE1C918",
+   "size": 6472,
+   "vertices": 252
+  },
+  "models.wide": {
+   "kind": "model",
+   "address": "0xE1E260",
+   "size": 3240,
+   "vertices": 112
+  },
+  "seqs.shard_dust": {
+   "kind": "seq",
+   "address": "0xE19E68",
+   "size": 428,
+   "frames": 16
+  },
+  "models.flash": {
+   "kind": "model",
+   "address": "0xE24FC8",
+   "size": 1296,
+   "vertices": 49
+  },
+  "models.wave": {
+   "kind": "model",
+   "address": "0xE22570",
+   "size": 4336,
+   "vertices": 132
+  },
+  "models.slash": {
+   "kind": "model",
+   "address": "0xE23660",
+   "size": 6504,
+   "vertices": 160
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6326D0",
+  "file_loader": "0x0",
+  "root": "0x6374D0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timeline",
+   "title": "Timeline",
+   "doc": "The 580-tick timeline: the camera script, Gilgamesh's files loaded, the summon stream, the battle text lines, the stage hidden and shown, the voice, the sounds; its spawns (spinners, flare, ring, blue tile, the cut on the target, the slash), the result; the TIM"
+  },
+  {
+   "id": 1,
+   "key": "fade",
+   "title": "White fade",
+   "doc": "A white full-screen tile fading in, held, fading out at the start"
+  },
+  {
+   "id": 2,
+   "key": "tile",
+   "title": "Blue tile",
+   "doc": "A blue full-screen tile behind everything"
+  },
+  {
+   "id": 3,
+   "key": "spinners",
+   "title": "Spinners",
+   "doc": "Two screen-space meshes turning (the stage shown with them)"
+  },
+  {
+   "id": 4,
+   "key": "flare",
+   "title": "Flare row",
+   "doc": "Eight flipbook sprites on a line from above the centre toward the camera, spreading out"
+  },
+  {
+   "id": 5,
+   "key": "ring",
+   "title": "Ring",
+   "doc": "A ring high above the centre, turning, swelling and shrinking"
+  },
+  {
+   "id": 6,
+   "key": "gilgamesh",
+   "title": "Gilgamesh",
+   "doc": "Gilgamesh and his sword's model: descending, standing, his animations; his own ticks spawn his landing's dust, rings and camera shake, the shards and the flash"
+  },
+  {
+   "id": 7,
+   "key": "sword",
+   "title": "Sword",
+   "doc": "The sword mesh on the sword model's bone (hidden while he swings)"
+  },
+  {
+   "id": 8,
+   "key": "glow",
+   "title": "Sword glow",
+   "doc": "A glow mesh past Gilgamesh's hand, along his arm, its texture scrolling"
+  },
+  {
+   "id": 9,
+   "key": "dust",
+   "title": "Dust",
+   "doc": "Dust flipbooks thrown out on a ring as he lands, slowing"
+  },
+  {
+   "id": 10,
+   "key": "rings",
+   "title": "Landing rings",
+   "doc": "A shock ring, two rising rings and a wide ring as he lands, fading out; the camera shake"
+  },
+  {
+   "id": 11,
+   "key": "shards",
+   "title": "Shards",
+   "doc": "The screen grabbed into VRAM and cut into shards thrown from the target, with their dust and chips"
+  },
+  {
+   "id": 12,
+   "key": "flash",
+   "title": "Flash",
+   "doc": "A screen-space flash mesh, its texture scrolling, fading out"
+  },
+  {
+   "id": 13,
+   "key": "wave",
+   "title": "Ground wave",
+   "doc": "A wave on the ground at the target as he is cut, its colour going blue"
+  },
+  {
+   "id": 14,
+   "key": "slash",
+   "title": "Slash",
+   "doc": "The slash at the target, turned toward the camera script's eye, its texture scrolling"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The timeline's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "timeline",
+   "label": "Start sound",
+   "doc": "At the timeline's tick 2 (with the first file's load)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.sword",
+   "part": "timeline",
+   "label": "Sword sound",
+   "doc": "At the sword sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.sword",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.end",
+   "part": "timeline",
+   "label": "End sound",
+   "doc": "At the end sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.end",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.voice",
+   "part": "timeline",
+   "label": "Voice",
+   "doc": "The sound block its voice slot is claimed with (at the start)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.spinners",
+   "part": "timeline",
+   "label": "Spinners",
+   "doc": "The timeline's tick of the spinners (the stage shown)",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.flare",
+   "part": "timeline",
+   "label": "Flare row",
+   "doc": "Its tick of the flare row",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.ring",
+   "part": "timeline",
+   "label": "Ring",
+   "doc": "Its tick of the ring",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.tile",
+   "part": "timeline",
+   "label": "Blue tile",
+   "doc": "Its tick of the blue tile",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 72,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sword",
+   "part": "timeline",
+   "label": "Sword sound",
+   "doc": "Its tick of the sword sound",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 366,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.cut",
+   "part": "timeline",
+   "label": "Cut",
+   "doc": "Its tick the target is cut (his hit chain 0x37, the ground wave)",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 383,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.result",
+   "part": "timeline",
+   "label": "Result",
+   "doc": "Its tick of the target's result",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 383,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.slash",
+   "part": "timeline",
+   "label": "Slash",
+   "doc": "Its tick of the slash (and its text line)",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 401,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_sound",
+   "part": "timeline",
+   "label": "End sound",
+   "doc": "Its tick of the end sound",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 559,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.release",
+   "part": "timeline",
+   "label": "Voice released",
+   "doc": "Its tick the voice slot is released",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 576,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "timeline",
+   "label": "End",
+   "doc": "Its last tick (the end task, the target's chain 1, the target hidden)",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 579,
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim",
+   "part": "timeline",
+   "label": "TIM",
+   "doc": "The TIM its setup uploads (exe data)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim",
+   "unit": "plain"
+  },
+  {
+   "key": "fade.ticks",
+   "part": "fade",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.in",
+   "part": "fade",
+   "label": "In",
+   "doc": "Fading in over so many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.out_from",
+   "part": "fade",
+   "label": "Out from",
+   "doc": "Fading out from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.out",
+   "part": "fade",
+   "label": "Out",
+   "doc": "Over so many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.ticks",
+   "part": "tile",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.r",
+   "part": "tile",
+   "label": "Red",
+   "doc": "Its colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 112,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.g",
+   "part": "tile",
+   "label": "Green",
+   "doc": "Its colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.b",
+   "part": "tile",
+   "label": "Blue",
+   "doc": "Its colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "spinners.ticks",
+   "part": "spinners",
+   "label": "Ticks",
+   "doc": "Their ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 61,
+   "unit": "plain"
+  },
+  {
+   "key": "spinners.spin_a",
+   "part": "spinners",
+   "label": "First spin",
+   "doc": "The first one's turn a tick",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": -16,
+   "unit": "angle"
+  },
+  {
+   "key": "spinners.spin_b",
+   "part": "spinners",
+   "label": "Second spin",
+   "doc": "The second one's turn a tick",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": -8,
+   "unit": "angle"
+  },
+  {
+   "key": "spinners.size_a",
+   "part": "spinners",
+   "label": "First size",
+   "doc": "The first one's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3200,
+   "unit": "scale"
+  },
+  {
+   "key": "spinners.size_b",
+   "part": "spinners",
+   "label": "Second size",
+   "doc": "The second one's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3072,
+   "unit": "scale"
+  },
+  {
+   "key": "spinners.fade_a",
+   "part": "spinners",
+   "label": "First fade",
+   "doc": "The first one's fade level",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "spinners.fade_b",
+   "part": "spinners",
+   "label": "Second fade",
+   "doc": "The second one's fade level",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2560,
+   "unit": "plain"
+  },
+  {
+   "key": "models.spinner",
+   "part": "spinners",
+   "label": "Mesh",
+   "doc": "The spinners' mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.spinner",
+   "unit": "plain"
+  },
+  {
+   "key": "flare.ticks",
+   "part": "flare",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "flare.length",
+   "part": "flare",
+   "label": "Length",
+   "doc": "How far its sprites lie along the line (x their table's distances)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2200,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flare",
+   "part": "flare",
+   "label": "Flipbook",
+   "doc": "The flare's flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flare",
+   "unit": "plain"
+  },
+  {
+   "key": "ring.ticks",
+   "part": "ring",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "ring",
+   "label": "Mesh",
+   "doc": "The ring's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "gil.dust",
+   "part": "gilgamesh",
+   "label": "Landing",
+   "doc": "Gilgamesh's tick of his landing's dust, rings and camera shake",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "gil.shards",
+   "part": "gilgamesh",
+   "label": "Shards",
+   "doc": "His tick of the shards",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 310,
+   "unit": "plain"
+  },
+  {
+   "key": "gil.flash",
+   "part": "gilgamesh",
+   "label": "Flash",
+   "doc": "His tick of the flash",
+   "type": "i16",
+   "min": 0,
+   "max": 600,
+   "default": 325,
+   "unit": "plain"
+  },
+  {
+   "key": "models.sword",
+   "part": "sword",
+   "label": "Mesh",
+   "doc": "The sword mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.sword",
+   "unit": "plain"
+  },
+  {
+   "key": "glow.ticks",
+   "part": "glow",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.reach",
+   "part": "glow",
+   "label": "Reach",
+   "doc": "How far past his hand along his arm",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 600,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.fade",
+   "part": "glow",
+   "label": "Fade",
+   "doc": "Its fade level",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "models.glow",
+   "part": "glow",
+   "label": "Mesh",
+   "doc": "The glow's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "dust.last",
+   "part": "dust",
+   "label": "Last",
+   "doc": "Spawned up to this tick of it",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.count",
+   "part": "dust",
+   "label": "Count",
+   "doc": "Puffs a tick (200 at most at once)",
+   "type": "i16",
+   "min": 0,
+   "max": 50,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust",
+   "part": "dust",
+   "label": "Flipbook",
+   "doc": "The dust's flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust",
+   "unit": "plain"
+  },
+  {
+   "key": "rings.shock",
+   "part": "rings",
+   "label": "Shock ticks",
+   "doc": "The shock ring's ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.rising",
+   "part": "rings",
+   "label": "Rising ticks",
+   "doc": "The rising rings' ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.wide",
+   "part": "rings",
+   "label": "Wide ticks",
+   "doc": "The wide ring's ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.shake",
+   "part": "rings",
+   "label": "Shake",
+   "doc": "The camera shake's amount",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.shake_ticks",
+   "part": "rings",
+   "label": "Shake ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "models.shock",
+   "part": "rings",
+   "label": "Shock mesh",
+   "doc": "The shock ring's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.shock",
+   "unit": "plain"
+  },
+  {
+   "key": "models.rising",
+   "part": "rings",
+   "label": "Rising mesh",
+   "doc": "The rising rings' mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.rising",
+   "unit": "plain"
+  },
+  {
+   "key": "models.wide",
+   "part": "rings",
+   "label": "Wide mesh",
+   "doc": "The wide ring's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wide",
+   "unit": "plain"
+  },
+  {
+   "key": "shards.count",
+   "part": "shards",
+   "label": "Count",
+   "doc": "How many (24 at most: the shard table's)",
+   "type": "i16",
+   "min": 0,
+   "max": 24,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.kick",
+   "part": "shards",
+   "label": "Speed",
+   "doc": "Thrown at this + a random below the next",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 250,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.kick_rand",
+   "part": "shards",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 350,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.shard_dust",
+   "part": "shards",
+   "label": "Dust flipbook",
+   "doc": "The shards' dust flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.shard_dust",
+   "unit": "plain"
+  },
+  {
+   "key": "flash.ticks",
+   "part": "flash",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "models.flash",
+   "part": "flash",
+   "label": "Mesh",
+   "doc": "The flash's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "wave.ticks",
+   "part": "wave",
+   "label": "Ticks",
+   "doc": "Its ticks (its colour goes blue over them; at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "wave.scroll",
+   "part": "wave",
+   "label": "Scroll",
+   "doc": "Its texture scroll a tick",
+   "type": "i16",
+   "min": -256,
+   "max": 256,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "models.wave",
+   "part": "wave",
+   "label": "Mesh",
+   "doc": "The ground wave's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wave",
+   "unit": "plain"
+  },
+  {
+   "key": "slash.ticks",
+   "part": "slash",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "slash.scroll",
+   "part": "slash",
+   "label": "Scroll",
+   "doc": "Its texture scroll a tick (backwards)",
+   "type": "i16",
+   "min": -256,
+   "max": 256,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "slash.back",
+   "part": "slash",
+   "label": "Toward the eye",
+   "doc": "Placed so far from the eye toward the target",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2000,
+   "unit": "plain"
+  },
+  {
+   "key": "models.slash",
+   "part": "slash",
+   "label": "Mesh",
+   "doc": "The slash's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.slash",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.chip_mesh",
+   "label": "Chip mesh",
+   "doc": "The shards' chips' mesh",
+   "address": "0xE1F5F0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.flare_table",
+   "label": "Flare row table",
+   "doc": "The flare row's 8 sprites (frame, size, distance: 8 bytes each)",
+   "address": "0xE257F2",
+   "size": 62
+  },
+  {
+   "key": "not_editable.glow_axis",
+   "label": "Glow axis",
+   "doc": "The sword glow's reference direction",
+   "address": "0xE25830",
+   "size": 2
+  },
+  {
+   "key": "not_editable.glow_axis_rest",
+   "label": "Glow axis",
+   "doc": "The rest of the sword glow's reference direction",
+   "address": "0xE25832",
+   "size": 14
+  },
+  {
+   "key": "not_editable.slash_axis",
+   "label": "Slash axis",
+   "doc": "The slash's reference direction",
+   "address": "0xE25840",
+   "size": 16
+  },
+  {
+   "key": "not_editable.shard_meshes",
+   "label": "Shard meshes",
+   "doc": "The 24 shards' meshes (an address each)",
+   "address": "0xE25850",
+   "size": 96
+  },
+  {
+   "key": "not_editable.shard_offsets",
+   "label": "Shard offsets",
+   "doc": "The 24 shards' offsets (x, y, z: 8 bytes each)",
+   "address": "0xE258B0",
+   "size": 2
+  },
+  {
+   "key": "not_editable.shard_offsets_y",
+   "label": "Shard offsets",
+   "doc": "The shards' offsets (y, z)",
+   "address": "0xE258B2",
+   "size": 2
+  },
+  {
+   "key": "not_editable.shard_offsets_rest",
+   "label": "Shard offsets",
+   "doc": "The shards' offsets (the rest of the table)",
+   "address": "0xE258B4",
+   "size": 188
+  },
+  {
+   "key": "not_editable.camera_script",
+   "label": "Camera script",
+   "doc": "The camera script its timeline starts (the shared camera-script task's byte code)",
+   "address": "0xE25970",
+   "size": 360
+  },
+  {
+   "key": "not_editable.grab_packet",
+   "label": "Grab packet",
+   "doc": "The screen grab's exe packet",
+   "address": "0xE25AD8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.stream",
+   "label": "Summon stream",
+   "doc": "The summon stream block the timeline starts",
+   "address": "0xF1DD50",
+   "size": 4
+  },
+  {
+   "key": "not_editable.sword_model",
+   "label": "Sword model",
+   "doc": "The sword's battle model data (the model block E1 binds)",
+   "address": "0xF1DD54",
+   "size": 3020
+  }
+ ]
+}
