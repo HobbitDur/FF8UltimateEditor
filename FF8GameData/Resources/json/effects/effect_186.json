@@ -1,0 +1,1046 @@
+{
+ "format": 1,
+ "effect": 186,
+ "name": "Blaster",
+ "doc": "Blaster (enemy attacks 122 / 123, Torama's): the charge's beams and rings between two points of the caster, a red screen fade, bolts from its mouth to the target flickering through four key meshes and their in-betweens, sparks at the mouth and the target, a glow at the mouth, a shock wave at the target shaking it, splashes; the screen flash; the sound; the damage at tick 60. Its tasks are the port's code (FFNx mag186_blaster.cpp) run on the program's memory (its particles, aim, bolt in-between meshes and queues in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5BF6D0",
+   "setup": "0x5BF6F0",
+   "root": "0x5C0C80"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 186,
+  "from": "0x22B7600",
+  "size": "0x4B28"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0xD207F4",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xD208A4",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xD1DA60",
+   "size": 764
+  },
+  "seqs.beam": {
+   "kind": "seq",
+   "address": "0xD1DD5C",
+   "size": 116,
+   "frames": 4
+  },
+  "models.beam_ring": {
+   "kind": "model",
+   "address": "0xD20204",
+   "size": 1520,
+   "vertices": 49
+  },
+  "models.bolt": {
+   "kind": "model",
+   "address": "0xD1EF4C",
+   "size": 2056,
+   "vertices": 102
+  },
+  "keys.a": {
+   "kind": "table",
+   "address": "0xD1E26C",
+   "size": 824,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 102
+  },
+  "keys.b": {
+   "kind": "table",
+   "address": "0xD1E5A4",
+   "size": 824,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 102
+  },
+  "keys.c": {
+   "kind": "table",
+   "address": "0xD1E8DC",
+   "size": 824,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 102
+  },
+  "keys.d": {
+   "kind": "table",
+   "address": "0xD1EC14",
+   "size": 824,
+   "format": "h",
+   "columns": 4,
+   "skip": 8,
+   "labels": [
+    "x",
+    "y",
+    "z",
+    "pad"
+   ],
+   "count": 102
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xD1DF7C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.glow": {
+   "kind": "seq",
+   "address": "0xD1DDD0",
+   "size": 428,
+   "frames": 16
+  },
+  "models.wave": {
+   "kind": "model",
+   "address": "0xD1F754",
+   "size": 2736,
+   "vertices": 81
+  },
+  "seqs.splash": {
+   "kind": "seq",
+   "address": "0xD1E128",
+   "size": 324,
+   "frames": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5BF6F0",
+  "file_loader": "0x5BF6D0",
+  "root": "0x5C0C80"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The director's ticks: each part's start, the sound, the damage, the end; the mouth point and the aim (every tick), the screen flash; the bolt's in-between meshes (tick 0); the charge's beams and rings; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "fade",
+   "title": "Screen fade",
+   "doc": "A red full-screen fade: up, held, down (its colour v, v / 4, v / 4)"
+  },
+  {
+   "id": 2,
+   "key": "beams",
+   "title": "Charge beams",
+   "doc": "Beams between two of the caster's points, each with a ring fading over its second half, at the boundaries of the exe's interval table"
+  },
+  {
+   "id": 3,
+   "key": "bolts",
+   "title": "Bolts",
+   "doc": "Bolt meshes from the mouth to the target, flickering through their key and in-between meshes, turning, fading over their last ticks"
+  },
+  {
+   "id": 4,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Still sparks at the mouth and at the target, each playing its flipbook once"
+  },
+  {
+   "id": 5,
+   "key": "glow",
+   "title": "Glow",
+   "doc": "A glow flipbook at the mouth, dimming at the end"
+  },
+  {
+   "id": 6,
+   "key": "wave",
+   "title": "Shock wave",
+   "doc": "A shock wave mesh at the target, its texture cycling, fading at the end; the target shaken"
+  },
+  {
+   "id": 7,
+   "key": "splashes",
+   "title": "Splashes",
+   "doc": "Splashes thrown out from the target along the aim, slowing"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The director's ticks"
+  },
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "Up by 128 a tick until tick up, down from tick down to 0 at the end"
+  },
+  {
+   "key": "mouth",
+   "label": "Mouth",
+   "doc": "The point the bolts leave"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.charge",
+   "part": "director",
+   "label": "Charge",
+   "doc": "The charge (its beams and rings) starts",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "The sound",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade",
+   "part": "director",
+   "label": "Screen fade",
+   "doc": "The screen fade starts",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sparks",
+   "part": "director",
+   "label": "Sparks",
+   "doc": "The sparks start",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.glow",
+   "part": "director",
+   "label": "Glow",
+   "doc": "The glow starts",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.bolts",
+   "part": "director",
+   "label": "Bolts",
+   "doc": "The bolts start",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.wave",
+   "part": "director",
+   "label": "Shock wave",
+   "doc": "The shock wave starts",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.splashes",
+   "part": "director",
+   "label": "Splashes",
+   "doc": "The splashes start",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage",
+   "part": "director",
+   "label": "Damage",
+   "doc": "The damage to the target",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "director",
+   "label": "End",
+   "doc": "The director's last tick (the screen flash back to 0)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 65,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.up",
+   "part": "director",
+   "label": "Up until",
+   "doc": "The flash at tick x 128 until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.down",
+   "part": "director",
+   "label": "Down from",
+   "doc": "From this tick (end - tick) x 256",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 57,
+   "unit": "plain"
+  },
+  {
+   "key": "mouth.point",
+   "part": "director",
+   "label": "Point",
+   "doc": "The caster's effect point of the mouth",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 21,
+   "unit": "plain"
+  },
+  {
+   "key": "mouth.out",
+   "part": "director",
+   "label": "Out",
+   "doc": "The mouth point moved this far along the aim (the bolts this much shorter)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 300,
+   "unit": "plain"
+  },
+  {
+   "key": "mouth.pull",
+   "part": "director",
+   "label": "Target pull",
+   "doc": "The target point (the sparks', wave's and splashes') pulled back this far towards the caster",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 400,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "fade.up",
+   "part": "fade",
+   "label": "Up",
+   "doc": "Ticks up to the level (0: at once)",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.hold",
+   "part": "fade",
+   "label": "Hold",
+   "doc": "Ticks held",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.down",
+   "part": "fade",
+   "label": "Down",
+   "doc": "Ticks down to none",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.level",
+   "part": "fade",
+   "label": "Level",
+   "doc": "Its red at the top (green and blue a quarter of it)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.point_a",
+   "part": "beams",
+   "label": "Point 1",
+   "doc": "The caster's effect point the beam ends at (its middle: the beam's point)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 49,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.point_b",
+   "part": "beams",
+   "label": "Point 2",
+   "doc": "The other one",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "charge.ticks",
+   "part": "beams",
+   "label": "Ticks",
+   "doc": "The charge's ticks (a beam and its ring at each odd interval's start of the exe's table)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "beams.length",
+   "part": "beams",
+   "label": "Length",
+   "doc": "A beam's length scale (x the points' distance / 820)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1664,
+   "unit": "scale"
+  },
+  {
+   "key": "beams.width",
+   "part": "beams",
+   "label": "Width",
+   "doc": "A beam's width",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1024,
+   "unit": "scale"
+  },
+  {
+   "key": "beam_rings.size",
+   "part": "beams",
+   "label": "Ring size",
+   "doc": "A ring's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2304,
+   "unit": "scale"
+  },
+  {
+   "key": "beam_rings.size_rand",
+   "part": "beams",
+   "label": "Ring size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 768,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.beam",
+   "part": "beams",
+   "label": "Beam",
+   "doc": "The sprite sequence of the beams (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.beam",
+   "unit": "plain"
+  },
+  {
+   "key": "models.beam_ring",
+   "part": "beams",
+   "label": "Ring",
+   "doc": "The prim model of the beams' rings (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.beam_ring",
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.ticks",
+   "part": "bolts",
+   "label": "Ticks",
+   "doc": "A bolt on each odd tick before this one",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.end",
+   "part": "bolts",
+   "label": "End",
+   "doc": "Their spawner's last tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.life",
+   "part": "bolts",
+   "label": "Life",
+   "doc": "A bolt's ticks: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.life_rand",
+   "part": "bolts",
+   "label": "Life random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.spin",
+   "part": "bolts",
+   "label": "Spin",
+   "doc": "Its z angle step a tick (either way by turns)",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 512,
+   "unit": "angle"
+  },
+  {
+   "key": "bolts.size",
+   "part": "bolts",
+   "label": "Size",
+   "doc": "Its width: this + a random below the next (its length: the aim's)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2816,
+   "unit": "scale"
+  },
+  {
+   "key": "bolts.size_rand",
+   "part": "bolts",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2560,
+   "unit": "scale"
+  },
+  {
+   "key": "bolts.fade",
+   "part": "bolts",
+   "label": "Fade",
+   "doc": "Fading out over its last ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "bolts.frames",
+   "part": "bolts",
+   "label": "First frames",
+   "doc": "Its first mesh frame: a random below this (of 20: the keys and their in-betweens; at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 20,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "models.bolt",
+   "part": "bolts",
+   "label": "Bolt",
+   "doc": "The prim model of the bolts (a mesh of 102 vertices: its vertices are the key sets' and their in-betweens; edit its faces)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bolt",
+   "unit": "plain"
+  },
+  {
+   "key": "keys.a",
+   "part": "bolts",
+   "label": "Key 1",
+   "doc": "The bolt's first key vertices (102 vertices x, y, z after its size and count: an edited one keeps the count)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@keys.a",
+   "unit": "plain"
+  },
+  {
+   "key": "keys.b",
+   "part": "bolts",
+   "label": "Key 2",
+   "doc": "The second key (the in-betweens: 4 between each key and the next, the last back to the first)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@keys.b",
+   "unit": "plain"
+  },
+  {
+   "key": "keys.c",
+   "part": "bolts",
+   "label": "Key 3",
+   "doc": "The third key",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@keys.c",
+   "unit": "plain"
+  },
+  {
+   "key": "keys.d",
+   "part": "bolts",
+   "label": "Key 4",
+   "doc": "The fourth key",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@keys.d",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.ticks",
+   "part": "sparks",
+   "label": "Ticks",
+   "doc": "One spark at the mouth and one at the target a tick on its first ticks (100 alive at most, with the splashes)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size",
+   "part": "sparks",
+   "label": "Mouth size",
+   "doc": "A mouth spark's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1280,
+   "unit": "scale"
+  },
+  {
+   "key": "sparks.size_rand",
+   "part": "sparks",
+   "label": "Mouth size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 512,
+   "unit": "scale"
+  },
+  {
+   "key": "sparks.spread",
+   "part": "sparks",
+   "label": "Mouth spread",
+   "doc": "Up to this far from the mouth on each axis (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 160,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.target_size",
+   "part": "sparks",
+   "label": "Target size",
+   "doc": "A target spark's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1792,
+   "unit": "scale"
+  },
+  {
+   "key": "sparks.target_size_rand",
+   "part": "sparks",
+   "label": "Target size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1280,
+   "unit": "scale"
+  },
+  {
+   "key": "sparks.target_spread",
+   "part": "sparks",
+   "label": "Target spread",
+   "doc": "Up to this far from the target point on each axis (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 260,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Spark",
+   "doc": "The sprite sequence of the sparks (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "glow.size",
+   "part": "glow",
+   "label": "Size",
+   "doc": "Its size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3584,
+   "unit": "scale"
+  },
+  {
+   "key": "glow.ticks",
+   "part": "glow",
+   "label": "Ticks",
+   "doc": "Its ticks (its frame: the tick's low 4 bits)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.fade",
+   "part": "glow",
+   "label": "Dim from",
+   "doc": "From this tick drawn at (ticks - tick) x 16",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.glow",
+   "part": "glow",
+   "label": "Glow",
+   "doc": "The sprite sequence of the glow (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "wave.size",
+   "part": "wave",
+   "label": "Size",
+   "doc": "Its size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 5632,
+   "unit": "scale"
+  },
+  {
+   "key": "wave.ticks",
+   "part": "wave",
+   "label": "Ticks",
+   "doc": "Its ticks (the shake: half a sine over them)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "wave.fade",
+   "part": "wave",
+   "label": "Fade from",
+   "doc": "Fading out by 512 a tick from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "wave.shake",
+   "part": "wave",
+   "label": "Shake",
+   "doc": "The target's z shaken by up to this (either way by turns)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "wave.turn",
+   "part": "wave",
+   "label": "Turn",
+   "doc": "Its y angle: the caster's + this",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 2048,
+   "unit": "angle"
+  },
+  {
+   "key": "models.wave",
+   "part": "wave",
+   "label": "Shock wave",
+   "doc": "The prim model of the shock wave (a mesh: an edited one keeps its vertices; its texture words from the exe's table)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.wave",
+   "unit": "plain"
+  },
+  {
+   "key": "splashes.ticks",
+   "part": "splashes",
+   "label": "Ticks",
+   "doc": "New splashes on its first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "splashes.count",
+   "part": "splashes",
+   "label": "Count",
+   "doc": "Splashes a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "splashes.size",
+   "part": "splashes",
+   "label": "Size",
+   "doc": "A splash's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2304,
+   "unit": "scale"
+  },
+  {
+   "key": "splashes.size_rand",
+   "part": "splashes",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2048,
+   "unit": "scale"
+  },
+  {
+   "key": "splashes.spread",
+   "part": "splashes",
+   "label": "Spread",
+   "doc": "Its start up to this far sideways from the target point (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "splashes.depth",
+   "part": "splashes",
+   "label": "Depth",
+   "doc": "And up to this far back along the aim (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "splashes.speed",
+   "part": "splashes",
+   "label": "Speed",
+   "doc": "Its speed: this + a random below the next (losing a quarter a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 16383,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "splashes.speed_rand",
+   "part": "splashes",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 260,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splash",
+   "part": "splashes",
+   "label": "Splash",
+   "doc": "The sprite sequence of the splashes (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splash",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.aim_from",
+   "label": "Aim from",
+   "doc": "The vector the aim's rotation turns from (0, 0, -4096)",
+   "address": "0xD20800",
+   "size": 12
+  },
+  {
+   "key": "not_editable.bolt_meshes",
+   "label": "Bolt meshes",
+   "doc": "The bolt's 20 mesh frames: each key's vertices then its 4 in-between buffers in the module (its code reads the in-between pointers; the keys are the key sets in use)",
+   "address": "0xD20810",
+   "size": 80
+  },
+  {
+   "key": "not_editable.wave_textures",
+   "label": "Wave textures",
+   "doc": "The shock wave's 8 texture words, one a tick in turn",
+   "address": "0xD20860",
+   "size": 32
+  },
+  {
+   "key": "not_editable.bounds",
+   "label": "Charge intervals",
+   "doc": "The charge's tick boundaries (from its second word, -1 ending them): a beam and its ring at the start of each odd interval",
+   "address": "0xD2087C",
+   "size": 32
+  }
+ ]
+}

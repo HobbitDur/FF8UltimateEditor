@@ -2428,6 +2428,23 @@ Potion's description is the same with its own sequences and sound.
      - *Tests:* the cycle test casts it from Tri-Face (c0m036, slot 3) on Squall (`CYCLE_CASTS`); the description's
        compile test. The recorder does not log the screen flash.
      - *Fujin:* its tabs (Director, Tinted caster, Puffs, Wisps, Clouds, Target gas); no + menu family.
+   - **Morph (172)** (FFNx 65901153; Jelleye's attack 53; a port root, Cannon Blow's kind): at director tick 0 the
+     caster's point; at tick 1 two ring meshes there (sizes 0xC00 / 0x1600, turning by -2 / -3 x their angle, fading in
+     over 8 ticks and out from tick 48, 56 ticks), the ring mesh's vertex radii, the sparkles (one a tick at a random bone
+     of the caster until tick 42) and the sound at the caster; at tick 8 the caster hidden and redrawn for 56 ticks with
+     a 20-step colour cycle over its faces within 1000 of its point (from black and back); the director ends after tick
+     60. Its code applies no action result.
+     - *Inputs* (`MorphParams`, 28): the sound and the director's ticks, the rings (sizes, spin, turns, ticks, fade in /
+       out / hold, a twist of the vertices by their radius: 0 in the game, its waving code multiplies by 0), the
+       sparkles (ticks, size, spread), the tinted caster (ticks, radius, fade in / out). Data: the sound, the sparkle
+       flipbook, the ring mesh, "mag171.tim", the camera track. Not editable: the tint's colour cycle (20 words).
+       The rings' radii and waved vertices are the drawn mesh's own (the game's: its model + 8), so an edited mesh's
+       vertices are the ones drawn. The tinted caster's model redraw (Gastric Juice 169's) stays code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; three parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Jelleye (c0m029, slot 3) on Squall (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Director, Rings, Sparkles, Tinted caster); no + menu family.
    - **Ice Breath (173)** (FFNx 62e957df; the Snow Lion's attack, the Cronos mod's item Arctic Wind; a port root,
      Ray-Bomb's kind): the caster's mouth (its bone 0xF0, retaken every tick) blowing a frost swirl, a glow and four
      breath cones, then frost puffs and spinning crystal layouts along a sweep toward the targets, five ice meshes on
@@ -2496,6 +2513,27 @@ Potion's description is the same with its own sequences and sound.
        (0x5C26A0, 0x5C3D10, 0x5C7AB0, ...) read the module's words.
      - *Port:* the spawn helper `LinkTask` goes through own::Fn.
      - *Fujin:* its tab (Timeline); no + menu family.
+   - **Blaster (186)** (FFNx 65901153; Torama's attacks 122 / 123; a port root, Cannon Blow's kind): every director tick
+     the mouth point (the caster's point 0x15 moved 300 along the aim) and the aim; at tick 0 the target point pulled 400
+     back and the bolt's 16 in-between meshes made from its four key vertex sets; at tick 7 the charge (beams and rings
+     between the caster's points 0x31 / 0x32 at the odd intervals of the exe's table) and the sound; at tick 39 a red
+     screen fade, the sparks (mouth and target) and the glow; at 40 the bolts (one each odd tick until 12, flickering
+     through the 20 meshes), the shock wave at the target (shaking it) and the splashes; the screen flash; the damage at
+     tick 60; the end at 65.
+     - *Inputs* (`BlasterParams`, 72): the sound and the director's ticks, the flash, the mouth (point, out, target
+       pull), the charge (points, ticks, beam length / width, ring size), the bolts (ticks, end, life, spin, size, fade,
+       first frames), the sparks (ticks, mouth and target size and spread), the glow (size, ticks, dim), the shock wave
+       (size, ticks, fade, shake, turn), the splashes (ticks, count, size, spread, depth, speed), the screen fade (up,
+       hold, down, level). Data: the sound, four flipbooks, three meshes, the bolt's four key vertex sets (tables of 102
+       vertices), "mag185.tim", the camera track. Not editable: the charge's interval table, the shock wave's 8 texture
+       words, the bolt's mesh frame table, the aim's start vector. The bolt mesh's own vertices are never drawn (the game's too: its frames are the
+       key sets and their in-betweens), only its faces.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; seven parts tagged
+       (FX_PART); the bolt frames' in-between buffers (pointers of the exe's table 0xD20810 into the module) through own::R.
+     - *Tests:* the cycle test casts it from Torama (c0m057, slot 3) on Squall (`CYCLE_CASTS`); the description's compile
+       test. The recorder does not log the screen flash nor the target's shake.
+     - *Fujin:* its tabs (Director, Screen fade, Charge beams, Bolts, Sparks, Glow, Shock wave, Splashes); no + menu
+       family.
    - **Odin (187)** (FFNx f1dcacb5; the GF's Zantetsuken, the timeline family; a port timeline, Ray-Bomb's kind):
      the camera script, the summon stream's loads, the grids, debris and intro, the creature with its blade
      glow, smoke, rings, mist, sparks and slashes, the target slices, the party hidden, the screen flash, the
