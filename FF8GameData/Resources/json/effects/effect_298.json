@@ -1,0 +1,580 @@
+{
+ "format": 1,
+ "effect": 298,
+ "name": "BGH251F2 destruction",
+ "doc": "BGH251F2's destruction (enemy attack 119, BGH251F2 (Damaged) c0m102, on itself): the module draws the caster with 45 pose entries that 3 bone scripts move, turn and shatter: its bone groups' polygons fly off as fragments (small meshes with their texture) spinning, falling, bouncing and fading, a mark flipbook where each started; layouts and sprites at its bones; the caster sinking at the end, the sound and its voice, the music faded; no damage. Effect 290's and 308's kin. Its tasks are the port's code (FFNx mag298_bgh251f2_destruction.cpp) run on the program's memory (its master's pose, fragments and marks in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x670980",
+   "setup": "0x670970",
+   "root": "0x670A20"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 298,
+  "from": "0x2507880",
+  "size": "0x84"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x104E330",
+   "size": 4
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0x104E334",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x105687C",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1052298",
+   "size": 328
+  },
+  "tables.scripts": {
+   "kind": "table",
+   "address": "0x1056560",
+   "size": 796,
+   "format": "h",
+   "columns": 2,
+   "skip": 0,
+   "count": 199
+  },
+  "models.frag[0]": {
+   "kind": "model",
+   "address": "0x104E464",
+   "size": 248,
+   "vertices": 8
+  },
+  "models.frag[1]": {
+   "kind": "model",
+   "address": "0x104E55C",
+   "size": 248,
+   "vertices": 8
+  },
+  "models.frag[2]": {
+   "kind": "model",
+   "address": "0x104E654",
+   "size": 248,
+   "vertices": 8
+  },
+  "mark_seqs.a": {
+   "kind": "seq",
+   "address": "0x104EA64",
+   "size": 352,
+   "frames": 13
+  },
+  "mark_seqs.b": {
+   "kind": "seq",
+   "address": "0x104E74C",
+   "size": 364,
+   "frames": 12
+  },
+  "layouts.l[0]": {
+   "kind": "layout",
+   "address": "0x104ED34",
+   "size": 2700,
+   "capacity": 80
+  },
+  "layouts.l[1]": {
+   "kind": "layout",
+   "address": "0x104F7C0",
+   "size": 4768,
+   "capacity": 304
+  },
+  "layouts.l[2]": {
+   "kind": "layout",
+   "address": "0x1050A60",
+   "size": 3084,
+   "capacity": 272
+  },
+  "layouts.l[3]": {
+   "kind": "layout",
+   "address": "0x105166C",
+   "size": 3084,
+   "capacity": 272
+  },
+  "seqs.s[0]": {
+   "kind": "seq",
+   "address": "0x104E74C",
+   "size": 364,
+   "frames": 12
+  },
+  "seqs.s[1]": {
+   "kind": "seq",
+   "address": "0x104E8B8",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.s[2]": {
+   "kind": "seq",
+   "address": "0x104EA64",
+   "size": 352,
+   "frames": 13
+  },
+  "seqs.s[3]": {
+   "kind": "seq",
+   "address": "0x104EBC4",
+   "size": 352,
+   "frames": 13
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x670970",
+  "file_loader": "0x670980",
+  "root": "0x670A20"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The master's ticks, the start sound and the voice (claimed at the start, released near the end), the caster sinking at the end; the texture and the camera"
+  },
+  {
+   "id": 0,
+   "key": "scripts",
+   "title": "Bone scripts",
+   "doc": "The 3 bone scripts: each moves the caster's 45 pose entries (offsets, turns, their speeds, a bounce on the ground), shatters bone groups into fragments (bones, count, speed, size, chance), spawns layouts and sprites at bones, loops"
+  },
+  {
+   "id": 1,
+   "key": "body",
+   "title": "Body",
+   "doc": "The caster drawn by the module with the pose entries (its shadow, then its bones)"
+  },
+  {
+   "id": 2,
+   "key": "fragments",
+   "title": "Fragments",
+   "doc": "The shattered polygons: fragments of up to 12 of them on a small mesh, flying off along their normal, spinning, falling, bouncing, fading out"
+  },
+  {
+   "id": 3,
+   "key": "marks",
+   "title": "Marks",
+   "doc": "A flipbook where each fragment started, drifting the same way (two kinds)"
+  },
+  {
+   "id": 4,
+   "key": "layouts",
+   "title": "Layouts",
+   "doc": "The scripts' layouts at a bone, turned, scaled"
+  },
+  {
+   "id": 5,
+   "key": "sprites",
+   "title": "Sprites",
+   "doc": "The scripts' sprites at a bone (one, or a random burst), drifting, accelerating"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The master's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "master",
+   "label": "Sound",
+   "doc": "At the start sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.voice",
+   "part": "master",
+   "label": "Voice",
+   "doc": "The sound block its voice slot is claimed with (at the start)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.start",
+   "part": "master",
+   "label": "Sound",
+   "doc": "The master's tick of the start sound",
+   "type": "i16",
+   "min": 0,
+   "max": 115,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.release",
+   "part": "master",
+   "label": "Voice released",
+   "doc": "Its tick the voice slot is released",
+   "type": "i16",
+   "min": 0,
+   "max": 115,
+   "default": 111,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "master",
+   "label": "End",
+   "doc": "Its last tick (the root runs its tasks below tick 116, then streams the battle file in)",
+   "type": "i16",
+   "min": 1,
+   "max": 115,
+   "default": 115,
+   "unit": "plain"
+  },
+  {
+   "key": "sink.start",
+   "part": "master",
+   "label": "Sink from",
+   "doc": "From this tick the caster sinks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 90,
+   "unit": "plain"
+  },
+  {
+   "key": "sink.speed",
+   "part": "master",
+   "label": "Sink speed",
+   "doc": "Its position word +0x20 - this a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "master",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "master",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.scripts",
+   "part": "scripts",
+   "label": "Bone scripts",
+   "doc": "The 3 bone scripts' byte code (0x31C bytes, each script at its own offset: edit their numbers, keep their shape)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.scripts",
+   "unit": "plain"
+  },
+  {
+   "key": "fragments.polys",
+   "part": "fragments",
+   "label": "Polygons",
+   "doc": "Polygons a fragment takes (12 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 12,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "fragments.life",
+   "part": "fragments",
+   "label": "Life",
+   "doc": "A fragment's ticks: this + a random below 16",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "fragments.gravity",
+   "part": "fragments",
+   "label": "Gravity",
+   "doc": "Its fall speed grows by this a tick (it bounces at half its speed on the ground)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "fragments.fade",
+   "part": "fragments",
+   "label": "Fade",
+   "doc": "It fades out over its last ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "fragments.spin",
+   "part": "fragments",
+   "label": "Spin",
+   "doc": "Its spin on each axis: a random below 0x400 - this a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 512,
+   "unit": "angle"
+  },
+  {
+   "key": "models.frag[0]",
+   "part": "fragments",
+   "label": "Mesh 1",
+   "doc": "A fragment's mesh (one of three at random)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.frag[0]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.frag[1]",
+   "part": "fragments",
+   "label": "Mesh 2",
+   "doc": "A fragment's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.frag[1]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.frag[2]",
+   "part": "fragments",
+   "label": "Mesh 3",
+   "doc": "A fragment's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.frag[2]",
+   "unit": "plain"
+  },
+  {
+   "key": "marks.life_a",
+   "part": "marks",
+   "label": "Life A",
+   "doc": "A kind A mark's ticks (its flipbook's frame count - its life left: 12 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 12,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "marks.life_b",
+   "part": "marks",
+   "label": "Life B",
+   "doc": "A kind B mark's ticks (11 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 11,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "marks.chance_a",
+   "part": "marks",
+   "label": "Kind A chance",
+   "doc": "A mark is of kind A (a quarter of its fragment's speed) when the module LCG (0..0x7FFF) is above this",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 12000,
+   "unit": "plain"
+  },
+  {
+   "key": "marks.speed",
+   "part": "marks",
+   "label": "Speed",
+   "doc": "A mark moves by its velocity bytes x this a tick",
+   "type": "i16",
+   "min": -64,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "mark_seqs.a",
+   "part": "marks",
+   "label": "Flipbook A",
+   "doc": "Kind A's flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@mark_seqs.a",
+   "unit": "plain"
+  },
+  {
+   "key": "mark_seqs.b",
+   "part": "marks",
+   "label": "Flipbook B",
+   "doc": "Kind B's flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@mark_seqs.b",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.l[0]",
+   "part": "layouts",
+   "label": "Layout 0",
+   "doc": "The scripts' layout 0",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.l[0]",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.l[1]",
+   "part": "layouts",
+   "label": "Layout 1",
+   "doc": "The scripts' layout 1 (the game's scripts do not use it)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.l[1]",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.l[2]",
+   "part": "layouts",
+   "label": "Layout 2",
+   "doc": "The scripts' layout 2",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.l[2]",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.l[3]",
+   "part": "layouts",
+   "label": "Layout 3",
+   "doc": "The scripts' layout 3",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.l[3]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[0]",
+   "part": "sprites",
+   "label": "Flipbook 0",
+   "doc": "The scripts' flipbook 0",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[0]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[1]",
+   "part": "sprites",
+   "label": "Flipbook 1",
+   "doc": "The scripts' flipbook 1",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[1]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[2]",
+   "part": "sprites",
+   "label": "Flipbook 2",
+   "doc": "The scripts' flipbook 2 (the game's scripts do not use it)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[2]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[3]",
+   "part": "sprites",
+   "label": "Flipbook 3",
+   "doc": "The scripts' flipbook 3",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[3]",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.sequence_table",
+   "label": "Flipbook table",
+   "doc": "The scripts' flipbooks by index (an address each: the parameters stand in for 0..3)",
+   "address": "0x104ED24",
+   "size": 16
+  },
+  {
+   "key": "not_editable.layout_table",
+   "label": "Layout table",
+   "doc": "The scripts' layouts by index (address, decode size: the parameters stand in for 0..3, the sizes are read here)",
+   "address": "0x1052278",
+   "size": 32
+  },
+  {
+   "key": "not_editable.sin_cos",
+   "label": "Sine / cosine table",
+   "doc": "4096 x (sine, cosine) the fragments' turns read (its first quarter shown)",
+   "address": "0x10523E0",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.sqrt_table",
+   "label": "Square roots",
+   "doc": "The GTE-style square-root table the fragments' normals are normalised with",
+   "address": "0x1056360",
+   "size": 512
+  }
+ ]
+}

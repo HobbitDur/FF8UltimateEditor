@@ -3166,6 +3166,26 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`WhiteWind297Params`): the sound. Data: the sound, "mag296.tim".
      - *Tests:* cast on two targets (`CYCLE_MONSTERS`: one records too little for the cycle test).
      - *Fujin:* its tab (Scene); no + menu family.
+   - **BGH251F2 destruction (298)** (FFNx 4e94a443; enemy attack 119 of BGH251F2 (Damaged), c0m102, on itself: its
+     destruction; a port root, Cannon Blow's kind; Trauma shatter 290's and Mobile Type 8's break-up 308's kin): the music
+     faded; the module draws the caster with 45 pose entries that 3 bone scripts move, turn and shatter (its bone groups'
+     polygons fly off as fragments of up to 12 on one of three small meshes, spinning, falling, bouncing, fading over their
+     last 8 ticks, a mark flipbook of one of two kinds where each started) and that spawn layouts and sprites at its bones;
+     from tick 90 the caster sinks 0x80 a tick; the sound at tick 1, the voice claimed at the start and released at 111;
+     the master ends at 115 (the effect once the battle file it streams is in). No damage.
+     - *Inputs* (`DestructParams`, 32): the sound and the voice, the ticks (sound, voice released, end), the sinking
+       (from, speed), the fragments (polygons each, life, gravity, fade, spin), the marks (two lives, the chance of kind A,
+       speed). Data: the two sounds, the scripts' four layouts and four flipbooks (by their index: the game's scripts use
+       layouts 0 / 2 / 3 and flipbooks 0 / 1 / 3), the marks' two flipbooks, the three fragment meshes, the 3 bone scripts'
+       byte code (0x31C bytes: their loop counters are written as they run), "mag297.tim", the camera track. Not editable:
+       the sine / cosine and square-root tables. The shatter itself (which polygons, the fragments' velocity from their
+       normals), the module's draw of the caster and the fragment / mark renderers stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; five parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from BGH251F2 (Damaged) (c0m102, slot 3) on itself (`CYCLE_CASTS`; it hurts
+       nobody); the description's compile test. The recorder does not record the music fade, the voice slot nor the
+       caster's position word.
+     - *Fujin:* its tabs (Master, Bone scripts, Body, Fragments, Marks, Layouts, Sprites); no + menu family.
    - **Micro Missiles (Quistis) (299)** (FFNx 92980f0e; Quistis' Blue Magic; a port root, Ray-Bomb's kind): her cast
      animation, six missiles fanned from her to random bones of the target (two miss) with their trails, hits,
      flashes and sparks, the sound; the action result.
@@ -3176,6 +3196,26 @@ Potion's description is the same with its own sequences and sound.
      screen fade, the smoke, one hit task a target, the sound; the action results.
      - *Inputs* (`BadBreath300Params`): the breath's sound. Data: the sound, "mag130-299.tim".
      - *Fujin:* its tab (Breath); no + menu family.
+   - **Gargantua entrance (301)** (FFNx 4e94a443; enemy attack 265 of Gargantua, c0m094, on itself; FFNx's
+     mag301_gargantua_burrow; a port root, Cannon Blow's kind): the party's bit 2 set for the effect; for 121 ticks a
+     layout on the ground at the caster and the module's draw of its body (polygons all below the ground line 0x40 left
+     out, every 8th polygon crossing it leaving a ground mark of 12 ticks); for 101 ticks the rocks (a mesh, thrown,
+     spinning, falling, bouncing, 16 ticks) and dust puffs (a flipbook, 16 ticks) of a spawn stream; from tick 122 the
+     caster's own draw back and its colour faded back in over 20 ticks; the sound at tick 1, the voice released at 138;
+     the master ends at 142. No damage.
+     - *Inputs* (`BurrowParams`, 28): the sound and the voice, the ticks (sound, voice released, end), the fade
+       (start, ticks, its byte), the spawn ticks, the layout (ticks, depth), the body (ground line, the marks' depth limit,
+       a mark every n-th polygon), the marks' life, the rocks (life, gravity, the speed of the velocity bytes x / z and y),
+       the puffs (life, size). Data: the two sounds, the layout, the rock mesh, the puffs' and the marks' flipbooks, the
+       spawn stream (0x12B8 bytes: per tick a count and 10 words a rock, a count and 6 words a puff), "mag300.tim", the
+       camera track. The spawn stream's pointer is exe data the game never puts back (a second cast reads on past it): a
+       copy reads its own stream at the pointer's offset, and spawns nothing past its end. The body's ground cut and the
+       mark sprites' renderer stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; five parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Gargantua (c0m094, slot 3) on itself (`CYCLE_CASTS`; it hurts nobody); the
+       description's compile test. The recorder does not record the caster's colour nor the party's flags.
+     - *Fujin:* its tabs (Master, Layout, Body, Ground marks, Rocks, Dust); no + menu family.
    - **Snipe Laser (302)** (FFNx 26f4da68; GIM47N's attack, a Funguar laser variant; a port root, Ray-Bomb's kind): two
      beams from two points of the caster's skeleton to each target, the aim layouts, the beams, the hit layouts and
      glows, beam 0's impact layout and sparks, the sound at the master's tick 20; the action results.
@@ -3184,6 +3224,27 @@ Potion's description is the same with its own sequences and sound.
        the camera track, the two beams' points (x, y, z and the caster's bone).
      - *Tests:* `tests/Fujin/test_ports_R.py` - cast by GIM47N (c0m008) on the party.
      - *Fujin:* its tab (Beam); no + menu family.
+   - **Remove mask (303)** (FFNx 4e94a443; Sphinxaur's (c0m011) mask removal, its target the unmasked Sphinxara (c0m012)
+     moved onto its position; a port root, Cannon Blow's kind): the burst layout at the caster's point for 22 ticks and 32
+     sparks a tick on its first 2; the mask's four pieces (meshes) flying off the caster, falling, then shattered into
+     shards (one per polygon, spinning, falling, bouncing) with the pieces' layout where each broke; 8 sprites around a
+     second point at tick 6; from tick 24 for 16 ticks the unmasked form redrawn environment-mapped (its uv from its
+     normals, scrolling, a pulsing grey); the sound at tick 0, the voice released at 37; the main ends at 41 (then the
+     battle file it streams, the masked caster's slot removed). No damage.
+     - *Inputs* (`MaskParams`, 52): the sound and the voice, the ticks (sound, voice released, end), the burst
+       (ticks, depth, its point x / y / z at a bone), the sparks (ticks, count, scatter, life), the sprites (tick, count,
+       scatter, life, their point), the pieces (gravity, their layouts' four scales), the shards (speed shift, life,
+       gravity, spin, spin scale), the redraw (start, ticks, palette, texture page x / y, uv scroll, the grey's pulse).
+       Data: the two sounds, the burst and piece layouts, the four piece meshes (shattered as they are: their triangles
+       and quads with texture, no flat polygons), the sparks' and sprites' flipbooks, the pieces' velocity and life
+       (0x20 bytes), "mag302.tim", the camera track. The shatter (the shards from the mesh's polygons), the shard and
+       environment-mapped renderers stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported (the unmasked
+       form's move, chain transformation and animation read included); seven parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Sphinxaur (c0m011, slot 3) on Sphinxara (c0m012, slot 4: `CYCLE_CASTS`,
+       `CYCLE_SLOTS`; it hurts nobody); the description's compile test.
+     - *Fujin:* its tabs (Main, Burst, Sparks, Sprites, Mask pieces, Piece layouts, Shards, Unmasked form); no + menu
+       family.
    - **Boomerang Sword (304)** (FFNx 4c826715; the Esthar Soldiers' enemy attack; a port root, Ray-Bomb's kind): the
      sword thrown from the caster's hand along the targets and back, spinning, with its trail, a hit layout and
      sparks at each target it passes, the sound; each target's action result.
@@ -3206,6 +3267,27 @@ Potion's description is the same with its own sequences and sound.
      sounds; the action results.
      - *Inputs* (`RayBomb307Params`): the muzzle and blast sounds. Data: the sounds, "mag009.tim".
      - *Fujin:* its tab (Director); no + menu family.
+   - **Mobile Type 8 break-up (308)** (FFNx 4e94a443; enemy attack 286 of Mobile Type 8, c0m105, with its two probes c0m106
+     / c0m107 in the next slots: its death; a port root, Cannon Blow's kind; BGH251F2 destruction 298's kin): the music
+     faded; the screen flash up over 8 ticks, held, down over the last 8; the three entities' colours blended to black over
+     20 ticks; until tick 86 the module draws the three with their pose entries that 3 bone scripts (one each) move, turn
+     and break (sparks thrown off their marked bones' polygons along the normals, two kinds), and that spawn layouts,
+     sprites and a full-screen quad; a white tile rising from tick 70 over 16 ticks (the scripts, sprites and layouts
+     dropped at its top), then fading; the sound at tick 0, the battle files loaded at 103, the voice released at 106;
+     the main ends at 110 (the effect once the files are in). No damage.
+     - *Inputs* (`MobileParams`, 34): the sound and the voice, the ticks (sound, voice released, files loaded,
+       end), the flash (ramp, level), the tint (ticks, its byte), the bodies' ticks, the tile (start, ticks, colour), the
+       sparks (two lives, the chance of kind A, cool-down, speed). Data: the two sounds, the scripts' four layouts and four
+       flipbooks (by their index), the sparks' two flipbooks, the 3 bone scripts' byte code (0x3A0 bytes: their loop
+       counters are written as they run), "mag307.tim", the camera track. Not editable: the square-root table. The sparks
+       (which polygons, their velocity from the normals), the module's draw of the entities and the spark renderer stay
+       code.
+     - *Port:* the module globals through own::R (the colour target 0x250754C, never written, too), the spawns through
+       own::Fn; setup and loader ported; six parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Mobile Type 8 (c0m105, slot 3) on itself with its probes in slots 4 / 5
+       (`CYCLE_CASTS`, `CYCLE_SLOTS`; it hurts nobody); the description's compile test. The recorder does not record the
+       screen flash, the music fade nor the entities' colours.
+     - *Fujin:* its tabs (Main, Bone scripts, Bodies, Sparks, Layouts, Sprites, White tile, Script quad); no + menu family.
    - **Hero (309)** (FFNx 18d8e283; the battle items Hero-trial / Hero; a port root, Ray-Bomb's kind): the orbit
      layouts spiralling in, the main layout and the shards at the target, the sound; the action result.
      - *Inputs* (`HeroParams`): the sound. Data: the sound, "mag308.tim".

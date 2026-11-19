@@ -1,0 +1,588 @@
+{
+ "format": 1,
+ "effect": 308,
+ "name": "Mobile Type 8 break-up",
+ "doc": "Mobile Type 8's death (enemy attack 286, c0m105 with its two probes c0m106 / c0m107 in the next slots): the module draws the three with their pose entries that 3 bone scripts move, turn and break, sparks thrown off their marked bones' polygons, layouts and sprites at their bones, their colours blended to black, the screen flash and a white tile rising and fading, the sound and its voice, the music faded; no damage. Effect 298's and 290's kin. Its tasks are the port's code (FFNx mag308_mobile_type8.cpp) run on the program's memory (its main's poses and sparks in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x667680",
+   "setup": "0x667670",
+   "root": "0x667720"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 308,
+  "from": "0x25074D0",
+  "size": "0x88"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x1025908",
+   "size": 4
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0x102590C",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x102E940",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x10257E8",
+   "size": 288
+  },
+  "tables.scripts": {
+   "kind": "table",
+   "address": "0x102E5A0",
+   "size": 928,
+   "format": "h",
+   "columns": 8,
+   "skip": 0,
+   "count": 58
+  },
+  "spark_seqs.a": {
+   "kind": "seq",
+   "address": "0x1026038",
+   "size": 352,
+   "frames": 13
+  },
+  "spark_seqs.b": {
+   "kind": "seq",
+   "address": "0x1025D20",
+   "size": 364,
+   "frames": 12
+  },
+  "layouts.l[0]": {
+   "kind": "layout",
+   "address": "0x1026308",
+   "size": 5692,
+   "capacity": 376
+  },
+  "layouts.l[1]": {
+   "kind": "layout",
+   "address": "0x1027944",
+   "size": 4768,
+   "capacity": 304
+  },
+  "layouts.l[2]": {
+   "kind": "layout",
+   "address": "0x1028BE4",
+   "size": 3084,
+   "capacity": 272
+  },
+  "layouts.l[3]": {
+   "kind": "layout",
+   "address": "0x10297F0",
+   "size": 3084,
+   "capacity": 272
+  },
+  "seqs.s[0]": {
+   "kind": "seq",
+   "address": "0x1025D20",
+   "size": 364,
+   "frames": 12
+  },
+  "seqs.s[1]": {
+   "kind": "seq",
+   "address": "0x1025E8C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.s[2]": {
+   "kind": "seq",
+   "address": "0x1026038",
+   "size": 352,
+   "frames": 13
+  },
+  "seqs.s[3]": {
+   "kind": "seq",
+   "address": "0x1026198",
+   "size": 352,
+   "frames": 13
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x667670",
+  "file_loader": "0x667680",
+  "root": "0x667720"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The main's ticks, the start sound and the voice (claimed at the start, released near the end), the screen flash, the three entities' colours blended to black, the battle files loaded at the end; the texture and the camera"
+  },
+  {
+   "id": 0,
+   "key": "scripts",
+   "title": "Bone scripts",
+   "doc": "The 3 bone scripts (one per entity: Mobile Type 8 and its two probes): each moves its entity's 45 pose entries (offsets, turns, their speeds, a bounce on the ground), throws sparks off bone groups, spawns layouts and sprites at bones, a full-screen quad, loops"
+  },
+  {
+   "id": 1,
+   "key": "body",
+   "title": "Bodies",
+   "doc": "The three entities drawn by the module with their pose entries (their shadow, then the bones not hidden)"
+  },
+  {
+   "id": 2,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sparks off the marked bones' polygons along their normals, drifting (two flipbooks)"
+  },
+  {
+   "id": 3,
+   "key": "layouts",
+   "title": "Layouts",
+   "doc": "The scripts' layouts at a bone, turned, scaled"
+  },
+  {
+   "id": 4,
+   "key": "sprites",
+   "title": "Sprites",
+   "doc": "The scripts' sprites at a bone (one, or a random burst), drifting, accelerating"
+  },
+  {
+   "id": 5,
+   "key": "tile",
+   "title": "White tile",
+   "doc": "A full-screen tile rising, then fading"
+  },
+  {
+   "id": 6,
+   "key": "quad",
+   "title": "Script quad",
+   "doc": "The scripts' flat full-screen quad"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The main's ticks"
+  },
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "The screen flash"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "At the start sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.voice",
+   "part": "main",
+   "label": "Voice",
+   "doc": "The sound block its voice slot is claimed with (at the start)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "The main's tick of the start sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.release",
+   "part": "main",
+   "label": "Voice released",
+   "doc": "Its tick the voice slot is released",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 106,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.load",
+   "part": "main",
+   "label": "Files loaded",
+   "doc": "Its tick the battle files 0x168 / 0x169 are streamed in",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 103,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "main",
+   "label": "End",
+   "doc": "Its last tick (the colours put back; the effect ends once the files are in)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.ramp",
+   "part": "main",
+   "label": "Flash ramp",
+   "doc": "The screen flash rises over the first ticks and falls over the last (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "main",
+   "label": "Flash level",
+   "doc": "Its level in between",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2300,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.ticks",
+   "part": "main",
+   "label": "Tint ticks",
+   "doc": "The three entities' colours blended to black over the first ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.alpha",
+   "part": "main",
+   "label": "Tint byte",
+   "doc": "Their colours' 4th byte set meanwhile",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.scripts",
+   "part": "scripts",
+   "label": "Bone scripts",
+   "doc": "The 3 bone scripts' byte code (0x3A0 bytes, each script at its own offset: edit their numbers, keep their shape)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.scripts",
+   "unit": "plain"
+  },
+  {
+   "key": "body.ticks",
+   "part": "body",
+   "label": "Ticks",
+   "doc": "The three drawn by the module (and the sparks drawn) on the main's ticks below this",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 86,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life_a",
+   "part": "sparks",
+   "label": "Life A",
+   "doc": "A kind A spark's ticks (its flipbook's frame count - its life left: 12 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 12,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life_b",
+   "part": "sparks",
+   "label": "Life B",
+   "doc": "A kind B spark's ticks (11 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 11,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.chance_a",
+   "part": "sparks",
+   "label": "Kind A chance",
+   "doc": "A spark is of kind A (a quarter of the speed) when the module LCG (0..0x7FFF) is above this",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 12000,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.cooldown",
+   "part": "sparks",
+   "label": "Cool-down",
+   "doc": "Marked polygons skipped after one that threw a spark",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.speed",
+   "part": "sparks",
+   "label": "Speed",
+   "doc": "A spark moves by its velocity bytes x this a tick",
+   "type": "i16",
+   "min": -64,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "spark_seqs.a",
+   "part": "sparks",
+   "label": "Flipbook A",
+   "doc": "Kind A's flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@spark_seqs.a",
+   "unit": "plain"
+  },
+  {
+   "key": "spark_seqs.b",
+   "part": "sparks",
+   "label": "Flipbook B",
+   "doc": "Kind B's flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@spark_seqs.b",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.l[0]",
+   "part": "layouts",
+   "label": "Layout 0",
+   "doc": "The scripts' layout 0",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.l[0]",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.l[1]",
+   "part": "layouts",
+   "label": "Layout 1",
+   "doc": "The scripts' layout 1",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.l[1]",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.l[2]",
+   "part": "layouts",
+   "label": "Layout 2",
+   "doc": "The scripts' layout 2",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.l[2]",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.l[3]",
+   "part": "layouts",
+   "label": "Layout 3",
+   "doc": "The scripts' layout 3",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.l[3]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[0]",
+   "part": "sprites",
+   "label": "Flipbook 0",
+   "doc": "The scripts' flipbook 0",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[0]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[1]",
+   "part": "sprites",
+   "label": "Flipbook 1",
+   "doc": "The scripts' flipbook 1",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[1]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[2]",
+   "part": "sprites",
+   "label": "Flipbook 2",
+   "doc": "The scripts' flipbook 2",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[2]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[3]",
+   "part": "sprites",
+   "label": "Flipbook 3",
+   "doc": "The scripts' flipbook 3",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[3]",
+   "unit": "plain"
+  },
+  {
+   "key": "tile.start",
+   "part": "tile",
+   "label": "Start",
+   "doc": "The main's tick it starts rising (then it fades over as many ticks)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 70,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.ticks",
+   "part": "tile",
+   "label": "Ticks",
+   "doc": "Its rise's ticks (at least 1; at its top the scripts, sprites and layouts are dropped)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.r",
+   "part": "tile",
+   "label": "Red",
+   "doc": "Its colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.g",
+   "part": "tile",
+   "label": "Green",
+   "doc": "Its colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "tile.b",
+   "part": "tile",
+   "label": "Blue",
+   "doc": "Its colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.sequence_table",
+   "label": "Flipbook table",
+   "doc": "The scripts' flipbooks by index (an address each: the parameters stand in for 0..3)",
+   "address": "0x10262F8",
+   "size": 16
+  },
+  {
+   "key": "not_editable.layout_table",
+   "label": "Layout table",
+   "doc": "The scripts' layouts by index (address, decode size: the parameters stand in for 0..3, the sizes are read here)",
+   "address": "0x102A400",
+   "size": 32
+  },
+  {
+   "key": "not_editable.sqrt_table",
+   "label": "Square roots",
+   "doc": "The GTE-style square-root table the sparks' normals are normalised with",
+   "address": "0x102E3A0",
+   "size": 512
+  }
+ ]
+}

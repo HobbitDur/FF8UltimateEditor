@@ -1,0 +1,746 @@
+{
+ "format": 1,
+ "effect": 303,
+ "name": "Remove mask",
+ "doc": "Sphinxaur's mask removal (c0m011, its target the unmasked Sphinxara c0m012 moved onto its position): a burst layout and sparks at the caster's point, the mask's four pieces flying off and shattering into spinning shards with a layout where each broke, sprites around the caster, the unmasked form redrawn environment-mapped, the sound and its voice; the masked caster's slot removed at the end. Its tasks are the port's code (FFNx mag303_remove_mask.cpp) run on the program's memory (its main and shards in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x66A830",
+   "setup": "0x66A820",
+   "root": "0x66A920"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 303,
+  "from": "0x25075D0",
+  "size": "0x90"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x10340A8",
+   "size": 4
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0x103411C",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x1034260",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x10340AC",
+   "size": 112
+  },
+  "layouts.burst": {
+   "kind": "layout",
+   "address": "0x1033114",
+   "size": 3988,
+   "capacity": 416
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0x1031440",
+   "size": 272,
+   "frames": 10
+  },
+  "seqs.sprite": {
+   "kind": "seq",
+   "address": "0x1031550",
+   "size": 324,
+   "frames": 12
+  },
+  "tables.pieces": {
+   "kind": "table",
+   "address": "0x1034230",
+   "size": 32,
+   "format": "h",
+   "columns": 4,
+   "skip": 0,
+   "count": 4
+  },
+  "models.piece[0]": {
+   "kind": "model",
+   "address": "0x1031694",
+   "size": 1992,
+   "vertices": 48
+  },
+  "models.piece[1]": {
+   "kind": "model",
+   "address": "0x1031E5C",
+   "size": 816,
+   "vertices": 22
+  },
+  "models.piece[2]": {
+   "kind": "model",
+   "address": "0x103218C",
+   "size": 816,
+   "vertices": 22
+  },
+  "models.piece[3]": {
+   "kind": "model",
+   "address": "0x10324BC",
+   "size": 312,
+   "vertices": 9
+  },
+  "layouts.piece": {
+   "kind": "layout",
+   "address": "0x10325F4",
+   "size": 2848,
+   "capacity": 280
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x66A820",
+  "file_loader": "0x66A830",
+  "root": "0x66A920"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The main's ticks, the start sound and the voice (claimed at the start, released near the end), the masked caster hidden and the unmasked form shown; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "The burst layout at the caster's point on the first ticks"
+  },
+  {
+   "id": 2,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sparks thrown from the burst's point, slowing down (a flipbook)"
+  },
+  {
+   "id": 3,
+   "key": "sprites",
+   "title": "Sprites",
+   "doc": "Sprites around the caster's second point on one tick (a flipbook, still)"
+  },
+  {
+   "id": 4,
+   "key": "pieces",
+   "title": "Mask pieces",
+   "doc": "The mask's four pieces (meshes) flying off the caster, falling, then shattered into shards"
+  },
+  {
+   "id": 5,
+   "key": "piece_layouts",
+   "title": "Piece layouts",
+   "doc": "The pieces' layout played where each shattered"
+  },
+  {
+   "id": 6,
+   "key": "shards",
+   "title": "Shards",
+   "doc": "The shattered pieces' polygons, flying, spinning, falling and bouncing"
+  },
+  {
+   "id": 7,
+   "key": "redraw",
+   "title": "Unmasked form",
+   "doc": "The unmasked form redrawn environment-mapped (its uv from its normals, scrolling, a pulsing grey)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The main's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "At the start sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.voice",
+   "part": "main",
+   "label": "Voice",
+   "doc": "The sound block its voice slot is claimed with (at the start)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "The main's tick of the start sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.release",
+   "part": "main",
+   "label": "Voice released",
+   "doc": "Its tick the voice slot is released",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 37,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "main",
+   "label": "End",
+   "doc": "Its last tick (then the battle file it streams, the masked caster's slot removed)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 41,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "burst.ticks",
+   "part": "burst",
+   "label": "Ticks",
+   "doc": "On the main's first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.depth",
+   "part": "burst",
+   "label": "Depth",
+   "doc": "The layout's depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.x",
+   "part": "burst",
+   "label": "Point x",
+   "doc": "Its point at the caster's bone (taken on the main's first tick)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 1789,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.y",
+   "part": "burst",
+   "label": "Point y",
+   "doc": "Its point's y",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.z",
+   "part": "burst",
+   "label": "Point z",
+   "doc": "Its point's z",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -1099,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.bone",
+   "part": "burst",
+   "label": "Bone",
+   "doc": "The caster's bone the point is at",
+   "type": "i16",
+   "min": 0,
+   "max": 45,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.burst",
+   "part": "burst",
+   "label": "Layout",
+   "doc": "The burst layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.ticks",
+   "part": "sparks",
+   "label": "Ticks",
+   "doc": "Thrown on the main's first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.count",
+   "part": "sparks",
+   "label": "Count",
+   "doc": "Sparks a tick (64 at most alive)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.spread",
+   "part": "sparks",
+   "label": "Scatter",
+   "doc": "Their velocity: a random below 0x200 - this on each axis (slowing by a twelfth a tick)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "Their ticks (their flipbook's frames: 10 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 10,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Flipbook",
+   "doc": "The sparks' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.tick",
+   "part": "sprites",
+   "label": "Tick",
+   "doc": "The main's tick they appear",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.count",
+   "part": "sprites",
+   "label": "Count",
+   "doc": "How many (8 at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 8,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spread",
+   "part": "sprites",
+   "label": "Scatter",
+   "doc": "Around the point: a random below 0x200 - this on x / z (y: on the ground up to 0x1FF above it)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.life",
+   "part": "sprites",
+   "label": "Life",
+   "doc": "Their ticks (their flipbook's frames: 12 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 12,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.x",
+   "part": "sprites",
+   "label": "Point x",
+   "doc": "Their point at the caster's bone",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 464,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.y",
+   "part": "sprites",
+   "label": "Point y",
+   "doc": "Its y",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -13,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.z",
+   "part": "sprites",
+   "label": "Point z",
+   "doc": "Its z",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -1058,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.bone",
+   "part": "sprites",
+   "label": "Bone",
+   "doc": "The caster's bone the point is at",
+   "type": "i16",
+   "min": 0,
+   "max": 45,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sprite",
+   "part": "sprites",
+   "label": "Flipbook",
+   "doc": "The sprites' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sprite",
+   "unit": "plain"
+  },
+  {
+   "key": "pieces.gravity",
+   "part": "pieces",
+   "label": "Gravity",
+   "doc": "A piece's fall speed grows by this a tick",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.pieces",
+   "part": "pieces",
+   "label": "Velocities",
+   "doc": "The 4 pieces' velocity x / y / z and life (their ticks before they shatter): 4 words each",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.pieces",
+   "unit": "plain"
+  },
+  {
+   "key": "models.piece[0]",
+   "part": "pieces",
+   "label": "Mesh 1",
+   "doc": "Piece 1's mesh (shattered as it is: its polygons become shards)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.piece[0]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.piece[1]",
+   "part": "pieces",
+   "label": "Mesh 2",
+   "doc": "Piece 2's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.piece[1]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.piece[2]",
+   "part": "pieces",
+   "label": "Mesh 3",
+   "doc": "Piece 3's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.piece[2]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.piece[3]",
+   "part": "pieces",
+   "label": "Mesh 4",
+   "doc": "Piece 4's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.piece[3]",
+   "unit": "plain"
+  },
+  {
+   "key": "pieces.scale[0]",
+   "part": "piece_layouts",
+   "label": "Scale 1",
+   "doc": "Piece 1's layout's scale",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 5000,
+   "unit": "scale"
+  },
+  {
+   "key": "pieces.scale[1]",
+   "part": "piece_layouts",
+   "label": "Scale 2",
+   "doc": "Piece 2's layout's scale",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "pieces.scale[2]",
+   "part": "piece_layouts",
+   "label": "Scale 3",
+   "doc": "Piece 3's layout's scale",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "pieces.scale[3]",
+   "part": "piece_layouts",
+   "label": "Scale 4",
+   "doc": "Piece 4's layout's scale",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3000,
+   "unit": "scale"
+  },
+  {
+   "key": "layouts.piece",
+   "part": "piece_layouts",
+   "label": "Layout",
+   "doc": "The layout played where a piece shattered",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.piece",
+   "unit": "plain"
+  },
+  {
+   "key": "shards.shift",
+   "part": "shards",
+   "label": "Speed shift",
+   "doc": "A shard's velocity: (its polygon's centre - the piece's centre) >> this",
+   "type": "i16",
+   "min": 0,
+   "max": 15,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.life",
+   "part": "shards",
+   "label": "Life",
+   "doc": "Its ticks: this + a random below 8",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.gravity",
+   "part": "shards",
+   "label": "Gravity",
+   "doc": "Its fall speed grows by this a tick (it bounces at half its speed on the ground)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.spin",
+   "part": "shards",
+   "label": "Spin",
+   "doc": "Its spin on each axis: a random below 0x200 - this a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 256,
+   "unit": "angle"
+  },
+  {
+   "key": "shards.scale",
+   "part": "shards",
+   "label": "Shrink",
+   "doc": "Its spin matrix's scale: this - a random below 0x100 (0x1000: it keeps its size)",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 3969,
+   "unit": "scale"
+  },
+  {
+   "key": "redraw.start",
+   "part": "redraw",
+   "label": "Start",
+   "doc": "The main's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "redraw.ticks",
+   "part": "redraw",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "redraw.clut",
+   "part": "redraw",
+   "label": "Palette",
+   "doc": "Its texture's palette (clut word)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 15828,
+   "unit": "plain"
+  },
+  {
+   "key": "redraw.page_x",
+   "part": "redraw",
+   "label": "Page x",
+   "doc": "Its texture page's VRAM x",
+   "type": "i16",
+   "min": 0,
+   "max": 1023,
+   "default": 704,
+   "unit": "plain"
+  },
+  {
+   "key": "redraw.page_y",
+   "part": "redraw",
+   "label": "Page y",
+   "doc": "Its texture page's VRAM y",
+   "type": "i16",
+   "min": 0,
+   "max": 511,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "redraw.scroll_u",
+   "part": "redraw",
+   "label": "Scroll u",
+   "doc": "Its u scroll a tick",
+   "type": "i16",
+   "min": -128,
+   "max": 128,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "redraw.scroll_v",
+   "part": "redraw",
+   "label": "Scroll v",
+   "doc": "Its v scroll a tick",
+   "type": "i16",
+   "min": -128,
+   "max": 128,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "redraw.pulse",
+   "part": "redraw",
+   "label": "Pulse",
+   "doc": "Its grey: sin(its tick x this) / 64",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 128,
+   "unit": "angle"
+  }
+ ],
+ "tasks": []
+}
