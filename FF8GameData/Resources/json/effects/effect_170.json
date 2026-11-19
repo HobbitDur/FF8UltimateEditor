@@ -1,0 +1,586 @@
+{
+ "format": 1,
+ "effect": 170,
+ "name": "Acid",
+ "doc": "Acid (enemy attack 35, Tri-Face's): Gastric Juice's design with one stream - a splash at the caster's mouth, an acid blob running down a curve to near the first target, a landing mesh, drips and puddles there, the target melting down into the ground and back; the sound; the damage at tick 46. Its tasks are the port's code (FFNx mag170_acid.cpp) run on the program's memory (its droplets, curve and queues in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5DC910",
+   "setup": "0x5DC930",
+   "root": "0x5DEDF0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 170,
+  "from": "0x23AF820",
+  "size": "0x1B50"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0xD6A3A4",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xD6A3EC",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xD68D0C",
+   "size": 236
+  },
+  "seqs.splash": {
+   "kind": "seq",
+   "address": "0xD68DF8",
+   "size": 168,
+   "frames": 6
+  },
+  "seqs.blob": {
+   "kind": "seq",
+   "address": "0xD68DF8",
+   "size": 168,
+   "frames": 6
+  },
+  "models.mesh": {
+   "kind": "model",
+   "address": "0xD6904C",
+   "size": 2592,
+   "vertices": 73
+  },
+  "seqs.drip": {
+   "kind": "seq",
+   "address": "0xD68EA0",
+   "size": 428,
+   "frames": 16
+  },
+  "models.puddle": {
+   "kind": "model",
+   "address": "0xD69CBC",
+   "size": 1768,
+   "vertices": 72
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5DC930",
+  "file_loader": "0x5DC910",
+  "root": "0x5DEDF0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The director's and the stream's ticks: the sound, the stream and its curve, the damage; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "splash",
+   "title": "Splash",
+   "doc": "Droplets bursting out of the caster's mouth along its direction, slowing, fading"
+  },
+  {
+   "id": 2,
+   "key": "blob",
+   "title": "Blob",
+   "doc": "The acid blob (4 sprites, smaller and smaller) running down the curve, slowing"
+  },
+  {
+   "id": 3,
+   "key": "mesh",
+   "title": "Landing mesh",
+   "doc": "A mesh at the landing point morphing between two shapes, growing, fading in and out"
+  },
+  {
+   "id": 4,
+   "key": "drips",
+   "title": "Drips",
+   "doc": "Droplets falling around the landing point (a table: how many on each of the first 13 ticks)"
+  },
+  {
+   "id": 5,
+   "key": "puddles",
+   "title": "Puddles",
+   "doc": "Puddle meshes around the landing point, each after its own delay, growing, fading"
+  },
+  {
+   "id": 6,
+   "key": "melt",
+   "title": "Melting target",
+   "doc": "The first target redrawn melting down toward the ground beyond the plane through the landing point, then back"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The director's ticks"
+  },
+  {
+   "key": "stream",
+   "label": "Stream",
+   "doc": "The curve from the caster to the landing point, and the stream's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "The sound at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.stream",
+   "part": "director",
+   "label": "Stream tick",
+   "doc": "The stream (and the splash at the caster's mouth) at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage at this tick of the director",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 46,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The director's last tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "stream.point",
+   "part": "director",
+   "label": "Mouth point",
+   "doc": "The caster's effect point the curve starts at",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 41,
+   "unit": "plain"
+  },
+  {
+   "key": "stream.spread",
+   "part": "director",
+   "label": "Landing spread",
+   "doc": "The landing point: the first target's default position, on the ground, + a random x and z up to this either side (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 350,
+   "unit": "plain"
+  },
+  {
+   "key": "stream.lift",
+   "part": "director",
+   "label": "Arc",
+   "doc": "The curve's middle control points each this much higher than the one before (+ the next random)",
+   "type": "i16",
+   "min": -4000,
+   "max": 4000,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "stream.lift_rand",
+   "part": "director",
+   "label": "Arc random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 4000,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "stream.puddles",
+   "part": "director",
+   "label": "Puddles tick",
+   "doc": "The puddles and the melting target at this tick of the stream",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "stream.mesh",
+   "part": "director",
+   "label": "Mesh tick",
+   "doc": "The landing mesh and the drips at this tick of the stream",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "stream.end",
+   "part": "director",
+   "label": "Stream end",
+   "doc": "The stream's last tick",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "splash.count",
+   "part": "splash",
+   "label": "Droplets",
+   "doc": "How many (100 at most alive, with the drips)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "splash.speed",
+   "part": "splash",
+   "label": "Speed",
+   "doc": "Sideways: this + a random below the next, in a random direction (losing 1/4 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "splash.speed_rand",
+   "part": "splash",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 70,
+   "unit": "plain"
+  },
+  {
+   "key": "splash.rise",
+   "part": "splash",
+   "label": "Out",
+   "doc": "Along the mouth's direction: this + a random below the next",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "splash.rise_rand",
+   "part": "splash",
+   "label": "Out random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.splash",
+   "part": "splash",
+   "label": "Splash",
+   "doc": "The sprite sequence of a droplet (a flipbook: frames 4 on, an edited one keeps as many)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.splash",
+   "unit": "plain"
+  },
+  {
+   "key": "blob.size",
+   "part": "blob",
+   "label": "Size",
+   "doc": "The first sprite's size: this + a random below the next (each next one 112 smaller)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 768,
+   "unit": "scale"
+  },
+  {
+   "key": "blob.size_rand",
+   "part": "blob",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 80,
+   "unit": "scale"
+  },
+  {
+   "key": "blob.speed",
+   "part": "blob",
+   "label": "Speed",
+   "doc": "It moves this many of the curve's 28 points a tick at first, 1 less a tick down to 2 (before point 14)",
+   "type": "i16",
+   "min": 1,
+   "max": 28,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.blob",
+   "part": "blob",
+   "label": "Blob",
+   "doc": "The sprite sequence of the blob (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.blob",
+   "unit": "plain"
+  },
+  {
+   "key": "mesh.size",
+   "part": "mesh",
+   "label": "Size",
+   "doc": "Its start size and growth: this + a random below the next, / 3 (the growth halved every tick for 8 ticks)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2816,
+   "unit": "scale"
+  },
+  {
+   "key": "mesh.size_rand",
+   "part": "mesh",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1024,
+   "unit": "scale"
+  },
+  {
+   "key": "models.mesh",
+   "part": "mesh",
+   "label": "Mesh",
+   "doc": "The prim model drawn (a mesh of 73 vertices: an edited one keeps them; it morphs toward the game's second shape)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.mesh",
+   "unit": "plain"
+  },
+  {
+   "key": "drips.size",
+   "part": "drips",
+   "label": "Size",
+   "doc": "A droplet's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1792,
+   "unit": "scale"
+  },
+  {
+   "key": "drips.size_rand",
+   "part": "drips",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2560,
+   "unit": "scale"
+  },
+  {
+   "key": "drips.spread",
+   "part": "drips",
+   "label": "Spread",
+   "doc": "Each one up to this far from the landing point in x and z (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 700,
+   "unit": "plain"
+  },
+  {
+   "key": "drips.fall",
+   "part": "drips",
+   "label": "Fall",
+   "doc": "Its first speed down: this + a random below the next (losing 1/16 a tick)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "drips.fall_rand",
+   "part": "drips",
+   "label": "Fall random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.drip",
+   "part": "drips",
+   "label": "Drip",
+   "doc": "The sprite sequence of a droplet (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.drip",
+   "unit": "plain"
+  },
+  {
+   "key": "puddles.count",
+   "part": "puddles",
+   "label": "Puddles",
+   "doc": "How many",
+   "type": "i16",
+   "min": 0,
+   "max": 90,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "puddles.spread",
+   "part": "puddles",
+   "label": "Spread",
+   "doc": "Each one up to this far from the landing point in x and z (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 800,
+   "unit": "plain"
+  },
+  {
+   "key": "puddles.size",
+   "part": "puddles",
+   "label": "Size",
+   "doc": "Its start size and growth a tick: this + a random below the next, / 10",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2560,
+   "unit": "scale"
+  },
+  {
+   "key": "puddles.size_rand",
+   "part": "puddles",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1536,
+   "unit": "scale"
+  },
+  {
+   "key": "models.puddle",
+   "part": "puddles",
+   "label": "Puddle",
+   "doc": "The prim model drawn (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.puddle",
+   "unit": "plain"
+  },
+  {
+   "key": "melt.ticks",
+   "part": "melt",
+   "label": "Ticks",
+   "doc": "The target drawn melting for this many ticks (then shown as it was)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 34,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.mesh_b",
+   "label": "Mesh b",
+   "doc": "The second shape: 73 vertices of 8 bytes each (the first: the mesh's own)",
+   "address": "0xD69A74",
+   "size": 584
+  },
+  {
+   "key": "not_editable.drip_counts",
+   "label": "Drip counts",
+   "doc": "Droplets per tick 0..12",
+   "address": "0xD6A3AC",
+   "size": 64
+  }
+ ]
+}

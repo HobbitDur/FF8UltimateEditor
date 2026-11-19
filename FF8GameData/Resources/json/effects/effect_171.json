@@ -1,0 +1,484 @@
+{
+ "format": 1,
+ "effect": 171,
+ "name": "Poison Gas",
+ "doc": "Poison Gas (enemy attacks 32 to 34, Tri-Face's): the caster redrawn under a scrolling gas tint, gas puffs and wisps blown out of it, two cloud meshes drifting across the screen, gas at every target, a screen flash rising and falling; the sound; the damage to every target at tick 30. Its tasks are the port's code (FFNx mag171_poison_gas.cpp) run on the program's memory (its particle tables and queues in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5DB250",
+   "setup": "0x5DB270",
+   "root": "0x5DC8C0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 171,
+  "from": "0x23AD700",
+  "size": "0x211C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0xD68CB4",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xD68D00",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xD65640",
+   "size": 180
+  },
+  "seqs.puff": {
+   "kind": "seq",
+   "address": "0xD658A0",
+   "size": 428,
+   "frames": 16
+  },
+  "models.cloud": {
+   "kind": "model",
+   "address": "0xD65A4C",
+   "size": 12904,
+   "vertices": 312
+  },
+  "seqs.gas": {
+   "kind": "seq",
+   "address": "0xD656F4",
+   "size": 428,
+   "frames": 16
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5DB270",
+  "file_loader": "0x5DB250",
+  "root": "0x5DC8C0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The director's ticks: the sound, each part's start, the damage to every target, the end; the screen flash; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "tint",
+   "title": "Tinted caster",
+   "doc": "The caster redrawn with a scrolling gas face over each of its faces, its grey rising then falling"
+  },
+  {
+   "id": 2,
+   "key": "puffs",
+   "title": "Puffs",
+   "doc": "Gas puffs thrown out of the caster's effect point along its spawn table's rows, growing, slowing"
+  },
+  {
+   "id": 3,
+   "key": "wisps",
+   "title": "Wisps",
+   "doc": "Thinner gas wisps thrown the same way along other rows (their flipbook played twice as fast)"
+  },
+  {
+   "id": 4,
+   "key": "clouds",
+   "title": "Clouds",
+   "doc": "Two cloud meshes on the screen drifting sideways, spinning, fading in and out"
+  },
+  {
+   "id": 5,
+   "key": "gas",
+   "title": "Target gas",
+   "doc": "Still gas particles appearing around every target's body"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The director's ticks"
+  },
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "Up by 128 a tick until tick up, down from tick down to 0 at the end"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "The sound",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.start",
+   "part": "director",
+   "label": "Caster",
+   "doc": "The tinted caster, the puffs and the wisps start",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.clouds",
+   "part": "director",
+   "label": "Clouds",
+   "doc": "The two clouds start",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.gas",
+   "part": "director",
+   "label": "Target gas",
+   "doc": "The target gas starts (one a target)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage",
+   "part": "director",
+   "label": "Damage",
+   "doc": "The damage to every target",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "director",
+   "label": "End",
+   "doc": "The director's last tick (the screen flash back to 0)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.up",
+   "part": "director",
+   "label": "Up until",
+   "doc": "The flash at tick x 128 until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.down",
+   "part": "director",
+   "label": "Down from",
+   "doc": "From this tick (end - tick) x 256",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 42,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "tint.ticks",
+   "part": "tint",
+   "label": "Ticks",
+   "doc": "The caster drawn tinted for this many ticks (its grey: up 32 a tick to 128, down 16 a tick from tick 16)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.point",
+   "part": "puffs",
+   "label": "Point",
+   "doc": "The caster's effect point they leave",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 241,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.ticks",
+   "part": "puffs",
+   "label": "Ticks",
+   "doc": "2 puffs (or wisps) a tick on their first ticks (100 alive at most each)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.size",
+   "part": "puffs",
+   "label": "Size",
+   "doc": "A puff's (or wisp's) size: this + a random below the next (growing 1/32 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1664,
+   "unit": "scale"
+  },
+  {
+   "key": "puffs.size_rand",
+   "part": "puffs",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1024,
+   "unit": "scale"
+  },
+  {
+   "key": "puffs.speed",
+   "part": "puffs",
+   "label": "Speed",
+   "doc": "Along its row: this + a random below the next (losing 1/32 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "puffs.speed_rand",
+   "part": "puffs",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 95,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.puff",
+   "part": "puffs",
+   "label": "Puff",
+   "doc": "The sprite sequence of the puffs and the wisps (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.puff",
+   "unit": "plain"
+  },
+  {
+   "key": "clouds.x",
+   "part": "clouds",
+   "label": "Start x",
+   "doc": "The clouds' x on the screen at the start",
+   "type": "i16",
+   "min": -4000,
+   "max": 4000,
+   "default": -400,
+   "unit": "plain"
+  },
+  {
+   "key": "clouds.size",
+   "part": "clouds",
+   "label": "Size",
+   "doc": "Their size (1.5 times wider)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2816,
+   "unit": "scale"
+  },
+  {
+   "key": "clouds.ticks",
+   "part": "clouds",
+   "label": "Ticks",
+   "doc": "Their ticks (fading in over the first 12, out from tick 42)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 54,
+   "unit": "plain"
+  },
+  {
+   "key": "clouds.step_a",
+   "part": "clouds",
+   "label": "Drift 1",
+   "doc": "The first cloud's x step a tick",
+   "type": "i16",
+   "min": -400,
+   "max": 400,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "clouds.step_b",
+   "part": "clouds",
+   "label": "Drift 2",
+   "doc": "The second cloud's",
+   "type": "i16",
+   "min": -400,
+   "max": 400,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "clouds.spin_a",
+   "part": "clouds",
+   "label": "Spin 1",
+   "doc": "The first cloud's x angle step a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 30,
+   "unit": "angle"
+  },
+  {
+   "key": "clouds.spin_b",
+   "part": "clouds",
+   "label": "Spin 2",
+   "doc": "The second cloud's",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 15,
+   "unit": "angle"
+  },
+  {
+   "key": "models.cloud",
+   "part": "clouds",
+   "label": "Cloud",
+   "doc": "The prim model drawn (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.cloud",
+   "unit": "plain"
+  },
+  {
+   "key": "gas.ticks",
+   "part": "gas",
+   "label": "Ticks",
+   "doc": "One particle a tick at each target on its first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "gas.spread",
+   "part": "gas",
+   "label": "Spread",
+   "doc": "Each one up to this far from the target's body point on each axis (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 500,
+   "unit": "plain"
+  },
+  {
+   "key": "gas.size",
+   "part": "gas",
+   "label": "Size",
+   "doc": "Its size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 768,
+   "unit": "scale"
+  },
+  {
+   "key": "gas.size_rand",
+   "part": "gas",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2304,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.gas",
+   "part": "gas",
+   "label": "Gas",
+   "doc": "The sprite sequence of the target gas (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.gas",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.rows",
+   "label": "Rows",
+   "doc": "Spawn table rows (8 bytes)",
+   "address": "0xD68CC0",
+   "size": 64
+  }
+ ]
+}

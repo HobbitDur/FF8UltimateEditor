@@ -1,0 +1,607 @@
+{
+ "format": 1,
+ "effect": 167,
+ "name": "Zantetsuken (Odin)",
+ "doc": "Zantetsuken (the monster Odin's attack, c0m070): sparks off the caster's sword as it swings, the blade's trail, two screen models, the stage shown and a screen fade, the caster moved away, every target cut in two along a tilted plane and one half sliding off, fading; the sound; the damage at tick 143. Its tasks are the port's code (FFNx mag167_zantetsuken.cpp) run on the program's memory (its spark pool, splines, trail history and queues in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5E29F0",
+   "setup": "0x5E2A10",
+   "root": "0x5E4E20"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 167,
+  "from": "0x23BD350",
+  "size": "0x1CE4"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0xD71564",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xD716CC",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xD6F7A4",
+   "size": 300
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xD6F8D0",
+   "size": 428,
+   "frames": 16
+  },
+  "models.screen_a": {
+   "kind": "model",
+   "address": "0xD6FA7C",
+   "size": 2480,
+   "vertices": 91
+  },
+  "models.screen_b": {
+   "kind": "model",
+   "address": "0xD7042C",
+   "size": 2224,
+   "vertices": 81
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5E2A10",
+  "file_loader": "0x5E29F0",
+  "root": "0x5E4E20"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Timeline",
+   "doc": "The timeline: the sound, each part's start, the stage shown and hidden, the screen fade, the caster moved away, the damage, the end; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "sparks",
+   "title": "Sword sparks",
+   "doc": "Sparks thrown off the caster's sword bone along its swing, growing, slowing"
+  },
+  {
+   "id": 2,
+   "key": "trail",
+   "title": "Blade trail",
+   "doc": "A trail of the blade's last 10 ticks (its base and tip through the caster's bone matrix), fading along it"
+  },
+  {
+   "id": 3,
+   "key": "screen_a",
+   "title": "Screen model 1",
+   "doc": "A prim model drawn on the screen, tilted, stretched, its size growing fast then slowing"
+  },
+  {
+   "id": 4,
+   "key": "screen_b",
+   "title": "Screen model 2",
+   "doc": "A second prim model on the screen, growing the same way"
+  },
+  {
+   "id": 5,
+   "key": "slices",
+   "title": "Target slices",
+   "doc": "Each target cut in two along a tilted plane, one half sliding off, its colour fading to the background's"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The timeline's ticks"
+  },
+  {
+   "key": "move",
+   "label": "Caster's move",
+   "doc": "Where the caster is moved at the move tick"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the timeline's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "The sound",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 28,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sparks",
+   "part": "director",
+   "label": "Sword sparks",
+   "doc": "The sword sparks start",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.trail",
+   "part": "director",
+   "label": "Blade trail",
+   "doc": "The blade trail starts",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 44,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.screen_a",
+   "part": "director",
+   "label": "Screen model 1",
+   "doc": "The first screen model starts",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.screen_b",
+   "part": "director",
+   "label": "Screen model 2",
+   "doc": "The second one starts",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 68,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.slices",
+   "part": "director",
+   "label": "Slices",
+   "doc": "The target slices start (one a target)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 97,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.stage",
+   "part": "director",
+   "label": "Stage shown",
+   "doc": "The stage shown, the caster and the party flagged 4 (not drawn by the battle)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fade",
+   "part": "director",
+   "label": "Screen fade",
+   "doc": "The screen fade starts",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 72,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.move",
+   "part": "director",
+   "label": "Caster moved",
+   "doc": "The caster and the party flagged 8, the caster moved",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 74,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.unstage",
+   "part": "director",
+   "label": "Stage hidden",
+   "doc": "The stage hidden again, the flags 4 cleared",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 77,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage",
+   "part": "director",
+   "label": "Damage",
+   "doc": "The damage to every target",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 143,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "director",
+   "label": "End",
+   "doc": "The timeline's last tick (then the caster's model flagged 0x40)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 145,
+   "unit": "plain"
+  },
+  {
+   "key": "move.y",
+   "part": "director",
+   "label": "Down",
+   "doc": "The caster's y + this (y down)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 700,
+   "unit": "plain"
+  },
+  {
+   "key": "move.z",
+   "part": "director",
+   "label": "Back",
+   "doc": "The caster's z + this",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 4400,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.bone",
+   "part": "sparks",
+   "label": "Bone",
+   "doc": "The caster's bone they leave (its base to its tip)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.ticks",
+   "part": "sparks",
+   "label": "Ticks",
+   "doc": "New sparks on the part's first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.per_tick",
+   "part": "sparks",
+   "label": "A tick",
+   "doc": "How many a tick (along the spline: at least 1, 31 at most; 100 alive at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 31,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size",
+   "part": "sparks",
+   "label": "Size",
+   "doc": "A spark's size: this + a random below the next (growing 1/32 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 640,
+   "unit": "scale"
+  },
+  {
+   "key": "sparks.size_rand",
+   "part": "sparks",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 896,
+   "unit": "scale"
+  },
+  {
+   "key": "sparks.speed",
+   "part": "sparks",
+   "label": "Speed",
+   "doc": "Along the bone's direction: this + a random below the next (losing 1/8 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.speed_rand",
+   "part": "sparks",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.r",
+   "part": "sparks",
+   "label": "Red",
+   "doc": "The sparks' colour (lit by the camera; 128 = the texture as it is)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.g",
+   "part": "sparks",
+   "label": "Green",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 56,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.b",
+   "part": "sparks",
+   "label": "Blue",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 72,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Spark",
+   "doc": "The sprite sequence of a spark (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "trail.ticks",
+   "part": "trail",
+   "label": "Ticks",
+   "doc": "The trail's ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.r",
+   "part": "trail",
+   "label": "Red",
+   "doc": "Its colour at the blade, fading to black along the trail",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.g",
+   "part": "trail",
+   "label": "Green",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.b",
+   "part": "trail",
+   "label": "Blue",
+   "doc": "",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 144,
+   "unit": "plain"
+  },
+  {
+   "key": "screen_a.ticks",
+   "part": "screen_a",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "screen_a.size",
+   "part": "screen_a",
+   "label": "Size",
+   "doc": "Its x size at the start, and its growth (a third less every tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1792,
+   "unit": "scale"
+  },
+  {
+   "key": "screen_a.height",
+   "part": "screen_a",
+   "label": "Height",
+   "doc": "Its y and z size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "scale"
+  },
+  {
+   "key": "models.screen_a",
+   "part": "screen_a",
+   "label": "Model",
+   "doc": "The prim model drawn (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.screen_a",
+   "unit": "plain"
+  },
+  {
+   "key": "screen_b.ticks",
+   "part": "screen_b",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 300,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "screen_b.size",
+   "part": "screen_b",
+   "label": "Size",
+   "doc": "Its size at the start, and its growth (a third less every tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1280,
+   "unit": "scale"
+  },
+  {
+   "key": "models.screen_b",
+   "part": "screen_b",
+   "label": "Model",
+   "doc": "The prim model drawn (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.screen_b",
+   "unit": "plain"
+  },
+  {
+   "key": "slices.life",
+   "part": "slices",
+   "label": "Ticks",
+   "doc": "A target drawn cut for this many ticks (then the battle draws it again)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "slices.fade",
+   "part": "slices",
+   "label": "Fade from",
+   "doc": "Its colour fades to the background's from this tick (over 8 ticks)",
+   "type": "i16",
+   "min": 0,
+   "max": 300,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "slices.speed",
+   "part": "slices",
+   "label": "Speed",
+   "doc": "The sliding half's speed: this + a random below the next, x the target's size (at most 2560) / 4096; x 3 for 4 ticks, then losing 1/10 a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "slices.speed_rand",
+   "part": "slices",
+   "label": "Speed random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "slices.tilt",
+   "part": "slices",
+   "label": "Tilt",
+   "doc": "The cut's angle: a random up to this either way (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 2048,
+   "default": 640,
+   "unit": "angle"
+  }
+ ],
+ "tasks": []
+}

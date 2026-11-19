@@ -509,6 +509,20 @@ Potion's description is the same with its own sequences and sound.
        time); four parts tagged (FX_PART: the game's shot untagged).
      - *Tests:* the cycle test (Squall on the c0m009 monster); `test_cannon_blow_as_a_smoke_grenade`.
      - *Fujin:* its tabs (Shot, Canister, Smoke trail, Smoke cloud); no + menu family.
+   - **Wild Cannon Blow (156)** (FFNx ae3bcc50; SAM08G's attack; a port root, Cannon Blow's kind with four shots): from
+     master tick 1 every 3 ticks a shot from the caster's effect point 0xF or 9 in turn (moved 200 sideways) on a curve to
+     near the targets' centre - its flash, burst, ring, fire ball and two fire trails, at its tick 13 an impact and its
+     ring, at 15 smoke at every target, the camera shake on ticks 13-16; the two sounds; the damage to every target at
+     tick 36.
+     - *Inputs* (`WildCannonParams`, 43): the sounds and their tick, the damage and end ticks, the shots (first tick,
+       every, count: 4 at most, the module keeps 4 curves), a shot's muzzle points, offset, aim spread, speed and its
+       impact / smoke / end ticks, the camera shake (tick, ticks, amount), the burst, trails, fire ball and target smoke
+       (counts, ticks, sizes, spread). Data: the two sounds, five flipbooks, four meshes, "mag150.tim", the camera track.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; seven parts
+       tagged (FX_PART).
+     - *Tests:* the cycle test casts it from SAM08G (c0m007, slot 3) on Squall (`CYCLE_CASTS`); the description's
+       compile test. The recorder does not log the camera shake word.
+     - *Fujin:* its tabs (Director, Flash, Burst, Ring, Fire ball, Trails, Impact, Target smoke); no + menu family.
    - **Breath (157)** (FFNx 22e59fd4; the Hexadragon's attack; a port root, Ray-Bomb's kind): two swirls and lit breath
      particles at the caster's mouth, then three clouds rolling toward the target - each a burst, a lit puff with its
      particles, a cloud model pair and a ring pair - with splatter sprites on the target, two sounds; the damage at tick
@@ -2371,6 +2385,49 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`GastricJuice169Params`): the sound, the damage tick. Data: the sound, "mag168.tim".
      - *Tests:* the cycle test casts it from Grat (slot 3) on Squall (`CYCLE_CASTS`).
      - *Fujin:* its tab (Director); no + menu family.
+   - **Zantetsuken (Odin) (167)** (FFNx ae3bcc50; the monster Odin's attack, c0m070; a port root, Odin 187's sparks,
+     trail and slices driven by the caster's own model): a 146-tick timeline - sparks off the caster's sword bone 0x28
+     from tick 27, the sound at 28, the blade trail from 44, two screen models at 64 and 68, the stage shown at 64 and
+     hidden at 77, a screen fade at 72, the caster moved away at 74, one target slice a target at 97 (the target cut
+     along a tilted plane, a half sliding off, fading); the damage at tick 143.
+     - *Inputs* (`ZantetsukenParams`, 44): the sound and the timeline's ticks, the caster's move, the sparks (bone,
+       ticks, count a tick, size, speed, colour), the trail (ticks, colour), the screen models (ticks, sizes), the slices
+       (life, fade, speed, tilt). Data: the sound, the spark flipbook, the two meshes, "mag166.tim", the camera track.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup (with its camera return) and loader
+       ported; the clipped renderer 0x5E4030 is the exe's, called as it is (it reads no module memory); five parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Odin (c0m070, slot 3) on Squall (`CYCLE_CASTS`); the description's compile
+       test. The recorder does not log the screen fade nor the caster's move.
+     - *Fujin:* its tabs (Timeline, Sword sparks, Blade trail, Screen model 1, Screen model 2, Target slices); no + menu
+       family.
+   - **Acid (170)** (FFNx ae3bcc50; Tri-Face's attack; a port root, Gastric Juice 169's design with one stream): a
+     splash at the caster's mouth and the stream's curve at director tick 1, the blob running down it, at stream tick 12
+     four puddles and the first target melting into the ground and back, at 13 the landing mesh (morphing between two
+     shapes) and the drips; the sound; the damage at tick 46.
+     - *Inputs* (`AcidParams`, 39): the sound and the director's ticks, the stream (mouth point, landing spread, arc,
+       ticks), the blob (size, speed), the landing mesh's size, the puddles (count, spread, size), the drips (size,
+       spread, fall), the splash (count, speed, out), the melt's ticks. Data: the sound, three flipbooks, two meshes,
+       "mag169.tim", the camera track. Not editable: the mesh's second shape (73 vertices) and the drips' count table.
+       The landing mesh morphs from the drawn mesh's own vertices (the game's: its model + 8): an edited mesh's
+       vertices are the ones drawn.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; six parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Tri-Face (c0m036, slot 3) on Squall (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Director, Splash, Blob, Landing mesh, Drips, Puddles, Melting target); no + menu family.
+   - **Poison Gas (171)** (FFNx ae3bcc50; Tri-Face's attack; a port root): at director tick 1 the caster redrawn under a
+     scrolling gas tint (24 ticks), two puffs and two wisps thrown out of its effect point 0xF1 along its spawn table's
+     rows; at 8 two cloud meshes drifting across the screen; at 27 gas at every target; the screen flash rising until
+     tick 16 and falling from 42; the sound; the damage to every target at tick 30.
+     - *Inputs* (`PoisonGasParams`, 32): the sound and the director's ticks, the flash (up until, down from), the tint's
+       ticks, the puffs (point, ticks, size, speed), the clouds (x, size, ticks, drifts, spins), the target gas (ticks,
+       spread, size). Data: the sound, two flipbooks, the cloud mesh, "mag170.tim", the camera track. Not editable: the
+       spawn table's rows. The gas face's texture page, CLUT and window stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; five parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Tri-Face (c0m036, slot 3) on Squall (`CYCLE_CASTS`); the description's
+       compile test. The recorder does not log the screen flash.
+     - *Fujin:* its tabs (Director, Tinted caster, Puffs, Wisps, Clouds, Target gas); no + menu family.
    - **Ice Breath (173)** (FFNx 62e957df; the Snow Lion's attack, the Cronos mod's item Arctic Wind; a port root,
      Ray-Bomb's kind): the caster's mouth (its bone 0xF0, retaken every tick) blowing a frost swirl, a glow and four
      breath cones, then frost puffs and spinning crystal layouts along a sweep toward the targets, five ice meshes on
