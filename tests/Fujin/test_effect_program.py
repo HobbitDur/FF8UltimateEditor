@@ -389,6 +389,9 @@ CYCLES = {
     171: ("mag170.tim", 32, "sound 22311280\npuffs.size 3000\nclouds.step_a 30\n"),
     172: ("mag171.tim", 28, "sound 22311280\nrings.size_a 2000\nsparks.size 600\n"),
     186: ("mag185.tim", 72, "sound 22311280\nbolts.size 1500\nsplashes.count 2\n"),
+    207: ("mag206.tim", 28, "sound 22311280\nwarp.head 256\nparticles.count 2\n"),
+    209: ("", 83, "sound_a 22311280\nripple.amp 900\nbursts.count 6\n"),
+    214: ("mag213-310.tim", 33, "sound 22311280\nwarp.amp 4\nparticles.count 16\n"),
     151: ("mag150.tim", 46, "sounds.shot 22311280\nsmoke.on 1\ncloud.count 50\n"),
     149: ("mag148.tim", 15, "sounds.start 22311280\nsounds.blast 22311276\ndirector.damage 150\n"),
     148: ("mag147.tim", 9, "sound 22311280\ndirector.damage 60\n"),
@@ -551,7 +554,7 @@ CYCLE_STAGES = {69: 142, 146: 0}
 # too little on one): slot -> file, every target
 CYCLE_MONSTERS = {110: {4: "c0m073.dat"}, 297: {4: "c0m009.dat"}}
 # a cast of its own (a monster's attack on the party: Geezard's Bad Breath, Cockatrice's Electric Discharge, Gayla's Gastric Juice, Grendel's Breath, Malboro's): caster slot, target slot, slot 3's monster
-CYCLE_CASTS = {172: (3, 0, "c0m029.dat"), 186: (3, 0, "c0m057.dat"), 156: (3, 0, "c0m007.dat"), 167: (3, 0, "c0m070.dat"), 170: (3, 0, "c0m036.dat"), 171: (3, 0, "c0m036.dat"), 113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat"), 139: (3, 0, "c0m099.dat"), 152: (3, 0, "c0m018.dat"), 153: (3, 0, "c0m017.dat"), 154: (3, 0, "c0m017.dat"), 155: (3, 0, "c0m020.dat"), 159: (0, 3, "c0m092.dat"), 161: (0, 3, "c0m091.dat"), 168: (3, 0, "c0m015.dat"), 169: (3, 0, "c0m015.dat"), 176: (3, 0, "c0m046.dat"), 179: (3, 0, "c0m043.dat"), 180: (3, 0, "c0m043.dat"), 190: (3, 0, "c0m008.dat"), 226: (3, 3, "c0m046.dat"), 276: (3, 0, "c0m092.dat"), 277: (3, 0, "c0m058.dat"), 281: (3, 0, "c0m078.dat"), 289: (3, 0, "c0m034.dat"), 304: (3, 0, "c0m079.dat"), 311: (3, 0, "c0m066.dat"), 315: (3, 0, "c0m075.dat")}
+CYCLE_CASTS = {207: (3, 0, "c0m100.dat"), 209: (3, 0, "c0m115.dat"), 214: (3, 0, "c0m114.dat"), 172: (3, 0, "c0m029.dat"), 186: (3, 0, "c0m057.dat"), 156: (3, 0, "c0m007.dat"), 167: (3, 0, "c0m070.dat"), 170: (3, 0, "c0m036.dat"), 171: (3, 0, "c0m036.dat"), 113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat"), 139: (3, 0, "c0m099.dat"), 152: (3, 0, "c0m018.dat"), 153: (3, 0, "c0m017.dat"), 154: (3, 0, "c0m017.dat"), 155: (3, 0, "c0m020.dat"), 159: (0, 3, "c0m092.dat"), 161: (0, 3, "c0m091.dat"), 168: (3, 0, "c0m015.dat"), 169: (3, 0, "c0m015.dat"), 176: (3, 0, "c0m046.dat"), 179: (3, 0, "c0m043.dat"), 180: (3, 0, "c0m043.dat"), 190: (3, 0, "c0m008.dat"), 226: (3, 3, "c0m046.dat"), 276: (3, 0, "c0m092.dat"), 277: (3, 0, "c0m058.dat"), 281: (3, 0, "c0m078.dat"), 289: (3, 0, "c0m034.dat"), 304: (3, 0, "c0m079.dat"), 311: (3, 0, "c0m066.dat"), 315: (3, 0, "c0m075.dat")}
 # what the battle's AnimSeq VM (not run by the recorder) would have written: Renzokuken's stage durations (opcode AB)
 CYCLE_POKES = {141: ["poke=0x1D98214:4,10,9,10,9,14"], 159: ["poke=0x1D98214:4,10,9,10,9,14"], 160: ["poke=0x1D98214:4,10,9,10,9,14"], 161: ["poke=0x1D98214:4,10,9,10,9,14"], 259: ["poke=0x1D98214:5,10,9,10,9,10,14"], 332: ["poke=0x1D98214:6,10,9,10,9,10,9,14"], 333: ["poke=0x1D98214:7,10,9,10,9,10,9,10,14"]}
 # what the battle's Shot window does for each trigger press: the setup called again with the sequence mode (2 a shot,
@@ -606,7 +609,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Ice Breath, Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot, Armor Shot, Hyper Shot, Cactuar, No Mercy, Burning Rave, My Final Heaven, Different Beat, White Wind (enemy), Renzokuken (6 hits), Shockwave Pulsar (Quistis), LV Up, LV Down, Mad Rush, Duel, Electrocute, X-ATM092 death, Funguar laser, Carbuncle, Full-cure, Shotgun, Rapture, Brrawghh, Pandemona, White Wind (Quistis), Micro Missiles (Quistis), Bad Breath (Quistis), Boomerang Sword, Gatling Gun (Quistis), Degenerator (Quistis), Ray-Bomb (Quistis), Hero, Holy War, Gravija, Fake President death, Acid (Quistis), Diablos, Odin reverse, Gilgamesh, Renzokuken (7 hits) and Renzokuken (8 hits) and Moomba, Wild Cannon Blow, Zantetsuken (Odin), Acid, Poison Gas, Morph, Blaster from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Ice Breath, Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot, Armor Shot, Hyper Shot, Cactuar, No Mercy, Burning Rave, My Final Heaven, Different Beat, White Wind (enemy), Renzokuken (6 hits), Shockwave Pulsar (Quistis), LV Up, LV Down, Mad Rush, Duel, Electrocute, X-ATM092 death, Funguar laser, Carbuncle, Full-cure, Shotgun, Rapture, Brrawghh, Pandemona, White Wind (Quistis), Micro Missiles (Quistis), Bad Breath (Quistis), Boomerang Sword, Gatling Gun (Quistis), Degenerator (Quistis), Ray-Bomb (Quistis), Hero, Holy War, Gravija, Fake President death, Acid (Quistis), Diablos, Odin reverse, Gilgamesh, Renzokuken (7 hits) and Renzokuken (8 hits) and Moomba, Wild Cannon Blow, Zantetsuken (Odin), Acid, Poison Gas, Morph, Blaster, Maelstrom, "Sorceress" spawn, Omega Gravija from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -3644,6 +3647,44 @@ def test_cannon_blow_as_a_smoke_grenade(tmp_path):
     assert drawn(vanilla) == {0} and drawn(new) >= {1, 2, 3}
     assert [line.split()[1] for line in new if line.startswith("N ")] == [line.split()[1] for line in vanilla
                                                                          if line.startswith("N ")]
+
+
+def test_maelstrom_sorceress_spawn_and_omega_gravija_descriptions_compile():
+    """Maelstrom, "Sorceress" spawn, Omega Gravija: port roots (Cannon Blow's kind) - their setup (and Maelstrom's and
+    Gravija's file loader) the ports', run on the program's memory (their queues, warp frame, grid points in the module);
+    their parts tagged; their data the sounds, layouts, flipbooks, meshes (209's 16), the lens table, the colour tables,
+    the texture name or TIM and the camera track."""
+    for effect, port, module, parts, kinds in (
+            (207, "port 0x6A3AB0 0x6A3AC0 0x6A3B70", "module 207 0x25102C0 0x77E0",
+             ['master', 'layout', 'warp', 'particles'], ['camera', 'layout', 'model', 'name', 'seq', 'sound', 'table']),
+            (209, "port 0x637500 0x0 0x639100", "module 209 0x24F3618 0x4450",
+             ['timeline', 'screen', 'glow', 'bursts', 'swirl', 'rise', 'rings'],
+             ['camera', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'sound', 'sound', 'table', 'table', 'table', 'tim']),
+            (214, "port 0x69D5B0 0x69D5C0 0x69D670", "module 214 0x25089B0 0x77B8",
+             ['master', 'layout', 'warp', 'particles'], ['camera', 'layout', 'model', 'name', 'seq', 'sound'])):
+        d = load_description(effect)
+        lines = compile_program(d).splitlines()
+        for line in ["director port -1", port, module]:
+            assert line in lines, (effect, line)
+        assert [p["key"] for p in d["parts"]] == parts, effect
+        assert sorted(e["kind"] for k, e in d["exe_data"].items() if k != "doc") == kinds, effect
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m117.dat")
+def test_sorceress_spawn_wormlike_timeline_runs_from_its_description(tmp_path):
+    """"Sorceress" spawn cast by the wormlike sorceress (c0m117: timeline B, its screen fades, camera shake and voice):
+    its description records what the exe's code records; a parameter of B's (its closing rings' spawn interval) changes it."""
+    stage = ["caster=3", "target=0", f"slot3={BATTLE / 'c0m117.dat'}"]
+    program = write_program(load_description(209), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 209, "original", *stage)
+    described, log = record(tmp_path, 209, "described", f"program={program}", *stage)
+    assert untag(described) == original and len(original) > 10000
+    params = tmp_path / "params.txt"
+    params.write_text("rings.every_b 3\n")
+    native, _log = record(tmp_path, 209, "native", "native=1", f"params={params}", *stage)
+    described, log = record(tmp_path, 209, "described_params", f"program={program}", f"params={params}", *stage)
+    assert "1 set" in log and native != original and described == native
 
 
 def test_morph_and_blaster_descriptions_compile():

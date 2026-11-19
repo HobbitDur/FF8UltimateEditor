@@ -2692,6 +2692,55 @@ Potion's description is the same with its own sequences and sound.
        `apply_eden_*` only when it is not listed yet (as they do the Brothers', Bahamut's and Leviathan's).
      - *Tests:* `tests/Fujin/test_ports_GF.py`: Squall summons it on c0m092; an edited .00 copy (model
        vertices at 0x6360..) read by the port's file loader and the program's alike; as effect 225, itself again.
+   - **Maelstrom (207)** (FFNx 3fedeb90; Edea's attack, c0m100; a port root, Cannon Blow's kind; Gravija 214's sibling): at
+     the master's tick 1 the screen copy (VRAM (0x240, 0x100) cleared, the next frame drawn there) and the main task at
+     the targets' average point (their default effect points, the height 0x200 below their height word); the main task
+     plays the prim-model layout there for 80 ticks (its kind-9 objects drawn with the screen copy, a texture scroll of
+     32 a tick), from tick 32 for 48 ticks the screen warp (the warp mesh over the targets' heads and feet, growing over
+     8 ticks, its vertices scaled by a row of the lens table stepping every 12 ticks, drawn faded by a half sine over 48
+     ticks, then textured by the screen copy), from tick 48 for 16 ticks 4 particles a tick falling back to the point; the
+     sound at tick 0; the action results at tick 80, the battle textures restored.
+     - *Inputs* (`MaelstromParams`, 28): the sound and the ticks (screen copy, sound, results), the layout (ticks, depth,
+       scroll), the warp (start, ticks, grow, fade, lens step, least size, head drop, widening, OT entry), the particles
+       (start, ticks, count, distance and its random, life). Data: the sound, the layout, the particle flipbook, the warp
+       mesh (copied whole: an edited one keeps its size), the lens table (0x20 rows of 0x80), "mag206.tim", the camera
+       track. Not editable: the layout's object kinds string ("00900901": which objects the screen-copy renderer draws).
+       The square-root table its mesh preparation reads (0x11B3164) stays exe data, with no row: its first bytes lie in
+       the layout's measured span. The particles' pull back (1/128 of their distance a tick) is tied to their 16 draws and
+       stays code, as do the renderers (the module's 0x6A45E0 prim set with the screen-copy polygons, called in the exe)
+       and the screen copy itself.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; three parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Edea (c0m100, slot 3) on Squall (`CYCLE_CASTS`); the description's compile
+       test. The recorder records the screen copy's clear (a V line of black at (0x240, 0x100)), not the frame drawn
+       into VRAM (the recorder has no GPU): Fujin's preview shows the copy's polygons black.
+     - *Fujin:* its tabs (Master, Layout, Warp, Particles); no + menu family.
+   - **"Sorceress" spawn (209)** (FFNx 3fedeb90; attacks 319 / 327 of the time-compression sorceresses c0m115 / c0m116 /
+     c0m117; a port root, Cannon Blow's kind): timeline A (c0m115 / c0m116) or B (the wormlike c0m117, com id 0x85), 130
+     ticks: at tick 0 the caster hidden (until 20, B 65), at 1 the glow mesh, the 12 bursts (each its mesh), A's swirl
+     and the sound; at 2 the next stage's file loaded into the summon data, at 52 the stage swapped; at 16 the screen
+     task (100 ticks: the stage rendered into VRAM (0x240, 0x100) and drawn back as 10 x 7 tiles, white at 36 / 37, then
+     on a rippling 28 x 41 grid around the caster's head from 38, fading to the new stage's colours from 82 to 98); the
+     rising rings (A every 10 ticks from 31 to 91, B every 6 from 73), the closing rings (A at 115, B every 6 from 96);
+     the screen flash up over 16 ticks and down from 122; the action result at 124. B adds three screen fades, a camera
+     shake (93..100) and its voice.
+     - *Inputs* (`SorceressSpawnParams`, 83): the two sounds and the timelines' ticks, the screen flash, the screen
+       task's phases, the ripple (steps, wave, speed, height, reach, shrink), the glow, the bursts (count, spin, sizes,
+       grow ticks, lives), the swirl (size, scroll, fade, life), the rising and the closing rings (spawn series, sizes,
+       lives). Data: the sounds, the TIM, the camera track, 16 meshes (glow, swirl, rising and closing ring, the 12
+       bursts'), the screen's 8 + 24 colours and the swirl's 18. Not editable: the stage groups' OT buckets (8 words), the
+       voice's sound block, the burst meshes' exe table (their game values). The grid stays code: its 28 x 41 points (module words) and 27 x 40 cells (corner
+       pointers and two GPU quads each, built in the summon data by its code every run, after the stage file there has
+       been used) are work memory whose sizes are the screen's (8 pixels a cell over 320 x 216). B's screen fades, camera
+       shake and voice stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; the setup ported (the file loader is the
+       engine's bare ret); six parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from the first sorceress (c0m115, slot 3) on Squall (`CYCLE_CASTS`); timeline B
+       cast by c0m117 (its own test); the description's compile test. The recorder does not swap the stage (BS_ChangeStage
+       0x50E3C0 is a logged no-op there: the fake battle's stage is not the witch fight's), records the stage render's
+       clear as one V line and not the screen flash; the stage file's load completes as in the game (its callback gets the
+       bytes read).
+     - *Fujin:* its tabs (Timeline, Screen, Glow, Bursts, Swirl, Rising rings, Closing rings); no + menu family.
    - **Burning Rave (212)** (FFNx aad96877; Zell's Duel finisher; a port root and director, Ray-Bomb's kind): his
      animation set and placement, the stage captured, the ground and burning layouts, rocks, sparks and debris,
      the targets drawn, thrown and spun, his afterimages, the camera's moves, the screen flash, the sounds
@@ -2699,6 +2748,26 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`BurningRaveParams`): the two sounds, the damage tick. Data: the sounds, "mag211.tim".
      - *Port:* the rock / sprite spawners take the task as an argument: those spawns go through own::Fn too.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Omega Gravija (214)** (FFNx 3fedeb90; enemy attack 309 of Omega Weapon c0m114 / Ultima Weapon c0m090; a port root,
+     Cannon Blow's kind; Gravija 311's copy with a real screen warp): at the master's tick 1 the screen copy (VRAM
+     (0x240, 0x100) cleared, the next frame drawn there) and the main task at the targets' average point; it plays the
+     layout there for 74 ticks, from tick 18 for 56 ticks the screen warp (the warp mesh over the targets' heads and feet,
+     growing over 8 ticks, its vertices pushed along their directions by a sine travelling along their lengths (a turn
+     every 56 ticks, amplitude 2 sin(phase / 2)), drawn faded (0xC00, from its tick 48 by 0x80 a tick), then textured by
+     the screen copy); at tick 18 0x40 particles on tilted circles round the point (their size rising over 16 ticks,
+     falling from 34); the sound at tick 0; the action results at tick 67; the battle textures restored at 74.
+     - *Inputs* (`OmegaGravijaParams`, 33): the sound and the ticks (screen copy, sound, results, end), the layout
+       (ticks, depth), the warp (start, ticks, grow, wave period and amplitude, fade, its start and step, least size,
+       widening, OT entry), the particles (start, count, life and its random, reach and its random, spin, rise, fall,
+       ticks). Data: the sound, the layout, the particle flipbook, the warp mesh (copied whole: an edited one keeps its
+       size), "mag213-310.tim", the camera track. Not editable: the sine table the wave reads (also its length table).
+       The square-root table its mesh preparation reads (0x1178A50) stays exe data, with no row: the camera track's
+       measured span (its header's size) runs into it. The renderers and the screen copy stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; three parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Omega Weapon (c0m114, slot 3) on Squall (`CYCLE_CASTS`); the description's
+       compile test. The recorder records the screen copy's clear, not the frame drawn into VRAM.
+     - *Fujin:* its tabs (Master, Layout, Warp, Particles); no + menu family.
    - **My Final Heaven (215)** (FFNx a99590fb; Zell's Duel finisher; a port root and director, Ray-Bomb's kind): his
      animation set, the layouts as he walks back, runs and jumps, the rings, the debris, the targets turned,
      thrown and spun, the crater, the white flash, the camera's moves, the screen flash, the sounds (ticks 6,
