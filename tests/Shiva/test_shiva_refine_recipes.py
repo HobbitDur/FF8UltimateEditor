@@ -1,10 +1,11 @@
-"""Shiva adds and removes refine recipes, the ranges of kernel.bin moving with them.
+"""Shiva adds and removes refine recipes; kernel.bin, which holds the ranges, is only read.
 
 A refine table (m000-m004) is a flat list of entries; each menu ability of kernel.bin gives the
 first and last entry it offers (Menu_Prog19_RefineMenu_Init: count = last - first + 1, a u8, list =
-Menu_RefineEntryBuffer + 8 * first, a 0x800-byte buffer). Adding a recipe means inserting an entry
-and its text, and moving every range of the table it pushes: kernel.bin and mngrp.bin are saved
-together or not at all.
+Menu_RefineEntryBuffer + 8 * first, a 0x800-byte buffer). Adding a recipe inserts an entry and its
+text, every later entry of the table moving down: the abilities keep kernel.bin's ranges, so the tab
+shows what the game would, and a warning lists the abilities whose range kernel.bin must change
+(with SolomonRing). Abilities offering the same entries are refused.
 """
 import csv
 import pathlib
@@ -12,12 +13,11 @@ import shutil
 import sys
 
 import pytest
-from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtWidgets import QApplication, QInputDialog, QMessageBox
 
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.mngrp.m00x.refineabilities import (MAX_TABLE_ENTRIES, RefineKernelError,
-                                                         read_refine_abilities, verify_refine_ranges,
-                                                         write_refine_ranges)
+                                                         read_refine_abilities)
 from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
 from Shiva.ShivaRefine.refinecsv import read_refine_csv, write_refine_csv
 from Shiva.ShivaRefine.refineview import RefineLayout
@@ -25,6 +25,7 @@ from Shiva.ShivaRefine.refineview import RefineLayout
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 EXTRACTED = PROJECT_ROOT / "extracted_files"
 FILES = ("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin", "extracted_files/main/kernel.bin")
+MENU_ABILITIES = 0x43C0  # offset of the menu ability section in the vanilla kernel.bin
 
 
 @pytest.fixture(scope="module")
@@ -42,6 +43,11 @@ def files(tmp_path):
     return tmp_path
 
 
+@pytest.fixture(scope="module")
+def qapp():
+    return QApplication.instance() or QApplication(sys.argv)
+
+
 def _load(game_data, folder, with_kernel=True):
     manager = MngrpManager(game_data=game_data)
     manager.load_file(str(folder / "mngrphd.bin"), str(folder / "mngrp.bin"))
@@ -49,63 +55,77 @@ def _load(game_data, folder, with_kernel=True):
     return manager, RefineLayout(manager, abilities)
 
 
-def _snapshot(layout):
-    """Everything the game reads of each ability (the text offsets are recomputed when saving)."""
-    return [(view.key, view.first, view.last, [t.get_str() for t in view.texts],
-             [{name: value for name, value in vars(entry).items() if name != "text_offset"}
-              for entry in view.entries]) for view in layout.views]
+def _table(layout, table):
+    """Everything the game reads of a table (the text offsets are recomputed when saving)."""
+    bin_section, msg_section = layout.tables()[table]
+    return [({name: value for name, value in vars(entry).items() if name != "text_offset"}, text.get_str())
+            for entry, text in zip(bin_section.entries, msg_section.get_text_list())]
 
 
 def _view(layout, name):
     return next(view for view in layout.views if view.name == name)
 
 
+def _ranges(layout, bin_name):
+    return [(view.name, view.first, view.last) for view in layout.views if view.bin_name == bin_name]
+
+
+def _set_range(folder, ability_index, first, last):
+    """What SolomonRing does: bytes 6-7 of a menu ability."""
+    kernel = bytearray((folder / "kernel.bin").read_bytes())
+    kernel[MENU_ABILITIES + ability_index * 8 + 6:MENU_ABILITIES + ability_index * 8 + 8] = bytes((first, last))
+    (folder / "kernel.bin").write_bytes(bytes(kernel))
+
+
+def _run(tool_class, argv) -> int:
+    tool = tool_class()
+    return tool.execute(tool.build_parser().parse_args(argv))
+
+
 @pytest.mark.ff8data(*FILES)
 def test_abilities_come_only_from_kernel_bin(game_data, files):
     """With a kernel.bin, one view per refine ability, named and sliced as it says (Tool-RF is the
     4th ability of kernel.bin but the last block of m001). Without one, no ability at all: each
-    table is one view of all its entries, with a fixed count."""
+    table is one view of all its entries."""
     manager, from_kernel = _load(game_data, files)
     assert [(v.bin_name, v.name, v.ability.index, v.first, v.last) for v in from_kernel.views if v.bin_name == "m001"] == [
         ("m001", "Recov Med-RF", 13, 0, 8), ("m001", "ST Med-RF", 14, 9, 20), ("m001", "Ammo-RF", 15, 21, 36),
         ("m001", "Forbid Med-RF", 17, 37, 56), ("m001", "GFRecov Med-RF", 18, 57, 68),
         ("m001", "GFAbl Med-RF", 19, 69, 110), ("m001", "Tool-RF", 16, 111, 142)]
-    assert len(from_kernel.views) == 19 and all(v.kind == "ability" and v.editable_range for v in from_kernel.views)
+    assert len(from_kernel.views) == 19 and all(v.kind == "ability" for v in from_kernel.views)
     assert sum(len(v.entries) for v in from_kernel.views) == 377 and not from_kernel.warnings
 
     without = RefineLayout(manager)
-    assert [(v.bin_name, v.kind, v.first, v.last, v.editable_range) for v in without.views] == [
-        ("m000", "table", 0, 101, False), ("m001", "table", 0, 142, False), ("m002", "table", 0, 9, False),
-        ("m003", "table", 0, 11, False), ("m004", "table", 0, 109, False)]
+    assert [(v.bin_name, v.kind, v.first, v.last) for v in without.views] == [
+        ("m000", "table", 0, 101), ("m001", "table", 0, 142), ("m002", "table", 0, 9),
+        ("m003", "table", 0, 11), ("m004", "table", 0, 109)]
     assert without.abilities == [] and not without.warnings
 
 
 @pytest.mark.ff8data(*FILES)
-def test_added_recipe_moves_the_ranges_and_survives_a_save(game_data, files):
+def test_added_recipe_shifts_the_table_and_keeps_kernel_ranges(game_data, files):
+    """The new recipe pushes every later one down; each ability still offers what kernel.bin says,
+    so ST Med-RF now starts on Recov Med-RF's old last recipe, until kernel.bin is edited."""
     manager, layout = _load(game_data, files)
     recov = _view(layout, "Recov Med-RF")
+    old_last = _table(layout, 1)[8]
     assert layout.insert_entry(recov, 0) == 1
-    assert (recov.first, recov.last) == (0, 9)
-    assert [(v.name, v.first, v.last) for v in layout.views if v.bin_name == "m001"] == [
-        ("Recov Med-RF", 0, 9), ("ST Med-RF", 10, 21), ("Ammo-RF", 22, 37), ("Forbid Med-RF", 38, 57),
-        ("GFRecov Med-RF", 58, 69), ("GFAbl Med-RF", 70, 111), ("Tool-RF", 112, 143)]
-    assert vars(recov.entries[1]) == vars(recov.entries[0])
+    assert _ranges(layout, "m001")[:2] == [("Recov Med-RF", 0, 8), ("ST Med-RF", 9, 20)]
+    assert len(recov.bin_section.entries) == 144 and vars(recov.entries[1]) == vars(recov.entries[0])
+    assert _table(layout, 1)[9] == old_last
+    assert layout.kernel_update_needed
+    assert layout.warnings == [layout.kernel_warnings()[0]]
+    assert "m001: 1 recipe(s) added" in layout.warnings[0] and "kernel.bin must be modified" in layout.warnings[0]
+    assert "Recov Med-RF (0-8)" in layout.warnings[0] and "Tool-RF (111-142)" in layout.warnings[0]
+
     recov.entries[1].element_in_id = 50
     recov.texts[1].set_str("Test:\\n1 will refine \\ninto 1 Potion")
-    expected = _snapshot(layout)
-
-    original_kernel = (files / "kernel.bin").read_bytes()
-    manager.save_file(str(files / "mngrp.bin"), str(files / "mngrphd.bin"))
-    assert write_refine_ranges(game_data, files / "kernel.bin", layout.abilities) == 7
-    assert not layout.ranges_changed
-
-    _, reloaded = _load(game_data, files)
-    assert _snapshot(reloaded) == expected
+    expected = _table(layout, 1)
     kernel = (files / "kernel.bin").read_bytes()
-    changed = [index for index in range(len(kernel)) if kernel[index] != original_kernel[index]]
-    section = 0x43C0  # vanilla menu ability section; bytes 6/7 of abilities 13-19 (m001) only
-    assert len(kernel) == len(original_kernel)
-    assert all((index - section) % 8 in (6, 7) and 13 <= (index - section) // 8 <= 19 for index in changed)
+    manager.save_file(str(files / "mngrp.bin"), str(files / "mngrphd.bin"))
+    assert (files / "kernel.bin").read_bytes() == kernel
+    _, reloaded = _load(game_data, files)
+    assert _table(reloaded, 1) == expected
 
 
 @pytest.mark.ff8data(*FILES)
@@ -119,12 +139,11 @@ def test_growing_past_the_text_padding_keeps_every_other_section(game_data, file
     for _ in range(40):
         layout.insert_entry(tool, len(tool.entries) - 1)
     assert layout.check_game_limits() == []
-    expected = _snapshot(layout)
+    expected = _table(layout, 1)
     manager.save_file(str(files / "mngrp.bin"), str(files / "mngrphd.bin"))
-    write_refine_ranges(game_data, files / "kernel.bin", layout.abilities)
 
     reloaded_manager, reloaded = _load(game_data, files)
-    assert _snapshot(reloaded) == expected
+    assert _table(reloaded, 1) == expected and len(expected) == 183
     assert sum(len(text) for text in reloaded_manager.m00_manager.get_msg_list()[1].get_text_list()) > 8192
     others_after = {section.id: bytes(section.get_data_hex()) for section in reloaded_manager.mngrp.get_section_list()
                     if section not in reloaded_manager.m00_manager.get_bin_list()
@@ -133,74 +152,82 @@ def test_growing_past_the_text_padding_keeps_every_other_section(game_data, file
 
 
 @pytest.mark.ff8data(*FILES)
-def test_removed_recipe_moves_the_ranges_back(game_data, files):
+def test_removed_recipe_shifts_the_table_back(game_data, files):
     manager, layout = _load(game_data, files)
     t_mag = _view(layout, "T Mag-RF")
     removed_text = t_mag.texts[2].get_str()
+    i_first = _view(layout, "I Mag-RF").texts[0].get_str()
     layout.remove_entry(t_mag, 2)
-    assert (t_mag.first, t_mag.last) == (0, 5) and _view(layout, "I Mag-RF").first == 6
-    assert removed_text not in [text.get_str() for text in t_mag.texts]
-    expected = _snapshot(layout)
+    assert (t_mag.first, t_mag.last) == (0, 6) and _view(layout, "I Mag-RF").first == 7
+    assert removed_text not in [text.get_str() for text in t_mag.texts] and t_mag.texts[6].get_str() == i_first
+    assert layout.warnings[0] == ("Forbid Mag-RF offers recipes 96-101 of m000, which only has 101: "
+                                  "the extra ones are empty.")
+    assert "m000: 1 removed, the recipes from entry 2 on moved" in layout.warnings[1]
+    assert "T Mag-RF (0-6)" in layout.warnings[1]
+    expected = _table(layout, 0)
     manager.save_file(str(files / "mngrp.bin"), str(files / "mngrphd.bin"))
-    write_refine_ranges(game_data, files / "kernel.bin", layout.abilities)
     _, reloaded = _load(game_data, files)
-    assert _snapshot(reloaded) == expected
-
-    one = _view(layout, "Forbid Mag-RF")
-    while len(one.entries) > 1:
-        layout.remove_entry(one, 0)
-    with pytest.raises(ValueError, match="at least one"):
-        layout.remove_entry(one, 0)
+    assert _table(reloaded, 0) == expected
 
 
 @pytest.mark.ff8data(*FILES)
 def test_limits_and_layout_without_kernel(game_data, files):
-    manager, layout = _load(game_data, files)
-    card_mod = _view(layout, "Card Mod")  # one ability: RefineMenuTask.entry_count is a u8
-    while len(card_mod.entries) < 255:
-        layout.insert_entry(card_mod, 0)
-    with pytest.raises(ValueError, match="255"):
-        layout.insert_entry(card_mod, 0)
-    mid, high = _view(layout, "Mid Mag-RF"), _view(layout, "High Mag-RF")  # two: the 0x800 buffer
+    _, layout = _load(game_data, files)
+    mid, high = _view(layout, "Mid Mag-RF"), _view(layout, "High Mag-RF")  # the 0x800 buffer
     while len(mid.bin_section.entries) < MAX_TABLE_ENTRIES:
         layout.insert_entry(mid, 0)
     with pytest.raises(ValueError, match="256"):
         layout.insert_entry(high, 0)
-    assert (mid.first, mid.last, high.first, high.last) == (0, 249, 250, 255)
     assert layout.check_game_limits() == []
 
-    _, vanilla = _load(game_data, files, with_kernel=False)
-    with pytest.raises(ValueError, match="kernel.bin"):
-        vanilla.insert_entry(vanilla.views[0], 0)
+    with pytest.raises(ValueError, match="entry 0 to 12, not 13"):
+        layout.insert_at(3, 13, 0)
+    with pytest.raises(ValueError, match="entries 0 to 11, not 12"):
+        layout.remove_at(3, 12)
 
 
 @pytest.mark.ff8data(*FILES)
-def test_kernel_changed_on_disk_is_never_overwritten(game_data, files):
+def test_recipes_at_any_index_of_the_table(game_data, files):
+    """A recipe goes at any entry 0 to the table's count: added at the end it moves no range, so
+    no ability offers it until kernel.bin points one at it. Without a kernel.bin, the same."""
     _, layout = _load(game_data, files)
-    layout.insert_entry(_view(layout, "Med LV Up"), 0)
-    kernel = bytearray((files / "kernel.bin").read_bytes())
-    kernel[0x43C0 + 22 * 8 + 7] = 13  # another tool moved Med LV Up's last entry meanwhile
-    (files / "kernel.bin").write_bytes(bytes(kernel))
-    with pytest.raises(RefineKernelError, match="changed since it was opened"):
-        verify_refine_ranges(game_data, files / "kernel.bin", layout.abilities)
-    with pytest.raises(RefineKernelError):
-        write_refine_ranges(game_data, files / "kernel.bin", layout.abilities)
-    assert (files / "kernel.bin").read_bytes() == bytes(kernel)
+    layout.insert_at(0, 102, 0)
+    assert _ranges(layout, "m000")[-2:] == [("Forbid Mag-RF", 96, 101), ("(no ability) 102-102", 102, 102)]
+    assert _table(layout, 0)[102] == _table(layout, 0)[0]
+    assert layout.warnings == ["m000: 1 recipe(s) added, the recipes from entry 102 on moved. no refine ability's "
+                               "range moved: a recipe past them is offered by none until an ability points at it "
+                               "in kernel.bin (with SolomonRing)"]
+    layout.remove_at(0, 102)
+    assert len(layout.tables()[0][0].entries) == 102
+
+    _, without = _load(game_data, files, with_kernel=False)
+    without.insert_at(3, 0, 11)
+    assert without.views[3].last == 12 and "open it to see which" in without.warnings[0]
 
 
 @pytest.mark.ff8data(*FILES)
-def test_csv_rows_past_the_last_recipe_are_added_with_a_kernel(game_data, files):
-    manager, layout = _load(game_data, files)
+def test_csv_new_rows_go_after_their_ability_in_csv_order(game_data, files):
+    """A row with an empty Entry goes right after the last entry kernel.bin gives its ability, the
+    rows of one ability in CSV order, whatever order the abilities come in."""
+    _, layout = _load(game_data, files)
     csv_path = files / "refine.csv"
     write_refine_csv(csv_path, layout)
     with open(csv_path, newline="", encoding="utf-8") as csv_file:
         lines = list(csv.reader(csv_file, delimiter="|"))
-    new_row = ["m003", "", "Med LV Up","New:\\n1 will refine \\ninto 1 Elixir", "1", "1", "16", "1", "1"]
+    new_rows = [["m002", "", "Mid Mag-RF", "Mid one", "1", "1", "16", "1", "1"],
+                ["m002", "", "High Mag-RF", "High one", "1", "1", "17", "1", "1"],
+                ["m002", "", "Mid Mag-RF", "Mid two", "1", "1", "18", "1", "1"],
+                ["m003", "", "Med LV Up", "New:\\n1 will refine \\ninto 1 Elixir", "1", "1", "16", "1", "1"]]
     with open(csv_path, "a", newline="", encoding="utf-8") as csv_file:
-        csv.writer(csv_file, delimiter="|").writerow(new_row)
-    assert read_refine_csv(csv_path, layout) == len(lines) - 1 + 1
-    med = _view(layout, "Med LV Up")
-    assert len(med.entries) == 13 and med.entries[12].element_out_id == 16 and med.texts[12].get_str() == new_row[3]
+        csv.writer(csv_file, delimiter="|").writerows(new_rows)
+    assert read_refine_csv(csv_path, layout) == len(lines) - 1 + 4
+    m002 = [text for _, text in _table(layout, 2)]
+    assert len(m002) == 13 and (m002[4], m002[5], m002[12]) == ("Mid one", "Mid two", "High one")
+    # kernel.bin's ranges: the last 3 recipes of the table are offered by no ability until it is edited
+    assert _ranges(layout, "m002") == [("Mid Mag-RF", 0, 3), ("High Mag-RF", 4, 9), ("(no ability) 10-12", 10, 12)]
+    m003 = _table(layout, 3)
+    assert len(m003) == 13 and m003[12][0]["element_out_id"] == 16 and m003[12][1] == new_rows[3][3]
+    assert any(line.startswith("m002: 3 recipe(s) added") for line in layout.warnings)
 
     _, vanilla = _load(game_data, files, with_kernel=False)
     with pytest.raises(ValueError, match="needs kernel.bin"):
@@ -208,7 +235,7 @@ def test_csv_rows_past_the_last_recipe_are_added_with_a_kernel(game_data, files)
 
 
 @pytest.mark.ff8data(*FILES)
-def test_cli_import_adds_recipes_and_writes_the_kernel(files):
+def test_cli_import_adds_recipes_and_only_reads_the_kernel(files, capsys):
     from Cli.shiva import ShivaCliTool
     csv_path = files / "refine.csv"
     args_export = ["export-refine-csv", "--input", str(files / "mngrp.bin"), "--output", str(csv_path),
@@ -217,76 +244,151 @@ def test_cli_import_adds_recipes_and_writes_the_kernel(files):
     with open(csv_path, "a", newline="", encoding="utf-8") as csv_file:
         csv.writer(csv_file, delimiter="|").writerow(
             ["m002", "", "High Mag-RF", "Blizzara:\\n5 will refine \\ninto 1 Blizzaga", "5", "5", "6", "1", "1"])
-    out_kernel = files / "kernel_out.bin"
+    out_mngrp = files / "mngrp_out.bin"
     assert _run(ShivaCliTool, ["import-refine-csv", "--input", str(files / "mngrp.bin"), "--csv", str(csv_path),
-                               "--kernel", str(files / "kernel.bin"), "--output-kernel", str(out_kernel)]) == 0
+                               "--kernel", str(files / "kernel.bin"), "--output", str(out_mngrp),
+                               "--output-mngrphd", str(files / "mngrphd_out.bin")]) == 0
     assert (files / "kernel.bin").read_bytes() == (EXTRACTED / "main" / "kernel.bin").read_bytes()
-    kernel = out_kernel.read_bytes()
-    assert kernel[0x43C0 + 21 * 8 + 6:0x43C0 + 21 * 8 + 8] == bytes((4, 10))
+    assert "[warning] m002: 1 recipe(s) added" in capsys.readouterr().out
+    manager = MngrpManager(game_data=GameData(str(PROJECT_ROOT / "FF8GameData")))
+    manager.game_data.load_all()
+    manager.load_file(str(files / "mngrphd_out.bin"), str(out_mngrp))
+    assert len(manager.m00_manager.get_bin_list()[2].entries) == 11
 
 
-def _run(tool_class, argv) -> int:
-    tool = tool_class()
-    return tool.execute(tool.build_parser().parse_args(argv))
-
-
-@pytest.fixture(scope="module")
-def qapp():
-    return QApplication.instance() or QApplication(sys.argv)
+def _overlapping_kernel(folder):
+    """The vanilla kernel.bin with I Mag-RF starting on T Mag-RF's last entry (6): two abilities
+    offering the same recipe, as older Shiva versions could leave it."""
+    _set_range(folder, 6, 6, 13)
 
 
 @pytest.mark.ff8data(*FILES)
-def test_shiva_tab_adds_a_recipe_and_saves_both_files(qapp, game_data, files, monkeypatch):
+def test_overlapping_ranges_are_refused(game_data, files):
+    """Nihil's report: E Mag-RF offered T Mag-RF's first entries, so editing one edited the other.
+    Each ability owns its block: a kernel.bin where two overlap is refused, naming them."""
+    _overlapping_kernel(files)
+    with pytest.raises(RefineKernelError, match=r"T Mag-RF \(menu ability 5, entries 0-6\) and I Mag-RF "
+                                                r"\(menu ability 6, entries 6-13\)"):
+        read_refine_abilities(game_data, files / "kernel.bin")
+
+    from Cli.shiva import ShivaCliTool
+    assert _run(ShivaCliTool, ["export-refine-csv", "--input", str(files / "mngrp.bin"),
+                               "--output", str(files / "refine.csv"), "--kernel", str(files / "kernel.bin")]) != 0
+    assert not (files / "refine.csv").exists()
+
+
+def _shiva(files, monkeypatch, index=None, errors=None):
+    """A Shiva with the test files open; index answers the add / remove recipe popups (None: the
+    index they propose). Error popups fail the test, unless an `errors` list collects them."""
     from Shiva.shivawidget import ShivaWidget
-    messages = []
-    monkeypatch.setattr(QMessageBox, "critical", lambda *args: messages.append(args[2]))
-    monkeypatch.setattr(QMessageBox, "warning", lambda *args: messages.append(args[2]))
+    monkeypatch.setattr(QInputDialog, "getInt",
+                        lambda parent, title, label, value, low, high: (value if index is None else index, True))
+    collect = (lambda *args: errors.append(args[2])) if errors is not None else (lambda *args: pytest.fail(args[2]))
+    monkeypatch.setattr(QMessageBox, "critical", collect)
+    monkeypatch.setattr(QMessageBox, "warning", collect)
     widget = ShivaWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
     widget.mngrp_binding.open_path(str(files / "mngrp.bin"))
-    refine = widget.refine_tab
-    assert refine.kernel_notice.isVisibleTo(refine) and not refine.add_recipe_button.isEnabled()
-
-    assert [refine.section_list.item(i).text() for i in range(refine.section_list.count())] ==         [f"m00{n} - all recipes" for n in range(5)]
     widget.kernel_binding.open_path(str(files / "kernel.bin"))
-    assert not refine.kernel_notice.isVisibleTo(refine) and refine.section_list.count() == 19
-    row = next(i for i, view in enumerate(refine.refine_views) if view.name == "Ammo-RF")
-    refine.section_list.setCurrentRow(row)
-    assert refine.section_list.currentItem().text() == "m001 - Ammo-RF" and refine.add_recipe_button.isEnabled()
-    refine.entry_table.setCurrentCell(15, 0)
-    refine.add_recipe_button.click()
-    assert refine.entry_table.rowCount() == 17 and refine.entry_table.currentRow() == 16
-    assert "Recipe 17 takes the same input as recipe 16" in refine.warning_label.text()
+    return widget
 
-    assert widget.save_files() is True and not messages
-    _, reloaded = _load(game_data, files)
-    assert len(_view(reloaded, "Ammo-RF").entries) == 17 and _view(reloaded, "Tool-RF").first == 112
 
-    # An added recipe with the kernel.bin removed from the opened files: nothing is written
-    refine.add_recipe_button.click()
-    widget.kernel_binding.registry.close_file("kernel.bin")
-    before = (files / "mngrp.bin").read_bytes()
-    assert widget.save_files() is False and "no kernel.bin is open" in messages[-1]
-    assert (files / "mngrp.bin").read_bytes() == before
+def _select(refine, name):
+    refine.section_list.setCurrentRow(next(i for i, view in enumerate(refine.refine_views) if view.name == name))
 
 
 @pytest.mark.ff8data(*FILES)
-def test_shiva_saves_twice_in_one_session_and_removes_the_added_recipe(qapp, game_data, files, monkeypatch):
+def test_shiva_tab_adds_a_recipe_and_saves_only_mngrp(qapp, game_data, files, monkeypatch):
+    widget = _shiva(files, monkeypatch)
+    refine = widget.refine_tab
+    assert widget.kernel_binding.read_only
+    assert refine.section_list.count() == 19 and not refine.warning_label.isVisibleTo(refine)
+    _select(refine, "Ammo-RF")
+    refine.entry_table.setCurrentCell(15, 0)
+    refine.add_recipe_button.click()  # the popup proposes entry 37, right after the selected recipe
+    # Added after Ammo-RF's last recipe: it is Forbid Med-RF's first until kernel.bin is edited
+    assert refine.entry_table.rowCount() == 16
+    assert refine.warning_label.isVisibleTo(refine) and "kernel.bin must be modified" in refine.warning_label.text()
+    assert "Forbid Med-RF (37-56)" in refine.warning_label.text() and "Ammo-RF" not in refine.warning_label.text()
+
+    kernel = (files / "kernel.bin").read_bytes()
+    assert widget.save_files() is True
+    assert (files / "kernel.bin").read_bytes() == kernel
+    _, reloaded = _load(game_data, files)
+    assert len(reloaded.tables()[1][0].entries) == 144
+
+    # The same kernel.bin opened again: still to edit. Once edited (SolomonRing), the warning goes
+    refine.set_kernel_abilities(read_refine_abilities(game_data, files / "kernel.bin"))
+    assert "kernel.bin must be modified" in refine.warning_label.text()
+    _set_range(files, 15, 21, 37)
+    for index, (first, last) in ((17, (38, 57)), (18, (58, 69)), (19, (70, 111)), (16, (112, 143))):
+        _set_range(files, index, first, last)
+    refine.set_kernel_abilities(read_refine_abilities(game_data, files / "kernel.bin"))
+    assert "kernel.bin must be modified" not in refine.warning_label.text()
+    _select(refine, "Ammo-RF")
+    assert refine.entry_table.rowCount() == 17
+
+
+@pytest.mark.ff8data(*FILES)
+def test_shiva_saves_twice_in_one_session_and_removes_the_added_recipe(qapp, files, monkeypatch):
     """The Sprite and Tutorial tabs swap their sections in unpadded on every save: from the second
     save on, mngrphd.bin got every later section's offset 496 bytes short (no menu images in game)."""
-    from Shiva.shivawidget import ShivaWidget
-    messages = []
-    monkeypatch.setattr(QMessageBox, "critical", lambda *args: messages.append(args[2]))
-    monkeypatch.setattr(QMessageBox, "warning", lambda *args: messages.append(args[2]))
     originals = {name: (files / name).read_bytes() for name in ("mngrp.bin", "mngrphd.bin", "kernel.bin")}
-    widget = ShivaWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
-    widget.mngrp_binding.open_path(str(files / "mngrp.bin"))
-    widget.kernel_binding.open_path(str(files / "kernel.bin"))
+    widget = _shiva(files, monkeypatch)
     refine = widget.refine_tab
-    refine.section_list.setCurrentRow(next(i for i, view in enumerate(refine.refine_views) if view.name == "Ammo-RF"))
-    refine.entry_table.setCurrentCell(15, 0)
+    _select(refine, "Ammo-RF")
+    refine.entry_table.setCurrentCell(14, 0)
     refine.add_recipe_button.click()
     assert widget.save_files() is True
-    refine.entry_table.setCurrentCell(16, 0)
+    refine.entry_table.setCurrentCell(15, 0)
     refine.remove_recipe_button.click()
-    assert widget.save_files() is True and widget.save_files() is True and not messages
+    assert widget.save_files() is True and widget.save_files() is True
     assert {name: (files / name).read_bytes() for name in originals} == originals
+
+
+@pytest.mark.ff8data(*FILES)
+def test_shiva_tab_refuses_an_overlapping_kernel(qapp, files, monkeypatch):
+    """An explicit error naming the abilities, and the tables shown whole as without a kernel.bin."""
+    _overlapping_kernel(files)
+    errors = []
+    widget = _shiva(files, monkeypatch, errors=errors)
+    refine = widget.refine_tab
+    assert len(errors) == 1 and "T Mag-RF (menu ability 5, entries 0-6) and I Mag-RF" in errors[0]
+    assert refine.kernel_notice.isVisibleTo(refine) and refine.section_list.count() == 5
+    assert widget.kernel_path == ""
+
+
+@pytest.mark.ff8data(*FILES)
+def test_shiva_tab_names_magic_as_the_kernel_does(qapp, game_data, files):
+    """A mod's kernel.bin renames spells: the refine combos show its names, not magic.json's."""
+    from Shiva.ShivaRefine.shivarefinewidget import ShivaRefineWidget
+    manager, layout = _load(game_data, files)
+    refine = ShivaRefineWidget(game_data)
+    refine.load_from_mngrp(manager)
+    refine.set_kernel_abilities(layout.abilities)
+    _select(refine, "T Mag-RF")
+    assert refine.entry_table.cellWidget(0, refine.COLUMN_OUTPUT).currentText() == "Thundara"
+    refine.set_kernel_names(refine._item_entries, {8: "Bolt 2"})
+    assert refine.entry_table.cellWidget(0, refine.COLUMN_OUTPUT).currentText() == "Bolt 2"
+
+
+@pytest.mark.ff8data(*FILES)
+def test_shiva_popups_add_at_the_end_and_remove_any_entry(qapp, game_data, files, monkeypatch):
+    """The index typed in the popup is an entry of the whole table, 0 to the count when adding."""
+    widget = _shiva(files, monkeypatch, index=102)
+    refine = widget.refine_tab
+    _select(refine, "T Mag-RF")
+    refine.entry_table.setCurrentCell(1, 0)
+    refine.add_recipe_button.click()
+    entries = refine.layout.tables()[0][0].entries
+    assert len(entries) == 103 and vars(entries[102]) == vars(entries[1])
+    assert any(view.name == "(no ability) 102-102" for view in refine.refine_views)
+
+    monkeypatch.setattr(QInputDialog, "getInt", lambda *args: (0, True))
+    first_text = refine.layout.tables()[0][1].get_text_list()[1].get_str()
+    refine.remove_recipe_button.click()
+    assert len(entries) == 102 and refine.layout.tables()[0][1].get_text_list()[0].get_str() == first_text
+
+    monkeypatch.setattr(QInputDialog, "getInt", lambda *args: (0, False))  # Cancel: nothing changes
+    refine.add_recipe_button.click()
+    refine.remove_recipe_button.click()
+    assert len(entries) == 102

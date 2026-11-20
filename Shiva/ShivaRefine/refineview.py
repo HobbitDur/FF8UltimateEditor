@@ -7,13 +7,13 @@ A refine table (m000 to m004) is one flat list of entries; kernel.bin's menu abi
 the first and last entry of their slice of it (FF8GameData/menu/mngrp/m00x/refineabilities.py).
 That is the only place the slices come from: with a kernel.bin, the views are its abilities and
 recipes can be added or removed, every range after the change moving with it. Without one, each
-table is a single view of all its entries, editable but with a fixed count.
+table is a single view of all its entries.
 """
 import copy
 
-from FF8GameData.menu.mngrp.m00x.refineabilities import (MAX_ABILITY_ENTRIES, MAX_MSG_SIZE,
+from FF8GameData.menu.mngrp.m00x.refineabilities import (MAX_MSG_SIZE,
                                                          MAX_TABLE_ENTRIES, RefineAbility,
-                                                         check_refine_ranges)
+                                                         check_no_overlap, check_refine_ranges)
 
 
 class RefineView:
@@ -24,12 +24,11 @@ class RefineView:
     sections keep the text of an entry in another section (the msg one), the two lined up by
     position. The offsets between them are recomputed when the file is written."""
 
-    def __init__(self, bin_section, msg_section, ability, kind, editable_range):
+    def __init__(self, bin_section, msg_section, ability, kind):
         self.bin_section = bin_section
         self.msg_section = msg_section
         self.ability = ability
         self.kind = kind                      # "ability", "table" (no kernel.bin) or "unused"
-        self.editable_range = editable_range  # a kernel.bin ability: recipes can be added or removed
         self.bin_name = bin_section.m00bin.name
         self.input_type = bin_section.m00bin.input_id
         self.output_type = bin_section.m00bin.output_id
@@ -86,21 +85,32 @@ class RefineView:
 
 
 class RefineLayout:
-    """Every refine ability of a mngrp, sliced as a kernel.bin says (or one view per table)."""
+    """Every refine ability of a mngrp, sliced as a kernel.bin says (or one view per table).
+
+    kernel.bin is only read: the abilities always keep the range it gives them, so each view shows
+    what the game shows. Adding or removing a recipe shifts every later entry of its table, and the
+    layout lists which abilities then need a new first/last entry in kernel.bin (kernel_warnings),
+    to set with a kernel.bin editor (SolomonRing)."""
 
     def __init__(self, manager, abilities=None):
-        """abilities: kernel.bin's RefineAbility list (read_refine_abilities), None without one."""
+        """abilities: kernel.bin's RefineAbility list (read_refine_abilities), None without one.
+
+        Each ability owns its own block of its table: abilities that overlap are refused
+        (RefineKernelError)."""
         self.manager = manager
         self.m00_manager = manager.m00_manager
         self.from_kernel = abilities is not None
         self.abilities = list(abilities or [])
         self.views = []
         self.warnings = []
+        self.shifts = {}         # table: [lowest entry index whose recipe moved, recipes added, removed]
+        check_no_overlap(self.abilities)
         self._build_views()
 
     @property
-    def ranges_changed(self):
-        return any(ability.changed for ability in self.abilities)
+    def kernel_update_needed(self):
+        """True when the recipes moved since kernel.bin was read: its ranges need editing."""
+        return bool(self.shifts)
 
     def tables(self):
         """[(bin section, msg section)] of m000 to m004."""
@@ -111,6 +121,32 @@ class RefineLayout:
         return [ability for ability in self.abilities
                 if ability.table == table and ability.first <= index <= ability.last]
 
+    def kernel_warnings(self):
+        """One line per table whose recipes moved: the abilities whose range in kernel.bin must change."""
+        lines = []
+        for table, (lowest, added, removed) in sorted(self.shifts.items()):
+            name = self.tables()[table][0].m00bin.name
+            stale = [ability for ability in sorted(self.abilities, key=lambda ability: ability.first)
+                     if ability.table == table and ability.last >= lowest]
+            changes = " and ".join(text for text in (f"{added} recipe(s) added" if added else "",
+                                                     f"{removed} removed" if removed else "") if text)
+            if stale:
+                to_do = ("kernel.bin must be modified (first/last entry of the refine abilities, with SolomonRing) "
+                         "for these to offer the right recipes again: "
+                         + ", ".join(f"{ability.name} ({ability.first}-{ability.last})" for ability in stale))
+            elif self.from_kernel:
+                to_do = ("no refine ability's range moved: a recipe past them is offered by none until an "
+                         "ability points at it in kernel.bin (with SolomonRing)")
+            else:
+                to_do = ("kernel.bin must be modified (first/last entry of the refine abilities, with SolomonRing) "
+                         "for them to offer the right recipes again: open it to see which")
+            lines.append(f"{name}: {changes}, the recipes from entry {lowest} on moved. {to_do}")
+        return lines
+
+    def rebuild_views(self):
+        """Rebuild the views and warnings (after `shifts` was carried over from a previous layout)."""
+        self._build_views()
+
     def _build_views(self):
         self.views = []
         self.warnings = []
@@ -119,12 +155,12 @@ class RefineLayout:
             if not self.from_kernel:
                 whole = RefineAbility(index=None, table=table, first=0, last=count - 1, name="all recipes",
                                       description="The abilities offering them come from kernel.bin")
-                self.views.append(RefineView(bin_section, msg_section, whole, "table", False))
+                self.views.append(RefineView(bin_section, msg_section, whole, "table"))
                 continue
             in_table = sorted((ability for ability in self.abilities if ability.table == table),
                               key=lambda ability: (ability.first, ability.index))
             for ability in in_table:
-                self.views.append(RefineView(bin_section, msg_section, ability, "ability", True))
+                self.views.append(RefineView(bin_section, msg_section, ability, "ability"))
                 if ability.last >= count:
                     self.warnings.append(f"{ability.name} offers recipes {ability.first}-{ability.last} "
                                          f"of {bin_section.m00bin.name}, which only has {count}: "
@@ -142,54 +178,58 @@ class RefineLayout:
                     gap = RefineAbility(index=None, table=table, first=gap_start, last=index - 1,
                                         name=f"(no ability) {gap_start}-{index - 1}",
                                         description="Entries of the table no refine ability of kernel.bin offers")
-                    self.views.append(RefineView(bin_section, msg_section, gap, "unused", False))
+                    self.views.append(RefineView(bin_section, msg_section, gap, "unused"))
                     gap_start = None
+        self.warnings += self.kernel_warnings()
+
+    def _record_shift(self, table, lowest, added=0, removed=0):
+        shift = self.shifts.setdefault(table, [lowest, 0, 0])
+        shift[0] = min(shift[0], lowest)
+        shift[1] += added
+        shift[2] += removed
 
     def insert_entry(self, view, row):
-        """Insert a copy of the entry at `row` of view (and of its text) right after it, and move
-        every range of that table it pushes. Returns the new entry's row."""
-        if not view.editable_range:
-            raise ValueError("Recipes can only be added to a refine ability of kernel.bin, which holds their range")
-        table = view.table
-        if len(view.bin_section.entries) >= MAX_TABLE_ENTRIES:
-            raise ValueError(f"{view.bin_name} already holds {MAX_TABLE_ENTRIES} recipes, the game reads no more")
-        if view.ability.count >= MAX_ABILITY_ENTRIES:
-            raise ValueError(f"{view.name} already has {MAX_ABILITY_ENTRIES} recipes, the game counts no more")
+        """Insert a copy of the entry at `row` of view (and of its text) right after it (insert_at).
+        Returns the new row (past the view's last one when inserted after it: the recipe then shows
+        in the next ability, until kernel.bin is edited)."""
+        if not view.entries:
+            raise ValueError(f"{view.name} offers recipes {view.first}-{view.last} of {view.bin_name}, which has "
+                             f"none there yet: add them after the table's last recipe first")
         row = min(max(row, 0), len(view.entries) - 1)
-        position = view.first + row + 1
-        source_entry = view.bin_section.entries[view.first + row]
-        source_text = view.msg_section.get_text_list()[view.first + row]
-        self.m00_manager.insert_entry(table, position, copy.copy(source_entry), source_text.get_data_hex())
-        for ability in self.abilities:
-            if ability is view.ability or ability.table != table:
-                continue
-            if ability.first >= position:
-                ability.first += 1
-            if ability.last >= position:
-                ability.last += 1
-        view.ability.last += 1
-        self._build_views()
+        self.insert_at(view.table, view.first + row + 1, view.first + row)
         return row + 1
 
+    def insert_at(self, table, position, source_index):
+        """Insert a copy of entry source_index of table (and of its text) at position, 0 to the
+        table's count (after its last entry): every later recipe of the table moves down one, the
+        ranges staying kernel.bin's."""
+        bin_section, msg_section = self.tables()[table]
+        count = len(bin_section.entries)
+        if count >= MAX_TABLE_ENTRIES:
+            raise ValueError(f"{bin_section.m00bin.name} already holds {MAX_TABLE_ENTRIES} recipes, the game reads no more")
+        if not 0 <= position <= count:
+            raise ValueError(f"{bin_section.m00bin.name}: a recipe goes at entry 0 to {count}, not {position}")
+        source_entry = bin_section.entries[source_index]
+        source_text = msg_section.get_text_list()[source_index]
+        self.m00_manager.insert_entry(table, position, copy.copy(source_entry), source_text.get_data_hex())
+        self._record_shift(table, position, added=1)
+        self._build_views()
+
     def remove_entry(self, view, row):
-        """Remove the entry at `row` of view (and its text), and move every later range back."""
-        if not view.editable_range:
-            raise ValueError("Recipes can only be removed from a refine ability of kernel.bin, which holds their range")
-        if view.ability.count <= 1:
-            raise ValueError(f"{view.name} needs at least one recipe")
-        table = view.table
-        position = view.first + row
-        others = [ability for ability in self.abilities if ability is not view.ability and ability.table == table]
-        for ability in others:
-            if ability.first == ability.last == position:
-                raise ValueError(f"{ability.name} also offers that recipe, and only that one")
+        """Remove the entry at `row` of view (and its text): see remove_at."""
+        self.remove_at(view.table, view.first + row)
+
+    def remove_at(self, table, position):
+        """Remove entry `position` of table (and its text): every later recipe of the table moves up
+        one, the ranges staying kernel.bin's."""
+        bin_section = self.tables()[table][0]
+        count = len(bin_section.entries)
+        if count <= 1:
+            raise ValueError(f"{bin_section.m00bin.name} needs at least one recipe")
+        if not 0 <= position < count:
+            raise ValueError(f"{bin_section.m00bin.name}: its recipes are entries 0 to {count - 1}, not {position}")
         self.m00_manager.remove_entry(table, position)
-        for ability in others:
-            if ability.first > position:
-                ability.first -= 1
-            if ability.last >= position:
-                ability.last -= 1
-        view.ability.last -= 1
+        self._record_shift(table, position, removed=1)
         self._build_views()
 
     def check_game_limits(self):

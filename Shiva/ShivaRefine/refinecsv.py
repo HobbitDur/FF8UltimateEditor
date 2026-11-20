@@ -7,8 +7,9 @@ Columns are matched by header name, not position.
 A row is one entry of a refine table: Bin (m000-m004) and Entry, its index in the table - the same
 with or without a kernel.bin, which only says which ability offers which entries. Ability names
 them on export (empty without a kernel.bin) and is not read back, except for a new recipe: a row
-with an empty Entry is added at the end of the kernel.bin ability it names, the ranges of the
-table moving with it. Rows are never taken as a removal - a CSV may list only the rows it changes.
+with an empty Entry is added after the last entry of the kernel.bin ability it names, every later
+entry of the table moving down (kernel.bin then needs new ranges: RefineLayout.kernel_warnings).
+Rows are never taken as a removal - a CSV may list only the rows it changes.
 """
 import csv
 import pathlib
@@ -75,7 +76,11 @@ def read_refine_csv(path, layout):
 
 def apply_rows(layout, rows):
     """rows: dicts keyed by the REFINE_CSV_HEADER names. The rows of existing entries are applied
-    first, then the new recipes (empty Entry), which move the entries after them."""
+    first, then the new recipes (empty Entry), which move the entries after them.
+
+    New recipes go in from the last ability of a table to the first, the last row of an ability
+    first, all at the place right after the ability's last entry in kernel.bin: an insertion then
+    never moves the place of one still to do, and each ability's rows end up in CSV order."""
     tables = {bin_section.m00bin.name: (bin_section, msg_section) for bin_section, msg_section in layout.tables()}
     applied = 0
     new_rows = []
@@ -92,6 +97,7 @@ def apply_rows(layout, rows):
                              f"(leave Entry empty to add a recipe to the ability named in {COLUMN_ABILITY})")
         _apply(row, bin_section.entries[index], msg_section.get_text_list()[index])
         applied += 1
+    placed = []  # (view, row) of each new recipe
     for row in new_rows:
         name = str(row.get(COLUMN_ABILITY, "")).strip()
         if not layout.from_kernel:
@@ -102,9 +108,13 @@ def apply_rows(layout, rows):
         if len(matches) != 1:
             raise ValueError(f"{row[COLUMN_BIN]}: no single refine ability named '{name}' for the new recipe "
                              f"'{row[COLUMN_TEXT]}'")
-        view = matches[0]
-        new_row = layout.insert_entry(view, len(view.entries) - 1)
-        _apply(row, view.entries[new_row], view.texts[new_row])
+        placed.append((matches[0], row))
+    for _, (view, row) in sorted(enumerate(placed), key=lambda item: (item[1][0].table, item[1][0].last, item[0]),
+                                     reverse=True):
+        table, last = view.table, view.last
+        bin_section, msg_section = layout.tables()[table]
+        layout.insert_at(table, last + 1, last)
+        _apply(row, bin_section.entries[last + 1], msg_section.get_text_list()[last + 1])
         applied += 1
     return applied
 

@@ -1,4 +1,3 @@
-import copy
 import os
 
 from PyQt6.QtGui import QIcon
@@ -9,8 +8,7 @@ from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.FF8HexReader.mngrphd import MngrpPairError
 from FF8GameData.gamedata import GameData
-from FF8GameData.menu.mngrp.m00x.refineabilities import (RefineKernelError, read_refine_abilities,
-                                                         verify_refine_ranges, write_refine_ranges)
+from FF8GameData.menu.mngrp.m00x.refineabilities import RefineKernelError, read_refine_abilities
 from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
 from Shiva.ShivaRefine.shivarefinewidget import ShivaRefineWidget
 from Shiva.ShivaSeedTest.shivaseedtestwidget import ShivaSeedTestWidget
@@ -63,14 +61,15 @@ class ShivaWidget(QWidget):
 
         self.refine_tab = ShivaRefineWidget(self.game_data)
         self.add_section_tab(self.refine_tab, "Refine")
-        # kernel.bin, complementary: names the items a refine takes or gives, the ones a mod adds
-        # with FFNx's AddMoreItems (199-255) included, and holds the range of recipes of each refine
-        # ability - which Shiva writes back when recipes are added or removed (only those bytes).
+        # kernel.bin, complementary and read-only: names the items and magic a refine takes or gives,
+        # the ones a mod adds with FFNx's AddMoreItems (199-255) included, and holds the range of
+        # recipes of each refine ability. Shiva never writes it: when recipes are added or removed,
+        # the refine tab lists the ranges kernel.bin needs (to set in SolomonRing).
         self.kernel_binding = FileBinding("kernel.bin", file_registry, file_filter="*kernel*.bin",
-                                          complementary=True)
+                                          read_only=True, complementary=True)
         self.kernel_names = KernelNameSource(self.game_data, file_registry, binding=self.kernel_binding)
         self.kernel_names.changed.connect(
-            lambda: self.refine_tab.set_item_entries(self.kernel_names.item_entries()))
+            lambda: self.refine_tab.set_kernel_names(self.kernel_names.item_entries(), self.kernel_names.magic))
         self.kernel_path = ""
         self.kernel_binding.file_opened.connect(self._load_refine_abilities)
         self.kernel_binding.file_closed.connect(self._clear_refine_abilities)
@@ -93,6 +92,9 @@ class ShivaWidget(QWidget):
     def _load_refine_abilities(self, kernel_path):
         try:
             abilities = read_refine_abilities(self.game_data, kernel_path)
+        except RefineKernelError as error:  # overlapping ranges: no recipe can be edited safely
+            abilities = None
+            QMessageBox.critical(self, "Shiva - Refine abilities overlap", str(error))
         except Exception as error:  # noqa: BLE001 - a bad kernel.bin just gives no abilities
             print(f"[Shiva] could not read the refine abilities of {kernel_path}: {error}")
             abilities = None
@@ -139,47 +141,16 @@ class ShivaWidget(QWidget):
     def save_file(self):
         """Write every tab's sections back in one file, so no tab loses another one's work.
 
-        Recipes added or removed move the refine ranges of kernel.bin: both files are written, and
-        everything is checked before either is, so they cannot end up out of step."""
+        Only mngrp.bin: recipes added or removed move refine ranges that kernel.bin holds, and the
+        refine tab keeps listing them until the kernel.bin opened says the same."""
         if not self.mngrp_path:
             return False
         layout = self.refine_tab.layout
         errors = layout.check_game_limits() if layout else []
-        if layout and layout.ranges_changed:
-            if not self.kernel_path:
-                errors.append("Recipes were added or removed, which moves the refine ranges kept in "
-                              "kernel.bin, and no kernel.bin is open anymore.")
-            else:
-                try:
-                    verify_refine_ranges(self.game_data, self.kernel_path, layout.abilities)
-                except (RefineKernelError, OSError) as error:
-                    errors.append(str(error))
         if errors:
             QMessageBox.critical(self, "Shiva - Nothing saved", "\n\n".join(errors))
             return False
         for tab in self.section_tabs:
             tab.save_to_mngrp(self.manager)
         self.manager.save_file(self.mngrp_path, self.mngrphd_path)
-        if layout and layout.ranges_changed:
-            try:
-                write_refine_ranges(self.game_data, self.kernel_path, layout.abilities)
-            except (RefineKernelError, OSError) as error:
-                QMessageBox.critical(self, "Shiva - kernel.bin not saved",
-                                     f"mngrp.bin was saved, but the refine ranges could not be written "
-                                     f"into kernel.bin, so the two files no longer match:\n{error}")
-                return False
-            self.refine_tab.kernel_abilities = copy.deepcopy(layout.abilities)
-            self._warn_other_kernel_editors()
         return True
-
-    def _warn_other_kernel_editors(self):
-        """A tool editing the whole kernel.bin (SolomonRing, ShumiTranslator) still holds the old
-        ranges in memory: saving there would put them back."""
-        others = [binding for binding in self.kernel_binding.registry.bindings
-                  if binding is not self.kernel_binding and binding.file_name == "kernel.bin"
-                  and not binding.read_only and binding.is_loaded]
-        if others:
-            QMessageBox.warning(self, "Shiva - kernel.bin also open elsewhere",
-                                "The refine ranges were written into kernel.bin. Another tool has it open "
-                                "(SolomonRing or ShumiTranslator): use Reload there before saving in it, "
-                                "or it writes the old ranges back.")
