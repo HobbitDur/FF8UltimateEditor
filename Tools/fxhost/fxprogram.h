@@ -2996,6 +2996,22 @@ namespace fxprog
 		UseModule();
 		return ff8fx::held_ready(p->module) && ff8fx::held_camera(p->module, num, den, world, lookat);
 	}
+	// the entities and the bone scales a program's held frame moves (its port module's 30 fps layer, on the program's
+	// memory and task functions: the module's held part matches its nodes through own::Fn)
+	inline int HeldEntities(Program *p, ff8fx::HeldEntity *out, int max)
+	{
+		if (!p || !p->module) return 0;
+		g_program = p;
+		UseModule();
+		return ff8fx::held_entities(p->module, out, max);
+	}
+	inline int HeldBoneScales(Program *p, ff8fx::HeldBoneScale *out, int max)
+	{
+		if (!p || !p->module) return 0;
+		g_program = p;
+		UseModule();
+		return ff8fx::held_bonescales(p->module, out, max);
+	}
 	// the original a node's function stands for: a program task's code, a port's original (own::note), the original
 	// an act-engine port's thunk runs (act::PortFn: Curaga's actor system), else itself
 	inline uint32_t HeldOrigOf(uint32_t fn)
