@@ -404,7 +404,7 @@ def test_suggested_ranges_follow_the_recipes(game_data, files):
     _, layout = _load(game_data, files)
     assert layout.suggested_ranges()[13] == [0, 8]  # nothing moved yet: kernel.bin's
     layout.insert_at(1, 1, 0)       # inside Recov Med-RF (0-8)
-    layout.insert_at(1, 39, 38)     # right after Ammo-RF, now 22-37
+    layout.insert_at(1, 38, 37)     # right after Ammo-RF, now 22-37
     layout.remove_at(0, 2)          # inside T Mag-RF (0-6)
     suggested = layout.suggested_ranges()
     assert [suggested[index] for index in (13, 14, 15, 17, 18, 19, 16)] == [
