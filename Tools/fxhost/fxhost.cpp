@@ -258,9 +258,24 @@ namespace
 	{
 		return fn == (uint32_t)fxprog::shatter::HitTask && fxprog::shatter::HeldDrawAll(1, num, den);
 	}
+#if defined(HELD_API_ENTITIES)
+	// version 3: what a program's held frame moves (its caster's position, a bone's scale: Counter-attack 318 / 319)
+	int __cdecl HeldEntitiesApi(int effect_id, ff8fx::HeldEntity *out, int max)
+	{
+		return fxprog::HeldEntities(HeldProgram(effect_id), out, max);
+	}
+	int __cdecl HeldBoneScalesApi(int effect_id, ff8fx::HeldBoneScale *out, int max)
+	{
+		return fxprog::HeldBoneScales(HeldProgram(effect_id), out, max);
+	}
+#endif
 	const ff8fx::HeldApi HELD_API = { ff8fx::HELD_API_VERSION, HeldReadyApi, HeldDrawApi, HeldCameraApi, HeldRedrawsApi,
 	                                  HeldKeepsEndedApi, HeldKeepsDrawnApi, HeldRealTickApi, HeldGateApi,
-	                                  HeldEqHasDrawApi, HeldEqDrawApi, HeldOwnsApi };
+	                                  HeldEqHasDrawApi, HeldEqDrawApi, HeldOwnsApi
+#if defined(HELD_API_ENTITIES)
+	                                  , HeldEntitiesApi, HeldBoneScalesApi
+#endif
+	};
 }
 
 extern "C" __declspec(dllexport) const ff8fx::HeldApi *__cdecl FujinEffects_HeldApi()

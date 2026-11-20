@@ -3404,6 +3404,96 @@ Potion's description is the same with its own sequences and sound.
      - *Tests:* the cycle test casts it from Krysta (c0m038, slot 3) on the party (`CYCLE_CASTS`); the description's
        compile test.
      - *Fujin:* its tabs (Main, Spike, Burst, Sprites, Arm regrowth); no + menu family.
+   - **Dark Flare (320)** (FFNx 2d4f2293, f719b9fc; Tiamat's (c0m132) attack, on the party; a port root, Cannon Blow's kind): for ticks
+     0..35 layout 1 at the caster's point (0, 200, -1024 through its bone 27), turned toward the targets' mean point, two
+     sparks a tick at its sides from tick 15; from tick 36 for 11 ticks layout 1 flying to the targets' mean point, 4
+     sparks a tick along its way, a grey tile at its start; from tick 36 for 16 ticks layout 2 at the caster's point; from
+     tick 45 for 53 ticks layout 3 at the targets (its texture scrolling 16 a tick), grey tiles on its ticks 1..4 (the
+     first between two draw modes); the sound at tick 0, the damage at 83; the main ends at 98.
+     - *Inputs* (`FlareParams`, 43): the sound, the ticks (sound, damage, end), the caster's point (x, y, z, bone),
+       the flight (start, ticks, depth), layout 2 (start, ticks, depth), layout 3 (start, ticks, depth, scroll), the five
+       tiles' grey levels, the caster's sparks (start, side, y, z, size and its spread, life, fall), the flight's sparks (count,
+       step, speed and its spread, size and its spread). Data: the sound, the three layouts, the sparks' flipbook,
+       "mag319.tim", the camera track. The layouts' per-object texture-window kind and renderer tables (exe bytes, read by
+       object number: not_editable), the prim set renderers and the sparks' random offsets stay code; the main still
+       writes the exe's spark point x (0xFF12A8) as the game does.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; six parts tagged
+       (FX_PART); the caster's bone kept below its bone count.
+     - *Tests:* the cycle test casts it from Tiamat (c0m132, slot 3) on the party (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Main, Charge, Flight, Ring, Burst, Grey tiles, Sparks); no + menu family.
+   - **Ker Plunk (321)** (FFNx 2d4f2293; enemy attack 231 of Jumbo Cactuar, c0m084, on the party; a port root, Fake
+     President death 315's kind: its queues, particles and packet arenas in the module's block): the looping voice at tick
+     0 at a point 2800 in front of the caster, the start sound at 1; at tick 24 three rings at the point (3 ticks apart,
+     growing, fading from their tick 12, 20 ticks), rising dust (6 a tick for 11 ticks), debris thrown up (5 a tick for 6
+     ticks, 16 frames, shrinking from frame 8), a white screen flash (20 ticks), and each target lifted 6000..8499 high and
+     spun 1..3 turns (raised over 12 ticks, lowered from 54 to 66, put back), a ring growing up at it; dust bursting out
+     where it lands, its damage 2 ticks later; the end sound at 92 at the targets, the loop released at 97; the director
+     ends after 100.
+     - *Inputs* (`KerPlunkParams`, 64): the three sounds, the director's ticks (start sound, burst, end sound,
+       release, end), the point's distance, the rings (count, delay, size, slowing, fade, life), the target rings (delay,
+       size, height, their spreads, slowing, fade, life), the dust (ticks, count, scatter, height, size and rise with their
+       spreads), the debris (the same, life, shrink), the flash (ticks, colour, level), the lift (turns, height and its
+       spread, up, down, end), the burst (ticks, count, size, speed, their spreads). Data: the three sounds, the ring,
+       target ring and debris models, the dust's flipbook, "mag320.tim", the camera track. The lifted targets' spin (its
+       12-tick period), the debris' spins and the particles' drag stay code.
+     - *Port:* the module globals (its whole block 0x221BC68..0x2239530, the arenas too) through own::R, the spawns
+       through own::Fn; setup and loader ported; six parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Jumbo Cactuar (c0m084, slot 3) on the party (`CYCLE_CASTS`); the
+       description's compile test. The recorder does not record the screen flash nor the targets' lift (entity writes).
+     - *Fujin:* its tabs (Director, Rings, Target rings, Dust, Debris, Flash, Lift, Burst); no + menu family.
+   - **Zan (322)** (FFNx 2d4f2293; enemy attack 214 of Fujin, c0m119 / c0m136, on a party member; a port root, Cannon
+     Blow's kind; Boomerang Sword 304's and Metsu 323's kin): from tick 14 the blade thrown from the caster's bone 24 past
+     the target and back along a path (points 1000 before and after it, 300 low / 600 high), spinning 0x400 a tick, a
+     fading trail every tick (8 ticks), two dust sprites a tick on the floor while it flies low; at tick 36 the hit layout
+     at the target, 32 streaks thrown out of the blade's plane, the damage; the sound at tick 15; at 30 the way back
+     re-aimed at the bone; the caster's weapon hidden until the main ends at 57 (the master once the battle file it
+     streams is in).
+     - *Inputs* (`ZanParams`, 30): the sound, the ticks (sound, hit, way back, end), the blade (bone, spin), the
+       path's two points around the target, the trails' life, the hit layout's depth, the streaks (count, turn, speed and
+       its spread, drag, life, size), the dust (level, size, life). Data: the sound, the blade and trail models, the hit
+       layout, the streaks' and the dust's flipbooks, "mag321.tim", the camera track. The path schedule (304's segment
+       blend: its four segments' counters and eases), the trails' fade ramps and the streaks' turn to the screen stay code.
+     - *Port:* the module globals through own::R (the bss zero vector 0x2505338 too: ZERO_VECTOR -> ZeroVector()), the
+       spawns through own::Fn; setup and loader ported; five parts tagged (FX_PART); the bone kept below the caster's bone
+       count.
+     - *Tests:* the cycle test casts it from Fujin (c0m119, slot 3) on the party (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Main, Blade, Trails, Hit, Streaks, Dust); no + menu family.
+   - **Metsu (323)** (FFNx 2d4f2293; enemy attack 215 of Fujin, c0m119 / c0m136, on the party; a port root, Cannon Blow's
+     kind; Boomerang Sword 304's module on its own path, Zan 322's kin): from tick 12 the blade thrown from the caster's
+     bone 24 past every target (sorted by x) and back along a path (1000 past their x, 1000 nearer than their mean z, the
+     way back's middle 1500 high), spinning 0x400 and tilting 0x4D a tick, a fading trail every tick; on ticks 35..44 as it
+     passes each target a hit layout, 21 sparks thrown out of its plane, that target's damage; the sound at tick 12; at 29
+     the way back re-aimed at the bone (the last point 1000 nearer); the caster's weapon hidden until the main ends at 64.
+     - *Inputs* (`MetsuParams`, 29): the sound, the ticks (sound, way back, end), the blade (bone, spin, tilt and its
+       step), the path (lead, margin, depth, rise, arc, back), the trails' life, the hits' depth, the sparks (count, turn,
+       speed and its spread, drag, life, size). Data: the sound, the blade and trail models, the hit layout, the sparks'
+       flipbook, "mag322.tim", the camera track. The path schedule (304's segment blend, the hit on passing a target),
+       the trails' fade ramps and the targets' box seed (+-1000) stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; four parts tagged
+       (FX_PART); the bone kept below the caster's bone count.
+     - *Tests:* the cycle test casts it from Fujin (c0m119, slot 3) on the party (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Main, Blade, Trails, Hits, Sparks); no + menu family.
+   - **Tonberry King death (324)** (FFNx 2d4f2293; Tonberry King's (c0m083) death, on itself; a port root, Fake President
+     death 315's kind: its queues, spark cells, kept bones and packet arenas in the module's block): the voice clip at tick
+     0, the sound at 1 at the caster's point; from tick 8 the caster's colour from the battle's to 24 tint colours in turn
+     (4 ticks in, faded to black from its tick 42, 50 ticks); from tick 12 two spark emitters at random bones (2 a tick each
+     for 47 ticks, shrinking, narrowing; A's rising); from tick 18 for 33 ticks a ghost of it (its pose and place at the
+     start) fading to black from its tick 16; spinning sprites at its chest on odd ticks 125..135, alternate sides; its
+     damage at 130; the voice released at 197; the cue ends after 200.
+     - *Inputs* (`TonkParams`, 43): the voice and the sound, the cue's ticks (voice, sound, tint, emitters, ghost,
+       spins first / last, damage, release, end), the emitters (ticks, count, size spread; A: size, shrink, scatter,
+       narrowing, rise and its spread; B: size, shrink, scatter, narrowing), the tint (in, out, fade, end), the ghost
+       (hold, fade start, fade, end), the spin sprites (size, turn, side, up). Data: the two sounds, the three flipbooks
+       (a spark or sprite lives through its flipbook), the 24 tint colours (0x60 bytes), "mag323.tim", the camera track.
+       The caster's point (its bone 0xF0, an engine special), the tint's colour cycle (24) and the ghost's draw stay code.
+     - *Port:* the module globals (its whole block 0x2201080..0x221BC68, the arenas too) through own::R, the spawns through
+       own::Fn; setup and loader ported; four parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Tonberry King (c0m083, slot 3) on itself (`CYCLE_CASTS`); the description's
+       compile test. The recorder does not record the caster's colour.
+     - *Fujin:* its tabs (Cue, Rising sparks, Sparks, Tint, Ghost, Spin sprites); no + menu family.
    - **Diablos (325)** (FFNx eec33c9f; the GF's Dark Messenger, the timeline family; a port timeline, Ray-Bomb's kind):
      the two battle models, the prim-model players and particles (bolts, puffs, rising and burst layouts), the
      targets squashed, the camera, the streamed loads, the screen flash, the voice and the sounds (ticks 0, 0x5B,

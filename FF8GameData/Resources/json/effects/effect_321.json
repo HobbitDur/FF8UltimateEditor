@@ -1,0 +1,850 @@
+{
+ "format": 1,
+ "effect": 321,
+ "name": "Ker Plunk",
+ "doc": "Jumbo Cactuar's Ker Plunk (enemy attack 231, c0m084, on the party): at a point in front of the caster growing rings, rising dust, debris thrown up, a white screen flash; each target lifted, spun and put down with a ring growing up at it, dust bursting out where it lands, its damage; a looping voice and two sounds. Its tasks are the port's code (FFNx mag321_ker_plunk.cpp) run on the program's memory (its queues, particles and packet arenas in the module's block).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5979E0",
+   "setup": "0x597A00",
+   "root": "0x598D00"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 321,
+  "from": "0x221BC68",
+  "size": "0x1D8C8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.loop": {
+   "kind": "sound",
+   "address": "0xCD29DC",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xCD2AF0",
+   "size": 4
+  },
+  "sounds.end": {
+   "kind": "sound",
+   "address": "0xCD2AF4",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xCD2AFC",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xCD1284",
+   "size": 268
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xCD153C",
+   "size": 1768,
+   "vertices": 72
+  },
+  "models.target_ring": {
+   "kind": "model",
+   "address": "0xCD1D5C",
+   "size": 3200,
+   "vertices": 125
+  },
+  "seqs.dust": {
+   "kind": "seq",
+   "address": "0xCD1390",
+   "size": 428,
+   "frames": 16
+  },
+  "models.debris": {
+   "kind": "model",
+   "address": "0xCD1C24",
+   "size": 312,
+   "vertices": 6
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x597A00",
+  "file_loader": "0x5979E0",
+  "root": "0x598D00"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Director",
+   "doc": "The director's ticks, the sounds; the point in front of the caster; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "rings",
+   "title": "Rings",
+   "doc": "Growing rings at the point (a model), fading"
+  },
+  {
+   "id": 2,
+   "key": "target_rings",
+   "title": "Target rings",
+   "doc": "A ring growing up at each target (a model), fading"
+  },
+  {
+   "id": 3,
+   "key": "dust",
+   "title": "Dust",
+   "doc": "Dust rising around the point (a flipbook)"
+  },
+  {
+   "id": 4,
+   "key": "debris",
+   "title": "Debris",
+   "doc": "Debris thrown up around the point, spinning (a model), shrinking"
+  },
+  {
+   "id": 5,
+   "key": "flash",
+   "title": "Flash",
+   "doc": "The white screen flash"
+  },
+  {
+   "id": 0,
+   "key": "lift",
+   "title": "Lift",
+   "doc": "Each target lifted, spun and put down (its position and angles written, put back), its damage"
+  },
+  {
+   "id": 6,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "Dust bursting out at each target put down (the dust's flipbook)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The director's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.loop",
+   "part": "main",
+   "label": "Loop",
+   "doc": "The looping voice (a voice slot claimed at the director's tick 0, released at the release tick)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.loop",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "main",
+   "label": "Start",
+   "doc": "At the start sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.end",
+   "part": "main",
+   "label": "End",
+   "doc": "At the end sound's tick, at the targets' centre",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.end",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.start",
+   "part": "main",
+   "label": "Start sound",
+   "doc": "The director's tick of the start sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.burst",
+   "part": "main",
+   "label": "Burst",
+   "doc": "Its tick of the rings, the dust, the debris, the flash and the lifts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end_sound",
+   "part": "main",
+   "label": "End sound",
+   "doc": "Its tick of the end sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 92,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.release",
+   "part": "main",
+   "label": "Release",
+   "doc": "Its tick the loop is released (if still playing)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 97,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "main",
+   "label": "End",
+   "doc": "Its last tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "point.distance",
+   "part": "main",
+   "label": "Distance",
+   "doc": "The point this far in front of the caster",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2800,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "rings.count",
+   "part": "rings",
+   "label": "Count",
+   "doc": "How many",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.delay",
+   "part": "rings",
+   "label": "Delay",
+   "doc": "Each one this many ticks after the one before",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.size",
+   "part": "rings",
+   "label": "Size",
+   "doc": "Their size (also their first growth)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 1484,
+   "unit": "scale"
+  },
+  {
+   "key": "rings.slow",
+   "part": "rings",
+   "label": "Slowing",
+   "doc": "Their growth less growth / this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 256,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.fade",
+   "part": "rings",
+   "label": "Fade",
+   "doc": "Their tick they start fading",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.life",
+   "part": "rings",
+   "label": "Life",
+   "doc": "Their ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "rings",
+   "label": "Model",
+   "doc": "The ring model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "target_rings.delay",
+   "part": "target_rings",
+   "label": "Delay",
+   "doc": "Their ticks before they start",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "target_rings.size",
+   "part": "target_rings",
+   "label": "Size",
+   "doc": "Their size (plus a random below the size spread)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 2304,
+   "unit": "scale"
+  },
+  {
+   "key": "target_rings.size_spread",
+   "part": "target_rings",
+   "label": "Size spread",
+   "doc": "The random part of their size",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 640,
+   "unit": "plain"
+  },
+  {
+   "key": "target_rings.height",
+   "part": "target_rings",
+   "label": "Height",
+   "doc": "Their height x 8 (plus a random below the height spread; also their first growth)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 6144,
+   "unit": "plain"
+  },
+  {
+   "key": "target_rings.height_spread",
+   "part": "target_rings",
+   "label": "Height spread",
+   "doc": "The random part of their height x 8",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "target_rings.slow",
+   "part": "target_rings",
+   "label": "Slowing",
+   "doc": "Their growth less growth / this a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 256,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "target_rings.fade",
+   "part": "target_rings",
+   "label": "Fade",
+   "doc": "Their tick they start fading",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "target_rings.life",
+   "part": "target_rings",
+   "label": "Life",
+   "doc": "Their ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "models.target_ring",
+   "part": "target_rings",
+   "label": "Model",
+   "doc": "The target ring model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.target_ring",
+   "unit": "plain"
+  },
+  {
+   "key": "dust.ticks",
+   "part": "dust",
+   "label": "Ticks",
+   "doc": "New ones while its tick is at most this",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.count",
+   "part": "dust",
+   "label": "Count",
+   "doc": "New ones a tick (100 particles for all)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.spread",
+   "part": "dust",
+   "label": "Scatter",
+   "doc": "Around the point: +- this on x / z",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 2200,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.height",
+   "part": "dust",
+   "label": "Height",
+   "doc": "Up to this higher (a random below it)",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 300,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.size",
+   "part": "dust",
+   "label": "Size",
+   "doc": "Its size (plus a random below the size spread)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 2304,
+   "unit": "scale"
+  },
+  {
+   "key": "dust.size_spread",
+   "part": "dust",
+   "label": "Size spread",
+   "doc": "The random part of its size",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 2560,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.speed",
+   "part": "dust",
+   "label": "Rise",
+   "doc": "Its rising speed (plus a random below the rise spread)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.speed_spread",
+   "part": "dust",
+   "label": "Rise spread",
+   "doc": "The random part of its rising speed",
+   "type": "i16",
+   "min": 1,
+   "max": 1024,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust",
+   "part": "dust",
+   "label": "Flipbook",
+   "doc": "The dust's flipbook (also the burst's: a mote lives through it)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust",
+   "unit": "plain"
+  },
+  {
+   "key": "debris.ticks",
+   "part": "debris",
+   "label": "Ticks",
+   "doc": "New ones while its tick is at most this",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.count",
+   "part": "debris",
+   "label": "Count",
+   "doc": "New ones a tick (100 particles for all)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.spread",
+   "part": "debris",
+   "label": "Scatter",
+   "doc": "Around the point: +- this on x / z",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 1900,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.height",
+   "part": "debris",
+   "label": "Height",
+   "doc": "Up to this higher (a random below it)",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 250,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.size",
+   "part": "debris",
+   "label": "Size",
+   "doc": "Its size (plus a random below the size spread)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 768,
+   "unit": "scale"
+  },
+  {
+   "key": "debris.size_spread",
+   "part": "debris",
+   "label": "Size spread",
+   "doc": "The random part of its size",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 1280,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.speed",
+   "part": "debris",
+   "label": "Rise",
+   "doc": "Its rising speed (plus a random below the rise spread; slowed by 1/8 a frame)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.speed_spread",
+   "part": "debris",
+   "label": "Rise spread",
+   "doc": "The random part of its rising speed",
+   "type": "i16",
+   "min": 1,
+   "max": 1024,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.life",
+   "part": "debris",
+   "label": "Life",
+   "doc": "Its frames",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "debris.shrink",
+   "part": "debris",
+   "label": "Shrink",
+   "doc": "Its frame it starts shrinking (by 1/8 of its size a frame)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "models.debris",
+   "part": "debris",
+   "label": "Model",
+   "doc": "The debris model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.debris",
+   "unit": "plain"
+  },
+  {
+   "key": "flash.ticks",
+   "part": "flash",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.r",
+   "part": "flash",
+   "label": "Red",
+   "doc": "Its colour: red",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.g",
+   "part": "flash",
+   "label": "Green",
+   "doc": "Green",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.b",
+   "part": "flash",
+   "label": "Blue",
+   "doc": "Blue",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "flash",
+   "label": "Level",
+   "doc": "Its level",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 63,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.turns",
+   "part": "lift",
+   "label": "Turns",
+   "doc": "Each target spun 1 .. this many turns about x (and one about y)",
+   "type": "i16",
+   "min": 1,
+   "max": 16,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.height",
+   "part": "lift",
+   "label": "Height",
+   "doc": "Lifted this high (plus a random below the height spread)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 6000,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.height_spread",
+   "part": "lift",
+   "label": "Height spread",
+   "doc": "The random part of its height",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 2500,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.up",
+   "part": "lift",
+   "label": "Up",
+   "doc": "Its ticks raised",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.down",
+   "part": "lift",
+   "label": "Down",
+   "doc": "Its tick it starts coming down",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 54,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.end",
+   "part": "lift",
+   "label": "End",
+   "doc": "Its tick it is put back (the burst; its damage two ticks later)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 66,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.ticks",
+   "part": "burst",
+   "label": "Ticks",
+   "doc": "New ones while its tick is at most this",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.count",
+   "part": "burst",
+   "label": "Count",
+   "doc": "New ones a tick (100 particles for all)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.size",
+   "part": "burst",
+   "label": "Size",
+   "doc": "Its size (plus a random below the size spread)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 1536,
+   "unit": "scale"
+  },
+  {
+   "key": "burst.size_spread",
+   "part": "burst",
+   "label": "Size spread",
+   "doc": "The random part of its size",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.speed",
+   "part": "burst",
+   "label": "Speed",
+   "doc": "Its speed out (plus a random below the speed spread; slowed by 1/8 a tick)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 70,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.speed_spread",
+   "part": "burst",
+   "label": "Speed spread",
+   "doc": "The random part of its speed",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 90,
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

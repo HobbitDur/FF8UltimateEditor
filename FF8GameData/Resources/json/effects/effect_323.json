@@ -1,0 +1,442 @@
+{
+ "format": 1,
+ "effect": 323,
+ "name": "Metsu",
+ "doc": "Fujin's Metsu (enemy attack 215, c0m119 / c0m136, on the party): the blade thrown from the caster's bone past every target and back along a path, spinning and tilting, a fading trail behind it; as it passes each target a hit layout, sparks thrown out, its damage; the caster's weapon hidden meanwhile. Boomerang Sword 304's module on its own path. Its tasks are the port's code (FFNx mag323_metsu.cpp) run on the program's memory (its main, trails, hits and sparks in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x659A90",
+   "setup": "0x659A80",
+   "root": "0x659B30"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 323,
+  "from": "0x2505230",
+  "size": "0x7C"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xFE12B0",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xFE429C",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xFE0FCC",
+   "size": 740
+  },
+  "models.blade": {
+   "kind": "model",
+   "address": "0xFE13EC",
+   "size": 5512,
+   "vertices": 162
+  },
+  "models.trail": {
+   "kind": "model",
+   "address": "0xFE2974",
+   "size": 624,
+   "vertices": 25
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0xFE2BE4",
+   "size": 5816,
+   "capacity": 624
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xFE12B4",
+   "size": 312,
+   "frames": 10
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x659A80",
+  "file_loader": "0x659A90",
+  "root": "0x659B30"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The main's ticks, the sound; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "blade",
+   "title": "Blade",
+   "doc": "The blade (a model) thrown from the caster's bone past every target and back along a path, spinning and tilting (the caster's weapon object hidden meanwhile); each target's damage as it passes it"
+  },
+  {
+   "id": 2,
+   "key": "trails",
+   "title": "Trails",
+   "doc": "A fading copy of the blade left every tick (blue as it fades)"
+  },
+  {
+   "id": 3,
+   "key": "hits",
+   "title": "Hits",
+   "doc": "The hit layout at each target passed"
+  },
+  {
+   "id": 4,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sparks thrown out of the blade's plane at each hit (a flipbook)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The main's ticks"
+  },
+  {
+   "key": "path",
+   "label": "Path",
+   "doc": "The path's points around the targets"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "The throw, at the sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "The main's tick of the sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.back",
+   "part": "main",
+   "label": "Way back",
+   "doc": "Its tick the path's last two points are taken again at the caster's bone",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 29,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "main",
+   "label": "End",
+   "doc": "Its last tick (the caster's weapon shown again)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "blade.bone",
+   "part": "blade",
+   "label": "Bone",
+   "doc": "The caster's bone it leaves from and comes back to",
+   "type": "i16",
+   "min": 0,
+   "max": 63,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "blade.spin",
+   "part": "blade",
+   "label": "Spin",
+   "doc": "Its spin a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 1024,
+   "unit": "angle"
+  },
+  {
+   "key": "blade.tilt",
+   "part": "blade",
+   "label": "Tilt",
+   "doc": "Its first tilt",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 1024,
+   "unit": "angle"
+  },
+  {
+   "key": "blade.tilt_step",
+   "part": "blade",
+   "label": "Tilt a tick",
+   "doc": "Its tilt's step a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 77,
+   "unit": "angle"
+  },
+  {
+   "key": "path.lead",
+   "part": "blade",
+   "label": "Lead",
+   "doc": "The path's first point (only the start's tangent: its sign counts, not its size): this nearer than the caster's bone (z)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 500,
+   "unit": "plain"
+  },
+  {
+   "key": "path.margin",
+   "part": "blade",
+   "label": "Margin",
+   "doc": "The path goes past the targets' x by this on both sides",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "path.depth",
+   "part": "blade",
+   "label": "Depth",
+   "doc": "Its points beside the targets: this nearer than their mean z",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "path.rise",
+   "part": "blade",
+   "label": "Rise",
+   "doc": "The point before the first target: this higher than their mean height",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "path.arc",
+   "part": "blade",
+   "label": "Arc",
+   "doc": "The way back's middle point: this higher",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 1500,
+   "unit": "plain"
+  },
+  {
+   "key": "path.back",
+   "part": "blade",
+   "label": "Back",
+   "doc": "The path's last point (taken again at the way back's tick; only the end's tangent: its sign counts, not its size): this nearer than the caster's bone",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "models.blade",
+   "part": "blade",
+   "label": "Model",
+   "doc": "The blade model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.blade",
+   "unit": "plain"
+  },
+  {
+   "key": "trails.life",
+   "part": "trails",
+   "label": "Life",
+   "doc": "Their ticks (their fade: a quarter sine over them; 32 alive at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "models.trail",
+   "part": "trails",
+   "label": "Model",
+   "doc": "The trail model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.trail",
+   "unit": "plain"
+  },
+  {
+   "key": "hits.depth",
+   "part": "hits",
+   "label": "Depth",
+   "doc": "Their layout's depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "hits",
+   "label": "Layout",
+   "doc": "The hit layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.count",
+   "part": "sparks",
+   "label": "Count",
+   "doc": "How many at each hit (64 alive at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 21,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.turn",
+   "part": "sparks",
+   "label": "Turn",
+   "doc": "The angle between two sparks in the blade's plane",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 195,
+   "unit": "angle"
+  },
+  {
+   "key": "sparks.speed",
+   "part": "sparks",
+   "label": "Speed",
+   "doc": "Their speed in the plane and out of it (plus a random below the spread)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.spread",
+   "part": "sparks",
+   "label": "Spread",
+   "doc": "The random part of their speed (below this)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.drag",
+   "part": "sparks",
+   "label": "Drag",
+   "doc": "Their first velocity / this taken off a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 256,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "Their ticks (their flipbook's frames: 10 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 10,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size",
+   "part": "sparks",
+   "label": "Size",
+   "doc": "Their size",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 2048,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Flipbook",
+   "doc": "The sparks' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

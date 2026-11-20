@@ -1,0 +1,465 @@
+{
+ "format": 1,
+ "effect": 322,
+ "name": "Zan",
+ "doc": "Fujin's Zan (enemy attack 214, c0m119 / c0m136, on a party member): the blade thrown from the caster's bone past the target and back along a path, spinning, a fading trail behind it, dust on the floor under it; at the hit a layout at the target, streaks thrown out, the damage; the caster's weapon hidden meanwhile. Boomerang Sword 304's and Metsu 323's kin. Its tasks are the port's code (FFNx mag322_zan.cpp) run on the program's memory (its main, trails, hit, streaks and dust in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x65AB80",
+   "setup": "0x65AB70",
+   "root": "0x65AC20"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 322,
+  "from": "0x25052B0",
+  "size": "0x94"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xFE7000",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xFE7288",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xFE7004",
+   "size": 644
+  },
+  "models.blade": {
+   "kind": "model",
+   "address": "0xFE44C8",
+   "size": 5512,
+   "vertices": 162
+  },
+  "models.trail": {
+   "kind": "model",
+   "address": "0xFE5A50",
+   "size": 624,
+   "vertices": 25
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0xFE5CC0",
+   "size": 4928,
+   "capacity": 528
+  },
+  "seqs.streak": {
+   "kind": "seq",
+   "address": "0xFE42A8",
+   "size": 220,
+   "frames": 8
+  },
+  "seqs.dust": {
+   "kind": "seq",
+   "address": "0xFE4384",
+   "size": 324,
+   "frames": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x65AB70",
+  "file_loader": "0x65AB80",
+  "root": "0x65AC20"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The main's ticks, the sound, the hit; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "blade",
+   "title": "Blade",
+   "doc": "The blade (a model) thrown from the caster's bone past the target and back along a path, spinning (the caster's weapon object hidden meanwhile)"
+  },
+  {
+   "id": 2,
+   "key": "trails",
+   "title": "Trails",
+   "doc": "A fading copy of the blade left every tick (blue as it fades)"
+  },
+  {
+   "id": 3,
+   "key": "hit",
+   "title": "Hit",
+   "doc": "The hit layout at the target"
+  },
+  {
+   "id": 4,
+   "key": "streaks",
+   "title": "Streaks",
+   "doc": "Streaks thrown out of the blade's plane at the hit (a flipbook)"
+  },
+  {
+   "id": 5,
+   "key": "dust",
+   "title": "Dust",
+   "doc": "Dust on the floor under the blade while it flies low (a flipbook)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The main's ticks"
+  },
+  {
+   "key": "path",
+   "label": "Path",
+   "doc": "The path's points around the target"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "The throw, at the sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "The main's tick of the sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.hit",
+   "part": "main",
+   "label": "Hit",
+   "doc": "Its tick of the hit layout, the streaks and the target's damage (inside the blade's flight: 14..71)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.back",
+   "part": "main",
+   "label": "Way back",
+   "doc": "Its tick the path's last two points are taken again at the caster's bone",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "main",
+   "label": "End",
+   "doc": "Its last tick (the caster's weapon shown again; the master ends after its tick 59 anyway)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 57,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "blade.bone",
+   "part": "blade",
+   "label": "Bone",
+   "doc": "The caster's bone it leaves from and comes back to",
+   "type": "i16",
+   "min": 0,
+   "max": 63,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "blade.spin",
+   "part": "blade",
+   "label": "Spin",
+   "doc": "Its spin a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 1024,
+   "unit": "angle"
+  },
+  {
+   "key": "path.before_z",
+   "part": "blade",
+   "label": "Before: distance",
+   "doc": "The path's point before the target: along the target's frame (toward the caster negative)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -1000,
+   "unit": "plain"
+  },
+  {
+   "key": "path.before_y",
+   "part": "blade",
+   "label": "Before: height",
+   "doc": "Its height offset (up negative)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 300,
+   "unit": "plain"
+  },
+  {
+   "key": "path.after_z",
+   "part": "blade",
+   "label": "After: distance",
+   "doc": "The path's point after the target: along the target's frame",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "path.after_y",
+   "part": "blade",
+   "label": "After: height",
+   "doc": "Its height offset (up negative)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -600,
+   "unit": "plain"
+  },
+  {
+   "key": "models.blade",
+   "part": "blade",
+   "label": "Model",
+   "doc": "The blade model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.blade",
+   "unit": "plain"
+  },
+  {
+   "key": "trails.life",
+   "part": "trails",
+   "label": "Life",
+   "doc": "Their ticks (their fade: a quarter sine over them; 8 alive at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "models.trail",
+   "part": "trails",
+   "label": "Model",
+   "doc": "The trail model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.trail",
+   "unit": "plain"
+  },
+  {
+   "key": "hit.depth",
+   "part": "hit",
+   "label": "Depth",
+   "doc": "Its layout's depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "hit",
+   "label": "Layout",
+   "doc": "The hit layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "streaks.count",
+   "part": "streaks",
+   "label": "Count",
+   "doc": "How many (32 alive at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 32,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "streaks.turn",
+   "part": "streaks",
+   "label": "Turn",
+   "doc": "The angle between two streaks in the blade's plane",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 128,
+   "unit": "angle"
+  },
+  {
+   "key": "streaks.speed",
+   "part": "streaks",
+   "label": "Speed",
+   "doc": "Their speed in the plane and out of it (plus a random below the spread)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "streaks.spread",
+   "part": "streaks",
+   "label": "Spread",
+   "doc": "The random part of their speed (below this)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "streaks.drag",
+   "part": "streaks",
+   "label": "Drag",
+   "doc": "Their first velocity / this taken off a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 256,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "streaks.life",
+   "part": "streaks",
+   "label": "Life",
+   "doc": "Their ticks (their flipbook's frames: 8 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 8,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "streaks.size",
+   "part": "streaks",
+   "label": "Size",
+   "doc": "Their size",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 1024,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.streak",
+   "part": "streaks",
+   "label": "Flipbook",
+   "doc": "The streaks' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.streak",
+   "unit": "plain"
+  },
+  {
+   "key": "dust.level",
+   "part": "dust",
+   "label": "Level",
+   "doc": "Dust while the blade is below this height (two a tick: under it and half way to its last point)",
+   "type": "i16",
+   "min": -16384,
+   "max": 4096,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.size",
+   "part": "dust",
+   "label": "Size",
+   "doc": "Its size: the blade's height x 8 + this",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 6144,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.life",
+   "part": "dust",
+   "label": "Life",
+   "doc": "Its ticks (its flipbook's frames: 12 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 12,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.dust",
+   "part": "dust",
+   "label": "Flipbook",
+   "doc": "The dust's flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}
