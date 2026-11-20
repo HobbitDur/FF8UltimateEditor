@@ -1,0 +1,545 @@
+{
+ "format": 1,
+ "effect": 319,
+ "name": "Counter-attack",
+ "doc": "Krysta's counter-attack (c0m038, on a party member): a spike (layout and model) travelling from the caster's arm bone to the target, a burst layout at the target with sprites around it, the damage; the caster's arm hidden and its bones grown back from nothing (Strong counter-attack 318's bone scale task). Its tasks are the port's code (FFNx mag319_counter_attack.cpp) run on the program's memory (its main, bone scales and sprites in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x65DB40",
+   "setup": "0x65DB30",
+   "root": "0x65DBE0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 319,
+  "from": "0x25053A0",
+  "size": "0x78"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xFF75CC",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xFF7798",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xFF75D0",
+   "size": 428
+  },
+  "tables.offsets": {
+   "kind": "table",
+   "address": "0xFF7780",
+   "size": 24,
+   "format": "h",
+   "columns": 4,
+   "skip": 0,
+   "count": 3
+  },
+  "layouts.spike": {
+   "kind": "layout",
+   "address": "0xFF24F8",
+   "size": 7768,
+   "capacity": 872
+  },
+  "models.spike": {
+   "kind": "model",
+   "address": "0xFF13F0",
+   "size": 4360,
+   "vertices": 96
+  },
+  "layouts.burst": {
+   "kind": "layout",
+   "address": "0xFF4350",
+   "size": 12924,
+   "capacity": 1132
+  },
+  "seqs.sprite": {
+   "kind": "seq",
+   "address": "0xFF12E0",
+   "size": 272,
+   "frames": 10
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x65DB30",
+  "file_loader": "0x65DB40",
+  "root": "0x65DBE0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The main's ticks, the sound, the damage; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "spike",
+   "title": "Spike",
+   "doc": "Layout A and the spike model travelling from the caster's bone to the target (the caster's arm object shown)"
+  },
+  {
+   "id": 2,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "Layout B at the target"
+  },
+  {
+   "id": 3,
+   "key": "sprites",
+   "title": "Sprites",
+   "doc": "Sprites around the target on a few ticks (a flipbook)"
+  },
+  {
+   "id": 0,
+   "key": "bones",
+   "title": "Arm regrowth",
+   "doc": "The caster's arm object hidden and five of its bones grown back from nothing"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The main's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "At the sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "The main's tick of the sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage",
+   "part": "main",
+   "label": "Damage",
+   "doc": "Its tick the target's damage is shown",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.bones",
+   "part": "main",
+   "label": "Bones",
+   "doc": "Its tick the arm is hidden and its bones grow back",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "main",
+   "label": "End",
+   "doc": "Its last tick (then the battle file it streams)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 39,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "spike.start",
+   "part": "spike",
+   "label": "Start",
+   "doc": "The main's tick it starts (its points are taken on tick 2)",
+   "type": "i16",
+   "min": 2,
+   "max": 400,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "spike.ticks",
+   "part": "spike",
+   "label": "Ticks",
+   "doc": "Its travel's ticks (drawn one tick more: from the caster's bone to the target)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "spike.bone",
+   "part": "spike",
+   "label": "Bone",
+   "doc": "The caster's bone it starts from",
+   "type": "i16",
+   "min": 0,
+   "max": 63,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "spike.depth",
+   "part": "spike",
+   "label": "Depth",
+   "doc": "Its layout's depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.offsets",
+   "part": "spike",
+   "label": "Offsets",
+   "doc": "Three offsets x / y / z (4 words each) turned along its direction: the first one moves the spike and the burst",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.offsets",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.spike",
+   "part": "spike",
+   "label": "Layout",
+   "doc": "Layout A",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.spike",
+   "unit": "plain"
+  },
+  {
+   "key": "models.spike",
+   "part": "spike",
+   "label": "Model",
+   "doc": "The spike model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.spike",
+   "unit": "plain"
+  },
+  {
+   "key": "burst.start",
+   "part": "burst",
+   "label": "Start",
+   "doc": "The main's tick it starts",
+   "type": "i16",
+   "min": 2,
+   "max": 400,
+   "default": 7,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.ticks",
+   "part": "burst",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.depth",
+   "part": "burst",
+   "label": "Depth",
+   "doc": "Its layout's depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.burst",
+   "part": "burst",
+   "label": "Layout",
+   "doc": "Layout B",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.first",
+   "part": "sprites",
+   "label": "First tick",
+   "doc": "The main's first tick they appear on (during the burst)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.last",
+   "part": "sprites",
+   "label": "Last tick",
+   "doc": "Its last tick they appear on",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 21,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.every",
+   "part": "sprites",
+   "label": "Every",
+   "doc": "Every that many ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.count",
+   "part": "sprites",
+   "label": "Count",
+   "doc": "How many each time (16 at most alive)",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spread",
+   "part": "sprites",
+   "label": "Scatter",
+   "doc": "Around the target: a random below 2 x this - this on each axis",
+   "type": "i16",
+   "min": 1,
+   "max": 8192,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.life",
+   "part": "sprites",
+   "label": "Life",
+   "doc": "Their ticks (their flipbook's frames: 10 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 10,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.size",
+   "part": "sprites",
+   "label": "Size",
+   "doc": "Their size",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.sprite",
+   "part": "sprites",
+   "label": "Flipbook",
+   "doc": "The sprites' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sprite",
+   "unit": "plain"
+  },
+  {
+   "key": "bones.bone[0]",
+   "part": "bones",
+   "label": "Bone 1",
+   "doc": "The first bone grown back",
+   "type": "i16",
+   "min": 0,
+   "max": 63,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "bones.bone[1]",
+   "part": "bones",
+   "label": "Bone 2",
+   "doc": "The second",
+   "type": "i16",
+   "min": 0,
+   "max": 63,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "bones.bone[2]",
+   "part": "bones",
+   "label": "Bone 3",
+   "doc": "The third",
+   "type": "i16",
+   "min": 0,
+   "max": 63,
+   "default": 23,
+   "unit": "plain"
+  },
+  {
+   "key": "bones.bone[3]",
+   "part": "bones",
+   "label": "Bone 4",
+   "doc": "The fourth",
+   "type": "i16",
+   "min": 0,
+   "max": 63,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "bones.bone[4]",
+   "part": "bones",
+   "label": "Bone 5",
+   "doc": "The fifth",
+   "type": "i16",
+   "min": 0,
+   "max": 63,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "bones.delay[0]",
+   "part": "bones",
+   "label": "Delay 1",
+   "doc": "The first bone's ticks before it grows",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "bones.delay[1]",
+   "part": "bones",
+   "label": "Delay 2",
+   "doc": "The second's",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "bones.delay[2]",
+   "part": "bones",
+   "label": "Delay 3",
+   "doc": "The third's",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "bones.delay[3]",
+   "part": "bones",
+   "label": "Delay 4",
+   "doc": "The fourth's",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "bones.delay[4]",
+   "part": "bones",
+   "label": "Delay 5",
+   "doc": "The fifth's",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "bones.grow_x",
+   "part": "bones",
+   "label": "Growth x / y",
+   "doc": "Their scale x / y grows by this a tick (up to 0x1000)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 512,
+   "unit": "scale"
+  },
+  {
+   "key": "bones.grow_y",
+   "part": "bones",
+   "label": "Growth z",
+   "doc": "Their scale z grows by this a tick (up to 0x1000)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 1024,
+   "unit": "scale"
+  }
+ ],
+ "tasks": []
+}

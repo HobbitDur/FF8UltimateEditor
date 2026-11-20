@@ -1,0 +1,732 @@
+{
+ "format": 1,
+ "effect": 314,
+ "name": "Abadon death",
+ "doc": "Abadon's death (enemy attack 191, Abadon c0m103 with its lower half c0m104 in the next slot, on itself): the music faded, the screen flash, white tiles; the caster drawn by the module lit by a light level falling down its body, both halves' colours faded to black, then its upper body drawn with 112 pose entries that 29 bone scripts move, turn, drop and bounce (dust where a bone first lands), its polygons above a rising level leaving it as spinning shards, sparks at random bones on the first ticks; the sound and its voice; no damage. Effect 316's kin. Its tasks are the port's code (FFNx mag314_abadon.cpp) run on the program's memory (its main's pose, particles and shards in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6628A0",
+   "setup": "0x662890",
+   "root": "0x662970"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 314,
+  "from": "0x2505578",
+  "size": "0x68"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x101619C",
+   "size": 4
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0x10161A0",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x101AF1C",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1016090",
+   "size": 268
+  },
+  "tables.scripts": {
+   "kind": "table",
+   "address": "0x101AA50",
+   "size": 1228,
+   "format": "h",
+   "columns": 2,
+   "skip": 0,
+   "count": 307
+  },
+  "seqs.s[0]": {
+   "kind": "seq",
+   "address": "0x10162C4",
+   "size": 352,
+   "frames": 13
+  },
+  "seqs.s[1]": {
+   "kind": "seq",
+   "address": "0x1016424",
+   "size": 324,
+   "frames": 12
+  },
+  "seqs.s[2]": {
+   "kind": "seq",
+   "address": "0x1016568",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.s[3]": {
+   "kind": "seq",
+   "address": "0x1016714",
+   "size": 428,
+   "frames": 16
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x662890",
+  "file_loader": "0x6628A0",
+  "root": "0x662970"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The main's ticks, the sound and the voice (claimed at the start, released near the end), the screen flash, the music faded; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "sweep",
+   "title": "Light sweep",
+   "doc": "The caster drawn lit by a light level falling down its body (its vertices grey by their height)"
+  },
+  {
+   "id": 0,
+   "key": "fade",
+   "title": "Colour fade",
+   "doc": "Both halves' colours faded to black"
+  },
+  {
+   "id": 0,
+   "key": "scripts",
+   "title": "Bone scripts",
+   "doc": "The 29 bone scripts: each moves a pose entry of the caster's upper body (offsets, turns, their speeds, a bounce on the ground throwing dust once, hiding it), loops"
+  },
+  {
+   "id": 2,
+   "key": "body",
+   "title": "Body",
+   "doc": "The caster's upper body drawn with the scripts' pose entries"
+  },
+  {
+   "id": 3,
+   "key": "tiles",
+   "title": "White tiles",
+   "doc": "Full-screen tiles flashing in three windows"
+  },
+  {
+   "id": 4,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sparks at random bones of the caster on the first ticks (flipbooks C and D)"
+  },
+  {
+   "id": 0,
+   "key": "dust",
+   "title": "Dust",
+   "doc": "Dust where a scripted bone first bounces on the ground (flipbook A)"
+  },
+  {
+   "id": 5,
+   "key": "shards",
+   "title": "Shards",
+   "doc": "The body's polygons above a rising level leaving it as spinning shards, some throwing a particle"
+  },
+  {
+   "id": 0,
+   "key": "particles",
+   "title": "Particles",
+   "doc": "Every particle (sparks, dust, the shards'): its flipbooks, its speed; the shards' particles' life"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The main's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "At the sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.voice",
+   "part": "main",
+   "label": "Voice",
+   "doc": "The sound block its voice slot is claimed with (at the start)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "The main's tick of the sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.release",
+   "part": "main",
+   "label": "Voice released",
+   "doc": "Its tick the voice slot is released",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 222,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "main",
+   "label": "End",
+   "doc": "Its last tick (the colours put back, every polygon shown again; the scripts stop 2 ticks later, then the battle files it streams)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 226,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.ramp",
+   "part": "main",
+   "label": "Flash ramp",
+   "doc": "The screen flash's ticks up at the start and down at the end",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "main",
+   "label": "Flash level",
+   "doc": "The screen flash's level between",
+   "type": "i16",
+   "min": 0,
+   "max": 4000,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "sweep.start",
+   "part": "sweep",
+   "label": "Start",
+   "doc": "The main's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep.ticks",
+   "part": "sweep",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep.top",
+   "part": "sweep",
+   "label": "Top level",
+   "doc": "The light level's start (y down)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep.range",
+   "part": "sweep",
+   "label": "Fall",
+   "doc": "The level falls by this over its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 4200,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep.page",
+   "part": "sweep",
+   "label": "Page move",
+   "doc": "The swept, the scripted body's and the shards' texture page word moved by this",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep.clut",
+   "part": "sweep",
+   "label": "CLUT move",
+   "doc": "Their CLUT word moved by this",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 788,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.start",
+   "part": "fade",
+   "label": "Start",
+   "doc": "The main's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 81,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.ticks",
+   "part": "fade",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.alpha",
+   "part": "fade",
+   "label": "Alpha byte",
+   "doc": "Both halves' byte +0x2F while they fade",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "scripts.start",
+   "part": "scripts",
+   "label": "Start",
+   "doc": "The main's tick the scripts start (the body is drawn by the module from then on)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 66,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.scripts",
+   "part": "scripts",
+   "label": "Bone scripts",
+   "doc": "The 29 bone scripts' byte code (0x4CC bytes, each script at its own offset: edit their numbers, keep their shape)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.scripts",
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.start[0]",
+   "part": "tiles",
+   "label": "Window 1",
+   "doc": "The main's tick the first window starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.start[1]",
+   "part": "tiles",
+   "label": "Window 2",
+   "doc": "The second's",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.start[2]",
+   "part": "tiles",
+   "label": "Window 3",
+   "doc": "The third's",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 19,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.ticks",
+   "part": "tiles",
+   "label": "Ticks",
+   "doc": "Each window's ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.r",
+   "part": "tiles",
+   "label": "Red",
+   "doc": "The tiles' red",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.g",
+   "part": "tiles",
+   "label": "Green",
+   "doc": "Their green",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.b",
+   "part": "tiles",
+   "label": "Blue",
+   "doc": "Their blue",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.in",
+   "part": "tiles",
+   "label": "Ramp in",
+   "doc": "A tile's ticks fading in",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.out",
+   "part": "tiles",
+   "label": "Ramp out",
+   "doc": "Its ticks fading out",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.ticks",
+   "part": "sparks",
+   "label": "Ticks",
+   "doc": "Thrown on the main's ticks up to this",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.count",
+   "part": "sparks",
+   "label": "Count",
+   "doc": "How many a tick (128 particles at most alive)",
+   "type": "i16",
+   "min": 0,
+   "max": 128,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "Their ticks (below their flipbooks' frame count: 15 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 15,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size",
+   "part": "sparks",
+   "label": "Size",
+   "doc": "Their size (+ a random below 0x800)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 512,
+   "unit": "scale"
+  },
+  {
+   "key": "dust.count",
+   "part": "dust",
+   "label": "Count",
+   "doc": "How many at a bounce",
+   "type": "i16",
+   "min": 0,
+   "max": 128,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.life",
+   "part": "dust",
+   "label": "Life",
+   "doc": "Their ticks (below their flipbook's frame count: 12 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 12,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.size",
+   "part": "dust",
+   "label": "Size",
+   "doc": "Their size (+ a random below 0x800)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 3072,
+   "unit": "scale"
+  },
+  {
+   "key": "dust.spread",
+   "part": "dust",
+   "label": "Scatter",
+   "doc": "Around the bone: a random below 2 x this - this on x / z",
+   "type": "i16",
+   "min": 1,
+   "max": 8192,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.start",
+   "part": "shards",
+   "label": "Start",
+   "doc": "The main's tick the shard sweep starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.ticks",
+   "part": "shards",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 111,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.base",
+   "part": "shards",
+   "label": "Level",
+   "doc": "The rising level's base (polygons above it leave the body)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.spread",
+   "part": "shards",
+   "label": "Velocity mask",
+   "doc": "A shard's velocity: a random masked by this (half of it off x, z backwards, y up)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 127,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.life",
+   "part": "shards",
+   "label": "Life",
+   "doc": "Its ticks: this + a random below 8",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.chance",
+   "part": "shards",
+   "label": "Particle chance",
+   "doc": "It throws a particle when a random below 0x8000 is below this",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 8192,
+   "unit": "plain"
+  },
+  {
+   "key": "shards.spin",
+   "part": "shards",
+   "label": "Spin",
+   "doc": "The 64 spin matrices' angles: a random below 2 x this - this on each axis, a tick",
+   "type": "i16",
+   "min": 1,
+   "max": 2048,
+   "default": 256,
+   "unit": "angle"
+  },
+  {
+   "key": "shards.scale",
+   "part": "shards",
+   "label": "Shrink",
+   "doc": "Their scale: this - a random below 0x200 (0x1000: the shards keep their size)",
+   "type": "i16",
+   "min": 0,
+   "max": 8192,
+   "default": 3840,
+   "unit": "scale"
+  },
+  {
+   "key": "particles.shard_life",
+   "part": "particles",
+   "label": "Shard particles' life",
+   "doc": "The shards' particles' ticks (below their flipbook's frame count: 11 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 11,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.speed",
+   "part": "particles",
+   "label": "Speed",
+   "doc": "Every particle's velocity scale a tick",
+   "type": "i16",
+   "min": -64,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[0]",
+   "part": "particles",
+   "label": "Flipbook A",
+   "doc": "The dust's flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[0]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[1]",
+   "part": "particles",
+   "label": "Flipbook B",
+   "doc": "The shards' particles' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[1]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[2]",
+   "part": "particles",
+   "label": "Flipbook C",
+   "doc": "The sparks' first flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[2]",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.s[3]",
+   "part": "particles",
+   "label": "Flipbook D",
+   "doc": "The sparks' second flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.s[3]",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.sequence_table",
+   "label": "Flipbook table",
+   "doc": "The particles' flipbooks by their kind (an address each: the parameters stand in for 0..3)",
+   "address": "0x10168C0",
+   "size": 16
+  }
+ ]
+}

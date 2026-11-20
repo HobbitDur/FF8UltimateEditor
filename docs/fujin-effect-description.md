@@ -3318,6 +3318,30 @@ Potion's description is the same with its own sequences and sound.
        track, the dust tables (3 entries each), the puff and debris offsets.
      - *Tests:* `test_ports_P.py` casts it from GIM52A (c0m001, slot 3) on Squall.
      - *Fujin:* its tabs (Timing, Charge, Muzzle flash, Beam, Blast, Bounce); no + menu family.
+   - **Abadon death (314)** (FFNx 67a7cad6; enemy attack 191 of Abadon, c0m103, its lower half c0m104 in the next slot, on
+     itself: its death; a port root, Cannon Blow's kind; Red Giant death 316's kin): the music faded; the screen flash up
+     over 8 ticks, held, down over the last 8; white tiles in three windows of 5 ticks (ticks 0, 15, 19); sparks at random
+     bones on ticks 0..16 (8 a tick); from tick 16 for 50 ticks the caster drawn by the module lit by a light level falling
+     down its body (84 a tick); both halves' colours faded to black from tick 81 over 16 ticks; from tick 66 its upper body
+     drawn with 112 pose entries that 29 bone scripts move, turn, drop and bounce (16 dust particles where a bone first
+     lands); from tick 100 for 111 ticks its polygons above a rising level leave it as spinning shards (1 in 4 throwing a
+     particle); the sound at tick 1, the voice claimed at the start and released at 222; the main ends at 226 (the scripts
+     2 ticks later, the effect once the battle files it streams are in). No damage.
+     - *Inputs* (`AbadonParams`, 51): the sound and the voice, the ticks (sound, voice released, end), the flash (ramp,
+       level), the sweep (start, ticks, top level, fall, the texture page / CLUT moves), the fade (start, ticks, its byte),
+       the scripts' tick, the tiles (three windows, ticks, colour, ramp in / out), the sparks (ticks, count, life, size),
+       the dust (count, life, size, scatter), the shards (start, ticks, level, velocity mask, life, particle chance, spin,
+       shrink), the particles (the shards' particles' life, speed). Data: the two sounds, the particles' four flipbooks,
+       the 29 bone scripts' byte code (0x4CC bytes: their loop counters are written as they run), "mag313.tim", the camera
+       track. The light sweep, the caster's draw with the pose offsets, the shatter (which polygons, the shards' corners)
+       and the particle / shard renderers stay code; so does the lower half's tint on the first ticks.
+     - *Port:* the module globals through own::R (the colour target 0x25055D8, never written, too), the spawns through
+       own::Fn; setup and loader ported; five parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Abadon (c0m103, slot 3) on itself with its lower half in slot 4
+       (`CYCLE_CASTS`, `CYCLE_SLOTS`; it hurts nobody); the description's compile test. The recorder does not record the
+       screen flash, the music fade nor the entities' colours.
+     - *Fujin:* its tabs (Main, Light sweep, Colour fade, Bone scripts, Body, White tiles, Sparks, Dust, Shards,
+       Particles); no + menu family.
    - **Fake President death (315)** (FFNx 883d74d1; its AI's death section; a port root, Ray-Bomb's kind): the Fake
      President melting into a puddle (drops, bubbles, rings, sparks, splashes) and Gerogero (the next entity
      slot) rising out of it, the tints, the voice and the sounds; the action result.
@@ -3325,11 +3349,61 @@ Potion's description is the same with its own sequences and sound.
      - *Tests:* cast by the Fake President (c0m075) with Gerogero (c0m034) in the next slot (`CYCLE_CASTS`,
        `CYCLE_SLOTS`: its rise reads that entity).
      - *Fujin:* its tab (Master); no + menu family.
+   - **Red Giant death (316)** (FFNx 67a7cad6; enemy attack 203 of Red Giant, c0m130, on itself: its death; a port root,
+     Cannon Blow's kind; Abadon death 314's kin): the music faded; the screen flash up over 8 ticks, held, down over the
+     last 8; from tick 20 for 130 ticks the caster drawn by the module lit by a light level falling down its body (40 a
+     tick for 100 ticks, then held); from tick 150 for 150 ticks the level rising back, the lit polygons semi-transparent,
+     1 in 16 throwing a particle; its colour faded to black from tick 150 over 140 ticks; the sound at tick 45, the voice
+     claimed at the start and released at 308; the main ends at 312. No damage.
+     - *Inputs* (`RedGiantParams`, 28): the sound and the voice, the ticks (sound, voice released, end), the flash
+       (ramp, level), the sweeps (top level, the texture page / CLUT moves; A: start, ticks, fall, its ticks; B: start,
+       ticks, rise), the fade (start, ticks, its byte), the particles (chance, life, size, speed). Data: the two sounds,
+       the particles' flipbook, the exe's TIM its setup uploads, "mag315.tim", the camera track. The two sweeps' draws
+       (each vertex's grey from its height, which polygons are lit) and the particle renderer stay code.
+     - *Port:* the module globals through own::R (the colour target 0x2505570, never written, too), the spawns through
+       own::Fn; setup and loader ported; three parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Red Giant (c0m130, slot 3) on itself (`CYCLE_CASTS`; it hurts nobody); the
+       description's compile test. The recorder does not record the screen flash, the music fade nor the caster's colour.
+     - *Fujin:* its tabs (Main, Sweep down, Sweep up, Colour fade, Particles); no + menu family.
    - **Acid (Quistis) (317)** (FFNx 316f2d95; Quistis' Blue Magic, Gastric Juice adapted; a port root, Ray-Bomb's
      kind): her cast animation, the acid streams and spray from her to the target, the drips and splashes, the
      target melting, the sound; the action result.
      - *Inputs* (`AcidParams`): the sound. Data: the sound, "mag127.tim".
      - *Fujin:* its tab (Target); no + menu family.
+   - **Strong counter-attack (318)** (FFNx 67a7cad6; Krysta's (c0m038) counter, on a party member; a port root, Cannon
+     Blow's kind; Counter-attack 319's big twin): from tick 2 for 22 ticks a charge layout at the caster's arm bone (0x1D);
+     from tick 4 for 16 ticks a spike (layout and model) rushing from it to the target (eased: (tick / 16)^4), particles
+     thrown off along its way (4 points a tick, 2 particles each, 2 more from tick 4 of the spike on); from tick 19 for 32
+     ticks a burst layout at the target, 8 sprites a tick flying off it on its first 4, slowing down; the sound at tick 8,
+     the damage at 24; at 39 the caster's arm object hidden and five of its bones grown back from nothing; the main ends
+     at 51 (once the battle file it streams from tick 41 is in).
+     - *Inputs* (`StrongParams`, 49): the sound, the ticks (sound, damage, bones, end), the charge (start, ticks,
+       depth), the spike (start, ticks, bone, depth), the particles (points, lag, second pair, life, size, speed), the burst
+       (start, ticks, depth), the sprites (ticks, count, turn, speed, slowing, life, size), the bones (five bones and
+       delays, the growths). Data: the sound, the three layouts, the spike model, the sprites' and particles' flipbooks,
+       the three offsets (0x18 bytes), "mag317.tim", the camera track. The directions (the spike's frame, the sprites'
+       spread), the particle and sprite renderers stay code.
+     - *Port:* the module globals through own::R (the sprites' zero vector 0x2505480 too: ZERO_VEC -> ZeroVec()), the
+       spawns through own::Fn; setup and loader ported; five parts tagged (FX_PART). Its bone scale task is noted for
+       programs (Counter-attack 319 queues it).
+     - *Tests:* the cycle test casts it from Krysta (c0m038, slot 3) on the party (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Main, Charge, Spike, Particles, Burst, Flying sprites, Arm regrowth); no + menu family.
+   - **Counter-attack (319)** (FFNx 67a7cad6; Krysta's (c0m038) counter, on a party member; a port root, Cannon Blow's
+     kind; Strong counter-attack 318's weak twin): from tick 2 for 7 ticks a spike (layout and model) travelling from the
+     caster's arm bone (0xD) to the target; from tick 7 for 32 ticks a burst layout at the target, 4 sprites around it on
+     ticks 15 / 17 / 19 / 21; the sound at tick 1, the damage at 12; at 27 the caster's arm object hidden and five of its
+     bones grown back from nothing (318's bone scale task); the main ends at 39 (then the battle file it streams).
+     - *Inputs* (`CounterParams`, 38): the sound, the ticks (sound, damage, bones, end), the spike (start, ticks,
+       bone, depth), the burst (start, ticks, depth), the sprites (first / last tick, every, count, scatter, life, size),
+       the bones (five bones and delays, the growths). Data: the sound, the two layouts, the spike model, the sprites'
+       flipbook, the three offsets (0x18 bytes: the first one used), "mag318.tim", the camera track. The spike's frame and
+       the sprite renderer stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn (the bone scales: 318's task, its port in a
+       program); setup and loader ported; three parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Krysta (c0m038, slot 3) on the party (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Main, Spike, Burst, Sprites, Arm regrowth); no + menu family.
    - **Diablos (325)** (FFNx eec33c9f; the GF's Dark Messenger, the timeline family; a port timeline, Ray-Bomb's kind):
      the two battle models, the prim-model players and particles (bolts, puffs, rising and burst layouts), the
      targets squashed, the camera, the streamed loads, the screen flash, the voice and the sounds (ticks 0, 0x5B,
