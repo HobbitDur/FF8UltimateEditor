@@ -29,7 +29,7 @@ def renamed_kernel(tmp_path):
     """A copy of kernel.bin where spell 1 (Fire) is called Blaze."""
     from FF8GameData import kernelnames
     from FF8GameData.gamedata import GameData
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     game_data = GameData(str(PROJECT_ROOT / "FF8GameData"))
     game_data.load_kernel_data()
     manager = KernelManager(game_data)

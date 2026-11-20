@@ -47,7 +47,7 @@ def _curves(data, entry_size, linear_offset, quadratic_offset):
 
 def load_kernel(game_data, kernel_path):
     """A KernelManager holding kernel_path, to read several things out of one parse."""
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     if not getattr(game_data, "kernel_data_json", None):
         game_data.load_kernel_data()
     kernel_manager = KernelManager(game_data)

@@ -34,7 +34,7 @@ class _KernelFile:
     """A loaded kernel.bin exposed as KernelEntry lists per section (GUI model, headless)."""
 
     def __init__(self, kernel_path: str):
-        from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+        from FF8GameData.kernel.kernelmanager import KernelManager
         self.game_data = load_game_data()
         self.manager = KernelManager(self.game_data)
         self.manager.load_file(kernel_path)

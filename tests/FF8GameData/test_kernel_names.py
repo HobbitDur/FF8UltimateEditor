@@ -191,7 +191,7 @@ def test_a_workbook_without_those_names_is_left_alone(game_data, tmp_path):
 def _kernel_with_more_magic(game_data, source, destination, added_names: dict):
     """A kernel.bin with a longer magic section, the way SolomonRing's "+ Add entry" grows it:
     blank entries appended, and the ids 64-95 the game keeps for the GF summons skipped over."""
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
 
     kernel_manager = KernelManager(game_data)
     kernel_manager.load_file(str(source))

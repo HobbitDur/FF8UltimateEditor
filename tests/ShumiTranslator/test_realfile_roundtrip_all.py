@@ -121,7 +121,7 @@ def _battle_files_filtered():
 
 @pytest.mark.ff8data(KERNEL)
 def test_roundtrip_kernel(game_data, tmp_path):
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     work = tmp_path / "kernel.bin"
     shutil.copy(EF / "main/kernel.bin", work)
 
@@ -228,7 +228,7 @@ def test_residual_raw_codes_are_consistent(game_data, capsys):
     section's screen never stays raw in that section, and that the names of one screen never
     show up in the sections of another, then prints the full residual histogram as a report.
     """
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     from FF8GameData.menu.mngrp.string.sectionstring import SectionString
     from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
     from ShumiTranslator.model.exe.exemanager import ExeManager

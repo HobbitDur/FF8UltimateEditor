@@ -2,8 +2,8 @@ import csv
 
 from FF8GameData.gamedata import GameData, SectionType
 from FF8GameData.GenericSection.listff8text import ListFF8Text
-from ShumiTranslator.model.kernel.kernelsectiondata import SectionData
-from ShumiTranslator.model.kernel.kernelsectionheader import SectionHeader
+from FF8GameData.kernel.kernelsectiondata import SectionData
+from FF8GameData.kernel.kernelsectionheader import SectionHeader
 
 
 class KernelManager():

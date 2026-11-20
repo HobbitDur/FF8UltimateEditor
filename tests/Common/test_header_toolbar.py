@@ -669,7 +669,7 @@ def test_shumitranslator_opens_a_tab_per_file(main_window, monkeypatch, tmp_path
     # Save acts on the active tab - the kernel one writes straight back to its own path.
     # KernelManager fully repacks on save (never byte-identical, like Julia's audio.fmt), so verify
     # functionally: reloading the written file yields the same number of text sections.
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     kernel_pane = shumi.tab_widget.widget(0)
     nb_sections = len(kernel_pane.manager.section_list)
     shumi.tab_widget.setCurrentWidget(kernel_pane)

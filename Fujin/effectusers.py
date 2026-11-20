@@ -63,7 +63,7 @@ def _kind(game_data, section_id):
 def read_effect_users(game_data, kernel_file) -> dict:
     """{effect id: [EffectUser, ...]} of every kernel.bin entry, in section then entry order."""
     from FF8GameData.kernelnames import _reserved_ids, _section_names
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
 
     if not getattr(game_data, "kernel_data_json", None):
         game_data.load_kernel_data()

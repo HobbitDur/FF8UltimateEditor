@@ -163,7 +163,7 @@ def _write_csv(output: pathlib.Path, delimiter: str, file_type: str, gd, manager
 
 def _export_kernel_csv(gd, input_file: str, output_file: str):
     """Export kernel.bin to CSV."""
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     mgr = KernelManager(game_data=gd)
     mgr.load_file(input_file)
     _write_csv(pathlib.Path(output_file), DEFAULT_DELIMITER, "kernel", gd, mgr)
@@ -263,7 +263,7 @@ def _apply_csv_to_sections(csv_path: str, delimiter: str, sections: List[Tuple])
 
 def _import_kernel_csv(gd, input_file: str, csv_file: str, output_file: str = None):
     """Import CSV into kernel.bin."""
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     mgr = KernelManager(game_data=gd)
     mgr.load_file(input_file)
     sections = list(_iter_sections(gd, "kernel", mgr))
@@ -628,7 +628,7 @@ def _cmd_export_all_world(args):
 def _cmd_compress(args):
     """Compress kernel.bin text strings."""
     gd = _load_game_data()
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     from FF8GameData.gamedata import SectionType
 
     mgr = KernelManager(game_data=gd)
@@ -652,7 +652,7 @@ def _cmd_compress(args):
 def _cmd_uncompress(args):
     """Uncompress kernel.bin text strings."""
     gd = _load_game_data()
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     from FF8GameData.gamedata import SectionType
 
     mgr = KernelManager(game_data=gd)

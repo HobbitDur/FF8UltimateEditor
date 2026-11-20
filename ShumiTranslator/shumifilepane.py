@@ -17,7 +17,7 @@ from .model.battle.battlemanager import BattleManager
 from .model.exe.exemanager import ExeManager
 from .model.exe.remasterdatmanager import RemasterDatManager
 from .model.field.fieldfsmanager import FieldFsManager
-from .model.kernel.kernelmanager import KernelManager
+from FF8GameData.kernel.kernelmanager import KernelManager
 from .model.world.worldfsmanager import WorldFsManager
 from .view.sectionwidget import SectionWidget
 from .view.tabholderwidget import TabHolderWidget

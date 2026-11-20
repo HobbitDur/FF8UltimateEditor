@@ -108,7 +108,7 @@ def read_names(game_data, kernel_file, keep_unnamed=False) -> dict:
     """Every name a kernel.bin holds, as {list name: {id: name}}. Entries the file leaves unnamed
     are left out - the json is what names those - unless keep_unnamed, which keeps them as an empty
     name so that a caller can see how far a list goes (a mod that adds spells makes it longer)."""
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
 
     kernel_manager = KernelManager(game_data)
     kernel_manager.load_file(str(kernel_file))
@@ -139,7 +139,7 @@ def read_devour_names(game_data, kernel_file) -> list:
     """The devour effects of a kernel.bin, as [{"id", "name"}] in id order - the list GameData
     keeps in devour_data_json["devour"]. An effect whose text is empty is still listed (it exists
     and can be chosen), named by its id."""
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
 
     kernel_manager = KernelManager(game_data)
     kernel_manager.load_file(str(kernel_file))
@@ -248,7 +248,7 @@ def read_weapon_and_ability_names(game_data, kernel_file) -> dict:
     kernel.bin, exactly as the file holds them (an entry the file leaves unnamed has an empty
     name). The items run to the last one the file defines, ids 199-255 with FFNx's AddMoreItems;
     the ability sections are as long as the file makes them (FFNx's AddMoreAbility resizes them)."""
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
 
     kernel_manager = KernelManager(game_data)
     kernel_manager.load_file(str(kernel_file))

@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from FF8GameData import itemids, kernelnames
 from FF8GameData.gamedata import GameData
-from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+from FF8GameData.kernel.kernelmanager import KernelManager
 from SolomonRing.solomonringwidget import SolomonRingWidget
 from tests.addmoreitems_fixture import POTION_NAME, extended_kernel
 

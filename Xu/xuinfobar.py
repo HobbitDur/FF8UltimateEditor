@@ -103,7 +103,7 @@ class InfoBarLine:
 
 def misc_texts_from_kernel(game_data, kernel_path) -> list:
     """The kernel.bin misc texts (FF8 bytes, no end byte), by FF8KernelMiscText index."""
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     if not getattr(game_data, "kernel_data_json", None):
         game_data.load_kernel_data()
     kernel = KernelManager(game_data)

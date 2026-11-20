@@ -56,7 +56,7 @@ class RefineAbility:
 
 
 def _menu_ability_section(game_data, kernel_path):
-    from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+    from FF8GameData.kernel.kernelmanager import KernelManager
     if not getattr(game_data, "kernel_data_json", None):
         game_data.load_kernel_data()
     kernel_manager = KernelManager(game_data)

@@ -1,5 +1,5 @@
 from FF8GameData.gamedata import GameData
-from ShumiTranslator.model.kernel.kernelsubsectiondata import SubSectionData
+from FF8GameData.kernel.kernelsubsectiondata import SubSectionData
 
 
 class KernelEntry:

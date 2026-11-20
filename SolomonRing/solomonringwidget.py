@@ -10,7 +10,7 @@ from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from FF8GameData import itemids
-from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+from FF8GameData.kernel.kernelmanager import KernelManager
 from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.kernelsectiontab import KernelSectionTab

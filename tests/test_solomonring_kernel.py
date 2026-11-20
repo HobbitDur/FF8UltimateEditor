@@ -12,7 +12,7 @@ from PyQt6.QtCore import QEvent
 from PyQt6.QtWidgets import QApplication, QGroupBox, QMessageBox, QPushButton
 
 from FF8GameData.gamedata import GameData, SectionType
-from ShumiTranslator.model.kernel.kernelmanager import KernelManager
+from FF8GameData.kernel.kernelmanager import KernelManager
 from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelsectiontab import KernelSectionTab
 from SolomonRing.solomonringwidget import SolomonRingWidget
