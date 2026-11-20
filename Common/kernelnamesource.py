@@ -96,7 +96,7 @@ class KernelNameSource(QObject):
         """The red "open kernel.bin" notice a tool shows while it has no names of `what`."""
         notice = QLabel(cls.NOTICE_TEXT.format(what=what))
         notice.setWordWrap(True)
-        notice.setStyleSheet("color:#c0392b; font-weight:bold;")
+        notice.setStyleSheet("color:#ff6b6b; font-weight:bold;")
         return notice
 
     def _load(self, path):

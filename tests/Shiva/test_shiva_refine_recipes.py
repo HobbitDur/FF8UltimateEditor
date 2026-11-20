@@ -1,11 +1,13 @@
-"""Shiva adds and removes refine recipes; kernel.bin, which holds the ranges, is only read.
+"""Shiva adds and removes refine recipes; kernel.bin, which holds the ranges, is written only by
+the Refine ranges dialog.
 
 A refine table (m000-m004) is a flat list of entries; each menu ability of kernel.bin gives the
 first and last entry it offers (Menu_Prog19_RefineMenu_Init: count = last - first + 1, a u8, list =
 Menu_RefineEntryBuffer + 8 * first, a 0x800-byte buffer). Adding a recipe inserts an entry and its
 text, every later entry of the table moving down: the abilities keep kernel.bin's ranges, so the tab
-shows what the game would, and a warning lists the abilities whose range kernel.bin must change
-(with SolomonRing). Abilities offering the same entries are refused.
+shows what the game would, and a warning lists the abilities whose range kernel.bin must change.
+Saving writes mngrp.bin alone; the Refine ranges dialog suggests the new ranges and writes them
+(bytes 6-7 only) when asked. Abilities offering the same entries are refused.
 """
 import csv
 import pathlib
@@ -196,7 +198,8 @@ def test_recipes_at_any_index_of_the_table(game_data, files):
     assert _table(layout, 0)[102] == _table(layout, 0)[0]
     assert layout.warnings == ["m000: 1 recipe(s) added, the recipes from entry 102 on moved. no refine ability's "
                                "range moved: a recipe past them is offered by none until an ability points at it "
-                               "in kernel.bin (with SolomonRing)"]
+                               "in kernel.bin (\"Refine ranges...\" button)"]
+    assert layout.suggested_ranges()[12] == [96, 102]  # added after Forbid Mag-RF's last: suggested to it
     layout.remove_at(0, 102)
     assert len(layout.tables()[0][0].entries) == 102
 
@@ -392,3 +395,97 @@ def test_shiva_popups_add_at_the_end_and_remove_any_entry(qapp, game_data, files
     refine.add_recipe_button.click()
     refine.remove_recipe_button.click()
     assert len(entries) == 102
+
+
+@pytest.mark.ff8data(*FILES)
+def test_suggested_ranges_follow_the_recipes(game_data, files):
+    """A recipe added at entry p goes to the ability holding p - 1, the later ranges move; a removed
+    one shrinks the ability holding it. Nothing is applied: the views keep kernel.bin's ranges."""
+    _, layout = _load(game_data, files)
+    assert layout.suggested_ranges()[13] == [0, 8]  # nothing moved yet: kernel.bin's
+    layout.insert_at(1, 1, 0)       # inside Recov Med-RF (0-8)
+    layout.insert_at(1, 39, 38)     # right after Ammo-RF, now 22-37
+    layout.remove_at(0, 2)          # inside T Mag-RF (0-6)
+    suggested = layout.suggested_ranges()
+    assert [suggested[index] for index in (13, 14, 15, 17, 18, 19, 16)] == [
+        [0, 9], [10, 21], [22, 38], [39, 58], [59, 70], [71, 112], [113, 144]]
+    assert [suggested[index] for index in (5, 6, 12)] == [[0, 5], [6, 12], [95, 100]]
+    assert _ranges(layout, "m001")[0] == ("Recov Med-RF", 0, 8)
+
+
+def test_range_problems_name_each_ability():
+    from FF8GameData.menu.mngrp.m00x.refineabilities import RefineAbility, range_problems
+    abilities = [RefineAbility(index=5, table=0, first=0, last=7, name="T Mag-RF"),
+                 RefineAbility(index=6, table=0, first=7, last=13, name="I Mag-RF"),
+                 RefineAbility(index=24, table=0, first=104, last=105, name="E Mag-RF"),
+                 RefineAbility(index=20, table=2, first=4, last=3, name="Mid Mag-RF")]
+    problems = [(ability.name, reason) for ability, reason in range_problems(abilities, [103, 0, 10, 0, 0])]
+    assert problems == [("E Mag-RF", "last 105 is past the table's end (entries 0-102)"),
+                        ("Mid Mag-RF", "first 4 is after last 3: no recipe"),
+                        ("T Mag-RF", "offers the same entries as I Mag-RF"),
+                        ("I Mag-RF", "offers the same entries as T Mag-RF")]
+
+
+@pytest.mark.ff8data(*FILES)
+def test_write_refine_ranges_patches_only_the_changed_bytes(game_data, files):
+    from FF8GameData.menu.mngrp.m00x.refineabilities import write_refine_ranges
+    abilities = read_refine_abilities(game_data, files / "kernel.bin")
+    before = (files / "kernel.bin").read_bytes()
+    assert write_refine_ranges(game_data, files / "kernel.bin", abilities, {5: (0, 7), 6: (8, 13), 7: (14, 23)}) == 2
+    after = (files / "kernel.bin").read_bytes()
+    assert [index for index in range(len(before)) if before[index] != after[index]] == [
+        MENU_ABILITIES + 5 * 8 + 7, MENU_ABILITIES + 6 * 8 + 6]
+    # What was read is not what the file holds anymore: refused, nothing written
+    with pytest.raises(RefineKernelError, match="changed since it was read"):
+        write_refine_ranges(game_data, files / "kernel.bin", abilities, {5: (0, 8)})
+    assert (files / "kernel.bin").read_bytes() == after
+
+
+@pytest.mark.ff8data(*FILES)
+def test_ranges_dialog_checks_before_writing(qapp, game_data, files):
+    from Shiva.ShivaRefine.refinerangesdialog import RefineRangesDialog
+    _, layout = _load(game_data, files)
+    layout.insert_at(2, 4, 3)  # after Mid Mag-RF's last recipe
+    tables = layout.tables()
+    dialog = RefineRangesDialog(None, layout.abilities, layout.suggested_ranges(),
+                                [len(b.entries) for b, _ in tables], [b.m00bin.name for b, _ in tables])
+    assert dialog.changed() == [21, 20] or sorted(dialog.changed()) == [20, 21]
+    assert dialog.write_button.isEnabled() and not dialog.problem_label.text()
+    row = next(row for row, ability in enumerate(dialog.abilities) if ability.name == "Mid Mag-RF")
+    assert (dialog.first_spins[row].value(), dialog.last_spins[row].value()) == (0, 4)
+    assert dialog.first_spins[row].font().bold() is False and dialog.last_spins[row].font().bold() is True
+    dialog.last_spins[row].setValue(5)  # now overlaps High Mag-RF (5-10)
+    assert not dialog.write_button.isEnabled() and "Mid Mag-RF: offers the same entries as High Mag-RF" \
+        in dialog.problem_label.text()
+    dialog.last_spins[row].setValue(4)
+    assert dialog.write_button.isEnabled()
+
+
+@pytest.mark.ff8data(*FILES)
+def test_shiva_writes_the_suggested_ranges_on_demand(qapp, game_data, files, monkeypatch):
+    """Add a recipe, open Refine ranges, write: kernel.bin gets Ammo-RF one longer and the later
+    abilities moved, the warning goes, and Ammo-RF shows its 17 recipes."""
+    from PyQt6.QtWidgets import QDialog
+    from Shiva.ShivaRefine.refinerangesdialog import RefineRangesDialog
+    monkeypatch.setattr(RefineRangesDialog, "exec", lambda self: QDialog.DialogCode.Accepted)
+    widget = _shiva(files, monkeypatch)
+    refine = widget.refine_tab
+    assert refine.ranges_button.isEnabled()
+    _select(refine, "Ammo-RF")
+    assert refine.entry_table.verticalHeaderItem(0).text() == "21"  # rows named by their table entry
+    refine.entry_table.setCurrentCell(15, 0)
+    refine.add_recipe_button.click()
+    assert "kernel.bin must be modified" in refine.warning_label.text()
+
+    refine.ranges_button.click()
+    abilities = {ability.index: (ability.first, ability.last)
+                 for ability in read_refine_abilities(game_data, files / "kernel.bin")}
+    assert [abilities[index] for index in (13, 14, 15, 17, 18, 19, 16)] == [
+        (0, 8), (9, 20), (21, 37), (38, 57), (58, 69), (70, 111), (112, 143)]
+    assert "kernel.bin must be modified" not in refine.warning_label.text()
+    _select(refine, "Ammo-RF")
+    assert refine.entry_table.rowCount() == 17 and refine.entry_table.verticalHeaderItem(16).text() == "37"
+    # mngrp.bin is saved apart, with the toolbar
+    assert widget.save_files() is True
+    _, reloaded = _load(game_data, files)
+    assert len(_view(reloaded, "Ammo-RF").entries) == 17 and not reloaded.warnings

@@ -63,8 +63,9 @@ class ShivaWidget(QWidget):
         self.add_section_tab(self.refine_tab, "Refine")
         # kernel.bin, complementary and read-only: names the items and magic a refine takes or gives,
         # the ones a mod adds with FFNx's AddMoreItems (199-255) included, and holds the range of
-        # recipes of each refine ability. Shiva never writes it: when recipes are added or removed,
-        # the refine tab lists the ranges kernel.bin needs (to set in SolomonRing).
+        # recipes of each refine ability. Saving never writes it: when recipes are added or removed,
+        # the refine tab lists the ranges kernel.bin needs, and its "Refine ranges..." dialog writes
+        # them (bytes 6-7 of the menu abilities only) when asked.
         self.kernel_binding = FileBinding("kernel.bin", file_registry, file_filter="*kernel*.bin",
                                           read_only=True, complementary=True)
         self.kernel_names = KernelNameSource(self.game_data, file_registry, binding=self.kernel_binding)
@@ -73,6 +74,7 @@ class ShivaWidget(QWidget):
         self.kernel_path = ""
         self.kernel_binding.file_opened.connect(self._load_refine_abilities)
         self.kernel_binding.file_closed.connect(self._clear_refine_abilities)
+        self.refine_tab.kernel_ranges_written.connect(self._warn_other_kernel_editors)
         self.add_section_tab(ShivaSeedTestWidget(self.game_data), "SeeD tests")
         self.add_section_tab(ShivaSpriteWidget(), "Sprites")
         self.add_section_tab(ShivaTutorialWidget(self.game_data), "Tutorial demos")
@@ -99,7 +101,19 @@ class ShivaWidget(QWidget):
             print(f"[Shiva] could not read the refine abilities of {kernel_path}: {error}")
             abilities = None
         self.kernel_path = kernel_path if abilities is not None else ""
-        self.refine_tab.set_kernel_abilities(abilities)
+        self.refine_tab.set_kernel_abilities(abilities, kernel_path)
+
+    def _warn_other_kernel_editors(self, _path=None):
+        """A tool editing the whole kernel.bin (SolomonRing, ShumiTranslator) still holds the old
+        ranges in memory: saving there would put them back."""
+        others = [binding for binding in self.kernel_binding.registry.bindings
+                  if binding is not self.kernel_binding and binding.file_name == "kernel.bin"
+                  and not binding.read_only and binding.is_loaded]
+        if others:
+            QMessageBox.warning(self, "Shiva - kernel.bin also open elsewhere",
+                                "The refine ranges were written into kernel.bin. Another tool has it open "
+                                "(SolomonRing or ShumiTranslator): use Reload there before saving in it, "
+                                "or it writes the old ranges back.")
 
     def _clear_refine_abilities(self, _path=None):
         self.kernel_path = ""

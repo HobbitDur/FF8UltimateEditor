@@ -87,10 +87,10 @@ class RefineView:
 class RefineLayout:
     """Every refine ability of a mngrp, sliced as a kernel.bin says (or one view per table).
 
-    kernel.bin is only read: the abilities always keep the range it gives them, so each view shows
-    what the game shows. Adding or removing a recipe shifts every later entry of its table, and the
-    layout lists which abilities then need a new first/last entry in kernel.bin (kernel_warnings),
-    to set with a kernel.bin editor (SolomonRing)."""
+    The abilities always keep the range kernel.bin gives them, so each view shows what the game
+    shows. Adding or removing a recipe shifts every later entry of its table: the layout lists which
+    abilities then need a new first/last entry in kernel.bin (kernel_warnings) and suggests them
+    (suggested_ranges), for the Refine ranges dialog to write when asked."""
 
     def __init__(self, manager, abilities=None):
         """abilities: kernel.bin's RefineAbility list (read_refine_abilities), None without one.
@@ -104,6 +104,7 @@ class RefineLayout:
         self.views = []
         self.warnings = []
         self.shifts = {}         # table: [lowest entry index whose recipe moved, recipes added, removed]
+        self.edits = []          # (table, entry index, +1 added / -1 removed), in order: suggested_ranges
         check_no_overlap(self.abilities)
         self._build_views()
 
@@ -131,21 +132,46 @@ class RefineLayout:
             changes = " and ".join(text for text in (f"{added} recipe(s) added" if added else "",
                                                      f"{removed} removed" if removed else "") if text)
             if stale:
-                to_do = ("kernel.bin must be modified (first/last entry of the refine abilities, with SolomonRing) "
-                         "for these to offer the right recipes again: "
+                to_do = ("kernel.bin must be modified (\"Refine ranges...\" button) for these to offer "
+                         "the right recipes again: "
                          + ", ".join(f"{ability.name} ({ability.first}-{ability.last})" for ability in stale))
             elif self.from_kernel:
                 to_do = ("no refine ability's range moved: a recipe past them is offered by none until an "
-                         "ability points at it in kernel.bin (with SolomonRing)")
+                         "ability points at it in kernel.bin (\"Refine ranges...\" button)")
             else:
-                to_do = ("kernel.bin must be modified (first/last entry of the refine abilities, with SolomonRing) "
-                         "for them to offer the right recipes again: open it to see which")
+                to_do = ("kernel.bin must be modified (first/last entry of the refine abilities) for them "
+                         "to offer the right recipes again: open it to see which")
             lines.append(f"{name}: {changes}, the recipes from entry {lowest} on moved. {to_do}")
         return lines
 
-    def rebuild_views(self):
-        """Rebuild the views and warnings (after `shifts` was carried over from a previous layout)."""
+    def carry_edits(self, previous):
+        """Take over the recipes added and removed in a previous layout of the same kernel.bin
+        ranges (its warnings and suggested ranges still hold)."""
+        self.shifts = previous.shifts
+        self.edits = previous.edits
         self._build_views()
+
+    def suggested_ranges(self):
+        """{menu ability index: [first, last]}: kernel.bin's ranges moved along with the recipes
+        added and removed since. A recipe added at entry p goes to the ability ending at p - 1 (or
+        holding it); one removed shrinks the ability holding it; the later ranges move."""
+        ranges = {ability.index: [ability.first, ability.last] for ability in self.abilities}
+        tables = {ability.index: ability.table for ability in self.abilities}
+        for table, position, delta in self.edits:
+            in_table = [index for index in ranges if tables[index] == table]
+            if delta > 0:
+                owner = next((index for index in in_table if ranges[index][0] <= position - 1 <= ranges[index][1]), None)
+            else:
+                owner = next((index for index in in_table if ranges[index][0] <= position <= ranges[index][1]), None)
+            for index in in_table:
+                first, last = ranges[index]
+                if index == owner:
+                    ranges[index] = [first, last + delta]
+                elif delta > 0:
+                    ranges[index] = [first + (first >= position), last + (last >= position)]
+                else:
+                    ranges[index] = [first - (first > position), last - (last >= position)]
+        return ranges
 
     def _build_views(self):
         self.views = []
@@ -183,6 +209,7 @@ class RefineLayout:
         self.warnings += self.kernel_warnings()
 
     def _record_shift(self, table, lowest, added=0, removed=0):
+        self.edits.append((table, lowest, added - removed))
         shift = self.shifts.setdefault(table, [lowest, 0, 0])
         shift[0] = min(shift[0], lowest)
         shift[1] += added

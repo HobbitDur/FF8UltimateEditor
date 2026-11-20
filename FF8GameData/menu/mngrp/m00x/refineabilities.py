@@ -8,8 +8,10 @@ Menu_Prog19_RefineMenu_Init computes `entry_count = last - first + 1` (a u8) and
 `Menu_RefineEntryBuffer + 8 * first`, so the recipes of an ability are wherever those two bytes say,
 and adding one means moving them. Menu_RefineEntryBuffer is 0x800 bytes: 256 entries per table.
 
-Only read here: kernel.bin is SolomonRing's to write. A mngrp editor adding or removing recipes
-says which ranges it then needs instead (RefineLayout.kernel_warnings).
+Saving mngrp.bin never touches kernel.bin: a mngrp editor adding or removing recipes says which
+ranges it then needs (RefineLayout.kernel_warnings). write_refine_ranges patches them, only when
+asked to (Shiva's "Refine ranges" dialog), and only bytes 6-7: what an ability is (byte 5, its
+name, its AP...) stays SolomonRing's business.
 """
 from dataclasses import dataclass
 
@@ -55,18 +57,25 @@ def _menu_ability_section(game_data, kernel_path):
     raise RefineKernelError(f"{kernel_path}: no menu ability section")
 
 
+def find_overlaps(abilities):
+    """[(ability, other)] of the abilities offering some of the same entries of a table."""
+    pairs = []
+    for position, ability in enumerate(abilities):
+        for other in abilities[position + 1:]:
+            if other.table == ability.table and other.first <= ability.last and ability.first <= other.last:
+                pairs.append((ability, other))
+    return pairs
+
+
 def check_no_overlap(abilities, source="kernel.bin"):
     """Raise RefineKernelError when two abilities offer some of the same entries of a table.
 
     Each refine ability owns its own block of its table: an overlap is a broken kernel.bin (older
     Shiva versions could make one), and editing a recipe there would edit it in both abilities."""
-    overlaps = []
-    for position, ability in enumerate(abilities):
-        for other in abilities[position + 1:]:
-            if other.table == ability.table and other.first <= ability.last and ability.first <= other.last:
-                overlaps.append(f"  m00{ability.table}: {ability.name or 'menu ability'} (menu ability {ability.index}, "
-                                f"entries {ability.first}-{ability.last}) and {other.name or 'menu ability'} "
-                                f"(menu ability {other.index}, entries {other.first}-{other.last})")
+    overlaps = [f"  m00{ability.table}: {ability.name or 'menu ability'} (menu ability {ability.index}, "
+                f"entries {ability.first}-{ability.last}) and {other.name or 'menu ability'} "
+                f"(menu ability {other.index}, entries {other.first}-{other.last})"
+                for ability, other in find_overlaps(abilities)]
     if overlaps:
         shown = overlaps[:8] + ([f"  ... and {len(overlaps) - 8} more"] if len(overlaps) > 8 else [])
         raise RefineKernelError(f"{source}: refine abilities offering the same recipes:\n" + "\n".join(shown)
@@ -104,3 +113,52 @@ def check_refine_ranges(abilities):
         elif ability.count > MAX_ABILITY_ENTRIES:
             errors.append(f"{label}: {ability.count} recipes, the game counts at most {MAX_ABILITY_ENTRIES}")
     return errors
+
+
+def range_problems(abilities, table_counts):
+    """[(ability, reason)] of the ranges kernel.bin should not get, for tables holding
+    table_counts[table] recipes: a slice with no recipe, past the table's end, too long for the
+    game, or offering the same entries as another ability."""
+    problems = []
+    for ability in abilities:
+        count = table_counts[ability.table]
+        if ability.first > ability.last:
+            problems.append((ability, f"first {ability.first} is after last {ability.last}: no recipe"))
+        elif ability.last >= count:
+            problems.append((ability, f"last {ability.last} is past the table's end (entries 0-{count - 1})"))
+        elif ability.count > MAX_ABILITY_ENTRIES:
+            problems.append((ability, f"{ability.count} recipes, the game counts at most {MAX_ABILITY_ENTRIES}"))
+    for ability, other in find_overlaps([ability for ability in abilities if ability.first <= ability.last]):
+        problems.append((ability, f"offers the same entries as {other.name or f'menu ability {other.index}'}"))
+        problems.append((other, f"offers the same entries as {ability.name or f'menu ability {ability.index}'}"))
+    return problems
+
+
+def write_refine_ranges(game_data, kernel_path, abilities, new_ranges):
+    """Patch bytes 6-7 (first, last entry) of the menu abilities whose range changes.
+
+    abilities: the RefineAbility list read from kernel_path (read_refine_abilities); new_ranges:
+    {menu ability index: (first, last)}. The file must still hold what was read for them (another
+    tool may have saved it meanwhile), and nothing else is written. Returns how many changed."""
+    by_index = {ability.index: ability for ability in abilities}
+    changed = {index: rng for index, rng in new_ranges.items()
+               if (by_index[index].first, by_index[index].last) != tuple(rng)}
+    if not changed:
+        return 0
+    for index, (first, last) in changed.items():
+        if not 0 <= first <= last <= 0xFF:
+            raise RefineKernelError(f"{by_index[index].name}: entries {first}-{last} do not fit kernel.bin's two bytes")
+    section = _menu_ability_section(game_data, kernel_path)
+    data = section.get_data_hex()
+    for index in changed:
+        raw = data[index * MENU_ABILITY_SIZE:(index + 1) * MENU_ABILITY_SIZE]
+        ability = by_index[index]
+        if len(raw) < MENU_ABILITY_SIZE or (raw[OFFSET_TABLE], raw[OFFSET_FIRST], raw[OFFSET_LAST]) != \
+                (ability.table, ability.first, ability.last):
+            raise RefineKernelError(f"{kernel_path} changed since it was read (menu ability {index}, {ability.name}): "
+                                    f"reopen it before writing the refine ranges.")
+    with open(kernel_path, "r+b") as kernel_file:
+        for index, (first, last) in changed.items():
+            kernel_file.seek(section.own_offset + index * MENU_ABILITY_SIZE + OFFSET_FIRST)
+            kernel_file.write(bytes((first, last)))
+    return len(changed)

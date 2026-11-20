@@ -1,15 +1,17 @@
 import copy
 from functools import partial
 
-from PyQt6.QtCore import QSignalBlocker
+from PyQt6.QtCore import QSignalBlocker, pyqtSignal
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QPushButton,
                              QComboBox, QSpinBox, QLineEdit, QTableWidget, QHeaderView, QFileDialog,
-                             QMessageBox, QInputDialog)
+                             QMessageBox, QInputDialog, QDialog)
 
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.m00x.dataclass import TypeId
-from FF8GameData.menu.mngrp.m00x.refineabilities import MAX_TABLE_ENTRIES, RefineKernelError
+from FF8GameData.menu.mngrp.m00x.refineabilities import (MAX_TABLE_ENTRIES, RefineKernelError,
+                                                         read_refine_abilities, write_refine_ranges)
 from Shiva.ShivaRefine.refinecsv import read_refine_csv, write_refine_csv
+from Shiva.ShivaRefine.refinerangesdialog import RefineRangesDialog
 from Shiva.ShivaRefine.refineview import RefineLayout
 from SmallWidget.listsearchbar import ListSearchBar
 
@@ -22,15 +24,19 @@ class ShivaRefineWidget(QWidget):
     and MngrpManager recomputes the text offsets of the m00x sections when it writes the file.
 
     Which recipes each ability offers comes from kernel.bin (a first and last entry per menu
-    ability), which Shiva only reads: without one, each table is listed whole. Recipes are added
-    and removed at any entry of a table (asked in a popup), every later one moving; the abilities
-    keep kernel.bin's ranges, so each shows what the game would, and the warning below the table
-    lists the ranges kernel.bin then needs (to set with SolomonRing)."""
+    ability): without one, each table is listed whole. Recipes are added and removed at any entry
+    of a table (asked in a popup), every later one moving; the abilities keep kernel.bin's ranges,
+    so each shows what the game would, and the warning below the table lists the ranges kernel.bin
+    then needs. Saving writes mngrp.bin only: the "Refine ranges..." dialog writes those ranges
+    (bytes 6-7 of the menu abilities, nothing else) into kernel.bin, at once, when asked."""
 
     TYPE_NAMES = {TypeId.ITEM: "Item", TypeId.SPELL: "Magic", TypeId.CARD: "Card"}
 
     KERNEL_NOTICE = ("No refine abilities: which recipes each one offers comes only from kernel.bin, so "
                      "every table is listed whole. Open one with the toolbar's \"Import complementary\" button.")
+
+    # A kernel.bin path, after its refine ranges were written (another tool holding it must reload)
+    kernel_ranges_written = pyqtSignal(str)
 
     COLUMN_TEXT = 0
     COLUMN_INPUT = 1
@@ -51,6 +57,7 @@ class ShivaRefineWidget(QWidget):
         self.manager = None
         self.layout = None            # RefineLayout of the loaded mngrp
         self.kernel_abilities = None  # kernel.bin's refine abilities as saved (None: no kernel.bin)
+        self.kernel_path = ""         # the kernel.bin they come from, written by the Refine ranges dialog
         # The items a refine can take or give: the game's 0-198 until set_kernel_names hands over
         # those of an opened kernel.bin (renamed, and FFNx AddMoreItems' 199-255).
         self._item_entries = [{"value": item["id"], "name": item["name"]}
@@ -98,10 +105,16 @@ class ShivaRefineWidget(QWidget):
         self.remove_recipe_button = QPushButton("Remove recipe")
         self.remove_recipe_button.setToolTip("Remove the entry of the table you choose (the selected recipe by default)")
         self.remove_recipe_button.clicked.connect(self.remove_recipe)
+        self.ranges_button = QPushButton("Refine ranges...")
+        self.ranges_button.setToolTip("The first and last entry each refine ability offers: check them, and "
+                                      "write them into kernel.bin (only those bytes, at once)")
+        self.ranges_button.clicked.connect(self.edit_ranges)
+        self.ranges_button.setEnabled(False)  # until a kernel.bin is open
         self.range_label = QLabel("")
         recipe_layout = QHBoxLayout()
         recipe_layout.addWidget(self.add_recipe_button)
         recipe_layout.addWidget(self.remove_recipe_button)
+        recipe_layout.addWidget(self.ranges_button)
         recipe_layout.addWidget(self.range_label, 1)
         self.kernel_notice = KernelNameSource.make_notice("")
         self.kernel_notice.setText(self.KERNEL_NOTICE)
@@ -137,9 +150,12 @@ class ShivaRefineWidget(QWidget):
         self._build_layout()
         self.editor_container.setEnabled(True)
 
-    def set_kernel_abilities(self, abilities):
-        """kernel.bin's refine abilities (read_refine_abilities), None when none is open."""
+    def set_kernel_abilities(self, abilities, kernel_path=""):
+        """kernel.bin's refine abilities (read_refine_abilities), None when none is open, and the
+        file they were read from."""
         self.kernel_abilities = abilities
+        self.kernel_path = kernel_path if abilities is not None else ""
+        self.ranges_button.setEnabled(bool(self.kernel_path))
         if self.manager is not None:
             self._build_layout()
         else:
@@ -157,8 +173,7 @@ class ShivaRefineWidget(QWidget):
             self.layout = RefineLayout(self.manager)
         # Recipes moved and the kernel.bin re-read still has the same ranges: it still needs editing
         if previous is not None and previous.shifts and self._ranges(previous) == self._ranges(self.layout):
-            self.layout.shifts = previous.shifts
-            self.layout.rebuild_views()
+            self.layout.carry_edits(previous)
         keep = next((view for view in self.layout.views if view.key == place), None)
         self._fill_section_list(keep)
 
@@ -240,6 +255,26 @@ class ShivaRefineWidget(QWidget):
         if view is not None and view.table == refine_view.table and view.first <= index <= view.last:
             self.entry_table.setCurrentCell(index - view.first, self.COLUMN_TEXT)
 
+    def edit_ranges(self):
+        """The Refine ranges dialog, suggesting the ranges the recipes added and removed need;
+        writes what it accepts into kernel.bin, then reads it again."""
+        if not self.kernel_path or self.layout is None or not self.layout.from_kernel:
+            return
+        tables = self.layout.tables()
+        dialog = RefineRangesDialog(self, self.layout.abilities, self.layout.suggested_ranges(),
+                                    [len(bin_section.entries) for bin_section, _ in tables],
+                                    [bin_section.m00bin.name for bin_section, _ in tables])
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        try:
+            write_refine_ranges(self.game_data, self.kernel_path, self.layout.abilities, dialog.ranges())
+            abilities = read_refine_abilities(self.game_data, self.kernel_path)
+        except (RefineKernelError, OSError) as error:
+            QMessageBox.critical(self, "Shiva - kernel.bin not written", str(error))
+            return
+        self.set_kernel_abilities(abilities, self.kernel_path)
+        self.kernel_ranges_written.emit(self.kernel_path)
+
     def set_kernel_names(self, item_entries, magic_names):
         """The names of the opened kernel.bin: [{"value", "name"}] of the items offered
         (KernelNameSource.item_entries) and {magic id: name} (empty without a kernel.bin)."""
@@ -294,6 +329,9 @@ class ShivaRefineWidget(QWidget):
 
         self.entry_table.clearContents()
         self.entry_table.setRowCount(len(refine_view.entries))
+        # Rows are named by their entry in the table, the index kernel.bin's ranges and the popups use
+        self.entry_table.setVerticalHeaderLabels([str(refine_view.first + row)
+                                                  for row in range(len(refine_view.entries))])
         for row, entry in enumerate(refine_view.entries):
             text = refine_view.texts[row]
             text_edit = QLineEdit(text.get_str())
@@ -334,8 +372,8 @@ class ShivaRefineWidget(QWidget):
         lines = list(self.layout.warnings) if self.layout else []
         if refine_view:
             for row, earlier in sorted(refine_view.duplicate_inputs().items()):
-                lines.append(f"Recipe {row + 1} takes the same input as recipe {earlier + 1}: "
-                             f"the game only uses the first one.")
+                lines.append(f"Recipe {refine_view.first + row} takes the same input as recipe "
+                             f"{refine_view.first + earlier}: the game only uses the first one.")
         self.warning_label.setText("\n".join(lines))
         self.warning_label.setVisible(bool(lines))
 
