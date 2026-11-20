@@ -1,0 +1,611 @@
+{
+ "format": 1,
+ "effect": 324,
+ "name": "Tonberry King death",
+ "doc": "Tonberry King's death (c0m083, on itself): its colour tinted through 24 colours then faded to black, two emitters of sparks at random bones (one rising), a ghost of it (its pose and place at the start) fading to black, spinning sprites at its chest on alternate sides, a voice clip and a sound, its own damage. Its tasks are the port's code (FFNx mag324_tonberry_king_death.cpp) run on the program's memory (its queues, spark cells, kept bones and packet arenas in the module's block).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x596BA0",
+   "setup": "0x596BC0",
+   "root": "0x5979A0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 324,
+  "from": "0x2201080",
+  "size": "0x1ABE8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0xCD1104",
+   "size": 4
+  },
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xCD1210",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xCD1278",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xCD09F0",
+   "size": 316
+  },
+  "seqs.spark_a": {
+   "kind": "seq",
+   "address": "0xCD0B88",
+   "size": 376,
+   "frames": 14
+  },
+  "seqs.spark_b": {
+   "kind": "seq",
+   "address": "0xCD0D00",
+   "size": 1028,
+   "frames": 9
+  },
+  "tables.tints": {
+   "kind": "table",
+   "address": "0xCD1218",
+   "size": 96,
+   "format": "B",
+   "columns": 4,
+   "skip": 0,
+   "count": 24,
+   "labels": [
+    "r",
+    "g",
+    "b",
+    "code"
+   ]
+  },
+  "seqs.spin": {
+   "kind": "seq",
+   "address": "0xCD0B2C",
+   "size": 92,
+   "frames": 3
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x596BC0",
+  "file_loader": "0x596BA0",
+  "root": "0x5979A0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Cue",
+   "doc": "The cue's ticks, the voice, the sound, the damage; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "sparks_a",
+   "title": "Rising sparks",
+   "doc": "Emitter A: sparks at random bones of the caster, shrinking, rising (a flipbook)"
+  },
+  {
+   "id": 2,
+   "key": "sparks_b",
+   "title": "Sparks",
+   "doc": "Emitter B: sparks at random bones of the caster, shrinking (a flipbook)"
+  },
+  {
+   "id": 0,
+   "key": "tint",
+   "title": "Tint",
+   "doc": "The caster's colour: from the battle's to the tint colours, then faded to black"
+  },
+  {
+   "id": 3,
+   "key": "ghost",
+   "title": "Ghost",
+   "doc": "The caster drawn in its pose and place of the ghost's start, fading to black"
+  },
+  {
+   "id": 4,
+   "key": "spins",
+   "title": "Spin sprites",
+   "doc": "Sprites at the caster's point on alternate sides (a flipbook)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The cue's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.voice",
+   "part": "main",
+   "label": "Voice",
+   "doc": "The voice clip (a voice slot claimed at its tick, released at the release tick)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "At the sound's tick, at the caster's point",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.voice",
+   "part": "main",
+   "label": "Voice",
+   "doc": "The cue's tick of the voice",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "Its tick of the sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.tint",
+   "part": "main",
+   "label": "Tint",
+   "doc": "Its tick the tint starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.emitters",
+   "part": "main",
+   "label": "Emitters",
+   "doc": "Its tick the two spark emitters start",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.ghost",
+   "part": "main",
+   "label": "Ghost",
+   "doc": "Its tick the ghost starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.spin_first",
+   "part": "main",
+   "label": "Spins: first",
+   "doc": "Its first tick of the spin sprites (one on each odd tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 125,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.spin_last",
+   "part": "main",
+   "label": "Spins: last",
+   "doc": "Its last tick of the spin sprites",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 135,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage",
+   "part": "main",
+   "label": "Damage",
+   "doc": "Its tick the target's damage is shown",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 130,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.release",
+   "part": "main",
+   "label": "Voice release",
+   "doc": "Its tick the voice is released (if still playing)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 197,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "main",
+   "label": "End",
+   "doc": "Its last tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.ticks",
+   "part": "sparks_a",
+   "label": "Ticks",
+   "doc": "Both emitters spawn while their tick is at most this",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 46,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.count",
+   "part": "sparks_a",
+   "label": "Count",
+   "doc": "New sparks a tick for each emitter (100 cells for both)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size_spread",
+   "part": "sparks_a",
+   "label": "Size spread",
+   "doc": "Both emitters' sparks: a random size below this added",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "a.size",
+   "part": "sparks_a",
+   "label": "Size",
+   "doc": "Its sparks' size (less shrink x the emitter's tick)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 2048,
+   "unit": "scale"
+  },
+  {
+   "key": "a.shrink",
+   "part": "sparks_a",
+   "label": "Shrink",
+   "doc": "Their size's shrink a tick of the emitter",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 40,
+   "unit": "plain"
+  },
+  {
+   "key": "a.spread",
+   "part": "sparks_a",
+   "label": "Scatter",
+   "doc": "Their scatter around the bone: +- this (less narrow x the emitter's tick)",
+   "type": "i16",
+   "min": 1,
+   "max": 8192,
+   "default": 250,
+   "unit": "plain"
+  },
+  {
+   "key": "a.narrow",
+   "part": "sparks_a",
+   "label": "Narrowing",
+   "doc": "The scatter's narrowing a tick",
+   "type": "i16",
+   "min": -256,
+   "max": 256,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "a.rise",
+   "part": "sparks_a",
+   "label": "Rise",
+   "doc": "Their rising speed (plus a random below the rise spread)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "a.rise_spread",
+   "part": "sparks_a",
+   "label": "Rise spread",
+   "doc": "The random part of their rising speed",
+   "type": "i16",
+   "min": 1,
+   "max": 1024,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark_a",
+   "part": "sparks_a",
+   "label": "Flipbook",
+   "doc": "Emitter A's flipbook (a spark lives through it)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark_a",
+   "unit": "plain"
+  },
+  {
+   "key": "b.size",
+   "part": "sparks_b",
+   "label": "Size",
+   "doc": "Its sparks' size (less shrink x the emitter's tick)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 768,
+   "unit": "scale"
+  },
+  {
+   "key": "b.shrink",
+   "part": "sparks_b",
+   "label": "Shrink",
+   "doc": "Their size's shrink a tick of the emitter",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "b.spread",
+   "part": "sparks_b",
+   "label": "Scatter",
+   "doc": "Their scatter around the bone: +- this (less narrow x the emitter's tick)",
+   "type": "i16",
+   "min": 1,
+   "max": 8192,
+   "default": 300,
+   "unit": "plain"
+  },
+  {
+   "key": "b.narrow",
+   "part": "sparks_b",
+   "label": "Narrowing",
+   "doc": "The scatter's narrowing a tick",
+   "type": "i16",
+   "min": -256,
+   "max": 256,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark_b",
+   "part": "sparks_b",
+   "label": "Flipbook",
+   "doc": "Emitter B's flipbook (a spark lives through it)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark_b",
+   "unit": "plain"
+  },
+  {
+   "key": "tint.in",
+   "part": "tint",
+   "label": "Fade in",
+   "doc": "Its ticks from the battle's colour to the first tint colour",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.out",
+   "part": "tint",
+   "label": "Fade out",
+   "doc": "Its tick the fade to black starts (the colours in turn before)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 42,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.fade",
+   "part": "tint",
+   "label": "Fade",
+   "doc": "The fade to black a tick (of 4096)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.end",
+   "part": "tint",
+   "label": "End",
+   "doc": "Its last tick (the caster's flag put back)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.tints",
+   "part": "tint",
+   "label": "Colours",
+   "doc": "The 24 tint colours (a colour word each), in turn",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.tints",
+   "unit": "plain"
+  },
+  {
+   "key": "ghost.hold",
+   "part": "ghost",
+   "label": "Hold",
+   "doc": "Drawn in the caster's place of its start after this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "ghost.fade_start",
+   "part": "ghost",
+   "label": "Fade start",
+   "doc": "Its tick it starts fading to black",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "ghost.fade",
+   "part": "ghost",
+   "label": "Fade",
+   "doc": "Its fade a tick (of 4096)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "ghost.end",
+   "part": "ghost",
+   "label": "End",
+   "doc": "Its last tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "spins.size",
+   "part": "spins",
+   "label": "Size",
+   "doc": "Their size",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 2048,
+   "unit": "scale"
+  },
+  {
+   "key": "spins.turn",
+   "part": "spins",
+   "label": "Turn",
+   "doc": "Their turn on the second side",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 2048,
+   "unit": "angle"
+  },
+  {
+   "key": "spins.side",
+   "part": "spins",
+   "label": "Side",
+   "doc": "Their offset to each side of the caster's point",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "spins.up",
+   "part": "spins",
+   "label": "Up",
+   "doc": "Their offset up",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spin",
+   "part": "spins",
+   "label": "Flipbook",
+   "doc": "Their flipbook (a sprite lives through it)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spin",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

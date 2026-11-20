@@ -1,0 +1,652 @@
+{
+ "format": 1,
+ "effect": 320,
+ "name": "Dark Flare",
+ "doc": "Tiamat's Dark Flare (c0m132, on the party): layout 1 charging at the caster's point (through its bone) with sparks at its sides, then flying to the targets' mean point leaving sparks, layout 2 at the caster's point, layout 3 at the targets (its texture scrolling), full-screen grey tiles at the flight's start and the burst's first ticks; the sound, the damage. Its tasks are the port's code (FFNx mag320_dark_flare.cpp) run on the program's memory (its main and sparks in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x65BC20",
+   "setup": "0x65BC10",
+   "root": "0x65BCC0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 320,
+  "from": "0x2505348",
+  "size": "0x58"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0xFE7298",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xFF12B0",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xFE729C",
+   "size": 468
+  },
+  "layouts.charge": {
+   "kind": "layout",
+   "address": "0xFE761C",
+   "size": 7288,
+   "capacity": 496
+  },
+  "layouts.ring": {
+   "kind": "layout",
+   "address": "0xFE9294",
+   "size": 2360,
+   "capacity": 272
+  },
+  "layouts.burst": {
+   "kind": "layout",
+   "address": "0xFE9BCC",
+   "size": 30416,
+   "capacity": 1044
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xFE7470",
+   "size": 428,
+   "frames": 16
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x65BC10",
+  "file_loader": "0x65BC20",
+  "root": "0x65BCC0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The main's ticks, the sound, the targets' damage; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "charge",
+   "title": "Charge",
+   "doc": "Layout 1 at the caster's point, turned toward the targets' mean point"
+  },
+  {
+   "id": 2,
+   "key": "flight",
+   "title": "Flight",
+   "doc": "Layout 1 flying from the caster's point to the targets' mean point"
+  },
+  {
+   "id": 3,
+   "key": "ring",
+   "title": "Ring",
+   "doc": "Layout 2 at the caster's point"
+  },
+  {
+   "id": 4,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "Layout 3 at the targets' mean point (its texture scrolling)"
+  },
+  {
+   "id": 5,
+   "key": "tiles",
+   "title": "Grey tiles",
+   "doc": "Full-screen grey tiles at the flight's start and the burst's first ticks"
+  },
+  {
+   "id": 6,
+   "key": "sparks",
+   "title": "Sparks",
+   "doc": "Sparks at the caster while it charges and along the flight (a flipbook), falling"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The main's ticks"
+  },
+  {
+   "key": "point",
+   "label": "Caster's point",
+   "doc": "The point through the caster's bone"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "At the sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "The main's tick of the sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage",
+   "part": "main",
+   "label": "Damage",
+   "doc": "Its tick the targets' damage is shown",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 83,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "main",
+   "label": "End",
+   "doc": "Its last tick",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 98,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "point.x",
+   "part": "charge",
+   "label": "Point x",
+   "doc": "The caster's point (through its bone): x",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "point.y",
+   "part": "charge",
+   "label": "Point y",
+   "doc": "y",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "point.z",
+   "part": "charge",
+   "label": "Point z",
+   "doc": "z",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -1024,
+   "unit": "plain"
+  },
+  {
+   "key": "point.bone",
+   "part": "charge",
+   "label": "Bone",
+   "doc": "The caster's bone (also the sparks')",
+   "type": "i16",
+   "min": 0,
+   "max": 63,
+   "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.charge",
+   "part": "charge",
+   "label": "Layout",
+   "doc": "Layout 1 (charge and flight)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.charge",
+   "unit": "plain"
+  },
+  {
+   "key": "flight.start",
+   "part": "flight",
+   "label": "Start",
+   "doc": "The main's tick it leaves the caster (layout 1 charges before)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "flight.ticks",
+   "part": "flight",
+   "label": "Ticks",
+   "doc": "Its flight's ticks (drawn one tick more)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "flight.depth",
+   "part": "flight",
+   "label": "Depth",
+   "doc": "Layout 1's depth offset (charge and flight)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -16,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.start",
+   "part": "ring",
+   "label": "Start",
+   "doc": "The main's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.ticks",
+   "part": "ring",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "ring.depth",
+   "part": "ring",
+   "label": "Depth",
+   "doc": "Its layout's depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -16,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.ring",
+   "part": "ring",
+   "label": "Layout",
+   "doc": "Layout 2",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "burst.start",
+   "part": "burst",
+   "label": "Start",
+   "doc": "The main's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.ticks",
+   "part": "burst",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 53,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.depth",
+   "part": "burst",
+   "label": "Depth",
+   "doc": "Its layout's depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.scroll",
+   "part": "burst",
+   "label": "Scroll",
+   "doc": "Its texture's v scroll a tick (its scrolling objects)",
+   "type": "i16",
+   "min": -128,
+   "max": 128,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.burst",
+   "part": "burst",
+   "label": "Layout",
+   "doc": "Layout 3",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.flight",
+   "part": "tiles",
+   "label": "Flight",
+   "doc": "The grey level of the tile at the flight's start",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.burst[0]",
+   "part": "tiles",
+   "label": "Burst 1",
+   "doc": "On the burst's tick 1 (between two draw modes)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.burst[1]",
+   "part": "tiles",
+   "label": "Burst 2",
+   "doc": "On its tick 2",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 240,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.burst[2]",
+   "part": "tiles",
+   "label": "Burst 3",
+   "doc": "On its tick 3",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 160,
+   "unit": "plain"
+  },
+  {
+   "key": "tiles.burst[3]",
+   "part": "tiles",
+   "label": "Burst 4",
+   "doc": "On its tick 4",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.start",
+   "part": "sparks",
+   "label": "Start",
+   "doc": "The main's tick the caster's sparks start (two a tick while charging)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.side",
+   "part": "sparks",
+   "label": "Side",
+   "doc": "Their points' x: +- this (through the caster's bone)",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.y",
+   "part": "sparks",
+   "label": "y",
+   "doc": "Their points' y",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.z",
+   "part": "sparks",
+   "label": "z",
+   "doc": "Their points' z",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": -800,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size",
+   "part": "sparks",
+   "label": "Size",
+   "doc": "Their size (plus a random below the size spread)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 1024,
+   "unit": "scale"
+  },
+  {
+   "key": "sparks.size_spread",
+   "part": "sparks",
+   "label": "Size spread",
+   "doc": "The random part of their size",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.life",
+   "part": "sparks",
+   "label": "Life",
+   "doc": "Every spark's ticks (their flipbook's frames: 16 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 16,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.fall",
+   "part": "sparks",
+   "label": "Fall",
+   "doc": "Every spark's fall a tick",
+   "type": "i16",
+   "min": -256,
+   "max": 256,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.count",
+   "part": "sparks",
+   "label": "Flight: count",
+   "doc": "The flight's sparks a tick (64 alive at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.step",
+   "part": "sparks",
+   "label": "Flight: step",
+   "doc": "Each one that much further back along the flight (of 4096)",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 102,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.speed",
+   "part": "sparks",
+   "label": "Flight: speed",
+   "doc": "Thrown out of the flight by this (plus a random below its spread)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.speed_spread",
+   "part": "sparks",
+   "label": "Flight: speed spread",
+   "doc": "The random part of their speed",
+   "type": "i16",
+   "min": 1,
+   "max": 4096,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.size",
+   "part": "sparks",
+   "label": "Flight: size",
+   "doc": "Their size (plus a random below its spread)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "trail.size_spread",
+   "part": "sparks",
+   "label": "Flight: size spread",
+   "doc": "The random part of their size",
+   "type": "i16",
+   "min": 1,
+   "max": 16384,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Flipbook",
+   "doc": "The sparks' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.kinds_1",
+   "label": "Kinds 1",
+   "doc": "Layout 1's objects: their texture window kind ('1' / '2': a scrolled window; '0' none), by object number",
+   "address": "0xFE0FAC",
+   "size": 5
+  },
+  {
+   "key": "not_editable.draws_1",
+   "label": "Renderers 1",
+   "doc": "Layout 1's objects: their renderer ('0' the engine's prim set, else this module's), by object number",
+   "address": "0xFF12D4",
+   "size": 5
+  },
+  {
+   "key": "not_editable.kinds_2",
+   "label": "Kinds 2",
+   "doc": "Layout 2's objects: their texture window kind, by object number",
+   "address": "0xFE0FB4",
+   "size": 1
+  },
+  {
+   "key": "not_editable.draws_2",
+   "label": "Renderers 2",
+   "doc": "Layout 2's objects: their renderer, by object number",
+   "address": "0xFE0FC8",
+   "size": 1
+  },
+  {
+   "key": "not_editable.kinds_3",
+   "label": "Kinds 3",
+   "doc": "Layout 3's objects: their texture window kind (the scrolled ones), by object number",
+   "address": "0xFF12C8",
+   "size": 11
+  },
+  {
+   "key": "not_editable.draws_3",
+   "label": "Renderers 3",
+   "doc": "Layout 3's objects: their renderer, by object number",
+   "address": "0xFF12BC",
+   "size": 11
+  }
+ ]
+}
