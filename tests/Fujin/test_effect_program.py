@@ -383,6 +383,27 @@ CYCLES = {
     154: ("mag153.tim", 6, "sound 22311280\ncontroller.damage 30\n"),
     153: ("mag152.tim", 7, "sound 22311280\nmaster.damage 40\n"),
     152: ("mag151.tim", 10, "sound 22311280\ncontroller.damage 30\n"),
+    156: ("mag150.tim", 43, "sounds.a 22311280\nshots.count 2\nshot.spread_x 1500\n"),
+    167: ("mag166.tim", 44, "sound 22311280\nsparks.per_tick 8\nslices.tilt 1000\n"),
+    170: ("mag169.tim", 39, "sound 22311280\nstream.spread 900\npuddles.count 6\n"),
+    171: ("mag170.tim", 32, "sound 22311280\npuffs.size 3000\nclouds.step_a 30\n"),
+    172: ("mag171.tim", 28, "sound 22311280\nrings.size_a 2000\nsparks.size 600\n"),
+    186: ("mag185.tim", 72, "sound 22311280\nbolts.size 1500\nsplashes.count 2\n"),
+    210: ("", 91, "sounds.start 22311280\nvortex.scroll 64\nflames.count 2\n"),
+    218: ("", 69, "sounds.start 22311280\ntile.r 255\nshards.count 12\n"),
+    251: ("", 85, "sounds.start 22311280\nwave.amp 512\nflames.count 2\n"),
+    290: ("mag289.tim", 46, "sounds.start 22311280\nsprites.count_b 2\ntint.ticks 10\n"),
+    314: ("mag313.tim", 51, "sounds.start 22311280\ntiles.g 0\ndust.spread 256\n"),
+    316: ("mag315.tim", 28, "sounds.start 22311280\nsweep.top 0\nparticles.speed 8\n"),
+    318: ("mag317.tim", 49, "sounds.start 22311280\nburst.depth 0\nsprites.turn 256\n"),
+    319: ("mag318.tim", 38, "sounds.start 22311280\nburst.depth 0\nsprites.spread 256\n"),
+    298: ("mag297.tim", 32, "sounds.start 22311280\nfragments.gravity 40\nmarks.speed 8\n"),
+    301: ("mag300.tim", 28, "sounds.start 22311280\nrocks.gravity 4\ndust.size 8192\n"),
+    303: ("mag302.tim", 52, "sounds.start 22311280\nshards.gravity 60\nsparks.count 16\n"),
+    308: ("mag307.tim", 34, "sounds.start 22311280\ntile.r 0\nsparks.speed 8\n"),
+    207: ("mag206.tim", 28, "sound 22311280\nwarp.head 256\nparticles.count 2\n"),
+    209: ("", 83, "sound_a 22311280\nripple.amp 900\nbursts.count 6\n"),
+    214: ("mag213-310.tim", 33, "sound 22311280\nwarp.amp 4\nparticles.count 16\n"),
     151: ("mag150.tim", 46, "sounds.shot 22311280\nsmoke.on 1\ncloud.count 50\n"),
     149: ("mag148.tim", 15, "sounds.start 22311280\nsounds.blast 22311276\ndirector.damage 150\n"),
     148: ("mag147.tim", 9, "sound 22311280\ndirector.damage 60\n"),
@@ -545,7 +566,7 @@ CYCLE_STAGES = {69: 142, 146: 0}
 # too little on one): slot -> file, every target
 CYCLE_MONSTERS = {110: {4: "c0m073.dat"}, 297: {4: "c0m009.dat"}}
 # a cast of its own (a monster's attack on the party: Geezard's Bad Breath, Cockatrice's Electric Discharge, Gayla's Gastric Juice, Grendel's Breath, Malboro's): caster slot, target slot, slot 3's monster
-CYCLE_CASTS = {113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat"), 139: (3, 0, "c0m099.dat"), 152: (3, 0, "c0m018.dat"), 153: (3, 0, "c0m017.dat"), 154: (3, 0, "c0m017.dat"), 155: (3, 0, "c0m020.dat"), 159: (0, 3, "c0m092.dat"), 161: (0, 3, "c0m091.dat"), 168: (3, 0, "c0m015.dat"), 169: (3, 0, "c0m015.dat"), 176: (3, 0, "c0m046.dat"), 179: (3, 0, "c0m043.dat"), 180: (3, 0, "c0m043.dat"), 190: (3, 0, "c0m008.dat"), 226: (3, 3, "c0m046.dat"), 276: (3, 0, "c0m092.dat"), 277: (3, 0, "c0m058.dat"), 281: (3, 0, "c0m078.dat"), 289: (3, 0, "c0m034.dat"), 304: (3, 0, "c0m079.dat"), 311: (3, 0, "c0m066.dat"), 315: (3, 0, "c0m075.dat")}
+CYCLE_CASTS = {314: (3, 3, "c0m103.dat"), 316: (3, 3, "c0m130.dat"), 318: (3, 0, "c0m038.dat"), 319: (3, 0, "c0m038.dat"), 298: (3, 3, "c0m102.dat"), 301: (3, 3, "c0m094.dat"), 303: (3, 4, "c0m011.dat"), 308: (3, 3, "c0m105.dat"), 210: (3, 0, "c0m128.dat"), 218: (3, 3, "c0m128.dat"), 251: (3, 0, "c0m086.dat"), 290: (3, 3, "c0m109.dat"), 207: (3, 0, "c0m100.dat"), 209: (3, 0, "c0m115.dat"), 214: (3, 0, "c0m114.dat"), 172: (3, 0, "c0m029.dat"), 186: (3, 0, "c0m057.dat"), 156: (3, 0, "c0m007.dat"), 167: (3, 0, "c0m070.dat"), 170: (3, 0, "c0m036.dat"), 171: (3, 0, "c0m036.dat"), 113: (3, 0, "c0m004.dat"), 126: (3, 0, "c0m016.dat"), 128: (3, 0, "c0m033.dat"), 129: (3, 0, "c0m053.dat"), 130: (3, 0, "c0m048.dat"), 131: (3, 0, "c0m048.dat"), 132: (3, 0, "c0m048.dat"), 134: (3, 0, "c0m026.dat"), 135: (3, 0, "c0m026.dat"), 136: (3, 0, "c0m099.dat"), 137: (3, 0, "c0m099.dat"), 138: (3, 0, "c0m044.dat"), 139: (3, 0, "c0m099.dat"), 152: (3, 0, "c0m018.dat"), 153: (3, 0, "c0m017.dat"), 154: (3, 0, "c0m017.dat"), 155: (3, 0, "c0m020.dat"), 159: (0, 3, "c0m092.dat"), 161: (0, 3, "c0m091.dat"), 168: (3, 0, "c0m015.dat"), 169: (3, 0, "c0m015.dat"), 176: (3, 0, "c0m046.dat"), 179: (3, 0, "c0m043.dat"), 180: (3, 0, "c0m043.dat"), 190: (3, 0, "c0m008.dat"), 226: (3, 3, "c0m046.dat"), 276: (3, 0, "c0m092.dat"), 277: (3, 0, "c0m058.dat"), 281: (3, 0, "c0m078.dat"), 289: (3, 0, "c0m034.dat"), 304: (3, 0, "c0m079.dat"), 311: (3, 0, "c0m066.dat"), 315: (3, 0, "c0m075.dat")}
 # what the battle's AnimSeq VM (not run by the recorder) would have written: Renzokuken's stage durations (opcode AB)
 CYCLE_POKES = {141: ["poke=0x1D98214:4,10,9,10,9,14"], 159: ["poke=0x1D98214:4,10,9,10,9,14"], 160: ["poke=0x1D98214:4,10,9,10,9,14"], 161: ["poke=0x1D98214:4,10,9,10,9,14"], 259: ["poke=0x1D98214:5,10,9,10,9,10,14"], 332: ["poke=0x1D98214:6,10,9,10,9,10,9,14"], 333: ["poke=0x1D98214:7,10,9,10,9,10,9,10,14"]}
 # what the battle's Shot window does for each trigger press: the setup called again with the sequence mode (2 a shot,
@@ -555,7 +576,8 @@ CYCLE_RECALLS = {188: ["recall=10:2,20:2,30:2,45:1"], 192: ["recall=10:2,20:2,30
 CYCLE_MODELS = {274: ("d1c003.dat", "d1w008.dat")}
 # a monster in a slot of its own that the effect reads, not a target (Gerogero rises out of the Fake President's
 # puddle: the next slot)
-CYCLE_SLOTS = {315: {4: "c0m034.dat"}}
+CYCLE_SLOTS = {314: {4: "c0m104.dat"}, 315: {4: "c0m034.dat"}, 210: {4: "c0m082.dat"}, 251: {4: "c0m082.dat"}, 303: {4: "c0m012.dat"},
+               308: {4: "c0m106.dat", 5: "c0m107.dat"}}
 
 # frames an exe quirk draws differently in a copy, left out of the comparisons (R numbers [from, to)): Siren's
 # splash task picks surface vertices past its table 0x258EC70, in the load-script pool's nodes (their pointers);
@@ -600,7 +622,7 @@ def test_float_description_compiles():
 @pytest.mark.parametrize("effect", [pytest.param(effect, marks=pytest.mark.ff8data(*cycle_files(effect)))
                                     for effect in CYCLES])
 def test_cycle_effect_runs_from_its_description(tmp_path, effect):
-    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Ice Breath, Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot, Armor Shot, Hyper Shot, Cactuar, No Mercy, Burning Rave, My Final Heaven, Different Beat, White Wind (enemy), Renzokuken (6 hits), Shockwave Pulsar (Quistis), LV Up, LV Down, Mad Rush, Duel, Electrocute, X-ATM092 death, Funguar laser, Carbuncle, Full-cure, Shotgun, Rapture, Brrawghh, Pandemona, White Wind (Quistis), Micro Missiles (Quistis), Bad Breath (Quistis), Boomerang Sword, Gatling Gun (Quistis), Degenerator (Quistis), Ray-Bomb (Quistis), Hero, Holy War, Gravija, Fake President death, Acid (Quistis), Diablos, Odin reverse, Gilgamesh, Renzokuken (7 hits) and Renzokuken (8 hits) and Moomba from their descriptions: what the exe's code records; with parameters, what
+    """Silence, Float, Slow, Haste, Dispel, Aura, Aero, Blind, both Petrify Stares, Zombie, Flare, Reflect, Berserk, Fire, Thunder, Double, Phoenix Down, Mega Phoenix, Doom, Ray-Bomb, Storm Breath, Blade Shot, Dark Mist, Death, Draw, Recover, Elvoret's entrance, Triple, Bio, Esuna, Cura, Clash, Full-life, Curaga, Wind Blast, Counter Laser-Eye, Protect, Shell, Pain, Life, Confuse, Drink Magic, Quake, Drain, Scan, Dribble, Melting Bubble, Junk, Stare, Sigh, Curse, Magma Breath, Resonance, Hi-Potion, X-Potion, Mega-Potion, Everyone's Grudge, Aqua Breath, Absorb, Treatment, Elixir, Megalixir, Raijin's strike, Revive, Devour, Helix's beam, Model breaking apart, Great Attractor, Griever's death, Remedy, Scan (enemy), Griever, Shockwave Pulsar, Laser Eye (Quistis), Aqua Breath (Quistis), Mighty Guard (Quistis), LV?Death (Quistis), Ultimecia's final form appears, Mighty Guard, Ultimecia's final form dies, Ultimecia junctions to Griever, Ultimecia's attack, Ultimecia's attack (82), Ultimecia absorbs into time, The End, Angelo Cannon, Angelo Strike, Invincible Moon, Wishing Star, Tonberry, Angelo Rush, Angelo Search, Angelo Recover, Angelo Reverse, Siren, MiniMog, ChocoFire, ChocoFlare, ChocoMeteor, ChocoBocle, Trauma's grab, Thundara, Blizzara, Blizzaga, Thundaga, Demi, Biggs, Wedge's first death, Meteor Barret, Bad Breath, Quezacotl, Break, Stop, Electric Discharge, Gastric Juice, Breath, Eerie Sound Wave, Bad Breath (Malboro), Dissolving Acid, Beam Laser, Reflect Beam, Oil Shot, Oil Blast, Saliva, Sonic Wave, Phoenix, Renzokuken (5 hits), Fira, Firaga, Blizzard, Sleep, Tornado, Regen, Meltdown, Ultima, Ultrasonic Waves, Sticky Web, Ultra Waves, Sand Storm, Renzokuken (vs X-ATM092), Renzokuken, Renzokuken (vs Elvoret), Fated Circle, Rough Divide, Blasting Zone, Lion Heart, Sleeping Gas, Gastric Juice (Grat), Ice Breath, Holy, Sand Storm (Adamantoise), Bomb glow, Suicide, Card, Defend, Ultra Waves (Quistis), Shiva, Odin, Normal Shot, Wall, Chain Gun, Doomtrain, Scatter Shot, Dark Shot, Flame Shot, Canister Shot, Quick Shot, Armor Shot, Hyper Shot, Cactuar, No Mercy, Burning Rave, My Final Heaven, Different Beat, White Wind (enemy), Renzokuken (6 hits), Shockwave Pulsar (Quistis), LV Up, LV Down, Mad Rush, Duel, Electrocute, X-ATM092 death, Funguar laser, Carbuncle, Full-cure, Shotgun, Rapture, Brrawghh, Pandemona, White Wind (Quistis), Micro Missiles (Quistis), Bad Breath (Quistis), Boomerang Sword, Gatling Gun (Quistis), Degenerator (Quistis), Ray-Bomb (Quistis), Hero, Holy War, Gravija, Fake President death, Acid (Quistis), Diablos, Odin reverse, Gilgamesh, Renzokuken (7 hits) and Renzokuken (8 hits) and Moomba, Wild Cannon Blow, Zantetsuken (Odin), Acid, Poison Gas, Morph, Blaster, Maelstrom, "Sorceress" spawn, Omega Gravija, Bloodfest, Gilgamesh kills Seifer, Demon Slice, Trauma's shattering, BGH251F2's destruction, Gargantua's entrance, Remove mask, Mobile Type 8's break-up, Abadon's death, Red Giant's death, Strong counter-attack, Counter-attack from their descriptions: what the exe's code records; with parameters, what
     FFNx's port records with them; as effect 225 (a free slot, no exe function), itself again."""
     _texture, count, values = CYCLES[effect]
     stage = [f"stage={CYCLE_STAGES[effect]}"] if effect in CYCLE_STAGES else []
@@ -622,9 +644,9 @@ def test_cycle_effect_runs_from_its_description(tmp_path, effect):
     assert f"{tasks} tasks, {count} params" in log and quirk(effect, untag(described)) == quirk(effect, original)
     assert len(original) > 10000
     # (Ray-Bomb hurts the party only: on the monster the recorder casts on, no number; Elvoret's entrance and
-    # Ultimecia's model breaking apart and Griever hurt nobody; Wishing Star's waves need eight target records a target; Trauma's grab and Biggs and Wedge's first death hurt nobody; Renzokuken's hits are Squall's sequence's; Draw's sounds are sound ids, BdPlaySy's, which the
+    # Ultimecia's model breaking apart and Griever hurt nobody; Wishing Star's waves need eight target records a target; Trauma's grab and Biggs and Wedge's first death hurt nobody; Morph's code applies no action result; Trauma's shattering, BGH251F2's destruction, Gargantua's entrance, Remove mask, Mobile Type 8's break-up, Abadon's and Red Giant's deaths hurt nobody; Renzokuken's hits are Squall's sequence's; Draw's sounds are sound ids, BdPlaySy's, which the
     # recorder does not log)
-    assert effect in (10, 17, 64, 69, 89, 101, 110, 141, 159, 160, 161, 259, 276, 332, 333) or any(line.startswith("N ") for line in original)
+    assert effect in (10, 17, 64, 69, 89, 101, 110, 141, 159, 160, 161, 172, 259, 276, 290, 298, 301, 303, 308, 314, 316, 332, 333) or any(line.startswith("N ") for line in original)
     assert effect == 15 or any(line.startswith("S ") for line in original)
     params = tmp_path / "params.txt"
     params.write_text(values)
@@ -3640,6 +3662,151 @@ def test_cannon_blow_as_a_smoke_grenade(tmp_path):
                                                                          if line.startswith("N ")]
 
 
+def test_abadon_and_red_giant_deaths_and_krysta_counter_attacks_descriptions_compile():
+    """Abadon's death, Red Giant's death, Strong counter-attack, Counter-attack: port roots (Cannon Blow's kind) - their file
+    loaders and setups the ports', run on the program's memory; their parts tagged; their data the sounds, layouts,
+    flipbooks, meshes, the bone scripts or the offsets, the exe's TIM, the texture name and the camera track."""
+    for effect, port, module, parts, kinds in (
+            (314, "port 0x662890 0x6628A0 0x662970", "module 314 0x2505578 0x68", ['main', 'sweep', 'fade', 'scripts', 'body', 'tiles', 'sparks', 'dust', 'shards', 'particles'],
+             ['camera', 'name', 'seq', 'seq', 'seq', 'seq', 'sound', 'sound', 'table']),
+            (316, "port 0x6610B0 0x6610C0 0x661190", "module 316 0x2505520 0x58", ['main', 'sweep_a', 'sweep_b', 'fade', 'particles'],
+             ['camera', 'name', 'seq', 'sound', 'sound', 'tim']),
+            (318, "port 0x65E510 0x65E520 0x65E5C0", "module 318 0x2505418 0x78", ['main', 'charge', 'spike', 'particles', 'burst', 'sprites', 'bones'],
+             ['camera', 'layout', 'layout', 'layout', 'model', 'name', 'seq', 'seq', 'sound', 'table']),
+            (319, "port 0x65DB30 0x65DB40 0x65DBE0", "module 319 0x25053A0 0x78", ['main', 'spike', 'burst', 'sprites', 'bones'],
+             ['camera', 'layout', 'layout', 'model', 'name', 'seq', 'sound', 'table'])):
+        d = load_description(effect)
+        lines = compile_program(d).splitlines()
+        for line in ["director port -1", port, module]:
+            assert line in lines, (effect, line)
+        assert [p["key"] for p in d["parts"]] == parts, effect
+        assert sorted(e["kind"] for k, e in d["exe_data"].items() if k != "doc") == kinds, effect
+
+
+def test_bgh251f2_destruction_gargantua_entrance_remove_mask_and_mobile_type8_descriptions_compile():
+    """BGH251F2's destruction, Gargantua's entrance, Remove mask, Mobile Type 8's break-up: port roots (Cannon Blow's kind) -
+    their file loaders and setups the ports', run on the program's memory; their parts tagged; their data the sounds,
+    layouts, flipbooks, meshes, the bone scripts or the spawn stream or the pieces' velocities, the texture name and the
+    camera track."""
+    for effect, port, module, parts, kinds in (
+            (298, "port 0x670970 0x670980 0x670A20", "module 298 0x2507880 0x84", ['master', 'scripts', 'body', 'fragments', 'marks', 'layouts', 'sprites'],
+             ['camera', 'layout', 'layout', 'layout', 'layout', 'model', 'model', 'model', 'name', 'seq', 'seq', 'seq', 'seq', 'seq', 'seq', 'sound', 'sound', 'table']),
+            (301, "port 0x66D8E0 0x66D8F0 0x66D9F0", "module 301 0x25076D8 0x80", ['master', 'layout', 'body', 'marks', 'rocks', 'dust'],
+             ['camera', 'layout', 'model', 'name', 'seq', 'seq', 'sound', 'sound', 'table']),
+            (303, "port 0x66A820 0x66A830 0x66A920", "module 303 0x25075D0 0x90", ['main', 'burst', 'sparks', 'sprites', 'pieces', 'piece_layouts', 'shards', 'redraw'],
+             ['camera', 'layout', 'layout', 'model', 'model', 'model', 'model', 'name', 'seq', 'seq', 'sound', 'sound', 'table']),
+            (308, "port 0x667670 0x667680 0x667720", "module 308 0x25074D0 0x88", ['main', 'scripts', 'body', 'sparks', 'layouts', 'sprites', 'tile', 'quad'],
+             ['camera', 'layout', 'layout', 'layout', 'layout', 'name', 'seq', 'seq', 'seq', 'seq', 'seq', 'seq', 'sound', 'sound', 'table'])):
+        d = load_description(effect)
+        lines = compile_program(d).splitlines()
+        for line in ["director port -1", port, module]:
+            assert line in lines, (effect, line)
+        assert [p["key"] for p in d["parts"]] == parts, effect
+        assert sorted(e["kind"] for k, e in d["exe_data"].items() if k != "doc") == kinds, effect
+
+
+def test_bloodfest_gilgamesh_kills_seifer_demon_slice_and_trauma_shatter_descriptions_compile():
+    """Bloodfest, Gilgamesh kills Seifer, Demon Slice, Trauma's shattering: port roots (Cannon Blow's kind) - their setup
+    (and Trauma's file loader) the ports', run on the program's memory (their queues, Gilgamesh's model blocks, the shard
+    table in the module); their parts tagged; their data the sounds, layouts, flipbooks, meshes, the bone scripts, the TIM
+    or the texture name and the camera track."""
+    for effect, port, module, parts, kinds in (
+            (210, "port 0x6F6800 0x0 0x6F6890", "module 210 0x2556478 0x108", ['master', 'flames', 'ghosts', 'rise', 'bone', 'vortex', 'targets', 'burn', 'drop', 'end', 'white', 'trail', 'rocks', 'sparkles'],
+             ['camera', 'layout', 'layout', 'layout', 'layout', 'model', 'model', 'model', 'model', 'seq', 'seq', 'seq', 'seq', 'sound', 'sound', 'sound', 'sound', 'tim']),
+            (218, "port 0x6326D0 0x0 0x6374D0", "module 218 0x24F2340 0x12D8", ['timeline', 'fade', 'tile', 'spinners', 'flare', 'ring', 'gilgamesh', 'sword', 'glow', 'dust', 'rings', 'shards', 'flash', 'wave', 'slash'],
+             ['model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'seq', 'seq', 'seq', 'sound', 'sound', 'sound', 'sound', 'tim']),
+            (251, "port 0x6F44D0 0x0 0x6F4580", "module 251 0x2556388 0xF0", ['master', 'caster', 'flames', 'opening', 'wave', 'risers', 'slash', 'hits', 'push', 'target', 'fall', 'whites', 'trail', 'sparkles'],
+             ['camera', 'layout', 'layout', 'layout', 'layout', 'layout', 'layout', 'layout', 'seq', 'seq', 'seq', 'seq', 'sound', 'sound', 'sound', 'tim']),
+            (290, "port 0x675280 0x675290 0x675340", "module 290 0x2507B38 0x94", ['master', 'scripts', 'under', 'rings', 'body', 'fragments', 'marks', 'sprites', 'bursts'],
+             ['camera', 'layout', 'layout', 'layout', 'model', 'model', 'model', 'model', 'name', 'seq', 'seq', 'seq', 'seq', 'sound', 'sound', 'table'])):
+        d = load_description(effect)
+        lines = compile_program(d).splitlines()
+        for line in ["director port -1", port, module]:
+            assert line in lines, (effect, line)
+        assert [p["key"] for p in d["parts"]] == parts, effect
+        assert sorted(e["kind"] for k, e in d["exe_data"].items() if k != "doc") == kinds, effect
+
+
+def test_maelstrom_sorceress_spawn_and_omega_gravija_descriptions_compile():
+    """Maelstrom, "Sorceress" spawn, Omega Gravija: port roots (Cannon Blow's kind) - their setup (and Maelstrom's and
+    Gravija's file loader) the ports', run on the program's memory (their queues, warp frame, grid points in the module);
+    their parts tagged; their data the sounds, layouts, flipbooks, meshes (209's 16), the lens table, the colour tables,
+    the texture name or TIM and the camera track."""
+    for effect, port, module, parts, kinds in (
+            (207, "port 0x6A3AB0 0x6A3AC0 0x6A3B70", "module 207 0x25102C0 0x77E0",
+             ['master', 'layout', 'warp', 'particles'], ['camera', 'layout', 'model', 'name', 'seq', 'sound', 'table']),
+            (209, "port 0x637500 0x0 0x639100", "module 209 0x24F3618 0x4450",
+             ['timeline', 'screen', 'glow', 'bursts', 'swirl', 'rise', 'rings'],
+             ['camera', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'model', 'sound', 'sound', 'table', 'table', 'table', 'tim']),
+            (214, "port 0x69D5B0 0x69D5C0 0x69D670", "module 214 0x25089B0 0x77B8",
+             ['master', 'layout', 'warp', 'particles'], ['camera', 'layout', 'model', 'name', 'seq', 'sound'])):
+        d = load_description(effect)
+        lines = compile_program(d).splitlines()
+        for line in ["director port -1", port, module]:
+            assert line in lines, (effect, line)
+        assert [p["key"] for p in d["parts"]] == parts, effect
+        assert sorted(e["kind"] for k, e in d["exe_data"].items() if k != "doc") == kinds, effect
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m117.dat")
+def test_sorceress_spawn_wormlike_timeline_runs_from_its_description(tmp_path):
+    """"Sorceress" spawn cast by the wormlike sorceress (c0m117: timeline B, its screen fades, camera shake and voice):
+    its description records what the exe's code records; a parameter of B's (its closing rings' spawn interval) changes it."""
+    stage = ["caster=3", "target=0", f"slot3={BATTLE / 'c0m117.dat'}"]
+    program = write_program(load_description(209), tmp_path / "effect.fxprog")
+    original, _log = record(tmp_path, 209, "original", *stage)
+    described, log = record(tmp_path, 209, "described", f"program={program}", *stage)
+    assert untag(described) == original and len(original) > 10000
+    params = tmp_path / "params.txt"
+    params.write_text("rings.every_b 3\n")
+    native, _log = record(tmp_path, 209, "native", "native=1", f"params={params}", *stage)
+    described, log = record(tmp_path, 209, "described_params", f"program={program}", f"params={params}", *stage)
+    assert "1 set" in log and native != original and described == native
+
+
+def test_morph_and_blaster_descriptions_compile():
+    """Morph, Blaster: port roots (Cannon Blow's kind) - their setup and file loader the ports', run on the program's memory
+    (their particles, ring vertex buffers, bolt in-between meshes and queues in the module); their parts tagged; their data
+    the sound, flipbooks, meshes, Blaster's four key vertex sets (tables), the texture name and the camera track."""
+    for effect, port, module, parts, kinds in (
+            (172, "port 0x5D9CD0 0x5D9CB0 0x5DB210", "module 172 0x239A8E0 0x12E20",
+             ["director", "rings", "sparks", "tint"], ["camera", "model", "name", "seq", "sound"]),
+            (186, "port 0x5BF6F0 0x5BF6D0 0x5C0C80", "module 186 0x22B7600 0x4B28",
+             ["director", "fade", "beams", "bolts", "sparks", "glow", "wave", "splashes"],
+             ["camera", "model", "model", "model", "name", "seq", "seq", "seq", "seq", "sound", "table", "table", "table",
+              "table"])):
+        d = load_description(effect)
+        lines = compile_program(d).splitlines()
+        for line in ["director port -1", port, module]:
+            assert line in lines, (effect, line)
+        assert [p["key"] for p in d["parts"]] == parts, effect
+        assert sorted(e["kind"] for k, e in d["exe_data"].items() if k != "doc") == kinds, effect
+
+
+def test_wild_cannon_blow_and_tri_face_odin_descriptions_compile():
+    """Wild Cannon Blow, Zantetsuken (Odin), Acid, Poison Gas: port roots (Cannon Blow's kind) - their setup and file
+    loader the ports', run on the program's memory (their particle tables, curves, spark pools and queues in the module);
+    their parts tagged; their data the sounds, flipbooks, meshes, the texture name and the camera track."""
+    for effect, port, module, parts, kinds in (
+            (156, "port 0x605530 0x605510 0x606C20", "module 156 0x23ECE40 0x39B0",
+             ["director", "flash", "burst", "ring", "ball", "trails", "impact", "smoke"],
+             ["camera", "model", "model", "model", "model", "name", "seq", "seq", "seq", "seq", "seq", "sound", "sound"]),
+            (167, "port 0x5E2A10 0x5E29F0 0x5E4E20", "module 167 0x23BD350 0x1CE4",
+             ["director", "sparks", "trail", "screen_a", "screen_b", "slices"], ["camera", "model", "model", "name", "seq", "sound"]),
+            (170, "port 0x5DC930 0x5DC910 0x5DEDF0", "module 170 0x23AF820 0x1B50",
+             ["director", "splash", "blob", "mesh", "drips", "puddles", "melt"],
+             ["camera", "model", "model", "name", "seq", "seq", "seq", "sound"]),
+            (171, "port 0x5DB270 0x5DB250 0x5DC8C0", "module 171 0x23AD700 0x211C",
+             ["director", "tint", "puffs", "wisps", "clouds", "gas"], ["camera", "model", "name", "seq", "seq", "sound"])):
+        d = load_description(effect)
+        lines = compile_program(d).splitlines()
+        for line in ["director port -1", port, module]:
+            assert line in lines, (effect, line)
+        assert [p["key"] for p in d["parts"]] == parts, effect
+        assert sorted(e["kind"] for k, e in d["exe_data"].items() if k != "doc") == kinds, effect
+
+
 def test_cannon_blow_description_compiles():
     """Cannon Blow: a port root (Ray-Bomb's kind) - its setup and file loader the port's, run on the program's memory (its
     particle tables, curve and queues in the module); its parts the shot and the smoke grenade's canister, trail and
@@ -4262,3 +4429,151 @@ def test_effect_331_runs_from_its_description(tmp_path):
     del description["copy"]["functions"]
     new, log = record_self(tmp_path, 331, "c0m118", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
     assert "program: New_effect_331" in log and untag(new) == original
+
+
+def test_final_sorceress_death_description_compiles():
+    """Final Sorceress death: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(208)).splitlines()
+    for line in ['director port -1', 'port 0xAD7900 0xAD78D0 0xAD7F70 exe', 'module 208 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG207_B.00", "extracted_files/magic/MAG207_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m117.dat")
+def test_final_sorceress_death_runs_from_its_description(tmp_path):
+    """Final Sorceress death from its description (c0m117 casting it): what the exe's code records; a script file of its own (an
+    edited .00 copy: vertices of a mesh moved) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(208), tmp_path / "effect.fxprog")
+    original, _log = record_self(tmp_path, 208, "c0m117", "original")
+    described, log = record_self(tmp_path, 208, "c0m117", "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG207_B.00").read_bytes())
+    for k in range(0xF20, 0xF60, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c208.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c208.00\n")
+    native, _log = record_self(tmp_path, 208, "c0m117", "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record_self(tmp_path, 208, "c0m117", "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(208))
+    description["effect"], description["name"] = 225, "New final_sorceress_death"
+    del description["copy"]["functions"]
+    new, log = record_self(tmp_path, 208, "c0m117", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_final_sorceress_death" in log and untag(new) == original
+
+
+def test_apocalypse_description_compiles():
+    """Apocalypse: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(221)).splitlines()
+    for line in ['director port -1', 'port 0xAA5560 0xAA5530 0xAA5BD0 exe', 'module 221 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG220_B.00", "extracted_files/magic/MAG220_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m126.dat")
+def test_apocalypse_runs_from_its_description(tmp_path):
+    """Apocalypse from its description (c0m126 casting it): what the exe's code records; a script file of its own (an
+    edited .00 copy: vertices of a mesh moved) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(221), tmp_path / "effect.fxprog")
+    original, _log = record_monster(tmp_path, 221, "c0m126", "original")
+    described, log = record_monster(tmp_path, 221, "c0m126", "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG220_B.00").read_bytes())
+    for k in range(0xDB08, 0xDB48, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c221.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c221.00\n")
+    native, _log = record_monster(tmp_path, 221, "c0m126", "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record_monster(tmp_path, 221, "c0m126", "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(221))
+    description["effect"], description["name"] = 225, "New apocalypse"
+    del description["copy"]["functions"]
+    new, log = record_monster(tmp_path, 221, "c0m126", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_apocalypse" in log and untag(new) == original
+
+
+def test_krysta_death_description_compiles():
+    """Krysta death: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(264)).splitlines()
+    for line in ['director port -1', 'port 0x937EB0 0x937E80 0x938520 exe', 'module 264 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG263_B.00", "extracted_files/magic/MAG263_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m038.dat")
+def test_krysta_death_runs_from_its_description(tmp_path):
+    """Krysta death from its description (c0m038 casting it): what the exe's code records; a script file of its own (an
+    edited .00 copy: vertices of a mesh moved) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(264), tmp_path / "effect.fxprog")
+    original, _log = record_self(tmp_path, 264, "c0m038", "original")
+    described, log = record_self(tmp_path, 264, "c0m038", "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG263_B.00").read_bytes())
+    for k in range(0x1328, 0x1368, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c264.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c264.00\n")
+    native, _log = record_self(tmp_path, 264, "c0m038", "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record_self(tmp_path, 264, "c0m038", "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(264))
+    description["effect"], description["name"] = 225, "New krysta_death"
+    del description["copy"]["functions"]
+    new, log = record_self(tmp_path, 264, "c0m038", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_krysta_death" in log and untag(new) == original
+
+
+def test_sphinxara_death_description_compiles():
+    """Sphinxara death: Elvoret's death's kind - a port director calling the cinematic clone's own setup (the engine's shared
+    state block), its root re-pointed; its two script files the parameters."""
+    lines = compile_program(load_description(265)).splitlines()
+    for line in ['director port -1', 'port 0x92CBD0 0x92CBA0 0x92D240 exe', 'module 265 0x2796E00 0x1E40']:
+        assert line in lines, line
+
+
+@pytest.mark.ff8data("extracted_files/FF8_EN.exe", "extracted_files/magic/MAG264_B.00", "extracted_files/magic/MAG264_B.01",
+                     "extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat",
+                     "extracted_files/battle/c0m012.dat")
+def test_sphinxara_death_runs_from_its_description(tmp_path):
+    """Sphinxara death from its description (c0m012 casting it): what the exe's code records; a script file of its own (an
+    edited .00 copy: vertices of a mesh moved) read by the port's file loader and the program's alike; as effect 225, itself again."""
+    program = write_program(load_description(265), tmp_path / "effect.fxprog")
+    original, _log = record_self(tmp_path, 265, "c0m012", "original")
+    described, log = record_self(tmp_path, 265, "c0m012", "described", f"program={program}")
+    assert "0 tasks, 2 params" in log and untag(described) == original and len(original) > 10000
+    files = tmp_path / "files"
+    files.mkdir()
+    script = bytearray((MAGIC / "MAG264_B.00").read_bytes())
+    for k in range(0xEAC, 0xEEC, 2):
+        script[k] = (script[k] + 3) & 0xFF
+    (files / "c265.00").write_bytes(script)
+    params = tmp_path / "params.txt"
+    params.write_text("files.file00 c265.00\n")
+    native, _log = record_self(tmp_path, 265, "c0m012", "native", "native=1", f"params={params}", f"overrides={files}")
+    described, log = record_self(tmp_path, 265, "c0m012", "described_params", f"program={program}", f"params={params}",
+                     f"overrides={files}")
+    assert "1 set" in log and described == native and native != original
+    description = copy.deepcopy(load_description(265))
+    description["effect"], description["name"] = 225, "New sphinxara_death"
+    del description["copy"]["functions"]
+    new, log = record_self(tmp_path, 265, "c0m012", "new", f"program={write_program(description, tmp_path / 'new.fxprog')}")
+    assert "program: New_sphinxara_death" in log and untag(new) == original

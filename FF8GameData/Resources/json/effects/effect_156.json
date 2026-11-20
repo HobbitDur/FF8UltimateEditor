@@ -1,0 +1,654 @@
+{
+ "format": 1,
+ "effect": 156,
+ "name": "Wild Cannon Blow",
+ "doc": "Wild Cannon Blow (enemy attack 70, the Galbadian soldiers' SAM08G): four Cannon Blow shots from its two muzzles in turn - each a fire ball shot on a curve to near the targets' centre with its flash, burst, ring and two fire trails, then an impact and its ring, smoke at every target, the camera shake; the two sounds; the damage to every target at tick 36. Its tasks are the port's code (FFNx mag156_wild_cannon_blow.cpp) run on the program's memory (its particle tables, curves and queues in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x605510",
+   "setup": "0x605530",
+   "root": "0x606C20"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 156,
+  "from": "0x23ECE40",
+  "size": "0x39B0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.a": {
+   "kind": "sound",
+   "address": "0xDB7DAC",
+   "size": 4
+  },
+  "sounds.b": {
+   "kind": "sound",
+   "address": "0xDB7DB0",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xDB7DB8",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xDB4CD4",
+   "size": 180
+  },
+  "models.flash": {
+   "kind": "model",
+   "address": "0xDB6DFC",
+   "size": 1672,
+   "vertices": 60
+  },
+  "seqs.burst": {
+   "kind": "seq",
+   "address": "0xDB5300",
+   "size": 428,
+   "frames": 16
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xDB68EC",
+   "size": 1296,
+   "vertices": 49
+  },
+  "seqs.ball": {
+   "kind": "seq",
+   "address": "0xDB528C",
+   "size": 116,
+   "frames": 4
+  },
+  "seqs.trail": {
+   "kind": "seq",
+   "address": "0xDB4F34",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.trail2": {
+   "kind": "seq",
+   "address": "0xDB50E0",
+   "size": 428,
+   "frames": 16
+  },
+  "models.impact": {
+   "kind": "model",
+   "address": "0xDB54AC",
+   "size": 3120,
+   "vertices": 73
+  },
+  "models.impact_ring": {
+   "kind": "model",
+   "address": "0xDB7484",
+   "size": 2344,
+   "vertices": 72
+  },
+  "seqs.smoke": {
+   "kind": "seq",
+   "address": "0xDB4D88",
+   "size": 428,
+   "frames": 16
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x605530",
+  "file_loader": "0x605510",
+  "root": "0x606C20"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The master's timeline: the two sounds, the shots, the damage to every target, its end; the shots' timing and aim, the camera shake; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "flash",
+   "title": "Flash",
+   "doc": "A spinning flash mesh at the muzzle as each shot leaves, growing and fading"
+  },
+  {
+   "id": 2,
+   "key": "burst",
+   "title": "Burst",
+   "doc": "Fire particles bursting out of the muzzle along the shot, slowing"
+  },
+  {
+   "id": 3,
+   "key": "ring",
+   "title": "Ring",
+   "doc": "A ring mesh on the floor under the muzzle, fading"
+  },
+  {
+   "id": 4,
+   "key": "ball",
+   "title": "Fire ball",
+   "doc": "The fire ball flying along the shot's curve, slowing"
+  },
+  {
+   "id": 5,
+   "key": "trails",
+   "title": "Trails",
+   "doc": "Two fire trails the ball leaves along its curve (the second one jittered), growing"
+  },
+  {
+   "id": 6,
+   "key": "impact",
+   "title": "Impact",
+   "doc": "The impact mesh and its ring at the landing point, spinning, growing, fading"
+  },
+  {
+   "id": 7,
+   "key": "smoke",
+   "title": "Target smoke",
+   "doc": "Smoke particles at every target's body after each impact"
+  }
+ ],
+ "groups": [
+  {
+   "key": "sounds",
+   "label": "Sounds",
+   "doc": "Both at the master's sound tick"
+  },
+  {
+   "key": "shots",
+   "label": "Shots",
+   "doc": "When the shots leave"
+  },
+  {
+   "key": "shake",
+   "label": "Camera shake",
+   "doc": "The camera shaken up and down after each impact"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.a",
+   "part": "director",
+   "label": "Sound A",
+   "doc": "At the master's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.a",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.b",
+   "part": "director",
+   "label": "Sound B",
+   "doc": "At the master's sound tick too",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.b",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "director",
+   "label": "Sound tick",
+   "doc": "The sounds at this tick of the master",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.damage",
+   "part": "director",
+   "label": "Damage tick",
+   "doc": "The damage to every target at this tick of the master",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "director",
+   "label": "End tick",
+   "doc": "The master's last tick (the shots still flying run on until they end)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "shots.first",
+   "part": "director",
+   "label": "First shot",
+   "doc": "The first shot leaves at this tick of the master",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "shots.every",
+   "part": "director",
+   "label": "Every",
+   "doc": "The next ones this many ticks apart (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "shots.count",
+   "part": "director",
+   "label": "Shots",
+   "doc": "How many (4 at most: the module keeps 4 curves)",
+   "type": "i16",
+   "min": 0,
+   "max": 4,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "shot.odd_point",
+   "part": "director",
+   "label": "Odd muzzle",
+   "doc": "The caster's effect point the 1st and 3rd shots leave from",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "shot.even_point",
+   "part": "director",
+   "label": "Even muzzle",
+   "doc": "The caster's effect point the 2nd and 4th shots leave from",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "shot.x",
+   "part": "director",
+   "label": "Muzzle offset",
+   "doc": "The start moved this far sideways (the caster's x: odd shots +, even shots -)",
+   "type": "i16",
+   "min": -4000,
+   "max": 4000,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "shot.spread_x",
+   "part": "director",
+   "label": "Aim spread x",
+   "doc": "The landing point: the targets' centre + a random x up to this either side (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 800,
+   "unit": "plain"
+  },
+  {
+   "key": "shot.spread_z",
+   "part": "director",
+   "label": "Aim spread z",
+   "doc": "And a random z up to this either side (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 400,
+   "unit": "plain"
+  },
+  {
+   "key": "shot.speed",
+   "part": "director",
+   "label": "Speed",
+   "doc": "The ball and the trails move this many of the curve's 32 points a tick at first, 1 less a tick down to 2",
+   "type": "i16",
+   "min": 1,
+   "max": 32,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "shot.impact",
+   "part": "director",
+   "label": "Impact tick",
+   "doc": "The impact and its ring at this tick of the shot",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "shot.smoke",
+   "part": "director",
+   "label": "Smoke tick",
+   "doc": "The target smoke at this tick of the shot",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "shot.end",
+   "part": "director",
+   "label": "Shot end",
+   "doc": "A shot's last tick",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "shake.tick",
+   "part": "director",
+   "label": "Tick",
+   "doc": "From this tick of each shot",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "shake.ticks",
+   "part": "director",
+   "label": "Ticks",
+   "doc": "For this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "shake.amount",
+   "part": "director",
+   "label": "Amount",
+   "doc": "The camera moved this much a tick (up on odd ticks, down on even ones)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "models.flash",
+   "part": "flash",
+   "label": "Flash model",
+   "doc": "The prim model of the muzzle flash (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.flash",
+   "unit": "plain"
+  },
+  {
+   "key": "burst.per_tick",
+   "part": "burst",
+   "label": "A tick",
+   "doc": "How many particles a tick (100 at most alive, with the target smoke)",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.ticks",
+   "part": "burst",
+   "label": "Ticks",
+   "doc": "On the shot's first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "burst.size",
+   "part": "burst",
+   "label": "Size",
+   "doc": "A particle's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1024,
+   "unit": "scale"
+  },
+  {
+   "key": "burst.size_rand",
+   "part": "burst",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2048,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.burst",
+   "part": "burst",
+   "label": "Burst",
+   "doc": "The sprite sequence of the burst (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.burst",
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "ring",
+   "label": "Ring model",
+   "doc": "The prim model of the ring (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "ball.size",
+   "part": "ball",
+   "label": "Size",
+   "doc": "The fire ball's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3072,
+   "unit": "scale"
+  },
+  {
+   "key": "ball.size_rand",
+   "part": "ball",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 512,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.ball",
+   "part": "ball",
+   "label": "Fire ball",
+   "doc": "The sprite sequence of the fire ball (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ball",
+   "unit": "plain"
+  },
+  {
+   "key": "trails.size",
+   "part": "trails",
+   "label": "Size",
+   "doc": "A trail particle's size: this + a random below the next (growing 1/32 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2816,
+   "unit": "scale"
+  },
+  {
+   "key": "trails.size_rand",
+   "part": "trails",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1792,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.trail",
+   "part": "trails",
+   "label": "Trail",
+   "doc": "The sprite sequence of the first trail (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.trail",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.trail2",
+   "part": "trails",
+   "label": "Jittered trail",
+   "doc": "The sprite sequence of the second trail",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.trail2",
+   "unit": "plain"
+  },
+  {
+   "key": "models.impact",
+   "part": "impact",
+   "label": "Impact model",
+   "doc": "The prim model of the impact (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.impact",
+   "unit": "plain"
+  },
+  {
+   "key": "models.impact_ring",
+   "part": "impact",
+   "label": "Impact ring model",
+   "doc": "The prim model of the impact's ring (a mesh: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.impact_ring",
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.ticks",
+   "part": "smoke",
+   "label": "Ticks",
+   "doc": "One particle a tick at each target on its first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.spread",
+   "part": "smoke",
+   "label": "Spread",
+   "doc": "Each one up to this far from the target's body point on each axis (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 300,
+   "unit": "plain"
+  },
+  {
+   "key": "smoke.size",
+   "part": "smoke",
+   "label": "Size",
+   "doc": "Its size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1280,
+   "unit": "scale"
+  },
+  {
+   "key": "smoke.size_rand",
+   "part": "smoke",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1280,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.smoke",
+   "part": "smoke",
+   "label": "Smoke",
+   "doc": "The sprite sequence of the target smoke (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.smoke",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

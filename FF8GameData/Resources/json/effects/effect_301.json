@@ -1,0 +1,451 @@
+{
+ "format": 1,
+ "effect": 301,
+ "name": "Gargantua entrance",
+ "doc": "Gargantua's entrance (enemy attack 265, Gargantua c0m094, on itself; FFNx's burrow module): a layout on the ground at the caster, the module drawing its body with the polygons under the ground line left out and ground marks where it crosses it, rocks and dust puffs from a spawn stream, its colour faded back in at the end, the sound and its voice; no damage. Its tasks are the port's code (FFNx mag301_gargantua_burrow.cpp) run on the program's memory (its master, rocks and puffs in the magic buffer); the spawn stream's pointer is exe data (never put back: a copy reads its own stream at the pointer's offset).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x66D8F0",
+   "setup": "0x66D8E0",
+   "root": "0x66D9F0"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 301,
+  "from": "0x25076D8",
+  "size": "0x80"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x103DC98",
+   "size": 4
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0x103BBD8",
+   "size": 4
+  },
+  "tables.stream": {
+   "kind": "table",
+   "address": "0x103BD00",
+   "size": 4792,
+   "format": "h",
+   "columns": 4,
+   "skip": 0,
+   "count": 599
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x103DCA0",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x103DB5C",
+   "size": 316
+  },
+  "layouts.main": {
+   "kind": "layout",
+   "address": "0x103D46C",
+   "size": 1776,
+   "capacity": 144
+  },
+  "seqs.mark": {
+   "kind": "seq",
+   "address": "0x103CFB8",
+   "size": 352,
+   "frames": 13
+  },
+  "models.rock": {
+   "kind": "model",
+   "address": "0x103D314",
+   "size": 344,
+   "vertices": 8
+  },
+  "seqs.dust": {
+   "kind": "seq",
+   "address": "0x103D118",
+   "size": 508,
+   "frames": 16
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x66D8E0",
+  "file_loader": "0x66D8F0",
+  "root": "0x66D9F0"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The master's ticks, the start sound and the voice (claimed at the start, released near the end), the caster's colour faded back in at the end; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "layout",
+   "title": "Layout",
+   "doc": "The prim-model layout at the caster's effect position (on the ground)"
+  },
+  {
+   "id": 2,
+   "key": "body",
+   "title": "Body",
+   "doc": "The caster drawn by the module: polygons all below the ground line left out, every n-th one crossing it leaving a ground mark"
+  },
+  {
+   "id": 3,
+   "key": "marks",
+   "title": "Ground marks",
+   "doc": "A flipbook on the ground where the body crosses it"
+  },
+  {
+   "id": 4,
+   "key": "rocks",
+   "title": "Rocks",
+   "doc": "Rocks from the spawn stream: a mesh at the caster, thrown, spinning, falling and bouncing"
+  },
+  {
+   "id": 5,
+   "key": "dust",
+   "title": "Dust",
+   "doc": "Dust puffs from the spawn stream: a flipbook drifting from the caster"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The master's ticks"
+  },
+  {
+   "key": "fade",
+   "label": "Colour fade",
+   "doc": "The caster's colour faded back in"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "master",
+   "label": "Sound",
+   "doc": "At the start sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.voice",
+   "part": "master",
+   "label": "Voice",
+   "doc": "The sound block its voice slot is claimed with (at the start)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.start",
+   "part": "master",
+   "label": "Sound",
+   "doc": "The master's tick of the start sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.release",
+   "part": "master",
+   "label": "Voice released",
+   "doc": "Its tick the voice slot is released",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 138,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "master",
+   "label": "End",
+   "doc": "Its last tick (the effect ends with it)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 142,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.start",
+   "part": "master",
+   "label": "Fade start",
+   "doc": "The master's tick the caster's colour starts fading back in (its own draw is back from there)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 122,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.ticks",
+   "part": "master",
+   "label": "Fade ticks",
+   "doc": "Its ticks (at least 1): the colour = its kept colour x (1 - sin of the quarter turn left)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.alpha",
+   "part": "master",
+   "label": "Fade byte",
+   "doc": "His colour's 4th byte set meanwhile",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "spawn.ticks",
+   "part": "master",
+   "label": "Spawn ticks",
+   "doc": "The spawn stream's rocks and puffs on the master's ticks below this (the stream holds 101 ticks)",
+   "type": "i16",
+   "min": 0,
+   "max": 102,
+   "default": 102,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.stream",
+   "part": "master",
+   "label": "Spawn stream",
+   "doc": "The rocks and puffs of each tick (0x12B8 bytes: a count, then 10 words a rock - offset x / y / z, velocity x / y / z, angle x / y, spin x / y; a count, then 6 words a puff - offset, velocity; edit their numbers, keep their shape)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.stream",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "master",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "master",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "layout.ticks",
+   "part": "layout",
+   "label": "Ticks",
+   "doc": "The layout and the body drawn on the master's ticks below this (then the caster's own draw)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 122,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.depth",
+   "part": "layout",
+   "label": "Depth",
+   "doc": "The layout's depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.main",
+   "part": "layout",
+   "label": "Layout",
+   "doc": "The layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.main",
+   "unit": "plain"
+  },
+  {
+   "key": "body.ground",
+   "part": "body",
+   "label": "Ground line",
+   "doc": "Vertices below this height are under the ground (a polygon all under it is left out)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "body.mark_depth",
+   "part": "body",
+   "label": "Mark depth",
+   "doc": "A crossing polygon leaves a mark when its first vertex's z is beyond the caster's - this",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 800,
+   "unit": "plain"
+  },
+  {
+   "key": "body.mark_every",
+   "part": "body",
+   "label": "Mark every",
+   "doc": "Every n-th crossing polygon (by its index and the tick) leaves a mark",
+   "type": "i16",
+   "min": 1,
+   "max": 64,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "marks.life",
+   "part": "marks",
+   "label": "Life",
+   "doc": "A mark's ticks (its flipbook's frame count - its life left: 12 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 12,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mark",
+   "part": "marks",
+   "label": "Flipbook",
+   "doc": "The marks' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mark",
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.life",
+   "part": "rocks",
+   "label": "Life",
+   "doc": "A rock's ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.gravity",
+   "part": "rocks",
+   "label": "Gravity",
+   "doc": "Its y velocity byte grows by this a tick (it bounces at half its speed on the ground)",
+   "type": "i16",
+   "min": -64,
+   "max": 64,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.speed_xz",
+   "part": "rocks",
+   "label": "Speed x / z",
+   "doc": "It moves by its x / z velocity bytes x this a tick",
+   "type": "i16",
+   "min": -128,
+   "max": 128,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "rocks.speed_y",
+   "part": "rocks",
+   "label": "Speed y",
+   "doc": "It moves by its y velocity byte x this a tick",
+   "type": "i16",
+   "min": -128,
+   "max": 128,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "models.rock",
+   "part": "rocks",
+   "label": "Mesh",
+   "doc": "The rocks' mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.rock",
+   "unit": "plain"
+  },
+  {
+   "key": "dust.life",
+   "part": "dust",
+   "label": "Life",
+   "doc": "A puff's ticks (its flipbook's frame = its tick: 16 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 16,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "dust.size",
+   "part": "dust",
+   "label": "Size",
+   "doc": "Its size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 4096,
+   "unit": "scale"
+  },
+  {
+   "key": "seqs.dust",
+   "part": "dust",
+   "label": "Flipbook",
+   "doc": "The puffs' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.dust",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

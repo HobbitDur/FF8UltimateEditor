@@ -1,0 +1,720 @@
+{
+ "format": 1,
+ "effect": 290,
+ "name": "Trauma shatter",
+ "doc": "Trauma's body shattering (enemy attack 291, c0m109, on itself): layout A and a flipbook under it, layouts B and C on the ground, its colour blended to black while the module draws it with 28 pose entries that 20 bone scripts move, turn, bounce and shatter: its bone groups' polygons fly off as fragments (small meshes with their texture) spinning, falling, bouncing and fading, with a mark where each started; bone layouts, rising sprites, the sound and its voice; no damage. Its tasks are the port's code (FFNx mag290_trauma_shatter.cpp) run on the program's memory (its master's pose, fragments and marks in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x675290",
+   "setup": "0x675280",
+   "root": "0x675340"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 290,
+  "from": "0x2507B38",
+  "size": "0x94"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x106A39C",
+   "size": 4
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0x106A3A0",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x106E894",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x106A2DC",
+   "size": 192
+  },
+  "tables.scripts": {
+   "kind": "table",
+   "address": "0x106E648",
+   "size": 588,
+   "format": "h",
+   "columns": 6,
+   "skip": 0,
+   "count": 49
+  },
+  "layouts.a": {
+   "kind": "layout",
+   "address": "0x1067CB8",
+   "size": 3084,
+   "capacity": 272
+  },
+  "seqs.under": {
+   "kind": "seq",
+   "address": "0x106784C",
+   "size": 428,
+   "frames": 16
+  },
+  "layouts.b": {
+   "kind": "layout",
+   "address": "0x106971C",
+   "size": 3008,
+   "capacity": 556
+  },
+  "layouts.c": {
+   "kind": "layout",
+   "address": "0x10688C4",
+   "size": 3672,
+   "capacity": 200
+  },
+  "seqs.a": {
+   "kind": "seq",
+   "address": "0x10676E0",
+   "size": 364,
+   "frames": 12
+  },
+  "seqs.b": {
+   "kind": "seq",
+   "address": "0x1067B58",
+   "size": 352,
+   "frames": 13
+  },
+  "models.frag[0]": {
+   "kind": "model",
+   "address": "0x1067400",
+   "size": 184,
+   "vertices": 6
+  },
+  "models.frag[1]": {
+   "kind": "model",
+   "address": "0x10674B8",
+   "size": 184,
+   "vertices": 6
+  },
+  "models.frag[2]": {
+   "kind": "model",
+   "address": "0x1067570",
+   "size": 184,
+   "vertices": 6
+  },
+  "models.frag[3]": {
+   "kind": "model",
+   "address": "0x1067628",
+   "size": 184,
+   "vertices": 6
+  },
+  "seqs.mark": {
+   "kind": "seq",
+   "address": "0x10679F8",
+   "size": 352,
+   "frames": 13
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x675280",
+  "file_loader": "0x675290",
+  "root": "0x675340"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The master's ticks, the start sound and the voice (claimed at the start, released near the end); the texture and the camera"
+  },
+  {
+   "id": 0,
+   "key": "scripts",
+   "title": "Bone scripts",
+   "doc": "The 20 bone scripts: each moves one of the caster's 28 pose entries (offsets, turns, their speeds, a bounce on the ground), shatters bone groups into fragments (bones, count, speed, size, chance), spawns a bone layout, loops"
+  },
+  {
+   "id": 1,
+   "key": "under",
+   "title": "Under",
+   "doc": "Layout A and a flipbook under the caster on the first ticks"
+  },
+  {
+   "id": 2,
+   "key": "rings",
+   "title": "Rings",
+   "doc": "Layouts B and C on the ground at the caster"
+  },
+  {
+   "id": 3,
+   "key": "body",
+   "title": "Body",
+   "doc": "The caster drawn by the module with the pose entries (his shadow, then the bone groups not hidden), his colour blended to black"
+  },
+  {
+   "id": 4,
+   "key": "fragments",
+   "title": "Fragments",
+   "doc": "The shattered polygons: fragments of up to 8 of them on a small mesh, flying off along their normal, spinning, falling, bouncing, fading out"
+  },
+  {
+   "id": 5,
+   "key": "marks",
+   "title": "Marks",
+   "doc": "A flipbook where each fragment started, drifting the same way"
+  },
+  {
+   "id": 6,
+   "key": "sprites",
+   "title": "Sprites",
+   "doc": "Flipbook sprites rising from the caster on the first ticks"
+  },
+  {
+   "id": 7,
+   "key": "bursts",
+   "title": "Bone layouts",
+   "doc": "Layout A at a bone, spawned by the bone scripts"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The master's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "master",
+   "label": "Sound",
+   "doc": "At the start sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.voice",
+   "part": "master",
+   "label": "Voice",
+   "doc": "The sound block its voice slot is claimed with (at the start)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.start",
+   "part": "master",
+   "label": "Sound",
+   "doc": "The master's tick of the start sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.release",
+   "part": "master",
+   "label": "Voice released",
+   "doc": "Its tick the voice slot is released",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 86,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "master",
+   "label": "End",
+   "doc": "Its last tick (the effect ends once the battle file it streams is in)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 90,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "master",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "master",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.scripts",
+   "part": "scripts",
+   "label": "Bone scripts",
+   "doc": "The 20 bone scripts' byte code (0x24C bytes, each script at its own offset: edit their numbers, keep their shape)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.scripts",
+   "unit": "plain"
+  },
+  {
+   "key": "under.ticks",
+   "part": "under",
+   "label": "Ticks",
+   "doc": "On the master's first ticks (the flipbook's frame = the tick: 16 at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "under.drop",
+   "part": "under",
+   "label": "Drop",
+   "doc": "So far below the caster's spawn point",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "under.depth",
+   "part": "under",
+   "label": "Depth",
+   "doc": "The layout's depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -512,
+   "unit": "plain"
+  },
+  {
+   "key": "under.size",
+   "part": "under",
+   "label": "Sprite size",
+   "doc": "The flipbook's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 16384,
+   "unit": "scale"
+  },
+  {
+   "key": "layouts.a",
+   "part": "under",
+   "label": "Layout A",
+   "doc": "Layout A (the bone scripts' layout too)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.under",
+   "part": "under",
+   "label": "Flipbook",
+   "doc": "The flipbook under the caster",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.under",
+   "unit": "plain"
+  },
+  {
+   "key": "rings.start",
+   "part": "rings",
+   "label": "Start",
+   "doc": "The master's tick they start",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.ticks",
+   "part": "rings",
+   "label": "Ticks",
+   "doc": "Their ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 22,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.bone",
+   "part": "rings",
+   "label": "Bone",
+   "doc": "At the caster's spawn point of this bone (on the ground)",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.frac",
+   "part": "rings",
+   "label": "Fraction",
+   "doc": "The spawn point's fraction",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.turn",
+   "part": "rings",
+   "label": "Turn",
+   "doc": "Their turn",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 2048,
+   "unit": "angle"
+  },
+  {
+   "key": "rings.depth",
+   "part": "rings",
+   "label": "Depth",
+   "doc": "Their depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.b",
+   "part": "rings",
+   "label": "Layout B",
+   "doc": "Layout B",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.b",
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.c",
+   "part": "rings",
+   "label": "Layout C",
+   "doc": "Layout C",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.c",
+   "unit": "plain"
+  },
+  {
+   "key": "tint.ticks",
+   "part": "body",
+   "label": "Tint ticks",
+   "doc": "His colour blended to black over the first ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.alpha",
+   "part": "body",
+   "label": "Tint byte",
+   "doc": "His colour's 4th byte set meanwhile",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.hide_from",
+   "part": "body",
+   "label": "Hidden from",
+   "doc": "From this tick his own draw is off (bit 3)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 30,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.ticks",
+   "part": "sprites",
+   "label": "Ticks",
+   "doc": "On the master's first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.count_a",
+   "part": "sprites",
+   "label": "A count",
+   "doc": "Sprites A a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 8,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.spread",
+   "part": "sprites",
+   "label": "A scatter",
+   "doc": "Around the spawn point: a random below 0x200 - this on each axis",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.size_a",
+   "part": "sprites",
+   "label": "A size",
+   "doc": "Their size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "scale"
+  },
+  {
+   "key": "sprites.life_a",
+   "part": "sprites",
+   "label": "A life",
+   "doc": "Their ticks (their flipbook's frames: 12 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 12,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.count_b",
+   "part": "sprites",
+   "label": "B count",
+   "doc": "Sprites B a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 8,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "sprites.size_b",
+   "part": "sprites",
+   "label": "B size",
+   "doc": "Their size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 6000,
+   "unit": "scale"
+  },
+  {
+   "key": "sprites.life_b",
+   "part": "sprites",
+   "label": "B life",
+   "doc": "Their ticks (their flipbook's frames: 13 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 13,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.a",
+   "part": "sprites",
+   "label": "A flipbook",
+   "doc": "Sprites A's flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.a",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.b",
+   "part": "sprites",
+   "label": "B flipbook",
+   "doc": "Sprites B's flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.b",
+   "unit": "plain"
+  },
+  {
+   "key": "fragments.life",
+   "part": "fragments",
+   "label": "Life",
+   "doc": "A fragment's ticks: this + a random below 16",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "fragments.gravity",
+   "part": "fragments",
+   "label": "Gravity",
+   "doc": "Its fall speed grows by this a tick (it bounces on the ground at half its speed)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "fragments.fade",
+   "part": "fragments",
+   "label": "Fade",
+   "doc": "It fades out over its last ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "fragments.spin",
+   "part": "fragments",
+   "label": "Spin",
+   "doc": "Its spin on each axis: a random below 0x400 - this a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 512,
+   "unit": "angle"
+  },
+  {
+   "key": "models.frag[0]",
+   "part": "fragments",
+   "label": "Mesh 1",
+   "doc": "A fragment's mesh (one of four at random)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.frag[0]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.frag[1]",
+   "part": "fragments",
+   "label": "Mesh 2",
+   "doc": "A fragment's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.frag[1]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.frag[2]",
+   "part": "fragments",
+   "label": "Mesh 3",
+   "doc": "A fragment's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.frag[2]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.frag[3]",
+   "part": "fragments",
+   "label": "Mesh 4",
+   "doc": "A fragment's mesh",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.frag[3]",
+   "unit": "plain"
+  },
+  {
+   "key": "marks.life",
+   "part": "marks",
+   "label": "Life",
+   "doc": "A mark's ticks (its flipbook's frame 12 - its life left: its 12 frames at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 12,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "marks.speed",
+   "part": "marks",
+   "label": "Speed",
+   "doc": "It moves by its velocity bytes (its fragment's / 4) x this a tick",
+   "type": "i16",
+   "min": -64,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.mark",
+   "part": "marks",
+   "label": "Flipbook",
+   "doc": "The marks' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.mark",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.sin_cos",
+   "label": "Sine / cosine table",
+   "doc": "4096 x (sine, cosine) the fragments' turns read (its first quarter shown)",
+   "address": "0x106A4C8",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.sqrt_table",
+   "label": "Square roots",
+   "doc": "The GTE-style square-root table the fragments' normals are normalised with",
+   "address": "0x106E448",
+   "size": 512
+  }
+ ]
+}

@@ -1,0 +1,418 @@
+{
+ "format": 1,
+ "effect": 316,
+ "name": "Red Giant death",
+ "doc": "Red Giant's death (enemy attack 203, Red Giant c0m130, on itself): the music faded, the screen flash; the caster drawn by the module lit by a light level falling down its body, then by the level rising back with its lit polygons semi-transparent, some throwing particles; its colour faded to black; the sound and its voice; no damage. Effect 314's kin. Its tasks are the port's code (FFNx mag316_red_giant.cpp) run on the program's memory (its main and particles in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6610C0",
+   "setup": "0x6610B0",
+   "root": "0x661190"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 316,
+  "from": "0x2505520",
+  "size": "0x58"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x1005D50",
+   "size": 4
+  },
+  "sounds.voice": {
+   "kind": "sound",
+   "address": "0x1005D54",
+   "size": 4
+  },
+  "res.tim": {
+   "kind": "tim",
+   "address": "0x1005E64",
+   "size": 66080
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x1016084",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1005C50",
+   "size": 256
+  },
+  "seqs.particle": {
+   "kind": "seq",
+   "address": "0x1005AE4",
+   "size": 364,
+   "frames": 12
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6610B0",
+  "file_loader": "0x6610C0",
+  "root": "0x661190"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "main",
+   "title": "Main",
+   "doc": "The main's ticks, the sound and the voice (claimed at the start, released near the end), the screen flash, the music faded; the TIMs and the camera"
+  },
+  {
+   "id": 1,
+   "key": "sweep_a",
+   "title": "Sweep down",
+   "doc": "The caster drawn lit by a light level falling down its body (its vertices grey by their height)"
+  },
+  {
+   "id": 2,
+   "key": "sweep_b",
+   "title": "Sweep up",
+   "doc": "The caster drawn by the level rising back, its lit polygons semi-transparent, some throwing particles"
+  },
+  {
+   "id": 0,
+   "key": "fade",
+   "title": "Colour fade",
+   "doc": "The caster's colour faded to black"
+  },
+  {
+   "id": 3,
+   "key": "particles",
+   "title": "Particles",
+   "doc": "Particles thrown up from sweep B's lit polygons (a flipbook by their life)"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The main's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "main",
+   "label": "Sound",
+   "doc": "At the sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.voice",
+   "part": "main",
+   "label": "Voice",
+   "doc": "The sound block its voice slot is claimed with (at the start)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.voice",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "main",
+   "label": "Sound",
+   "doc": "The main's tick of the sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 45,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.release",
+   "part": "main",
+   "label": "Voice released",
+   "doc": "Its tick the voice slot is released",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 308,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "main",
+   "label": "End",
+   "doc": "Its last tick (the caster's colour put back, the party drawn again)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 312,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.ramp",
+   "part": "main",
+   "label": "Flash ramp",
+   "doc": "The screen flash's ticks up at the start and down at the end",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "main",
+   "label": "Flash level",
+   "doc": "The screen flash's level between",
+   "type": "i16",
+   "min": 0,
+   "max": 4000,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim",
+   "part": "main",
+   "label": "Exe TIM",
+   "doc": "The image its setup uploads besides the texture file (as it is)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim",
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "main",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "main",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "sweep.top",
+   "part": "sweep_a",
+   "label": "Top level",
+   "doc": "The light level's top (sweep A starts there, sweep B ends there; y down)",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep.page",
+   "part": "sweep_a",
+   "label": "Page move",
+   "doc": "The lit polygons' texture page word moved by this (both sweeps)",
+   "type": "i16",
+   "min": -1024,
+   "max": 1024,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep.clut",
+   "part": "sweep_a",
+   "label": "CLUT move",
+   "doc": "Their CLUT word moved by this (both sweeps)",
+   "type": "i16",
+   "min": -32768,
+   "max": 32767,
+   "default": 1044,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep_a.start",
+   "part": "sweep_a",
+   "label": "Start",
+   "doc": "The main's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep_a.ticks",
+   "part": "sweep_a",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 130,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep_a.range",
+   "part": "sweep_a",
+   "label": "Fall",
+   "doc": "The level falls by this from the top",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 4000,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep_a.fall",
+   "part": "sweep_a",
+   "label": "Fall ticks",
+   "doc": "Over that many ticks (then it holds)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep_b.start",
+   "part": "sweep_b",
+   "label": "Start",
+   "doc": "The main's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 150,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep_b.ticks",
+   "part": "sweep_b",
+   "label": "Ticks",
+   "doc": "Its ticks (the level rises back to the top over them)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 150,
+   "unit": "plain"
+  },
+  {
+   "key": "sweep_b.range",
+   "part": "sweep_b",
+   "label": "Rise",
+   "doc": "The level rises by this to the top",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 4000,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.start",
+   "part": "fade",
+   "label": "Start",
+   "doc": "The main's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 150,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.ticks",
+   "part": "fade",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 140,
+   "unit": "plain"
+  },
+  {
+   "key": "fade.alpha",
+   "part": "fade",
+   "label": "Alpha byte",
+   "doc": "The caster's byte +0x2F while it fades",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.chance",
+   "part": "particles",
+   "label": "Chance",
+   "doc": "A lit polygon throws one when a random below 0x8000 is below this",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.life",
+   "part": "particles",
+   "label": "Life",
+   "doc": "Their ticks (below their flipbook's frame count: 11 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 11,
+   "default": 11,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.size",
+   "part": "particles",
+   "label": "Size",
+   "doc": "Their size (+ a random below 8)",
+   "type": "i16",
+   "min": 0,
+   "max": 16384,
+   "default": 1024,
+   "unit": "scale"
+  },
+  {
+   "key": "particles.speed",
+   "part": "particles",
+   "label": "Speed",
+   "doc": "Their velocity's scale a tick",
+   "type": "i16",
+   "min": -64,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.particle",
+   "part": "particles",
+   "label": "Flipbook",
+   "doc": "The particles' flipbook",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.particle",
+   "unit": "plain"
+  }
+ ],
+ "tasks": []
+}

@@ -1,0 +1,417 @@
+{
+ "format": 1,
+ "effect": 172,
+ "name": "Morph",
+ "doc": "Morph (enemy attack 53, Jelleye's): two ring meshes at the caster's point, turning and fading in and out, sparkles appearing at random bones of the caster, the caster hidden and redrawn with a cycling colour over its faces near its point; the sound at the caster (its code applies no action result). Its tasks are the port's code (FFNx mag172_morph.cpp) run on the program's memory (its sparkles, the rings' radii and vertex buffers, its queues and packet arenas in the module).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x5D9CB0",
+   "setup": "0x5D9CD0",
+   "root": "0x5DB210"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 172,
+  "from": "0x239A8E0",
+  "size": "0x12E20"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0xD655DC",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0xD65634",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xD61E28",
+   "size": 356
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xD6299C",
+   "size": 11328,
+   "vertices": 261
+  },
+  "seqs.spark": {
+   "kind": "seq",
+   "address": "0xD61F8C",
+   "size": 352,
+   "frames": 13
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x5D9CD0",
+  "file_loader": "0x5D9CB0",
+  "root": "0x5DB210"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "director",
+   "title": "Director",
+   "doc": "The director's ticks: the caster's point (tick 0), the rings, the sparkles, the sound at the caster, the tinted caster, the end; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "rings",
+   "title": "Rings",
+   "doc": "Two ring meshes at the caster's point through the shadow camera, turning (one faster), fading in and out"
+  },
+  {
+   "id": 2,
+   "key": "sparks",
+   "title": "Sparkles",
+   "doc": "Still sparkles appearing at random bones of the caster, each playing its flipbook once"
+  },
+  {
+   "id": 3,
+   "key": "tint",
+   "title": "Tinted caster",
+   "doc": "The caster hidden and redrawn with a cycling colour over its faces near its point, from black and back"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The director's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "At the director's sound tick, at the caster's point",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.rings",
+   "part": "director",
+   "label": "Rings",
+   "doc": "The two rings start (the ring mesh's radii taken)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sparks",
+   "part": "director",
+   "label": "Sparkles",
+   "doc": "The sparkles start",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "director",
+   "label": "Sound",
+   "doc": "The sound",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.tint",
+   "part": "director",
+   "label": "Tinted caster",
+   "doc": "The tinted caster starts",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "director",
+   "label": "End",
+   "doc": "The director's last tick",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "director",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "director",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "rings.size_a",
+   "part": "rings",
+   "label": "Size 1",
+   "doc": "The first ring's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3072,
+   "unit": "scale"
+  },
+  {
+   "key": "rings.size_b",
+   "part": "rings",
+   "label": "Size 2",
+   "doc": "The second ring's size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 5632,
+   "unit": "scale"
+  },
+  {
+   "key": "rings.spin",
+   "part": "rings",
+   "label": "Spin",
+   "doc": "Their angle step a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": -10,
+   "unit": "angle"
+  },
+  {
+   "key": "rings.turn_a",
+   "part": "rings",
+   "label": "Turn 1",
+   "doc": "The first ring turned about z by this x its angle",
+   "type": "i16",
+   "min": -16,
+   "max": 16,
+   "default": -2,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.turn_b",
+   "part": "rings",
+   "label": "Turn 2",
+   "doc": "The second ring's",
+   "type": "i16",
+   "min": -16,
+   "max": 16,
+   "default": -3,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.ticks",
+   "part": "rings",
+   "label": "Ticks",
+   "doc": "Their ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 200,
+   "default": 56,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.in",
+   "part": "rings",
+   "label": "Fade in",
+   "doc": "Ticks from none to the hold level",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.out",
+   "part": "rings",
+   "label": "Fade out from",
+   "doc": "From this tick back to none at their end",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.hold",
+   "part": "rings",
+   "label": "Hold fade",
+   "doc": "Their fade in between (0x1000: none drawn)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 3072,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.twist",
+   "part": "rings",
+   "label": "Twist",
+   "doc": "Each vertex turned by sin(its radius x 3) x this (0: the mesh as it is)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 0,
+   "unit": "angle"
+  },
+  {
+   "key": "models.ring",
+   "part": "rings",
+   "label": "Ring",
+   "doc": "The prim model drawn (a mesh of 261 vertices: an edited one keeps its vertices)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.ticks",
+   "part": "sparks",
+   "label": "Ticks",
+   "doc": "One new sparkle a tick on its first ticks (100 alive at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 43,
+   "unit": "plain"
+  },
+  {
+   "key": "sparks.size",
+   "part": "sparks",
+   "label": "Size",
+   "doc": "A sparkle's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 320,
+   "unit": "scale"
+  },
+  {
+   "key": "sparks.size_rand",
+   "part": "sparks",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1664,
+   "unit": "scale"
+  },
+  {
+   "key": "sparks.spread",
+   "part": "sparks",
+   "label": "Spread",
+   "doc": "Up to this far from its bone on each axis (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 180,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.spark",
+   "part": "sparks",
+   "label": "Sparkle",
+   "doc": "The sprite sequence of the sparkles (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.spark",
+   "unit": "plain"
+  },
+  {
+   "key": "tint.ticks",
+   "part": "tint",
+   "label": "Ticks",
+   "doc": "The caster drawn tinted for this many ticks (its colour: the 20-step cycle of the exe's table)",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 56,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.radius",
+   "part": "tint",
+   "label": "Radius",
+   "doc": "The faces with a corner this near the caster's point get the colour (fading with the distance)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1000,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.in",
+   "part": "tint",
+   "label": "Fade in",
+   "doc": "Ticks from black to its colour",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "tint.out",
+   "part": "tint",
+   "label": "Fade out from",
+   "doc": "From this tick back to black at its end",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 48,
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.tint_colours",
+   "label": "Tint colours",
+   "doc": "The tinted caster's colour cycle: 20 colour words, one a tick in turn",
+   "address": "0xD655E4",
+   "size": 80
+  }
+ ]
+}

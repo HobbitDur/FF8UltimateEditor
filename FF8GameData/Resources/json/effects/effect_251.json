@@ -1,0 +1,1189 @@
+{
+ "format": 1,
+ "effect": 251,
+ "name": "Demon Slice",
+ "doc": "Demon Slice (Seifer's enemy attack 314, c0m086): flames around the target, the caster sliding toward him under a fading layout, the wave layout at the caster swelling and lifting the caster and the target, rising layouts, the slash layout and a hit at the target every 5 ticks with the caster swinging and the blade trail of slot 4's bone 1, two white flashes, the push layout with the target pushed back and hidden, the caster back with sparkles round him, the target dropped back at his start and drawn turned over by the module under the fall layout, the screen flash, the sounds; the action result at tick 0xDB. Bloodfest 210's twin. Its tasks are the port's code (FFNx mag251_demon_slice.cpp) run on the program's memory (its pools in the magic buffer); its texture is exe data (the setup's TIM), its file loader the engine's null sub.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x6F44D0",
+   "root": "0x6F4580"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 251,
+  "from": "0x2556388",
+  "size": "0xF0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sounds.start": {
+   "kind": "sound",
+   "address": "0x142D738",
+   "size": 4
+  },
+  "sounds.swing": {
+   "kind": "sound",
+   "address": "0x142D740",
+   "size": 4
+  },
+  "sounds.fall": {
+   "kind": "sound",
+   "address": "0x142D73C",
+   "size": 4
+  },
+  "res.tim": {
+   "kind": "tim",
+   "address": "0x143CC90",
+   "size": 132640
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x142D5AC",
+   "size": 396
+  },
+  "seqs.flame": {
+   "kind": "seq",
+   "address": "0x143878C",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.glow": {
+   "kind": "seq",
+   "address": "0x1438938",
+   "size": 428,
+   "frames": 16
+  },
+  "seqs.ember": {
+   "kind": "seq",
+   "address": "0x1438AE4",
+   "size": 428,
+   "frames": 16
+  },
+  "layouts.opening": {
+   "kind": "layout",
+   "address": "0x142FB40",
+   "size": 6360,
+   "capacity": 456
+  },
+  "layouts.wave": {
+   "kind": "layout",
+   "address": "0x1434430",
+   "size": 17224,
+   "capacity": 588
+  },
+  "layouts.rise": {
+   "kind": "layout",
+   "address": "0x1431F88",
+   "size": 1216,
+   "capacity": 192
+  },
+  "layouts.slash": {
+   "kind": "layout",
+   "address": "0x1433318",
+   "size": 4376,
+   "capacity": 416
+  },
+  "layouts.hit": {
+   "kind": "layout",
+   "address": "0x1431418",
+   "size": 2928,
+   "capacity": 324
+  },
+  "layouts.push": {
+   "kind": "layout",
+   "address": "0x1432448",
+   "size": 3792,
+   "capacity": 456
+  },
+  "layouts.fall": {
+   "kind": "layout",
+   "address": "0x142D8A4",
+   "size": 8860,
+   "capacity": 520
+  },
+  "seqs.sparkle": {
+   "kind": "seq",
+   "address": "0x142D744",
+   "size": 352,
+   "frames": 13
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6F44D0",
+  "file_loader": "0x0",
+  "root": "0x6F4580"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The main task's ticks, its three sounds, the screen flash rising and falling; the TIM and the camera"
+  },
+  {
+   "id": 0,
+   "key": "caster",
+   "title": "Caster",
+   "doc": "The caster sliding toward the target, swinging between two points by him, then back to his start (the effect moves him, it draws nothing)"
+  },
+  {
+   "id": 1,
+   "key": "flames",
+   "title": "Flames",
+   "doc": "Flames around the target (Fire's parts), each with its ground glow, embers rising and sparks drifting"
+  },
+  {
+   "id": 2,
+   "key": "opening",
+   "title": "Opening",
+   "doc": "Layout A at the caster's spawn point, fading out"
+  },
+  {
+   "id": 3,
+   "key": "wave",
+   "title": "Wave",
+   "doc": "The wave layout at the caster's spawn point, its vertices pushed by a travelling wave, its texture scrolling; it swells, then grows taller as it lifts the caster and the target"
+  },
+  {
+   "id": 4,
+   "key": "risers",
+   "title": "Risers",
+   "doc": "Layout tasks rising above the caster's spawn point while the wave plays"
+  },
+  {
+   "id": 5,
+   "key": "slash",
+   "title": "Slash",
+   "doc": "The slash layout at the caster's spawn point of its first tick, its texture scrolling"
+  },
+  {
+   "id": 6,
+   "key": "hits",
+   "title": "Hits",
+   "doc": "A hit layout task at the target every few ticks, with his hit chain"
+  },
+  {
+   "id": 7,
+   "key": "push",
+   "title": "Push",
+   "doc": "The push layout at the target's effect point; the target pushed back a step a tick, hidden at its end"
+  },
+  {
+   "id": 9,
+   "key": "target",
+   "title": "Target",
+   "doc": "The target back at his start, dropped from above, drawn by the module turned over about his middle; then his result"
+  },
+  {
+   "id": 8,
+   "key": "fall",
+   "title": "Fall",
+   "doc": "The fall layout at the target's start, his hit chain at its first tick"
+  },
+  {
+   "id": 10,
+   "key": "whites",
+   "title": "White flashes",
+   "doc": "Two full-screen flashes (fading in, held, fading out)"
+  },
+  {
+   "id": 11,
+   "key": "trail",
+   "title": "Blade trail",
+   "doc": "The blade trail of slot 4's bone 1: a ring of its last 7 points splined, drawn as gouraud quads fading along it"
+  },
+  {
+   "id": 12,
+   "key": "sparkles",
+   "title": "Sparkles",
+   "doc": "Sparkles flying out round the caster when he is back"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The main task's ticks"
+  },
+  {
+   "key": "flash",
+   "label": "Screen flash",
+   "doc": "The screen flash's level and slopes"
+  }
+ ],
+ "params": [
+  {
+   "key": "sounds.start",
+   "part": "master",
+   "label": "Start sound",
+   "doc": "At the start sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.start",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.swing",
+   "part": "master",
+   "label": "Swing sound",
+   "doc": "At the swing sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.swing",
+   "unit": "plain"
+  },
+  {
+   "key": "sounds.fall",
+   "part": "master",
+   "label": "Fall sound",
+   "doc": "At the fall sound's tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sounds.fall",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.start",
+   "part": "master",
+   "label": "Start sound",
+   "doc": "The main task's tick of the start sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.swing",
+   "part": "master",
+   "label": "Swing sound",
+   "doc": "Its tick of the swing sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 68,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.fall",
+   "part": "master",
+   "label": "Fall sound",
+   "doc": "Its tick of the fall sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 199,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "master",
+   "label": "End",
+   "doc": "Its last tick: the caster put back at his start (the screen flash falls to 0 there)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 220,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.level",
+   "part": "master",
+   "label": "Flash level",
+   "doc": "The screen flash's level",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 2300,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.rise",
+   "part": "master",
+   "label": "Flash rise",
+   "doc": "It rises over the first ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.fall",
+   "part": "master",
+   "label": "Flash fall",
+   "doc": "It falls over the last ticks before the end (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim",
+   "part": "master",
+   "label": "TIM",
+   "doc": "The TIM its setup uploads (exe data: the effect has no file)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "master",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "caster.slide_from",
+   "part": "caster",
+   "label": "Slide from",
+   "doc": "The main task's tick the caster starts sliding to the far point (an eased sine)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 83,
+   "unit": "plain"
+  },
+  {
+   "key": "caster.slide_ticks",
+   "part": "caster",
+   "label": "Slide ticks",
+   "doc": "Its ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 31,
+   "unit": "plain"
+  },
+  {
+   "key": "caster.swing_until",
+   "part": "caster",
+   "label": "Swings until",
+   "doc": "While the hits run, below this tick the caster swings between the far and the near point",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 141,
+   "unit": "plain"
+  },
+  {
+   "key": "caster.back_from",
+   "part": "caster",
+   "label": "Back from",
+   "doc": "The tick he starts back to his start (the sparkles at its end; 0x37 at least: their pool is set up then)",
+   "type": "i16",
+   "min": 55,
+   "max": 400,
+   "default": 168,
+   "unit": "plain"
+  },
+  {
+   "key": "caster.back_ticks",
+   "part": "caster",
+   "label": "Back ticks",
+   "doc": "Its ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.count",
+   "part": "flames",
+   "label": "Count",
+   "doc": "Flames around the target",
+   "type": "i16",
+   "min": 0,
+   "max": 8,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.frames",
+   "part": "flames",
+   "label": "Frames",
+   "doc": "A flame's frames (its flipbook's: 16 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 16,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.embers",
+   "part": "flames",
+   "label": "Embers",
+   "doc": "Embers rising from each flame",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.sparks",
+   "part": "flames",
+   "label": "Sparks",
+   "doc": "Sparks drifting from each flame",
+   "type": "i16",
+   "min": 0,
+   "max": 20,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.size",
+   "part": "flames",
+   "label": "Size",
+   "doc": "A flame's size: this + a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3328,
+   "unit": "scale"
+  },
+  {
+   "key": "flames.size_rand",
+   "part": "flames",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "flames.drop",
+   "part": "flames",
+   "label": "Dropped",
+   "doc": "The main task's tick every flame, ember and spark is dropped",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 33,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.flame",
+   "part": "flames",
+   "label": "Flame",
+   "doc": "The flames' sprite sequence (a flipbook)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.flame",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.glow",
+   "part": "flames",
+   "label": "Ground glow",
+   "doc": "Their ground glow's sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.ember",
+   "part": "flames",
+   "label": "Ember",
+   "doc": "The embers' sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.ember",
+   "unit": "plain"
+  },
+  {
+   "key": "opening.start",
+   "part": "opening",
+   "label": "Start",
+   "doc": "The main task's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 73,
+   "unit": "plain"
+  },
+  {
+   "key": "opening.ticks",
+   "part": "opening",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "opening.fade_from",
+   "part": "opening",
+   "label": "Fade from",
+   "doc": "After this tick of it, it fades out",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "opening.fade_ticks",
+   "part": "opening",
+   "label": "Fade ticks",
+   "doc": "Over so many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.opening",
+   "part": "opening",
+   "label": "Layout",
+   "doc": "The prim-model layout played",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.opening",
+   "unit": "plain"
+  },
+  {
+   "key": "wave.start",
+   "part": "wave",
+   "label": "Start",
+   "doc": "The main task's tick it starts (0x37 at least: the risers' pool is set up then)",
+   "type": "i16",
+   "min": 55,
+   "max": 400,
+   "default": 83,
+   "unit": "plain"
+  },
+  {
+   "key": "wave.ticks",
+   "part": "wave",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 95,
+   "unit": "plain"
+  },
+  {
+   "key": "wave.phase",
+   "part": "wave",
+   "label": "Wave step",
+   "doc": "The wave's phase step a tick (0x1000 a turn)",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 64,
+   "unit": "angle"
+  },
+  {
+   "key": "wave.amp",
+   "part": "wave",
+   "label": "Wave amplitude",
+   "doc": "How far the wave pushes the vertices",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "wave.scroll",
+   "part": "wave",
+   "label": "Scroll",
+   "doc": "Its texture scroll a tick",
+   "type": "i16",
+   "min": -256,
+   "max": 256,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "wave.swell_from",
+   "part": "wave",
+   "label": "Swell from",
+   "doc": "From this tick of it, it swells sideways",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "wave.swell_ticks",
+   "part": "wave",
+   "label": "Swell ticks",
+   "doc": "A quarter turn of the swell's sine over so many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 15,
+   "unit": "plain"
+  },
+  {
+   "key": "wave.swell",
+   "part": "wave",
+   "label": "Swell",
+   "doc": "Its width grows by this x the sine (x 1 = its own width)",
+   "type": "i16",
+   "min": -8,
+   "max": 8,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.start",
+   "part": "wave",
+   "label": "Lift from",
+   "doc": "From this main task's tick it grows taller (to twice its height)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 141,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.ticks",
+   "part": "wave",
+   "label": "Lift ticks",
+   "doc": "Over so many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "lift.end",
+   "part": "wave",
+   "label": "Lift until",
+   "doc": "Below this tick it lifts the caster and the target (a cosine ease)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 168,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.wave",
+   "part": "wave",
+   "label": "Layout",
+   "doc": "The wave layout played (its first two models' heights are normalised for the wave)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.wave",
+   "unit": "plain"
+  },
+  {
+   "key": "risers.every",
+   "part": "risers",
+   "label": "Every",
+   "doc": "A riser every so many of the wave's ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "risers.until",
+   "part": "risers",
+   "label": "Until",
+   "doc": "Below this tick of the wave",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 83,
+   "unit": "plain"
+  },
+  {
+   "key": "risers.lift",
+   "part": "risers",
+   "label": "Lift",
+   "doc": "Above the caster's spawn point",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 256,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.rise",
+   "part": "risers",
+   "label": "Layout",
+   "doc": "The risers' prim-model layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "slash.start",
+   "part": "slash",
+   "label": "Start",
+   "doc": "The main task's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 114,
+   "unit": "plain"
+  },
+  {
+   "key": "slash.ticks",
+   "part": "slash",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 25,
+   "unit": "plain"
+  },
+  {
+   "key": "slash.scroll",
+   "part": "slash",
+   "label": "Scroll",
+   "doc": "Its texture scroll a tick",
+   "type": "i16",
+   "min": -256,
+   "max": 256,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.slash",
+   "part": "slash",
+   "label": "Layout",
+   "doc": "The slash's prim-model layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.slash",
+   "unit": "plain"
+  },
+  {
+   "key": "hits.start",
+   "part": "hits",
+   "label": "Start",
+   "doc": "The main task's tick the hits start (0x37 at least: their pool is set up then)",
+   "type": "i16",
+   "min": 55,
+   "max": 400,
+   "default": 114,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.ticks",
+   "part": "hits",
+   "label": "Ticks",
+   "doc": "For so many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 54,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.every",
+   "part": "hits",
+   "label": "Every",
+   "doc": "A hit every so many ticks (at least 1); the caster's swing is that long too",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "hits.chain",
+   "part": "hits",
+   "label": "Hit chain",
+   "doc": "The target's hit chain (QueueChainTransformation) with each hit and the fall",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 5,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.hit",
+   "part": "hits",
+   "label": "Layout",
+   "doc": "The hits' prim-model layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.hit",
+   "unit": "plain"
+  },
+  {
+   "key": "push.start",
+   "part": "push",
+   "label": "Start",
+   "doc": "The main task's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 163,
+   "unit": "plain"
+  },
+  {
+   "key": "push.ticks",
+   "part": "push",
+   "label": "Ticks",
+   "doc": "Its ticks (the target hidden at its last)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 14,
+   "unit": "plain"
+  },
+  {
+   "key": "push.height",
+   "part": "push",
+   "label": "Height",
+   "doc": "The layout's height",
+   "type": "i16",
+   "min": -16384,
+   "max": 16384,
+   "default": -4096,
+   "unit": "plain"
+  },
+  {
+   "key": "push.step",
+   "part": "push",
+   "label": "Step",
+   "doc": "The target pushed back so much a tick",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.push",
+   "part": "push",
+   "label": "Layout",
+   "doc": "The push's prim-model layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.push",
+   "unit": "plain"
+  },
+  {
+   "key": "target.start",
+   "part": "target",
+   "label": "Start",
+   "doc": "The main task's tick he is back at his start",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 192,
+   "unit": "plain"
+  },
+  {
+   "key": "target.drop",
+   "part": "target",
+   "label": "Drop",
+   "doc": "He drops from above over so many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "target.ticks",
+   "part": "target",
+   "label": "Ticks",
+   "doc": "He is drawn by the module until this tick of it, then his result and he is shown",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 27,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.start",
+   "part": "fall",
+   "label": "Start",
+   "doc": "The main task's tick it starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 200,
+   "unit": "plain"
+  },
+  {
+   "key": "fall.ticks",
+   "part": "fall",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.fall",
+   "part": "fall",
+   "label": "Layout",
+   "doc": "The fall's prim-model layout",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.fall",
+   "unit": "plain"
+  },
+  {
+   "key": "whites.first",
+   "part": "whites",
+   "label": "First",
+   "doc": "The main task's tick of the first",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 114,
+   "unit": "plain"
+  },
+  {
+   "key": "whites.second",
+   "part": "whites",
+   "label": "Second",
+   "doc": "The tick of the second",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 163,
+   "unit": "plain"
+  },
+  {
+   "key": "whites.in",
+   "part": "whites",
+   "label": "In",
+   "doc": "Ticks fading in",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "whites.hold",
+   "part": "whites",
+   "label": "Hold",
+   "doc": "Ticks held",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "whites.out",
+   "part": "whites",
+   "label": "Out",
+   "doc": "Ticks fading out",
+   "type": "i16",
+   "min": 0,
+   "max": 100,
+   "default": 3,
+   "unit": "plain"
+  },
+  {
+   "key": "whites.r",
+   "part": "whites",
+   "label": "Red",
+   "doc": "Their colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "whites.g",
+   "part": "whites",
+   "label": "Green",
+   "doc": "Their colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "whites.b",
+   "part": "whites",
+   "label": "Blue",
+   "doc": "Their colour",
+   "type": "i16",
+   "min": 0,
+   "max": 255,
+   "default": 255,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.start",
+   "part": "trail",
+   "label": "Start",
+   "doc": "The main task's tick it starts (0x37 at least: its pool is set up then)",
+   "type": "i16",
+   "min": 55,
+   "max": 400,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.ticks",
+   "part": "trail",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 19,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.shorten",
+   "part": "trail",
+   "label": "Shorter from",
+   "doc": "From this tick of it, it keeps ticks + 1 - its tick points (7 before)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.length",
+   "part": "trail",
+   "label": "Length",
+   "doc": "Its tip's distance from the bone along the blade",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 777,
+   "unit": "plain"
+  },
+  {
+   "key": "trail.colour",
+   "part": "trail",
+   "label": "Colour",
+   "doc": "Its colour at the blade (0xBBGGRR), fading to black along it",
+   "type": "i32",
+   "min": 0,
+   "max": 16777215,
+   "default": 1595424,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.count",
+   "part": "sparkles",
+   "label": "Count",
+   "doc": "How many",
+   "type": "i16",
+   "min": 0,
+   "max": 16,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "sparkles.step",
+   "part": "sparkles",
+   "label": "Angle step",
+   "doc": "The angle between two of them",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 256,
+   "unit": "angle"
+  },
+  {
+   "key": "sparkles.frames",
+   "part": "sparkles",
+   "label": "Frames",
+   "doc": "A sparkle's frames (its flipbook's: 13 at most)",
+   "type": "i16",
+   "min": 1,
+   "max": 13,
+   "default": 13,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.sparkle",
+   "part": "sparkles",
+   "label": "Sparkle",
+   "doc": "The sparkles' sprite sequence",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.sparkle",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.kinds_plain",
+   "label": "Object kinds",
+   "doc": "The plain layouts' per-object kind bytes (0x30 plain, 0x31 texture scroll, 0x41 / 0x42 the wave)",
+   "address": "0x1438778",
+   "size": 20
+  },
+  {
+   "key": "not_editable.wave_table",
+   "label": "Wave table",
+   "doc": "The wave's 0x1000 directions and amplitudes (2 words each: its first quarter shown)",
+   "address": "0x1438C90",
+   "size": 4096
+  },
+  {
+   "key": "not_editable.kinds_slash",
+   "label": "Slash layout kinds",
+   "doc": "The slash layout's per-object kind bytes",
+   "address": "0x145D2B0",
+   "size": 4
+  },
+  {
+   "key": "not_editable.kinds_wave",
+   "label": "Wave layout kinds",
+   "doc": "The wave layout's per-object kind bytes",
+   "address": "0x145D2B4",
+   "size": 256
+  }
+ ]
+}

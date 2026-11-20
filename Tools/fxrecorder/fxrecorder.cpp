@@ -17,7 +17,8 @@
 //   R t n                         tick t, then its n OT insertions:
 //   P 0 0 0 0 0 0 0 fn bucket len words...   one GPU packet (hex)
 //   C t ex ey ez ax ay az         the battle camera words after the tick (eye, look-at)
-//   V t x y w h hexwords          a VRAM upload (queued by the tick, or done before it)
+//   V t x y w h hexwords          a VRAM upload (queued by the tick, or done before it), or a VRAM fill
+//                                 (0x45BEE0: the rectangle in one colour)
 //   B t x y w h u v               a VRAM-to-VRAM copy
 //   N t slot amount flags hit    an action result the effect gave a target (its number then shows)
 //   S t address word              a sound it played (its sound block in memory, the world sound id in it)
@@ -164,11 +165,13 @@ static std::string join(const std::string &dir, const std::string &name)
 struct VramRect { int x, y, w, h; };
 static std::vector<VramRect> g_actor_vram;
 static bool g_loading_actors = false;
+static uint32_t g_vram_lines = 0; // V / B lines written so far
 static void dump_rect(int t, const int16_t *rect, const uint16_t *data)
 {
 	int w = rect[2], h = rect[3];
 	if (g_loading_actors && w > 0 && h > 0) g_actor_vram.push_back({ rect[0], rect[1], w, h });
 	if (!g_out || w <= 0 || h <= 0 || w > 1024 || h > 512 || IsBadReadPtr(data, (size_t)w * h * 2)) return;
+	g_vram_lines++;
 	fprintf(g_out, "V %d %d %d %d %d ", t, rect[0], rect[1], w, h);
 	for (int i = 0; i < w * h; i++) fprintf(g_out, "%04X", data[i]);
 	fprintf(g_out, "\n");
@@ -194,7 +197,7 @@ static void dump_vram_queue()
 		uint32_t src = *(const uint32_t *)(e + 12);
 		if (e[0] == 0) dump_rect(g_tick, rect, (const uint16_t *)src);
 		else if (e[0] == 1) dump_tim(g_tick, (const uint8_t *)src);
-		else if (e[0] == 3 && g_out) fprintf(g_out, "B %d %d %d %d %d %u %u\n", g_tick, rect[0], rect[1], rect[2], rect[3], src & 0xFFFF, src >> 16);
+		else if (e[0] == 3 && g_out) { g_vram_lines++; fprintf(g_out, "B %d %d %d %d %d %u %u\n", g_tick, rect[0], rect[1], rect[2], rect[3], src & 0xFFFF, src >> 16); }
 	}
 	*(uint32_t *)0x1D98420 = 0;
 }
@@ -259,7 +262,45 @@ static int __cdecl s_505DF0(const int16_t *rect, const uint16_t *data) { if (rec
 // QueueBlitCommand (0x505EB0): a VRAM-to-VRAM copy, recorded
 static int __cdecl s_505EB0(const int16_t *r, uint32_t u, uint32_t v)
 {
-	if (r && g_out) fprintf(g_out, "B %d %d %d %d %d %u %u\n", g_tick, r[0], r[1], r[2], r[3], u & 0xFFFF, v & 0xFFFF);
+	if (r && g_out) { g_vram_lines++; fprintf(g_out, "B %d %d %d %d %d %u %u\n", g_tick, r[0], r[1], r[2], r[3], u & 0xFFFF, v & 0xFFFF); }
+	return 0;
+}
+// isDravingOverlayImage (0x45BEE0): fills a VRAM rectangle {x, y, w, h} with one colour (its r, g, b packed as it does: b low, r high), recorded as
+// a V line of that colour (the screen copy of Maelstrom 207, Sorceress spawn 209, Omega Gravija 214 clears its VRAM
+// (0x240, 0x100) with it). The fill is done in the exe's VRAM copy (0x1B47A18, 1024 x 512) as the game does; what it
+// sets up there the first time (the PSX VRAM's graphics objects, set_ptr_psxvram_sub_464220: the game's renderer, absent
+// here) and its texture cache clear are not run. The same fill again with no V / B line written since is not written again
+// (209 clears it every tick).
+static int16_t g_fill_last[5];
+static uint32_t g_fill_lines = 0xFFFFFFFF;
+static int __cdecl s_45BEE0(const int16_t *rect, uint8_t r, uint8_t g, uint8_t b)
+{
+	if (!rect) return 1;
+	const uint16_t colour = (uint16_t)((b >> 3) | (g >> 3) << 5 | (r >> 3) << 10); // as the game packs it
+	const int x = rect[0], y = rect[1], w = rect[2], h = rect[3];
+	*(uint32_t *)0x1B47810 = 1;                 // initialize_psxvram_is_done
+	if (x >= 0 && y >= 0 && w > 0 && h > 0 && x + w <= 1024 && y + h <= 512)
+	{
+		uint16_t *vram = (uint16_t *)0x1B47A18;
+		for (int j = 0; j < h; j++)
+			for (int i = 0; i < w; i++) vram[(y + j) * 1024 + x + i] = colour;
+		const int16_t key[5] = { rect[0], rect[1], rect[2], rect[3], (int16_t)colour };
+		if (g_fill_lines != g_vram_lines || memcmp(key, g_fill_last, sizeof(key)) != 0)
+		{
+			std::vector<uint16_t> words((size_t)w * h, colour);
+			dump_rect(g_tick, rect, words.data());
+			memcpy(g_fill_last, key, sizeof(key));
+			g_fill_lines = g_vram_lines;
+		}
+	}
+	return 1;
+}
+// BS_ChangeStage (0x50E3C0): the Sorceress fight's stage swap (209 at its tick 52: the next stage's geometry moved over the
+// stage's, its TIM queued, its palettes and sky set) - not done here (the fake battle's stage is not the witch fight's);
+// said on the console. Its file (BS_WitchFight_GetNewStage 0x50E3A0, tick 2) still loads like every battle file here.
+static int __cdecl s_50E3C0(uint32_t)
+{
+	printf("tick %d: stage swap (BS_ChangeStage) not done\n", g_tick);
 	return 0;
 }
 static int __cdecl s_40A0F0(uint32_t, uint32_t, uint32_t) { return 0; } // free_mem_with_line
@@ -932,7 +973,7 @@ static void apply_pending(std::vector<Pending> v)
 			if (f.empty() && g_serve.empty()) f = readfile(join(O.magic, name));   // a summon's later files (mag200_b.02..), imported with its others
 			if (!f.empty()) memcpy((void *)p.b, f.data(), f.size());
 			else printf("missing battle file %s\n", g_serve.empty() ? name : g_serve.c_str());
-			if (p.c) ((void (__cdecl *)())p.c)();
+			if (p.c) ((void (__cdecl *)(int32_t))p.c)((int32_t)f.size()); // its load's result: the bytes read
 		}
 		for (const Pending &q : g_pending) v.push_back(q);
 		g_pending.clear();
@@ -1699,6 +1740,8 @@ int main(int argc, char **argv)
 	patch_jmp(0x5088A0, (void *)s_5088A0);
 	patch_jmp(0x505DF0, (void *)s_505DF0);
 	patch_jmp(0x505EB0, (void *)s_505EB0);
+	patch_jmp(0x45BEE0, (void *)s_45BEE0);   // VRAM fill: recorded (the screen copy's clear)
+	patch_jmp(0x50E3C0, (void *)s_50E3C0);   // the witch fight's stage swap: not done
 	patch_jmp(0x49ED30, (void *)s_49ED30); patch_jmp(0x4A2D60, (void *)s_4A2D60); patch_jmp(0x49F0A0, (void *)s_49F0A0);
 	patch_jmp(0x5099D0, (void *)s_5099D0); patch_jmp(0x508C90, (void *)s_508C90); patch_jmp(0x5095B0, (void *)s_5095B0);
 	patch_jmp(0x508F90, (void *)s_508F90); patch_jmp(0x509440, (void *)s_509440);

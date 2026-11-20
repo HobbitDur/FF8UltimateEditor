@@ -1,0 +1,1183 @@
+{
+ "format": 1,
+ "effect": 209,
+ "name": "Sorceress spawn",
+ "doc": "\"Sorceress\" spawn (enemy attacks 319 / 327 of the time-compression sorceresses c0m115 / c0m116 / c0m117): the battle stage swapped for the next one while the stage, rendered into VRAM (0x240, 0x100), is drawn back as tiles, flashes white and ripples on a screen grid around the caster's head, fading to the new stage's colours; the glow, the 12 bursts, the swirl (timeline A), rising and closing rings at the caster, the screen flash, the sound; the action result at tick 124. Timeline B (the wormlike c0m117) adds screen fades, a camera shake and a voice. Its tasks are the port's code (FFNx mag209_sorceress_spawn.cpp) run on the program's memory (its grid points in the module; its grid cells in the summon data, where the next stage's file is loaded first); its texture is exe data (the setup's TIM), its file loader the engine's bare ret.",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "setup": "0x637500",
+   "root": "0x639100"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 209,
+  "from": "0x24F3618",
+  "size": "0x4450"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound_a": {
+   "kind": "sound",
+   "address": "0xE2B3F4",
+   "size": 4
+  },
+  "sound_b": {
+   "kind": "sound",
+   "address": "0xE2B3F8",
+   "size": 4
+  },
+  "res.tim": {
+   "kind": "tim",
+   "address": "0xF47340",
+   "size": 68128
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0xE25AF0",
+   "size": 2128
+  },
+  "tables.colours_in": {
+   "kind": "table",
+   "address": "0xE2B430",
+   "size": 32,
+   "format": "B",
+   "columns": 4,
+   "skip": 0,
+   "labels": [
+    "r",
+    "g",
+    "b",
+    "code"
+   ],
+   "count": 8
+  },
+  "tables.colours": {
+   "kind": "table",
+   "address": "0xE2B450",
+   "size": 96,
+   "format": "B",
+   "columns": 4,
+   "skip": 0,
+   "labels": [
+    "r",
+    "g",
+    "b",
+    "code"
+   ],
+   "count": 24
+  },
+  "models.glow": {
+   "kind": "model",
+   "address": "0xE288F0",
+   "size": 2032,
+   "vertices": 81
+  },
+  "models.bursts[0]": {
+   "kind": "model",
+   "address": "0xE29588",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[1]": {
+   "kind": "model",
+   "address": "0xE297F8",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[2]": {
+   "kind": "model",
+   "address": "0xE29A68",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[3]": {
+   "kind": "model",
+   "address": "0xE29CD8",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[4]": {
+   "kind": "model",
+   "address": "0xE29F48",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[5]": {
+   "kind": "model",
+   "address": "0xE2A1B8",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[6]": {
+   "kind": "model",
+   "address": "0xE2A428",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[7]": {
+   "kind": "model",
+   "address": "0xE2A698",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[8]": {
+   "kind": "model",
+   "address": "0xE2A908",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[9]": {
+   "kind": "model",
+   "address": "0xE2AB78",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[10]": {
+   "kind": "model",
+   "address": "0xE2ADE8",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.bursts[11]": {
+   "kind": "model",
+   "address": "0xE2B058",
+   "size": 624,
+   "vertices": 25
+  },
+  "models.swirl": {
+   "kind": "model",
+   "address": "0xE26340",
+   "size": 5240,
+   "vertices": 158
+  },
+  "tables.swirl": {
+   "kind": "table",
+   "address": "0xE2B4B0",
+   "size": 72,
+   "format": "B",
+   "columns": 4,
+   "skip": 0,
+   "labels": [
+    "r",
+    "g",
+    "b",
+    "code"
+   ],
+   "count": 18
+  },
+  "models.rise": {
+   "kind": "model",
+   "address": "0xE277B8",
+   "size": 4408,
+   "vertices": 186
+  },
+  "models.ring": {
+   "kind": "model",
+   "address": "0xE290E0",
+   "size": 1192,
+   "vertices": 48
+  }
+ },
+ "resources": {},
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x637500",
+  "file_loader": "0x0",
+  "root": "0x639100"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "timeline",
+   "title": "Timeline",
+   "doc": "The timelines (A: c0m115 / c0m116, B: the wormlike c0m117): the sound, the stage's file loaded then the stage swapped, the caster hidden, the screen flash, the action result; B's screen fades, camera shake and voice; the TIM and the camera"
+  },
+  {
+   "id": 1,
+   "key": "screen",
+   "title": "Screen",
+   "doc": "The stage rendered into VRAM (0x240, 0x100) and drawn back as tiles, a white flash, then on a rippling grid around the caster's head fading to the new stage's colours"
+  },
+  {
+   "id": 2,
+   "key": "glow",
+   "title": "Glow",
+   "doc": "The glow mesh at the caster, growing then fading out"
+  },
+  {
+   "id": 3,
+   "key": "bursts",
+   "title": "Bursts",
+   "doc": "The 12 burst meshes at the caster, turning and growing, fading out over their last ticks"
+  },
+  {
+   "id": 4,
+   "key": "swirl",
+   "title": "Swirl",
+   "doc": "Timeline A's scrolling swirl mesh at the caster's head height, its colour cycling, fading out"
+  },
+  {
+   "id": 5,
+   "key": "rise",
+   "title": "Rising rings",
+   "doc": "Rings rising at the caster's head, turning, growing, fading in and out"
+  },
+  {
+   "id": 6,
+   "key": "rings",
+   "title": "Closing rings",
+   "doc": "Rings at the caster's feet, turning and growing, fading out"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The timelines' ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound_a",
+   "part": "timeline",
+   "label": "Sound A",
+   "doc": "Timeline A's sound (c0m115 / c0m116)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound_a",
+   "unit": "plain"
+  },
+  {
+   "key": "sound_b",
+   "part": "timeline",
+   "label": "Sound B",
+   "doc": "Timeline B's sound (the wormlike c0m117)",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound_b",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "timeline",
+   "label": "Sound",
+   "doc": "The sound's tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.load",
+   "part": "timeline",
+   "label": "Stage load",
+   "doc": "The next stage's file loaded (into the summon data)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.swap",
+   "part": "timeline",
+   "label": "Stage swap",
+   "doc": "The stage swapped for it (waiting for the load)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 52,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.screen",
+   "part": "timeline",
+   "label": "Screen",
+   "doc": "The screen task starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.start",
+   "part": "timeline",
+   "label": "Meshes",
+   "doc": "The glow, the bursts and A's swirl start",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.result",
+   "part": "timeline",
+   "label": "Result",
+   "doc": "The action result",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 124,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "timeline",
+   "label": "End",
+   "doc": "The timeline's last tick (the screen flash cleared after it)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 130,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.hide_a",
+   "part": "timeline",
+   "label": "Shown again (A)",
+   "doc": "The caster hidden from tick 0 to this one (timeline A)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.hide_b",
+   "part": "timeline",
+   "label": "Shown again (B)",
+   "doc": "The same for timeline B",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 65,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.in",
+   "part": "timeline",
+   "label": "Flash in",
+   "doc": "The screen flash rising over the first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.in_step",
+   "part": "timeline",
+   "label": "Flash in step",
+   "doc": "By this a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 96,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.out",
+   "part": "timeline",
+   "label": "Flash out from",
+   "doc": "From this tick it falls to none at the end",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 122,
+   "unit": "plain"
+  },
+  {
+   "key": "flash.out_step",
+   "part": "timeline",
+   "label": "Flash out step",
+   "doc": "By this a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 192,
+   "unit": "plain"
+  },
+  {
+   "key": "res.tim",
+   "part": "timeline",
+   "label": "TIM",
+   "doc": "The texture its setup uploads (a TIM with a palette)",
+   "type": "tim",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.tim",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "timeline",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "screen.tiles",
+   "part": "screen",
+   "label": "Tiles",
+   "doc": "The stage's VRAM copy drawn back as tiles until this tick of the screen task",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 36,
+   "unit": "plain"
+  },
+  {
+   "key": "screen.flash",
+   "part": "screen",
+   "label": "White",
+   "doc": "White until this tick (the grid made then)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 38,
+   "unit": "plain"
+  },
+  {
+   "key": "screen.fade_from",
+   "part": "screen",
+   "label": "Fade from",
+   "doc": "The rippling grid fading to the new stage's colours from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 82,
+   "unit": "plain"
+  },
+  {
+   "key": "screen.fade_to",
+   "part": "screen",
+   "label": "Fade to",
+   "doc": "Until this tick (more than the last)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 98,
+   "unit": "plain"
+  },
+  {
+   "key": "screen.ticks",
+   "part": "screen",
+   "label": "Ticks",
+   "doc": "The screen task's ticks (the stage hidden at the last)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "ripple.steps",
+   "part": "screen",
+   "label": "Ripple steps",
+   "doc": "The ripple's height a half sine over this many steps (one a tick from the grid on; at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 60,
+   "unit": "plain"
+  },
+  {
+   "key": "ripple.wave",
+   "part": "screen",
+   "label": "Wave",
+   "doc": "The ripple's angle step a pixel from the caster's head",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 96,
+   "unit": "angle"
+  },
+  {
+   "key": "ripple.speed",
+   "part": "screen",
+   "label": "Speed",
+   "doc": "Its angle step a tick (outwards)",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": 385,
+   "unit": "angle"
+  },
+  {
+   "key": "ripple.amp",
+   "part": "screen",
+   "label": "Height",
+   "doc": "Its height",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 500,
+   "unit": "plain"
+  },
+  {
+   "key": "ripple.range",
+   "part": "screen",
+   "label": "Reach",
+   "doc": "Its reach in pixels (fading to none there)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 600,
+   "unit": "plain"
+  },
+  {
+   "key": "ripple.shrink",
+   "part": "screen",
+   "label": "Shrink",
+   "doc": "Its reach shrinking by this a step",
+   "type": "i16",
+   "min": 0,
+   "max": 256,
+   "default": 9,
+   "unit": "plain"
+  },
+  {
+   "key": "tables.colours_in",
+   "part": "screen",
+   "label": "Colours in",
+   "doc": "The screen's colour on its first 8 ticks (8 words: r, g, b, 0)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.colours_in",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.colours",
+   "part": "screen",
+   "label": "Colour cycle",
+   "doc": "Then this 24-colour cycle (24 words)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.colours",
+   "unit": "plain"
+  },
+  {
+   "key": "glow.size",
+   "part": "glow",
+   "label": "Size",
+   "doc": "Its size and its first growth (the growth slowing by 1/8 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 938,
+   "unit": "scale"
+  },
+  {
+   "key": "glow.grow",
+   "part": "glow",
+   "label": "Grow",
+   "doc": "Growing on its first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.out",
+   "part": "glow",
+   "label": "Fade out from",
+   "doc": "Fading out from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 102,
+   "unit": "plain"
+  },
+  {
+   "key": "glow.life",
+   "part": "glow",
+   "label": "Life",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "models.glow",
+   "part": "glow",
+   "label": "Mesh",
+   "doc": "The glow's prim model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.glow",
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.count",
+   "part": "bursts",
+   "label": "Count",
+   "doc": "How many (12 at most: one mesh each)",
+   "type": "i16",
+   "min": 0,
+   "max": 12,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.spin",
+   "part": "bursts",
+   "label": "Spin",
+   "doc": "Their angle step a tick",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 30,
+   "unit": "angle"
+  },
+  {
+   "key": "bursts.size",
+   "part": "bursts",
+   "label": "Size",
+   "doc": "Their size and first growth (slowing by 1/8 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 256,
+   "unit": "scale"
+  },
+  {
+   "key": "bursts.size2",
+   "part": "bursts",
+   "label": "Height",
+   "doc": "Their height (and first growth): (this + a random below the next) / 6",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3072,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.size2_rand",
+   "part": "bursts",
+   "label": "Height random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.grow",
+   "part": "bursts",
+   "label": "Grow",
+   "doc": "Growing on their first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.grow2",
+   "part": "bursts",
+   "label": "Grow height",
+   "doc": "Growing taller on their first ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.life",
+   "part": "bursts",
+   "label": "Life",
+   "doc": "Their ticks (fading out over the last 8)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "bursts.life_b",
+   "part": "bursts",
+   "label": "Life (B)",
+   "doc": "Timeline B's",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 55,
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[0]",
+   "part": "bursts",
+   "label": "Mesh 1",
+   "doc": "The first burst's prim model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[0]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[1]",
+   "part": "bursts",
+   "label": "Mesh 2",
+   "doc": "The second's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[1]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[2]",
+   "part": "bursts",
+   "label": "Mesh 3",
+   "doc": "The third's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[2]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[3]",
+   "part": "bursts",
+   "label": "Mesh 4",
+   "doc": "The fourth's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[3]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[4]",
+   "part": "bursts",
+   "label": "Mesh 5",
+   "doc": "The fifth's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[4]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[5]",
+   "part": "bursts",
+   "label": "Mesh 6",
+   "doc": "The sixth's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[5]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[6]",
+   "part": "bursts",
+   "label": "Mesh 7",
+   "doc": "The seventh's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[6]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[7]",
+   "part": "bursts",
+   "label": "Mesh 8",
+   "doc": "The eighth's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[7]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[8]",
+   "part": "bursts",
+   "label": "Mesh 9",
+   "doc": "The ninth's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[8]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[9]",
+   "part": "bursts",
+   "label": "Mesh 10",
+   "doc": "The tenth's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[9]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[10]",
+   "part": "bursts",
+   "label": "Mesh 11",
+   "doc": "The eleventh's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[10]",
+   "unit": "plain"
+  },
+  {
+   "key": "models.bursts[11]",
+   "part": "bursts",
+   "label": "Mesh 12",
+   "doc": "The twelfth's",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.bursts[11]",
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.size",
+   "part": "swirl",
+   "label": "Size",
+   "doc": "Its size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 6144,
+   "unit": "scale"
+  },
+  {
+   "key": "swirl.scroll",
+   "part": "swirl",
+   "label": "Scroll",
+   "doc": "Its texture scroll a tick",
+   "type": "i16",
+   "min": -256,
+   "max": 256,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.fade",
+   "part": "swirl",
+   "label": "Fade",
+   "doc": "Its fade (0x1000: none drawn)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 1536,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.out",
+   "part": "swirl",
+   "label": "Fade out from",
+   "doc": "Fading out from this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 102,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.out_step",
+   "part": "swirl",
+   "label": "Fade out step",
+   "doc": "By this a tick",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 320,
+   "unit": "plain"
+  },
+  {
+   "key": "swirl.life",
+   "part": "swirl",
+   "label": "Life",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "models.swirl",
+   "part": "swirl",
+   "label": "Mesh",
+   "doc": "The swirl's prim model (scrolling)",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.swirl",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.swirl",
+   "part": "swirl",
+   "label": "Colours",
+   "doc": "Its colour cycle (18 words)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.swirl",
+   "unit": "plain"
+  },
+  {
+   "key": "rise.first_a",
+   "part": "rise",
+   "label": "First (A)",
+   "doc": "Timeline A's first rising ring",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 31,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.every_a",
+   "part": "rise",
+   "label": "Every (A)",
+   "doc": "Then one every this many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 10,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.last_a",
+   "part": "rise",
+   "label": "Last (A)",
+   "doc": "Until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 100,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.first_b",
+   "part": "rise",
+   "label": "First (B)",
+   "doc": "Timeline B's first",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 73,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.every_b",
+   "part": "rise",
+   "label": "Every (B)",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.last_b",
+   "part": "rise",
+   "label": "Last (B)",
+   "doc": "Until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 90,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.height",
+   "part": "rise",
+   "label": "Height random",
+   "doc": "Up to this above the caster's head (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 600,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.size",
+   "part": "rise",
+   "label": "Size",
+   "doc": "Its size and first growth: (this + a random below the next) / 8 (slowing by 1/16 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 3584,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.size_rand",
+   "part": "rise",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "rise.life",
+   "part": "rise",
+   "label": "Life",
+   "doc": "Its ticks (fading in over 2, out from 8)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 24,
+   "unit": "plain"
+  },
+  {
+   "key": "models.rise",
+   "part": "rise",
+   "label": "Mesh",
+   "doc": "The rising ring's prim model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.rise",
+   "unit": "plain"
+  },
+  {
+   "key": "rings.tick_a",
+   "part": "rings",
+   "label": "Tick (A)",
+   "doc": "Timeline A's one closing ring",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 115,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.first_b",
+   "part": "rings",
+   "label": "First (B)",
+   "doc": "Timeline B's first",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 96,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.every_b",
+   "part": "rings",
+   "label": "Every (B)",
+   "doc": "Then one every this many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 6,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.last_b",
+   "part": "rings",
+   "label": "Last (B)",
+   "doc": "Until this tick",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 110,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.size",
+   "part": "rings",
+   "label": "Size",
+   "doc": "Its size and first growth: (this + a random below the next) / 12, B's x 3 (slowing by 1/16 a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 8192,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.size_rand",
+   "part": "rings",
+   "label": "Size random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "rings.life",
+   "part": "rings",
+   "label": "Life",
+   "doc": "Its ticks (fading out from 4)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 20,
+   "unit": "plain"
+  },
+  {
+   "key": "models.ring",
+   "part": "rings",
+   "label": "Mesh",
+   "doc": "The closing ring's prim model",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.ring",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.e2b2c8",
+   "label": "Voice",
+   "doc": "Timeline B's voice: the sound block its voice slot is claimed with (released at tick 127)",
+   "address": "0xE2B2C8",
+   "size": 4
+  },
+  {
+   "key": "not_editable.e2b400",
+   "label": "Burst meshes",
+   "doc": "The 12 burst meshes' addresses in the exe: the bursts' mesh parameters' game values (each mesh is a parameter)",
+   "address": "0xE2B400",
+   "size": 48
+  },
+  {
+   "key": "not_editable.e2b4f8",
+   "label": "Stage OT buckets",
+   "doc": "The stage render's OT bucket and shift of each of the 4 stage groups",
+   "address": "0xE2B4F8",
+   "size": 32
+  }
+ ]
+}

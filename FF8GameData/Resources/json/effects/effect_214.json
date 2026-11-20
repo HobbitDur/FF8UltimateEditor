@@ -1,0 +1,479 @@
+{
+ "format": 1,
+ "effect": 214,
+ "name": "Omega Gravija",
+ "doc": "Gravija of Omega Weapon / Ultima Weapon (enemy attack 309, c0m114 / c0m090): the screen copied into VRAM (0x240, 0x100), the prim-model layout at the targets' average point, the screen warp around the targets (the warp mesh over their heads and feet, its vertices pushed along their directions by a travelling sine, drawn faded then textured by the screen copy), 0x40 particles circling the average point, the sound; the action results at counter 67. Gravija 311's copy with a real screen warp. Its tasks are the port's code (FFNx mag214_omega_gravija.cpp) run on the program's memory (its pools and warp vertices in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x69D5C0",
+   "setup": "0x69D5B0",
+   "root": "0x69D670"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 214,
+  "from": "0x25089B0",
+  "size": "0x77B8"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0x1172B3C",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x10231C8",
+   "size": 16
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x1178938",
+   "size": 408
+  },
+  "layouts.main": {
+   "kind": "layout",
+   "address": "0x1174AD0",
+   "size": 15976,
+   "capacity": 756
+  },
+  "models.mesh": {
+   "kind": "model",
+   "address": "0x1172D00",
+   "size": 7632,
+   "vertices": 241,
+   "same_size": true
+  },
+  "seqs.particle": {
+   "kind": "seq",
+   "address": "0x1172B40",
+   "size": 448,
+   "frames": 50
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x69D5B0",
+  "file_loader": "0x69D5C0",
+  "root": "0x69D670"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The screen copy (VRAM (0x240, 0x100) cleared, the next frame drawn there), the main task's start at the targets' average point, the sound; the action results, the battle textures restored; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "layout",
+   "title": "Layout",
+   "doc": "The prim-model layout at the targets' average point"
+  },
+  {
+   "id": 2,
+   "key": "warp",
+   "title": "Warp",
+   "doc": "The screen warp around the targets: the mesh over their heads and feet, its vertices pushed along their directions by a travelling sine, drawn faded then textured by the screen copy"
+  },
+  {
+   "id": 3,
+   "key": "particles",
+   "title": "Particles",
+   "doc": "Particles circling the average point on tilted circles that widen and narrow"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The master's and the main task's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "At the main task's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.copy",
+   "part": "master",
+   "label": "Screen copy",
+   "doc": "The master's tick of the screen copy; its first one starts the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "The main task's tick of the sound",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.result",
+   "part": "master",
+   "label": "Results",
+   "doc": "The main task's tick of the action results",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 67,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.end",
+   "part": "master",
+   "label": "End",
+   "doc": "The main task's last tick: the battle textures restored (it ends when that is done)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 74,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "master",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "master",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "layout.ticks",
+   "part": "layout",
+   "label": "Ticks",
+   "doc": "The layout drawn on the main task's ticks below this",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 74,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.depth",
+   "part": "layout",
+   "label": "Depth",
+   "doc": "Its depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.main",
+   "part": "layout",
+   "label": "Layout",
+   "doc": "The prim-model layout played (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.main",
+   "unit": "plain"
+  },
+  {
+   "key": "warp.start",
+   "part": "warp",
+   "label": "Start",
+   "doc": "The main task's tick the warp starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.ticks",
+   "part": "warp",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 56,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.grow",
+   "part": "warp",
+   "label": "Grow",
+   "doc": "Its box growing from nothing over its first ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.period",
+   "part": "warp",
+   "label": "Wave period",
+   "doc": "The wave's phase turns once in this many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 56,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.amp",
+   "part": "warp",
+   "label": "Wave amplitude",
+   "doc": "Its amplitude: this x sin(phase / 2) (4.12 of each vertex's direction)",
+   "type": "i16",
+   "min": -16,
+   "max": 16,
+   "default": 2,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.fade",
+   "part": "warp",
+   "label": "Fade",
+   "doc": "The faded polygons' fade (0x1000: black)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 3072,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.fade_from",
+   "part": "warp",
+   "label": "Fade out from",
+   "doc": "From this tick of the warp the fade grows",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.fade_step",
+   "part": "warp",
+   "label": "Fade step",
+   "doc": "By this a tick (half of it at the first)",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 128,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.min_size",
+   "part": "warp",
+   "label": "Least size",
+   "doc": "The box's least width and height: this / the average point's depth",
+   "type": "i32",
+   "min": 0,
+   "max": 134217727,
+   "default": 98304,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.widen",
+   "part": "warp",
+   "label": "Widening",
+   "doc": "The box widened both ways at each point by (size + 0x100) x this / its depth",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 54,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.ot",
+   "part": "warp",
+   "label": "OT entry",
+   "doc": "Drawn at the nearest point's depth / 4 + this",
+   "type": "i16",
+   "min": 0,
+   "max": 1024,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "models.mesh",
+   "part": "warp",
+   "label": "Mesh",
+   "doc": "The warp mesh (241 vertices, 240 polygons: its setup copies it whole into a block of its size: an edited one keeps its vertices and its size (move vertices, change colours))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.mesh",
+   "unit": "plain"
+  },
+  {
+   "key": "particles.start",
+   "part": "particles",
+   "label": "Start",
+   "doc": "The main task's tick they all start",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 18,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.count",
+   "part": "particles",
+   "label": "Count",
+   "doc": "How many (0x40 at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 64,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.life",
+   "part": "particles",
+   "label": "Life",
+   "doc": "A particle's draws: this - a random below the next",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.life_rand",
+   "part": "particles",
+   "label": "Life random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.reach",
+   "part": "particles",
+   "label": "Reach",
+   "doc": "Its circle's radius: this + a random below the next, x the circles' size",
+   "type": "i16",
+   "min": 0,
+   "max": 32767,
+   "default": 1500,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.reach_rand",
+   "part": "particles",
+   "label": "Reach random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 32767,
+   "default": 1024,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.spin",
+   "part": "particles",
+   "label": "Spin",
+   "doc": "Its angle step a tick on its circle",
+   "type": "i16",
+   "min": -2048,
+   "max": 2048,
+   "default": 8,
+   "unit": "angle"
+  },
+  {
+   "key": "particles.rise",
+   "part": "particles",
+   "label": "Rise",
+   "doc": "The circles' size rising over this many ticks (and falling as long; at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.fall",
+   "part": "particles",
+   "label": "Fall from",
+   "doc": "From this tick it falls",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 34,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.ticks",
+   "part": "particles",
+   "label": "Ticks",
+   "doc": "The circles' size set on this many ticks (it stays at its last after)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 50,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.particle",
+   "part": "particles",
+   "label": "Particle",
+   "doc": "The sprite sequence of the particles (a flipbook: its frame 1 drawn)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.particle",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.sin_table",
+   "label": "Sine table",
+   "doc": "The 0x1000-entry sine table the wave reads (0x2000 bytes: its first half shown; its first quarter is the vertices' length table)",
+   "address": "0x1178C50",
+   "size": 4096
+  }
+ ]
+}

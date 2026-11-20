@@ -1,0 +1,433 @@
+{
+ "format": 1,
+ "effect": 207,
+ "name": "Maelstrom",
+ "doc": "Maelstrom (Edea's enemy attack, c0m100): the screen copied into VRAM (0x240, 0x100), a prim-model layout at the targets' average point (its kind-9 objects drawn with the screen copy), the screen warp around the targets (the warp mesh over their heads and feet, its vertices moved by a row of the lens table, drawn faded then textured by the screen copy), particles falling back to the average point, the sound; the action results at counter 80. Gravija 214's sibling. Its tasks are the port's code (FFNx mag207_maelstrom.cpp) run on the program's memory (its pools and warp vertices in the magic buffer).",
+ "copy": {
+  "doc": "Where this effect's copy is in FF8_EN.exe: the program stands in for these functions.",
+  "functions": {
+   "file_loader": "0x6A3AC0",
+   "setup": "0x6A3AB0",
+   "root": "0x6A3B70"
+  },
+  "memory": {}
+ },
+ "module": {
+  "doc": "The port module whose code runs: its memory [from, + size) - in a copy, a block of its own.",
+  "effect": 207,
+  "from": "0x25102C0",
+  "size": "0x77E0"
+ },
+ "exe_data": {
+  "doc": "The exe data the effect uses (@key in its values).",
+  "sound": {
+   "kind": "sound",
+   "address": "0x11AC274",
+   "size": 4
+  },
+  "res.texture_name": {
+   "kind": "name",
+   "address": "0x11B5364",
+   "size": 12
+  },
+  "res.camera": {
+   "kind": "camera",
+   "address": "0x11AC278",
+   "size": 412
+  },
+  "layouts.main": {
+   "kind": "layout",
+   "address": "0x11AE3F4",
+   "size": 19952,
+   "capacity": 1208
+  },
+  "models.mesh": {
+   "kind": "model",
+   "address": "0x11AC624",
+   "size": 7632,
+   "vertices": 241,
+   "same_size": true
+  },
+  "tables.lens": {
+   "kind": "table",
+   "address": "0x11B3364",
+   "size": 8192,
+   "format": "h",
+   "columns": 16,
+   "skip": 0,
+   "count": 256
+  },
+  "seqs.particle": {
+   "kind": "seq",
+   "address": "0x11AC414",
+   "size": 528,
+   "frames": 16
+  }
+ },
+ "resources": {
+  "texture": {
+   "game_name": "@res.texture_name"
+  }
+ },
+ "director": {
+  "kind": "port",
+  "doc": "The port's file loader, setup and root (they start its tasks)",
+  "setup": "0x6A3AB0",
+  "file_loader": "0x6A3AC0",
+  "root": "0x6A3B70"
+ },
+ "pools": [],
+ "parts": [
+  {
+   "id": 0,
+   "key": "master",
+   "title": "Master",
+   "doc": "The screen copy (VRAM (0x240, 0x100) cleared, the next frame drawn there), the main task's start at the targets' average point, the sound; the action results, the battle textures restored; the texture and the camera"
+  },
+  {
+   "id": 1,
+   "key": "layout",
+   "title": "Layout",
+   "doc": "The prim-model layout at the targets' average point (its objects of kind 9 drawn with the screen copy)"
+  },
+  {
+   "id": 2,
+   "key": "warp",
+   "title": "Warp",
+   "doc": "The screen warp around the targets: the mesh over their heads and feet, its vertices moved by the lens table's row, drawn faded then textured by the screen copy"
+  },
+  {
+   "id": 3,
+   "key": "particles",
+   "title": "Particles",
+   "doc": "Particles starting around the average point and falling back to it, each playing its flipbook"
+  }
+ ],
+ "groups": [
+  {
+   "key": "timing",
+   "label": "Ticks",
+   "doc": "The master's and the main task's ticks"
+  }
+ ],
+ "params": [
+  {
+   "key": "sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "At the main task's sound tick",
+   "type": "sound",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@sound",
+   "unit": "plain"
+  },
+  {
+   "key": "timing.copy",
+   "part": "master",
+   "label": "Screen copy",
+   "doc": "The master's tick of the screen copy; its first one starts the main task",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 1,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.sound",
+   "part": "master",
+   "label": "Sound",
+   "doc": "The main task's tick of the sound",
+   "type": "i16",
+   "min": 0,
+   "max": 200,
+   "default": 0,
+   "unit": "plain"
+  },
+  {
+   "key": "timing.result",
+   "part": "master",
+   "label": "Results",
+   "doc": "The main task's last tick: the action results, the battle textures restored (it ends when that is done)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "res.texture_name",
+   "part": "master",
+   "label": "Texture file",
+   "doc": "The texture file its loader reads from the magic folder (a name of at most 31 letters)",
+   "type": "name",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.texture_name",
+   "unit": "plain"
+  },
+  {
+   "key": "res.camera",
+   "part": "master",
+   "label": "Camera track",
+   "doc": "The camera track its setup plays (any length: its offsets are its own)",
+   "type": "camera",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@res.camera",
+   "unit": "plain"
+  },
+  {
+   "key": "layout.ticks",
+   "part": "layout",
+   "label": "Ticks",
+   "doc": "The layout drawn on the main task's ticks below this",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 80,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.depth",
+   "part": "layout",
+   "label": "Depth",
+   "doc": "Its depth offset",
+   "type": "i16",
+   "min": -4096,
+   "max": 4096,
+   "default": -128,
+   "unit": "plain"
+  },
+  {
+   "key": "layout.scroll",
+   "part": "layout",
+   "label": "Texture scroll",
+   "doc": "Its scrolling objects' texture scroll a tick (low 7 bits used)",
+   "type": "i16",
+   "min": -128,
+   "max": 128,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "layouts.main",
+   "part": "layout",
+   "label": "Layout",
+   "doc": "The prim-model layout played (its models' animation)",
+   "type": "layout",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@layouts.main",
+   "unit": "plain"
+  },
+  {
+   "key": "warp.start",
+   "part": "warp",
+   "label": "Start",
+   "doc": "The main task's tick the warp starts",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 32,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.ticks",
+   "part": "warp",
+   "label": "Ticks",
+   "doc": "Its ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.grow",
+   "part": "warp",
+   "label": "Grow",
+   "doc": "Its box growing from nothing over its first ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 8,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.fade",
+   "part": "warp",
+   "label": "Fade",
+   "doc": "Its fade: a half sine over this many ticks (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.row",
+   "part": "warp",
+   "label": "Lens step",
+   "doc": "The lens row it uses goes from 16 down to 0, up to 31 and back, this many ticks a step (at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 400,
+   "default": 12,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.min_size",
+   "part": "warp",
+   "label": "Least size",
+   "doc": "The box's least width and height: this / the average point's depth",
+   "type": "i32",
+   "min": 0,
+   "max": 134217727,
+   "default": 98304,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.head",
+   "part": "warp",
+   "label": "Head drop",
+   "doc": "The targets' head points (and the average point's height): their height word minus this",
+   "type": "i16",
+   "min": -8192,
+   "max": 8192,
+   "default": 512,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.widen",
+   "part": "warp",
+   "label": "Widening",
+   "doc": "The box widened both ways at each point by (size + 0x100) x this / its depth",
+   "type": "i16",
+   "min": 0,
+   "max": 4096,
+   "default": 54,
+   "unit": "plain"
+  },
+  {
+   "key": "warp.ot",
+   "part": "warp",
+   "label": "OT entry",
+   "doc": "Drawn at the nearest point's depth / 4 + this",
+   "type": "i16",
+   "min": 0,
+   "max": 1024,
+   "default": 17,
+   "unit": "plain"
+  },
+  {
+   "key": "models.mesh",
+   "part": "warp",
+   "label": "Mesh",
+   "doc": "The warp mesh (241 vertices, 240 polygons: its setup copies it whole into a block of its size: an edited one keeps its vertices and its size (move vertices, change colours))",
+   "type": "model",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@models.mesh",
+   "unit": "plain"
+  },
+  {
+   "key": "tables.lens",
+   "part": "warp",
+   "label": "Lens table",
+   "doc": "Each vertex's x and y scaled (4.12) by the row's value at its length / 32 (0x20 rows of 0x80)",
+   "type": "data",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@tables.lens",
+   "unit": "plain"
+  },
+  {
+   "key": "particles.start",
+   "part": "particles",
+   "label": "Start",
+   "doc": "The main task's tick the particles start",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 48,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.ticks",
+   "part": "particles",
+   "label": "Ticks",
+   "doc": "New particles on this many ticks",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.count",
+   "part": "particles",
+   "label": "Count",
+   "doc": "New particles a tick (0x40 alive at most)",
+   "type": "i16",
+   "min": 0,
+   "max": 64,
+   "default": 4,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.dist",
+   "part": "particles",
+   "label": "Distance",
+   "doc": "How far from the average point a particle starts: this + a random below the next (pulled back by 1/128 of it a tick, a tick)",
+   "type": "i16",
+   "min": 0,
+   "max": 16383,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.dist_rand",
+   "part": "particles",
+   "label": "Distance random",
+   "doc": "(at least 1)",
+   "type": "i16",
+   "min": 1,
+   "max": 16383,
+   "default": 2048,
+   "unit": "plain"
+  },
+  {
+   "key": "particles.life",
+   "part": "particles",
+   "label": "Life",
+   "doc": "A particle's draws (its flipbook's frames)",
+   "type": "i16",
+   "min": 0,
+   "max": 400,
+   "default": 16,
+   "unit": "plain"
+  },
+  {
+   "key": "seqs.particle",
+   "part": "particles",
+   "label": "Particle",
+   "doc": "The sprite sequence of the particles (a flipbook: an edited one keeps as many frames)",
+   "type": "seq",
+   "min": 0,
+   "max": 2147483647,
+   "default": "@seqs.particle",
+   "unit": "plain"
+  }
+ ],
+ "tasks": [],
+ "not_editable": [
+  {
+   "key": "not_editable.kinds",
+   "label": "Object kinds",
+   "doc": "The layout objects' renderers, a character each (\"00900901\": '9' the module's prim set drawing the screen-copy polygons, '1' the engine's with the texture scroll, else the engine's)",
+   "address": "0x11B5370",
+   "size": 12
+  }
+ ]
+}

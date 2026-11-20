@@ -509,6 +509,20 @@ Potion's description is the same with its own sequences and sound.
        time); four parts tagged (FX_PART: the game's shot untagged).
      - *Tests:* the cycle test (Squall on the c0m009 monster); `test_cannon_blow_as_a_smoke_grenade`.
      - *Fujin:* its tabs (Shot, Canister, Smoke trail, Smoke cloud); no + menu family.
+   - **Wild Cannon Blow (156)** (FFNx ae3bcc50; SAM08G's attack; a port root, Cannon Blow's kind with four shots): from
+     master tick 1 every 3 ticks a shot from the caster's effect point 0xF or 9 in turn (moved 200 sideways) on a curve to
+     near the targets' centre - its flash, burst, ring, fire ball and two fire trails, at its tick 13 an impact and its
+     ring, at 15 smoke at every target, the camera shake on ticks 13-16; the two sounds; the damage to every target at
+     tick 36.
+     - *Inputs* (`WildCannonParams`, 43): the sounds and their tick, the damage and end ticks, the shots (first tick,
+       every, count: 4 at most, the module keeps 4 curves), a shot's muzzle points, offset, aim spread, speed and its
+       impact / smoke / end ticks, the camera shake (tick, ticks, amount), the burst, trails, fire ball and target smoke
+       (counts, ticks, sizes, spread). Data: the two sounds, five flipbooks, four meshes, "mag150.tim", the camera track.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; seven parts
+       tagged (FX_PART).
+     - *Tests:* the cycle test casts it from SAM08G (c0m007, slot 3) on Squall (`CYCLE_CASTS`); the description's
+       compile test. The recorder does not log the camera shake word.
+     - *Fujin:* its tabs (Director, Flash, Burst, Ring, Fire ball, Trails, Impact, Target smoke); no + menu family.
    - **Breath (157)** (FFNx 22e59fd4; the Hexadragon's attack; a port root, Ray-Bomb's kind): two swirls and lit breath
      particles at the caster's mouth, then three clouds rolling toward the target - each a burst, a lit puff with its
      particles, a cloud model pair and a ring pair - with splatter sprites on the target, two sounds; the damage at tick
@@ -2371,6 +2385,66 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`GastricJuice169Params`): the sound, the damage tick. Data: the sound, "mag168.tim".
      - *Tests:* the cycle test casts it from Grat (slot 3) on Squall (`CYCLE_CASTS`).
      - *Fujin:* its tab (Director); no + menu family.
+   - **Zantetsuken (Odin) (167)** (FFNx ae3bcc50; the monster Odin's attack, c0m070; a port root, Odin 187's sparks,
+     trail and slices driven by the caster's own model): a 146-tick timeline - sparks off the caster's sword bone 0x28
+     from tick 27, the sound at 28, the blade trail from 44, two screen models at 64 and 68, the stage shown at 64 and
+     hidden at 77, a screen fade at 72, the caster moved away at 74, one target slice a target at 97 (the target cut
+     along a tilted plane, a half sliding off, fading); the damage at tick 143.
+     - *Inputs* (`ZantetsukenParams`, 44): the sound and the timeline's ticks, the caster's move, the sparks (bone,
+       ticks, count a tick, size, speed, colour), the trail (ticks, colour), the screen models (ticks, sizes), the slices
+       (life, fade, speed, tilt). Data: the sound, the spark flipbook, the two meshes, "mag166.tim", the camera track.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup (with its camera return) and loader
+       ported; the clipped renderer 0x5E4030 is the exe's, called as it is (it reads no module memory); five parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Odin (c0m070, slot 3) on Squall (`CYCLE_CASTS`); the description's compile
+       test. The recorder does not log the screen fade nor the caster's move.
+     - *Fujin:* its tabs (Timeline, Sword sparks, Blade trail, Screen model 1, Screen model 2, Target slices); no + menu
+       family.
+   - **Acid (170)** (FFNx ae3bcc50; Tri-Face's attack; a port root, Gastric Juice 169's design with one stream): a
+     splash at the caster's mouth and the stream's curve at director tick 1, the blob running down it, at stream tick 12
+     four puddles and the first target melting into the ground and back, at 13 the landing mesh (morphing between two
+     shapes) and the drips; the sound; the damage at tick 46.
+     - *Inputs* (`AcidParams`, 39): the sound and the director's ticks, the stream (mouth point, landing spread, arc,
+       ticks), the blob (size, speed), the landing mesh's size, the puddles (count, spread, size), the drips (size,
+       spread, fall), the splash (count, speed, out), the melt's ticks. Data: the sound, three flipbooks, two meshes,
+       "mag169.tim", the camera track. Not editable: the mesh's second shape (73 vertices) and the drips' count table.
+       The landing mesh morphs from the drawn mesh's own vertices (the game's: its model + 8): an edited mesh's
+       vertices are the ones drawn.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; six parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Tri-Face (c0m036, slot 3) on Squall (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Director, Splash, Blob, Landing mesh, Drips, Puddles, Melting target); no + menu family.
+   - **Poison Gas (171)** (FFNx ae3bcc50; Tri-Face's attack; a port root): at director tick 1 the caster redrawn under a
+     scrolling gas tint (24 ticks), two puffs and two wisps thrown out of its effect point 0xF1 along its spawn table's
+     rows; at 8 two cloud meshes drifting across the screen; at 27 gas at every target; the screen flash rising until
+     tick 16 and falling from 42; the sound; the damage to every target at tick 30.
+     - *Inputs* (`PoisonGasParams`, 32): the sound and the director's ticks, the flash (up until, down from), the tint's
+       ticks, the puffs (point, ticks, size, speed), the clouds (x, size, ticks, drifts, spins), the target gas (ticks,
+       spread, size). Data: the sound, two flipbooks, the cloud mesh, "mag170.tim", the camera track. Not editable: the
+       spawn table's rows. The gas face's texture page, CLUT and window stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; five parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Tri-Face (c0m036, slot 3) on Squall (`CYCLE_CASTS`); the description's
+       compile test. The recorder does not log the screen flash.
+     - *Fujin:* its tabs (Director, Tinted caster, Puffs, Wisps, Clouds, Target gas); no + menu family.
+   - **Morph (172)** (FFNx 65901153; Jelleye's attack 53; a port root, Cannon Blow's kind): at director tick 0 the
+     caster's point; at tick 1 two ring meshes there (sizes 0xC00 / 0x1600, turning by -2 / -3 x their angle, fading in
+     over 8 ticks and out from tick 48, 56 ticks), the ring mesh's vertex radii, the sparkles (one a tick at a random bone
+     of the caster until tick 42) and the sound at the caster; at tick 8 the caster hidden and redrawn for 56 ticks with
+     a 20-step colour cycle over its faces within 1000 of its point (from black and back); the director ends after tick
+     60. Its code applies no action result.
+     - *Inputs* (`MorphParams`, 28): the sound and the director's ticks, the rings (sizes, spin, turns, ticks, fade in /
+       out / hold, a twist of the vertices by their radius: 0 in the game, its waving code multiplies by 0), the
+       sparkles (ticks, size, spread), the tinted caster (ticks, radius, fade in / out). Data: the sound, the sparkle
+       flipbook, the ring mesh, "mag171.tim", the camera track. Not editable: the tint's colour cycle (20 words).
+       The rings' radii and waved vertices are the drawn mesh's own (the game's: its model + 8), so an edited mesh's
+       vertices are the ones drawn. The tinted caster's model redraw (Gastric Juice 169's) stays code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; three parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Jelleye (c0m029, slot 3) on Squall (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Director, Rings, Sparkles, Tinted caster); no + menu family.
    - **Ice Breath (173)** (FFNx 62e957df; the Snow Lion's attack, the Cronos mod's item Arctic Wind; a port root,
      Ray-Bomb's kind): the caster's mouth (its bone 0xF0, retaken every tick) blowing a frost swirl, a glow and four
      breath cones, then frost puffs and spinning crystal layouts along a sweep toward the targets, five ice meshes on
@@ -2439,6 +2513,27 @@ Potion's description is the same with its own sequences and sound.
        (0x5C26A0, 0x5C3D10, 0x5C7AB0, ...) read the module's words.
      - *Port:* the spawn helper `LinkTask` goes through own::Fn.
      - *Fujin:* its tab (Timeline); no + menu family.
+   - **Blaster (186)** (FFNx 65901153; Torama's attacks 122 / 123; a port root, Cannon Blow's kind): every director tick
+     the mouth point (the caster's point 0x15 moved 300 along the aim) and the aim; at tick 0 the target point pulled 400
+     back and the bolt's 16 in-between meshes made from its four key vertex sets; at tick 7 the charge (beams and rings
+     between the caster's points 0x31 / 0x32 at the odd intervals of the exe's table) and the sound; at tick 39 a red
+     screen fade, the sparks (mouth and target) and the glow; at 40 the bolts (one each odd tick until 12, flickering
+     through the 20 meshes), the shock wave at the target (shaking it) and the splashes; the screen flash; the damage at
+     tick 60; the end at 65.
+     - *Inputs* (`BlasterParams`, 72): the sound and the director's ticks, the flash, the mouth (point, out, target
+       pull), the charge (points, ticks, beam length / width, ring size), the bolts (ticks, end, life, spin, size, fade,
+       first frames), the sparks (ticks, mouth and target size and spread), the glow (size, ticks, dim), the shock wave
+       (size, ticks, fade, shake, turn), the splashes (ticks, count, size, spread, depth, speed), the screen fade (up,
+       hold, down, level). Data: the sound, four flipbooks, three meshes, the bolt's four key vertex sets (tables of 102
+       vertices), "mag185.tim", the camera track. Not editable: the charge's interval table, the shock wave's 8 texture
+       words, the bolt's mesh frame table, the aim's start vector. The bolt mesh's own vertices are never drawn (the game's too: its frames are the
+       key sets and their in-betweens), only its faces.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; seven parts tagged
+       (FX_PART); the bolt frames' in-between buffers (pointers of the exe's table 0xD20810 into the module) through own::R.
+     - *Tests:* the cycle test casts it from Torama (c0m057, slot 3) on Squall (`CYCLE_CASTS`); the description's compile
+       test. The recorder does not log the screen flash nor the target's shake.
+     - *Fujin:* its tabs (Director, Screen fade, Charge beams, Bolts, Sparks, Glow, Shock wave, Splashes); no + menu
+       family.
    - **Odin (187)** (FFNx f1dcacb5; the GF's Zantetsuken, the timeline family; a port timeline, Ray-Bomb's kind):
      the camera script, the summon stream's loads, the grids, debris and intro, the creature with its blade
      glow, smoke, rings, mist, sparks and slashes, the target slices, the party hidden, the screen flash, the
@@ -2597,6 +2692,86 @@ Potion's description is the same with its own sequences and sound.
        `apply_eden_*` only when it is not listed yet (as they do the Brothers', Bahamut's and Leviathan's).
      - *Tests:* `tests/Fujin/test_ports_GF.py`: Squall summons it on c0m092; an edited .00 copy (model
        vertices at 0x6360..) read by the port's file loader and the program's alike; as effect 225, itself again.
+   - **Maelstrom (207)** (FFNx 3fedeb90; Edea's attack, c0m100; a port root, Cannon Blow's kind; Gravija 214's sibling): at
+     the master's tick 1 the screen copy (VRAM (0x240, 0x100) cleared, the next frame drawn there) and the main task at
+     the targets' average point (their default effect points, the height 0x200 below their height word); the main task
+     plays the prim-model layout there for 80 ticks (its kind-9 objects drawn with the screen copy, a texture scroll of
+     32 a tick), from tick 32 for 48 ticks the screen warp (the warp mesh over the targets' heads and feet, growing over
+     8 ticks, its vertices scaled by a row of the lens table stepping every 12 ticks, drawn faded by a half sine over 48
+     ticks, then textured by the screen copy), from tick 48 for 16 ticks 4 particles a tick falling back to the point; the
+     sound at tick 0; the action results at tick 80, the battle textures restored.
+     - *Inputs* (`MaelstromParams`, 28): the sound and the ticks (screen copy, sound, results), the layout (ticks, depth,
+       scroll), the warp (start, ticks, grow, fade, lens step, least size, head drop, widening, OT entry), the particles
+       (start, ticks, count, distance and its random, life). Data: the sound, the layout, the particle flipbook, the warp
+       mesh (copied whole: an edited one keeps its size), the lens table (0x20 rows of 0x80), "mag206.tim", the camera
+       track. Not editable: the layout's object kinds string ("00900901": which objects the screen-copy renderer draws).
+       The square-root table its mesh preparation reads (0x11B3164) stays exe data, with no row: its first bytes lie in
+       the layout's measured span. The particles' pull back (1/128 of their distance a tick) is tied to their 16 draws and
+       stays code, as do the renderers (the module's 0x6A45E0 prim set with the screen-copy polygons, called in the exe)
+       and the screen copy itself.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; three parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Edea (c0m100, slot 3) on Squall (`CYCLE_CASTS`); the description's compile
+       test. The recorder records the screen copy's clear (a V line of black at (0x240, 0x100)), not the frame drawn
+       into VRAM (the recorder has no GPU): Fujin's preview shows the copy's polygons black.
+     - *Fujin:* its tabs (Master, Layout, Warp, Particles); no + menu family.
+   - **"Sorceress" spawn (209)** (FFNx 3fedeb90; attacks 319 / 327 of the time-compression sorceresses c0m115 / c0m116 /
+     c0m117; a port root, Cannon Blow's kind): timeline A (c0m115 / c0m116) or B (the wormlike c0m117, com id 0x85), 130
+     ticks: at tick 0 the caster hidden (until 20, B 65), at 1 the glow mesh, the 12 bursts (each its mesh), A's swirl
+     and the sound; at 2 the next stage's file loaded into the summon data, at 52 the stage swapped; at 16 the screen
+     task (100 ticks: the stage rendered into VRAM (0x240, 0x100) and drawn back as 10 x 7 tiles, white at 36 / 37, then
+     on a rippling 28 x 41 grid around the caster's head from 38, fading to the new stage's colours from 82 to 98); the
+     rising rings (A every 10 ticks from 31 to 91, B every 6 from 73), the closing rings (A at 115, B every 6 from 96);
+     the screen flash up over 16 ticks and down from 122; the action result at 124. B adds three screen fades, a camera
+     shake (93..100) and its voice.
+     - *Inputs* (`SorceressSpawnParams`, 83): the two sounds and the timelines' ticks, the screen flash, the screen
+       task's phases, the ripple (steps, wave, speed, height, reach, shrink), the glow, the bursts (count, spin, sizes,
+       grow ticks, lives), the swirl (size, scroll, fade, life), the rising and the closing rings (spawn series, sizes,
+       lives). Data: the sounds, the TIM, the camera track, 16 meshes (glow, swirl, rising and closing ring, the 12
+       bursts'), the screen's 8 + 24 colours and the swirl's 18. Not editable: the stage groups' OT buckets (8 words), the
+       voice's sound block, the burst meshes' exe table (their game values). The grid stays code: its 28 x 41 points (module words) and 27 x 40 cells (corner
+       pointers and two GPU quads each, built in the summon data by its code every run, after the stage file there has
+       been used) are work memory whose sizes are the screen's (8 pixels a cell over 320 x 216). B's screen fades, camera
+       shake and voice stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; the setup ported (the file loader is the
+       engine's bare ret); six parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from the first sorceress (c0m115, slot 3) on Squall (`CYCLE_CASTS`); timeline B
+       cast by c0m117 (its own test); the description's compile test. The recorder does not swap the stage (BS_ChangeStage
+       0x50E3C0 is a logged no-op there: the fake battle's stage is not the witch fight's), records the stage render's
+       clear as one V line and not the screen flash; the stage file's load completes as in the game (its callback gets the
+       bytes read).
+     - *Fujin:* its tabs (Timeline, Screen, Glow, Bursts, Swirl, Rising rings, Closing rings); no + menu family.
+   - **Bloodfest (210)** (FFNx 73de620b; Seifer's enemy attack 315, c0m128; a port root, Cannon Blow's kind; Demon Slice
+     251's twin): flames round each target (Fire's parts) until tick 0x21; from 0x37 afterimages of the entity after the
+     caster (slot 4, the scene's c0m082: two windows, the last two poses recorded) and the blade trail of its bone 1; a
+     rising layout at the caster's effect point (0x40) and a mesh at his bone 0x25 (0x41); at 0x55 the stage captured into
+     VRAM and the vortex at the targets' centre (a ring and quads of the capture, a second one from its tick 11, fading
+     out from 22); from 0x73 for 80 ticks the targets lifted spinning and drawn by the module over the burning layout,
+     a burst of 8 sparkles and 8 rocks a tick for 4 ticks; from 0xC3 for 40 ticks the targets dropped from above under
+     the drop layout (the caster and slot 4 hidden), 2 rocks a tick; then put back 0x1000 lower and raised 0x200 a tick
+     for 8 ticks; the end layout at each target and the results at 0xF3; the white flash from 0xE3; the screen flash
+     rising over 12 ticks and falling over the last 12; four sounds.
+     - *Inputs* (`BloodfestParams`, 91): the sounds and their ticks, the end, the flash (level, rise, fall), the
+       flames (count, frames, embers, sparks, size and its random, the drop tick), the afterimages (two windows: start,
+       ticks, recorded below; brightness and its step), the rising layout's and the bone mesh's windows (the bone, the
+       spin), the vortex (start, ticks, second from, grow, fade from / over, two yaws, the roll, the scroll), the lift
+       (start, ticks, spin, the burning layout's scrolls, the burst's ticks, sparkles, rocks, radius, rise), the drop
+       (start, ticks, rocks a tick, their life, height and speed, the layout's depth), the raise (ticks, step, lowered),
+       the white flash (start, in, hold, out, colour), the trail (start, ticks, shorter from, length, colour), the rocks'
+       gravity, the sparkles' frames. Data: the four sounds, four layouts, four meshes (the bone mesh, the vortex mesh,
+       its ring, the rock), four flipbooks, the TIM (exe data: the effect has no file), the camera track. Not editable:
+       the layouts' object kind tables. The stage capture, the vortex's quad renderer, the afterimages' draw (Burning Rave's
+       / Duel's code), the module-drawn targets and the trail's spline stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; the setup ported (the file loader is the
+       engine's bare ret); thirteen parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Seifer (c0m128, slot 3) on Squall with the scene's c0m082 in slot 4
+       (`CYCLE_CASTS`, `CYCLE_SLOTS`: without it the afterimages read an empty slot and the exe faults at tick 57); the
+       description's compile test. In the recorder the rising layout and the bone mesh draw nothing on screen (their
+       edits record the same) and the afterimages of c0m082 (a two-bone helper) draw nothing; the screen flash and the
+       entities' moves (the lift's raise) are not recorded; the burst's pools (32 sparkles, 32 rocks) are full after its
+       4 ticks of 8.
+     - *Fujin:* its tabs (Master, Flames, Afterimages, Rising layout, Bone model, Vortex, Targets, Burning layout, Drop,
+       End layouts, White flash, Blade trail, Rocks, Sparkles); no + menu family.
    - **Burning Rave (212)** (FFNx aad96877; Zell's Duel finisher; a port root and director, Ray-Bomb's kind): his
      animation set and placement, the stage captured, the ground and burning layouts, rocks, sparks and debris,
      the targets drawn, thrown and spun, his afterimages, the camera's moves, the screen flash, the sounds
@@ -2604,6 +2779,26 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`BurningRaveParams`): the two sounds, the damage tick. Data: the sounds, "mag211.tim".
      - *Port:* the rock / sprite spawners take the task as an argument: those spawns go through own::Fn too.
      - *Fujin:* its tab (Director); no + menu family.
+   - **Omega Gravija (214)** (FFNx 3fedeb90; enemy attack 309 of Omega Weapon c0m114 / Ultima Weapon c0m090; a port root,
+     Cannon Blow's kind; Gravija 311's copy with a real screen warp): at the master's tick 1 the screen copy (VRAM
+     (0x240, 0x100) cleared, the next frame drawn there) and the main task at the targets' average point; it plays the
+     layout there for 74 ticks, from tick 18 for 56 ticks the screen warp (the warp mesh over the targets' heads and feet,
+     growing over 8 ticks, its vertices pushed along their directions by a sine travelling along their lengths (a turn
+     every 56 ticks, amplitude 2 sin(phase / 2)), drawn faded (0xC00, from its tick 48 by 0x80 a tick), then textured by
+     the screen copy); at tick 18 0x40 particles on tilted circles round the point (their size rising over 16 ticks,
+     falling from 34); the sound at tick 0; the action results at tick 67; the battle textures restored at 74.
+     - *Inputs* (`OmegaGravijaParams`, 33): the sound and the ticks (screen copy, sound, results, end), the layout
+       (ticks, depth), the warp (start, ticks, grow, wave period and amplitude, fade, its start and step, least size,
+       widening, OT entry), the particles (start, count, life and its random, reach and its random, spin, rise, fall,
+       ticks). Data: the sound, the layout, the particle flipbook, the warp mesh (copied whole: an edited one keeps its
+       size), "mag213-310.tim", the camera track. Not editable: the sine table the wave reads (also its length table).
+       The square-root table its mesh preparation reads (0x1178A50) stays exe data, with no row: the camera track's
+       measured span (its header's size) runs into it. The renderers and the screen copy stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; three parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Omega Weapon (c0m114, slot 3) on Squall (`CYCLE_CASTS`); the description's
+       compile test. The recorder records the screen copy's clear, not the frame drawn into VRAM.
+     - *Fujin:* its tabs (Master, Layout, Warp, Particles); no + menu family.
    - **My Final Heaven (215)** (FFNx a99590fb; Zell's Duel finisher; a port root and director, Ray-Bomb's kind): his
      animation set, the layouts as he walks back, runs and jumps, the rings, the debris, the targets turned,
      thrown and spun, the crater, the white flash, the camera's moves, the screen flash, the sounds (ticks 6,
@@ -2615,6 +2810,32 @@ Potion's description is the same with its own sequences and sound.
      and hit, the two flash envelopes, the camera's moves, the sound; the action result.
      - *Inputs* (`DifferentBeatParams`): the sound. Data: the sound, "mag215.tim".
      - *Fujin:* its tab (Director); no + menu family.
+   - **Gilgamesh kills Seifer (218)** (FFNx 73de620b; enemy attack 330, Seifer c0m128 on himself; a port root, Cannon Blow's
+     kind; a timeline-B module on Gilgamesh 327's template): a 580-tick timeline - the camera script, Gilgamesh's files
+     (0x2C1..0x2C5) loaded and uploaded, the summon stream, the battle text lines, the voice; a white fade (24 ticks) at
+     the start, the spinners at tick 11 (the stage shown), the flare row at 24, the ring at 32, at 52 Gilgamesh and his
+     sword (their model blocks in the module: descending, standing, six animations; his own ticks: the landing's dust,
+     four rings and the camera shake at 45, the screen grabbed and cut into 24 shards thrown from the target at 310
+     with their dust and chips, the flash at 325 - his ticks run 52 behind the timeline's; hidden while he swings), the
+     sword glow, a blue tile at 72, the cut at 383 (the target's hit chain 0x37, the ground wave, the result), the slash
+     at 401, three sounds; the end at 579.
+     - *Inputs* (`GilKillsParams`, 69): the sounds and the voice, the timeline's spawn ticks (spinners, flare, ring,
+       blue tile, sword sound, cut, result, slash, end sound, voice released, end), Gilgamesh's (landing, shards, flash),
+       the white fade (ticks, in, out from / over), the blue tile (ticks, colour), the spinners (ticks, spins, sizes,
+       fades), the flare (ticks, length), the ring's ticks, the sword glow (ticks, reach, fade), the dust (last tick, count
+       a tick), the landing rings' ticks and the camera shake (amount, ticks), the shards (count, speed and its random),
+       the flash's ticks, the ground wave (ticks, scroll), the slash (ticks, scroll, distance). Data: the four sounds
+       (the voice's block), ten meshes, three flipbooks, the TIM (exe data). Not editable: the camera script, the flare's
+       sprite table, the shards' table and meshes. The timeline's file loads and waits, the text lines, the models'
+       animation and the screen grab stay code.
+     - *Port:* the module globals through own::R (Gilgamesh's and the sword's model blocks, the shard table and the
+       grab's packets through accessors), the spawns through own::Fn; the setup ported (the file loader is the engine's
+       bare ret, the camera the timeline's script); fourteen parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Seifer (c0m128, slot 3) on himself (`CYCLE_CASTS`); the description's compile
+       test. In the recorder the spinners, the flare row, the ring, the sword glow and the flash record nothing (their
+       meshes' edits record the same); the camera shake word and the voice slot are not recorded.
+     - *Fujin:* its tabs (Timeline, White fade, Blue tile, Spinners, Flare row, Ring, Gilgamesh, Sword, Sword glow, Dust,
+       Landing rings, Shards, Flash, Ground wave, Slash); no + menu family.
    - **Light Pillar (220)** (FFNx 4443c7a8; Omega Weapon's and Ultima Weapon's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
      engine's clone run from its two script files (mag219_b.00 / .01) - its bones, prims, sprites and particles, the action results.
      The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
@@ -2730,6 +2951,36 @@ Potion's description is the same with its own sequences and sound.
        .00 copy (0x4000..) read by the port's file loader and the program's alike. Its ribbon's tail-retire tick (50)
        reads a GTE V0 it never writes (0xB1ADD0): the lab's part places must leave the GTE as they found it
        (FFNx e319638a), or the lab draws the ribbon elsewhere.
+   - **Demon Slice (251)** (FFNx 73de620b, b0c8c851; Seifer's enemy attack 314, c0m086; a port root, Cannon Blow's kind; Bloodfest
+     210's twin): four flames round the target (Fire's parts) until tick 0x21; the fading opening layout at the caster's
+     spawn point (0x49, 20 ticks); the caster sliding toward the target (0x53, 31 ticks); the wave layout at the spawn
+     point (0x53, 95 ticks: a travelling wave on its vertices, its texture scrolling, swelling from its tick 80, from
+     0x8D growing taller over 27 ticks and lifting the caster and the target until 0xA8) with a rising layout task every
+     6 ticks; from 0x72 the slash layout (25 ticks), a hit layout and the target's hit chain every 5 ticks for 54 with
+     the caster swinging, the blade trail of slot 4's bone 1 (from 0x37, 19 ticks), white flashes at 0x72 and 0xA3; the
+     push layout at the target (0xA3, 14 ticks) pushing him back, hidden at its end; the caster back (0xA8, 14 ticks)
+     with 16 sparkles; the target at his start dropped over 8 ticks from 0xC0 and drawn by the module turned over, the
+     fall layout (0xC8); his result at 0xDB; the screen flash rising over 12 ticks and falling over the last 12; three
+     sounds.
+     - *Inputs* (`DemonSliceParams`, 85): the sounds and their ticks, the end, the flash (level, rise, fall), the
+       caster's slide / swings / way back, the flames (count, frames, embers, sparks, size and its random, the drop tick),
+       the opening layout (start, ticks, fade from / over), the wave (start, ticks, wave step and amplitude, scroll, swell
+       from / ticks / amount), its lift (from, ticks, until), the risers (every, until, lift), the slash (start, ticks,
+       scroll), the hits (start, ticks, every, hit chain), the push (start, ticks, height, step), the target (start,
+       drop, ticks), the fall layout (start, ticks), the white flashes (two ticks, in, hold, out, colour), the trail
+       (start, ticks, shorter from, length, colour), the sparkles (count, angle step, frames). Data: the three sounds,
+       seven layouts, four flipbooks, the TIM (exe data: the effect has no file), the camera track. Not editable: the
+       layouts' object kind tables, the wave's direction table. The wave layout's height normalisation (on the layout
+       played), the module-drawn target and the trail's spline stay code. The push layout's capacity is its block's 0x1C8
+       bytes: the game decodes it with 0x144 though its player state takes 392 (the rest is the slash layout's residue).
+     - *Port:* the module globals through own::R, the spawns through own::Fn; the setup ported (the file loader is the
+       engine's null sub); twelve parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Seifer (c0m086, slot 3) on Squall with the scene's c0m082 in slot 4 (the
+       trail's bone; `CYCLE_CASTS`, `CYCLE_SLOTS`); the description's compile test. The recorder does not record the
+       screen flash, the entities' moves (the caster's slide, swings and lift, the target's push) nor hit chains; the
+       flames are gone before tick 0x21 (their drop tick changes nothing there).
+     - *Fujin:* its tabs (Master, Caster, Flames, Opening, Wave, Risers, Slash, Hits, Push, Target, Fall, White flashes,
+       Blade trail, Sparkles); no + menu family.
    - **Twin Homing Laser (253)** (FFNx 4443c7a8; Mobile Type 8's attack; a cinematic clone, Elvoret's death's kind): the GF cinematic
      engine's clone run from its two script files (mag252_b.00 / .01) - its bones, prims, sprites and particles, the action results.
      The program calls the clone's own setup (the engine's shared state block), its root re-pointed at the
@@ -2879,6 +3130,28 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`BrrawghhParams`): the sound. Data: the sound, "mag288.tim".
      - *Tests:* cast by Gerogero (c0m034) on the party (`CYCLE_CASTS`).
      - *Fujin:* its tab (Main); no + menu family.
+   - **Trauma shatter (290)** (FFNx 73de620b; enemy attack 291 of Trauma, c0m109, on itself: its death; a port root, Cannon
+     Blow's kind): layout A and a flipbook under Trauma for 16 ticks, layouts B and C on the ground from tick 20 for 22,
+     its colour blended to black over 20 ticks, its own draw off from 30; the module draws it with 28 pose entries that
+     20 bone scripts move, turn, bounce and shatter (its bone groups' polygons fly off as fragments of up to 8 on one of
+     four small meshes, spinning, falling, bouncing, fading over their last 8 ticks, a mark flipbook where each started)
+     and spawn bone layouts; for 25 ticks a sprite B and 2 sprites A a tick rising from it; the sound at tick 0, the voice
+     claimed at the start and released at 86; the master ends at 90 (the effect once the battle file it streams is in).
+     No damage.
+     - *Inputs* (`ShatterParams`, 46): the sound and the voice, the ticks (sound, voice released, end), under (ticks,
+       drop, depth, sprite size), the rings (start, ticks, bone, fraction, turn, depth), the tint (ticks, its byte, hidden
+       from), the sprites (ticks, A count / scatter / size / life, B count / size / life), the fragments (life, gravity,
+       fade, spin), the marks (life, speed). Data: the two sounds, the three layouts, four flipbooks, the four fragment
+       meshes, the 20 bone scripts' byte code (0x24C bytes: their loop counters are written as they run), "mag289.tim",
+       the camera track. Not editable: the sine / cosine and square-root tables. The shatter itself (which polygons, the
+       fragments' velocity from their normals), the module's draw of the caster and the fragment / mark renderers stay
+       code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; seven parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Trauma (c0m109, slot 3) on itself (`CYCLE_CASTS`; it hurts nobody); the
+       description's compile test. The recorder does not record its colour, its own draw's flag nor the voice slot.
+     - *Fujin:* its tabs (Master, Bone scripts, Under, Rings, Body, Fragments, Marks, Sprites, Bone layouts); no + menu
+       family.
    - **Pandemona (291)** (FFNx b68a15d2; the GF's Tornado Zone, the timeline family; a port timeline, Ray-Bomb's
      kind): the tornado layers, prim models and particles, the creature, the targets sucked up, spun, carried
      round and dropped, the camera, the streamed loads, the voice and the sounds; each target's action result
@@ -2893,6 +3166,26 @@ Potion's description is the same with its own sequences and sound.
      - *Inputs* (`WhiteWind297Params`): the sound. Data: the sound, "mag296.tim".
      - *Tests:* cast on two targets (`CYCLE_MONSTERS`: one records too little for the cycle test).
      - *Fujin:* its tab (Scene); no + menu family.
+   - **BGH251F2 destruction (298)** (FFNx 4e94a443; enemy attack 119 of BGH251F2 (Damaged), c0m102, on itself: its
+     destruction; a port root, Cannon Blow's kind; Trauma shatter 290's and Mobile Type 8's break-up 308's kin): the music
+     faded; the module draws the caster with 45 pose entries that 3 bone scripts move, turn and shatter (its bone groups'
+     polygons fly off as fragments of up to 12 on one of three small meshes, spinning, falling, bouncing, fading over their
+     last 8 ticks, a mark flipbook of one of two kinds where each started) and that spawn layouts and sprites at its bones;
+     from tick 90 the caster sinks 0x80 a tick; the sound at tick 1, the voice claimed at the start and released at 111;
+     the master ends at 115 (the effect once the battle file it streams is in). No damage.
+     - *Inputs* (`DestructParams`, 32): the sound and the voice, the ticks (sound, voice released, end), the sinking
+       (from, speed), the fragments (polygons each, life, gravity, fade, spin), the marks (two lives, the chance of kind A,
+       speed). Data: the two sounds, the scripts' four layouts and four flipbooks (by their index: the game's scripts use
+       layouts 0 / 2 / 3 and flipbooks 0 / 1 / 3), the marks' two flipbooks, the three fragment meshes, the 3 bone scripts'
+       byte code (0x31C bytes: their loop counters are written as they run), "mag297.tim", the camera track. Not editable:
+       the sine / cosine and square-root tables. The shatter itself (which polygons, the fragments' velocity from their
+       normals), the module's draw of the caster and the fragment / mark renderers stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; five parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from BGH251F2 (Damaged) (c0m102, slot 3) on itself (`CYCLE_CASTS`; it hurts
+       nobody); the description's compile test. The recorder does not record the music fade, the voice slot nor the
+       caster's position word.
+     - *Fujin:* its tabs (Master, Bone scripts, Body, Fragments, Marks, Layouts, Sprites); no + menu family.
    - **Micro Missiles (Quistis) (299)** (FFNx 92980f0e; Quistis' Blue Magic; a port root, Ray-Bomb's kind): her cast
      animation, six missiles fanned from her to random bones of the target (two miss) with their trails, hits,
      flashes and sparks, the sound; the action result.
@@ -2903,6 +3196,26 @@ Potion's description is the same with its own sequences and sound.
      screen fade, the smoke, one hit task a target, the sound; the action results.
      - *Inputs* (`BadBreath300Params`): the breath's sound. Data: the sound, "mag130-299.tim".
      - *Fujin:* its tab (Breath); no + menu family.
+   - **Gargantua entrance (301)** (FFNx 4e94a443; enemy attack 265 of Gargantua, c0m094, on itself; FFNx's
+     mag301_gargantua_burrow; a port root, Cannon Blow's kind): the party's bit 2 set for the effect; for 121 ticks a
+     layout on the ground at the caster and the module's draw of its body (polygons all below the ground line 0x40 left
+     out, every 8th polygon crossing it leaving a ground mark of 12 ticks); for 101 ticks the rocks (a mesh, thrown,
+     spinning, falling, bouncing, 16 ticks) and dust puffs (a flipbook, 16 ticks) of a spawn stream; from tick 122 the
+     caster's own draw back and its colour faded back in over 20 ticks; the sound at tick 1, the voice released at 138;
+     the master ends at 142. No damage.
+     - *Inputs* (`BurrowParams`, 28): the sound and the voice, the ticks (sound, voice released, end), the fade
+       (start, ticks, its byte), the spawn ticks, the layout (ticks, depth), the body (ground line, the marks' depth limit,
+       a mark every n-th polygon), the marks' life, the rocks (life, gravity, the speed of the velocity bytes x / z and y),
+       the puffs (life, size). Data: the two sounds, the layout, the rock mesh, the puffs' and the marks' flipbooks, the
+       spawn stream (0x12B8 bytes: per tick a count and 10 words a rock, a count and 6 words a puff), "mag300.tim", the
+       camera track. The spawn stream's pointer is exe data the game never puts back (a second cast reads on past it): a
+       copy reads its own stream at the pointer's offset, and spawns nothing past its end. The body's ground cut and the
+       mark sprites' renderer stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported; five parts tagged
+       (FX_PART).
+     - *Tests:* the cycle test casts it from Gargantua (c0m094, slot 3) on itself (`CYCLE_CASTS`; it hurts nobody); the
+       description's compile test. The recorder does not record the caster's colour nor the party's flags.
+     - *Fujin:* its tabs (Master, Layout, Body, Ground marks, Rocks, Dust); no + menu family.
    - **Snipe Laser (302)** (FFNx 26f4da68; GIM47N's attack, a Funguar laser variant; a port root, Ray-Bomb's kind): two
      beams from two points of the caster's skeleton to each target, the aim layouts, the beams, the hit layouts and
      glows, beam 0's impact layout and sparks, the sound at the master's tick 20; the action results.
@@ -2911,6 +3224,27 @@ Potion's description is the same with its own sequences and sound.
        the camera track, the two beams' points (x, y, z and the caster's bone).
      - *Tests:* `tests/Fujin/test_ports_R.py` - cast by GIM47N (c0m008) on the party.
      - *Fujin:* its tab (Beam); no + menu family.
+   - **Remove mask (303)** (FFNx 4e94a443; Sphinxaur's (c0m011) mask removal, its target the unmasked Sphinxara (c0m012)
+     moved onto its position; a port root, Cannon Blow's kind): the burst layout at the caster's point for 22 ticks and 32
+     sparks a tick on its first 2; the mask's four pieces (meshes) flying off the caster, falling, then shattered into
+     shards (one per polygon, spinning, falling, bouncing) with the pieces' layout where each broke; 8 sprites around a
+     second point at tick 6; from tick 24 for 16 ticks the unmasked form redrawn environment-mapped (its uv from its
+     normals, scrolling, a pulsing grey); the sound at tick 0, the voice released at 37; the main ends at 41 (then the
+     battle file it streams, the masked caster's slot removed). No damage.
+     - *Inputs* (`MaskParams`, 52): the sound and the voice, the ticks (sound, voice released, end), the burst
+       (ticks, depth, its point x / y / z at a bone), the sparks (ticks, count, scatter, life), the sprites (tick, count,
+       scatter, life, their point), the pieces (gravity, their layouts' four scales), the shards (speed shift, life,
+       gravity, spin, spin scale), the redraw (start, ticks, palette, texture page x / y, uv scroll, the grey's pulse).
+       Data: the two sounds, the burst and piece layouts, the four piece meshes (shattered as they are: their triangles
+       and quads with texture, no flat polygons), the sparks' and sprites' flipbooks, the pieces' velocity and life
+       (0x20 bytes), "mag302.tim", the camera track. The shatter (the shards from the mesh's polygons), the shard and
+       environment-mapped renderers stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn; setup and loader ported (the unmasked
+       form's move, chain transformation and animation read included); seven parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Sphinxaur (c0m011, slot 3) on Sphinxara (c0m012, slot 4: `CYCLE_CASTS`,
+       `CYCLE_SLOTS`; it hurts nobody); the description's compile test.
+     - *Fujin:* its tabs (Main, Burst, Sparks, Sprites, Mask pieces, Piece layouts, Shards, Unmasked form); no + menu
+       family.
    - **Boomerang Sword (304)** (FFNx 4c826715; the Esthar Soldiers' enemy attack; a port root, Ray-Bomb's kind): the
      sword thrown from the caster's hand along the targets and back, spinning, with its trail, a hit layout and
      sparks at each target it passes, the sound; each target's action result.
@@ -2933,6 +3267,27 @@ Potion's description is the same with its own sequences and sound.
      sounds; the action results.
      - *Inputs* (`RayBomb307Params`): the muzzle and blast sounds. Data: the sounds, "mag009.tim".
      - *Fujin:* its tab (Director); no + menu family.
+   - **Mobile Type 8 break-up (308)** (FFNx 4e94a443; enemy attack 286 of Mobile Type 8, c0m105, with its two probes c0m106
+     / c0m107 in the next slots: its death; a port root, Cannon Blow's kind; BGH251F2 destruction 298's kin): the music
+     faded; the screen flash up over 8 ticks, held, down over the last 8; the three entities' colours blended to black over
+     20 ticks; until tick 86 the module draws the three with their pose entries that 3 bone scripts (one each) move, turn
+     and break (sparks thrown off their marked bones' polygons along the normals, two kinds), and that spawn layouts,
+     sprites and a full-screen quad; a white tile rising from tick 70 over 16 ticks (the scripts, sprites and layouts
+     dropped at its top), then fading; the sound at tick 0, the battle files loaded at 103, the voice released at 106;
+     the main ends at 110 (the effect once the files are in). No damage.
+     - *Inputs* (`MobileParams`, 34): the sound and the voice, the ticks (sound, voice released, files loaded,
+       end), the flash (ramp, level), the tint (ticks, its byte), the bodies' ticks, the tile (start, ticks, colour), the
+       sparks (two lives, the chance of kind A, cool-down, speed). Data: the two sounds, the scripts' four layouts and four
+       flipbooks (by their index), the sparks' two flipbooks, the 3 bone scripts' byte code (0x3A0 bytes: their loop
+       counters are written as they run), "mag307.tim", the camera track. Not editable: the square-root table. The sparks
+       (which polygons, their velocity from the normals), the module's draw of the entities and the spark renderer stay
+       code.
+     - *Port:* the module globals through own::R (the colour target 0x250754C, never written, too), the spawns through
+       own::Fn; setup and loader ported; six parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Mobile Type 8 (c0m105, slot 3) on itself with its probes in slots 4 / 5
+       (`CYCLE_CASTS`, `CYCLE_SLOTS`; it hurts nobody); the description's compile test. The recorder does not record the
+       screen flash, the music fade nor the entities' colours.
+     - *Fujin:* its tabs (Main, Bone scripts, Bodies, Sparks, Layouts, Sprites, White tile, Script quad); no + menu family.
    - **Hero (309)** (FFNx 18d8e283; the battle items Hero-trial / Hero; a port root, Ray-Bomb's kind): the orbit
      layouts spiralling in, the main layout and the shards at the target, the sound; the action result.
      - *Inputs* (`HeroParams`): the sound. Data: the sound, "mag308.tim".
@@ -2963,6 +3318,30 @@ Potion's description is the same with its own sequences and sound.
        track, the dust tables (3 entries each), the puff and debris offsets.
      - *Tests:* `test_ports_P.py` casts it from GIM52A (c0m001, slot 3) on Squall.
      - *Fujin:* its tabs (Timing, Charge, Muzzle flash, Beam, Blast, Bounce); no + menu family.
+   - **Abadon death (314)** (FFNx 67a7cad6; enemy attack 191 of Abadon, c0m103, its lower half c0m104 in the next slot, on
+     itself: its death; a port root, Cannon Blow's kind; Red Giant death 316's kin): the music faded; the screen flash up
+     over 8 ticks, held, down over the last 8; white tiles in three windows of 5 ticks (ticks 0, 15, 19); sparks at random
+     bones on ticks 0..16 (8 a tick); from tick 16 for 50 ticks the caster drawn by the module lit by a light level falling
+     down its body (84 a tick); both halves' colours faded to black from tick 81 over 16 ticks; from tick 66 its upper body
+     drawn with 112 pose entries that 29 bone scripts move, turn, drop and bounce (16 dust particles where a bone first
+     lands); from tick 100 for 111 ticks its polygons above a rising level leave it as spinning shards (1 in 4 throwing a
+     particle); the sound at tick 1, the voice claimed at the start and released at 222; the main ends at 226 (the scripts
+     2 ticks later, the effect once the battle files it streams are in). No damage.
+     - *Inputs* (`AbadonParams`, 51): the sound and the voice, the ticks (sound, voice released, end), the flash (ramp,
+       level), the sweep (start, ticks, top level, fall, the texture page / CLUT moves), the fade (start, ticks, its byte),
+       the scripts' tick, the tiles (three windows, ticks, colour, ramp in / out), the sparks (ticks, count, life, size),
+       the dust (count, life, size, scatter), the shards (start, ticks, level, velocity mask, life, particle chance, spin,
+       shrink), the particles (the shards' particles' life, speed). Data: the two sounds, the particles' four flipbooks,
+       the 29 bone scripts' byte code (0x4CC bytes: their loop counters are written as they run), "mag313.tim", the camera
+       track. The light sweep, the caster's draw with the pose offsets, the shatter (which polygons, the shards' corners)
+       and the particle / shard renderers stay code; so does the lower half's tint on the first ticks.
+     - *Port:* the module globals through own::R (the colour target 0x25055D8, never written, too), the spawns through
+       own::Fn; setup and loader ported; five parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Abadon (c0m103, slot 3) on itself with its lower half in slot 4
+       (`CYCLE_CASTS`, `CYCLE_SLOTS`; it hurts nobody); the description's compile test. The recorder does not record the
+       screen flash, the music fade nor the entities' colours.
+     - *Fujin:* its tabs (Main, Light sweep, Colour fade, Bone scripts, Body, White tiles, Sparks, Dust, Shards,
+       Particles); no + menu family.
    - **Fake President death (315)** (FFNx 883d74d1; its AI's death section; a port root, Ray-Bomb's kind): the Fake
      President melting into a puddle (drops, bubbles, rings, sparks, splashes) and Gerogero (the next entity
      slot) rising out of it, the tints, the voice and the sounds; the action result.
@@ -2970,11 +3349,61 @@ Potion's description is the same with its own sequences and sound.
      - *Tests:* cast by the Fake President (c0m075) with Gerogero (c0m034) in the next slot (`CYCLE_CASTS`,
        `CYCLE_SLOTS`: its rise reads that entity).
      - *Fujin:* its tab (Master); no + menu family.
+   - **Red Giant death (316)** (FFNx 67a7cad6; enemy attack 203 of Red Giant, c0m130, on itself: its death; a port root,
+     Cannon Blow's kind; Abadon death 314's kin): the music faded; the screen flash up over 8 ticks, held, down over the
+     last 8; from tick 20 for 130 ticks the caster drawn by the module lit by a light level falling down its body (40 a
+     tick for 100 ticks, then held); from tick 150 for 150 ticks the level rising back, the lit polygons semi-transparent,
+     1 in 16 throwing a particle; its colour faded to black from tick 150 over 140 ticks; the sound at tick 45, the voice
+     claimed at the start and released at 308; the main ends at 312. No damage.
+     - *Inputs* (`RedGiantParams`, 28): the sound and the voice, the ticks (sound, voice released, end), the flash
+       (ramp, level), the sweeps (top level, the texture page / CLUT moves; A: start, ticks, fall, its ticks; B: start,
+       ticks, rise), the fade (start, ticks, its byte), the particles (chance, life, size, speed). Data: the two sounds,
+       the particles' flipbook, the exe's TIM its setup uploads, "mag315.tim", the camera track. The two sweeps' draws
+       (each vertex's grey from its height, which polygons are lit) and the particle renderer stay code.
+     - *Port:* the module globals through own::R (the colour target 0x2505570, never written, too), the spawns through
+       own::Fn; setup and loader ported; three parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Red Giant (c0m130, slot 3) on itself (`CYCLE_CASTS`; it hurts nobody); the
+       description's compile test. The recorder does not record the screen flash, the music fade nor the caster's colour.
+     - *Fujin:* its tabs (Main, Sweep down, Sweep up, Colour fade, Particles); no + menu family.
    - **Acid (Quistis) (317)** (FFNx 316f2d95; Quistis' Blue Magic, Gastric Juice adapted; a port root, Ray-Bomb's
      kind): her cast animation, the acid streams and spray from her to the target, the drips and splashes, the
      target melting, the sound; the action result.
      - *Inputs* (`AcidParams`): the sound. Data: the sound, "mag127.tim".
      - *Fujin:* its tab (Target); no + menu family.
+   - **Strong counter-attack (318)** (FFNx 67a7cad6; Krysta's (c0m038) counter, on a party member; a port root, Cannon
+     Blow's kind; Counter-attack 319's big twin): from tick 2 for 22 ticks a charge layout at the caster's arm bone (0x1D);
+     from tick 4 for 16 ticks a spike (layout and model) rushing from it to the target (eased: (tick / 16)^4), particles
+     thrown off along its way (4 points a tick, 2 particles each, 2 more from tick 4 of the spike on); from tick 19 for 32
+     ticks a burst layout at the target, 8 sprites a tick flying off it on its first 4, slowing down; the sound at tick 8,
+     the damage at 24; at 39 the caster's arm object hidden and five of its bones grown back from nothing; the main ends
+     at 51 (once the battle file it streams from tick 41 is in).
+     - *Inputs* (`StrongParams`, 49): the sound, the ticks (sound, damage, bones, end), the charge (start, ticks,
+       depth), the spike (start, ticks, bone, depth), the particles (points, lag, second pair, life, size, speed), the burst
+       (start, ticks, depth), the sprites (ticks, count, turn, speed, slowing, life, size), the bones (five bones and
+       delays, the growths). Data: the sound, the three layouts, the spike model, the sprites' and particles' flipbooks,
+       the three offsets (0x18 bytes), "mag317.tim", the camera track. The directions (the spike's frame, the sprites'
+       spread), the particle and sprite renderers stay code.
+     - *Port:* the module globals through own::R (the sprites' zero vector 0x2505480 too: ZERO_VEC -> ZeroVec()), the
+       spawns through own::Fn; setup and loader ported; five parts tagged (FX_PART). Its bone scale task is noted for
+       programs (Counter-attack 319 queues it).
+     - *Tests:* the cycle test casts it from Krysta (c0m038, slot 3) on the party (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Main, Charge, Spike, Particles, Burst, Flying sprites, Arm regrowth); no + menu family.
+   - **Counter-attack (319)** (FFNx 67a7cad6; Krysta's (c0m038) counter, on a party member; a port root, Cannon Blow's
+     kind; Strong counter-attack 318's weak twin): from tick 2 for 7 ticks a spike (layout and model) travelling from the
+     caster's arm bone (0xD) to the target; from tick 7 for 32 ticks a burst layout at the target, 4 sprites around it on
+     ticks 15 / 17 / 19 / 21; the sound at tick 1, the damage at 12; at 27 the caster's arm object hidden and five of its
+     bones grown back from nothing (318's bone scale task); the main ends at 39 (then the battle file it streams).
+     - *Inputs* (`CounterParams`, 38): the sound, the ticks (sound, damage, bones, end), the spike (start, ticks,
+       bone, depth), the burst (start, ticks, depth), the sprites (first / last tick, every, count, scatter, life, size),
+       the bones (five bones and delays, the growths). Data: the sound, the two layouts, the spike model, the sprites'
+       flipbook, the three offsets (0x18 bytes: the first one used), "mag318.tim", the camera track. The spike's frame and
+       the sprite renderer stay code.
+     - *Port:* the module globals through own::R, the spawns through own::Fn (the bone scales: 318's task, its port in a
+       program); setup and loader ported; three parts tagged (FX_PART).
+     - *Tests:* the cycle test casts it from Krysta (c0m038, slot 3) on the party (`CYCLE_CASTS`); the description's
+       compile test.
+     - *Fujin:* its tabs (Main, Spike, Burst, Sprites, Arm regrowth); no + menu family.
    - **Diablos (325)** (FFNx eec33c9f; the GF's Dark Messenger, the timeline family; a port timeline, Ray-Bomb's kind):
      the two battle models, the prim-model players and particles (bolts, puffs, rising and burst layouts), the
      targets squashed, the camera, the streamed loads, the screen flash, the voice and the sounds (ticks 0, 0x5B,
