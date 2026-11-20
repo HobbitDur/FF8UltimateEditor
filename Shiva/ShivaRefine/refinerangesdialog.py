@@ -3,7 +3,7 @@ from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget, QTableWidgetItem,
                              QSpinBox, QPushButton, QHeaderView)
 
-from FF8GameData.menu.mngrp.m00x.refineabilities import RefineAbility, range_problems
+from FF8GameData.menu.mngrp.m00x.refineabilities import RefineAbility, range_problems, table_growth
 
 
 class RefineRangesDialog(QDialog):
@@ -12,7 +12,9 @@ class RefineRangesDialog(QDialog):
     Opens with the ranges suggested after the recipes added and removed (RefineLayout.suggested_ranges),
     the values that differ from kernel.bin in bold. Every range is checked against the tables as
     they are now (range_problems): "Write to kernel.bin" is only possible when none has a problem
-    and one changed. Only the ranges: what each ability is stays SolomonRing's to edit."""
+    and one changed. A range past its table's end grows the table: growth() says how many recipes
+    each table gets (copies of the one before), the caller adds them. Only the ranges: what each
+    ability is stays SolomonRing's to edit."""
 
     COLUMN_ABILITY = 0
     COLUMN_INDEX = 1
@@ -59,6 +61,8 @@ class RefineRangesDialog(QDialog):
                 item = self.table.item(row, column)
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
+        self.growth_label = QLabel("")
+        self.growth_label.setWordWrap(True)
         self.problem_label = QLabel("")
         self.problem_label.setWordWrap(True)
         self.problem_label.setStyleSheet("color:#ff6b6b;")
@@ -74,6 +78,7 @@ class RefineRangesDialog(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(explanation)
         layout.addWidget(self.table)
+        layout.addWidget(self.growth_label)
         layout.addWidget(self.problem_label)
         layout.addLayout(buttons)
         self.setLayout(layout)
@@ -90,11 +95,17 @@ class RefineRangesDialog(QDialog):
         return [ability.index for row, ability in enumerate(self.abilities)
                 if (self.first_spins[row].value(), self.last_spins[row].value()) != (ability.first, ability.last)]
 
+    def _proposed(self):
+        return [RefineAbility(index=ability.index, table=ability.table, first=first, last=last, name=ability.name)
+                for ability, (first, last) in zip(self.abilities, self.ranges().values())]
+
     def problems(self):
-        """[(ability, reason)] of the ranges as set (range_problems)."""
-        proposed = [RefineAbility(index=ability.index, table=ability.table, first=first, last=last, name=ability.name)
-                    for ability, (first, last) in zip(self.abilities, self.ranges().values())]
-        return range_problems(proposed, self.table_counts)
+        """[(ability, reason)] of the ranges as set (range_problems, past the end allowed)."""
+        return range_problems(self._proposed(), self.table_counts, can_grow=True)
+
+    def growth(self):
+        """{table: recipes to append} for the ranges as set to fit (table_growth)."""
+        return table_growth(self._proposed(), self.table_counts)
 
     def _refresh(self, *_):
         problems = self.problems()
@@ -110,5 +121,10 @@ class RefineRangesDialog(QDialog):
                 spin.setToolTip(f"kernel.bin: {kernel_value}")
             mark = "⚠ " if ability.index in rows_with_problem else ""
             self.table.item(row, self.COLUMN_ABILITY).setText(mark + ability.name)
+        self.growth_label.setText("\n".join(
+            f"{self.table_names[table]} grows from {self.table_counts[table]} to {self.table_counts[table] + added} "
+            f"recipes: {added} new one{'s' if added > 1 else ''} at the end, copies of the one before "
+            f"(save mngrp.bin with the toolbar afterwards)."
+            for table, added in sorted(self.growth().items())))
         self.problem_label.setText("\n".join(f"{ability.name}: {reason}" for ability, reason in problems))
         self.write_button.setEnabled(not problems and bool(changed))

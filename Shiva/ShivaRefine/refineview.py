@@ -104,7 +104,7 @@ class RefineLayout:
         self.views = []
         self.warnings = []
         self.shifts = {}         # table: [lowest entry index whose recipe moved, recipes added, removed]
-        self.edits = []          # (table, entry index, +1 added / -1 removed), in order: suggested_ranges
+        self.edits = []          # (table, entry index, +1 added / -1 removed, appended at the table's end), in order: suggested_ranges
         check_no_overlap(self.abilities)
         self._build_views()
 
@@ -154,11 +154,18 @@ class RefineLayout:
     def suggested_ranges(self):
         """{menu ability index: [first, last]}: kernel.bin's ranges moved along with the recipes
         added and removed since. A recipe added at entry p goes to the ability ending at p - 1 (or
-        holding it); one removed shrinks the ability holding it; the later ranges move."""
+        holding it); one removed shrinks the ability holding it; the later ranges move. A recipe
+        appended after the table's last one moves none: only the ability ending at p - 1 grows
+        (an append into a range that already covers p is not even recorded, see insert_at)."""
         ranges = {ability.index: [ability.first, ability.last] for ability in self.abilities}
         tables = {ability.index: ability.table for ability in self.abilities}
-        for table, position, delta in self.edits:
+        for table, position, delta, appended in self.edits:
             in_table = [index for index in ranges if tables[index] == table]
+            if appended:
+                owner = next((index for index in in_table if ranges[index][1] == position - 1), None)
+                if owner is not None:
+                    ranges[owner][1] += 1
+                continue
             if delta > 0:
                 owner = next((index for index in in_table if ranges[index][0] <= position - 1 <= ranges[index][1]), None)
             else:
@@ -208,8 +215,8 @@ class RefineLayout:
                     gap_start = None
         self.warnings += self.kernel_warnings()
 
-    def _record_shift(self, table, lowest, added=0, removed=0):
-        self.edits.append((table, lowest, added - removed))
+    def _record_shift(self, table, lowest, added=0, removed=0, appended=False):
+        self.edits.append((table, lowest, added - removed, appended))
         shift = self.shifts.setdefault(table, [lowest, 0, 0])
         shift[0] = min(shift[0], lowest)
         shift[1] += added
@@ -229,18 +236,29 @@ class RefineLayout:
     def insert_at(self, table, position, source_index):
         """Insert a copy of entry source_index of table (and of its text) at position, 0 to the
         table's count (after its last entry): every later recipe of the table moves down one, the
-        ranges staying kernel.bin's."""
+        ranges staying kernel.bin's.
+
+        Appended after the last recipe, it moves none: when a range (as suggested) already covers
+        that entry, the recipe fills it and nothing needs kernel.bin; otherwise only the ability
+        ending right before it is suggested one longer."""
         bin_section, msg_section = self.tables()[table]
         count = len(bin_section.entries)
         if count >= MAX_TABLE_ENTRIES:
             raise ValueError(f"{bin_section.m00bin.name} already holds {MAX_TABLE_ENTRIES} recipes, the game reads no more")
         if not 0 <= position <= count:
             raise ValueError(f"{bin_section.m00bin.name}: a recipe goes at entry 0 to {count}, not {position}")
+        appended = position == count
+        fills = appended and any(first <= position <= last for index, (first, last) in self.suggested_ranges().items()
+                                 if self._ability_table(index) == table)
         source_entry = bin_section.entries[source_index]
         source_text = msg_section.get_text_list()[source_index]
         self.m00_manager.insert_entry(table, position, copy.copy(source_entry), source_text.get_data_hex())
-        self._record_shift(table, position, added=1)
+        if not fills:
+            self._record_shift(table, position, added=1, appended=appended)
         self._build_views()
+
+    def _ability_table(self, index):
+        return next(ability.table for ability in self.abilities if ability.index == index)
 
     def remove_entry(self, view, row):
         """Remove the entry at `row` of view (and its text): see remove_at."""

@@ -115,16 +115,32 @@ def check_refine_ranges(abilities):
     return errors
 
 
-def range_problems(abilities, table_counts):
+def table_growth(abilities, table_counts):
+    """{table: recipes to append} so that every range fits its table, for tables holding
+    table_counts[table] recipes (only the tables some range goes past the end of)."""
+    growth = {}
+    for ability in abilities:
+        missing = ability.last + 1 - table_counts[ability.table]
+        if ability.first <= ability.last and missing > growth.get(ability.table, 0):
+            growth[ability.table] = missing
+    return growth
+
+
+def range_problems(abilities, table_counts, can_grow=False):
     """[(ability, reason)] of the ranges kernel.bin should not get, for tables holding
     table_counts[table] recipes: a slice with no recipe, past the table's end, too long for the
-    game, or offering the same entries as another ability."""
+    game, or offering the same entries as another ability.
+
+    can_grow: a range past the table's end is fine (the table gets the recipes it lacks,
+    table_growth), as long as the table stays within the MAX_TABLE_ENTRIES the game reads."""
     problems = []
     for ability in abilities:
         count = table_counts[ability.table]
         if ability.first > ability.last:
             problems.append((ability, f"first {ability.first} is after last {ability.last}: no recipe"))
-        elif ability.last >= count:
+        elif can_grow and ability.last >= MAX_TABLE_ENTRIES:
+            problems.append((ability, f"last {ability.last} is past the {MAX_TABLE_ENTRIES} entries the game reads"))
+        elif not can_grow and ability.last >= count:
             problems.append((ability, f"last {ability.last} is past the table's end (entries 0-{count - 1})"))
         elif ability.count > MAX_ABILITY_ENTRIES:
             problems.append((ability, f"{ability.count} recipes, the game counts at most {MAX_ABILITY_ENTRIES}"))

@@ -257,7 +257,8 @@ class ShivaRefineWidget(QWidget):
 
     def edit_ranges(self):
         """The Refine ranges dialog, suggesting the ranges the recipes added and removed need;
-        writes what it accepts into kernel.bin, then reads it again."""
+        writes what it accepts into kernel.bin, then reads it again. A range set past its table's
+        end appends the recipes it lacks (copies of the one before), saved with mngrp.bin."""
         if not self.kernel_path or self.layout is None or not self.layout.from_kernel:
             return
         tables = self.layout.tables()
@@ -266,6 +267,7 @@ class ShivaRefineWidget(QWidget):
                                     [bin_section.m00bin.name for bin_section, _ in tables])
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
+        growth = dialog.growth()
         try:
             write_refine_ranges(self.game_data, self.kernel_path, self.layout.abilities, dialog.ranges())
             abilities = read_refine_abilities(self.game_data, self.kernel_path)
@@ -273,6 +275,12 @@ class ShivaRefineWidget(QWidget):
             QMessageBox.critical(self, "Shiva - kernel.bin not written", str(error))
             return
         self.set_kernel_abilities(abilities, self.kernel_path)
+        if growth:  # kernel.bin now offers them: the table gets them, filling the ranges just written
+            for table, added in growth.items():
+                for _ in range(added):
+                    count = len(self.layout.tables()[table][0].entries)
+                    self.layout.insert_at(table, count, count - 1)
+            self._fill_section_list(self._selected_refine_view())
         self.kernel_ranges_written.emit(self.kernel_path)
 
     def set_kernel_names(self, item_entries, magic_names):

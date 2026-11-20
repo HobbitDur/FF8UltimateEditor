@@ -489,3 +489,59 @@ def test_shiva_writes_the_suggested_ranges_on_demand(qapp, game_data, files, mon
     assert widget.save_files() is True
     _, reloaded = _load(game_data, files)
     assert len(_view(reloaded, "Ammo-RF").entries) == 17 and not reloaded.warnings
+
+
+@pytest.mark.ff8data(*FILES)
+def test_ranges_past_the_table_end_grow_the_table(qapp, game_data, files, monkeypatch):
+    """Forbid Mag-RF (96-101) is the end of m000 (102 recipes): setting its last entry to 103 in
+    Refine ranges is allowed, writes 96-103 into kernel.bin and appends 2 recipes to m000, copies
+    of the one before, that mngrp.bin then saves."""
+    from PyQt6.QtWidgets import QDialog
+    from Shiva.ShivaRefine.refinerangesdialog import RefineRangesDialog
+
+    def accept_longer_forbid(dialog):
+        row = next(row for row, ability in enumerate(dialog.abilities) if ability.name == "Forbid Mag-RF")
+        dialog.last_spins[row].setValue(103)
+        assert dialog.write_button.isEnabled() and not dialog.problem_label.text()
+        assert dialog.growth() == {0: 2} and "grows from 102 to 104" in dialog.growth_label.text()
+        return QDialog.DialogCode.Accepted
+
+    monkeypatch.setattr(RefineRangesDialog, "exec", accept_longer_forbid)
+    widget = _shiva(files, monkeypatch)
+    refine = widget.refine_tab
+    last_text = refine.layout.tables()[0][1].get_text_list()[101].get_str()
+    refine.ranges_button.click()
+    forbid = next(ability for ability in read_refine_abilities(game_data, files / "kernel.bin")
+                  if ability.name == "Forbid Mag-RF")
+    assert (forbid.first, forbid.last) == (96, 103)
+    assert len(refine.layout.tables()[0][0].entries) == 104 and not refine.layout.warnings
+    assert len(_view(refine.layout, "Forbid Mag-RF").entries) == 8
+    assert widget.save_files() is True
+    _, reloaded = _load(game_data, files)
+    texts = reloaded.tables()[0][1].get_text_list()
+    assert len(reloaded.tables()[0][0].entries) == 104 and [text.get_str() for text in texts[102:]] == [last_text] * 2
+    assert len(_view(reloaded, "Forbid Mag-RF").entries) == 8 and not reloaded.warnings
+
+
+@pytest.mark.ff8data(*FILES)
+def test_recipes_appended_into_a_kernel_range_past_the_end_fill_it(game_data, files):
+    """kernel.bin already gives an ability entries 102-103 of m000 (102 recipes, set in
+    SolomonRing): recipes appended after the last one fill that range. No recipe moved, so no
+    range changes and kernel.bin needs nothing; Forbid Mag-RF (96-101) is left alone. Appended past
+    every range, a recipe makes only the ability ending right before it one longer."""
+    kernel = bytearray((files / "kernel.bin").read_bytes())
+    kernel[MENU_ABILITIES + 6:MENU_ABILITIES + 8] = bytes((0, 102, 103))[1:]
+    kernel[MENU_ABILITIES + 5] = 0  # menu ability 0 now opens m000, entries 102-103
+    (files / "kernel.bin").write_bytes(bytes(kernel))
+    _, layout = _load(game_data, files)
+    new = next(view for view in layout.views if view.ability.index == 0)
+    assert (new.first, new.last, len(new.entries)) == (102, 103, 0)
+    before = layout.suggested_ranges()
+    layout.insert_at(0, 102, 101)
+    layout.insert_at(0, 103, 102)
+    assert layout.suggested_ranges() == before and not layout.shifts and not layout.warnings
+    assert len(next(view for view in layout.views if view.ability.index == 0).entries) == 2
+    layout.insert_at(0, 104, 103)  # past every range: menu ability 0 grows, nothing else moves
+    suggested = layout.suggested_ranges()
+    assert suggested[0] == [102, 104] and suggested[12] == [96, 101]
+    assert {index: rng for index, rng in suggested.items() if index != 0} ==         {index: rng for index, rng in before.items() if index != 0}
