@@ -250,6 +250,7 @@ package. The 400-slot list uses shared attack-animation names. `Fujin/magdocumen
   with the part tabs' form, preview and "?" compare. A value is written to the effect's file (the one its Files tab names, empty: the game's), one undo step, same size, and shows in
   the Script tab; Save writes the file. Enabled while that file is imported and laid out as the description says (a mod's may not be: then its Script tab).
   A part's id is its bone's program offset in the `.00`: the engine tags what each bone draws (FX_PART, `tag_parts` in the port's clone).
+  A part several bones draw lists them in `ids`, its id first: bones that run the same drawing code (the Brothers' 37 slab pieces, Eden's picture screens and its model in each scene, Ifrit's three sizes of fire rings under the part their shared values are in); its tab previews them all.
   **Path, Starts from** puts the cloud on the target: bone handler 0 instead of the flight between two bones, no speed, and the position taken before the bone is spawned. In the game's
   order the bone inherits no position, so its first puff is released at the world's origin (it goes unnoticed on the way from the caster).
   The sparks', cloud's and rings' picture and blend are not offered: their sprites carry their own, whatever the script sets (the swirls follow `SetTexture` and `SetBlendMode`).

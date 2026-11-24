@@ -341,6 +341,15 @@ def test_the_tabs_edit_the_effects_file_with_one_undo_a_change(qapp, tmp_path, s
     assert fujin.program_camera_row.isHidden()
 
 
+def test_a_part_drawn_by_several_bones_previews_them_all():
+    """A part's "ids" (bones running the same drawing code: the Brothers' 37 slab pieces) are what its tab previews;
+    a part with one id previews that one, a part that draws nothing (id 0) none of its own."""
+    from Fujin.effectparts import drawn_by
+    pieces = next(part for part in load_description(205)["script"]["parts"] if part["key"] == "pieces")
+    assert len(pieces["ids"]) == 37 and drawn_by(pieces) == frozenset(pieces["ids"])
+    assert drawn_by({"id": SPARKS}) == {SPARKS} and drawn_by({"id": 0}) == frozenset()
+
+
 def test_a_missing_shared_texture_is_sent_to_import_complementary():
     from Fujin.nativepreview import recording_notes
     notes = recording_notes("missing battle file a8def.tim (for a load)\nmissing battle file MAG200_B.02 (for a load)")

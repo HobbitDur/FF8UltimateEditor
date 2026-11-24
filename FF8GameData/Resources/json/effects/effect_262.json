@@ -197,6 +197,10 @@
    },
    {
     "id": 2846,
+    "ids": [
+     2846,
+     2882
+    ],
     "key": "trails",
     "title": "Blade trails",
     "doc": "The red trails behind Kiros' two blades"
@@ -218,12 +222,26 @@
    },
    {
     "id": 970,
+    "ids": [
+     970,
+     1126,
+     1214,
+     1306,
+     1566
+    ],
     "key": "slash",
     "title": "Slashes",
     "doc": "The glowing slash streaks, one per hit (the tab shows the first one's). Their picture and blend are in their sprites (Textures tab, Sections)"
    },
    {
     "id": 1024,
+    "ids": [
+     1024,
+     1158,
+     1250,
+     1342,
+     1598
+    ],
     "key": "blood",
     "title": "Blood",
     "doc": "The dark drops left along each slash (the tab shows the first slash's). Their picture and darkening blend are in their sprites (Textures tab, Sections)"

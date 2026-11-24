@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from FF8GameData.magcine.cinescript import CineOpcodeTable, CineProgram
 from Fujin.effectprogram import DESCRIPTIONS
 from Fujin.scriptparts import apply_script_values, edits, read_value, script_matches, script_values
 
@@ -46,3 +47,17 @@ def test_a_value_is_written_where_it_is_read_and_nowhere_else(effect):
             changed = {at for at in range(len(data)) if edited[at] != data[at]}
             allowed = {at + index for at, raw in edits(field, value, data) for index in range(len(raw))}
             assert changed <= allowed, field["key"]
+
+
+@pytest.mark.parametrize("effect", CASES)
+def test_a_part_drawn_by_several_bones_names_bones_its_script_starts(effect):
+    """A part several bones draw ("ids": the Brothers' 37 slab pieces, Eden's 12 picture screens) lists its own id first,
+    each bone once, each a bone program the script spawns."""
+    script = SCRIPTS[effect]
+    data = _file(script)
+    program = CineProgram(data, int.from_bytes(data[4:8], "little"), CineOpcodeTable.for_effect(effect))
+    bones = {target for target, refs in program.xrefs.items() if any(kind == "spawn" for _source, kind in refs)}
+    for part in script["parts"]:
+        if "ids" in part:
+            assert part["ids"][0] == part["id"] and len(set(part["ids"])) == len(part["ids"]) > 1, part["key"]
+            assert set(part["ids"]) <= bones, part["key"]

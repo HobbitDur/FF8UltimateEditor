@@ -133,6 +133,12 @@ def defaults(schema):
 TARGET_PART = 0                     # what no effect part drew: in the lab recording, the target's model
 
 
+def drawn_by(part):
+    """The part ids (bone program offsets) a part draws with: its "ids" when several bones draw it (a script part:
+    the Brothers' 20 streaks, Eden's picture screens), else its "id"; none for a part that draws nothing (id 0)."""
+    return frozenset(part.get("ids") or ([part["id"]] if part["id"] else []))
+
+
 _FOLDED = {}                        # Collapsible title -> folded: one choice for every part tab (this session)
 PANEL = {"width": 300}              # a part tab's parameter panel width (pixels), the same in every tab
 
@@ -957,7 +963,7 @@ class PartTab(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setWidget(form_widget)
         # 0: draws nothing, the whole effect (no part tagged: all it drew is untagged, with the target's model)
-        part_ids = {part["id"]} if part["id"] else set(effect_parts) or {TARGET_PART}
+        part_ids = set(drawn_by(part)) or set(effect_parts) or {TARGET_PART}
         # a result's number is a heal when the part gives HP (Cure's emitter: Heal tick)
         heals = any(f["key"].endswith("heal_tick") for f in fields)
         self.preview = PartPreview(runner, part_ids, renderer, markers=self.markers, part_names=self.part_names,

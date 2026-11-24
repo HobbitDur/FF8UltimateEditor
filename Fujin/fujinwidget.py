@@ -26,7 +26,7 @@ from Fujin.nativeresources import NativeResourceStore, apply_effect_hext
 from Fujin.magdocumentwidget import MagDocumentWidget
 from Fujin.texturepictureview import TexturePictureView, TimTexture, sheet_in_tim, tim_blocks
 from FF8GameData.psxgpu.texuse import texture_sheets
-from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, no_parts_reason, defaults as schema_defaults, effect_schema,
+from Fujin.effectparts import (PORTS_BUILDING, PORTS_MISSING, PartTab, drawn_by, no_parts_reason, defaults as schema_defaults, effect_schema,
                                recorder_has_ports)
 from Fujin.nativepreview import NativePreviewView, gl_renderer
 from Fujin.scriptparts import apply_script_values, edits, is_script_key, script_matches, script_values, with_script_parts
@@ -1436,8 +1436,8 @@ class FujinWidget(QWidget):
         self._show_parts_note()
         if schema is None:
             return
-        drawing = frozenset(part["id"] for part in schema["parts"] if part["id"])
-        names = {0: "The target"} | {part["id"]: part["title"] for part in schema["parts"] if part["id"]}
+        drawing = frozenset().union(*(drawn_by(part) for part in schema["parts"]))
+        names = {0: "The target"} | {at: part["title"] for part in schema["parts"] for at in drawn_by(part)}
         # what its code reads at a fixed place of the exe: under the part that previews the whole effect
         whole = next((part for part in schema["parts"] if not part["id"]), next(iter(schema["parts"]), None))
         fixed = (self.description(effect) or {}).get("not_editable", [])

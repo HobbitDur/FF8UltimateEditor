@@ -283,6 +283,10 @@
    },
    {
     "id": 10174,
+    "ids": [
+     10174,
+     10190
+    ],
     "key": "glow",
     "title": "Flare glow",
     "paths": [],
@@ -313,6 +317,11 @@
    },
    {
     "id": 11356,
+    "ids": [
+     11356,
+     11348,
+     11364
+    ],
     "key": "smoke",
     "title": "Smoke rings",
     "paths": [],
