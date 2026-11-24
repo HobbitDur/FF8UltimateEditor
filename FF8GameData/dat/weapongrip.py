@@ -29,6 +29,11 @@ import numpy as np
 HELD_DISTANCE = 0.5
 # Below this the in-between is already in the hand: left untouched.
 MIN_CORRECTION = 0.01
+# A grip is pinned only when it really holds over the original frames (mean distance, vertex
+# units). Squall, Irvine, Rinoa, Selphie, Seifer: 0.008-0.011; Quistis 0.032. Laguna's machine
+# gun (d8w035, 0.21: 15% of its frames 0.5-1.0 off) and Ward's harpoon (daw039, 1.4: no point of
+# it stays in his hand) have no steady grip: pinning one would move the weapon for nothing.
+MAX_GRIP_SPREAD = 0.1
 # Weapon root -> vertex units (Ifrit3D: get_pos_world is raw / 204.8, vertices raw / 128).
 ROOT_TO_VERTEX = 1.6
 # Vertex local axes as IfritManager._transform_vertex reads them.
@@ -122,14 +127,18 @@ def find_grip(body_model, weapon_model, pairs):
 
 def pin_weapon_grip(body_model, weapon_model) -> dict:
     """Pin one converted weapon's grip to its converted body's hand on the in-between frames.
-    Returns {'grip': Grip or None, 'nb_pinned': int, 'worst_before': float, 'worst_after': float}
-    (the worst distance of a pinned in-between's grip from the hand, vertex units)."""
-    report = {'grip': None, 'nb_pinned': 0, 'worst_before': 0.0, 'worst_after': 0.0}
+    Returns {'grip': Grip or None, 'steady': bool, 'nb_pinned': int, 'worst_before': float,
+    'worst_after': float} (the worst distance of an in-between's grip from the hand, vertex units).
+    A grip that does not hold (spread over MAX_GRIP_SPREAD) is reported, not pinned."""
+    report = {'grip': None, 'steady': False, 'nb_pinned': 0, 'worst_before': 0.0, 'worst_after': 0.0}
     pairs = _pairs(body_model, weapon_model)
     grip = find_grip(body_model, weapon_model, pairs)
     if grip is None:
         return report
     report['grip'] = grip
+    report['steady'] = grip.spread <= MAX_GRIP_SPREAD
+    if not report['steady']:
+        return report
 
     for anim_id, body_frames, weapon_frames in pairs:
         def offset(index):

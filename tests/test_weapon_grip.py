@@ -75,6 +75,24 @@ def test_every_in_between_keeps_the_grip_in_the_hand(manager, converted):
                 assert distance < 0.25, (name, anim_id, index, distance)
 
 
+@pytest.mark.skipif(not all((BATTLE_PATH / name).exists() for name in ("dac021.dat", "daw039.dat")),
+                    reason="Ward's vanilla battle files not available")
+def test_a_weapon_without_a_steady_grip_is_left_as_blended(manager, tmp_path, monkeypatch):
+    """No point of Ward's harpoon stays in his hand (it leaves it by up to 18 units): nothing to
+    pin, the weapon is the plain conversion."""
+    family = ["dac021.dat", "daw039.dat"]
+    for folder in ("pinned", "plain"):
+        (tmp_path / folder).mkdir()
+        for name in family:
+            shutil.copy(BATTLE_PATH / name, tmp_path / folder / name)
+    report_list = manager.convert_file_list_to_fps([str(tmp_path / "pinned" / name) for name in family], 30)
+    grip_report = {report['file']: report for report in report_list}["daw039.dat"]['grip_report']
+    assert not grip_report['steady'] and grip_report['nb_pinned'] == 0
+    monkeypatch.setattr(weapongrip, "pin_family_grips", lambda model_by_name: {})
+    manager.convert_file_list_to_fps([str(tmp_path / "plain" / name) for name in family], 30)
+    assert (tmp_path / "pinned" / "daw039.dat").read_bytes() == (tmp_path / "plain" / "daw039.dat").read_bytes()
+
+
 def test_the_original_frames_and_the_body_are_untouched(manager, converted, monkeypatch):
     """Only the weapon roots of in-between frames move: the original frames keep their vanilla
     root, the body is the family's conversion without the pinning, and a weapon differs from
