@@ -210,6 +210,10 @@ def _cmd_convert_fps(args) -> int:
                           if count.get('manual') or count.get('refused') else ""))
         if report.get('camera_report') is not None:
             detail += f", camera {report['camera_report'].summary()}"
+        grip = report.get('grip_report')
+        if grip and grip['grip'] is not None:
+            detail += (f", grip kept in the hand on {grip['nb_pinned']} in-between(s)"
+                       f" (worst {grip['worst_before']:.2f} -> {grip['worst_after']:.2f})")
         print(f"[ok] {name}: {detail}")
         for warning in report.get('warning_list', []):
             print(f"    [warning] {warning}")

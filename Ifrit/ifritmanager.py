@@ -21,7 +21,7 @@ from FF8GameData.dat.animchain import analyse_animation_chain
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
                                           get_max_frame_for_animation, get_nb_part_needed,
                                           can_split_animation, MAX_ANIMATION_ID, MAX_ANIMATION_FRAME)
-from FF8GameData.dat import dat30, battlememory
+from FF8GameData.dat import dat30, battlememory, weapongrip
 from FF8GameData.dat.entranceanimation import EntranceAnimationView
 from FF8GameData.tim.timfile import (decode_tim, force_opaque, word_to_rgba, PalettedTim,
                                      encode_clut, encode_indices)
@@ -605,9 +605,26 @@ class IfritManager:
                 index += 1
                 group_report.append(self._convert_one_file_to_real30(file_path, split_when_too_long,
                                                                      mode, hold_step_dict))
+            self._pin_family_grips(group_report)
             self._write_real30_group(group_report)
             report_list.extend(group_report)
         return report_list
+
+    @staticmethod
+    def _pin_family_grips(group_report):
+        """Every converted weapon of a character family keeps its grip in its body's hand on the
+        new in-between frames (FF8GameData/dat/weapongrip.py): blended on their own, the weapon
+        leaves the hand for one frame on a fast swing. Only when the whole family converted (it is
+        written whole or not at all), and only with its body in the list."""
+        if any((report.get('_monster') is None and not report.get('_not_a_model')) or report['skipped_list']
+               for report in group_report):
+            return
+        model_by_name = {report['file']: report['_monster'] for report in group_report
+                         if report.get('_monster') is not None}
+        for name, grip_report in weapongrip.pin_family_grips(model_by_name).items():
+            for report in group_report:
+                if report['file'] == name:
+                    report['grip_report'] = grip_report
 
     def _write_real30_group(self, group_report):
         """Save every converted file of a family, or none when one of them was refused. A file
