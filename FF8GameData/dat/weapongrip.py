@@ -125,6 +125,16 @@ def find_grip(body_model, weapon_model, pairs):
     return best
 
 
+def has_steady_grip(body_model, weapon_model) -> bool:
+    """Whether a weapon not converted yet (15 fps, like its body) holds a steady grip in its
+    hand (spread at most MAX_GRIP_SPREAD): its in-betweens will be pinned there."""
+    pairs = [(anim_id, [frame for frame in body_frames for _ in (0, 1)],
+              [frame for frame in weapon_frames for _ in (0, 1)])
+             for anim_id, body_frames, weapon_frames in _pairs(body_model, weapon_model)]
+    grip = find_grip(body_model, weapon_model, pairs)
+    return grip is not None and grip.spread <= MAX_GRIP_SPREAD
+
+
 def pin_weapon_grip(body_model, weapon_model) -> dict:
     """Pin one converted weapon's grip to its converted body's hand on the in-between frames.
     Returns {'grip': Grip or None, 'steady': bool, 'nb_pinned': int, 'worst_before': float,

@@ -280,8 +280,8 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
     (animchain.analyse_animation_chain), also read before: its last frames go toward that one.
     driver_frame_count: the vanilla frame counts of the animations the sequences time themselves
     on (`C3 0A`: the character body's for a weapon); this model's own when omitted.
-    hold_step_dict: {anim id: frames whose step is held whole} (a character family's snaps,
-    Animation.snap_step_set over the body and all its weapons).
+    hold_step_dict: {anim id: frames whose step is held whole} (a character's snaps,
+    Animation.snap_step_set: a weapon's over the body and all its weapons, a body's its own).
     Returns {'nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra',
     'camera_report'}. A camera that cannot be converted is listed in 'skipped_list' as
     ('camera', reason), and nothing is touched either.
