@@ -15,7 +15,10 @@ Commands:
                     swaps the victory music
     • convert-30fps - convert the file for FFNx True30FPS: the pose animations get 2n
                     frames, the pose sequences are rewritten (9F blink stamps x2...), the
-                    camera keyframe durations x2 (FF8GameData/dat/camera30.py)
+                    camera keyframe durations x2 (FF8GameData/dat/camera30.py); with
+                    --models, the weapons pinned to the hand as pin-grips does
+    • pin-grips   - on a converted file, keep each weapon in its character's hand on the
+                    in-between frames (FF8GameData/dat/weapongrip.py)
 """
 import argparse
 import os
@@ -165,10 +168,22 @@ def _cmd_set_fanfare_id(args) -> int:
     return 0
 
 
+def _print_grip_list(grip_list):
+    for report in grip_list:
+        if report['skipped']:
+            print(f"  {report['name']} weapon grip: left as blended ({report['skipped']})")
+            continue
+        after = ", ".join(f"{name} {worst:.3f}" for name, worst in report['worst_after'].items())
+        print(f"  {report['name']} weapon grip ({report['weapon']}, spread {report['grip'].spread:.3f}): "
+              f"{report['nb_pinned']} in-betweens pinned, worst {report['worst_before']:.3f} -> "
+              f"{after or 'unchanged'} vertex units")
+
+
 def _cmd_convert_30fps(args) -> int:
     manager = _load_manager(args)
     try:
         report = manager.convert_to_real30()
+        grip_list = manager.pin_weapon_grips(args.models) if args.models else []
     except ValueError as error:
         print(f"[error] not converted, nothing written: {error}", file=sys.stderr)
         return 1
@@ -176,8 +191,21 @@ def _cmd_convert_30fps(args) -> int:
         weapon = f", weapon {weapon_frames} frames" if weapon_frames is not None else ""
         print(f"  {name}: body {body_frames} frames{weapon}, sequence {status}")
     print(f"  camera: {report['camera_report'].summary()}")
+    _print_grip_list(grip_list)
     for warning in report['warning_list']:
         print(f"[warning] {warning}")
+    _save_manager(manager, args)
+    return 0
+
+
+def _cmd_pin_grips(args) -> int:
+    manager = _load_manager(args)
+    try:
+        grip_list = manager.pin_weapon_grips(args.models)
+    except ValueError as error:
+        print(f"[error] nothing written: {error}", file=sys.stderr)
+        return 1
+    _print_grip_list(grip_list)
     _save_manager(manager, args)
     return 0
 
@@ -276,7 +304,20 @@ class WattsCliTool(BaseCliTool):
                  "sequences rewritten, camera durations x2); convert a vanilla file only once")
         _add_input_argument(p_30)
         p_30.add_argument("--output", "-o", help="Output r0win.dat (omitted: overwrite --input)")
+        p_30.add_argument("--models", "-m",
+                          help="Folder of the characters' vanilla dXc/dXw: each weapon's in-between "
+                               "frames are pinned to the hand (see pin-grips)")
         p_30.set_defaults(func=_cmd_convert_30fps)
+
+        p_pin = sub.add_parser(
+            "pin-grips",
+            help="On a converted r0win.dat, keep each weapon in its character's hand on the "
+                 "in-between frames of the victory poses (grip from the vanilla dXc/dXw)")
+        _add_input_argument(p_pin)
+        p_pin.add_argument("--models", "-m", required=True,
+                           help="Folder of the characters' vanilla dXc/dXw battle models")
+        p_pin.add_argument("--output", "-o", help="Output r0win.dat (omitted: overwrite --input)")
+        p_pin.set_defaults(func=_cmd_pin_grips)
 
         return parser
 

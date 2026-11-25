@@ -353,6 +353,109 @@ class WattsManager:
         report['warning_list'].extend(battlememory.file_warning_list("r0win.dat", self.to_bytes()))
         return report
 
+    # -------------------------------------------------- 30 fps weapon grips
+    def _load_model(self, path):
+        from FF8GameData.dat.monsteranalyser import MonsterAnalyser
+        model = MonsterAnalyser(self.game_data)
+        model.load_file_data(str(path), self.game_data)
+        model.analyse_loaded_data(self.game_data)
+        return model
+
+    def _pinned_weapon_block(self, pose: R0winPose, models_folder) -> tuple:
+        """(new weapon block or None, report) for one converted pose: its weapon's in-betweens
+        pinned to the hand (weapongrip.pin_frames) with the grip the character's own vanilla
+        dXc/dXw battle animations hold. The steadiest grip of the character's weapons is used
+        (they all play this one animation); the report gives the worst distance on each."""
+        import pathlib
+        import numpy as np
+        from FF8GameData.dat import weapongrip
+        character = pose.character
+        prefix = "d%x" % character.com_id
+        folder = pathlib.Path(models_folder)
+        report = {'name': character.name, 'grip': None, 'weapon': None, 'nb_pinned': 0,
+                  'worst_before': 0.0, 'worst_after': {}, 'skipped': None}
+        bodies = [path for path in sorted(folder.glob(f"{prefix}c*.dat"))
+                  if self._model_bones(path) == character.body_bones]
+        weapons = [path for path in sorted(folder.glob(f"{prefix}w*.dat"))
+                   if self._model_bones(path) == character.weapon_bones]
+        if not bodies or not weapons:
+            report['skipped'] = f"no {prefix}c/{prefix}w model with its skeleton in {folder}"
+            return None, report
+        body = self._load_model(bodies[0])
+        best = None
+        weapon_models = []
+        for path in weapons:
+            weapon = self._load_model(path)
+            weapon_models.append((path.name, weapon))
+            grip = weapongrip.vanilla_grip(body, weapon)
+            if grip is not None and (best is None or grip.spread < best[0].spread):
+                best = (grip, path.name, weapon)
+        if best is None or best[0].spread > weapongrip.MAX_GRIP_SPREAD:
+            report['skipped'] = "no steady grip"
+            return None, report
+        grip, report['weapon'], weapon = best
+        report['grip'] = grip
+
+        def section_of(block, model):
+            section = AnimationSection()
+            section.analyze(bytes(block), model.bone_data)
+            return section
+
+        body_frames = section_of(pose.body_anim, body).animations[0].frames
+        weapon_section = section_of(pose.weapon_anim, weapon)
+        weapon_frames = weapon_section.animations[0].frames
+        frame_report = weapongrip.pin_frames(grip, body, weapon, body_frames, weapon_frames)
+        report['nb_pinned'] = frame_report['nb_pinned']
+        report['worst_before'] = frame_report['worst_before']
+        if not frame_report['nb_pinned']:
+            return None, report
+        weapon_section.animations[0]._recompute_frame_storage_types()
+        block = self.canonicalize_animation_block(bytes(weapon_section.to_binary()), character.weapon_bones)
+        # the worst in-between left on each weapon of the character, read back from the new block
+        for name, model in weapon_models:
+            check = section_of(block, model).animations[0].frames
+            model_grip = weapongrip.vanilla_grip(body, model)
+            worst = 0.0
+            for index in range(1, min(len(body_frames), len(check)), 2):
+                if model_grip is not None:
+                    worst = max(worst, float(np.linalg.norm(
+                        model_grip.offset(body, model, body_frames[index], check[index]))))
+            report['worst_after'][name] = worst
+        return block, report
+
+    @staticmethod
+    def _model_bones(path) -> int:
+        """Bone count of a battle model .dat (section 1's first byte), 0 if unreadable."""
+        try:
+            with open(path, "rb") as in_file:
+                data = in_file.read(64)
+            return data[_read_u32(data, 4)]
+        except (OSError, IndexError, struct.error):
+            return 0
+
+    def pin_weapon_grips(self, models_folder) -> list:
+        """Keep each weapon in its character's hand on the in-between frames of a converted
+        file's victory poses (the same fault as the battle models: dat30 blends the body and the
+        weapon on their own, so on a fast move the weapon leaves the hand for one 30 Hz frame).
+        models_folder holds the characters' vanilla dXc/dXw. All or nothing: ValueError and
+        nothing changed. Returns one report per pose with a weapon."""
+        if not self.poses:
+            raise ValueError("No file loaded")
+        if self.game_data is None:
+            raise ValueError("No GameData available to read the battle models")
+        result = []
+        for pose in self.poses:
+            if pose.weapon_anim is None:
+                continue
+            try:
+                result.append((pose, *self._pinned_weapon_block(pose, models_folder)))
+            except ValueError as error:
+                raise ValueError(f"{pose.character.name} weapon grip: {error}")
+        for pose, block, _report in result:
+            if block is not None:
+                pose.weapon_anim = block
+        return [report for _pose, _block, report in result]
+
     # ------------------------------------------------------------------- parts
     def part_keys(self) -> list:
         keys = [self.PART_FANFARE_BANK, self.PART_FANFARE_SEQ, self.PART_CAMERA]

@@ -125,14 +125,47 @@ def find_grip(body_model, weapon_model, pairs):
     return best
 
 
-def has_steady_grip(body_model, weapon_model) -> bool:
-    """Whether a weapon not converted yet (15 fps, like its body) holds a steady grip in its
-    hand (spread at most MAX_GRIP_SPREAD): its in-betweens will be pinned there."""
+def vanilla_grip(body_model, weapon_model):
+    """The Grip of a weapon not converted yet (15 fps, like its body), or None: each original
+    frame doubled, so find_grip reads them as the original frames of a conversion."""
     pairs = [(anim_id, [frame for frame in body_frames for _ in (0, 1)],
               [frame for frame in weapon_frames for _ in (0, 1)])
              for anim_id, body_frames, weapon_frames in _pairs(body_model, weapon_model)]
-    grip = find_grip(body_model, weapon_model, pairs)
+    return find_grip(body_model, weapon_model, pairs)
+
+
+def has_steady_grip(body_model, weapon_model) -> bool:
+    """Whether a weapon not converted yet (15 fps, like its body) holds a steady grip in its
+    hand (spread at most MAX_GRIP_SPREAD): its in-betweens will be pinned there."""
+    grip = vanilla_grip(body_model, weapon_model)
     return grip is not None and grip.spread <= MAX_GRIP_SPREAD
+
+
+def pin_frames(grip, body_model, weapon_model, body_frames, weapon_frames) -> dict:
+    """Pin the grip in the hand on the in-between (odd) frames of one converted animation pair:
+    each in-between whose two original frames around it hold the grip gets its weapon root
+    moved so the grip sits at the offset half-way between theirs. Returns {'nb_pinned',
+    'worst_before', 'worst_after'} (vertex units). The caller re-encodes the weapon frames."""
+    report = {'nb_pinned': 0, 'worst_before': 0.0, 'worst_after': 0.0}
+
+    def offset(index):
+        return grip.offset(body_model, weapon_model, body_frames[index], weapon_frames[index])
+
+    for index in range(1, min(len(body_frames), len(weapon_frames)), 2):
+        before = offset(index - 1)
+        after = offset(index + 1) if index + 1 < len(weapon_frames) else before
+        if np.linalg.norm(before) > HELD_DISTANCE or np.linalg.norm(after) > HELD_DISTANCE:
+            continue        # not in the hand around this in-between: leave it as blended
+        now = offset(index)
+        report['worst_before'] = max(report['worst_before'], float(np.linalg.norm(now)))
+        correction = (before + after) / 2 - now
+        if np.linalg.norm(correction) >= MIN_CORRECTION:
+            for axis, position in enumerate(weapon_frames[index].position[:3]):
+                position.move_world(correction[axis] / ROOT_TO_VERTEX)
+            report['nb_pinned'] += 1
+            now = offset(index)
+        report['worst_after'] = max(report['worst_after'], float(np.linalg.norm(now)))
+    return report
 
 
 def pin_weapon_grip(body_model, weapon_model) -> dict:
@@ -151,26 +184,11 @@ def pin_weapon_grip(body_model, weapon_model) -> dict:
         return report
 
     for anim_id, body_frames, weapon_frames in pairs:
-        def offset(index):
-            return grip.offset(body_model, weapon_model, body_frames[index], weapon_frames[index])
-
-        changed = False
-        for index in range(1, len(weapon_frames), 2):
-            before = offset(index - 1)
-            after = offset(index + 1) if index + 1 < len(weapon_frames) else before
-            if np.linalg.norm(before) > HELD_DISTANCE or np.linalg.norm(after) > HELD_DISTANCE:
-                continue        # not in the hand around this in-between: leave it as blended
-            now = offset(index)
-            report['worst_before'] = max(report['worst_before'], float(np.linalg.norm(now)))
-            correction = (before + after) / 2 - now
-            if np.linalg.norm(correction) >= MIN_CORRECTION:
-                for axis, position in enumerate(weapon_frames[index].position[:3]):
-                    position.move_world(correction[axis] / ROOT_TO_VERTEX)
-                report['nb_pinned'] += 1
-                changed = True
-                now = offset(index)
-            report['worst_after'] = max(report['worst_after'], float(np.linalg.norm(now)))
-        if changed:
+        frame_report = pin_frames(grip, body_model, weapon_model, body_frames, weapon_frames)
+        report['nb_pinned'] += frame_report['nb_pinned']
+        report['worst_before'] = max(report['worst_before'], frame_report['worst_before'])
+        report['worst_after'] = max(report['worst_after'], frame_report['worst_after'])
+        if frame_report['nb_pinned']:
             weapon_model.animation_data.animations[anim_id]._recompute_frame_storage_types()
     return report
 

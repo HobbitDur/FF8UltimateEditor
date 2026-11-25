@@ -8,6 +8,7 @@ import pytest
 from FF8GameData.dat.sequencecommand import iter_command
 from FF8GameData.dat.sequencevm import entity_sequence_vm
 from FF8GameData.gamedata import GameData
+from FF8GameData.monsterdata import AnimationSection
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
 R0WIN = PROJECT_ROOT / "extracted_files" / "battle" / "r0win.dat"
@@ -60,6 +61,42 @@ def test_poses_sequences_and_camera_are_converted(game_data):
     again = WattsManager(game_data)
     again._parse(manager.to_bytes())
     assert again.looks_converted_to_real30() and not vanilla.looks_converted_to_real30()
+
+
+@pytest.mark.ff8data(R0WIN_MARK)
+def test_weapons_stay_in_the_hand_on_the_in_betweens(game_data):
+    """Selphie's nunchaku left her hand by 0.56 vertex units on in-betweens of her victory pose
+    (the weapon blended on its own): pinned, only the weapon roots of in-betweens move."""
+    import numpy as np
+    from FF8GameData.dat import weapongrip
+    blended, pinned = _manager(game_data), _manager(game_data)
+    blended.convert_to_real30()
+    pinned.convert_to_real30()
+    report_list = pinned.pin_weapon_grips(R0WIN.parent)
+    by_name = {report['name']: report for report in report_list}
+    assert set(by_name) == {"Rinoa", "Quistis", "Irvine", "Selphie"}
+    selphie = by_name["Selphie"]
+    assert selphie['worst_before'] > 0.5 and selphie['nb_pinned'] > 20
+    assert max(selphie['worst_after'].values()) < 0.05
+    for report in report_list:
+        assert report['skipped'] is None and max(report['worst_after'].values()) < 0.06
+    for before, after in zip(blended.poses, pinned.poses):
+        assert after.body_anim == before.body_anim and after.seq_block == before.seq_block
+        if before.weapon_anim is None:
+            continue
+        frames = []
+        for block in (before.weapon_anim, after.weapon_anim):
+            section = AnimationSection()
+            section.analyze(bytes(block), pinned.synthetic_bone_section(before.character.weapon_bones))
+            frames.append(section.animations[0].frames)
+        for index, (old, new) in enumerate(zip(*frames)):
+            rotation = [[angle.get_rotate_raw() for angle in bone] for bone in old.rotation_vector_data]
+            assert rotation == [[angle.get_rotate_raw() for angle in bone] for bone in new.rotation_vector_data]
+            root_old = np.array([position.get_pos_world() for position in old.position[:3]])
+            root_new = np.array([position.get_pos_world() for position in new.position[:3]])
+            if index % 2 == 0:
+                assert np.allclose(root_old, root_new)       # original frames untouched
+    assert weapongrip.MAX_GRIP_SPREAD >= by_name["Quistis"]['grip'].spread
 
 
 @pytest.mark.ff8data(R0WIN_MARK)
