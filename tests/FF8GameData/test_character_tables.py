@@ -38,13 +38,17 @@ def test_vietnamese_table_is_the_latin_one_with_the_patch_letters(game_data):
     assert game_data.translate_str_to_hex("Tấn công") == patch_bytes  # same codes, read as Vietnamese
 
 
-def test_a_letter_drawn_at_two_codes_keeps_its_code(game_data):
+def test_vietnamese_table_has_the_capitals_ff8_ilp_draws(game_data):
+    """FF8 ILP 2.0 draws the opening quote and 27 capitals with marks in cells the patch left unused,
+    among them its second ớ (0xca) and ộ (0xcb): those two letters are written at 0x37 and 0x9b only."""
     from FF8GameData.GenericSection.ff8text import FF8Text
     game_data.set_character_table("vietnamese")
-    assert game_data.translate_hex_to_str_table[0x37] == game_data.translate_hex_to_str_table[0xca] == "ớ"
-    for code in (0x37, 0xca):
-        text = FF8Text(game_data, 0, bytearray([0x21, code, 0x00]), 0)  # "0" then ớ
-        assert text.get_str() == "0ớ" and bytes(text.get_data_hex()) == bytes([0x21, code, 0x00])
+    table = game_data.translate_hex_to_str_table
+    assert (table[0xba], table[0xca], table[0xcb], table[0xe7]) == ("“", "À", "Ê", "Ạ")
+    assert "".join(table[0xcf:0xe2]) == "ẢỪỦƠÝỜỞỔĨẮẦẾẬỢỬÓƯÍÚ"
+    assert game_data.translate_str_to_hex("ớộ") == [0x37, 0x9b]
+    text = FF8Text(game_data, 0, bytearray(game_data.translate_str_to_hex("“ỞÊ”") + [0x00]), 0)
+    assert text.get_str() == "“ỞÊ”" and bytes(text.get_data_hex()) == bytes([0xba, 0xd5, 0xcb, 0x3e, 0x00])
 
 
 def test_switching_tables_and_editing_one(tmp_path, game_data):
