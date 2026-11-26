@@ -5,6 +5,7 @@ from FF8GameData.gamedata import GameData
 # so both the Zone (mmag.bin) and Moomba (mmag2.bin) editors build on them.
 from FF8GameData.menu.magpage import MagPageEntry, OverlaySlot, UNUSED_ID
 from FF8GameData.menu.magpagemanager import TEXTURE_CATEGORIES, MagPageManager
+from FF8GameData.menu.magpicture import pc_picture_file_name
 from FF8GameData.menu.mngrp.string.sectionstring import SectionString
 from FF8GameData.menu.mngrp.tkmnmes.sectiontkmnmes import SectionTkmnmes
 
@@ -66,6 +67,14 @@ class ZoneManager(MagPageManager):
 
     FILE_LABEL = "mmag.bin"
 
+    # The pages of the English PC release: the items, mtmag.bin and the menu code point at them by
+    # number, so only the pages added after them can be removed.
+    VANILLA_ENTRY_COUNT = 69
+    # A page number is one byte everywhere: mitem.bin's first/last page of a magazine, mtmag.bin's
+    # ranges and the reader's current page (Menu_ItemMagazine_Draw). The game sizes its copy of
+    # mmag.bin by the file (Menu_LoadFile, 0x4B9530), so up to 256 pages work.
+    MAX_ENTRY_COUNT = 256
+
     def __init__(self, game_data: GameData):
         super().__init__(game_data)
         # The weapon names come only from a kernel.bin (set_weapon_names) - none built in.
@@ -114,7 +123,38 @@ class ZoneManager(MagPageManager):
             return f"Card icon explanation {index - 63}/4"
         if index == 68:
             return "Empty terminator"
+        if index >= ZoneManager.VANILLA_ENTRY_COUNT:
+            return "Added page"
         return f"Entry {index}"
+
+    def can_add_entry(self):
+        return bool(self.file_path) and len(self.entries) < self.MAX_ENTRY_COUNT
+
+    def can_remove_entry(self):
+        return len(self.entries) > self.VANILLA_ENTRY_COUNT
+
+    def add_entry(self, copy_of=None):
+        """Append a page, a copy of page `copy_of` (its layout, picture and texts to start from) or a
+        blank one (every overlay and unlock unused). Returns its index, None when the file is full.
+
+        A magazine shows a range of consecutive pages (mitem.bin's first and last page), so a new
+        book's pages are added one after the other at the end."""
+        if not self.can_add_entry():
+            return None
+        index = len(self.entries)
+        if copy_of is not None and 0 <= copy_of < len(self.entries):
+            entry = MagPageEntry.from_bytes(index, self.entries[copy_of].to_bytes())
+        else:
+            entry = MagPageEntry(index)
+        self.entries.append(entry)
+        return index
+
+    def remove_last_entry(self):
+        """Drop the last page, only one added after the vanilla ones. False when there is none."""
+        if not self.can_remove_entry():
+            return False
+        self.entries.pop()
+        return True
 
     def get_weapon_name(self, weapon_index):
         if weapon_index == UNUSED_ID:
@@ -144,6 +184,12 @@ class ZoneManager(MagPageManager):
         if category in TEXTURE_CATEGORIES:
             return TEXTURE_CATEGORIES[category][0]
         return f"Direct raw file (category {category})"
+
+    @staticmethod
+    def pc_picture_file(entry: MagPageEntry):
+        """The menu texture ("mag00.TEX"...) the PC game shows as the entry's page picture, None
+        when its slot is one the PC port never uploads (see FF8GameData.menu.magpicture)."""
+        return pc_picture_file_name(MagPageManager.texture_raw_file(entry))
 
     def load_kernel(self, kernel_path):
         """Read Zell's Duel button sequences out of kernel.bin.

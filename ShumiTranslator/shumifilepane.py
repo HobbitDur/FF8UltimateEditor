@@ -178,7 +178,11 @@ class ShumiFilePane(QWidget):
         first_section_line_index = 2
         for section in sections:
             if section.type == SectionType.MNGRP_STRING:
-                self.section_widget_list.append(SectionWidget(section.get_text_section(), first_section_line_index))
+                # New lines go at the end, with the next free id (a magazine page or tutorial
+                # points at one by that id) - e.g. the text of a new book in the book text.
+                self.section_widget_list.append(SectionWidget(section.get_text_section(), first_section_line_index,
+                                                              allow_add=True,
+                                                              max_entries=section.get_max_text_count()))
                 first_section_line_index += len(section.get_text_list())
                 self._tick()
             elif section.type in (SectionType.FF8_TEXT, SectionType.MNGRP_M00MSG, SectionType.MNGRP_SEED_TEST):

@@ -4,13 +4,14 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon, QImage, QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QGroupBox, QMessageBox, QSpinBox, QComboBox, QCheckBox,
-                             QGridLayout, QScrollArea, QFormLayout)
+                             QGridLayout, QScrollArea, QFormLayout, QPushButton)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.magpage import MagPageEntry, UNUSED_ID
+from FF8GameData.menu.magpicture import pc_picture_file_name
 from SmallWidget.listsearchbar import ListSearchBar
 from Zone.zonemanager import (ZoneManager, TEXTURE_CATEGORIES, DUEL_MOVE_NAMES,
                               ANGELO_MOVE_NAMES, BOOK_TEXT_FIRST_RAW_FILE)
@@ -18,6 +19,10 @@ from Zone.zonerender import (PageRenderer, BUTTON_STYLE_BOXES, BUTTON_STYLE_ICON
                              CANVAS_WIDTH, CANVAS_HEIGHT)
 
 PREVIEW_SCALE = 2
+
+# Menu_Magazine_LoadPageTexture adds a base slot only for the categories 0-6: any other value is
+# "the page number is the slot". 7 is the first such value.
+DIRECT_TEXTURE_CATEGORY = 7
 
 # The file this editor edits. The open dialog filters on its exact name.
 MAIN_FILE = "mmag.bin"
@@ -86,6 +91,7 @@ class ZoneWidget(QWidget):
         self.entry_list.setFixedWidth(240)
         self.entry_list.currentRowChanged.connect(self._entry_changed)
         self.entry_search = ListSearchBar.wrap(self.entry_list)
+        self.entry_search.column.layout().addWidget(self._build_page_buttons())
 
         # Entry form (right, scrollable)
         form_widget = QWidget()
@@ -125,6 +131,64 @@ class ZoneWidget(QWidget):
         """The files the shared header toolbar drives for this tab: mmag.bin (edited) and the
         five read-only complementary files it renders from."""
         return [self.mmag_binding, *self.companion_bindings.values()]
+
+    def _build_page_buttons(self):
+        """"+ Add page" / "- Remove last page" under the page list: a new book's pages go at the end."""
+        self.add_page_button = QPushButton("+ Add page (copy of this one)")
+        self.remove_page_button = QPushButton("- Remove last page")
+        self.page_count_label = QLabel()
+        self.page_count_label.setStyleSheet("font-size: 9pt;")
+        self.page_count_label.setWordWrap(True)
+        tooltip = ("A new book is a range of pages at the end of mmag.bin: add them here, then point its\n"
+                   "item at the first and last one (Kadowaki, item type \"Magazine\"). A page starts as a\n"
+                   "copy of the selected one, so its layout, picture and texts are there to edit.\n"
+                   f"Up to {ZoneManager.MAX_ENTRY_COUNT} pages (a page number is one byte). Only the pages "
+                   f"added after the game's {ZoneManager.VANILLA_ENTRY_COUNT} can be removed, from the last one.")
+        for widget in (self.add_page_button, self.remove_page_button, self.page_count_label):
+            widget.setToolTip(tooltip)
+        self.add_page_button.clicked.connect(self._add_page)
+        self.remove_page_button.clicked.connect(self._remove_last_page)
+        box = QWidget()
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.add_page_button)
+        layout.addWidget(self.remove_page_button)
+        layout.addWidget(self.page_count_label)
+        self._update_page_buttons()
+        return box
+
+    def _update_page_buttons(self):
+        count = len(self.manager.entries)
+        self.add_page_button.setEnabled(self.manager.can_add_entry())
+        self.remove_page_button.setEnabled(self.manager.can_remove_entry())
+        self.page_count_label.setText(f"{count} / {ZoneManager.MAX_ENTRY_COUNT} pages (0-{count - 1})"
+                                      if count else "")
+
+    def _add_page(self):
+        self._apply_form_to_entry()
+        index = self.manager.add_entry(copy_of=self.current_entry_index)
+        if index is None:
+            return
+        self.entry_list.addItem(f"{index}: {self.manager.entry_name(index)}")
+        self.entry_list.setCurrentRow(index)
+        self._update_page_buttons()
+        self._mark_edited()
+
+    def _remove_last_page(self):
+        self._apply_form_to_entry()
+        if not self.manager.remove_last_entry():
+            return
+        last = self.entry_list.count() - 1
+        if self.current_entry_index == last:
+            self.current_entry_index = -1  # Its form must not be written into the page now gone
+        self.entry_list.takeItem(last)
+        self._update_page_buttons()
+        self._mark_edited()
+
+    def _mark_edited(self):
+        dirty_state = getattr(self, "dirty_state", None)
+        if dirty_state is not None:
+            dirty_state.mark()
 
     def _build_preview_group(self):
         self.preview_label = QLabel()
@@ -257,6 +321,13 @@ class ZoneWidget(QWidget):
         self.texture_category = QComboBox()
         for category, (name, _base) in TEXTURE_CATEGORIES.items():
             self.texture_category.addItem(f"{category}: {name}", category)
+        # Any other category takes the page number as the mngrp slot itself
+        self.texture_category.addItem(f"{DIRECT_TEXTURE_CATEGORY}: Direct slot (page = mngrp raw file)",
+                                      DIRECT_TEXTURE_CATEGORY)
+        self.texture_category.setToolTip(
+            "Which picture the page shows: a mngrp.bin slot, the category's first slot + the page.\n"
+            "On PC only 30 slots have a picture (menu/mag00-19.TEX and mc00-09.TEX, shown next to it);\n"
+            "a page on any other slot shows no picture. Shiva's \"Magazine pictures\" tab replaces them.")
         self.texture_category.currentIndexChanged.connect(self._update_resolved_labels)
         self.texture_page = self._spin8()
         self.texture_page.valueChanged.connect(self._update_resolved_labels)
@@ -390,6 +461,7 @@ class ZoneWidget(QWidget):
         self.entry_list.clear()
         for index in range(len(self.manager.entries)):
             self.entry_list.addItem(f"{index}: {self.manager.entry_name(index)}")
+        self._update_page_buttons()
         self.entry_search.select_first_match()  # Row 0, or the first match if a search is typed in
         self._autoload_complementary(file_name)
 
@@ -610,13 +682,21 @@ class ZoneWidget(QWidget):
 
     def _update_resolved_labels(self):
         self.text_file_label.setText(
-            f"= mngrp raw file {BOOK_TEXT_FIRST_RAW_FILE + self.text_file.value()}")
+            f"= mngrp raw file {BOOK_TEXT_FIRST_RAW_FILE + self.text_file.value()} "
+            f"(tutorial books; the Item menu always reads {BOOK_TEXT_FIRST_RAW_FILE})")
         category = self.texture_category.currentData()
         if category in TEXTURE_CATEGORIES:
             raw_file = TEXTURE_CATEGORIES[category][1] + self.texture_page.value()
         else:
             raw_file = self.texture_page.value()
-        self.texture_label.setText(f"= mngrp raw file {raw_file}")
+        pc_file = pc_picture_file_name(raw_file)
+        if pc_file:
+            self.texture_label.setText(f"= mngrp raw file {raw_file}, in game (PC): menu/{pc_file}")
+            self.texture_label.setStyleSheet("")
+        else:
+            self.texture_label.setText(f"= mngrp raw file {raw_file}: no picture on PC (no texture for "
+                                       f"this slot)")
+            self.texture_label.setStyleSheet("color: #c06000;")
 
         if not self.manager.mngrp_loaded:
             return

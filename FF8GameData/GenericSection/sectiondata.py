@@ -75,6 +75,17 @@ class SectionData(Section):
             new_list.append(new_data)
         self._offset_list = new_list
 
+    def append_offsets(self, count):
+        """Add `count` offset slots at the end of the table, each one holding a text.
+
+        They get a placeholder value (any non-zero value reads as "holds a text"); the real
+        offsets are written by the next set_all_offset_by_text_list, from the texts' lengths."""
+        for _ in range(count):
+            index = len(self._offset_list)
+            self._offset_list.append(FF8Data(game_data=self._game_data, own_offset=index * self.OFFSET_SIZE,
+                                             data_hex=bytes([0xFF, 0xFF]), id=index, offset_type=True))
+        self._nb_offset = len(self._offset_list)
+
     def set_all_offset_by_value_list(self, value_list):
         if len(value_list) != self.get_nb_offset_not_empty():
             print(f"The size of the value list ({len(value_list)}) is different than the nb of "

@@ -7,11 +7,14 @@ from ShumiTranslator.view.translationwidget import TranslationWidget
 
 class SectionWidget(QWidget):
 
-    def __init__(self, section: ListFF8Text, first_section_line_index, allow_add=False):
+    def __init__(self, section: ListFF8Text, first_section_line_index, allow_add=False, max_entries=None):
         QWidget.__init__(self)
 
         self.section = section
         self.first_section_line_index = first_section_line_index
+        # With allow_add: the most entries the format can address (None = no limit); the Add
+        # button is greyed once the section holds that many.
+        self.max_entries = max_entries
         self.__section_name_widget = QLabel()
         self.__section_name_widget.setText(f"<b><u>Section text n°{self.section.id}:</u></b> " + self.section.name)
 
@@ -41,14 +44,26 @@ class SectionWidget(QWidget):
             self.__add_button.setToolTip("Append a new, empty text entry to this section")
             self.__add_button.clicked.connect(self.add_entry)
             self.__main_layout.addWidget(self.__add_button, alignment=Qt.AlignmentFlag.AlignLeft)
+            self.__update_add_button()
         end_separator_line = QFrame()
         end_separator_line.setFrameStyle(0x04)# Horizontal line
         end_separator_line.setLineWidth(2)
         self.__main_layout.addWidget(end_separator_line)
 
 
+    def __update_add_button(self):
+        if self.__add_button is None or self.max_entries is None:
+            return
+        full = len(self.section.get_text_list()) >= self.max_entries
+        self.__add_button.setEnabled(not full)
+        if full:
+            self.__add_button.setToolTip(f"This section is full: the game addresses at most "
+                                         f"{self.max_entries} entries in it")
+
     def add_entry(self):
         """Append a new, empty text entry: data_read starts blank, data_modified is ready to type."""
+        if self.max_entries is not None and len(self.section.get_text_list()) >= self.max_entries:
+            return None
         self.section.add_text(bytearray())
         new_text = self.section.get_text_list()[-1]
         line_number = self.first_section_line_index + len(self.translation_widget_list)
@@ -59,6 +74,7 @@ class SectionWidget(QWidget):
         insert_index = (self.__main_layout.indexOf(self.__add_button) if self.__add_button
                         else self.__main_layout.count() - 1)
         self.__main_layout.insertWidget(insert_index, translation_widget)
+        self.__update_add_button()
         return translation_widget
 
     def set_text_from_id(self, id: int, text: str):

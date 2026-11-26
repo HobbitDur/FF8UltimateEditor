@@ -7,6 +7,9 @@ from FF8GameData.GenericSection.sectiondata import SectionData
 class SectionString(Section):
     OFFSET_SIZE = 2
     HEADER_SIZE = 2
+    # The menu picks a string of these sections by a one-byte id (a magazine page's text overlay,
+    # a tutorial line), so a section holds at most 256 of them.
+    MAX_TEXT = 256
 
     def __init__(self, game_data: GameData, data_hex=bytearray(), id=0, own_offset=0, name=""):
 
@@ -52,6 +55,12 @@ class SectionString(Section):
             in_file.write(self._data_hex)
 
     def update_data_hex(self):
+        # A text appended to the text list (ShumiTranslator's "+ Add entry") has no offset slot yet:
+        # it gets a new one at the end of the table, so its id is the next free one.
+        missing = len(self._text_section.get_text_list()) - self._offset_section.get_nb_offset_not_empty()
+        if missing > 0:
+            self._offset_section.append_offsets(missing)
+            self._nb_offset += missing
         self._text_section.update_data_hex()
         self._offset_section.set_all_offset_by_text_list(self._text_section.get_text_list(), shift=self.HEADER_SIZE + self.OFFSET_SIZE * self._nb_offset)
         self._offset_section.update_data_hex()
@@ -65,6 +74,11 @@ class SectionString(Section):
 
     def get_text_section(self):
         return self._text_section
+
+    def get_max_text_count(self):
+        """How many texts the section can hold: MAX_TEXT id slots, less the empty ones it keeps."""
+        empty_slots = len(self._offset_section.get_all_offset()) - self._offset_section.get_nb_offset_not_empty()
+        return self.MAX_TEXT - empty_slots
 
     def __analyse_data(self):
         self._nb_offset = int.from_bytes(self._data_hex[0:self.HEADER_SIZE], byteorder='little')

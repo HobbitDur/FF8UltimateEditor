@@ -10,6 +10,7 @@ from FF8GameData.FF8HexReader.mngrphd import MngrpPairError
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.mngrp.m00x.refineabilities import RefineKernelError, read_refine_abilities
 from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
+from Shiva.ShivaMagazinePicture.shivamagazinepicturewidget import ShivaMagazinePictureWidget
 from Shiva.ShivaRefine.shivarefinewidget import ShivaRefineWidget
 from Shiva.ShivaSeedTest.shivaseedtestwidget import ShivaSeedTestWidget
 from Shiva.ShivaSprite.shivaspritewidget import ShivaSpriteWidget
@@ -77,6 +78,7 @@ class ShivaWidget(QWidget):
         self.refine_tab.kernel_ranges_written.connect(self._warn_other_kernel_editors)
         self.add_section_tab(ShivaSeedTestWidget(self.game_data), "SeeD tests")
         self.add_section_tab(ShivaSpriteWidget(), "Sprites")
+        self.add_section_tab(ShivaMagazinePictureWidget(), "Magazine pictures")
         self.add_section_tab(ShivaTutorialWidget(self.game_data), "Tutorial demos")
 
         main_layout = QVBoxLayout()

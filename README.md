@@ -138,6 +138,20 @@ FFNx's AddMoreItems lets a mod add items 199-255 and gives the player 255 invent
 - **Hyne** shows 255 slots as soon as the kernel.bin it has open adds items, as FFNx does, and writes
   the block once one of slots 199-255 holds an item.
 
+### Adding a magazine
+A magazine is an item of type *Magazine* whose two parameters are its first and last page in
+`mmag.bin`; reading a page unlocks what it names (a weapon remodel, a Zell Duel move, an Angelo move).
+- **SolomonRing**, **Kadowaki**, **Siren**: add the item (see above), type *Magazine*, pages first-last.
+- **Zone** (`mmag.bin`): **+ Add page** appends a page, a copy of the selected one; a magazine's pages
+  are consecutive. Up to 256 pages; only the added ones can be removed.
+- **ShumiTranslator** (`mngrp.bin`): **+ Add entry** on *Book text* adds a line with the next id, which
+  a page's text overlay points at (the Item menu always reads the book text, whatever the page's text
+  file index). 256 ids per section.
+- **Shiva**, *Magazine pictures*: on PC a page can only show one of 30 pictures, the menu textures
+  `mag00-19.TEX` and `mc00-09.TEX`, picked by the page's mngrp slot (Zone shows which). A new picture
+  replaces one of them from a 256x192 PNG; Save writes the `.TEX` next to `mngrp.bin` and the copy
+  inside it. Pages that crop it differently use new sprites (Shiva, *Sprites*).
+
 ### Nida — SeeD written test editor (`mngrp.bin`)
 Edits the 30 SeeD written tests (tutorial menu): the question texts, the expected answer of each
 question, and the selectable choices (cursor stops) — the engine counts the stops at display time,
