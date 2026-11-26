@@ -101,9 +101,9 @@ def test_weapons_stay_in_the_hand_on_the_in_betweens(game_data):
     assert weapongrip.MAX_GRIP_SPREAD >= by_name["Quistis"]['grip'].spread
 
 
-def _nunchaku_in_hand_space(game_data, manager, folder):
+def _nunchaku_in_hand_space(game_data, manager, folder, bones=False):
     """Selphie's nunchaku vertices on every frame of her pose, seen from her hand (the body bone
-    of the grip): (F, V, 3)."""
+    of the grip): (F, V, 3), and with bones=True the weapon bone of each vertex (V,)."""
     import numpy as np
     from FF8GameData.dat import weapongrip
     pose = manager.get_pose("Selphie")
@@ -125,7 +125,7 @@ def _nunchaku_in_hand_space(game_data, manager, folder):
         world = (np.einsum('nij,nj->ni', rotation_w[bone_ids], points) + translation_w[bone_ids]
                  + weapongrip.ROOT_TO_VERTEX * (weapongrip._root(weapon_frame) - weapongrip._root(body_frame)))
         result.append((world - translation_b[grip.body_bone]) @ rotation_b[grip.body_bone])
-    return np.array(result)
+    return (np.array(result), bone_ids) if bones else np.array(result)
 
 
 @pytest.mark.ff8data(R0WIN_MARK, "extracted_files/battle/d5c011.dat", "extracted_files/battle/d5w028.dat",
@@ -159,6 +159,23 @@ def test_in_betweens_blended_on_the_real_skeletons(game_data):
     jump = np.linalg.norm(poses[2:] - 2 * poses[1:-1] + poses[:-2], axis=2).max(axis=1)
     in_between_jump, original_jump = jump[0::2].max(), jump[1::2].max()     # jump[i] is frame i + 1
     assert in_between_jump < original_jump and in_between_jump < 5
+    # her free stick (bone 6) lies behind the held one at the end of the pose: an in-between
+    # re-posed 0.02 closer at its farthest vertex drew it 1.4 out, in sight for 1/30 s (filmed)
+    vanilla_poses = _nunchaku_in_hand_space(game_data, vanilla, folder)
+    poses, bone_ids = _nunchaku_in_hand_space(game_data, real, folder, bones=True)
+    free = bone_ids == 6
+    middle = (vanilla_poses[48][free].mean(axis=0) + vanilla_poses[49][free].mean(axis=0)) / 2
+    assert np.linalg.norm(poses[97][free].mean(axis=0) - middle) < 0.5
+    # the two sticks stay folded through the pose (0.41 apart on every original frame): each
+    # chain link blended on its own opened them 0.75-1.1 on 8 in-betweens, a second bar for
+    # 1/30 s (filmed); the in-betweens keep them as the original frames have them
+    held = bone_ids == 2
+
+    def sticks_apart(pose_list):
+        return np.linalg.norm(pose_list[:, free].mean(axis=1) - pose_list[:, held].mean(axis=1), axis=1)
+    folded = sticks_apart(vanilla_poses)
+    assert np.ptp(folded) < 0.05
+    assert np.abs(sticks_apart(poses) - folded.mean()).max() < 0.05
 
 
 @pytest.mark.ff8data(R0WIN_MARK)
