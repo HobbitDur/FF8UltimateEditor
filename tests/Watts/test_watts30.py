@@ -166,6 +166,16 @@ def test_in_betweens_blended_on_the_real_skeletons(game_data):
     free = bone_ids == 6
     middle = (vanilla_poses[48][free].mean(axis=0) + vanilla_poses[49][free].mean(axis=0)) / 2
     assert np.linalg.norm(poses[97][free].mean(axis=0) - middle) < 0.5
+    # the two sticks stay folded through the pose (0.41 apart on every original frame): each
+    # chain link blended on its own opened them 0.75-1.1 on 8 in-betweens, a second bar for
+    # 1/30 s (filmed); the in-betweens keep them as the original frames have them
+    held = bone_ids == 2
+
+    def sticks_apart(pose_list):
+        return np.linalg.norm(pose_list[:, free].mean(axis=1) - pose_list[:, held].mean(axis=1), axis=1)
+    folded = sticks_apart(vanilla_poses)
+    assert np.ptp(folded) < 0.05
+    assert np.abs(sticks_apart(poses) - folded.mean()).max() < 0.05
 
 
 @pytest.mark.ff8data(R0WIN_MARK)

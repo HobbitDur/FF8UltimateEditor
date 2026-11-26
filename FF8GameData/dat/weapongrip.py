@@ -29,6 +29,14 @@ import numpy as np
 HELD_DISTANCE = 0.5
 # Below this the in-between is already in the hand: left untouched.
 MIN_CORRECTION = 0.01
+# A weapon bone keeps one place against the grip bone over a step when it moves less than this
+# (vertex units) and turns less than RIGID_TURN (largest rotation matrix entry, ~0.6 deg); the
+# in-between then keeps it there, the bones of its chain fitted in at most CLOSE_STEPS steps,
+# its place weighing CLOSE_WEIGHT times a chain vertex (_close_loops).
+RIGID_DISTANCE = 0.02
+RIGID_TURN = 0.01
+CLOSE_STEPS = 30
+CLOSE_WEIGHT = 30.0
 # A grip is pinned only when it really holds over the original frames (mean distance, vertex
 # units). Squall, Irvine, Rinoa, Selphie, Seifer: 0.008-0.011; Quistis 0.032. Laguna's machine
 # gun (d8w035, 0.21: 15% of its frames 0.5-1.0 off) and Ward's harpoon (daw039, 1.4: no point of
@@ -206,6 +214,122 @@ def _with_model_rotations(frame, model_list, parent_list, bones):
     return new_frame
 
 
+def _rodrigues(vector):
+    """The rotation (3x3) of a rotation vector (axis * angle in radians)."""
+    angle = float(np.linalg.norm(vector))
+    if angle < 1e-12:
+        return np.eye(3)
+    k = vector / angle
+    cross = np.array([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]])
+    return np.eye(3) + np.sin(angle) * cross + (1 - np.cos(angle)) * cross @ cross
+
+
+def _close_loops(frame_a, frame_b, frame, bones, parent_list, grip_bone, points):
+    """frame (an in-between of frame_a and frame_b) with every bone that keeps one place against
+    the grip bone on both frame_a and frame_b put back in that place, the bones between them
+    turned to reach it as near as they can to the middle of their places on frame_a and frame_b
+    (least squares on their vertices, against the grip bone); None when no bone moves by
+    RIGID_DISTANCE. Selphie's nunchaku stays folded through her victory pose, the free stick
+    0.41 beside the held one while the chain swings: each chain link blended on its own left
+    the free stick 0.75-1.1 off on 8 in-betweens, a second bar in sight for 1/30 s (filmed)."""
+    rotation_a, translation_a = _bone_frames(frame_a, bones)
+    rotation_b, translation_b = _bone_frames(frame_b, bones)
+    rotation, translation = _bone_frames(frame, bones)
+    nb_bone = len(bones)
+    bone_ids, local = points
+    children = [[child for child in range(nb_bone) if parent_list[child] == bone] for bone in range(nb_bone)]
+
+    def subtree(bone):
+        result = [bone]
+        for child in children[bone]:
+            result += subtree(child)
+        return result
+    fixed, bone = set(), grip_bone          # the grip bone and its parents: never moved
+    while bone is not None:
+        fixed.add(bone)
+        bone = parent_list[bone]
+    offset_list = [None if parent is None else rotation_a[parent].T @ (translation_a[bone] - translation_a[parent])
+                   for bone, parent in enumerate(parent_list)]
+
+    def positions(model):
+        position = np.zeros((nb_bone, 3))
+        for bone, parent in enumerate(parent_list):
+            position[bone] = translation[bone] if parent is None else position[parent] + model[parent] @ offset_list[bone]
+        return position
+
+    def against_grip(rotation_list, translation_list, point_list):
+        return (point_list - translation_list[grip_bone]) @ rotation_list[grip_bone]
+    # every vertex half-way between its places on frame_a and frame_b, seen from the grip bone
+    vertex_a = np.einsum('nij,nj->ni', rotation_a[bone_ids], local) + translation_a[bone_ids]
+    vertex_b = np.einsum('nij,nj->ni', rotation_b[bone_ids], local) + translation_b[bone_ids]
+    middle = rotation[grip_bone] @ ((against_grip(rotation_a, translation_a, vertex_a)
+                                     + against_grip(rotation_b, translation_b, vertex_b)) / 2).T
+    middle = middle.T + translation[grip_bone]
+    model, placed, moved = rotation.copy(), set(), 0.0
+    for bone in range(nb_bone):                     # parents first
+        if bone in fixed:
+            continue
+        turn_a = rotation_a[grip_bone].T @ rotation_a[bone]
+        turn_b = rotation_b[grip_bone].T @ rotation_b[bone]
+        place_a = rotation_a[grip_bone].T @ (translation_a[bone] - translation_a[grip_bone])
+        place_b = rotation_b[grip_bone].T @ (translation_b[bone] - translation_b[grip_bone])
+        if np.abs(turn_a - turn_b).max() > RIGID_TURN or np.linalg.norm(place_a - place_b) > RIGID_DISTANCE:
+            continue
+        target_rotation = model[grip_bone] @ turn_a
+        target_place = translation[grip_bone] + model[grip_bone] @ (place_a + place_b) / 2
+        moved = max(moved, float(np.linalg.norm(positions(model)[bone] - target_place)),
+                    float(np.abs(model[bone] - target_rotation).max()) * abs(bones[bone].get_size()))
+        chain, joint = [], parent_list[bone]
+        while joint is not None and joint not in fixed and joint not in placed:
+            chain.append(joint)
+            joint = parent_list[joint]
+        chain.reverse()                             # from the fixed side to the bone
+        chain_vertex = np.isin(bone_ids, chain)
+
+        def turned(vector):
+            """model with each chain joint turned (in the model, about its own place) by its
+            rotation vector, the joints nearest the fixed side first."""
+            result = model.copy()
+            for index, joint in enumerate(chain):
+                turn = _rodrigues(vector[3 * index:3 * index + 3])
+                for moving in subtree(joint):
+                    result[moving] = turn @ result[moving]
+            return result
+
+        def residual(vector):
+            result = turned(vector)
+            position = positions(result)
+            vertex = (np.einsum('nij,nj->ni', result[bone_ids[chain_vertex]], local[chain_vertex])
+                      + position[bone_ids[chain_vertex]])
+            return np.concatenate([CLOSE_WEIGHT * (position[bone] - target_place),
+                                   (vertex - middle[chain_vertex]).ravel()])
+        vector = np.zeros(3 * len(chain))
+        damping = 1e-3
+        for _ in range(CLOSE_STEPS if chain else 0):
+            value = residual(vector)
+            jacobian = np.empty((len(value), len(vector)))
+            for column in range(len(vector)):
+                step = np.zeros(len(vector))
+                step[column] = 1e-6
+                jacobian[:, column] = (residual(vector + step) - value) / 1e-6
+            normal = jacobian.T @ jacobian
+            change = np.linalg.solve(normal + damping * np.diag(np.diag(normal) + 1e-9), -jacobian.T @ value)
+            if np.sum(residual(vector + change) ** 2) < np.sum(value ** 2):
+                vector, damping = vector + change, damping / 3
+                if np.linalg.norm(change) < 1e-7:
+                    break
+            else:
+                damping *= 10
+        model = turned(vector)
+        turn = target_rotation @ model[bone].T
+        for moving in subtree(bone):
+            model[moving] = turn @ model[moving]
+        placed.add(bone)
+    if moved < RIGID_DISTANCE:
+        return None
+    return _with_model_rotations(frame, [m.tolist() for m in model], parent_list, bones)
+
+
 def smooth_in_betweens(grip, body_model, weapon_model, body_frames, weapon_frames) -> dict:
     """After pin_frames: each in-between of a held weapon whose pose, seen from the hand, is not
     between the two original frames around it (a 1/30 s jump) takes the pose that is, of:
@@ -283,6 +407,10 @@ def smooth_in_betweens(grip, body_model, weapon_model, body_frames, weapon_frame
             score, candidate_farthest = distance(candidate)
             if score < best - MIN_CORRECTION:
                 best_frame, best, farthest = candidate, score, candidate_farthest
+        closed = _close_loops(frame_a, frame_b, best_frame, bones, parent_list, grip.weapon_bone, points)
+        if closed is not None:
+            best_frame = closed
+            farthest = distance(closed)[1]
         if best_frame is not weapon_frames[index]:
             weapon_frames[index] = best_frame
             report['nb_changed'] += 1
