@@ -84,3 +84,46 @@ def test_wrong_size_is_refused_and_nothing_is_queued(qapp, game_data, tmp_path, 
 
     assert tab.replace_from_file(SLOT, str(png)) is False
     assert tab._pending == {}
+
+
+def test_a_new_picture_takes_the_first_free_slot_and_is_saved(qapp, game_data, tmp_path):
+    """Add new picture: slot 206 (after every slot mngrp.bin uses), its TIM in mngrp.bin and its
+    mag206.TEX written at Save; the other sections stay as they were."""
+    from Shiva.ShivaMagazinePicture.shivamagazinepicturewidget import ShivaMagazinePictureWidget
+    for name in ("mngrp.bin", "mngrphd.bin", "mag00.TEX"):
+        shutil.copy(MENU / name, tmp_path / name)
+    png = tmp_path / "new.png"
+    Image.new("RGBA", (256, 192), (40, 200, 40, 255)).save(png)
+
+    manager = _load(game_data, tmp_path)
+    before = [bytes(section.get_data_hex()) for section in manager.mngrp.get_section_list()]
+    tab = ShivaMagazinePictureWidget()
+    tab.load_from_mngrp(manager)
+    assert tab.free_slots()[0] == 206
+    assert tab.add_from_file(str(png)) == 206
+    assert tab._current_slot() == 206
+    tab.save_to_mngrp(manager)
+    manager.save_file(str(tmp_path / "mngrp.bin"), str(tmp_path / "mngrphd.bin"))
+
+    reloaded = _load(game_data, tmp_path)
+    sections = [bytes(section.get_data_hex()) for section in reloaded.mngrp.get_section_list()]
+    assert sections[:206] == before[:206]
+    tim = decode_tim(sections[206])
+    assert tim is not None and tim.image.size == (256, 192)
+    assert (tmp_path / "mag206.TEX").exists()
+    assert tex_to_image(TexFile.read(str(tmp_path / "mag206.TEX"))).convert("RGB").getpixel((5, 5)) == (40, 200, 40)
+    # Loaded again, the tab lists it after the game's 30
+    tab.load_from_mngrp(reloaded)
+    assert tab._picture_slots()[-1] == 206
+
+
+def test_the_sprites_tab_shows_the_sprites_over_a_picture(qapp, game_data):
+    """Shiva's Sprites tab: the same view as Zone's picker; a click selects the sprite in the editor."""
+    from Shiva.ShivaSprite.shivaspritewidget import ShivaSpriteWidget
+    manager = _load(game_data, MENU)
+    tab = ShivaSpriteWidget()
+    tab.load_from_mngrp(manager)
+    assert tab.picture_combo.currentData() == 28
+    assert tab.canvas._pixmap is not None and tab.canvas.sprites
+    tab._canvas_picked(8)
+    assert tab.sp2_editor.sprite_list.currentRow() == 8 and tab.canvas.selected_id == 8
