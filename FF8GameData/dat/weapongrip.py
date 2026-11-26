@@ -262,10 +262,15 @@ def smooth_in_betweens(grip, body_model, weapon_model, body_frames, weapon_frame
         middle = (hand_space(index - 1) + hand_space(index + 1)) / 2
 
         def distance(weapon_frame):
-            return float(np.linalg.norm(hand_space(index, weapon_frame) - middle, axis=1).max())
+            """(farthest vertex + mean vertex, farthest vertex) from the middle of the neighbours:
+            a pose is chosen on both, the farthest alone took for Selphie's victory frame 97 a
+            pose 0.02 closer there that drew her free stick 1.4 out from behind the held one
+            (mean 0.50 -> 0.84), in sight for 1/30 s (filmed)."""
+            gap = np.linalg.norm(hand_space(index, weapon_frame) - middle, axis=1)
+            return float(gap.max() + gap.mean()), float(gap.max())
         best_frame = weapon_frames[index]
-        best = before = distance(best_frame)
-        report['worst_before'] = max(report['worst_before'], before)
+        best, farthest = distance(best_frame)
+        report['worst_before'] = max(report['worst_before'], farthest)
         rotation_a = Animation._model_rotation_list(frame_a, parent_list)
         rotation_b = Animation._model_rotation_list(frame_b, parent_list)
         hand = hand_rotation(index)
@@ -275,13 +280,13 @@ def smooth_in_betweens(grip, body_model, weapon_model, body_frames, weapon_frame
             [(hand @ hand_rotation(index + 1).T @ np.array(b)).tolist() for b in rotation_b]]
         for model_list in candidate_list:
             candidate = pinned(index, _with_model_rotations(weapon_frames[index], model_list, parent_list, bones))
-            score = distance(candidate)
+            score, candidate_farthest = distance(candidate)
             if score < best - MIN_CORRECTION:
-                best_frame, best = candidate, score
+                best_frame, best, farthest = candidate, score, candidate_farthest
         if best_frame is not weapon_frames[index]:
             weapon_frames[index] = best_frame
             report['nb_changed'] += 1
-        report['worst_after'] = max(report['worst_after'], best)
+        report['worst_after'] = max(report['worst_after'], farthest)
     return report
 
 
