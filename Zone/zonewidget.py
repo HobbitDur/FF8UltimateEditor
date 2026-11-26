@@ -122,6 +122,17 @@ class ZoneWidget(QWidget):
         form_layout.addWidget(self._build_window_group())
         form_layout.addWidget(self._build_picture_group())
         form_layout.addWidget(self._build_text_and_texture_group())
+        # Fields not studied enough to edit safely (only their retail values are known to work)
+        # are greyed out by default, as in SolomonRing and the mmag2.bin tab; this box unlocks them.
+        self.unlock_check = QCheckBox("Unlock fields not studied yet (paper tile E1 / E2)")
+        self.unlock_check.setToolTip(
+            "Off (default): the paper tile bytes E1 / E2 are shown, greyed out. Only the retail 0x00 / 0xC0\n"
+            "(the parchment) is known to work: other values tile another part of VRAM (the page picture or\n"
+            "the menu graphics, in the paper's palette, so in the wrong colours), and the PC port is untested.\n"
+            "On: they become editable. Loading and saving are identical either way.")
+        self.unlock_check.toggled.connect(self._set_unlock_unstudied)
+        self._set_unlock_unstudied(False)
+        form_layout.insertWidget(0, self.unlock_check)
         form_layout.addWidget(self._build_unlock_group())
         form_layout.addWidget(self._build_overlays_group())
         form_layout.addStretch(1)
@@ -724,6 +735,15 @@ class ZoneWidget(QWidget):
         self._refresh_choices()
         self._update_resolved_labels()
         self._refresh_preview()
+
+    def unstudied_widgets(self):
+        """The fields greyed until unlocked: the paper tile bytes, whose only known-good value is
+        the retail one (see paper_tile_vram)."""
+        return [self.paper_a, self.paper_b]
+
+    def _set_unlock_unstudied(self, unlocked):
+        for widget in self.unstudied_widgets():
+            widget.setEnabled(bool(unlocked))
 
     def _update_paper_label(self):
         """Say which 32x32 VRAM tile the paper bytes pick (paper_tile_vram)."""

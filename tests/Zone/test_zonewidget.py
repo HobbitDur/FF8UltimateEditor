@@ -245,3 +245,15 @@ def test_hovering_the_glyph_choice_explains_it_is_a_game_setup(widget):
     tooltip = widget.button_icon_combo.toolTip()
     assert "key config" in tooltip
     assert "icon.sp1" in tooltip
+
+
+def test_paper_tile_bytes_are_greyed_until_unlocked(qapp):
+    """E1/E2 only work at their retail value so far: shown greyed, editable once unlocked."""
+    from Zone.zonewidget import ZoneWidget
+    zone = ZoneWidget()
+    zone.editor_container.setEnabled(True)  # as once an mmag.bin is open
+    assert not zone.unlock_check.isChecked()
+    assert not zone.paper_a.isEnabled() and not zone.paper_b.isEnabled()
+    assert zone.text_file.isEnabled() and zone.window_x.isEnabled()
+    zone.unlock_check.setChecked(True)
+    assert zone.paper_a.isEnabled() and zone.paper_b.isEnabled()
