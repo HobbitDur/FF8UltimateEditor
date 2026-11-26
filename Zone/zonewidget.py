@@ -4,8 +4,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon, QImage, QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QGroupBox, QMessageBox, QSpinBox, QComboBox, QCheckBox,
-                             QGridLayout, QScrollArea, QFormLayout, QPushButton, QPlainTextEdit,
-                             QFileDialog)
+                             QGridLayout, QScrollArea, QFormLayout, QPushButton, QPlainTextEdit)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -375,27 +374,39 @@ class ZoneWidget(QWidget):
         self.text_file.valueChanged.connect(self._text_file_changed)
         self.text_file_label = QLabel()
 
+        # The page picture is stored as two bytes: a group (texture category: each magazine has its own
+        # run of mngrp slots) and a number in that group. The game adds the group's first slot.
         self.texture_category = QComboBox()
-        for category, (name, _base) in TEXTURE_CATEGORIES.items():
-            self.texture_category.addItem(f"{category}: {name}", category)
-        # Any other category takes the page number as the mngrp slot itself
-        self.texture_category.addItem(f"{DIRECT_TEXTURE_CATEGORY}: Direct slot (page = mngrp raw file)",
+        for category, (name, base) in TEXTURE_CATEGORIES.items():
+            self.texture_category.addItem(f"{category}: {name} (from slot {base})", category)
+        # Any other category takes the number as the mngrp slot itself
+        self.texture_category.addItem(f"{DIRECT_TEXTURE_CATEGORY}: Any slot (number = mngrp slot)",
                                       DIRECT_TEXTURE_CATEGORY)
         self.texture_category.setToolTip(
-            "Which picture the page shows: a mngrp.bin slot, the category's first slot + the page.\n"
-            "On PC only 30 slots have a picture (menu/mag00-19.TEX and mc00-09.TEX), plus the slots 185-255\n"
-            "of the pictures added with FFNx's AddMorePictures; the page list shows those it can reach.")
+            "Picture group (the file's \"texture category\"): each magazine keeps its pictures in its own run of\n"
+            "mngrp.bin slots, and the page's picture number counts from the group's first slot.\n"
+            "\"Any slot\" takes the number as the slot itself: that is how a page reaches a picture added in\n"
+            "Shiva > Magazine pictures (slots 206-255).")
         self.texture_category.currentIndexChanged.connect(self._texture_category_changed)
         fit_combo(self.texture_category, 18)
         self.texture_page = ValueComboBox(fallback="no picture on PC")
-        self.texture_page.setToolTip("The pictures this category reaches (page = slot - its first slot). A value\n"
-                                     "kept from the file but showing no picture on PC is marked so.")
+        self.texture_page.setToolTip(
+            "The picture shown behind the page (the file's \"texture page\": not the book's page number).\n"
+            "Listed: the pictures this group reaches, by number in the group and PC file. A value kept\n"
+            "from the file but showing no picture on PC is marked so.")
         self.texture_page.valueChanged.connect(self._update_resolved_labels)
         self.texture_label = QLabel()
+        self.texture_label.setWordWrap(True)
+        self.picture_note = QLabel(
+            "A page shows one 256x192 picture; the picture overlays below cut pieces out of it. To add a "
+            "picture of your own, or replace or export one, use Shiva > Magazine pictures, save there, then "
+            "reload mngrp.bin here: an added picture is listed under \"Any slot\".")
+        self.picture_note.setWordWrap(True)
+        self.picture_note.setStyleSheet("color: gray;")
 
         self.footer_flag = QCheckBox("Draw the footer line (the “to scroll” hint of the multi-page books)")
 
-        group = QGroupBox("Paper, book text and page texture")
+        group = QGroupBox("Paper, book text and page picture")
         layout = QFormLayout()
         paper_layout = QHBoxLayout()
         paper_layout.addWidget(QLabel("E1 (X)"))
@@ -414,34 +425,14 @@ class ZoneWidget(QWidget):
         text_layout.addStretch(1)
         layout.addRow("Text file index:", text_layout)
         texture_layout = QHBoxLayout()
+        texture_layout.addWidget(QLabel("Group"))
         texture_layout.addWidget(self.texture_category)
-        texture_layout.addWidget(QLabel("Page"))
+        texture_layout.addWidget(QLabel("Picture"))
         texture_layout.addWidget(self.texture_page)
-        texture_layout.addWidget(self.texture_label)
         texture_layout.addStretch(1)
-        layout.addRow("Page texture:", texture_layout)
-
-        self.replace_picture_button = QPushButton("Replace picture from PNG...")
-        self.replace_picture_button.setToolTip(
-            "Put a 256x192 image (a 256x256 one is cropped to its top 192 rows) in this page's picture\n"
-            "slot, reduced to 255 colours; alpha under 128 is transparent. Save writes the .TEX the PC\n"
-            "game shows and the copy in mngrp.bin. Every page on this slot shows the new picture, the\n"
-            "game's own pages included. The picture overlays crop it with the Sprites of Shiva.")
-        self.replace_picture_button.clicked.connect(self._replace_picture)
-        self.export_picture_button = QPushButton("Export picture...")
-        self.export_picture_button.clicked.connect(self._export_picture)
-        self.add_picture_button = QPushButton("Add new picture from PNG...")
-        self.add_picture_button.setToolTip(
-            "Add a picture of its own for this page (256x192), in the next free mngrp.bin slot (206-255),\n"
-            "and point the page at it. Save writes its menu/magNNN.TEX and its copy in mngrp.bin.\n"
-            "In game it needs FFNx with AddMorePictures: the game alone only shows its 30 pictures.")
-        self.add_picture_button.clicked.connect(self._add_picture)
-        picture_layout = QHBoxLayout()
-        picture_layout.addWidget(self.add_picture_button)
-        picture_layout.addWidget(self.replace_picture_button)
-        picture_layout.addWidget(self.export_picture_button)
-        picture_layout.addStretch(1)
-        layout.addRow("", picture_layout)
+        layout.addRow("Page picture:", texture_layout)
+        layout.addRow("", self.texture_label)
+        layout.addRow("", self.picture_note)
         layout.addRow("", self.footer_flag)
         group.setLayout(layout)
         return group
@@ -650,62 +641,21 @@ class ZoneWidget(QWidget):
             return TEXTURE_CATEGORIES[category][1] + self.texture_page.value()
         return self.texture_page.value()
 
-    def _replace_picture(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Picture for this page's slot", "", "Images (*.png *.bmp)")
-        if path:
-            self.replace_picture_from_file(path)
+    def _pages_sharing_picture(self, raw_file):
+        """The other pages (entry numbers) whose picture is that mngrp slot: an issue's pages share one."""
+        return [index for index, entry in enumerate(self.manager.entries)
+                if index != self.current_entry_index and self.manager.texture_raw_file(entry) == raw_file]
 
-    def replace_picture_from_file(self, path):
-        """Replace the picture of the selected page's slot from an image file. False (with a
-        message) when the slot or the image cannot be."""
-        from PIL import Image
-        raw_file = self._picture_slot()
-        try:
-            with Image.open(path) as image:
-                self.manager.replace_picture(raw_file, image)
-        except (OSError, ValueError) as error:
-            QMessageBox.warning(self, "Zone - page picture", f"Cannot use {os.path.basename(path)}:\n{error}")
-            return False
-        if self.renderer is not None:
-            self.renderer._tim_cache.pop(raw_file, None)
-        self._mark_edited()
-        self._schedule_preview()
-        return True
-
-    def _add_picture(self):
-        path, _ = QFileDialog.getOpenFileName(self, "New picture for this page", "", "Images (*.png *.bmp)")
-        if path:
-            self.add_picture_from_file(path)
-
-    def add_picture_from_file(self, path):
-        """Add a new picture from an image file and show it on the selected page. Its slot, None
-        (with a message) when it cannot be added."""
-        from PIL import Image
-        try:
-            with Image.open(path) as image:
-                slot = self.manager.add_picture(image)
-        except (OSError, ValueError) as error:
-            QMessageBox.warning(self, "Zone - new picture", f"Cannot add {os.path.basename(path)}:\n{error}")
-            return None
-        if self.renderer is not None:
-            self.renderer._tim_cache.pop(slot, None)
-        self._set_combo_data(self.texture_category, DIRECT_TEXTURE_CATEGORY, "")
-        self._refresh_page_choices()  # the new picture is one of them now
-        self.texture_page.setValue(slot)  # -> the labels and the preview follow
-        self._mark_edited()
-        self._update_resolved_labels()
-        self._schedule_preview()
-        return slot
-
-    def _export_picture(self):
-        raw_file = self._picture_slot()
-        image, _origin = self.manager.picture(raw_file)
-        if image is None:
-            return
-        name = os.path.splitext(pc_picture_file_name(raw_file) or f"slot{raw_file}")[0]
-        path, _ = QFileDialog.getSaveFileName(self, "Export the picture", f"{name}.png", "PNG (*.png)")
-        if path:
-            image.save(path)
+    @staticmethod
+    def _page_ranges(numbers):
+        """1, 2, 3, 7 -> "1-3, 7"."""
+        ranges = []
+        for number in sorted(numbers):
+            if ranges and number == ranges[-1][1] + 1:
+                ranges[-1][1] = number
+            else:
+                ranges.append([number, number])
+        return ", ".join(str(a) if a == b else f"{a}-{b}" for a, b in ranges)
 
     def _text_edited(self, slot):
         """The user typed in a text overlay's line: write it into the book text and redraw."""
@@ -1049,26 +999,24 @@ class ZoneWidget(QWidget):
             raw_file = self.texture_page.value()
         pc_file = pc_picture_file_name(raw_file)
         if pc_file and is_added_slot(raw_file) and not self.manager.has_added_picture(raw_file):
-            self.texture_label.setText(f"= mngrp raw file {raw_file}: no picture there (empty, or the game's "
-                                       f"other data); Add new picture fills the next free slot")
-            self.texture_label.setStyleSheet("color: #c06000;")
+            text = (f"= mngrp slot {raw_file}: no picture there (empty, or the game's other data). Add one in "
+                    f"Shiva > Magazine pictures.")
+            warn = True
         elif pc_file and is_added_slot(raw_file):
-            self.texture_label.setText(f"= mngrp raw file {raw_file}, in game (PC, FFNx with AddMorePictures): "
-                                       f"menu/{pc_file}")
-            self.texture_label.setStyleSheet("")
+            text = f"= mngrp slot {raw_file}, an added picture: menu/{pc_file} in game (needs FFNx's AddMorePictures)."
+            warn = False
         elif pc_file:
-            self.texture_label.setText(f"= mngrp raw file {raw_file}, in game (PC): menu/{pc_file}")
-            self.texture_label.setStyleSheet("")
+            text = f"= mngrp slot {raw_file}, shown in game from menu/{pc_file}."
+            warn = False
         else:
-            self.texture_label.setText(f"= mngrp raw file {raw_file}: no picture on PC (no texture for "
-                                       f"this slot)")
-            self.texture_label.setStyleSheet("color: #c06000;")
+            text = f"= mngrp slot {raw_file}: no picture on PC (the PC game has no texture for this slot)."
+            warn = True
+        shared = self._pages_sharing_picture(raw_file)
+        if shared:
+            text += " Also behind page" + ("s " if len(shared) > 1 else " ") + self._page_ranges(shared) + "."
+        self.texture_label.setText(text)
+        self.texture_label.setStyleSheet("color: #c06000;" if warn else "")
 
-        can_replace = self.manager.can_replace_picture(raw_file)
-        self.replace_picture_button.setEnabled(can_replace)
-        self.export_picture_button.setEnabled(self.manager.mngrp_loaded and pc_file is not None
-                                              and (not is_added_slot(raw_file) or self.manager.has_added_picture(raw_file)))
-        self.add_picture_button.setEnabled(bool(self.manager.free_picture_slots()))
         for button in self.new_line_buttons + self.sprite_pick_buttons:
             button.setEnabled(self.manager.mngrp_loaded)
 

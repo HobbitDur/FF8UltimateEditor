@@ -6,12 +6,14 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QMessageBox
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
+from Common.pagefontsource import PageFontSource
 from FF8GameData.FF8HexReader.mngrphd import MngrpPairError
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.mngrp.m00x.refineabilities import RefineKernelError, read_refine_abilities
 from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
 from Shiva.ShivaMagazinePicture.shivamagazinepicturewidget import ShivaMagazinePictureWidget
 from Shiva.ShivaRefine.shivarefinewidget import ShivaRefineWidget
+from Shiva.ShivaSeedTest.seedscreen import MenuIcons
 from Shiva.ShivaSeedTest.shivaseedtestwidget import ShivaSeedTestWidget
 from Shiva.ShivaSprite.shivaspritewidget import ShivaSpriteWidget
 from Shiva.ShivaTutorial.shivatutorialwidget import ShivaTutorialWidget
@@ -76,7 +78,16 @@ class ShivaWidget(QWidget):
         self.kernel_binding.file_opened.connect(self._load_refine_abilities)
         self.kernel_binding.file_closed.connect(self._clear_refine_abilities)
         self.refine_tab.kernel_ranges_written.connect(self._warn_other_kernel_editors)
-        self.add_section_tab(ShivaSeedTestWidget(self.game_data), "SeeD tests")
+        # The menu font, two read-only side files: the SeeD test preview draws its text with them
+        self.font_source = PageFontSource(file_registry)
+        self.seed_test_tab = ShivaSeedTestWidget(self.game_data, font_source=self.font_source)
+        self.add_section_tab(self.seed_test_tab, "SeeD tests")
+        # icon.sp1 (read with the icon.TEX beside it), read-only (Minimog edits it): the menu's hand
+        # and window border, for the SeeD test preview
+        self.icon_binding = FileBinding("icon.sp1", file_registry, read_only=True)
+        self.icon_binding.file_opened.connect(self._load_icons)
+        self.icon_binding.file_closed.connect(lambda _path=None: self._set_icons(None))
+        self._set_icons(None)
         self.add_section_tab(ShivaSpriteWidget(), "Sprites")
         self.add_section_tab(ShivaMagazinePictureWidget(), "Magazine pictures")
         self.add_section_tab(ShivaTutorialWidget(self.game_data), "Tutorial demos")
@@ -87,11 +98,26 @@ class ShivaWidget(QWidget):
 
         self.mngrp_binding.load_opened_file()  # Another tool may have opened mngrp.bin already
         self.kernel_binding.load_opened_file()  # ...or a kernel.bin
+        self.font_source.load_opened_files()  # ...or the font
+        self.icon_binding.load_opened_file()  # ...or the menu icons
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool: mngrp.bin, and kernel.bin as
-        a complementary file naming the items and holding the refine ranges."""
-        return [self.mngrp_binding, self.kernel_binding]
+        """The files the shared header toolbar drives for this tool: mngrp.bin, kernel.bin as
+        a complementary file naming the items and holding the refine ranges, and the menu font
+        (sysfnt.TEX / sysfnt.tdw) and icons (icon.sp1) the SeeD test preview draws with."""
+        return [self.mngrp_binding, self.kernel_binding, *self.font_source.bindings, self.icon_binding]
+
+    def _load_icons(self, sp1_path):
+        try:
+            self._set_icons(MenuIcons(sp1_path))
+        except (OSError, ValueError, IndexError) as error:
+            self._set_icons(None, f"Could not read {sp1_path}: {error}")
+
+    def _set_icons(self, icons, error=""):
+        notice = error or ("" if icons is not None else
+                           "No icon.sp1: the window border and the hand are drawn plain. Open icon.sp1 (icon.TEX "
+                           "beside it, in the game's menu folder) with the toolbar's \"Import complementary\" button.")
+        self.seed_test_tab.preview.set_icons(icons, notice)
 
     def _load_refine_abilities(self, kernel_path):
         try:
@@ -144,6 +170,12 @@ class ShivaWidget(QWidget):
             return
         self.mngrp_path = mngrp_path
         self.mngrphd_path = mngrphd_path
+        # The font sits beside mngrp.bin in the game's menu folder: share it as a side file when it
+        # is there (one another tool already opened is kept), so the SeeD preview has real glyphs.
+        for binding in (*self.font_source.bindings, self.icon_binding):
+            side_path = os.path.join(os.path.dirname(mngrp_path), binding.file_name)
+            if not binding.current_path and os.path.exists(side_path):
+                binding.open_path(side_path)
         for tab in self.section_tabs:
             tab.load_from_mngrp(self.manager)
         self.tabs.setEnabled(True)

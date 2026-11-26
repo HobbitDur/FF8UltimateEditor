@@ -1,16 +1,16 @@
 import csv
-import os
 
-from PyQt6.QtCore import QSize, QSignalBlocker, Qt, QRectF, QPointF
-from PyQt6.QtGui import QIcon, QPainter, QColor, QFont, QPen, QBrush, QPolygonF
-from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog,
-                             QListWidget, QComboBox, QPlainTextEdit, QGroupBox, QScrollArea, QMessageBox)
+from PyQt6.QtCore import QRect, QSize, QSignalBlocker
+from PyQt6.QtGui import QImage, QPainter, QPixmap
+from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QLineEdit,
+                             QListWidget, QComboBox, QPlainTextEdit, QGroupBox, QScrollArea, QMessageBox,
+                             QSizePolicy)
 
 from FF8GameData.gamedata import GameData
 from Shiva.ShivaSeedTest.seedtest import SeedString, SeedTestSet
 from SmallWidget.listsearchbar import ListSearchBar
-from Shiva.ShivaSeedTest.seedfont import (SeedFontMetrics, layout_text, overflows, LINE_HEIGHT,
-                                          VANILLA_MAX_WIDTH, VANILLA_MAX_LINES)
+from Shiva.ShivaSeedTest.seedscreen import (CROP,MAX_LINES, MAX_TEXT_WIDTH, SAMPLE_VALUES,
+                                            render_seed_screen)
 
 
 class NidaQuestionWidget(QGroupBox):
@@ -102,98 +102,148 @@ class NidaQuestionWidget(QGroupBox):
             self.stops_label.setText("No cursor stop (plain text)")
 
 
+class SeedScreenCanvas(QWidget):
+    """The rendered test screen, scaled up to the room it has (nearest neighbour, never below 1:1)."""
+
+    def __init__(self):
+        QWidget.__init__(self)
+        width, height = CROP[2] - CROP[0], CROP[3] - CROP[1]
+        self._size = (width, height)
+        self.setMinimumSize(width, height)
+        # As wide as the column allows, and only as tall as the screen needs at that width
+        policy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
+        self._pixmap = None
+
+    def sizeHint(self):
+        return QSize(self._size[0] * 2, self._size[1] * 2)
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        return max(self._size[1], width * self._size[1] // self._size[0])
+
+    def set_image(self, image):
+        rgba = image.convert("RGBA")
+        qimage = QImage(rgba.tobytes("raw", "RGBA"), rgba.width, rgba.height, QImage.Format.Format_RGBA8888).copy()
+        self._pixmap = QPixmap.fromImage(qimage)
+        self.update()
+
+    def paintEvent(self, _event):
+        if self._pixmap is None:
+            return
+        painter = QPainter(self)
+        scale = max(1.0, min(self.width() / self._pixmap.width(), self.height() / self._pixmap.height()))
+        width, height = int(self._pixmap.width() * scale), int(self._pixmap.height() * scale)
+        painter.drawPixmap(QRect(0, 0, width, height), self._pixmap)
+
+
 class SeedPreviewWidget(QWidget):
-    """In-game layout preview of one SeeD question, drawn with the real FF8 font
-    widths: the box is the vanilla text envelope, glyphs sit at the exact pen
-    positions the engine computes, and each choice cursor stop is marked (the
-    expected answer in green)."""
-    SCALE = 1.4  # Game pixels -> screen pixels
-    MARGIN = 10
+    """The focused question on the SeeD test screen, as the game draws it (see seedscreen.py): the
+    three windows, the text in the real menu font at the engine's pen positions and clipped where
+    the game clips it, and a cursor hand at each choice (the expected answer's in green)."""
 
-    BG_COLOR = QColor(20, 24, 48)
-    BOX_COLOR = QColor(120, 140, 200)
-    OVERFLOW_COLOR = QColor(220, 90, 90)
-    TEXT_COLOR = QColor(240, 240, 240)
-    STOP_COLOR = QColor(230, 200, 80)
-    EXPECTED_COLOR = QColor(90, 210, 120)
-
-    def __init__(self, game_data: GameData, metrics: SeedFontMetrics):
+    def __init__(self, game_data: GameData):
         QWidget.__init__(self)
         self.game_data = game_data
-        self.metrics = metrics
+        self.metrics = None  # sysfnt.tdw, when opened
+        self.atlas = None    # sysfnt.TEX, when opened
+        self.icons = None    # icon.sp1 + icon.TEX (MenuIcons), when opened
+        self._notices = {}   # what is missing, per side file group
         self._seed_string = None
-        box_w = int(VANILLA_MAX_WIDTH * self.SCALE) + 2 * self.MARGIN
-        box_h = int(VANILLA_MAX_LINES * LINE_HEIGHT * self.SCALE) + 2 * self.MARGIN
-        self.setMinimumSize(box_w + 4, box_h + 4)
-        self.setToolTip("Preview of how the question renders in game (real FF8 character widths). "
-                        "The blue box is the vanilla size envelope; content past it (red) risks overflowing.")
 
-    def set_metrics(self, metrics: SeedFontMetrics):
+        self.canvas = SeedScreenCanvas()
+        self.canvas.setToolTip("The SeeD test screen as the game draws it (positions from the exe). The text "
+                               "is cut where the game cuts it;\nthe hands point at the choices, the expected "
+                               "answer's in green. The title and help bars hold other menu text.")
+        self.status_label = QLabel()
+        self.status_label.setWordWrap(True)
+        self.font_notice = QLabel()
+        self.font_notice.setWordWrap(True)
+        self.font_notice.setStyleSheet("color: #c07000;")
+
+        # The values the screen fills in when it opens: samples, so the lines get their real width
+        self.value_edits = {}
+        values_layout = QHBoxLayout()
+        values_layout.addWidget(QLabel("Values shown:"))
+        for name, label, tip in (
+                ("SeedTestLevelOrScore", "level / score", "{SeedTestLevelOrScore}: the test level, or the AP "
+                                                          "scored (10 per right answer) on a failed test"),
+                ("NextSeedTestLevel", "next level", "{NextSeedTestLevel}: the level of the test offered"),
+                ("SeedRank", "rank", "{SeedRank}: the SeeD rank, digits or \"A\"")):
+            edit = QLineEdit(SAMPLE_VALUES[name])
+            edit.setMaxLength(3)
+            edit.setFixedWidth(40)
+            edit.setToolTip(tip + " (only for this preview, not saved)")
+            edit.textChanged.connect(self._redraw)
+            values_layout.addWidget(QLabel(label))
+            values_layout.addWidget(edit)
+            self.value_edits[name] = edit
+        values_layout.addStretch(1)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.canvas)
+        layout.addWidget(self.status_label)
+        layout.addLayout(values_layout)
+        layout.addWidget(self.font_notice)
+        layout.addStretch(1)
+        self._redraw()
+
+    def set_font(self, metrics, atlas, notice=""):
+        """The opened menu font (None for a file not opened) and what to say about a missing one."""
         self.metrics = metrics
-        self.update()
+        self.atlas = atlas
+        self._set_notice("font", notice)
+
+    def set_icons(self, icons, notice=""):
+        """The opened menu icons (MenuIcons: the hand and the window border), None when not opened."""
+        self.icons = icons
+        self._set_notice("icons", notice)
+
+    def _set_notice(self, key, notice):
+        self._notices[key] = notice
+        text = "\n".join(text for text in self._notices.values() if text)
+        self.font_notice.setText(text)
+        self.font_notice.setVisible(bool(text))
+        self._redraw()
 
     def show_string(self, seed_string):
         self._seed_string = seed_string
-        self.update()
+        self._redraw()
 
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.fillRect(self.rect(), self.BG_COLOR)
+    def values(self):
+        return {name: edit.text() for name, edit in self.value_edits.items()}
+
+    def _redraw(self, *_args):
+        text = self._seed_string.get_text() if self._seed_string is not None else ""
+        answer = self._seed_string.answer if self._seed_string is not None else -1
+        screen = render_seed_screen(text, answer, self.game_data, self.metrics, self.atlas, self.values(),
+                                    icons=self.icons)
+        self.screen = screen
+        self.canvas.set_image(screen.image)
         if self._seed_string is None:
+            self.status_label.setText("")
             return
-
-        layout = layout_text(self._seed_string.get_text(), self.game_data, self.metrics)
-        overflow = overflows(layout)
-        scale = self.SCALE
-        origin_x = self.MARGIN
-        origin_y = self.MARGIN
-
-        # Vanilla envelope box
-        box_w = VANILLA_MAX_WIDTH * scale
-        box_h = VANILLA_MAX_LINES * LINE_HEIGHT * scale
-        painter.setPen(QPen(self.OVERFLOW_COLOR if overflow else self.BOX_COLOR, 1))
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawRect(QRectF(origin_x, origin_y, box_w, box_h))
-
-        # Glyphs at their true FF8 pen positions
-        font = QFont("Consolas")
-        font.setStyleHint(QFont.StyleHint.Monospace)  # Fall back to any monospace font
-        font.setPixelSize(int(LINE_HEIGHT * scale * 0.8))
-        painter.setFont(font)
-        painter.setPen(self.TEXT_COLOR)
-        for glyph in layout.glyphs:
-            gx = origin_x + glyph.x * scale
-            gy = origin_y + glyph.y * scale
-            painter.drawText(QRectF(gx, gy, max(glyph.width, 1) * scale + scale, LINE_HEIGHT * scale),
-                             int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter), glyph.char)
-
-        # Choice cursor stops (the pointing hand); the expected answer highlighted
-        expected = self._seed_string.answer
-        for stop in layout.stops:
-            sx = origin_x + stop.x * scale
-            sy = origin_y + stop.y * scale
-            is_expected = stop.index == expected
-            color = self.EXPECTED_COLOR if is_expected else self.STOP_COLOR
-            painter.setPen(QPen(color, 1))
-            painter.setBrush(QBrush(color))
-            mid = sy + LINE_HEIGHT * scale / 2
-            triangle = QPolygonF([QPointF(sx - 12, mid - 5), QPointF(sx - 12, mid + 5), QPointF(sx - 3, mid)])
-            painter.drawPolygon(triangle)
-
-        # Status line under the box
-        painter.setPen(self.OVERFLOW_COLOR if overflow else self.BOX_COLOR)
-        status_font = QFont()
-        status_font.setPixelSize(12)
-        painter.setFont(status_font)
-        parts = [f"width {layout.max_width}px / {VANILLA_MAX_WIDTH}",
-                 f"lines {layout.line_count} / {VANILLA_MAX_LINES}",
-                 f"choices {len(layout.stops)}"]
-        if overflow:
-            parts.append("- may overflow in game")
-        if not self.metrics.exact:
-            parts.append("(approx widths: sysfnt.tdw not found)")
-        painter.drawText(QRectF(origin_x, origin_y + box_h + 2, self.width() - 2 * self.MARGIN, 18),
-                         int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter), "   ".join(parts))
+        lines = screen.layout.line_count
+        parts = [f"Widest line: {screen.ink_right} of {MAX_TEXT_WIDTH} px",
+                 f"lines: {lines} of {MAX_LINES}",
+                 f"choices: {len(screen.layout.stops)}"]
+        status = ", ".join(parts) + "."
+        cut = []
+        if screen.cut_columns:
+            cut.append(f"the last {screen.cut_columns} px of the widest line")
+        if screen.cut_lines:
+            cut.append(f"{screen.cut_lines} line(s) at the bottom")
+        if cut:
+            status += " The game cuts off " + " and ".join(cut) + "."
+        no_answer = screen.layout.stops and answer >= len(screen.layout.stops)
+        if no_answer:
+            status += f" The expected answer ({answer}) is not one of the choices: no answer can be right."
+        self.status_label.setText(status)
+        self.status_label.setStyleSheet("color: #d04040;" if cut or no_answer else "")
 
 
 class ShivaSeedTestWidget(QWidget):
@@ -202,14 +252,15 @@ class ShivaSeedTestWidget(QWidget):
     Reads its sections out of the shared mngrp, so it cannot overwrite the other tabs' sections.
     The CSV export/import stays here, on the tab, as it only concerns the SeeD test strings."""
 
-    def __init__(self, game_data):
+    def __init__(self, game_data, font_source=None):
+        """`font_source`: the menu font (sysfnt.TEX / sysfnt.tdw side files, Common.pagefontsource) the
+        preview draws with; None draws boxes of a uniform width."""
         QWidget.__init__(self)
         self.game_data = game_data
         self.seed_tests = None
-        self.mngrp_folder = ""  # Where sysfnt.tdw is looked for, set on load
+        self.font_source = font_source
 
         self.file_dialog = QFileDialog()
-        self.metrics = SeedFontMetrics.from_folder("")  # Real FF8 font widths for the preview
 
         self.export_csv_button = QPushButton("Export CSV")
         self.export_csv_button.setToolTip("Export every question (answer + text) to a CSV file, editable in Excel")
@@ -245,18 +296,20 @@ class ShivaSeedTestWidget(QWidget):
         self.question_scroll.setEnabled(False)
 
         # In-game preview (right side), follows the focused / edited question
-        self.preview = SeedPreviewWidget(self.game_data, self.metrics)
+        self.preview = SeedPreviewWidget(self.game_data)
         preview_title = QLabel("In-game preview")
         preview_title.setStyleSheet("font-weight: bold;")
         preview_column = QVBoxLayout()
         preview_column.addWidget(preview_title)
-        preview_column.addWidget(self.preview)
-        preview_column.addStretch(1)
+        preview_column.addWidget(self.preview, 1)
+        if self.font_source is not None:
+            self.font_source.changed.connect(self._apply_font)
+        self._apply_font()
 
         main_editor_layout = QHBoxLayout()
         main_editor_layout.addWidget(self.section_search.column)
         main_editor_layout.addWidget(self.question_scroll, 1)
-        main_editor_layout.addLayout(preview_column)
+        main_editor_layout.addLayout(preview_column, 1)
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -266,10 +319,6 @@ class ShivaSeedTestWidget(QWidget):
 
     def load_from_mngrp(self, manager):
         self.seed_tests = SeedTestSet.from_mngrp(self.game_data, manager.mngrp)
-        # sysfnt.tdw sits next to mngrp.bin, used for the exact preview widths
-        self.mngrp_folder = os.path.dirname(manager.mngrp_path) if getattr(manager, "mngrp_path", "") else ""
-        self.metrics = SeedFontMetrics.from_folder(self.mngrp_folder)
-        self.preview.set_metrics(self.metrics)
         self.question_scroll.setEnabled(True)
         self.export_csv_button.setEnabled(True)
         self.import_csv_button.setEnabled(True)
@@ -280,6 +329,13 @@ class ShivaSeedTestWidget(QWidget):
                 self.section_list.addItem(seed_test.name)
         self.section_list.setCurrentRow(1)  # Test 1
         self.reload_selected_section()
+
+    def _apply_font(self):
+        """sysfnt.TEX / sysfnt.tdw opened or removed: draw with what is open."""
+        if self.font_source is None:
+            self.preview.set_font(None, None, "No menu font: the text is drawn as boxes of a uniform width.")
+            return
+        self.preview.set_font(self.font_source.metrics, self.font_source.atlas, self.font_source.notice())
 
     def save_to_mngrp(self, manager):
         """Nothing to do: the strings edited here are the shared mngrp's own SeeD sections."""

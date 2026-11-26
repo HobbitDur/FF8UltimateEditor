@@ -101,7 +101,6 @@ def test_widget_edits_a_line_in_place_and_saves_both_files(menu):
     assert new_id != old_id and editor.toPlainText() == "" and not editor.isReadOnly()
     editor.setPlainText("My own magazine\nIssue 1")
     assert zone.manager.get_book_texts(0)[new_id] == "My own magazine\\nIssue 1"
-    assert zone.replace_picture_button.isEnabled() == zone.manager.can_replace_picture(zone._picture_slot())
 
     zone.save_files()
     reloaded = ZoneManager(zone.manager.game_data)
@@ -157,27 +156,36 @@ def test_a_file_with_added_slots_loads_in_every_mngrp_tool(manager, menu):
         model.add_raw_section(185, b"\x00")  # before the last used slot: it would move the others
 
 
-def test_widget_adds_a_picture_and_points_the_page_at_it(menu):
+def test_a_picture_added_in_shiva_is_offered_under_any_slot(manager, menu):
+    """Zone adds no picture itself (Shiva > Magazine pictures does): one saved there is listed under
+    "Any slot" once mngrp.bin is reloaded, and the page points at it by its slot."""
     QApplication.instance() or QApplication(sys.argv)
     from Zone.zonewidget import ZoneWidget, DIRECT_TEXTURE_CATEGORY
+    manager.add_picture(Image.new("RGBA", (256, 192), (40, 200, 90, 255)))  # as Shiva would
+    assert manager.save_mngrp() == []
     zone = ZoneWidget()
     zone._load_mmag(str(menu / "mmag.bin"))
     zone._apply_mngrp(str(menu / "mngrp.bin"))
     zone.select_entry(0)
-    zone.add_page_button.click()
-    png = menu / "new.png"
-    Image.new("RGBA", (256, 192), (40, 200, 90, 255)).save(png)
+    assert not hasattr(zone, "add_picture_button") and "Shiva > Magazine pictures" in zone.picture_note.text()
 
-    slot = zone.add_picture_from_file(str(png))
-    assert slot == 206
-    assert zone.texture_category.currentData() == DIRECT_TEXTURE_CATEGORY and zone.texture_page.value() == 206
-    assert "mag206.TEX" in zone.texture_label.text()
-    zone.save_files()
-    reloaded = ZoneManager(zone.manager.game_data)
-    reloaded.load_file(str(menu / "mmag.bin"))
-    page = reloaded.entries[ZoneManager.VANILLA_ENTRY_COUNT]
-    assert (page.texture_category, page.texture_page) == (DIRECT_TEXTURE_CATEGORY, 206)
-    assert (menu / "mag206.TEX").exists()
+    zone._set_combo_data(zone.texture_category, DIRECT_TEXTURE_CATEGORY, "")
+    pages = [zone.texture_page.itemText(i) for i in range(zone.texture_page.count())]
+    assert "206: mag206.TEX (added)" in pages
+    zone.texture_page.setValue(206)
+    assert "an added picture: menu/mag206.TEX" in zone.texture_label.text()
+
+
+def test_the_picture_label_names_the_pages_sharing_it(menu):
+    QApplication.instance() or QApplication(sys.argv)
+    from Zone.zonewidget import ZoneWidget
+    zone = ZoneWidget()
+    zone._load_mmag(str(menu / "mmag.bin"))
+    zone._apply_mngrp(str(menu / "mngrp.bin"))
+    zone.select_entry(0)  # Weapons Monthly 1st issue, page 1/4: its 4 pages share mag00
+    assert "menu/mag00.TEX" in zone.texture_label.text()
+    assert "Also behind pages 1-3" in zone.texture_label.text()
+    assert ZoneWidget._page_ranges([7, 1, 2, 3]) == "1-3, 7"
 
 
 def test_raw_numbers_are_offered_as_named_choices(menu):
