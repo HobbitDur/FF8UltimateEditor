@@ -3,7 +3,8 @@ import os
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QCheckBox
 
-from FF8GameData.menu.magpicture import PC_PICTURE_FILES, is_added_slot, pc_picture_name, slot_picture
+from FF8GameData.menu.magpicture import (PC_PICTURE_FILES, is_added_slot, is_page_picture_tim, pc_picture_name,
+                                         slot_picture)
 from Joker.jokermanager import Sp2File
 from Joker.sp2editorwidget import Sp2EditorWidget
 from SmallWidget.spritecanvas import SpriteCanvas
@@ -98,7 +99,10 @@ class ShivaSpriteWidget(QWidget):
         """The page pictures of this mngrp.bin: the game's 30, then the added ones it holds."""
         slots = sorted(PC_PICTURE_FILES)
         entries = self.manager.mngrphd.get_entry_list() if self.manager is not None else []
-        slots += [slot for slot in range(len(entries)) if is_added_slot(slot) and not entries[slot].invalid_value]
+        sections = self.manager.mngrp.get_section_list() if self.manager is not None else []
+        # Past 185 only the slots holding a page picture: the game's 188-205 are other data
+        slots += [slot for slot in range(len(entries)) if is_added_slot(slot) and not entries[slot].invalid_value
+                  and is_page_picture_tim(sections[slot].get_data_hex())]
         return slots
 
     def _fill_pictures(self):

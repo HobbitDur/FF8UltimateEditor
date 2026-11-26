@@ -63,7 +63,16 @@ Color = Tuple[int, int, int]
 
 
 def is_added_slot(raw_file: int) -> bool:
+    """A slot number an added picture may take (185-255). Being in that range is not enough to be
+    one: the game's own mngrp.bin uses 188-205 for other data; see is_page_picture_tim."""
     return ADDED_FIRST_SLOT <= raw_file <= ADDED_LAST_SLOT
+
+
+def is_page_picture_tim(data) -> bool:
+    """Whether a mngrp slot holds a page picture: an 8bpp TIM of 256x192 texels (what Add new
+    picture writes). Slots 188-205 of the game hold other data, which this keeps out."""
+    tim = PalettedTim.parse(bytes(data)) if data else None
+    return tim is not None and tim.bpp == 1 and (tim.width, tim.height) == (256, 192)
 
 
 def pc_picture_name(raw_file: int) -> Optional[str]:

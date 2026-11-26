@@ -607,7 +607,7 @@ class ZoneWidget(QWidget):
             if slot > 255:
                 break
             name = pc_picture_file_name(slot)
-            if name is None or (is_added_slot(slot) and not self.manager.has_slot(slot)):
+            if name is None or (is_added_slot(slot) and not self.manager.has_added_picture(slot)):
                 continue
             added = " (added)" if is_added_slot(slot) else ""
             label = f"{page}: {name}{added}" if category in TEXTURE_CATEGORIES else f"{slot}: {name}{added}"
@@ -1043,9 +1043,9 @@ class ZoneWidget(QWidget):
         else:
             raw_file = self.texture_page.value()
         pc_file = pc_picture_file_name(raw_file)
-        if pc_file and is_added_slot(raw_file) and not self.manager.has_slot(raw_file):
-            self.texture_label.setText(f"= mngrp raw file {raw_file}: empty slot, no picture (Add new picture "
-                                       f"fills the next free one)")
+        if pc_file and is_added_slot(raw_file) and not self.manager.has_added_picture(raw_file):
+            self.texture_label.setText(f"= mngrp raw file {raw_file}: no picture there (empty, or the game's "
+                                       f"other data); Add new picture fills the next free slot")
             self.texture_label.setStyleSheet("color: #c06000;")
         elif pc_file and is_added_slot(raw_file):
             self.texture_label.setText(f"= mngrp raw file {raw_file}, in game (PC, FFNx with AddMorePictures): "
@@ -1062,7 +1062,7 @@ class ZoneWidget(QWidget):
         can_replace = self.manager.can_replace_picture(raw_file)
         self.replace_picture_button.setEnabled(can_replace)
         self.export_picture_button.setEnabled(self.manager.mngrp_loaded and pc_file is not None
-                                              and (not is_added_slot(raw_file) or self.manager.has_slot(raw_file)))
+                                              and (not is_added_slot(raw_file) or self.manager.has_added_picture(raw_file)))
         self.add_picture_button.setEnabled(bool(self.manager.free_picture_slots()))
         for button in self.new_line_buttons + self.sprite_pick_buttons:
             button.setEnabled(self.manager.mngrp_loaded)

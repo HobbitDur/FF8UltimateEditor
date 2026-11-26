@@ -127,3 +127,16 @@ def test_the_sprites_tab_shows_the_sprites_over_a_picture(qapp, game_data):
     assert tab.canvas._pixmap is not None and tab.canvas.sprites
     tab._canvas_picked(8)
     assert tab.sp2_editor.sprite_list.currentRow() == 8 and tab.canvas.selected_id == 8
+
+
+def test_the_games_other_data_past_185_is_not_listed_as_an_added_picture(qapp, game_data):
+    """Slots 188-205 of the game's mngrp.bin hold other data: neither Shiva tab lists them."""
+    from Shiva.ShivaMagazinePicture.shivamagazinepicturewidget import ShivaMagazinePictureWidget
+    from Shiva.ShivaSprite.shivaspritewidget import ShivaSpriteWidget
+    manager = _load(game_data, MENU)
+    pictures = ShivaMagazinePictureWidget()
+    pictures.load_from_mngrp(manager)
+    assert max(pictures._picture_slots()) == 184 and len(pictures._picture_slots()) == 30
+    sprites = ShivaSpriteWidget()
+    sprites.load_from_mngrp(manager)
+    assert len(sprites._picture_slots()) == 30

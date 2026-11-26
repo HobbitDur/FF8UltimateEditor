@@ -206,3 +206,19 @@ def test_raw_numbers_are_offered_as_named_choices(menu):
     editor.setPlainText("Renamed line")
     _x, _y, other_line_id, _editor = zone.text_overlay_spins[1]
     assert other_line_id.itemText(other_line_id.findData(2)) == "2: Renamed line"
+
+
+def test_the_games_other_data_past_185_is_no_added_picture():
+    """has_added_picture: the game's 188-205 are not pictures, so Zone neither lists nor replaces them."""
+    import pathlib
+    import pytest
+    from FF8GameData.gamedata import GameData
+    from Zone.zonemanager import ZoneManager
+    menu = pathlib.Path(__file__).parent.parent.parent / "extracted_files" / "menu"
+    if not (menu / "mngrp.bin").exists():
+        pytest.skip("needs extracted_files/menu")
+    manager = ZoneManager(GameData(str(pathlib.Path(__file__).parent.parent.parent / "FF8GameData")))
+    manager.load_mngrp(str(menu / "mngrp.bin"))
+    assert manager.has_slot(188) and not manager.has_added_picture(188)
+    assert not manager.can_replace_picture(200)
+    assert manager.can_replace_picture(28)

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLa
 
 from FF8GameData.menu.magpagemanager import TEXTURE_CATEGORIES
 from FF8GameData.menu.magpicture import (ADDED_FIRST_SLOT, ADDED_LAST_SLOT, PC_PICTURE_FILES, TEMPLATE_SLOT,
-                                         encode_picture_tim, is_added_slot, pc_picture_file_name,
+                                         encode_picture_tim, is_added_slot, is_page_picture_tim, pc_picture_file_name,
                                          pc_picture_name, picture_from_indices, quantize_picture,
                                          replace_picture_tim, slot_picture, write_picture_tex)
 
@@ -90,9 +90,9 @@ class ShivaMagazinePictureWidget(QWidget):
 
         right = QVBoxLayout()
         right.addWidget(help_label)
-        right.addWidget(self.picture_label)
+        right.addLayout(buttons)  # above the 512x384 picture, so a short window cannot hide them
         right.addWidget(self.info_label)
-        right.addLayout(buttons)
+        right.addWidget(self.picture_label)
         right.addStretch(1)
 
         layout = QHBoxLayout(self)
@@ -144,8 +144,11 @@ class ShivaMagazinePictureWidget(QWidget):
         slots = sorted(PC_PICTURE_FILES)
         if self.manager is not None and self.manager.mngrphd is not None:
             entries = self.manager.mngrphd.get_entry_list()
+            sections = self.manager.mngrp.get_section_list()
+            # Past 185 only the slots holding a page picture: the game's 188-205 are other data
             slots += [slot for slot in range(len(entries))
-                      if is_added_slot(slot) and not entries[slot].invalid_value]
+                      if is_added_slot(slot) and not entries[slot].invalid_value
+                      and is_page_picture_tim(sections[slot].get_data_hex())]
         return slots
 
     def _fill_slots(self, select=None):

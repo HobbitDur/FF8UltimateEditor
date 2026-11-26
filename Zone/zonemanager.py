@@ -6,7 +6,7 @@ from FF8GameData.gamedata import GameData
 from FF8GameData.menu.magpage import MagPageEntry, OverlaySlot, UNUSED_ID
 from FF8GameData.menu.magpagemanager import TEXTURE_CATEGORIES, MagPageManager
 from FF8GameData.menu.magpicture import (ADDED_FIRST_SLOT, ADDED_LAST_SLOT, PC_PICTURE_FILES, TEMPLATE_SLOT,
-                                         encode_picture_tim, is_added_slot, pc_picture_file_name,
+                                         encode_picture_tim, is_added_slot, is_page_picture_tim, pc_picture_file_name,
                                          picture_from_indices, quantize_picture, replace_picture_tim,
                                          slot_picture, write_picture_tex)
 from FF8GameData.menu.mngrp.string.sectionstring import SectionString
@@ -213,11 +213,18 @@ class ZoneManager(MagPageManager):
         entries = self.mngrp_model.mngrphd.get_entry_list()
         return 0 <= raw_file < len(entries) and not entries[raw_file].invalid_value
 
+    def has_added_picture(self, raw_file):
+        """Whether slot `raw_file` holds a picture added for FFNx's AddMorePictures: a 256x192 page
+        picture past the game's ones. The game's own 188-205 hold other data, not pictures."""
+        if not (is_added_slot(raw_file) and self.has_slot(raw_file)):
+            return False
+        return is_page_picture_tim(self.mngrp_model.mngrp.get_section_list()[raw_file].get_data_hex())
+
     def can_replace_picture(self, raw_file):
         """A picture the PC game shows: one of its 30, or an added one (FFNx's AddMorePictures)."""
         if raw_file in PC_PICTURE_FILES:
             return self.mngrp_model is not None
-        return is_added_slot(raw_file) and self.has_slot(raw_file)
+        return self.has_added_picture(raw_file)
 
     def free_picture_slots(self):
         """The slots a new picture can take: empty, past the game's pictures and after every slot
