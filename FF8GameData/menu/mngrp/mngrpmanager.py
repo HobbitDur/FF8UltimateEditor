@@ -155,18 +155,35 @@ class MngrpManager:
         """The last raw slot of mngrphd.bin holding a section (205 in the game's mngrp.bin)."""
         return max(slot for slot, entry in enumerate(self.mngrphd.get_entry_list()) if not entry.invalid_value)
 
+    def last_mapped_slot(self):
+        """The raw slot of the last section the tools know by its place (mngrp_data_json's sections,
+        205 in the game's mngrp.bin). Those are found by their order among the used slots, so no slot
+        before this one may be filled or emptied; the slots after it only hold added sections, which
+        everything finds by their slot number."""
+        mapped = len(self.game_data.mngrp_data_json["sections"])
+        sections = self.mngrp.get_section_list()
+        return max(slot for slot, entry in enumerate(self.mngrphd.get_entry_list())
+                   if not entry.invalid_value and 0 <= sections[slot].id < mapped)
+
     def free_slots_after(self, first_slot=0):
-        """The empty raw slots after the last used one, from `first_slot` on: filling one moves no
-        other section, so the tools still find every section by its place."""
-        start = max(first_slot, self.last_used_slot() + 1)
-        return list(range(start, len(self.mngrphd.get_entry_list())))
+        """The empty raw slots after the last mapped one (see last_mapped_slot), from `first_slot` on,
+        gaps left by a removed section included: filling one moves no section the tools know by its
+        place."""
+        start = max(first_slot, self.last_mapped_slot() + 1)
+        entries = self.mngrphd.get_entry_list()
+        return [slot for slot in range(start, len(entries)) if entries[slot].invalid_value]
+
+    def is_added_section(self, slot):
+        """Whether `slot` holds a section added after the mapped ones (see last_mapped_slot)."""
+        entries = self.mngrphd.get_entry_list()
+        return (self.last_mapped_slot() < slot < len(entries)) and not entries[slot].invalid_value
 
     def add_raw_section(self, slot, data):
-        """Put `data` in an empty raw slot after the last used one (see free_slots_after), as a plain
+        """Put `data` in an empty raw slot after the last mapped one (see free_slots_after), as a plain
         section written at the end of mngrp.bin. Raises ValueError for any other slot."""
         if slot not in self.free_slots_after():
-            raise ValueError(f"mngrp.bin slot {slot} is not an empty slot after the last used one "
-                             f"({self.last_used_slot()})")
+            raise ValueError(f"mngrp.bin slot {slot} is not an empty slot after the last mapped one "
+                             f"({self.last_mapped_slot()})")
         sections = self.mngrp.get_section_list()
         # Mngrp keeps the entry list it was built with; mngrphd.bin's is rebuilt by every save
         for entry_list in {id(self.mngrp.header_entry_list): self.mngrp.header_entry_list,
@@ -178,11 +195,12 @@ class MngrpManager:
         sections[slot] = Section(game_data=self.game_data, data_hex=bytearray(data), id=next_id, own_offset=0,
                                  name=f"Added slot {slot}")
 
-    def remove_last_raw_section(self, slot):
-        """Empty `slot` again, which must be the last used one (an added section: removing an earlier
-        one would move the sections after it). Raises ValueError otherwise."""
-        if slot != self.last_used_slot():
-            raise ValueError(f"mngrp.bin slot {slot} is not the last used one ({self.last_used_slot()})")
+    def remove_raw_section(self, slot):
+        """Empty `slot` again, which must hold an added section (see is_added_section): the slot is
+        left empty, so the other added sections keep their numbers. Raises ValueError otherwise."""
+        if not self.is_added_section(slot):
+            raise ValueError(f"mngrp.bin slot {slot} holds no added section (the game's end at "
+                             f"{self.last_mapped_slot()})")
         for entry_list in {id(self.mngrp.header_entry_list): self.mngrp.header_entry_list,
                            id(self.mngrphd.get_entry_list()): self.mngrphd.get_entry_list()}.values():
             entry_list[slot].invalid_value = True

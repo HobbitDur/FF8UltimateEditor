@@ -143,9 +143,9 @@ def test_the_games_other_data_past_185_is_not_listed_as_an_added_picture(qapp, g
 
 
 def test_add_and_remove_pictures_like_sprite_ids(qapp, game_data, tmp_path):
-    """"+ Add new picture" under the list makes the next entry (206, 207...), grey until its image is
-    set with Replace; "- Remove last added picture" takes the last one back out, and a save after it
-    leaves mngrp.bin as it was."""
+    """Through the buttons under the list: "+ Add new picture" makes the next entry (206, 207...),
+    grey until its image is set with Replace; "- Remove selected picture" removes the selected one,
+    only an added one, leaving its slot for the next add; removing them all saves mngrp.bin as it was."""
     from Shiva.ShivaMagazinePicture.shivamagazinepicturewidget import ShivaMagazinePictureWidget
     for name in ("mngrp.bin", "mngrphd.bin", "mag00.TEX"):
         shutil.copy(MENU / name, tmp_path / name)
@@ -153,14 +153,47 @@ def test_add_and_remove_pictures_like_sprite_ids(qapp, game_data, tmp_path):
     manager = _load(game_data, tmp_path)
     tab = ShivaMagazinePictureWidget()
     tab.load_from_mngrp(manager)
-    assert not tab.remove_button.isEnabled()
-    assert tab.add_picture() == 206 and tab.add_picture() == 207
-    assert tab._current_slot() == 207 and tab.remove_button.isEnabled()
+    assert tab._current_slot() == 24 and not tab.remove_button.isEnabled()  # a game picture
+    tab.add_button.click()
+    tab.add_button.click()
+    assert tab._picture_slots()[-2:] == [206, 207] and tab._current_slot() == 207
+    assert tab.remove_button.isEnabled()
     png = tmp_path / "set.png"
     Image.new("RGBA", (256, 192), (10, 120, 220, 255)).save(png)
     assert tab.replace_from_file(207, str(png))
-    assert tab.remove_last_picture() == 207 and tab.remove_last_picture() == 206
-    assert tab.remove_last_picture() is None and tab._picture_slots()[-1] == 184
+
+    tab._fill_slots(select=206)  # remove the first one: 207 keeps its slot, 206 is free again
+    tab.remove_button.click()
+    assert tab._picture_slots()[-1] == 207 and 206 not in tab._picture_slots()
+    assert tab.free_slots()[0] == 206
+    tab.add_button.click()
+    assert tab._current_slot() == 206
+
+    for slot in (206, 207):
+        tab._fill_slots(select=slot)
+        tab.remove_button.click()
+    assert tab._picture_slots()[-1] == 184
     tab.save_to_mngrp(manager)
     manager.save_file(str(tmp_path / "mngrp.bin"), str(tmp_path / "mngrphd.bin"))
     assert ((tmp_path / "mngrp.bin").read_bytes(), (tmp_path / "mngrphd.bin").read_bytes()) == original
+
+
+def test_a_gap_left_by_a_removed_picture_survives_a_save(qapp, game_data, tmp_path):
+    """206 removed, 207 kept: after Save and a new load, 207 is still 207 and 206 is free."""
+    from Shiva.ShivaMagazinePicture.shivamagazinepicturewidget import ShivaMagazinePictureWidget
+    for name in ("mngrp.bin", "mngrphd.bin", "mag00.TEX"):
+        shutil.copy(MENU / name, tmp_path / name)
+    manager = _load(game_data, tmp_path)
+    tab = ShivaMagazinePictureWidget()
+    tab.load_from_mngrp(manager)
+    tab.add_button.click()
+    tab.add_button.click()
+    tab._fill_slots(select=206)
+    tab.remove_button.click()
+    tab.save_to_mngrp(manager)
+    manager.save_file(str(tmp_path / "mngrp.bin"), str(tmp_path / "mngrphd.bin"))
+
+    reloaded = _load(game_data, tmp_path)
+    tab.load_from_mngrp(reloaded)
+    assert tab._picture_slots()[-1] == 207 and 206 not in tab._picture_slots()
+    assert reloaded.free_slots_after(185)[0] == 206 and reloaded.last_mapped_slot() == 205

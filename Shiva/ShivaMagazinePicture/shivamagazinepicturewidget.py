@@ -67,17 +67,19 @@ class ShivaMagazinePictureWidget(QWidget):
         # Under the list, like the Sprites tab's "Add sprite id": a new picture is a new entry
         self.add_button = QPushButton("+ Add new picture")
         self.add_button.setToolTip(
-            f"A new picture of its own, in the next free mngrp.bin slot (206 first, up to {ADDED_LAST_SLOT}: after\n"
-            "the last slot mngrp.bin uses, so nothing else moves). It starts grey: set its image with\n"
-            "\"Replace from PNG...\". Save writes its menu/magNNN.TEX and its copy in mngrp.bin.\n"
-            "A page shows it with Zone's \"Page texture\" set to that slot. In game it needs FFNx with\n"
-            "AddMorePictures (FFNx PR #1111), which reads it from direct/menu/magNNN.TEX.")
-        self.add_button.clicked.connect(self.add_picture)
-        self.remove_button = QPushButton("- Remove last added picture")
-        self.remove_button.setToolTip("Remove the last picture added (only the last one: removing an earlier one\n"
-                                      "would move the slots after it). Its .TEX already saved next to mngrp.bin\n"
-                                      "is left on disk.")
-        self.remove_button.clicked.connect(self.remove_last_picture)
+            f"A new picture of its own, in the first free mngrp.bin slot (206-{ADDED_LAST_SLOT}, after the game's\n"
+            "own sections, so nothing else moves). It starts grey: set its image with \"Replace from PNG...\".\n"
+            "Save writes its menu/magNNN.TEX and its copy in mngrp.bin. A page shows it with Zone's\n"
+            "\"Page texture\" set to that slot. In game it needs FFNx with AddMorePictures (FFNx PR #1111),\n"
+            "which reads it from direct/menu/magNNN.TEX.")
+        # clicked sends its checked flag: not an image for add_picture
+        self.add_button.clicked.connect(lambda _checked=False: self.add_picture())
+        self.remove_button = QPushButton("- Remove selected picture")
+        self.remove_button.setToolTip("Remove the selected picture, only one added here (the game's 30 stay). Its slot\n"
+                                      "is left empty for the next one added; the other added pictures keep their\n"
+                                      "slot. A page still pointing at it shows no picture. Its .TEX already saved\n"
+                                      "next to mngrp.bin is left on disk.")
+        self.remove_button.clicked.connect(lambda _checked=False: self.remove_selected_picture())
 
         buttons = QHBoxLayout()
         buttons.addWidget(self.export_button)
@@ -221,24 +223,23 @@ class ShivaMagazinePictureWidget(QWidget):
             QMessageBox.warning(self, "Shiva - Magazine pictures", f"Cannot use {os.path.basename(path)}:\n{error}")
             return None
 
-    def last_added_slot(self):
-        """The last added picture, the only one that can be removed (None when there is none)."""
-        slots = [slot for slot in self._picture_slots() if is_added_slot(slot)]
-        if not slots or self.manager is None or slots[-1] != self.manager.last_used_slot():
-            return None
-        return slots[-1]
+    def can_remove(self, slot):
+        """Only a picture added here can be removed, never one of the game's 30."""
+        return (slot is not None and self.manager is not None and is_added_slot(slot)
+                and self.manager.is_added_section(slot))
 
-    def remove_last_picture(self):
-        """Remove the last added picture from mngrp.bin (its .TEX on disk stays). Returns its slot."""
-        slot = self.last_added_slot()
-        if slot is None:
+    def remove_selected_picture(self):
+        """Remove the selected added picture from mngrp.bin (its slot left empty, its .TEX on disk
+        kept) and select the entry before it. Returns its slot, or None when it cannot be removed."""
+        slot = self._current_slot()
+        if not self.can_remove(slot):
             return None
-        self.manager.remove_last_raw_section(slot)
+        row = self.slot_list.currentRow()
+        self.manager.remove_raw_section(slot)
         self._pending.pop(slot, None)
         self._image_cache.pop(slot, None)
-        self._fill_slots(select=slot - 1)
-        if self._current_slot() is None and self.slot_list.count():
-            self.slot_list.setCurrentRow(self.slot_list.count() - 1)
+        self._fill_slots()
+        self.slot_list.setCurrentRow(max(row - 1, 0))  # the entry before the removed one
         self._slot_changed(self.slot_list.currentRow())
         return slot
 
@@ -274,7 +275,7 @@ class ShivaMagazinePictureWidget(QWidget):
         self.revert_button.setEnabled(ready and self._current_slot() in self._pending
                                       and not is_added_slot(self._current_slot()))
         self.add_button.setEnabled(bool(self.free_slots()))
-        self.remove_button.setEnabled(self.last_added_slot() is not None)
+        self.remove_button.setEnabled(self.can_remove(self._current_slot()))
 
     def _export(self):
         raw_file = self._current_slot()
