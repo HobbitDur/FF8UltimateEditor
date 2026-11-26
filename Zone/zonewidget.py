@@ -4,7 +4,8 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon, QImage, QPixmap
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QListWidget, QGroupBox, QMessageBox, QSpinBox, QComboBox, QCheckBox,
-                             QGridLayout, QScrollArea, QFormLayout, QPushButton)
+                             QGridLayout, QScrollArea, QFormLayout, QPushButton, QPlainTextEdit,
+                             QFileDialog)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -31,7 +32,8 @@ MAIN_FILE = "mmag.bin"
 # here read-only through the registry (shared in every direction). Exact name -> what it
 # adds. Each only fills in its own part of the manager, which the renderer reads as it draws.
 COMPLEMENTARY_FILES = {
-    "mngrp.bin": "the page art, the overlay sprites and the book text (needs mngrphd.bin beside it)",
+    "mngrp.bin": "the page art, the overlay sprites and the book text (needs mngrphd.bin beside it); "
+                 "the book text and the pictures are edited here too",
     "kernel.bin": "Zell's Duel button combos, drawn on the Combat King pages",
     "mwepon.bin": "the weapon remodel item lists, drawn on the Weapons Monthly pages",
     "icon.sp1": "the button and item icons of those two lists (needs icon.TEX beside it)",
@@ -63,15 +65,17 @@ class ZoneWidget(QWidget):
         self.setWindowTitle("Zone")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'hobbitdur.ico')))
 
-        # Files, driven by the shared header toolbar. mmag.bin is the edited file; the five
-        # complementary files (mngrp/kernel/mwepon/icon.sp1/mitem) only decorate its entries and
-        # are read-only here - each is edited in another tool (Shiva/SolomonRing/Junkshop/Minimog/
-        # Kadowaki) and shared in every direction through the registry.
+        # Files, driven by the shared header toolbar. mmag.bin is the edited file. mngrp.bin is a
+        # complementary file Zone also edits - the book text and the page pictures, so a whole book
+        # is made here - written by the shared Save only when one of those changed. The four others
+        # (kernel/mwepon/icon.sp1/mitem) only decorate the pages and are read-only here - each is
+        # edited in another tool (SolomonRing/Junkshop/Minimog/Kadowaki) and shared in every
+        # direction through the registry.
         self.mmag_binding = FileBinding(MAIN_FILE, file_registry,
                                         load_callback=self.load_file, save_callback=self.save_file)
         self.companion_bindings = {
             "mngrp.bin": FileBinding("mngrp.bin", file_registry, load_callback=self._apply_mngrp,
-                                     read_only=True),
+                                     save_callback=self._save_mngrp, complementary=True),
             "kernel.bin": FileBinding("kernel.bin", file_registry, load_callback=self._apply_kernel,
                                       read_only=True),
             "mwepon.bin": FileBinding("mwepon.bin", file_registry, load_callback=self._apply_mwepon,
@@ -356,6 +360,21 @@ class ZoneWidget(QWidget):
         texture_layout.addWidget(self.texture_label)
         texture_layout.addStretch(1)
         layout.addRow("Page texture:", texture_layout)
+
+        self.replace_picture_button = QPushButton("Replace picture from PNG...")
+        self.replace_picture_button.setToolTip(
+            "Put a 256x192 image (a 256x256 one is cropped to its top 192 rows) in this page's picture\n"
+            "slot, reduced to 255 colours; alpha under 128 is transparent. Save writes the .TEX the PC\n"
+            "game shows and the copy in mngrp.bin. Every page on this slot shows the new picture, the\n"
+            "game's own pages included. The picture overlays crop it with the Sprites of Shiva.")
+        self.replace_picture_button.clicked.connect(self._replace_picture)
+        self.export_picture_button = QPushButton("Export picture...")
+        self.export_picture_button.clicked.connect(self._export_picture)
+        picture_layout = QHBoxLayout()
+        picture_layout.addWidget(self.replace_picture_button)
+        picture_layout.addWidget(self.export_picture_button)
+        picture_layout.addStretch(1)
+        layout.addRow("", picture_layout)
         layout.addRow("", self.footer_flag)
         group.setLayout(layout)
         return group
@@ -412,12 +431,13 @@ class ZoneWidget(QWidget):
         return group
 
     def _build_overlays_group(self):
+        self.new_line_buttons = []
         group = QGroupBox("Overlays (id 255 = unused slot)")
         layout = QGridLayout()
         layout.addWidget(QLabel("<b>Picture overlays (SP2 sprite)</b>"), 0, 0, 1, 7)
         self.pic_overlay_spins = self._build_overlay_rows(layout, row_start=1)
         row = 1 + MagPageEntry.NB_OVERLAY_SLOTS
-        layout.addWidget(QLabel("<b>Text overlays (book-text string)</b>"), row, 0, 1, 7)
+        layout.addWidget(QLabel("<b>Text overlays (book-text line, edited in place)</b>"), row, 0, 1, 7)
         self.text_overlay_spins = self._build_overlay_rows(layout, row_start=row + 1,
                                                            with_preview=True)
         group.setLayout(layout)
@@ -426,7 +446,8 @@ class ZoneWidget(QWidget):
     def _build_overlay_rows(self, layout, row_start, with_preview=False):
         spins = []
         for slot in range(MagPageEntry.NB_OVERLAY_SLOTS):
-            row = row_start + slot
+            # A text slot takes two rows: its fields, then its line's editor under them
+            row = row_start + slot * (2 if with_preview else 1)
             x_spin = self._spin16()
             y_spin = self._spin8()
             id_spin = self._spin8()
@@ -439,11 +460,84 @@ class ZoneWidget(QWidget):
             layout.addWidget(id_spin, row, 6)
             preview = None
             if with_preview:
-                preview = QLabel()
-                layout.addWidget(preview, row, 7)
+                # The line itself, edited in place in mngrp.bin's book text
+                preview = QPlainTextEdit()
+                preview.setFixedHeight(56)
+                preview.setMinimumWidth(240)
+                preview.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+                preview.setPlaceholderText("unused slot (id 255)")
+                preview.setToolTip("The book text line this slot shows, edited in mngrp.bin (written at Save).\n"
+                                   "A line can be shown by several pages: they all show the edit.")
+                preview.textChanged.connect(lambda s=slot: self._text_edited(s))
+                layout.addWidget(preview, row + 1, 1, 1, 6)
+                new_line = QPushButton("New line")
+                new_line.setToolTip("Add a line at the end of the book text (the next id) and show it here")
+                new_line.clicked.connect(lambda _checked=False, s=slot: self._new_text_line(s))
+                layout.addWidget(new_line, row, 7)
+                self.new_line_buttons.append(new_line)
                 id_spin.valueChanged.connect(self._update_resolved_labels)
             spins.append((x_spin, y_spin, id_spin, preview))
         return spins
+
+    def _picture_slot(self):
+        category = self.texture_category.currentData()
+        if category in TEXTURE_CATEGORIES:
+            return TEXTURE_CATEGORIES[category][1] + self.texture_page.value()
+        return self.texture_page.value()
+
+    def _replace_picture(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Picture for this page's slot", "", "Images (*.png *.bmp)")
+        if path:
+            self.replace_picture_from_file(path)
+
+    def replace_picture_from_file(self, path):
+        """Replace the picture of the selected page's slot from an image file. False (with a
+        message) when the slot or the image cannot be."""
+        from PIL import Image
+        raw_file = self._picture_slot()
+        try:
+            with Image.open(path) as image:
+                self.manager.replace_picture(raw_file, image)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Zone - page picture", f"Cannot use {os.path.basename(path)}:\n{error}")
+            return False
+        if self.renderer is not None:
+            self.renderer._tim_cache.pop(raw_file, None)
+        self._mark_edited()
+        self._schedule_preview()
+        return True
+
+    def _export_picture(self):
+        raw_file = self._picture_slot()
+        image, _origin = self.manager.picture(raw_file)
+        if image is None:
+            return
+        name = os.path.splitext(pc_picture_file_name(raw_file) or f"slot{raw_file}")[0]
+        path, _ = QFileDialog.getSaveFileName(self, "Export the picture", f"{name}.png", "PNG (*.png)")
+        if path:
+            image.save(path)
+
+    def _text_edited(self, slot):
+        """The user typed in a text overlay's line: write it into the book text and redraw."""
+        _x_spin, _y_spin, id_spin, editor = self.text_overlay_spins[slot]
+        text_id = id_spin.value()
+        if text_id == UNUSED_ID or not self.manager.mngrp_loaded:
+            return
+        if self.manager.set_book_text(text_id, editor.toPlainText(), self.text_file.value()):
+            self._mark_edited()
+            self._schedule_preview()
+
+    def _new_text_line(self, slot):
+        text_id = self.manager.add_book_text("", self.text_file.value())
+        if text_id is None:
+            QMessageBox.warning(self, "Zone - book text",
+                                "No line can be added: open mngrp.bin, or this book text already holds the "
+                                "256 lines the pages can point at.")
+            return
+        self._mark_edited()
+        _x_spin, _y_spin, id_spin, editor = self.text_overlay_spins[slot]
+        id_spin.setValue(text_id)  # -> the labels and the preview follow
+        editor.setFocus()
 
     def load_file(self, file_name):
         """Load mmag.bin, the file this editor edits (path from the shared file toolbar)."""
@@ -543,6 +637,42 @@ class ZoneWidget(QWidget):
             return
         self._apply_form_to_entry()
         self.manager.save_file()
+
+    def save_files(self):
+        """The shared Save: mmag.bin, then mngrp.bin (and the replaced pictures' .TEX) when its book
+        text or pictures were edited here."""
+        self.mmag_binding.save()
+        self.companion_bindings["mngrp.bin"].save()
+        return True
+
+    def _save_mngrp(self):
+        if not self.manager.mngrp_edited:
+            return
+        problems = self.manager.save_mngrp()
+        if self.renderer is not None:
+            self.renderer._tim_cache.clear()  # the pictures are read again from the saved file
+        if problems:
+            QMessageBox.warning(self, "Zone - mngrp.bin saved", "\n".join(problems))
+        self._refresh_other_mngrp_users()
+
+    def _refresh_other_mngrp_users(self):
+        """The other tools holding mngrp.bin still have the file as it was: the read-only ones
+        (Moomba) read it again; an editor (Shiva, ShumiTranslator) would write its older copy back
+        on its next save, so it is told to reload first."""
+        mine = self.companion_bindings["mngrp.bin"]
+        editors = []
+        for binding in mine.registry.bindings:
+            if binding is mine or binding.file_name != "mngrp.bin" or not binding.is_loaded:
+                continue
+            if binding.read_only:
+                binding.reload_from_disk()
+            else:
+                editors.append(binding)
+        if editors:
+            QMessageBox.information(self, "Zone - mngrp.bin also open elsewhere",
+                                    "mngrp.bin was saved with the book text and pictures edited here. Another "
+                                    "tool has it open (Shiva or ShumiTranslator): use Reload there before saving "
+                                    "in it, or it writes its older copy back.")
 
     def _refresh_preview(self):
         """Render the selected entry from the values currently in the form."""
@@ -698,19 +828,26 @@ class ZoneWidget(QWidget):
                                        f"this slot)")
             self.texture_label.setStyleSheet("color: #c06000;")
 
-        if not self.manager.mngrp_loaded:
-            return
-        texts = self.manager.get_book_texts(self.text_file.value())
-        for _x_spin, _y_spin, id_spin, preview in self.text_overlay_spins:
-            if preview is None:
+        can_replace = self.manager.can_replace_picture(raw_file)
+        self.replace_picture_button.setEnabled(can_replace)
+        self.export_picture_button.setEnabled(self.manager.mngrp_loaded and pc_file is not None)
+        for button in self.new_line_buttons:
+            button.setEnabled(self.manager.mngrp_loaded)
+
+        texts = self.manager.get_book_texts(self.text_file.value()) if self.manager.mngrp_loaded else []
+        for _x_spin, _y_spin, id_spin, editor in self.text_overlay_spins:
+            if editor is None:
                 continue
             slot_id = id_spin.value()
-            if slot_id == UNUSED_ID:
-                preview.setText("")
-            elif 0 <= slot_id < len(texts):
-                text = texts[slot_id].replace("\n", " / ")
-                if len(text) > 60:
-                    text = text[:57] + "..."
-                preview.setText(text)
+            editable = slot_id != UNUSED_ID and 0 <= slot_id < len(texts)
+            if slot_id == UNUSED_ID or not self.manager.mngrp_loaded:
+                text = ""
+            elif editable:
+                text = self.manager.to_editor_text(texts[slot_id])
             else:
-                preview.setText(f"(no string {slot_id})")
+                text = f"(no line {slot_id} in the book text)"
+            editor.setReadOnly(not editable)
+            if editor.toPlainText() != text:  # never reset what is being typed
+                editor.blockSignals(True)
+                editor.setPlainText(text)
+                editor.blockSignals(False)

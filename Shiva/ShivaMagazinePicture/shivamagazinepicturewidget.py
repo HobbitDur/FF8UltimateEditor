@@ -6,10 +6,9 @@ from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLa
                              QFileDialog, QMessageBox)
 
 from FF8GameData.menu.magpagemanager import TEXTURE_CATEGORIES
-from FF8GameData.menu.magpicture import (PC_PICTURE_FILES, encode_picture_tex, encode_picture_tim,
-                                         pc_picture_file_name, quantize_picture, tex_to_image)
-from FF8GameData.tex.texfile import TexFile
-from FF8GameData.tim.timfile import decode_tim
+from FF8GameData.menu.magpicture import (PC_PICTURE_FILES, pc_picture_file_name, picture_from_indices,
+                                         quantize_picture, replace_picture_tim, slot_picture,
+                                         write_picture_tex)
 
 PREVIEW_SCALE = 2
 
@@ -104,64 +103,26 @@ class ShivaMagazinePictureWidget(QWidget):
         """Write each replaced picture: its TIM into the shared mngrp, its .TEX into the menu folder."""
         problems = []
         for raw_file, (palette, indices) in sorted(self._pending.items()):
-            section = manager.mngrp.get_section_list()[raw_file]
-            manager.mngrp.set_section_by_id_and_bytearray(
-                section.id, bytearray(encode_picture_tim(palette, indices, bytes(section.get_data_hex()))))
-            template = self._tex_template(raw_file)
-            if template is None:
+            replace_picture_tim(manager, raw_file, palette, indices)
+            if not write_picture_tex(self.menu_folder, raw_file, palette, indices):
                 problems.append(f"{pc_picture_file_name(raw_file)}: no .TEX next to mngrp.bin to take "
                                 f"the header from, only the mngrp copy was written")
-                continue
-            encode_picture_tex(palette, indices, template).write(self._tex_path(raw_file))
         self._pending = {}
         self._image_cache = {}
         self._slot_changed(self.slot_list.currentRow())
         if problems:
             QMessageBox.warning(self, "Shiva - Magazine pictures", "\n".join(problems))
 
-    # --- files -------------------------------------------------------------------------------
-
-    def _tex_path(self, raw_file):
-        return os.path.join(self.menu_folder, pc_picture_file_name(raw_file))
-
-    def _tex_template(self, raw_file):
-        """The .TEX the replacement takes its header from: the slot's own one, else any other
-        page picture of the folder (they all share the same header)."""
-        candidates = [self._tex_path(raw_file)] + [os.path.join(self.menu_folder, f"{name}.TEX")
-                                                   for name in PC_PICTURE_FILES.values()]
-        for path in candidates:
-            if self.menu_folder and os.path.exists(path):
-                try:
-                    return TexFile.read(path)
-                except (OSError, ValueError):
-                    continue
-        return None
-
     def _picture(self, raw_file):
         """(image, where it comes from) of a slot: the pending replacement, else the .TEX the game
         shows, else the mngrp copy."""
         if raw_file in self._pending:
-            from PIL import Image
-            palette, indices = self._pending[raw_file]
-            lut = [(0, 0, 0, 0)] + [(r, g, b, 255) for r, g, b in palette[1:]]
-            image = Image.new("RGBA", (256, 192))
-            image.putdata([lut[index] for index in indices])
-            return image, "replacement, written at the next Save"
+            return picture_from_indices(*self._pending[raw_file]), "replacement, written at the next Save"
         if raw_file not in self._image_cache:
-            image, origin = None, ""
-            tex_path = self._tex_path(raw_file)
-            if self.menu_folder and os.path.exists(tex_path):
-                try:
-                    image, origin = tex_to_image(TexFile.read(tex_path)), f"menu/{os.path.basename(tex_path)}"
-                except (OSError, ValueError):
-                    image = None
-            if image is None and self.manager is not None:
-                data = bytes(self.manager.mngrp.get_section_list()[raw_file].get_data_hex())
-                tim = decode_tim(data) if data else None
-                if tim is not None:
-                    image, origin = tim.image, (f"mngrp copy ({os.path.basename(tex_path)} not found "
-                                                f"next to mngrp.bin)")
-            self._image_cache[raw_file] = (image, origin)
+            tim_bytes = b""
+            if self.manager is not None:
+                tim_bytes = bytes(self.manager.mngrp.get_section_list()[raw_file].get_data_hex())
+            self._image_cache[raw_file] = slot_picture(self.menu_folder, raw_file, tim_bytes)
         return self._image_cache[raw_file]
 
     # --- UI ----------------------------------------------------------------------------------

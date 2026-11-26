@@ -51,3 +51,16 @@ class ZoneTabsWidget(QWidget):
         active = self.tabs.currentWidget()
         getter = getattr(active, "file_bindings", None)
         return getter() if callable(getter) else []
+
+    def save_files(self):
+        """The shared Save, for the active tab: the Magazines tab also writes mngrp.bin (its book
+        text and pictures) when edited, which the toolbar's main-file save would skip as a
+        complementary file."""
+        active = self.tabs.currentWidget()
+        saver = getattr(active, "save_files", None)
+        if callable(saver):
+            return saver()
+        for binding in self.file_bindings():
+            if not binding.read_only and not getattr(binding, "complementary", False):
+                binding.save()
+        return True

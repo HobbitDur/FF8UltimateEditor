@@ -15,12 +15,13 @@ The .TEX copy is 256x256: the picture, then 64 rows of index 0. Index 0 of both 
 transparent black, the other 255 colours are opaque - the layout every vanilla picture has, and
 the one encode_picture writes.
 """
+import os
 from typing import List, Optional, Tuple
 
 from PIL import Image
 
 from FF8GameData.tex.texfile import TexFile
-from FF8GameData.tim.timfile import PalettedTim
+from FF8GameData.tim.timfile import PalettedTim, decode_tim
 
 PICTURE_WIDTH = 256
 PICTURE_HEIGHT = 192
@@ -128,3 +129,66 @@ def encode_picture_tex(palette: List[Color], indices: bytes, template: TexFile) 
     pixels = bytearray(indices) + bytearray(template.width * template.height - len(indices))
     return TexFile(template.raw_header, raw_palette, pixels, template.num_palettes,
                    template.palette_entries, template.bpp, template.width, template.height)
+
+
+def picture_from_indices(palette: List[Color], indices: bytes) -> Image.Image:
+    """The 256x192 RGBA picture of quantize_picture's (palette, indices)."""
+    lut = [(0, 0, 0, 0)] + [(r, g, b, 255) for r, g, b in palette[1:]]
+    image = Image.new("RGBA", (PICTURE_WIDTH, PICTURE_HEIGHT))
+    image.putdata([lut[index] for index in indices])
+    return image
+
+
+def tex_path(menu_folder: str, raw_file: int) -> str:
+    """Where the PC texture of a picture slot sits: next to mngrp.bin, in the menu folder."""
+    return os.path.join(menu_folder, pc_picture_file_name(raw_file))
+
+
+def tex_template(menu_folder: str, raw_file: int) -> Optional[TexFile]:
+    """The .TEX a replacement of slot `raw_file` takes its header from: the slot's own one, else any
+    other page picture of the folder (they all share the same header). None without any."""
+    if not menu_folder:
+        return None
+    candidates = [tex_path(menu_folder, raw_file)] + [os.path.join(menu_folder, f"{name}.TEX")
+                                                      for name in PC_PICTURE_FILES.values()]
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                return TexFile.read(path)
+            except (OSError, ValueError):
+                continue
+    return None
+
+
+def write_picture_tex(menu_folder: str, raw_file: int, palette: List[Color], indices: bytes) -> bool:
+    """Write the .TEX the PC game shows for slot `raw_file`. False when the folder has no page
+    picture .TEX to take the header from (nothing written)."""
+    template = tex_template(menu_folder, raw_file)
+    if template is None:
+        return False
+    encode_picture_tex(palette, indices, template).write(tex_path(menu_folder, raw_file))
+    return True
+
+
+def replace_picture_tim(mngrp_manager, raw_file: int, palette: List[Color], indices: bytes) -> bytes:
+    """Put the picture's TIM in slot `raw_file` of a loaded MngrpManager, placed in VRAM like the
+    one it replaces. Returns the TIM bytes."""
+    section = mngrp_manager.mngrp.get_section_list()[raw_file]
+    data = encode_picture_tim(palette, indices, bytes(section.get_data_hex()))
+    mngrp_manager.mngrp.set_section_by_id_and_bytearray(section.id, bytearray(data))
+    return data
+
+
+def slot_picture(menu_folder: str, raw_file: int, tim_bytes: bytes = b"") -> Tuple[Optional[Image.Image], str]:
+    """(image, where it comes from) of a picture slot as the PC game shows it: its .TEX in the menu
+    folder, else the mngrp copy `tim_bytes`."""
+    path = tex_path(menu_folder, raw_file) if pc_picture_name(raw_file) and menu_folder else ""
+    if path and os.path.exists(path):
+        try:
+            return tex_to_image(TexFile.read(path)), f"menu/{os.path.basename(path)}"
+        except (OSError, ValueError):
+            pass
+    tim = decode_tim(tim_bytes) if tim_bytes else None
+    if tim is not None:
+        return tim.image, "mngrp copy (no .TEX found next to mngrp.bin)"
+    return None, ""

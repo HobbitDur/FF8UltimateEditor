@@ -133,16 +133,19 @@ def test_preview_is_inert_until_mngrp_is_loaded(qapp, tmp_path):
 
 
 def test_the_bindings_split_the_edited_file_from_the_rest(qapp):
-    """The main binding is mmag.bin (writable); everything else is a read-only companion."""
+    """The main binding is mmag.bin (writable); everything else is a companion, read-only but for
+    mngrp.bin, whose book text and pictures Zone edits too (a complementary file it saves)."""
     from Zone.zonewidget import ZoneWidget, MAIN_FILE, COMPLEMENTARY_FILES
     zone = ZoneWidget()
     assert MAIN_FILE == "mmag.bin"
     assert zone.mmag_binding.file_name == "mmag.bin" and not zone.mmag_binding.read_only
     assert set(zone.companion_bindings) == set(COMPLEMENTARY_NAMES) == set(COMPLEMENTARY_FILES)
-    assert all(binding.read_only for binding in zone.companion_bindings.values())
-    bindings = zone.file_bindings()  # main first, then the five read-only companions
+    mngrp = zone.companion_bindings["mngrp.bin"]
+    assert mngrp.complementary and not mngrp.read_only
+    assert all(binding.read_only for name, binding in zone.companion_bindings.items() if name != "mngrp.bin")
+    bindings = zone.file_bindings()  # main first, then the five companions
     assert bindings[0] is zone.mmag_binding
-    assert {b.file_name for b in bindings if b.read_only} == set(COMPLEMENTARY_NAMES)
+    assert {b.file_name for b in bindings if b.read_only or b.complementary} == set(COMPLEMENTARY_NAMES)
 
 
 def test_complementary_files_load_through_their_bindings(qapp, tmp_path):

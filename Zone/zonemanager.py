@@ -5,7 +5,9 @@ from FF8GameData.gamedata import GameData
 # so both the Zone (mmag.bin) and Moomba (mmag2.bin) editors build on them.
 from FF8GameData.menu.magpage import MagPageEntry, OverlaySlot, UNUSED_ID
 from FF8GameData.menu.magpagemanager import TEXTURE_CATEGORIES, MagPageManager
-from FF8GameData.menu.magpicture import pc_picture_file_name
+from FF8GameData.menu.magpicture import (PC_PICTURE_FILES, pc_picture_file_name, picture_from_indices,
+                                         quantize_picture, replace_picture_tim, slot_picture,
+                                         write_picture_tex)
 from FF8GameData.menu.mngrp.string.sectionstring import SectionString
 from FF8GameData.menu.mngrp.tkmnmes.sectiontkmnmes import SectionTkmnmes
 
@@ -80,6 +82,10 @@ class ZoneManager(MagPageManager):
         # The weapon names come only from a kernel.bin (set_weapon_names) - none built in.
         self.weapon_name_list = []
         self._book_text_cache = {}
+        # mngrp.bin as an editable model (book text, page pictures), loaded with it - see load_mngrp
+        self.mngrp_model = None
+        self.mngrp_edited = False
+        self._pictures = {}  # slot -> (palette, indices, TIM bytes) of a picture replaced, not saved yet
         # The unlock block only draws with these: kernel.bin gives Zell's Duel button
         # sequences, mwepon.bin the weapon remodel item lists. Loaded on demand.
         self._duel_sequences = None
@@ -97,6 +103,149 @@ class ZoneManager(MagPageManager):
 
     def _on_mngrp_loaded(self):
         self._book_text_cache = {}
+
+    # --- editing mngrp.bin: the book text and the page pictures --------------------------------
+    #
+    # The render reads mngrp.bin as raw bytes (MagPageManager); the edits go through a full
+    # MngrpManager model of the same file, which save_mngrp writes back (only the sections changed,
+    # the others as loaded). An edited slot's bytes are served from the model, so the preview
+    # shows the edit straight away.
+
+    def load_mngrp(self, mngrp_path, mngrphd_path=""):
+        from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
+        MagPageManager.load_mngrp(self, mngrp_path, mngrphd_path)
+        if not mngrphd_path:
+            mngrphd_path = os.path.join(os.path.dirname(mngrp_path), "mngrphd.bin")
+        if not self.game_data.mngrp_data_json:
+            self.game_data.load_mngrp_data()
+        model = MngrpManager(self.game_data)
+        model.load_file(mngrphd_path, mngrp_path)
+        self.mngrp_model = model
+        self.mngrp_edited = False
+        self._pictures = {}
+
+    @property
+    def menu_folder(self):
+        return os.path.dirname(self.mngrp_model.mngrp_path) if self.mngrp_model else ""
+
+    def get_raw_file(self, raw_file):
+        if raw_file in self._pictures:
+            return self._pictures[raw_file][2]
+        return MagPageManager.get_raw_file(self, raw_file)
+
+    def _book_text_section(self, text_file_index):
+        """The model's string section of book text file `text_file_index` (None if not one)."""
+        from FF8GameData.menu.mngrp.string.sectionstring import SectionString
+        if self.mngrp_model is None:
+            return None
+        sections = self.mngrp_model.mngrp.get_section_list()
+        raw_file = BOOK_TEXT_FIRST_RAW_FILE + text_file_index
+        if not 0 <= raw_file < len(sections) or not isinstance(sections[raw_file], SectionString):
+            return None
+        return sections[raw_file]
+
+    def can_add_book_text(self, text_file_index=0):
+        section = self._book_text_section(text_file_index)
+        return section is not None and len(section.get_text_list()) < section.get_max_text_count()
+
+    def add_book_text(self, text="", text_file_index=0):
+        """Append a line to a book text section; returns its id (what a text overlay points at),
+        None when the section is full or mngrp.bin is not loaded."""
+        if not self.can_add_book_text(text_file_index):
+            return None
+        section = self._book_text_section(text_file_index)
+        section.get_text_section().add_text(bytearray())
+        section.get_text_list()[-1].set_str(self.to_game_text(text))
+        self._book_text_edited(text_file_index)
+        return len(section.get_text_by_slot()) - 1 + self._missing_slots(section)
+
+    @staticmethod
+    def _missing_slots(section):
+        """An added line has no offset slot until the section is saved: it is the next id."""
+        return len(section.get_text_list()) - section.get_text_section().section_data_linked.get_nb_offset_not_empty()
+
+    def set_book_text(self, text_id, text, text_file_index=0):
+        """Change the line with id `text_id` (every page showing it shows the new text). False when
+        there is no such line."""
+        section = self._book_text_section(text_file_index)
+        if section is None:
+            return False
+        text_list = section.get_text_list()
+        position = self._text_position(section, text_id)
+        if position is None or position >= len(text_list):
+            return False
+        game_text = self.to_game_text(text)
+        if text_list[position].get_str() == game_text:
+            return True
+        text_list[position].set_str(game_text)
+        self._book_text_edited(text_file_index)
+        return True
+
+    @staticmethod
+    def _text_position(section, text_id):
+        """Index in the text list of the line with id `text_id` (ids count the empty slots, the
+        text list skips them; the lines added since the load come after every slot)."""
+        offsets = section.get_text_section().section_data_linked.get_all_offset()
+        if 0 <= text_id < len(offsets):
+            if offsets[text_id] == 0:
+                return None
+            return sum(1 for offset in offsets[:text_id] if offset != 0)
+        return text_id - (len(offsets) - section.get_text_section().section_data_linked.get_nb_offset_not_empty())
+
+    def _book_text_edited(self, text_file_index):
+        self._book_text_cache.pop(text_file_index, None)
+        self.mngrp_edited = True
+
+    @staticmethod
+    def to_game_text(text):
+        """Editor text -> FF8 text: a real line break is the game's {\\n}."""
+        return text.replace("\r\n", "\n").replace("\n", "\\n")
+
+    @staticmethod
+    def to_editor_text(text):
+        return text.replace("\\n", "\n")
+
+    def can_replace_picture(self, raw_file):
+        return self.mngrp_model is not None and pc_picture_file_name(raw_file) is not None
+
+    def replace_picture(self, raw_file, image):
+        """Replace the picture of slot `raw_file` (one the PC game shows) with a 256x192 image: the
+        mngrp copy now, the .TEX at save_mngrp. Raises ValueError for a slot or image that cannot be."""
+        if not self.can_replace_picture(raw_file):
+            raise ValueError(f"mngrp slot {raw_file} has no picture on PC: only "
+                             f"{len(PC_PICTURE_FILES)} slots do (mag00-19.TEX, mc00-09.TEX)")
+        palette, indices = quantize_picture(image)
+        tim = replace_picture_tim(self.mngrp_model, raw_file, palette, indices)
+        self._pictures[raw_file] = (palette, indices, tim)
+        self.mngrp_edited = True
+
+    def picture(self, raw_file):
+        """(image, where it comes from) of a picture slot: a replacement not saved yet, else what
+        the PC game shows (the .TEX), else the mngrp copy."""
+        if raw_file in self._pictures:
+            palette, indices, _tim = self._pictures[raw_file]
+            return picture_from_indices(palette, indices), "replacement, written at the next Save"
+        return slot_picture(self.menu_folder, raw_file, bytes(MagPageManager.get_raw_file(self, raw_file)))
+
+    def save_mngrp(self):
+        """Write the book text and picture edits: mngrp.bin + mngrphd.bin, and each replaced
+        picture's .TEX. Returns the problems (a .TEX that could not be written), [] when all went.
+        Nothing is written when nothing was edited here, so a mngrp.bin another tool saved since
+        is never overwritten with this older copy."""
+        if self.mngrp_model is None or not self.mngrp_edited:
+            return []
+        problems = []
+        model = self.mngrp_model
+        model.save_file(model.mngrp_path, model.mngrphd_path)
+        for raw_file, (palette, indices, _tim) in sorted(self._pictures.items()):
+            if not write_picture_tex(self.menu_folder, raw_file, palette, indices):
+                problems.append(f"{pc_picture_file_name(raw_file)}: no .TEX next to mngrp.bin to take the "
+                                f"header from, only the mngrp copy was written")
+        # Re-read what was written, so the render and the next edits start from the saved file
+        MagPageManager.load_mngrp(self, model.mngrp_path, model.mngrphd_path)
+        self._pictures = {}
+        self.mngrp_edited = False
+        return problems
 
     @staticmethod
     def book_text_raw_file(entry: MagPageEntry):
@@ -340,6 +489,13 @@ class ZoneManager(MagPageManager):
         (empty list when no mngrp is loaded or the raw file is invalid)."""
         if not self.mngrp_loaded:
             return []
+        section = self._book_text_section(text_file_index)
+        if section is not None and text_file_index not in self._book_text_cache:
+            # The edited model, with the lines added since the load at the next ids
+            texts = section.get_text_by_slot()
+            text_list = section.get_text_list()
+            texts += [str(text) for text in text_list[len(text_list) - self._missing_slots(section):]]
+            self._book_text_cache[text_file_index] = texts
         if text_file_index not in self._book_text_cache:
             raw_file = BOOK_TEXT_FIRST_RAW_FILE + text_file_index
             section_data = self.get_raw_file(raw_file)

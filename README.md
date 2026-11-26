@@ -142,15 +142,20 @@ FFNx's AddMoreItems lets a mod add items 199-255 and gives the player 255 invent
 A magazine is an item of type *Magazine* whose two parameters are its first and last page in
 `mmag.bin`; reading a page unlocks what it names (a weapon remodel, a Zell Duel move, an Angelo move).
 - **SolomonRing**, **Kadowaki**, **Siren**: add the item (see above), type *Magazine*, pages first-last.
-- **Zone** (`mmag.bin`): **+ Add page** appends a page, a copy of the selected one; a magazine's pages
-  are consecutive. Up to 256 pages; only the added ones can be removed.
-- **ShumiTranslator** (`mngrp.bin`): **+ Add entry** on *Book text* adds a line with the next id, which
-  a page's text overlay points at (the Item menu always reads the book text, whatever the page's text
-  file index). 256 ids per section.
-- **Shiva**, *Magazine pictures*: on PC a page can only show one of 30 pictures, the menu textures
-  `mag00-19.TEX` and `mc00-09.TEX`, picked by the page's mngrp slot (Zone shows which). A new picture
-  replaces one of them from a 256x192 PNG; Save writes the `.TEX` next to `mngrp.bin` and the copy
-  inside it. Pages that crop it differently use new sprites (Shiva, *Sprites*).
+- **Zone** (`mmag.bin` + `mngrp.bin`) makes the book itself, with a live preview:
+  - **+ Add page** appends a page, a copy of the selected one; a magazine's pages are consecutive.
+    Up to 256 pages; only the added ones can be removed.
+  - Each text overlay's line is edited in place, and **New line** adds one to the book text at the
+    next id (256 per section). The Item menu always reads the book text, whatever the page's text
+    file index. A line shown by several pages changes on all of them.
+  - **Replace picture from PNG** (256x192): on PC a page can only show one of 30 pictures, the menu
+    textures `mag00-19.TEX` and `mc00-09.TEX`, picked by its mngrp slot (shown next to the page
+    texture). Every page on that slot, the game's own included, shows the new picture.
+  - Save writes `mmag.bin`, and `mngrp.bin` + the replaced `.TEX` only when a line or a picture
+    changed. Another editor of `mngrp.bin` (Shiva, ShumiTranslator) has to Reload before saving.
+- The same `mngrp.bin` edits are also in **ShumiTranslator** (**+ Add entry** on *Book text*) and
+  **Shiva** (*Magazine pictures*). Pages that crop a picture differently use new sprites (Shiva,
+  *Sprites*).
 
 ### Nida — SeeD written test editor (`mngrp.bin`)
 Edits the 30 SeeD written tests (tutorial menu): the question texts, the expected answer of each

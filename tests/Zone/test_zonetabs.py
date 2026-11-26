@@ -38,11 +38,12 @@ def test_file_bindings_follow_the_active_tab(qapp):
     tabs = ZoneTabsWidget()
 
     tabs.tabs.setCurrentIndex(0)
-    main = [b for b in tabs.file_bindings() if not b.read_only]
+    main = [b for b in tabs.file_bindings() if not b.read_only and not b.complementary]
     assert [b.file_name for b in main] == ["mmag.bin"]
-    # its five complementary files are offered read-only
+    # its five complementary files: mngrp.bin edited too (book text, pictures), the others read-only
     assert {b.file_name for b in tabs.file_bindings() if b.read_only} == {
-        "mngrp.bin", "kernel.bin", "mwepon.bin", "icon.sp1", "mitem.bin"}
+        "kernel.bin", "mwepon.bin", "icon.sp1", "mitem.bin"}
+    assert {b.file_name for b in tabs.file_bindings() if b.complementary and not b.read_only} == {"mngrp.bin"}
 
     tabs.tabs.setCurrentIndex(1)
     main = [b for b in tabs.file_bindings() if not b.read_only]
