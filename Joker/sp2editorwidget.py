@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QSignalBlocker, Qt
 from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel,
-                             QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox)
+                             QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QScrollArea)
 
 from Joker.jokermanager import Sp2Quad
 from SmallWidget.listsearchbar import ListSearchBar
@@ -39,6 +39,7 @@ class Sp2EditorWidget(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.sp2 = None
+        self._loaded_count = 0
 
         # Sprite list (left side)
         self.sprite_list = QListWidget()
@@ -48,7 +49,18 @@ class Sp2EditorWidget(QWidget):
         self.add_sprite_button = QPushButton("Add sprite id")
         self.add_sprite_button.setToolTip("Append a new sprite id at the end of the directory "
                                           "(the offset table is rebuilt on save)")
-        self.add_sprite_button.clicked.connect(self.add_sprite)
+        self.add_sprite_button.clicked.connect(lambda _checked=False: self.add_sprite())
+        self.remove_sprite_button = QPushButton("Remove sprite id")
+        self.remove_sprite_button.setToolTip(
+            "Remove the selected sprite id, only one added (the file's own stay). The last id goes from\n"
+            "the directory; one before others is only made unused, so the ids after it do not move (pages\n"
+            "use them), and the next \"Add sprite id\" takes it again.")
+        self.remove_sprite_button.clicked.connect(lambda _checked=False: self.remove_sprite())
+        # The sprite ids that cannot be removed: the file's own, as loaded (a host knowing the game's
+        # count, Shiva, sets it so the ones a mod added stay removable)
+        self.fixed_count = None
+        # Makes a new sprite's first quad (a host knowing its texture page and CLUT, Shiva, sets it)
+        self.new_quad = None
 
         self.sprite_search = ListSearchBar(self.sprite_list)  # Ctrl+F filter over the sprite list
 
@@ -56,6 +68,7 @@ class Sp2EditorWidget(QWidget):
         sprite_list_layout.addWidget(self.sprite_search)
         sprite_list_layout.addWidget(self.sprite_list)
         sprite_list_layout.addWidget(self.add_sprite_button)
+        sprite_list_layout.addWidget(self.remove_sprite_button)
 
         # Editor (right side)
         self.sprite_name_label = QLabel("")
@@ -105,23 +118,53 @@ class Sp2EditorWidget(QWidget):
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(sprite_column)
-        main_layout.addWidget(self.editor_container, 1)
+        # The editor scrolls on its own (a host may add a tall view under the quads, as Shiva does), so
+        # it never pushes the window taller and the list column keeps its buttons in sight
+        editor_scroll = QScrollArea()
+        editor_scroll.setWidgetResizable(True)
+        editor_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        editor_scroll.setWidget(self.editor_container)
+        main_layout.addWidget(editor_scroll, 1)
         self.setLayout(main_layout)
 
-    def set_sp2(self, sp2, select_row=0):
+    def set_sp2(self, sp2, select_row=0, keep_loaded_count=False):
         """Edit that SP2 table. It is modified in place, the host saves it where it came from."""
         self.sp2 = sp2
+        if not keep_loaded_count:  # a new table: its own ids are the ones loaded
+            self._loaded_count = len(sp2.sprites)
         self.editor_container.setEnabled(True)
         with QSignalBlocker(self.sprite_list):
             self.sprite_list.clear()
             self.sprite_list.addItems([self._sprite_label(sprite) for sprite in self.sp2.sprites])
         self.sprite_list.setCurrentRow(select_row)
 
+    def kept_count(self):
+        """How many sprite ids cannot be removed (see fixed_count)."""
+        if self.fixed_count is not None:
+            return self.fixed_count
+        return self._loaded_count
+
+    def can_remove(self, sprite):
+        return sprite is not None and sprite.sprite_id >= self.kept_count()
+
     def add_sprite(self):
+        """A new sprite id (a removed one again first) with one quad, selected."""
         if not self.sp2:
-            return
-        self.sp2.add_sprite()
-        self.set_sp2(self.sp2, select_row=len(self.sp2.sprites) - 1)
+            return None
+        sprite = self.sp2.add_sprite(reuse_from=self.kept_count(),
+                                     first_quad=self.new_quad() if self.new_quad else None)
+        self.set_sp2(self.sp2, select_row=sprite.sprite_id, keep_loaded_count=True)
+        return sprite
+
+    def remove_sprite(self):
+        """Remove the selected sprite id when it is an added one (see Sp2File.remove_sprite)."""
+        sprite = self._selected_sprite()
+        if not self.can_remove(sprite):
+            return None
+        sprite_id = sprite.sprite_id
+        self.sp2.remove_sprite(sprite_id, keep_count=self.kept_count())
+        self.set_sp2(self.sp2, select_row=min(sprite_id, len(self.sp2.sprites) - 1), keep_loaded_count=True)
+        return sprite_id
 
     def add_quad(self):
         sprite = self._selected_sprite()
@@ -151,6 +194,7 @@ class Sp2EditorWidget(QWidget):
 
     def reload_selected_sprite(self):
         sprite = self._selected_sprite()
+        self.remove_sprite_button.setEnabled(self.can_remove(sprite))
         if not sprite:
             return
         self.sprite_name_label.setText(f"Sprite id {sprite.sprite_id}")

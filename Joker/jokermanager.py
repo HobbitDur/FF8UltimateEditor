@@ -121,11 +121,32 @@ class Sp2File:
                 records.extend(quad.to_bytes())
         return bytes(struct.pack("<I", len(self.sprites)) + directory + records)
 
-    def add_sprite(self):
-        """Append a new used sprite id at the end of the directory and return it."""
-        sprite = Sp2Sprite(len(self.sprites), quads=[Sp2Quad()])
+    def add_sprite(self, reuse_from=None, first_quad=None):
+        """A new used sprite with one quad (`first_quad`, else an empty one), returned: the first unused
+        id from `reuse_from` on (one a removal left, so no id moves), else a new id at the end of the
+        directory."""
+        quad = first_quad if first_quad is not None else Sp2Quad()
+        if reuse_from is not None:
+            for sprite in self.sprites[reuse_from:]:
+                if not sprite.used:
+                    sprite.used = True
+                    sprite.quads = [quad]
+                    return sprite
+        sprite = Sp2Sprite(len(self.sprites), quads=[quad])
         self.sprites.append(sprite)
         return sprite
+
+    def remove_sprite(self, sprite_id, keep_count=0):
+        """Remove a sprite id the host may remove (>= keep_count, the ids it must keep). The last id
+        goes from the directory, with the unused ids before it down to keep_count; an id before
+        others is only made unused, so the ids after it do not move (the pages use them)."""
+        if not keep_count <= sprite_id < len(self.sprites):
+            raise ValueError(f"Sprite id {sprite_id} cannot be removed (kept: 0-{keep_count - 1})")
+        sprite = self.sprites[sprite_id]
+        sprite.used = False
+        sprite.quads = []
+        while len(self.sprites) > keep_count and not self.sprites[-1].used:
+            self.sprites.pop()
 
     def used_sprites(self):
         return [sprite for sprite in self.sprites if sprite.used]

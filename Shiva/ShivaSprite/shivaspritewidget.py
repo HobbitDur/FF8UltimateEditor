@@ -5,7 +5,10 @@ from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QComboBox
 
 from FF8GameData.menu.magpicture import (PC_PICTURE_FILES, is_added_slot, is_page_picture_tim, pc_picture_name,
                                          slot_picture)
-from Joker.jokermanager import Sp2File
+from Joker.jokermanager import Sp2File, Sp2Quad
+
+PAGE_QUAD_CLUT = 0x36A0     # CLUT at VRAM (512,218), the page pictures' palette
+PAGE_QUAD_TEXPAGE = 0x00AE  # texture page at VRAM (896,0), 8bpp, where the page picture sits
 from Joker.sp2editorwidget import Sp2EditorWidget
 from SmallWidget.spritecanvas import SpriteView
 
@@ -23,6 +26,7 @@ class ShivaSpriteWidget(QWidget):
     """
 
     MNGRP_SP2_SECTION_ID = 4
+    GAME_SPRITE_COUNT = 79  # the game's sprite ids (0-78): never removed; a mod's added ones can be
     DEFAULT_PICTURE_SLOT = 28  # mag00, Weapons Monthly's first picture
 
     def __init__(self):
@@ -32,6 +36,8 @@ class ShivaSpriteWidget(QWidget):
         self.menu_folder = ""
 
         self.sp2_editor = Sp2EditorWidget()
+        self.sp2_editor.fixed_count = self.GAME_SPRITE_COUNT
+        self.sp2_editor.new_quad = self.new_page_quad
 
         self.picture_combo = QComboBox()
         self.picture_combo.setToolTip("The page picture the sprites are drawn over: a sprite cuts from whatever\n"
@@ -49,7 +55,8 @@ class ShivaSpriteWidget(QWidget):
         editor.sprite_list.currentRowChanged.connect(self._refresh_canvas)
         editor.quad_table.itemChanged.connect(self._refresh_canvas)
         editor.used_checkbox.toggled.connect(self._refresh_canvas)
-        for button in (editor.add_sprite_button, editor.add_quad_button, editor.remove_quad_button):
+        for button in (editor.add_sprite_button, editor.remove_sprite_button, editor.add_quad_button,
+                       editor.remove_quad_button):
             button.clicked.connect(self._refresh_canvas)
 
         # The view goes in the editor's own column, under the quad table (a sprite has a few quads:
@@ -63,6 +70,13 @@ class ShivaSpriteWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(self.sp2_editor)
         self.setLayout(main_layout)
+
+    @staticmethod
+    def new_page_quad():
+        """A new sprite's first quad: a 128x96 rectangle at the top left of the page picture, with the
+        texture page (896,0 8bpp) and CLUT (512,218) every magazine sprite uses, so it shows at once."""
+        return Sp2Quad(u=0, v=0, clut=PAGE_QUAD_CLUT, width=128, height=96, dx=0, dy=0,
+                       texpage=PAGE_QUAD_TEXPAGE)
 
     def load_from_mngrp(self, manager):
         self.manager = manager
