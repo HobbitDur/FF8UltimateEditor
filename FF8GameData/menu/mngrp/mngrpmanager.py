@@ -178,6 +178,19 @@ class MngrpManager:
         sections[slot] = Section(game_data=self.game_data, data_hex=bytearray(data), id=next_id, own_offset=0,
                                  name=f"Added slot {slot}")
 
+    def remove_last_raw_section(self, slot):
+        """Empty `slot` again, which must be the last used one (an added section: removing an earlier
+        one would move the sections after it). Raises ValueError otherwise."""
+        if slot != self.last_used_slot():
+            raise ValueError(f"mngrp.bin slot {slot} is not the last used one ({self.last_used_slot()})")
+        for entry_list in {id(self.mngrp.header_entry_list): self.mngrp.header_entry_list,
+                           id(self.mngrphd.get_entry_list()): self.mngrphd.get_entry_list()}.values():
+            entry_list[slot].invalid_value = True
+            entry_list[slot].seek = 0
+            entry_list[slot].size = 0
+        self.mngrp.get_section_list()[slot] = Section(game_data=self.game_data, data_hex=bytearray(), id=-1,
+                                                      own_offset=0, name="")
+
     def _encode_sections(self):
         """Every section encoded from its current content, as the save would write it.
 

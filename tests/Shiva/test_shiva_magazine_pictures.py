@@ -140,3 +140,27 @@ def test_the_games_other_data_past_185_is_not_listed_as_an_added_picture(qapp, g
     sprites = ShivaSpriteWidget()
     sprites.load_from_mngrp(manager)
     assert len(sprites._picture_slots()) == 30
+
+
+def test_add_and_remove_pictures_like_sprite_ids(qapp, game_data, tmp_path):
+    """"+ Add new picture" under the list makes the next entry (206, 207...), grey until its image is
+    set with Replace; "- Remove last added picture" takes the last one back out, and a save after it
+    leaves mngrp.bin as it was."""
+    from Shiva.ShivaMagazinePicture.shivamagazinepicturewidget import ShivaMagazinePictureWidget
+    for name in ("mngrp.bin", "mngrphd.bin", "mag00.TEX"):
+        shutil.copy(MENU / name, tmp_path / name)
+    original = (tmp_path / "mngrp.bin").read_bytes(), (tmp_path / "mngrphd.bin").read_bytes()
+    manager = _load(game_data, tmp_path)
+    tab = ShivaMagazinePictureWidget()
+    tab.load_from_mngrp(manager)
+    assert not tab.remove_button.isEnabled()
+    assert tab.add_picture() == 206 and tab.add_picture() == 207
+    assert tab._current_slot() == 207 and tab.remove_button.isEnabled()
+    png = tmp_path / "set.png"
+    Image.new("RGBA", (256, 192), (10, 120, 220, 255)).save(png)
+    assert tab.replace_from_file(207, str(png))
+    assert tab.remove_last_picture() == 207 and tab.remove_last_picture() == 206
+    assert tab.remove_last_picture() is None and tab._picture_slots()[-1] == 184
+    tab.save_to_mngrp(manager)
+    manager.save_file(str(tmp_path / "mngrp.bin"), str(tmp_path / "mngrphd.bin"))
+    assert ((tmp_path / "mngrp.bin").read_bytes(), (tmp_path / "mngrphd.bin").read_bytes()) == original

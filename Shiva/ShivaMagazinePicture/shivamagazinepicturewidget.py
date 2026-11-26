@@ -12,6 +12,7 @@ from FF8GameData.menu.magpicture import (ADDED_FIRST_SLOT, ADDED_LAST_SLOT, PC_P
                                          replace_picture_tim, slot_picture, write_picture_tex)
 
 PREVIEW_SCALE = 2
+NEW_PICTURE_COLOR = (96, 96, 96, 255)  # a new picture's placeholder, until its image is set
 
 
 def slot_label(raw_file):
@@ -63,29 +64,33 @@ class ShivaMagazinePictureWidget(QWidget):
         self.replace_button.clicked.connect(self._replace)
         self.revert_button = QPushButton("Undo the replacement")
         self.revert_button.clicked.connect(self._revert)
-        self.add_button = QPushButton("Add new picture from PNG...")
+        # Under the list, like the Sprites tab's "Add sprite id": a new picture is a new entry
+        self.add_button = QPushButton("+ Add new picture")
         self.add_button.setToolTip(
-            f"Add a picture of its own (256x192) in the next free mngrp.bin slot ({ADDED_FIRST_SLOT}-{ADDED_LAST_SLOT},\n"
-            "after the last slot mngrp.bin uses, so nothing else moves). Save writes its menu/magNNN.TEX\n"
-            "and its copy in mngrp.bin. A page shows it with Zone's \"Page texture\" set to that slot.\n"
-            "In game it needs FFNx with AddMorePictures (FFNx PR #1111), which reads it from\n"
-            "direct/menu/magNNN.TEX.")
-        self.add_button.clicked.connect(self._add)
+            f"A new picture of its own, in the next free mngrp.bin slot (206 first, up to {ADDED_LAST_SLOT}: after\n"
+            "the last slot mngrp.bin uses, so nothing else moves). It starts grey: set its image with\n"
+            "\"Replace from PNG...\". Save writes its menu/magNNN.TEX and its copy in mngrp.bin.\n"
+            "A page shows it with Zone's \"Page texture\" set to that slot. In game it needs FFNx with\n"
+            "AddMorePictures (FFNx PR #1111), which reads it from direct/menu/magNNN.TEX.")
+        self.add_button.clicked.connect(self.add_picture)
+        self.remove_button = QPushButton("- Remove last added picture")
+        self.remove_button.setToolTip("Remove the last picture added (only the last one: removing an earlier one\n"
+                                      "would move the slots after it). Its .TEX already saved next to mngrp.bin\n"
+                                      "is left on disk.")
+        self.remove_button.clicked.connect(self.remove_last_picture)
 
         buttons = QHBoxLayout()
         buttons.addWidget(self.export_button)
         buttons.addWidget(self.replace_button)
         buttons.addWidget(self.revert_button)
-        buttons.addSpacing(16)
-        buttons.addWidget(self.add_button)
         buttons.addStretch(1)
 
         help_label = QLabel(
             "On PC, the game shows 30 page pictures: it reads them from menu/*.TEX, chosen by the page's "
             "mngrp slot (Zone, \"Page texture\"). Replacing one changes every page using it, the game's own "
-            "books too. \"Add new picture\" makes one of its own instead, in a free slot (206 and up); the "
-            "game shows it only with FFNx's AddMorePictures. Saving writes the .TEX next to mngrp.bin and "
-            "the copy inside mngrp.bin.")
+            "books too. \"+ Add new picture\" (under the list) makes one of its own instead, in a free slot "
+            "(206 and up); the game shows it only with FFNx's AddMorePictures. Saving writes the .TEX next "
+            "to mngrp.bin and the copy inside mngrp.bin.")
         help_label.setWordWrap(True)
 
         right = QVBoxLayout()
@@ -95,8 +100,17 @@ class ShivaMagazinePictureWidget(QWidget):
         right.addWidget(self.picture_label)
         right.addStretch(1)
 
+        left = QVBoxLayout()
+        left.addWidget(self.slot_list)
+        left.addWidget(self.add_button)
+        left.addWidget(self.remove_button)
+        left_widget = QWidget()
+        left.setContentsMargins(0, 0, 0, 0)
+        left_widget.setLayout(left)
+        left_widget.setFixedWidth(self.slot_list.width())
+
         layout = QHBoxLayout(self)
-        layout.addWidget(self.slot_list)
+        layout.addWidget(left_widget)
         layout.addLayout(right, 1)
         self._update_buttons()
 
@@ -131,6 +145,9 @@ class ShivaMagazinePictureWidget(QWidget):
         """(image, where it comes from) of a slot: the pending replacement, else the .TEX the game
         shows, else the mngrp copy."""
         if raw_file in self._pending:
+            if is_added_slot(raw_file):
+                return (picture_from_indices(*self._pending[raw_file]),
+                        "new picture, written at the next Save (set its image with \"Replace from PNG...\")")
             return picture_from_indices(*self._pending[raw_file]), "replacement, written at the next Save"
         if raw_file not in self._image_cache:
             tim_bytes = b""
@@ -171,21 +188,19 @@ class ShivaMagazinePictureWidget(QWidget):
             return []
         return [slot for slot in self.manager.free_slots_after(ADDED_FIRST_SLOT) if slot <= ADDED_LAST_SLOT]
 
-    def add_from_file(self, path):
-        """Add a new picture from an image file in the first free slot (its TIM in mngrp.bin now, its
-        .TEX at Save). Returns the slot, or None (with a message) when it cannot be added."""
+    def add_picture(self, image=None):
+        """Add a new picture entry in the first free slot (its TIM in mngrp.bin now, its .TEX at Save)
+        and select it: `image` (PIL), or a plain grey one to set with "Replace from PNG...". Returns the
+        slot, or None (with a message) when no slot is free."""
         from PIL import Image
         free = self.free_slots()
         if not free:
             QMessageBox.warning(self, "Shiva - Magazine pictures",
                                 f"mngrp.bin has no free slot left for a picture ({ADDED_FIRST_SLOT}-{ADDED_LAST_SLOT}).")
             return None
-        try:
-            with Image.open(path) as image:
-                palette, indices = quantize_picture(image)
-        except (OSError, ValueError) as error:
-            QMessageBox.warning(self, "Shiva - Magazine pictures", f"Cannot use {os.path.basename(path)}:\n{error}")
-            return None
+        if image is None:
+            image = Image.new("RGBA", (256, 192), NEW_PICTURE_COLOR)
+        palette, indices = quantize_picture(image)
         template = bytes(self.manager.mngrp.get_section_list()[TEMPLATE_SLOT].get_data_hex())
         slot = free[0]
         self.manager.add_raw_section(slot, encode_picture_tim(palette, indices, template))
@@ -194,10 +209,38 @@ class ShivaMagazinePictureWidget(QWidget):
         self._slot_changed(self.slot_list.currentRow())
         return slot
 
-    def _add(self):
-        path, _ = QFileDialog.getOpenFileName(self, "New picture (256x192)", "", "Images (*.png *.bmp)")
-        if path:
-            self.add_from_file(path)
+    def add_from_file(self, path):
+        """Add a new picture from an image file: add_picture, then its image. Returns the slot or None."""
+        from PIL import Image
+        try:
+            with Image.open(path) as image:
+                image.load()
+                quantize_picture(image)  # refuse an image that cannot be a page picture first
+                return self.add_picture(image.copy())
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Shiva - Magazine pictures", f"Cannot use {os.path.basename(path)}:\n{error}")
+            return None
+
+    def last_added_slot(self):
+        """The last added picture, the only one that can be removed (None when there is none)."""
+        slots = [slot for slot in self._picture_slots() if is_added_slot(slot)]
+        if not slots or self.manager is None or slots[-1] != self.manager.last_used_slot():
+            return None
+        return slots[-1]
+
+    def remove_last_picture(self):
+        """Remove the last added picture from mngrp.bin (its .TEX on disk stays). Returns its slot."""
+        slot = self.last_added_slot()
+        if slot is None:
+            return None
+        self.manager.remove_last_raw_section(slot)
+        self._pending.pop(slot, None)
+        self._image_cache.pop(slot, None)
+        self._fill_slots(select=slot - 1)
+        if self._current_slot() is None and self.slot_list.count():
+            self.slot_list.setCurrentRow(self.slot_list.count() - 1)
+        self._slot_changed(self.slot_list.currentRow())
+        return slot
 
     # --- UI ----------------------------------------------------------------------------------
 
@@ -231,6 +274,7 @@ class ShivaMagazinePictureWidget(QWidget):
         self.revert_button.setEnabled(ready and self._current_slot() in self._pending
                                       and not is_added_slot(self._current_slot()))
         self.add_button.setEnabled(bool(self.free_slots()))
+        self.remove_button.setEnabled(self.last_added_slot() is not None)
 
     def _export(self):
         raw_file = self._current_slot()
