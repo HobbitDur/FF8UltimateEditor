@@ -13,7 +13,7 @@ from FF8GameData.font.atlas import FontAtlas
 from FF8GameData.font.textlayout import FontMetrics
 from FF8GameData.gamedata import GameData
 from Shiva.ShivaSeedTest.seedfont import SeedFontMetrics, layout_text, LINE_HEIGHT
-from Shiva.ShivaSeedTest.seedscreen import (CROP, HAND_DX, MAX_LINES, MAX_TEXT_WIDTH, TEXT_X, TEXT_Y,
+from Shiva.ShivaSeedTest.seedscreen import (HAND_DX, MAX_LINES, MAX_TEXT_WIDTH, TEXT_X, TEXT_Y,
                                             fill_values, render_seed_screen)
 
 PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent
@@ -86,7 +86,8 @@ def test_the_screen_geometry_is_the_exes():
 def test_text_past_the_clip_is_reported_cut(game_data):
     metrics = SeedFontMetrics(widths=None)  # every glyph as wide as the widest
     short = render_seed_screen("A{Cursor_location_id:0x20}YES", 0, game_data, metrics)
-    assert not short.cut and short.image.size == (CROP[2] - CROP[0], CROP[3] - CROP[1])
+    assert not short.cut and short.image.size == (384, 240)
+    assert short.displayed().size == (640, 480)  # as the PC shows the 384x240 menu space
     wide = render_seed_screen("W" * 80, 0, game_data, metrics)
     assert wide.cut_columns > 0 and wide.cut_lines == 0
     tall = render_seed_screen("\\n".join(["A"] * 12), 0, game_data, metrics)

@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLa
 from FF8GameData.gamedata import GameData
 from Shiva.ShivaSeedTest.seedtest import SeedString, SeedTestSet
 from SmallWidget.listsearchbar import ListSearchBar
-from Shiva.ShivaSeedTest.seedscreen import (CROP,MAX_LINES, MAX_TEXT_WIDTH, SAMPLE_VALUES,
+from Shiva.ShivaSeedTest.seedscreen import (DISPLAY_SIZE, MAX_LINES, MAX_TEXT_WIDTH, SAMPLE_VALUES,
                                             render_seed_screen)
 
 
@@ -103,13 +103,14 @@ class NidaQuestionWidget(QGroupBox):
 
 
 class SeedScreenCanvas(QWidget):
-    """The rendered test screen, scaled up to the room it has (nearest neighbour, never below 1:1)."""
+    """The test screen as the PC shows it (640x480, see seedscreen.DISPLAY_SIZE), fitted to the room
+    it has: from half size (smoothed) up."""
 
     def __init__(self):
         QWidget.__init__(self)
-        width, height = CROP[2] - CROP[0], CROP[3] - CROP[1]
+        width, height = DISPLAY_SIZE
         self._size = (width, height)
-        self.setMinimumSize(width, height)
+        self.setMinimumSize(width // 2, height // 2)
         # As wide as the column allows, and only as tall as the screen needs at that width
         policy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         policy.setHeightForWidth(True)
@@ -117,13 +118,13 @@ class SeedScreenCanvas(QWidget):
         self._pixmap = None
 
     def sizeHint(self):
-        return QSize(self._size[0] * 2, self._size[1] * 2)
+        return QSize(*self._size)
 
     def hasHeightForWidth(self):
         return True
 
     def heightForWidth(self, width):
-        return max(self._size[1], width * self._size[1] // self._size[0])
+        return max(self._size[1] // 2, width * self._size[1] // self._size[0])
 
     def set_image(self, image):
         rgba = image.convert("RGBA")
@@ -135,7 +136,8 @@ class SeedScreenCanvas(QWidget):
         if self._pixmap is None:
             return
         painter = QPainter(self)
-        scale = max(1.0, min(self.width() / self._pixmap.width(), self.height() / self._pixmap.height()))
+        scale = min(self.width() / self._pixmap.width(), self.height() / self._pixmap.height())
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, scale < 1)
         width, height = int(self._pixmap.width() * scale), int(self._pixmap.height() * scale)
         painter.drawPixmap(QRect(0, 0, width, height), self._pixmap)
 
@@ -223,7 +225,7 @@ class SeedPreviewWidget(QWidget):
         screen = render_seed_screen(text, answer, self.game_data, self.metrics, self.atlas, self.values(),
                                     icons=self.icons)
         self.screen = screen
-        self.canvas.set_image(screen.image)
+        self.canvas.set_image(screen.displayed())
         if self._seed_string is None:
             self.status_label.setText("")
             return

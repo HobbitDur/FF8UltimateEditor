@@ -21,10 +21,11 @@ Everything below comes from the PC exe:
 
 * The window fill (BattleUI_DrawWindowBorder 0x4B6A80, called with texture origin 8) is textured too:
   128 px wide strips from icon.TEX's page with palette 1 (CLUT 0x3850), the first one starting at
-  u = 8, under the texture window 0xE20303D0 (table 0xB87CD0) that keeps u in 0-127 and v in 48-63.
-  So the fill is the 128x16 band at (0, 48) of icon.TEX, a left-dark right-light grey gradient,
-  repeated across and down. The game tints it with the player's Config > Window colour; the preview
-  shows it untinted (the default).
+  u = 8, each under the next texture window of the table at 0xB87CD0 (0xE20303D0, 0xE20343D0,
+  0xE20403D0, then the first two again). Those keep each strip in one 128x16 band of icon.TEX,
+  repeated down: (0, 48) a dark-to-light grey gradient, (128, 48) a flat light grey, (0, 64) a
+  light-to-dark one. So a window is darker on its left only, as in game. The game tints the fill
+  with the player's Config > Window colour; the preview shows it untinted (the default).
 
 The title and help bars' own text comes from another file (the menu strings), so they are drawn
 empty.
@@ -50,7 +51,11 @@ MAX_TEXT_WIDTH = CLIP_RIGHT - TEXT_X       # 322 px of ink from the text start
 MAX_LINES = (CLIP_BOTTOM - TEXT_Y - GLYPH_SIZE) // 16 + 1  # 10 lines of 16 px fit
 
 # The part of the 384x240 menu screen the preview shows: the three windows and a small margin.
-CROP = (16, 0, 368, 222)
+SCREEN_SIZE = (384, 240)
+# The PC game shows that 384x240 menu space on a 640x480 screen: everything is squeezed across to
+# 5/6 of its height's scale (a 128 px window band is 213 screen pixels wide, 16 rows are 32). The
+# preview is shown the same way, so it compares with a screenshot.
+DISPLAY_SIZE = (640, 480)
 
 # Sample values for the codes the screen fills in (name in the editor's text -> digits).
 SAMPLE_VALUES = {"SeedTestLevelOrScore": "7", "NextSeedTestLevel": "8", "SeedRank": "15"}
@@ -58,7 +63,10 @@ SAMPLE_VALUES = {"SeedTestLevelOrScore": "7", "NextSeedTestLevel": "8", "SeedRan
 HAND_ICON = 0         # the icon.sp1 sprite sub_4BDA00 draws for a queued hand
 FRAME_BOX = (16, 0, 40, 24)  # the window bevel in icon.TEX (palette 0)
 FRAME_CORNER = 8
-FILL_BOX = (0, 48, 128, 64)  # the window fill band in icon.TEX (palette 1), see the module docstring
+# The window fill's bands in icon.TEX (palette 1), in the order the strips take them (the table at
+# 0xB87CD0 cycles through these three, see the module docstring)
+FILL_BANDS = ((0, 48), (128, 48), (0, 64))
+FILL_BAND_SIZE = (128, 16)
 FILL_PALETTE = 1
 FILL_FIRST_U = 8             # the first strip starts 8 texels into the band
 
@@ -86,7 +94,9 @@ class MenuIcons:
         self.sprites.load_file(sp1_path)
         texture = TexFile.read(tex_path)
         self.frame = texture.to_image(0).convert("RGBA").crop(FRAME_BOX)
-        self.fill_band = texture.to_image(FILL_PALETTE).convert("RGBA").crop(FILL_BOX)
+        fill = texture.to_image(FILL_PALETTE).convert("RGBA")
+        width, height = FILL_BAND_SIZE
+        self.fill_bands = [fill.crop((u, v, u + width, v + height)) for u, v in FILL_BANDS]
         icon = self.sprites.icons[HAND_ICON] if HAND_ICON < len(self.sprites.icons) else None
         image = self.sprites.render_icon(HAND_ICON, texture) if icon is not None else None
         # (image, where its top-left sits from the draw position)
@@ -101,7 +111,8 @@ def fill_values(text, values=None):
 
 
 class SeedScreen:
-    """One question drawn: `image` (the CROP part of the screen, 1 game pixel = 1 pixel), the
+    """One question drawn: `image` (the whole 384x240 screen, 1 game pixel = 1 pixel; displayed() is
+    how the PC shows it), the
     `layout` (pen positions from the text start), and what the game cuts off."""
 
     def __init__(self, image, layout, ink_right, cut_columns, cut_lines):
@@ -115,25 +126,37 @@ class SeedScreen:
     def cut(self):
         return bool(self.cut_columns or self.cut_lines)
 
+    def displayed(self):
+        """The screen as the PC game shows it: 640x480, squeezed across (see DISPLAY_SIZE)."""
+        return self.image.resize(DISPLAY_SIZE, Image.Resampling.NEAREST)
 
-def _window_fill(width, height, icons):
-    """The window fill: icon.TEX's 128x16 band repeated across (the first strip from u = 8) and down;
-    without icon.TEX, the band's gradient drawn plain."""
-    if icons is not None:
-        band = icons.fill_band
-    else:
-        band = Image.new("RGBA", (FILL_BOX[2] - FILL_BOX[0], FILL_BOX[3] - FILL_BOX[1]))
+
+def _plain_bands():
+    """Without icon.TEX: the three fill bands drawn plain (dark to light, light, light to dark)."""
+    bands = []
+    for start, end in ((WINDOW_LEFT, WINDOW_RIGHT), (WINDOW_RIGHT, WINDOW_RIGHT), (WINDOW_RIGHT, WINDOW_LEFT)):
+        band = Image.new("RGBA", FILL_BAND_SIZE)
         draw = ImageDraw.Draw(band)
         for column in range(band.width):
-            t = column / (band.width - 1)
+            t = min(1.0, column / (band.width * 0.75))  # the game's gradients flatten out at 3/4
             draw.line((column, 0, column, band.height),
-                      fill=tuple(round(a + (b - a) * t) for a, b in zip(WINDOW_LEFT, WINDOW_RIGHT)) + (255,))
+                      fill=tuple(round(a + (b - a) * t) for a, b in zip(start, end)) + (255,))
+        bands.append(band)
+    return bands
+
+
+def _window_fill(width, height, icons):
+    """The window fill: 128 px strips, each one of icon.TEX's bands in turn (the first strip from
+    u = 8), repeated down."""
+    bands = icons.fill_bands if icons is not None else _plain_bands()
     fill = Image.new("RGBA", (width, height))
-    x = -FILL_FIRST_U
+    x, strip = -FILL_FIRST_U, 0
     while x < width:
+        band = bands[strip % len(bands)]
         for y in range(0, height, band.height):
             fill.paste(band, (x, y))
         x += band.width
+        strip += 1
     return fill
 
 
@@ -195,7 +218,7 @@ def render_seed_screen(text, answer, game_data, metrics=None, atlas=None, values
     metrics = metrics if metrics is not None else FontMetrics(widths=None)
     layout = layout_text(fill_values(text, values), game_data, metrics)
 
-    screen = Image.new("RGBA", (384, 240), BACKDROP)
+    screen = Image.new("RGBA", SCREEN_SIZE, BACKDROP)
     for box in (TITLE_WINDOW, QUESTION_WINDOW, HELP_WINDOW):
         _draw_window(screen, box, icons)
 
@@ -220,4 +243,4 @@ def render_seed_screen(text, answer, game_data, metrics=None, atlas=None, values
     cut_columns = max(0, ink_right - MAX_TEXT_WIDTH)
     last_line = max((glyph.y for glyph in inked), default=0) // layout.line_height
     cut_lines = max(0, last_line + 1 - MAX_LINES)
-    return SeedScreen(screen.crop(CROP), layout, ink_right, cut_columns, cut_lines)
+    return SeedScreen(screen, layout, ink_right, cut_columns, cut_lines)
