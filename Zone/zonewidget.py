@@ -12,7 +12,8 @@ from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from Common.pagefontsource import PageFontSource
 from FF8GameData.gamedata import GameData
-from FF8GameData.menu.magpage import MagPageEntry, UNUSED_ID
+from FF8GameData.menu.magpage import (MagPageEntry, UNUSED_ID, VANILLA_PAPER_E1, VANILLA_PAPER_E2,
+                                      paper_tile_vram)
 from FF8GameData.menu.magpicture import is_added_slot, pc_picture_file_name
 from SmallWidget.listsearchbar import ListSearchBar
 from SmallWidget.valuecombo import ValueComboBox
@@ -338,10 +339,18 @@ class ZoneWidget(QWidget):
         return group
 
     def _build_text_and_texture_group(self):
+        paper_tip = (
+            "Where the paper the window is tiled with is read from in VRAM: a 32x32 tile, repeated.\n"
+            "E1 (byte 0x13) is its X, E2 (byte 0x14) its Y; the game builds the GPU texture page (E1)\n"
+            "and texture window (E2) of the paper sprites from them. Every retail page has 0x00 / 0xC0:\n"
+            "VRAM (896,192), the parchment tile (mngrp.bin raw file 12).\n"
+            "Another value reads another part of VRAM (e.g. E2 0x00-0xA0: a piece of the page picture,\n"
+            "with the paper's palette, so in the wrong colours). The preview always draws the parchment.")
         self.paper_a = self._spin8(hex_display=True)
-        self.paper_a.setToolTip("PS1 GPU E1 primitive bits (texture page) of the paper background")
+        self.paper_a.setToolTip(paper_tip)
         self.paper_b = self._spin8(hex_display=True)
-        self.paper_b.setToolTip("PS1 GPU E2 primitive bits (texture window) of the paper background")
+        self.paper_b.setToolTip(paper_tip)
+        self.paper_label = QLabel()
 
         self.text_file = ValueComboBox(fallback="another mngrp.bin string section")
         self.text_file.set_choices(BOOK_TEXT_FILES)
@@ -370,12 +379,16 @@ class ZoneWidget(QWidget):
         group = QGroupBox("Paper, book text and page texture")
         layout = QFormLayout()
         paper_layout = QHBoxLayout()
-        paper_layout.addWidget(QLabel("E1"))
+        paper_layout.addWidget(QLabel("E1 (X)"))
         paper_layout.addWidget(self.paper_a)
-        paper_layout.addWidget(QLabel("E2"))
+        paper_layout.addWidget(QLabel("E2 (Y)"))
         paper_layout.addWidget(self.paper_b)
+        paper_layout.addWidget(self.paper_label)
         paper_layout.addStretch(1)
-        layout.addRow("Paper background:", paper_layout)
+        layout.addRow("Paper tile in VRAM:", paper_layout)
+        self.paper_a.valueChanged.connect(self._update_paper_label)
+        self.paper_b.valueChanged.connect(self._update_paper_label)
+        self._update_paper_label()
         text_layout = QHBoxLayout()
         text_layout.addWidget(self.text_file)
         text_layout.addWidget(self.text_file_label)
@@ -711,6 +724,18 @@ class ZoneWidget(QWidget):
         self._refresh_choices()
         self._update_resolved_labels()
         self._refresh_preview()
+
+    def _update_paper_label(self):
+        """Say which 32x32 VRAM tile the paper bytes pick (paper_tile_vram)."""
+        e1, e2 = self.paper_a.value(), self.paper_b.value()
+        x, y = paper_tile_vram(e1, e2)
+        if (e1, e2) == (VANILLA_PAPER_E1, VANILLA_PAPER_E2):
+            self.paper_label.setText(f"= tile at ({x},{y}): the parchment (mngrp raw file 12)")
+            self.paper_label.setStyleSheet("")
+        else:
+            self.paper_label.setText(f"= tile at ({x},{y}): not the parchment (retail: 0x00 / 0xC0); "
+                                     "the preview still draws the parchment")
+            self.paper_label.setStyleSheet("color: #c07000;")
 
     def _on_font_changed(self):
         """sysfnt.TEX or sysfnt.tdw was opened or removed: redraw the text with what is open."""

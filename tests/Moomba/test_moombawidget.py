@@ -176,3 +176,21 @@ def test_preview_is_inert_before_mngrp(qapp):
     moomba.picture_overlay_x[0].setValue(50)
     QTest.qWait(DEBOUNCE_WAIT)
     assert moomba.preview_label.pixmap() is None or moomba.preview_label.pixmap().isNull()
+
+
+def test_fields_the_screen_never_reads_are_greyed_until_unlocked(qapp):
+    """As in SolomonRing: what Menu_ChocoboWorld_Draw never reads is shown greyed, the unlock box
+    makes it editable; what it reads (window, texture page, overlays) always stays editable."""
+    from Moomba.moombawidget import MoombaWidget
+    moomba = MoombaWidget()
+    moomba.editor_container.setEnabled(True)  # as once an mmag2.bin is open
+    unused = moomba.unused_widgets()
+    assert moomba.paper_e1 in unused and moomba.texture_category in unused
+    assert moomba.texture_page not in unused and moomba.window_x not in unused
+    assert not moomba.unlock_check.isChecked()
+    assert not any(widget.isEnabled() for widget in unused)
+    assert moomba.texture_page.isEnabled() and moomba.picture_overlay_id[0].isEnabled()
+    moomba.unlock_check.setChecked(True)
+    assert all(widget.isEnabled() for widget in unused)
+    moomba.unlock_check.setChecked(False)
+    assert not any(widget.isEnabled() for widget in unused)

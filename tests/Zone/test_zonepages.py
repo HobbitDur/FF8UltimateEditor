@@ -91,3 +91,14 @@ def test_widget_buttons_add_and_remove_pages(mmag_path):
     assert len(zone.manager.entries) == ZoneManager.VANILLA_ENTRY_COUNT
     zone.save_file()  # the removed page's form must not be written anywhere
     assert mmag_path.stat().st_size == ZoneManager.VANILLA_ENTRY_COUNT * MagPageEntry.SIZE
+
+
+def test_paper_tile_vram_follows_the_draw_code():
+    """Menu_Magazine_DrawPaperBackground: E1 picks X (page + 32-texel step), E2 Y (32-line step)."""
+    from FF8GameData.menu.magpage import paper_tile_vram
+    assert paper_tile_vram(0x00, 0xC0) == (896, 192)  # retail: the parchment, raw file 12
+    assert paper_tile_vram(0x00, 0x00) == (896, 0)    # the top of the page picture
+    assert paper_tile_vram(0x00, 0xDF) == (896, 192)  # only the top 3 bits of E2 count
+    assert paper_tile_vram(0x08, 0xC0) == (912, 192)  # 32 texels = 16 VRAM pixels at 8bpp
+    assert paper_tile_vram(0x40, 0xC0) == (960, 192)  # the next texture page
+    assert paper_tile_vram(0x80, 0xC0) == (0, 192)    # 1024 wraps to page 0

@@ -2,7 +2,7 @@ import os
 
 from PyQt6.QtCore import QSignalBlocker, Qt, QTimer
 from PyQt6.QtGui import QIcon, QImage, QPixmap
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox,
                              QListWidget, QSpinBox, QGroupBox, QFormLayout, QGridLayout, QScrollArea,
                              QMessageBox)
 
@@ -65,8 +65,21 @@ class MoombaWidget(QWidget):
         overlay_groups = self._build_overlay_groups()
         misc_group = self._build_misc_group()
 
+        # Fields the Chocobo World screen never reads (Menu_ChocoboWorld_Draw 0x4D1D30 reads the
+        # window, the texture page and the two overlay sets, nothing else) are greyed out by
+        # default, as in SolomonRing; a mod may have given one a meaning, so they can be unlocked.
+        self.unlock_check = QCheckBox("Unlock fields unused by the vanilla game")
+        self.unlock_check.setToolTip(
+            "Off (default): a field the Chocobo World screen never reads is shown - so you can see its "
+            "value - but greyed out, so you cannot change something that does nothing.\n"
+            "On: every field becomes editable, for a mod that gave those bytes a purpose. This only "
+            "changes what the UI lets you edit; loading and saving are identical either way.")
+        self.unlock_check.toggled.connect(self._set_unlock_unused)
+        self._set_unlock_unused(False)
+
         editor_layout = QVBoxLayout()
         editor_layout.addWidget(self.entry_name_label)
+        editor_layout.addWidget(self.unlock_check)
         editor_layout.addWidget(window_group)
         editor_layout.addWidget(picture_group)
         editor_layout.addWidget(overlay_groups)
@@ -196,24 +209,27 @@ class MoombaWidget(QWidget):
                                                  "(multiplied by the zoom factor, /128)")
         self.picture_tint_g = self._byte_spinbox("Green of the paper mat rectangle")
         self.picture_tint_b = self._byte_spinbox("Blue of the paper mat rectangle")
-        self.texture_category = self._byte_spinbox("Page texture category. The Chocobo World screen uses "
-                                                   "category 6 = mngrp raw file 180 + page")
-        self.texture_page = self._byte_spinbox("Page texture page number: with category 6, page 0 = raw 180 "
-                                               "(story pictures), page 1 = raw 181 (manual pictures)")
-        self.paper_e1 = self._byte_spinbox("Paper background parameter A (PS1 GPU E1 texture page bits)")
-        self.paper_e2 = self._byte_spinbox("Paper background parameter B (PS1 GPU E2 texture window bits)")
+        self.texture_category = self._byte_spinbox("Page texture category: not read by the Chocobo World "
+                                                   "screen, which loads mngrp raw file 180 + page whatever "
+                                                   "it is (retail: 6, the magazines' Chocobo World entry)")
+        self.texture_page = self._byte_spinbox("Page texture: mngrp raw file 180 + this page, page 0 = raw "
+                                               "180 (story pictures), page 1 = raw 181 (manual pictures)")
+        unused_paper = ("The magazines' paper tile position in VRAM (E1 = X, E2 = Y; see Zone). The Chocobo World "
+                        "screen draws no paper, so it never reads it: kept as is (retail 0x00 / 0xC0).")
+        self.paper_e1 = self._byte_spinbox(unused_paper)
+        self.paper_e2 = self._byte_spinbox(unused_paper)
         self.paper_e1.setDisplayIntegerBase(16)
         self.paper_e1.setPrefix("0x")
         self.paper_e2.setDisplayIntegerBase(16)
         self.paper_e2.setPrefix("0x")
-        group = QGroupBox("Page picture (texture: category 6 → raw file 180 + page)")
+        group = QGroupBox("Page picture (texture: mngrp raw file 180 + page; the rest is never read here)")
         form = QFormLayout()
         form.addRow("X / Y:", self._pair(self.picture_x, self.picture_y))
         form.addRow("Width / Height:", self._pair(self.picture_width, self.picture_height))
         form.addRow("Mat tint R / G / B:", self._pair(self.picture_tint_r, self.picture_tint_g,
                                                    self.picture_tint_b))
         form.addRow("Texture category / page:", self._pair(self.texture_category, self.texture_page))
-        form.addRow("Paper params A / B:", self._pair(self.paper_e1, self.paper_e2))
+        form.addRow("Paper tile E1 / E2 (unused here):", self._pair(self.paper_e1, self.paper_e2))
         group.setLayout(form)
         return group
 
@@ -294,7 +310,7 @@ class MoombaWidget(QWidget):
         self.weapon_quantity_column_x = self._byte_spinbox("Weapon quantity column X offset (unused here)")
         self.duel_combo_x = self._int16_spinbox("Duel combo X (unused here)")
         self.duel_combo_y = self._byte_spinbox("Duel combo Y (unused here)")
-        group = QGroupBox("Footer + fields unused by the Chocobo World screen (preserved byte-exact)")
+        group = QGroupBox("Fields unused by the Chocobo World screen (kept byte-exact)")
         form = QFormLayout()
         form.addRow("Footer flag:", self.footer_flag)
         form.addRow("Text file index:", self.text_file_index)
@@ -305,6 +321,23 @@ class MoombaWidget(QWidget):
         form.addRow("Duel combo X / Y:", self._pair(self.duel_combo_x, self.duel_combo_y))
         group.setLayout(form)
         return group
+
+    def unused_widgets(self):
+        """The fields the Chocobo World screen never reads: Menu_ChocoboWorld_Draw (0x4D1D30) takes
+        the window (0x00-0x07), the picture and text overlays (0x24, 0x34), and its update reads
+        the texture page (0x17: mngrp raw file 180 + page). Everything else is only in the file."""
+        return [self.picture_x, self.picture_y, self.picture_width, self.picture_height,
+                self.picture_tint_r, self.picture_tint_g, self.picture_tint_b,
+                self.texture_category, self.paper_e1, self.paper_e2,
+                self.footer_flag, self.text_file_index, self.weapon_index, self.weapon_line_spacing,
+                self.duel_move_id, self.angelo_move_id, self.weapon_list_x, self.weapon_list_y,
+                self.weapon_quantity_column_x, self.duel_combo_x, self.duel_combo_y]
+
+    def _set_unlock_unused(self, unlocked):
+        """Grey out (or let edit) the fields the game never reads; their values load and save
+        the same either way."""
+        for widget in self.unused_widgets():
+            widget.setEnabled(bool(unlocked))
 
     @staticmethod
     def _pair(*widgets):

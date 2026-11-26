@@ -12,8 +12,8 @@ Layout (little endian), as read by Menu_Magazine_Draw (0x4C9330) and friends:
 | 0x00   | 2x4  | window_x / window_y / window_width / window_height              |
 | 0x08   | 2x4  | picture_x / picture_y / picture_width / picture_height          |
 | 0x10   | 1x3  | picture_tint_r / picture_tint_g / picture_tint_b                |
-| 0x13   | 1    | paper_e1 (PS1 GPU E1 texture page bits)                         |
-| 0x14   | 1    | paper_e2 (PS1 GPU E2 texture window bits)                       |
+| 0x13   | 1    | paper_e1: the paper tile's VRAM X (see paper_tile_vram)         |
+| 0x14   | 1    | paper_e2: the paper tile's VRAM Y (see paper_tile_vram)         |
 | 0x15   | 1    | text_file_index (book text = mngrp raw file 87 + this)          |
 | 0x16   | 1    | texture_category                                                |
 | 0x17   | 1    | texture_page                                                    |
@@ -37,9 +37,36 @@ by the matching byte of the zoom colour and divided by 128. So the "page
 picture" rect is the tinted paper mat drawn behind the art; the art itself comes
 from the picture overlays. (The FF8ModdingWiki called these "Picture X/Y/Z
 scale", which is what the field names used to say.)
+
+**0x13-0x14 say where the paper tile is in VRAM.** Menu_Magazine_DrawPaperBackground
+(0x4C96F0; the Item menu reader's twin is 0x4FD5B0) tiles the window with 64 px wide
+8bpp sprites (CLUT fixed at (512,219)) whose GP0(E1) texture page and GP0(E2) texture
+window come from these two bytes: the window wraps every texel into one 32x32 tile, so
+the bytes pick which tile. See paper_tile_vram. Every retail page (and every mmag2.bin
+page, which the Chocobo World screen never draws paper for) has 0x00 / 0xC0: the tile at
+VRAM (896,192), the parchment of mngrp.bin raw file 12.
 """
 
 UNUSED_ID = 0xFF
+
+VANILLA_PAPER_E1 = 0x00
+VANILLA_PAPER_E2 = 0xC0
+
+
+def paper_tile_vram(e1, e2):
+    """(x, y) in VRAM of the 32x32-texel paper tile the page tiles its window with, from
+    paper_e1 / paper_e2 the way Menu_Magazine_DrawPaperBackground builds its primitives:
+
+    * GP0(E1) texture page X = 64 * (((896 + e1) >> 6) & 15), page Y 0, 8bpp;
+    * GP0(E2) texture window mask (28, 28) = a 32x32 tile, offset U = (4 * e1) & 0xE0 texels
+      (half that in VRAM pixels at 8bpp) and offset V = e2 & 0xE0.
+
+    So only some bits count: e2 moves the tile down in steps of 32 lines (0x00-0xE0), e1 moves
+    it right 16 VRAM pixels per 8 (and to another texture page from 64 on). Retail 0x00 / 0xC0
+    = (896, 192), the parchment tile (mngrp.bin raw file 12)."""
+    page_x = 64 * (((896 + e1) >> 6) & 15)
+    u = (4 * e1) & 0xE0
+    return page_x + u // 2, e2 & 0xE0
 
 
 class OverlaySlot:
