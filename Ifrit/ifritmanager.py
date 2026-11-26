@@ -21,7 +21,7 @@ from FF8GameData.dat.animchain import analyse_animation_chain
 from FF8GameData.dat.animsplitter import (split_and_convert_animation, get_converted_frame_count,
                                           get_max_frame_for_animation, get_nb_part_needed,
                                           can_split_animation, MAX_ANIMATION_ID, MAX_ANIMATION_FRAME)
-from FF8GameData.dat import dat30, battlememory
+from FF8GameData.dat import dat30, battlememory, weapongrip
 from FF8GameData.dat.entranceanimation import EntranceAnimationView
 from FF8GameData.tim.timfile import (decode_tim, force_opaque, word_to_rgba, PalettedTim,
                                      encode_clut, encode_indices)
@@ -597,17 +597,39 @@ class IfritManager:
         for group in self._group_families(file_list):
             group_report = []
             hold_step_dict = self._family_hold_step_dict(group)
+            body_hold_step_dict = self._family_hold_step_dict(group, with_weapons=False)
             for file_path in group:
                 if progress_callback and progress_callback(index, os.path.basename(str(file_path))) is False:
                     for report in group_report:
                         report.pop('_monster', None)
                     return report_list
                 index += 1
-                group_report.append(self._convert_one_file_to_real30(file_path, split_when_too_long,
-                                                                     mode, hold_step_dict))
+                # A body holds its own snaps only: held on every snap of its weapons too, the whole
+                # character froze (6 of the 15 in-betweens of Selphie's attack, anim 5: filmed as a
+                # shaking nunchaku). Its weapons hold every snap, their grip pinned in the hand.
+                is_body = os.path.basename(str(file_path)).lower()[2:3] == 'c'
+                group_report.append(self._convert_one_file_to_real30(
+                    file_path, split_when_too_long, mode, body_hold_step_dict if is_body else hold_step_dict))
+            self._pin_family_grips(group_report)
             self._write_real30_group(group_report)
             report_list.extend(group_report)
         return report_list
+
+    @staticmethod
+    def _pin_family_grips(group_report):
+        """Every converted weapon of a character family keeps its grip in its body's hand on the
+        new in-between frames (FF8GameData/dat/weapongrip.py): blended on their own, the weapon
+        leaves the hand for one frame on a fast swing. Only when the whole family converted (it is
+        written whole or not at all), and only with its body in the list."""
+        if any((report.get('_monster') is None and not report.get('_not_a_model')) or report['skipped_list']
+               for report in group_report):
+            return
+        model_by_name = {report['file']: report['_monster'] for report in group_report
+                         if report.get('_monster') is not None}
+        for name, grip_report in weapongrip.pin_family_grips(model_by_name).items():
+            for report in group_report:
+                if report['file'] == name:
+                    report['grip_report'] = grip_report
 
     def _write_real30_group(self, group_report):
         """Save every converted file of a family, or none when one of them was refused. A file
@@ -665,17 +687,21 @@ class IfritManager:
             worst = max(pairs, key=lambda pair: battlememory.party_bytes(pair[1]) if pair[1] else 0)
             report['warning_list'].extend(battlememory.pair_warning_list(body_name, body, *worst))
 
-    def _family_hold_step_dict(self, group) -> dict:
-        """{anim id: frames whose step the body and every weapon of a character hold whole}:
-        the snaps (Animation.snap_step_set) of every file of the family, merged. A weapon draws on
-        its body's animation and frame and hangs from its hand: its snapped bones held on their
-        own are still carried round by the hand (Selphie's nunchaku, d5w028 anim 29 frames 31 and
-        33, filmed going round the far side). The whole character holds those steps, as vanilla
-        shows them: holding the weapon alone left the hands missing the nunchaku (user, filmed).
+    def _family_hold_step_dict(self, group, with_weapons: bool = True) -> dict:
+        """{anim id: frames whose step a character's files hold whole}: the snaps
+        (Animation.snap_step_set) of every file of the family, merged (with_weapons=False: of its
+        bodies only). A weapon draws on its body's animation and frame and hangs from its hand: its
+        snapped bones held on their own are still carried round by the hand (Selphie's nunchaku,
+        d5w028 anim 29 frames 31 and 33, filmed going round the far side), so every weapon holds
+        all the family's snaps whole, rigid as vanilla shows them, its grip pinned in the hand
+        (weapongrip: before it, the hands missed the nunchaku). The body and its weapons hold the
+        body's own snaps together; the snaps of a weapon with a steady grip leave the body
+        blending (those of one without, Ward's harpoon, which no pinning keeps in the hand, hold
+        the body too).
         {} for a monster (its own snaps hold the snapping bones only)."""
         if len(group) < 2 and not any(self.is_character_family_file(path) for path in group):
             return {}
-        hold_step_dict = {}
+        model_by_name = {}
         for file_path in group:
             if not self.is_character_family_file(file_path):
                 continue
@@ -685,7 +711,13 @@ class IfritManager:
                 model.analyse_loaded_data(self.game_data)
             except Exception:
                 continue
-            if not (model.bone_data and model.bone_data.bones):
+            if model.bone_data and model.bone_data.bones:
+                model_by_name[os.path.basename(str(file_path)).lower()] = model
+        body = next((model for name, model in model_by_name.items() if name[2:3] == 'c'), None)
+        hold_step_dict = {}
+        for name, model in model_by_name.items():
+            if (not with_weapons and name[2:3] != 'c'
+                    and (body is None or weapongrip.has_steady_grip(body, model))):
                 continue
             for anim_id, animation in enumerate(model.animation_data.animations):
                 step_set = animation.snap_step_set(model.bone_data.bones)

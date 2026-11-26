@@ -1729,8 +1729,9 @@ class Animation:
         """The frames (indexes) whose step to the next one snaps a bone (_step_plan 'frozen': a
         turn of SPIN_AMBIGUOUS_DEGREES or more that does not carry a spin on). A character's
         weapon hangs from its body's hand, which blends on: held in the weapon alone, the snapped
-        bones are still carried round (Selphie d5w028 anim 29 frames 15 -> 17). The body and every
-        weapon of the character then hold these steps whole (IfritManager._family_hold_step_dict)."""
+        bones are still carried round (Selphie d5w028 anim 29 frames 15 -> 17). Every weapon of
+        the character then holds these steps whole, and the body its own
+        (IfritManager._family_hold_step_dict)."""
         step_set = set()
         last_long_way_dict = {}
         frames = self.frames

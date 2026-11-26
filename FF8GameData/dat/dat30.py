@@ -205,10 +205,12 @@ def chain_frame_dict(animation_list, chain_dict, model_scale: int = 0) -> dict:
     return frame_dict
 
 
-def double_animation(animation, bones, smooth_loop: bool = False, mode=interpolation.LINEAR):
+def double_animation(animation, bones, smooth_loop: bool = False, mode=interpolation.LINEAR,
+                     hold_step_set=frozenset()):
     """2n frames for an n-frame animation (one-shot: the last pose held once more; loop: the
-    in-between back to frame 0), for the anim sets outside a model (r0win poses...)."""
-    _double_animation(animation, bones, smooth_loop, mode)
+    in-between back to frame 0), for the anim sets outside a model (r0win poses...).
+    hold_step_set: the frames whose step is held whole (Animation.create_interpolated_frames)."""
+    _double_animation(animation, bones, smooth_loop, mode, hold_step_set=hold_step_set)
 
 
 def same_pose(frame_a, frame_b) -> bool:
@@ -280,8 +282,8 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
     (animchain.analyse_animation_chain), also read before: its last frames go toward that one.
     driver_frame_count: the vanilla frame counts of the animations the sequences time themselves
     on (`C3 0A`: the character body's for a weapon); this model's own when omitted.
-    hold_step_dict: {anim id: frames whose step is held whole} (a character family's snaps,
-    Animation.snap_step_set over the body and all its weapons).
+    hold_step_dict: {anim id: frames whose step is held whole} (a character's snaps,
+    Animation.snap_step_set: a weapon's over the body and all its weapons, a body's its own).
     Returns {'nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra',
     'camera_report'}. A camera that cannot be converted is listed in 'skipped_list' as
     ('camera', reason), and nothing is touched either.
