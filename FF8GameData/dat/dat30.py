@@ -205,10 +205,12 @@ def chain_frame_dict(animation_list, chain_dict, model_scale: int = 0) -> dict:
     return frame_dict
 
 
-def double_animation(animation, bones, smooth_loop: bool = False, mode=interpolation.LINEAR):
+def double_animation(animation, bones, smooth_loop: bool = False, mode=interpolation.LINEAR,
+                     hold_step_set=frozenset()):
     """2n frames for an n-frame animation (one-shot: the last pose held once more; loop: the
-    in-between back to frame 0), for the anim sets outside a model (r0win poses...)."""
-    _double_animation(animation, bones, smooth_loop, mode)
+    in-between back to frame 0), for the anim sets outside a model (r0win poses...).
+    hold_step_set: the frames whose step is held whole (Animation.create_interpolated_frames)."""
+    _double_animation(animation, bones, smooth_loop, mode, hold_step_set=hold_step_set)
 
 
 def same_pose(frame_a, frame_b) -> bool:

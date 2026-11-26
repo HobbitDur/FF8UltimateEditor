@@ -171,6 +171,7 @@ class WattsManager:
         self.camera_collection = None        # CameraCollection over the collection half
         self._camera_collection_raw = b""    # kept when the collection does not parse
         self.poses = []  # List[R0winPose], in section order 3..8
+        self._pose_model_cache = {}          # _pose_models: the characters' battle models, read once
 
     # ------------------------------------------------------------------ loading
     def load_file(self, file_path):
@@ -265,20 +266,34 @@ class WattsManager:
             out_file.write(data)
 
     # ------------------------------------------------------------- 30 fps (FFNx)
-    def _converted_animation_block(self, block: bytes, nb_bone: int, mode) -> bytes:
+    def _converted_animation_block(self, block: bytes, nb_bone: int, mode, bone_section=None,
+                                   hold_step_set=frozenset()) -> bytes:
         """A pose animation section with 2n frames per animation (one-shot: the pose winds up
-        once and holds, the last pose is held once more like dat30)."""
+        once and holds, the last pose is held once more like dat30). bone_section is the real
+        skeleton (the character's dXc/dXw): without it the in-betweens are blended on neutral
+        bones, each bone on its own, and a turn undone by a child bone is drawn half-way round
+        (Selphie's nunchaku 15 vertex units off on her victory pose's in-betweens).
+        hold_step_set: the frames whose step is held whole (the character's snaps)."""
         from FF8GameData.dat import dat30
         from FF8GameData.dat.animsplitter import MAX_ANIMATION_FRAME
-        bone_section = self.synthetic_bone_section(nb_bone)
+        if bone_section is None:
+            bone_section = self.synthetic_bone_section(nb_bone)
         section = AnimationSection()
         section.analyze(bytes(block), bone_section)
         for anim_id, animation in enumerate(section.animations):
             if len(animation.frames) * dat30.FACTOR > MAX_ANIMATION_FRAME:
                 raise ValueError(f"animation {anim_id}: {len(animation.frames)} frames, over "
                                  f"{MAX_ANIMATION_FRAME} once converted")
-            dat30.double_animation(animation, bone_section.bones, False, mode)
+            dat30.double_animation(animation, bone_section.bones, False, mode, hold_step_set=hold_step_set)
         return self.canonicalize_animation_block(bytes(section.to_binary()), nb_bone)
+
+    @staticmethod
+    def _snap_steps(block: bytes, bone_section) -> set:
+        """The frames of a pose animation (not converted yet) whose step snaps a bone
+        (Animation.snap_step_set, on the real skeleton)."""
+        section = AnimationSection()
+        section.analyze(bytes(block), bone_section)
+        return set().union(*(animation.snap_step_set(bone_section.bones) for animation in section.animations))
 
     def looks_converted_to_real30(self) -> bool:
         """A guess for a warning only: every pose animation ends on its last pose held twice and
@@ -295,15 +310,17 @@ class WattsManager:
                 return False
         return camera30.collection_looks_converted(self.camera_collection)
 
-    def convert_to_real30(self, mode=None) -> dict:
+    def convert_to_real30(self, mode=None, models_folder=None) -> dict:
         """Convert r0win.dat in memory for FFNx True30FPS (every battle file is expected
         converted, there is no marker): the 6 body and 4 weapon pose animations get exactly 2n
         frames (FF8GameData/dat/dat30.py), each pose sequence is rewritten for a VM ticking at
         30 Hz (seqrewrite30: the 9F blink stamps x2...) and the section 2 camera is converted
-        (camera30: keyframe durations x2, script waits). All or nothing: ValueError and nothing
-        changed. Returns {'poses': [(name, body frames, weapon frames, sequence status)],
-        'camera_report', 'warning_list'}."""
-        from FF8GameData.dat import battlememory, camera30, interpolation
+        (camera30: keyframe durations x2, script waits). models_folder holds the characters'
+        vanilla dXc/dXw: the in-betweens are then blended on each character's real skeleton
+        (a pose whose models are not there is blended on neutral bones, with a warning). All or
+        nothing: ValueError and nothing changed. Returns {'poses': [(name, body frames, weapon
+        frames, sequence status)], 'camera_report', 'warning_list'}."""
+        from FF8GameData.dat import battlememory, camera30, interpolation, weapongrip
         from FF8GameData.dat.seqrewrite30 import STATUS_MANUAL, STATUS_REFUSED, rewrite_sequence
         from FF8GameData.dat.sequencevm import camera_sequence_vm, entity_sequence_vm
         if not self.poses:
@@ -325,9 +342,34 @@ class WattsManager:
         converted = []
         for pose in self.poses:
             name = pose.character.name
+            body_bones = weapon_bones = None
+            body_hold, weapon_hold = set(), set()
             try:
-                body = self._converted_animation_block(pose.body_anim, pose.character.body_bones, mode)
-                weapon = (self._converted_animation_block(pose.weapon_anim, pose.character.weapon_bones, mode)
+                if models_folder is not None:
+                    models = self._pose_models(pose, models_folder)
+                    if models['body'] is not None:
+                        body_bones = models['body'].bone_data
+                        body_hold = self._snap_steps(pose.body_anim, body_bones)
+                        weapon_hold = set(body_hold)
+                    else:
+                        report['warning_list'].append(f"{name}: {models['skipped']}, blended on neutral bones")
+                    if pose.weapon_anim is not None and models['weapon'] is not None:
+                        # as the battle models (IfritManager._family_hold_step_dict): the weapon holds
+                        # every snap of the character whole, rigid as vanilla shows it, its grip then
+                        # pinned in the hand; the body holds its own (and those of a weapon no grip
+                        # keeps in the hand)
+                        weapon_bones = models['weapon'].bone_data
+                        weapon_snaps = set().union(*(self._snap_steps(pose.weapon_anim, model.bone_data)
+                                                     for _name, model in models['weapon_models']))
+                        weapon_hold |= weapon_snaps
+                        if models['grip'] is None or models['grip'].spread > weapongrip.MAX_GRIP_SPREAD:
+                            body_hold |= weapon_snaps
+                    elif pose.weapon_anim is not None and models['body'] is not None:
+                        report['warning_list'].append(f"{name} weapon: {models['skipped']}, blended on neutral bones")
+                body = self._converted_animation_block(pose.body_anim, pose.character.body_bones, mode, body_bones,
+                                                       frozenset(body_hold))
+                weapon = (self._converted_animation_block(pose.weapon_anim, pose.character.weapon_bones, mode,
+                                                          weapon_bones, frozenset(weapon_hold))
                           if pose.weapon_anim is not None else None)
             except ValueError as error:
                 raise ValueError(f"{name} pose: {error}")
@@ -361,39 +403,62 @@ class WattsManager:
         model.analyse_loaded_data(self.game_data)
         return model
 
+    def _pose_models(self, pose: R0winPose, models_folder) -> dict:
+        """The character's vanilla battle models in models_folder: {'body': its dXc or None,
+        'weapon_models': [(file name, dXw)], 'weapon': the dXw whose grip is the steadiest (the
+        first one when none holds a grip), 'weapon_name', 'grip': its weapongrip.Grip or None,
+        'skipped': why a model is missing, or None}. Only the files with the pose's bone counts
+        are read. Cached per pose and folder (the conversion and the pinning both need them)."""
+        import pathlib
+        from FF8GameData.dat import weapongrip
+        character = pose.character
+        folder = pathlib.Path(models_folder)
+        key = (character.name, str(folder.resolve()))
+        if key in self._pose_model_cache:
+            return self._pose_model_cache[key]
+        prefix = "d%x" % character.com_id
+        models = {'body': None, 'weapon_models': [], 'weapon': None, 'weapon_name': None, 'grip': None,
+                  'skipped': None}
+        bodies = [path for path in sorted(folder.glob(f"{prefix}c*.dat"))
+                  if self._model_bones(path) == character.body_bones]
+        weapons = [path for path in sorted(folder.glob(f"{prefix}w*.dat"))
+                   if self._model_bones(path) == character.weapon_bones] if character.weapon_bones else []
+        if not bodies:
+            models['skipped'] = f"no {prefix}c model with its skeleton in {folder}"
+        else:
+            models['body'] = self._load_model(bodies[0])
+            for path in weapons:
+                weapon = self._load_model(path)
+                models['weapon_models'].append((path.name, weapon))
+                grip = weapongrip.vanilla_grip(models['body'], weapon)
+                if models['weapon'] is None or (grip is not None and (
+                        models['grip'] is None or grip.spread < models['grip'].spread)):
+                    models['weapon'], models['weapon_name'] = weapon, path.name
+                    models['grip'] = grip if grip is not None else models['grip']
+            if character.weapon_bones and not weapons:
+                models['skipped'] = f"no {prefix}w model with its skeleton in {folder}"
+        self._pose_model_cache[key] = models
+        return models
+
     def _pinned_weapon_block(self, pose: R0winPose, models_folder) -> tuple:
         """(new weapon block or None, report) for one converted pose: its weapon's in-betweens
         pinned to the hand (weapongrip.pin_frames) with the grip the character's own vanilla
         dXc/dXw battle animations hold. The steadiest grip of the character's weapons is used
         (they all play this one animation); the report gives the worst distance on each."""
-        import pathlib
         import numpy as np
         from FF8GameData.dat import weapongrip
         character = pose.character
-        prefix = "d%x" % character.com_id
-        folder = pathlib.Path(models_folder)
         report = {'name': character.name, 'grip': None, 'weapon': None, 'nb_pinned': 0,
                   'worst_before': 0.0, 'worst_after': {}, 'skipped': None}
-        bodies = [path for path in sorted(folder.glob(f"{prefix}c*.dat"))
-                  if self._model_bones(path) == character.body_bones]
-        weapons = [path for path in sorted(folder.glob(f"{prefix}w*.dat"))
-                   if self._model_bones(path) == character.weapon_bones]
-        if not bodies or not weapons:
-            report['skipped'] = f"no {prefix}c/{prefix}w model with its skeleton in {folder}"
+        models = self._pose_models(pose, models_folder)
+        if models['body'] is None or models['weapon'] is None:
+            report['skipped'] = models['skipped']
             return None, report
-        body = self._load_model(bodies[0])
-        best = None
-        weapon_models = []
-        for path in weapons:
-            weapon = self._load_model(path)
-            weapon_models.append((path.name, weapon))
-            grip = weapongrip.vanilla_grip(body, weapon)
-            if grip is not None and (best is None or grip.spread < best[0].spread):
-                best = (grip, path.name, weapon)
-        if best is None or best[0].spread > weapongrip.MAX_GRIP_SPREAD:
+        body, weapon_models = models['body'], models['weapon_models']
+        if models['grip'] is None or models['grip'].spread > weapongrip.MAX_GRIP_SPREAD:
             report['skipped'] = "no steady grip"
             return None, report
-        grip, report['weapon'], weapon = best
+        grip, report['weapon'], weapon = models['grip'], models['weapon_name'], models['weapon']
         report['grip'] = grip
 
         def section_of(block, model):

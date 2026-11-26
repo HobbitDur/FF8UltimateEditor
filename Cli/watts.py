@@ -182,7 +182,7 @@ def _print_grip_list(grip_list):
 def _cmd_convert_30fps(args) -> int:
     manager = _load_manager(args)
     try:
-        report = manager.convert_to_real30()
+        report = manager.convert_to_real30(models_folder=args.models)
         grip_list = manager.pin_weapon_grips(args.models) if args.models else []
     except ValueError as error:
         print(f"[error] not converted, nothing written: {error}", file=sys.stderr)
