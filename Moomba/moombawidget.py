@@ -13,6 +13,7 @@ from FF8GameData.gamedata import GameData
 from FF8GameData.menu.pagerender import PageRenderer, CANVAS_WIDTH, CANVAS_HEIGHT
 from Moomba.moombamanager import MoombaManager, MagPageEntry
 from SmallWidget.listsearchbar import ListSearchBar
+from SmallWidget.fitwidth import fit_list_width
 
 PREVIEW_SCALE = 2
 
@@ -369,6 +370,7 @@ class MoombaWidget(QWidget):
             self.page_list.clear()
             self.page_list.addItems([self.manager.get_entry_name(entry.entry_id)
                                      for entry in self.manager.entries])
+        fit_list_width(self.page_list)  # every page name shown in full
         self.page_search.select_first_match()  # Row 0, or the first match if a search is typed in
 
     def file_bindings(self):

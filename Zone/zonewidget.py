@@ -16,6 +16,7 @@ from FF8GameData.menu.magpage import (MagPageEntry, UNUSED_ID, VANILLA_PAPER_E1,
                                       paper_tile_vram)
 from FF8GameData.menu.magpicture import is_added_slot, pc_picture_file_name
 from SmallWidget.listsearchbar import ListSearchBar
+from SmallWidget.fitwidth import fit_combo, fit_combo_popup, fit_list_width
 from SmallWidget.valuecombo import ValueComboBox
 from Zone.zonemanager import (ZoneManager, TEXTURE_CATEGORIES, DUEL_MOVE_NAMES,
                               ANGELO_MOVE_NAMES, BOOK_TEXT_FIRST_RAW_FILE)
@@ -205,6 +206,7 @@ class ZoneWidget(QWidget):
         if index is None:
             return
         self.entry_list.addItem(f"{index}: {self.manager.entry_name(index)}")
+        fit_list_width(self.entry_list)
         self.entry_list.setCurrentRow(index)
         self._update_page_buttons()
         self._mark_edited()
@@ -379,6 +381,7 @@ class ZoneWidget(QWidget):
             "On PC only 30 slots have a picture (menu/mag00-19.TEX and mc00-09.TEX), plus the slots 185-255\n"
             "of the pictures added with FFNx's AddMorePictures; the page list shows those it can reach.")
         self.texture_category.currentIndexChanged.connect(self._texture_category_changed)
+        fit_combo(self.texture_category, 18)
         self.texture_page = ValueComboBox(fallback="no picture on PC")
         self.texture_page.setToolTip("The pictures this category reaches (page = slot - its first slot). A value\n"
                                      "kept from the file but showing no picture on PC is marked so.")
@@ -451,6 +454,9 @@ class ZoneWidget(QWidget):
         self.angelo_combo.addItem("None", UNUSED_ID)
         for move_id, name in enumerate(ANGELO_MOVE_NAMES):
             self.angelo_combo.addItem(f"{move_id}: {name}", move_id)
+        fit_combo(self.weapon_combo, 18)  # the names in full (the weapon list is refilled later)
+        fit_combo(self.duel_combo, 18)
+        fit_combo(self.angelo_combo, 18)
 
         self.weapon_spacing = self._spin8()
         self.weapon_list_x = self._spin16()
@@ -706,6 +712,7 @@ class ZoneWidget(QWidget):
         self.entry_list.clear()
         for index in range(len(self.manager.entries)):
             self.entry_list.addItem(f"{index}: {self.manager.entry_name(index)}")
+        fit_list_width(self.entry_list)  # every page name shown in full
         self._update_page_buttons()
         self.entry_search.select_first_match()  # Row 0, or the first match if a search is typed in
         self._autoload_complementary(file_name)
@@ -780,6 +787,7 @@ class ZoneWidget(QWidget):
         self._set_combo_data(self.weapon_combo, weapon_index,
                              f"{weapon_index}: (not in kernel.bin)")
         self.weapon_combo.setEnabled(bool(names))
+        fit_combo_popup(self.weapon_combo)
         self.weapon_combo.blockSignals(False)
         self.weapon_notice.setVisible(not names)
 

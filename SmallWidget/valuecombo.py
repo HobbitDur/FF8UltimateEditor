@@ -9,12 +9,15 @@ none of the choices (a modded file, a choice list not loaded yet) is still shown
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QComboBox
 
+from SmallWidget.fitwidth import fit_combo, fit_combo_popup
+
 
 class ValueComboBox(QComboBox):
     valueChanged = pyqtSignal(int)
 
-    def __init__(self, fallback="not in the list", parent=None):
+    def __init__(self, fallback="not in the list", parent=None, min_chars=16):
         QComboBox.__init__(self, parent)
+        fit_combo(self, min_chars)  # the names readable closed, and in full in the drop-down
         self._fallback = fallback
         self._choices = []          # [(value, label)]
         self._value = 0
@@ -39,6 +42,7 @@ class ValueComboBox(QComboBox):
                 index = self.findData(value)
                 if index >= 0:
                     self.setItemText(index, label)
+                    fit_combo_popup(self)
                 return
 
     def value(self):
@@ -70,6 +74,7 @@ class ValueComboBox(QComboBox):
             self.addItem(f"{self._value}: {self._fallback}", self._value)
         self.setCurrentIndex(self.findData(self._value))
         self.blockSignals(was_blocked)
+        fit_combo_popup(self)
 
     def _index_changed(self, index):
         if index < 0:
