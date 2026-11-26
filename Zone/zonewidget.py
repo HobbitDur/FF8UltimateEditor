@@ -293,6 +293,10 @@ class ZoneWidget(QWidget):
         for widget in self._form_widgets():
             if isinstance(widget, QSpinBox):
                 widget.valueChanged.connect(self._schedule_preview)
+            elif isinstance(widget, ValueComboBox):
+                # valueChanged, not currentIndexChanged: setValue (the sprite picker) changes the
+                # current item with its signals blocked, and announces the new value only through it
+                widget.valueChanged.connect(self._schedule_preview)
             elif isinstance(widget, QComboBox):
                 widget.currentIndexChanged.connect(self._schedule_preview)
             elif isinstance(widget, QCheckBox):
@@ -579,8 +583,9 @@ class ZoneWidget(QWidget):
             picture = tim.image if tim is not None else None
         sprites = self.manager.get_sp2_sprites() if self.manager.mngrp_loaded else None
         dialog = SpritePickerDialog(picture, sprites, current_id=id_spin.value(), parent=self)
-        if dialog.exec():
-            id_spin.setValue(dialog.selected_id())
+        if dialog.exec() and dialog.selected_id() != id_spin.value():
+            id_spin.setValue(dialog.selected_id())  # -> valueChanged: the preview redraws
+            self._mark_edited()  # the dirty tracking only hears the user's own clicks in the combo
 
     # --- the choice lists (filled from mngrp.bin: pictures, sprites, book text lines) ----------
 

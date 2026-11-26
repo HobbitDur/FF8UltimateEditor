@@ -1,13 +1,13 @@
 import os
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QCheckBox
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QComboBox
 
 from FF8GameData.menu.magpicture import (PC_PICTURE_FILES, is_added_slot, is_page_picture_tim, pc_picture_name,
                                          slot_picture)
 from Joker.jokermanager import Sp2File
 from Joker.sp2editorwidget import Sp2EditorWidget
-from SmallWidget.spritecanvas import SpriteCanvas
+from SmallWidget.spritecanvas import SpriteView
 
 
 class ShivaSpriteWidget(QWidget):
@@ -37,12 +37,12 @@ class ShivaSpriteWidget(QWidget):
         self.picture_combo.setToolTip("The page picture the sprites are drawn over: a sprite cuts from whatever\n"
                                       "picture its page shows, so any of them shows where the rectangles fall.")
         self.picture_combo.currentIndexChanged.connect(self._picture_changed)
-        self.canvas = SpriteCanvas()
-        self.canvas.picked.connect(self._canvas_picked)
-        self.show_all_check = QCheckBox("Show every sprite's outline")
-        self.show_all_check.setChecked(True)
-        self.show_all_check.toggled.connect(self._toggle_all)
-        self.info_label = QLabel("Click a rectangle to select its sprite in the editor.")
+        # The same view as Zone's sprite picker, with the picture choice in its header row
+        self.view = SpriteView()
+        self.view.add_header_widget(QLabel("Drawn over:"))
+        self.view.add_header_widget(self.picture_combo)
+        self.view.picked.connect(self._canvas_picked)
+        self.canvas = self.view.canvas
 
         # Every edit of the table redraws the view (the editor changes the Sp2File in place)
         editor = self.sp2_editor
@@ -52,25 +52,11 @@ class ShivaSpriteWidget(QWidget):
         for button in (editor.add_sprite_button, editor.add_quad_button, editor.remove_quad_button):
             button.clicked.connect(self._refresh_canvas)
 
-        picture_row = QHBoxLayout()
-        picture_row.addWidget(QLabel("Drawn over:"))
-        picture_row.addWidget(self.picture_combo)
-        picture_row.addSpacing(16)
-        picture_row.addWidget(self.show_all_check)
-        picture_row.addStretch(1)
-        view = QVBoxLayout()
-        view.setContentsMargins(0, 0, 0, 0)
-        view.addLayout(picture_row)
-        view.addWidget(self.canvas)
-        view.addWidget(self.info_label)
-        view_widget = QWidget()
-        view_widget.setLayout(view)
-
         # The view goes in the editor's own column, under the quad table (a sprite has a few quads:
         # the table needs only a few rows), instead of beside an editor left mostly empty
         editor.quad_table.setMaximumHeight(180)
         editor_layout = editor.editor_container.layout()
-        editor_layout.addWidget(view_widget)
+        editor_layout.addWidget(self.view)
         editor_layout.addStretch(1)
 
         main_layout = QHBoxLayout()
@@ -123,20 +109,14 @@ class ShivaSpriteWidget(QWidget):
         if slot is not None and self.manager is not None:
             tim_bytes = bytes(self.manager.mngrp.get_section_list()[slot].get_data_hex())
             picture, _origin = slot_picture(self.menu_folder, slot, tim_bytes)
-        self.canvas.set_picture(picture)
+        self.view.set_picture(picture)
 
     def _refresh_canvas(self, *_args):
-        self.canvas.set_sprites(self.sp2.sprites if self.sp2 else [])
         sprite = self.sp2_editor._selected_sprite()
         self.canvas.selected_id = sprite.sprite_id if sprite is not None else -1
-        self.canvas.update()
+        self.view.set_sprites(self.sp2.sprites if self.sp2 else [])
 
     def _canvas_picked(self, sprite_id):
-        """A rectangle clicked: select its sprite in the editor (its row is its id)."""
+        """A rectangle clicked: select its sprite in the editor (its row is its id), which redraws."""
         if self.sp2 and 0 <= sprite_id < len(self.sp2.sprites):
             self.sp2_editor.sprite_list.setCurrentRow(sprite_id)
-            self.info_label.setText(f"Sprite {sprite_id} selected.")
-
-    def _toggle_all(self, checked):
-        self.canvas.show_all = checked
-        self.canvas.update()

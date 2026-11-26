@@ -7,7 +7,7 @@ whatever picture the page shows, so the rectangles are drawn over a page picture
 """
 from PyQt6.QtCore import Qt, QRect, pyqtSignal
 from PyQt6.QtGui import QColor, QImage, QPainter, QPen, QPixmap
-from PyQt6.QtWidgets import QDialog, QWidget
+from PyQt6.QtWidgets import QCheckBox, QDialog, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 UNUSED_ID = 0xFF
 SCALE = 2
@@ -148,3 +148,92 @@ class SpriteCanvas(QWidget):
         window = self.window()
         if isinstance(window, QDialog) and self._sprite_under(event) >= 0:
             window.accept()
+
+
+class SpriteView(QWidget):
+    """The sprite view both Zone (its sprite picker) and Shiva (its Sprites tab) show: a header row
+    the host fills (Shiva puts its picture choice there), the picture with the sprites' rectangles,
+    the "every outline" switch, and a line naming the sprite under the mouse, else the selected one.
+
+    The host gives it the picture and the sprites, sets the selection with select(), and hears a
+    click through `picked` (it decides what a pick does: Zone's dialog keeps it, Shiva selects the
+    sprite in its editor)."""
+
+    picked = pyqtSignal(int)
+
+    def __init__(self, help_text="", parent=None):
+        QWidget.__init__(self, parent)
+        self.canvas = SpriteCanvas()
+        self.canvas.picked.connect(self.picked)
+        self.canvas.hovered.connect(self._show_hover)
+        self.show_all_check = QCheckBox("Show every sprite's outline")
+        self.show_all_check.setChecked(True)
+        self.show_all_check.toggled.connect(self._toggle_all)
+        self.info_label = QLabel()
+        self.info_label.setFixedWidth(PAGE_SIZE * SCALE)
+        self.info_label.setWordWrap(True)
+
+        self.header_layout = QHBoxLayout()  # the host's widgets, then the outline switch
+        self.header_layout.setContentsMargins(0, 0, 0, 0)
+        self.header_layout.addStretch(1)
+        self.header_layout.addWidget(self.show_all_check)
+
+        self.setMaximumWidth(PAGE_SIZE * SCALE)  # the header row stays over the picture in a wide host
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        if help_text:
+            help_label = QLabel(help_text)
+            help_label.setWordWrap(True)
+            help_label.setFixedWidth(PAGE_SIZE * SCALE)
+            layout.addWidget(help_label)
+        layout.addLayout(self.header_layout)
+        layout.addWidget(self.canvas)
+        layout.addWidget(self.info_label)
+
+    def add_header_widget(self, widget):
+        """Put a widget of the host's at the start of the header row (before the outline switch)."""
+        self.header_layout.insertWidget(self.header_layout.count() - 2, widget)
+
+    def set_picture(self, picture):
+        self.canvas.set_picture(picture)
+
+    def set_sprites(self, sprites):
+        self.canvas.set_sprites(sprites)
+        self._show_info(self.canvas.selected_id, "Selected")
+
+    def select(self, sprite_id):
+        """Highlight a sprite (UNUSED_ID or -1: none) and name it."""
+        self.canvas.selected_id = sprite_id
+        self.canvas.update()
+        self._show_info(sprite_id, "Selected")
+
+    def selected_id(self):
+        return self.canvas.selected_id
+
+    def sprite(self, sprite_id):
+        return self.canvas._sprite(sprite_id)
+
+    def _toggle_all(self, checked):
+        self.canvas.show_all = checked
+        self.canvas.update()
+
+    def _show_hover(self, sprite_id):
+        if sprite_id >= 0:
+            self._show_info(sprite_id, "Under the mouse")
+        else:
+            self._show_info(self.canvas.selected_id, "Selected")
+
+    def _show_info(self, sprite_id, what):
+        sprite = self.canvas._sprite(sprite_id)
+        if sprite is None:
+            if sprite_id == UNUSED_ID:
+                self.info_label.setText(f"{what}: none (the slot shows nothing)")
+            elif sprite_id < 0:
+                self.info_label.setText("Click a rectangle to pick its sprite; where several overlap, "
+                                        "the smallest is picked.")
+            else:
+                self.info_label.setText(f"{what}: sprite {sprite_id} (unused, or without quads)")
+            return
+        width, height = sprite_size(sprite)
+        rects = ", ".join(f"({x},{y}) {w}x{h}" for x, y, w, h in sprite_rects(sprite))
+        self.info_label.setText(f"{what}: sprite {sprite_id}, drawn {width}x{height}; cut from {rects}")

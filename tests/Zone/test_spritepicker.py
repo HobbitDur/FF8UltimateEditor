@@ -65,3 +65,36 @@ def test_zone_opens_the_picker_on_the_page_picture(qapp, monkeypatch):
     zone._pick_sprite(0)
     assert seen["picture"] is not None and seen["picture"].size == (256, 192)
     assert zone.pic_overlay_spins[0][2].value() == 3
+
+
+@pytest.mark.ff8data("extracted_files/menu/mmag.bin", "extracted_files/menu/mngrp.bin",
+                     "extracted_files/menu/mngrphd.bin")
+def test_a_sprite_picked_with_the_button_redraws_the_preview_and_marks_the_page_edited(qapp, monkeypatch):
+    """The picker sets the slot's id from code: the preview must still redraw (it once only heard
+    the combo's own index changes) and the page count as edited."""
+    from Zone import zonewidget
+    from Zone.zonewidget import ZoneWidget
+    zone = ZoneWidget()
+    zone._load_mmag(str(MENU_DIR / "mmag.bin"))
+    zone._apply_mngrp(str(MENU_DIR / "mngrp.bin"))
+    zone.select_entry(8)
+    marks = []
+    monkeypatch.setattr(zone, "_mark_edited", lambda: marks.append(1))
+    redraws = []
+    zone._preview_timer.timeout.disconnect()
+    zone._preview_timer.timeout.connect(lambda: redraws.append(1))
+
+    class FakeDialog:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def exec(self):
+            return True
+
+        def selected_id(self):
+            return 3
+
+    monkeypatch.setattr(zonewidget, "SpritePickerDialog", FakeDialog)
+    zone._pick_sprite(0)
+    assert zone._preview_timer.isActive() or redraws  # the redraw is scheduled
+    assert marks
