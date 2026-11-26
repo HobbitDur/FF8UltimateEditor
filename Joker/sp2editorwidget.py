@@ -96,10 +96,16 @@ class Sp2EditorWidget(QWidget):
         self.editor_container.setLayout(editor_layout)
         self.editor_container.setEnabled(False)
 
+        # The list column keeps the list's width (the search bar and the button would stretch it)
+        sprite_column = QWidget()
+        sprite_list_layout.setContentsMargins(0, 0, 0, 0)
+        sprite_column.setLayout(sprite_list_layout)
+        sprite_column.setFixedWidth(self.sprite_list.width())
+
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addLayout(sprite_list_layout)
-        main_layout.addWidget(self.editor_container)
+        main_layout.addWidget(sprite_column)
+        main_layout.addWidget(self.editor_container, 1)
         self.setLayout(main_layout)
 
     def set_sp2(self, sp2, select_row=0):

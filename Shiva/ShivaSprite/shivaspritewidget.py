@@ -54,18 +54,27 @@ class ShivaSpriteWidget(QWidget):
         picture_row = QHBoxLayout()
         picture_row.addWidget(QLabel("Drawn over:"))
         picture_row.addWidget(self.picture_combo)
+        picture_row.addSpacing(16)
+        picture_row.addWidget(self.show_all_check)
         picture_row.addStretch(1)
         view = QVBoxLayout()
+        view.setContentsMargins(0, 0, 0, 0)
         view.addLayout(picture_row)
         view.addWidget(self.canvas)
-        view.addWidget(self.show_all_check)
         view.addWidget(self.info_label)
-        view.addStretch(1)
+        view_widget = QWidget()
+        view_widget.setLayout(view)
+
+        # The view goes in the editor's own column, under the quad table (a sprite has a few quads:
+        # the table needs only a few rows), instead of beside an editor left mostly empty
+        editor.quad_table.setMaximumHeight(180)
+        editor_layout = editor.editor_container.layout()
+        editor_layout.addWidget(view_widget)
+        editor_layout.addStretch(1)
 
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(self.sp2_editor, 1)
-        main_layout.addLayout(view)
+        main_layout.addWidget(self.sp2_editor)
         self.setLayout(main_layout)
 
     def load_from_mngrp(self, manager):
