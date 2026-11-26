@@ -39,7 +39,7 @@ def test_vietnamese_table_is_the_latin_one_with_the_patch_letters(game_data):
 
 
 def test_vietnamese_table_has_the_capitals_ff8_ilp_draws(game_data):
-    """FF8 ILP 2.0 draws the opening quote and 27 capitals with marks in cells the patch left unused,
+    """FF8 ILP 1.10 draws the opening quote and 27 capitals with marks in cells the patch left unused,
     among them its second ớ (0xca) and ộ (0xcb): those two letters are written at 0x37 and 0x9b only."""
     from FF8GameData.GenericSection.ff8text import FF8Text
     game_data.set_character_table("vietnamese")
