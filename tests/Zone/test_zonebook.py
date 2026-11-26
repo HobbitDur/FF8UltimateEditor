@@ -124,3 +124,85 @@ def test_the_tool_save_writes_the_book_edits(menu):
 
     assert tabs.save_files() is True
     assert _reloaded(zone.manager, menu).get_book_texts(0)[text_id] == "Saved through the tool"
+
+
+def test_new_pictures_take_the_slots_after_the_last_used_one(manager, menu):
+    """Add new picture: slot 206 then 207 (after mngrp.bin's last section, so nothing moves), the
+    TIM in mngrp.bin and menu/magNNN.TEX written with the default header when no vanilla .TEX
+    sits in the folder."""
+    (menu / "mag00.TEX").unlink()  # like a mod's menu folder: no vanilla picture to copy
+    first = manager.add_picture(Image.new("RGBA", (256, 192), (250, 10, 120, 255)))
+    second = manager.add_picture(Image.new("RGBA", (256, 192), (0, 0, 255, 255)))
+    assert (first, second) == (206, 207)
+    assert decode_tim(manager.get_raw_file(first)).image_x == 896  # previewed before the save
+
+    assert manager.save_mngrp() == []
+    reloaded = _reloaded(manager, menu)
+    assert reloaded.has_slot(206) and reloaded.has_slot(207) and not reloaded.has_slot(208)
+    image, origin = reloaded.picture(206)
+    assert origin == "menu/mag206.TEX" and image.getpixel((3, 3)) == (250, 10, 120, 255)
+    assert reloaded.get_book_texts(0) == manager.get_book_texts(0)  # the sections before did not move
+
+
+def test_a_file_with_added_slots_loads_in_every_mngrp_tool(manager, menu):
+    from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
+    manager.add_picture(Image.new("RGBA", (256, 192), (1, 2, 3, 255)))
+    manager.save_mngrp()
+    game_data = GameData(str(PROJECT_ROOT / "FF8GameData"))
+    game_data.load_all()
+    model = MngrpManager(game_data)
+    model.load_file(str(menu / "mngrphd.bin"), str(menu / "mngrp.bin"))
+    assert model.last_used_slot() == 206
+    with pytest.raises(ValueError):
+        model.add_raw_section(185, b"\x00")  # before the last used slot: it would move the others
+
+
+def test_widget_adds_a_picture_and_points_the_page_at_it(menu):
+    QApplication.instance() or QApplication(sys.argv)
+    from Zone.zonewidget import ZoneWidget, DIRECT_TEXTURE_CATEGORY
+    zone = ZoneWidget()
+    zone._load_mmag(str(menu / "mmag.bin"))
+    zone._apply_mngrp(str(menu / "mngrp.bin"))
+    zone.select_entry(0)
+    zone.add_page_button.click()
+    png = menu / "new.png"
+    Image.new("RGBA", (256, 192), (40, 200, 90, 255)).save(png)
+
+    slot = zone.add_picture_from_file(str(png))
+    assert slot == 206
+    assert zone.texture_category.currentData() == DIRECT_TEXTURE_CATEGORY and zone.texture_page.value() == 206
+    assert "mag206.TEX" in zone.texture_label.text()
+    zone.save_files()
+    reloaded = ZoneManager(zone.manager.game_data)
+    reloaded.load_file(str(menu / "mmag.bin"))
+    page = reloaded.entries[ZoneManager.VANILLA_ENTRY_COUNT]
+    assert (page.texture_category, page.texture_page) == (DIRECT_TEXTURE_CATEGORY, 206)
+    assert (menu / "mag206.TEX").exists()
+
+
+def test_raw_numbers_are_offered_as_named_choices(menu):
+    """The text file, the page picture and the overlay ids are picked by name, not typed."""
+    QApplication.instance() or QApplication(sys.argv)
+    from Zone.zonewidget import ZoneWidget
+    zone = ZoneWidget()
+    zone._load_mmag(str(menu / "mmag.bin"))
+    zone._apply_mngrp(str(menu / "mngrp.bin"))
+    zone.select_entry(2)  # Weapons Monthly 1st Issue 3/4
+
+    assert zone.text_file.currentText().startswith("0: Book text")
+    pages = [zone.texture_page.itemText(i) for i in range(zone.texture_page.count())]
+    assert "2: mag02.TEX" in pages  # the category's other issues
+    assert zone.texture_page.currentText() == "0: mag00.TEX"  # the 4 pages of the 1st issue share mag00
+    _x, _y, sprite_id, _none = zone.pic_overlay_spins[0]
+    assert sprite_id.currentText().split(":")[0] == str(sprite_id.value())
+    assert "x" in sprite_id.currentText()  # the sprite's size
+    _x, _y, line_id, editor = zone.text_overlay_spins[0]
+    assert line_id.currentText().startswith(f"{line_id.value()}: Weapons Monthly")
+
+    # Picking another line by its name shows it in the editor
+    line_id.setCurrentIndex(line_id.findData(2))
+    assert editor.toPlainText().startswith("Of all gunblades")
+    # Editing a line renames it in every overlay's list
+    editor.setPlainText("Renamed line")
+    _x, _y, other_line_id, _editor = zone.text_overlay_spins[1]
+    assert other_line_id.itemText(other_line_id.findData(2)) == "2: Renamed line"

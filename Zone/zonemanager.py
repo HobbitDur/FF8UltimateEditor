@@ -5,9 +5,10 @@ from FF8GameData.gamedata import GameData
 # so both the Zone (mmag.bin) and Moomba (mmag2.bin) editors build on them.
 from FF8GameData.menu.magpage import MagPageEntry, OverlaySlot, UNUSED_ID
 from FF8GameData.menu.magpagemanager import TEXTURE_CATEGORIES, MagPageManager
-from FF8GameData.menu.magpicture import (PC_PICTURE_FILES, pc_picture_file_name, picture_from_indices,
-                                         quantize_picture, replace_picture_tim, slot_picture,
-                                         write_picture_tex)
+from FF8GameData.menu.magpicture import (ADDED_FIRST_SLOT, ADDED_LAST_SLOT, PC_PICTURE_FILES, TEMPLATE_SLOT,
+                                         encode_picture_tim, is_added_slot, pc_picture_file_name,
+                                         picture_from_indices, quantize_picture, replace_picture_tim,
+                                         slot_picture, write_picture_tex)
 from FF8GameData.menu.mngrp.string.sectionstring import SectionString
 from FF8GameData.menu.mngrp.tkmnmes.sectiontkmnmes import SectionTkmnmes
 
@@ -205,15 +206,49 @@ class ZoneManager(MagPageManager):
     def to_editor_text(text):
         return text.replace("\\n", "\n")
 
+    def has_slot(self, raw_file):
+        """Whether mngrp.bin holds something in that raw slot (an added picture not saved yet too)."""
+        if self.mngrp_model is None:
+            return False
+        entries = self.mngrp_model.mngrphd.get_entry_list()
+        return 0 <= raw_file < len(entries) and not entries[raw_file].invalid_value
+
     def can_replace_picture(self, raw_file):
-        return self.mngrp_model is not None and pc_picture_file_name(raw_file) is not None
+        """A picture the PC game shows: one of its 30, or an added one (FFNx's AddMorePictures)."""
+        if raw_file in PC_PICTURE_FILES:
+            return self.mngrp_model is not None
+        return is_added_slot(raw_file) and self.has_slot(raw_file)
+
+    def free_picture_slots(self):
+        """The slots a new picture can take: empty, past the game's pictures and after every slot
+        mngrp.bin uses, so no other section moves."""
+        if self.mngrp_model is None:
+            return []
+        return [slot for slot in self.mngrp_model.free_slots_after(ADDED_FIRST_SLOT) if slot <= ADDED_LAST_SLOT]
+
+    def add_picture(self, image):
+        """Add a new picture (256x192) in the first free slot, its TIM in mngrp.bin now and its
+        menu/magNNN.TEX at save_mngrp; returns the slot. In game it needs FFNx's AddMorePictures.
+        Raises ValueError when no slot is free or the image cannot be a page picture."""
+        free = self.free_picture_slots()
+        if not free:
+            raise ValueError(f"mngrp.bin has no free slot left for a picture (slots {ADDED_FIRST_SLOT}-"
+                             f"{ADDED_LAST_SLOT} after the last one it uses)")
+        palette, indices = quantize_picture(image)
+        template = bytes(self.mngrp_model.mngrp.get_section_list()[TEMPLATE_SLOT].get_data_hex())
+        tim = encode_picture_tim(palette, indices, template)
+        slot = free[0]
+        self.mngrp_model.add_raw_section(slot, tim)
+        self._pictures[slot] = (palette, indices, tim)
+        self.mngrp_edited = True
+        return slot
 
     def replace_picture(self, raw_file, image):
         """Replace the picture of slot `raw_file` (one the PC game shows) with a 256x192 image: the
         mngrp copy now, the .TEX at save_mngrp. Raises ValueError for a slot or image that cannot be."""
         if not self.can_replace_picture(raw_file):
-            raise ValueError(f"mngrp slot {raw_file} has no picture on PC: only "
-                             f"{len(PC_PICTURE_FILES)} slots do (mag00-19.TEX, mc00-09.TEX)")
+            raise ValueError(f"mngrp slot {raw_file} has no picture on PC: the game's are mag00-19.TEX "
+                             f"and mc00-09.TEX, an added one is made with Add new picture")
         palette, indices = quantize_picture(image)
         tim = replace_picture_tim(self.mngrp_model, raw_file, palette, indices)
         self._pictures[raw_file] = (palette, indices, tim)

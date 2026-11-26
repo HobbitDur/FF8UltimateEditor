@@ -148,9 +148,16 @@ A magazine is an item of type *Magazine* whose two parameters are its first and 
   - Each text overlay's line is edited in place, and **New line** adds one to the book text at the
     next id (256 per section). The Item menu always reads the book text, whatever the page's text
     file index. A line shown by several pages changes on all of them.
-  - **Replace picture from PNG** (256x192): on PC a page can only show one of 30 pictures, the menu
-    textures `mag00-19.TEX` and `mc00-09.TEX`, picked by its mngrp slot (shown next to the page
+  - **Replace picture from PNG** (256x192): the game alone shows 30 pictures, the menu textures
+    `mag00-19.TEX` and `mc00-09.TEX`, picked by the page's mngrp slot (shown next to the page
     texture). Every page on that slot, the game's own included, shows the new picture.
+  - **Add new picture from PNG** (256x192): a picture of its own, in the next free mngrp slot after
+    the last one it uses (206-255), and the page pointed at it. Save writes its TIM in `mngrp.bin` and
+    `menu/magNNN.TEX`, which a Junction VIII mod ships in its `direct/menu/` folder. In game it needs
+    FFNx with AddMorePictures (julianxhokaxhiu/FFNx#1111, draft).
+  - The text file, the page picture and the overlay ids are picked from lists: the pictures the
+    category reaches, the sprites with their size (the size a picture has on the page: sprites are
+    drawn 1:1, their rectangles are edited in Shiva, *Sprites*), the book text lines with their start.
   - Save writes `mmag.bin`, and `mngrp.bin` + the replaced `.TEX` only when a line or a picture
     changed. Another editor of `mngrp.bin` (Shiva, ShumiTranslator) has to Reload before saving.
 - The same `mngrp.bin` edits are also in **ShumiTranslator** (**+ Add entry** on *Book text*) and

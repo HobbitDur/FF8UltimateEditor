@@ -12,14 +12,24 @@ from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.magpage import MagPageEntry, UNUSED_ID
-from FF8GameData.menu.magpicture import pc_picture_file_name
+from FF8GameData.menu.magpicture import is_added_slot, pc_picture_file_name
 from SmallWidget.listsearchbar import ListSearchBar
+from SmallWidget.valuecombo import ValueComboBox
 from Zone.zonemanager import (ZoneManager, TEXTURE_CATEGORIES, DUEL_MOVE_NAMES,
                               ANGELO_MOVE_NAMES, BOOK_TEXT_FIRST_RAW_FILE)
 from Zone.zonerender import (PageRenderer, BUTTON_STYLE_BOXES, BUTTON_STYLE_ICONS,
                              CANVAS_WIDTH, CANVAS_HEIGHT)
 
 PREVIEW_SCALE = 2
+
+# The book text a page's text overlays read (mngrp raw file 87 + this). The Item menu's magazines
+# always read 87, whatever the page says; the tutorial books read theirs.
+BOOK_TEXT_FILES = [
+    (0, "0: Book text (raw 87, the magazines)"),
+    (1, "1: Battle tutorial (raw 88)"),
+    (2, "2: Card rules and icons (raw 89)"),
+    (3, "3: Chocobo World tutorial (raw 90)"),
+]
 
 # Menu_Magazine_LoadPageTexture adds a base slot only for the categories 0-6: any other value is
 # "the page number is the slot". 7 is the first such value.
@@ -115,7 +125,7 @@ class ZoneWidget(QWidget):
         self.editor_container = QWidget()
         editor_layout = QHBoxLayout()
         editor_layout.addWidget(self.entry_search.column)
-        editor_layout.addWidget(scroll)
+        editor_layout.addWidget(scroll, 1)  # the form takes the spare width: the preview has a fixed size
         editor_layout.addWidget(self._build_preview_group())
         self.editor_container.setLayout(editor_layout)
         self.editor_container.setEnabled(False)
@@ -318,8 +328,9 @@ class ZoneWidget(QWidget):
         self.paper_b = self._spin8(hex_display=True)
         self.paper_b.setToolTip("PS1 GPU E2 primitive bits (texture window) of the paper background")
 
-        self.text_file = self._spin8()
-        self.text_file.valueChanged.connect(self._update_resolved_labels)
+        self.text_file = ValueComboBox(fallback="another mngrp.bin string section")
+        self.text_file.set_choices(BOOK_TEXT_FILES)
+        self.text_file.valueChanged.connect(self._text_file_changed)
         self.text_file_label = QLabel()
 
         self.texture_category = QComboBox()
@@ -330,10 +341,12 @@ class ZoneWidget(QWidget):
                                       DIRECT_TEXTURE_CATEGORY)
         self.texture_category.setToolTip(
             "Which picture the page shows: a mngrp.bin slot, the category's first slot + the page.\n"
-            "On PC only 30 slots have a picture (menu/mag00-19.TEX and mc00-09.TEX, shown next to it);\n"
-            "a page on any other slot shows no picture. Shiva's \"Magazine pictures\" tab replaces them.")
-        self.texture_category.currentIndexChanged.connect(self._update_resolved_labels)
-        self.texture_page = self._spin8()
+            "On PC only 30 slots have a picture (menu/mag00-19.TEX and mc00-09.TEX), plus the slots 185-255\n"
+            "of the pictures added with FFNx's AddMorePictures; the page list shows those it can reach.")
+        self.texture_category.currentIndexChanged.connect(self._texture_category_changed)
+        self.texture_page = ValueComboBox(fallback="no picture on PC")
+        self.texture_page.setToolTip("The pictures this category reaches (page = slot - its first slot). A value\n"
+                                     "kept from the file but showing no picture on PC is marked so.")
         self.texture_page.valueChanged.connect(self._update_resolved_labels)
         self.texture_label = QLabel()
 
@@ -370,7 +383,14 @@ class ZoneWidget(QWidget):
         self.replace_picture_button.clicked.connect(self._replace_picture)
         self.export_picture_button = QPushButton("Export picture...")
         self.export_picture_button.clicked.connect(self._export_picture)
+        self.add_picture_button = QPushButton("Add new picture from PNG...")
+        self.add_picture_button.setToolTip(
+            "Add a picture of its own for this page (256x192), in the next free mngrp.bin slot (206-255),\n"
+            "and point the page at it. Save writes its menu/magNNN.TEX and its copy in mngrp.bin.\n"
+            "In game it needs FFNx with AddMorePictures: the game alone only shows its 30 pictures.")
+        self.add_picture_button.clicked.connect(self._add_picture)
         picture_layout = QHBoxLayout()
+        picture_layout.addWidget(self.add_picture_button)
         picture_layout.addWidget(self.replace_picture_button)
         picture_layout.addWidget(self.export_picture_button)
         picture_layout.addStretch(1)
@@ -450,7 +470,13 @@ class ZoneWidget(QWidget):
             row = row_start + slot * (2 if with_preview else 1)
             x_spin = self._spin16()
             y_spin = self._spin8()
-            id_spin = self._spin8()
+            # The id picks a sprite of the picture (its size shown) or a book text line (its start)
+            id_spin = ValueComboBox(fallback="no such line" if with_preview else "no such sprite")
+            id_spin.setMinimumWidth(170)
+            id_spin.set_choices([(UNUSED_ID, f"{UNUSED_ID}: unused")])
+            id_spin.setToolTip("A book text line of the page's text file: its id and its start" if with_preview else
+                               "A sprite of the SP2 table (Shiva, Sprites): a rectangle cropped out of the page's\n"
+                               "picture, its id and its size. The size is the sprite's, not the page's: drawn 1:1.")
             layout.addWidget(QLabel(f"Slot {slot + 1}"), row, 0)
             layout.addWidget(QLabel("X"), row, 1)
             layout.addWidget(x_spin, row, 2)
@@ -478,6 +504,63 @@ class ZoneWidget(QWidget):
                 id_spin.valueChanged.connect(self._update_resolved_labels)
             spins.append((x_spin, y_spin, id_spin, preview))
         return spins
+
+    # --- the choice lists (filled from mngrp.bin: pictures, sprites, book text lines) ----------
+
+    def _text_file_changed(self, _value):
+        self._refresh_text_choices()
+        self._update_resolved_labels()
+
+    def _texture_category_changed(self, _index):
+        self._refresh_page_choices()
+        self._update_resolved_labels()
+
+    def _refresh_choices(self):
+        self._refresh_page_choices()
+        self._refresh_sprite_choices()
+        self._refresh_text_choices()
+
+    def _refresh_page_choices(self):
+        """The pages this category reaches that show a picture on PC: page = slot - its first slot."""
+        category = self.texture_category.currentData()
+        base = TEXTURE_CATEGORIES[category][1] if category in TEXTURE_CATEGORIES else 0
+        choices = []
+        for page in range(256):
+            slot = base + page
+            if slot > 255:
+                break
+            name = pc_picture_file_name(slot)
+            if name is None or (is_added_slot(slot) and not self.manager.has_slot(slot)):
+                continue
+            added = " (added)" if is_added_slot(slot) else ""
+            label = f"{page}: {name}{added}" if category in TEXTURE_CATEGORIES else f"{slot}: {name}{added}"
+            choices.append((page, label))
+        self.texture_page.set_choices(choices)
+
+    def _refresh_sprite_choices(self):
+        choices = [(UNUSED_ID, f"{UNUSED_ID}: unused")]
+        sprites = self.manager.get_sp2_sprites() if self.manager.mngrp_loaded else None
+        for sprite in sprites or []:
+            if not sprite.used or not sprite.quads or sprite.sprite_id == UNUSED_ID:
+                continue
+            width = max(q.dx + q.width for q in sprite.quads) - min(q.dx for q in sprite.quads)
+            height = max(q.dy + q.height for q in sprite.quads) - min(q.dy for q in sprite.quads)
+            choices.append((sprite.sprite_id, f"{sprite.sprite_id}: {width}x{height}"))
+        for _x_spin, _y_spin, id_spin, _preview in self.pic_overlay_spins:
+            id_spin.set_choices(choices)
+
+    @staticmethod
+    def _line_label(text_id, text):
+        text = " ".join(text.replace("\\n", " / ").split()) or "(empty)"  # the titles pad with spaces
+        return f"{text_id}: {text[:36] + '...' if len(text) > 36 else text}"
+
+    def _refresh_text_choices(self):
+        texts = self.manager.get_book_texts(self.text_file.value()) if self.manager.mngrp_loaded else []
+        choices = [(UNUSED_ID, f"{UNUSED_ID}: unused")]
+        choices += [(text_id, self._line_label(text_id, text)) for text_id, text in enumerate(texts)
+                    if text_id != UNUSED_ID]
+        for _x_spin, _y_spin, id_spin, _preview in self.text_overlay_spins:
+            id_spin.set_choices(choices)
 
     def _picture_slot(self):
         category = self.texture_category.currentData()
@@ -507,6 +590,31 @@ class ZoneWidget(QWidget):
         self._schedule_preview()
         return True
 
+    def _add_picture(self):
+        path, _ = QFileDialog.getOpenFileName(self, "New picture for this page", "", "Images (*.png *.bmp)")
+        if path:
+            self.add_picture_from_file(path)
+
+    def add_picture_from_file(self, path):
+        """Add a new picture from an image file and show it on the selected page. Its slot, None
+        (with a message) when it cannot be added."""
+        from PIL import Image
+        try:
+            with Image.open(path) as image:
+                slot = self.manager.add_picture(image)
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Zone - new picture", f"Cannot add {os.path.basename(path)}:\n{error}")
+            return None
+        if self.renderer is not None:
+            self.renderer._tim_cache.pop(slot, None)
+        self._set_combo_data(self.texture_category, DIRECT_TEXTURE_CATEGORY, "")
+        self._refresh_page_choices()  # the new picture is one of them now
+        self.texture_page.setValue(slot)  # -> the labels and the preview follow
+        self._mark_edited()
+        self._update_resolved_labels()
+        self._schedule_preview()
+        return slot
+
     def _export_picture(self):
         raw_file = self._picture_slot()
         image, _origin = self.manager.picture(raw_file)
@@ -524,6 +632,9 @@ class ZoneWidget(QWidget):
         if text_id == UNUSED_ID or not self.manager.mngrp_loaded:
             return
         if self.manager.set_book_text(text_id, editor.toPlainText(), self.text_file.value()):
+            label = self._line_label(text_id, self.manager.to_game_text(editor.toPlainText()))
+            for _x, _y, other_id_spin, _editor in self.text_overlay_spins:
+                other_id_spin.set_label(text_id, label)
             self._mark_edited()
             self._schedule_preview()
 
@@ -535,6 +646,7 @@ class ZoneWidget(QWidget):
                                 "256 lines the pages can point at.")
             return
         self._mark_edited()
+        self._refresh_text_choices()  # the new line is one of them now
         _x_spin, _y_spin, id_spin, editor = self.text_overlay_spins[slot]
         id_spin.setValue(text_id)  # -> the labels and the preview follow
         editor.setFocus()
@@ -582,6 +694,7 @@ class ZoneWidget(QWidget):
             return
         self.renderer = PageRenderer(self.manager, menu_folder=os.path.dirname(file_name),
                                      button_icon_style=self.button_icon_combo.currentData())
+        self._refresh_choices()
         self._update_resolved_labels()
         self._refresh_preview()
 
@@ -653,6 +766,7 @@ class ZoneWidget(QWidget):
             self.renderer._tim_cache.clear()  # the pictures are read again from the saved file
         if problems:
             QMessageBox.warning(self, "Zone - mngrp.bin saved", "\n".join(problems))
+        self._refresh_choices()
         self._refresh_other_mngrp_users()
 
     def _refresh_other_mngrp_users(self):
@@ -739,8 +853,10 @@ class ZoneWidget(QWidget):
         self.paper_a.setValue(entry.paper_e1)
         self.paper_b.setValue(entry.paper_e2)
         self.text_file.setValue(entry.text_file_index)
+        self._refresh_text_choices()  # the lines of this page's text file
         self._set_combo_data(self.texture_category, entry.texture_category,
                              f"{entry.texture_category}: Direct raw file")
+        self._refresh_page_choices()  # the pictures of this page's category
         self.texture_page.setValue(entry.texture_page)
         self.footer_flag.setChecked(bool(entry.footer_flag))
         self._fill_weapon_combo(entry.weapon_index)
@@ -820,7 +936,15 @@ class ZoneWidget(QWidget):
         else:
             raw_file = self.texture_page.value()
         pc_file = pc_picture_file_name(raw_file)
-        if pc_file:
+        if pc_file and is_added_slot(raw_file) and not self.manager.has_slot(raw_file):
+            self.texture_label.setText(f"= mngrp raw file {raw_file}: empty slot, no picture (Add new picture "
+                                       f"fills the next free one)")
+            self.texture_label.setStyleSheet("color: #c06000;")
+        elif pc_file and is_added_slot(raw_file):
+            self.texture_label.setText(f"= mngrp raw file {raw_file}, in game (PC, FFNx with AddMorePictures): "
+                                       f"menu/{pc_file}")
+            self.texture_label.setStyleSheet("")
+        elif pc_file:
             self.texture_label.setText(f"= mngrp raw file {raw_file}, in game (PC): menu/{pc_file}")
             self.texture_label.setStyleSheet("")
         else:
@@ -830,7 +954,9 @@ class ZoneWidget(QWidget):
 
         can_replace = self.manager.can_replace_picture(raw_file)
         self.replace_picture_button.setEnabled(can_replace)
-        self.export_picture_button.setEnabled(self.manager.mngrp_loaded and pc_file is not None)
+        self.export_picture_button.setEnabled(self.manager.mngrp_loaded and pc_file is not None
+                                              and (not is_added_slot(raw_file) or self.manager.has_slot(raw_file)))
+        self.add_picture_button.setEnabled(bool(self.manager.free_picture_slots()))
         for button in self.new_line_buttons:
             button.setEnabled(self.manager.mngrp_loaded)
 

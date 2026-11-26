@@ -66,8 +66,10 @@ def test_picture_file_the_pc_game_shows(manager):
     assert manager.pc_picture_file(manager.entries[5]) == "mag02.TEX"  # Weapons Monthly base 28 + 2
     direct = MagPageEntry()
     direct.texture_category = 7
-    direct.texture_page = 206
+    direct.texture_page = 100  # a slot neither the game nor AddMorePictures shows
     assert manager.pc_picture_file(direct) is None
+    direct.texture_page = 206  # an added one: FFNx's AddMorePictures
+    assert manager.pc_picture_file(direct) == "mag206.TEX"
 
 
 def test_widget_buttons_add_and_remove_pages(mmag_path):

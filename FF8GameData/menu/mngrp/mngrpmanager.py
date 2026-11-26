@@ -90,6 +90,8 @@ class MngrpManager:
             if self.mngrphd.get_entry_list()[index].invalid_value:  # If it's a non-existent section, ignore it
                 continue
             section_id = section_mngrp.id
+            if section_id >= len(self.game_data.mngrp_data_json["sections"]):
+                continue  # A slot a mod added after the game's (a picture): kept as plain data
             section_data_type = self.game_data.mngrp_data_json["sections"][section_id]["data_type"]
             section_name = self.game_data.mngrp_data_json["sections"][section_id]["section_name"]
             section_offset_value = section_mngrp.own_offset
@@ -148,6 +150,33 @@ class MngrpManager:
             if new_section:
                 self.mngrp.set_section_by_id(section_id, new_section)
         self._as_loaded = (loaded_bytes, self._encode_sections())
+
+    def last_used_slot(self):
+        """The last raw slot of mngrphd.bin holding a section (205 in the game's mngrp.bin)."""
+        return max(slot for slot, entry in enumerate(self.mngrphd.get_entry_list()) if not entry.invalid_value)
+
+    def free_slots_after(self, first_slot=0):
+        """The empty raw slots after the last used one, from `first_slot` on: filling one moves no
+        other section, so the tools still find every section by its place."""
+        start = max(first_slot, self.last_used_slot() + 1)
+        return list(range(start, len(self.mngrphd.get_entry_list())))
+
+    def add_raw_section(self, slot, data):
+        """Put `data` in an empty raw slot after the last used one (see free_slots_after), as a plain
+        section written at the end of mngrp.bin. Raises ValueError for any other slot."""
+        if slot not in self.free_slots_after():
+            raise ValueError(f"mngrp.bin slot {slot} is not an empty slot after the last used one "
+                             f"({self.last_used_slot()})")
+        sections = self.mngrp.get_section_list()
+        # Mngrp keeps the entry list it was built with; mngrphd.bin's is rebuilt by every save
+        for entry_list in {id(self.mngrp.header_entry_list): self.mngrp.header_entry_list,
+                           id(self.mngrphd.get_entry_list()): self.mngrphd.get_entry_list()}.values():
+            entry_list[slot].invalid_value = False
+            entry_list[slot].seek = 0
+            entry_list[slot].size = len(data)
+        next_id = max(section.id for section in sections) + 1
+        sections[slot] = Section(game_data=self.game_data, data_hex=bytearray(data), id=next_id, own_offset=0,
+                                 name=f"Added slot {slot}")
 
     def _encode_sections(self):
         """Every section encoded from its current content, as the save would write it.

@@ -9,7 +9,11 @@ folder through a hard-coded switch - slot 28 is menu/mag00.TEX, slot 24 menu/mag
 * a page can only show one of the PC_PICTURE_FILES pictures in game: a slot outside the list
   (an empty mngrp slot included) is never uploaded, and its page shows no picture;
 * a new picture for a new book replaces one of those files (and the mngrp copy, which the editor
-  previews and the PSX path reads).
+  previews and the PSX path reads);
+* or, with FFNx's AddMorePictures, it is a new one: a page on slot 185-255 shows
+  menu/magNNN.TEX (NNN = the slot) when the mod provides that file. The slot must hold a TIM in
+  mngrp.bin too: the game takes the picture's VRAM placement from its header. The tools add them
+  after the last slot mngrp.bin uses (206 in the game's), so the slots before keep their places.
 
 The .TEX copy is 256x256: the picture, then 64 rows of index 0. Index 0 of both palettes is
 transparent black, the other 255 colours are opaque - the layout every vanilla picture has, and
@@ -38,13 +42,44 @@ PC_PICTURE_FILES = {
     180: "mag15", 181: "mag16", 182: "mag17", 183: "mag18", 184: "mag19",
 }
 
+# FFNx's AddMorePictures: slots past the game's switches show menu/magNNN.TEX
+ADDED_FIRST_SLOT = 185
+ADDED_LAST_SLOT = 255
+
+# A carrier slot whose TIM header places a picture like every page picture (VRAM (896, 0), CLUT
+# (512, 218)): an added picture's TIM is built on it.
+TEMPLATE_SLOT = 28
+
+# The header of a page picture .TEX (mag00.TEX's, the two runtime pointers it keeps at 0x60 and
+# 0xD8 zeroed): 1 palette of 256 colours, 8 bpp, 256x256, colour key on, placed like the TIM.
+DEFAULT_TEX_HEADER = bytes.fromhex(
+    "020000000000000001000000000000000700000004000000080000000000000008000000080000002000000000000000"
+    "010000000001000008000000000100000001000000000000000000000100000008000000000000000001000000010000"
+    "000000000800000001000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    "00000000ff00000004000000000000000000000000000000000000000000000000020000da0000008003000000000000")
+
 Color = Tuple[int, int, int]
 
 
+def is_added_slot(raw_file: int) -> bool:
+    return ADDED_FIRST_SLOT <= raw_file <= ADDED_LAST_SLOT
+
+
 def pc_picture_name(raw_file: int) -> Optional[str]:
-    """The menu texture ("mag00"...) the PC game shows for a page picture slot, None for a slot
-    it never uploads."""
+    """The menu texture ("mag00"...) the PC game shows for a page picture slot: one of the game's
+    30, or magNNN for a slot 185-255 (with FFNx's AddMorePictures). None for a slot it never
+    uploads."""
+    if is_added_slot(raw_file):
+        return f"mag{raw_file:03d}"
     return PC_PICTURE_FILES.get(raw_file)
+
+
+def default_tex_template() -> TexFile:
+    """An empty page picture .TEX, for a picture written where no vanilla .TEX sits to copy."""
+    palette = bytes(NB_COLOR * 4)
+    return TexFile(DEFAULT_TEX_HEADER, palette, bytearray(PICTURE_WIDTH * PICTURE_WIDTH), 1, NB_COLOR, 8,
+                   PICTURE_WIDTH, PICTURE_WIDTH)
 
 
 def pc_picture_file_name(raw_file: int) -> Optional[str]:
@@ -144,11 +179,11 @@ def tex_path(menu_folder: str, raw_file: int) -> str:
     return os.path.join(menu_folder, pc_picture_file_name(raw_file))
 
 
-def tex_template(menu_folder: str, raw_file: int) -> Optional[TexFile]:
-    """The .TEX a replacement of slot `raw_file` takes its header from: the slot's own one, else any
-    other page picture of the folder (they all share the same header). None without any."""
+def tex_template(menu_folder: str, raw_file: int) -> TexFile:
+    """The .TEX a picture of slot `raw_file` takes its header from: the slot's own one, else any
+    other page picture of the folder (they all share the same header), else the default one."""
     if not menu_folder:
-        return None
+        return default_tex_template()
     candidates = [tex_path(menu_folder, raw_file)] + [os.path.join(menu_folder, f"{name}.TEX")
                                                       for name in PC_PICTURE_FILES.values()]
     for path in candidates:
@@ -157,15 +192,15 @@ def tex_template(menu_folder: str, raw_file: int) -> Optional[TexFile]:
                 return TexFile.read(path)
             except (OSError, ValueError):
                 continue
-    return None
+    return default_tex_template()
 
 
 def write_picture_tex(menu_folder: str, raw_file: int, palette: List[Color], indices: bytes) -> bool:
-    """Write the .TEX the PC game shows for slot `raw_file`. False when the folder has no page
-    picture .TEX to take the header from (nothing written)."""
-    template = tex_template(menu_folder, raw_file)
-    if template is None:
+    """Write the .TEX the PC game shows for slot `raw_file` into the menu folder. False without a
+    folder (nothing written)."""
+    if not menu_folder:
         return False
+    template = tex_template(menu_folder, raw_file)
     encode_picture_tex(palette, indices, template).write(tex_path(menu_folder, raw_file))
     return True
 

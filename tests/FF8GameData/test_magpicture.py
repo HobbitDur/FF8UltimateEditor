@@ -41,7 +41,8 @@ def test_the_slots_the_pc_game_shows():
     assert pc_picture_file_name(28) == "mag00.TEX"
     assert pc_picture_file_name(24) == "mag07.TEX"
     assert pc_picture_file_name(184) == "mag19.TEX"
-    assert pc_picture_file_name(206) is None  # an empty mngrp slot is never uploaded
+    assert pc_picture_file_name(100) is None  # a slot the switches do not have is never uploaded
+    assert pc_picture_file_name(206) == "mag206.TEX"  # past them: FFNx's AddMorePictures
     assert len(PC_PICTURE_FILES) == 30
 
 
@@ -99,3 +100,27 @@ def test_vanilla_tex_round_trips_through_the_encoder(tmp_path):
     palette = [(r, g, b) for r, g, b, _a in vanilla.palette(0)]
     tex = encode_picture_tex(palette, bytes(vanilla.pixels[:256 * 192]), vanilla)
     assert tex.to_bytes() == vanilla.to_bytes()
+
+
+def test_added_slots_name_their_texture():
+    from FF8GameData.menu.magpicture import is_added_slot
+    assert pc_picture_file_name(185) == "mag185.TEX" and pc_picture_file_name(255) == "mag255.TEX"
+    assert not is_added_slot(184) and not is_added_slot(256)
+
+
+def test_a_tex_is_written_without_any_template(tmp_path):
+    from FF8GameData.menu.magpicture import write_picture_tex
+    palette, indices = quantize_picture(_test_image())
+    assert write_picture_tex(str(tmp_path), 206, palette, indices)
+    tex = TexFile.read(str(tmp_path / "mag206.TEX"))
+    assert (tex.width, tex.height, tex.palette_entries) == (256, 256, 256)
+    assert bytes(tex.pixels[:256 * 192]) == indices
+
+
+@pytest.mark.ff8data("extracted_files/menu/mag00.TEX")
+def test_default_header_is_the_vanilla_one():
+    from FF8GameData.menu.magpicture import DEFAULT_TEX_HEADER
+    vanilla = bytearray((MENU / "mag00.TEX").read_bytes()[:240])
+    vanilla[0x60:0x64] = bytes(4)  # runtime pointers the original tool left in the header
+    vanilla[0xD8:0xDC] = bytes(4)
+    assert DEFAULT_TEX_HEADER == bytes(vanilla)
