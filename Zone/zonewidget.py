@@ -18,6 +18,7 @@ from FF8GameData.menu.magpicture import is_added_slot, pc_picture_file_name
 from SmallWidget.listsearchbar import ListSearchBar
 from SmallWidget.fitwidth import fit_combo, fit_combo_popup, fit_list_width
 from SmallWidget.valuecombo import ValueComboBox
+from Zone.spritepicker import SpritePickerDialog
 from Zone.zonemanager import (ZoneManager, TEXTURE_CATEGORIES, DUEL_MOVE_NAMES,
                               ANGELO_MOVE_NAMES, BOOK_TEXT_FIRST_RAW_FILE)
 from Zone.zonerender import (PageRenderer, BUTTON_STYLE_BOXES, BUTTON_STYLE_ICONS,
@@ -488,7 +489,10 @@ class ZoneWidget(QWidget):
         duel_layout.addWidget(self.duel_y)
         duel_layout.addStretch(1)
         layout.addRow("Zell Duel move:", duel_layout)
-        layout.addRow("Angelo move:", self.angelo_combo)
+        angelo_layout = QHBoxLayout()
+        angelo_layout.addWidget(self.angelo_combo)
+        angelo_layout.addStretch(1)
+        layout.addRow("Angelo move:", angelo_layout)
         group.setLayout(layout)
         # Only now: the notice is shown while no kernel.bin is open, and a label shown before it
         # has a parent pops up as its own little window for an instant at start-up
@@ -497,58 +501,86 @@ class ZoneWidget(QWidget):
 
     def _build_overlays_group(self):
         self.new_line_buttons = []
+        self.sprite_pick_buttons = []
         group = QGroupBox("Overlays (id 255 = unused slot)")
-        layout = QGridLayout()
-        layout.addWidget(QLabel("<b>Picture overlays (SP2 sprite)</b>"), 0, 0, 1, 7)
-        self.pic_overlay_spins = self._build_overlay_rows(layout, row_start=1)
-        row = 1 + MagPageEntry.NB_OVERLAY_SLOTS
-        layout.addWidget(QLabel("<b>Text overlays (book-text line, edited in place)</b>"), row, 0, 1, 7)
-        self.text_overlay_spins = self._build_overlay_rows(layout, row_start=row + 1,
-                                                           with_preview=True)
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("<b>Picture overlays (SP2 sprite)</b>"))
+        self.pic_overlay_spins = self._build_overlay_rows(layout)
+        layout.addWidget(QLabel("<b>Text overlays (book-text line, edited in place)</b>"))
+        self.text_overlay_spins = self._build_overlay_rows(layout, with_preview=True)
         group.setLayout(layout)
         return group
 
-    def _build_overlay_rows(self, layout, row_start, with_preview=False):
+    def _build_overlay_rows(self, layout, with_preview=False):
+        """One packed line per slot (fields at their natural width, then the spare space, as in
+        the other groups); a text slot has its line's editor under it."""
         spins = []
         for slot in range(MagPageEntry.NB_OVERLAY_SLOTS):
-            # A text slot takes two rows: its fields, then its line's editor under them
-            row = row_start + slot * (2 if with_preview else 1)
             x_spin = self._spin16()
             y_spin = self._spin8()
             # The id picks a sprite of the picture (its size shown) or a book text line (its start)
-            id_spin = ValueComboBox(fallback="no such line" if with_preview else "no such sprite")
-            id_spin.setMinimumWidth(170)
+            id_spin = ValueComboBox(fallback="no such line" if with_preview else "no such sprite",
+                                    min_chars=30 if with_preview else 16)
             id_spin.set_choices([(UNUSED_ID, f"{UNUSED_ID}: unused")])
             id_spin.setToolTip("A book text line of the page's text file: its id and its start" if with_preview else
                                "A sprite of the SP2 table (Shiva, Sprites): a rectangle cropped out of the page's\n"
                                "picture, its id and its size. The size is the sprite's, not the page's: drawn 1:1.")
-            layout.addWidget(QLabel(f"Slot {slot + 1}"), row, 0)
-            layout.addWidget(QLabel("X"), row, 1)
-            layout.addWidget(x_spin, row, 2)
-            layout.addWidget(QLabel("Y"), row, 3)
-            layout.addWidget(y_spin, row, 4)
-            layout.addWidget(QLabel("ID"), row, 5)
-            layout.addWidget(id_spin, row, 6)
+            row = QHBoxLayout()
+            row.addWidget(QLabel(f"Slot {slot + 1}"))
+            row.addSpacing(8)
+            row.addWidget(QLabel("X"))
+            row.addWidget(x_spin)
+            row.addWidget(QLabel("Y"))
+            row.addWidget(y_spin)
+            row.addSpacing(8)
+            row.addWidget(QLabel("ID"))
+            row.addWidget(id_spin)
             preview = None
             if with_preview:
-                # The line itself, edited in place in mngrp.bin's book text
+                new_line = QPushButton("New line")
+                new_line.setToolTip("Add a line at the end of the book text (the next id) and show it here")
+                new_line.clicked.connect(lambda _checked=False, s=slot: self._new_text_line(s))
+                row.addWidget(new_line)
+                self.new_line_buttons.append(new_line)
+                id_spin.valueChanged.connect(self._update_resolved_labels)
+            else:
+                pick = QPushButton("Pick sprite...")
+                pick.setToolTip("Choose the sprite on the page's whole picture, with every sprite's rectangle shown")
+                pick.clicked.connect(lambda _checked=False, s=slot: self._pick_sprite(s))
+                row.addWidget(pick)
+                self.sprite_pick_buttons.append(pick)
+            row.addStretch(1)
+            layout.addLayout(row)
+            if with_preview:
+                # The line itself, edited in place in mngrp.bin's book text, under its slot's fields
                 preview = QPlainTextEdit()
                 preview.setFixedHeight(56)
-                preview.setMinimumWidth(240)
+                preview.setFixedWidth(520)
                 preview.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
                 preview.setPlaceholderText("unused slot (id 255)")
                 preview.setToolTip("The book text line this slot shows, edited in mngrp.bin (written at Save).\n"
                                    "A line can be shown by several pages: they all show the edit.")
                 preview.textChanged.connect(lambda s=slot: self._text_edited(s))
-                layout.addWidget(preview, row + 1, 1, 1, 6)
-                new_line = QPushButton("New line")
-                new_line.setToolTip("Add a line at the end of the book text (the next id) and show it here")
-                new_line.clicked.connect(lambda _checked=False, s=slot: self._new_text_line(s))
-                layout.addWidget(new_line, row, 7)
-                self.new_line_buttons.append(new_line)
-                id_spin.valueChanged.connect(self._update_resolved_labels)
+                editor_row = QHBoxLayout()
+                editor_row.addSpacing(48)
+                editor_row.addWidget(preview)
+                editor_row.addStretch(1)
+                layout.addLayout(editor_row)
             spins.append((x_spin, y_spin, id_spin, preview))
         return spins
+
+    def _pick_sprite(self, slot):
+        """Open the sprite picker on this page's picture and put the chosen sprite in the slot."""
+        _x_spin, _y_spin, id_spin, _preview = self.pic_overlay_spins[slot]
+        picture = None
+        if self.renderer is not None and 0 <= self.current_entry_index < len(self.manager.entries):
+            self._apply_form_to_entry()
+            tim = self.renderer.page_texture(self.manager.entries[self.current_entry_index])
+            picture = tim.image if tim is not None else None
+        sprites = self.manager.get_sp2_sprites() if self.manager.mngrp_loaded else None
+        dialog = SpritePickerDialog(picture, sprites, current_id=id_spin.value(), parent=self)
+        if dialog.exec():
+            id_spin.setValue(dialog.selected_id())
 
     # --- the choice lists (filled from mngrp.bin: pictures, sprites, book text lines) ----------
 
@@ -1032,7 +1064,7 @@ class ZoneWidget(QWidget):
         self.export_picture_button.setEnabled(self.manager.mngrp_loaded and pc_file is not None
                                               and (not is_added_slot(raw_file) or self.manager.has_slot(raw_file)))
         self.add_picture_button.setEnabled(bool(self.manager.free_picture_slots()))
-        for button in self.new_line_buttons:
+        for button in self.new_line_buttons + self.sprite_pick_buttons:
             button.setEnabled(self.manager.mngrp_loaded)
 
         texts = self.manager.get_book_texts(self.text_file.value()) if self.manager.mngrp_loaded else []
