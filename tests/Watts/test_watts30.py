@@ -66,7 +66,7 @@ def test_poses_sequences_and_camera_are_converted(game_data):
 @pytest.mark.ff8data(R0WIN_MARK)
 def test_weapons_stay_in_the_hand_on_the_in_betweens(game_data):
     """Selphie's nunchaku left her hand by 0.56 vertex units on in-betweens of her victory pose
-    (the weapon blended on its own): pinned, only the weapon roots of in-betweens move."""
+    (the weapon blended on its own): pinned, only the in-betweens move, the original frames stay."""
     import numpy as np
     from FF8GameData.dat import weapongrip
     blended, pinned = _manager(game_data), _manager(game_data)
@@ -89,13 +89,15 @@ def test_weapons_stay_in_the_hand_on_the_in_betweens(game_data):
             section = AnimationSection()
             section.analyze(bytes(block), pinned.synthetic_bone_section(before.character.weapon_bones))
             frames.append(section.animations[0].frames)
-        for index, (old, new) in enumerate(zip(*frames)):
-            rotation = [[angle.get_rotate_raw() for angle in bone] for bone in old.rotation_vector_data]
-            assert rotation == [[angle.get_rotate_raw() for angle in bone] for bone in new.rotation_vector_data]
+        for old, new in list(zip(*frames))[0::2]:            # original frames untouched
+            # (an angle may come back whole turns away: the file stores each frame's angles as
+            # steps from the frame before, and a re-posed in-between steps another way round)
+            rotation = [[int(angle.get_rotate_raw()) % 4096 for angle in bone] for bone in old.rotation_vector_data]
+            assert rotation == [[int(angle.get_rotate_raw()) % 4096 for angle in bone]
+                                for bone in new.rotation_vector_data]
             root_old = np.array([position.get_pos_world() for position in old.position[:3]])
             root_new = np.array([position.get_pos_world() for position in new.position[:3]])
-            if index % 2 == 0:
-                assert np.allclose(root_old, root_new)       # original frames untouched
+            assert np.allclose(root_old, root_new)
     assert weapongrip.MAX_GRIP_SPREAD >= by_name["Quistis"]['grip'].spread
 
 
@@ -132,7 +134,10 @@ def test_in_betweens_blended_on_the_real_skeletons(game_data):
     """On neutral bones each bone blended on its own: Selphie's nunchaku chain turns undone by
     the next bone were drawn half-way round, the free stick flung out straight or hanging down for
     1/30 s, 14.8 vertex units from the vanilla mid-point (filmed). On her real skeleton, with her
-    snaps held whole as the battle models do, it stays near the vanilla path."""
+    snaps held whole as the battle models do, it stays near the vanilla path; still two in-betweens
+    jumped for 1/30 s seen from her hand (filmed: a link sent the long way round, a snap held still
+    while the hand moved on), each now takes the pose between its neighbours
+    (weapongrip.smooth_in_betweens): no in-between jumps more than vanilla's own frames do."""
     import numpy as np
     folder = R0WIN.parent
     vanilla, neutral, real = _manager(game_data), _manager(game_data), _manager(game_data)
@@ -148,7 +153,12 @@ def test_in_betweens_blended_on_the_real_skeletons(game_data):
         middle = (before[:-1] + before[1:]) / 2
         return float(np.linalg.norm(after[1::2][:len(middle)] - middle, axis=2).max())
     assert worst_in_between(neutral) > 10
-    assert worst_in_between(real) < 5
+    assert worst_in_between(real) < 2.5
+    # a jump for one frame: the frame off the middle of its two neighbours (vertex units)
+    poses = _nunchaku_in_hand_space(game_data, real, folder)
+    jump = np.linalg.norm(poses[2:] - 2 * poses[1:-1] + poses[:-2], axis=2).max(axis=1)
+    in_between_jump, original_jump = jump[0::2].max(), jump[1::2].max()     # jump[i] is frame i + 1
+    assert in_between_jump < original_jump and in_between_jump < 5
 
 
 @pytest.mark.ff8data(R0WIN_MARK)

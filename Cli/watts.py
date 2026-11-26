@@ -177,6 +177,9 @@ def _print_grip_list(grip_list):
         print(f"  {report['name']} weapon grip ({report['weapon']}, spread {report['grip'].spread:.3f}): "
               f"{report['nb_pinned']} in-betweens pinned, worst {report['worst_before']:.3f} -> "
               f"{after or 'unchanged'} vertex units")
+        if report.get('smooth') and report['smooth']['nb_changed']:
+            print(f"    {report['smooth']['nb_changed']} in-betweens re-posed between their neighbours, worst "
+                  f"{report['smooth']['worst_before']:.3f} -> {report['smooth']['worst_after']:.3f} vertex units")
 
 
 def _cmd_convert_30fps(args) -> int:

@@ -168,6 +168,123 @@ def pin_frames(grip, body_model, weapon_model, body_frames, weapon_frames) -> di
     return report
 
 
+def _weapon_points(weapon_model):
+    """(bone ids, local points * _FLIP) of every vertex of the weapon."""
+    bone_list, point_list = [], []
+    for obj in weapon_model.geometry_data.object_data:
+        for vertex_data in obj.vertices_data:
+            for vertex in vertex_data.vertices:
+                bone_list.append(vertex_data.bone_id)
+                point_list.append(vertex.get_list())
+    return np.array(bone_list, dtype=int), np.array(point_list, dtype=float).reshape(-1, 3) * _FLIP
+
+
+def _hand_space(grip, body_model, weapon_model, points, body_frame, weapon_frame):
+    """The weapon's vertices seen from the hand (the grip's body bone): (V, 3)."""
+    bone_ids, local = points
+    rotation_w, translation_w = _bone_frames(weapon_frame, weapon_model.bone_data.bones)
+    rotation_b, translation_b = _bone_frames(body_frame, body_model.bone_data.bones)
+    world = (np.einsum('nij,nj->ni', rotation_w[bone_ids], local) + translation_w[bone_ids]
+             + ROOT_TO_VERTEX * (_root(weapon_frame) - _root(body_frame)))
+    return (world - translation_b[grip.body_bone]) @ rotation_b[grip.body_bone]
+
+
+def _with_model_rotations(frame, model_list, parent_list, bones):
+    """A copy of frame whose bones turn as model_list says (rotations in the model's space)."""
+    import copy
+    from FF8GameData.dat import rotation3d
+    from FF8GameData.monsterdata import Animation, RotationType
+    new_frame = copy.deepcopy(frame)
+    for bone_index, parent in enumerate(parent_list):
+        model = [list(row) for row in model_list[bone_index]]
+        local = model if parent is None else rotation3d.multiply(
+            rotation3d.transpose([list(row) for row in model_list[parent]]), model)
+        pose = rotation3d.matrix_to_euler_raw(local, Animation._bone_pose_raw(frame, bone_index))
+        new_frame.rotation_vector_data[bone_index] = [RotationType(True, 0, raw) for raw in pose]
+    new_frame._reset_matrix_lists(len(bones))
+    new_frame.set_all_bones_matrix(bones)
+    return new_frame
+
+
+def smooth_in_betweens(grip, body_model, weapon_model, body_frames, weapon_frames) -> dict:
+    """After pin_frames: each in-between of a held weapon whose pose, seen from the hand, is not
+    between the two original frames around it (a 1/30 s jump) takes the pose that is, of:
+    - as blended (dat30's step plan: a far turn blended in the model, the long way round when it
+      carries a spin on, a snap held where it is in the model);
+    - every bone turned the short way, in the model;
+    - the pose of the frame before, or after, carried rigidly by the hand (a snap: the weapon
+      keeps its pose in the hand while the hand moves on, then snaps, as vanilla shows it).
+    A plan is right for the battle models, where the body holds the snaps with its weapons; on a
+    pose whose body blends on (r0win.dat) a held snap leaves the weapon still while the hand moves
+    (Selphie's victory pose: her nunchaku 6.6 vertex units off for 1/30 s), and a spin read on a
+    snapped step sends a bone the long way (frame 12: 224 deg instead of 136). The chosen pose is
+    pinned in the hand. Returns {'nb_changed', 'worst_before', 'worst_after'}: how far the worst
+    in-between sits from the middle of its two neighbours, seen from the hand (vertex units)."""
+    from FF8GameData.dat import rotation3d
+    from FF8GameData.monsterdata import Animation
+    bones = weapon_model.bone_data.bones
+    report = {'nb_changed': 0, 'worst_before': 0.0, 'worst_after': 0.0}
+    parent_list = []
+    for bone_index, bone in enumerate(bones):
+        parent = None if bone.parent_id == 0xFFFF else bone.parent_id
+        if parent is not None and not 0 <= parent < bone_index:
+            return report        # not stored parents first: no model space to work in
+        parent_list.append(parent)
+    points = _weapon_points(weapon_model)
+    if not len(points[0]):
+        return report
+
+    def hand_space(index, weapon_frame=None):
+        return _hand_space(grip, body_model, weapon_model, points, body_frames[index],
+                           weapon_frames[index] if weapon_frame is None else weapon_frame)
+
+    def hand_rotation(index):
+        _ensure_matrices(body_frames[index], body_model.bone_data.bones)
+        return _bone_frames(body_frames[index], body_model.bone_data.bones)[0][grip.body_bone]
+
+    def pinned(index, weapon_frame):
+        """weapon_frame with its root moved so the grip sits half-way between its neighbours'."""
+        before = grip.offset(body_model, weapon_model, body_frames[index - 1], weapon_frames[index - 1])
+        after = grip.offset(body_model, weapon_model, body_frames[index + 1], weapon_frames[index + 1])
+        correction = (before + after) / 2 - grip.offset(body_model, weapon_model, body_frames[index], weapon_frame)
+        for axis, position in enumerate(weapon_frame.position[:3]):
+            position.move_world(correction[axis] / ROOT_TO_VERTEX)
+        weapon_frame._reset_matrix_lists(len(bones))
+        weapon_frame.set_all_bones_matrix(bones)
+        return weapon_frame
+
+    for index in range(1, min(len(body_frames), len(weapon_frames)) - 1, 2):
+        frame_a, frame_b = weapon_frames[index - 1], weapon_frames[index + 1]
+        if (np.linalg.norm(grip.offset(body_model, weapon_model, body_frames[index - 1], frame_a)) > HELD_DISTANCE
+                or np.linalg.norm(grip.offset(body_model, weapon_model, body_frames[index + 1], frame_b))
+                > HELD_DISTANCE):
+            continue
+        middle = (hand_space(index - 1) + hand_space(index + 1)) / 2
+
+        def distance(weapon_frame):
+            return float(np.linalg.norm(hand_space(index, weapon_frame) - middle, axis=1).max())
+        best_frame = weapon_frames[index]
+        best = before = distance(best_frame)
+        report['worst_before'] = max(report['worst_before'], before)
+        rotation_a = Animation._model_rotation_list(frame_a, parent_list)
+        rotation_b = Animation._model_rotation_list(frame_b, parent_list)
+        hand = hand_rotation(index)
+        candidate_list = [
+            [rotation3d.slerp_matrix(a, b, 0.5) for a, b in zip(rotation_a, rotation_b)],
+            [(hand @ hand_rotation(index - 1).T @ np.array(a)).tolist() for a in rotation_a],
+            [(hand @ hand_rotation(index + 1).T @ np.array(b)).tolist() for b in rotation_b]]
+        for model_list in candidate_list:
+            candidate = pinned(index, _with_model_rotations(weapon_frames[index], model_list, parent_list, bones))
+            score = distance(candidate)
+            if score < best - MIN_CORRECTION:
+                best_frame, best = candidate, score
+        if best_frame is not weapon_frames[index]:
+            weapon_frames[index] = best_frame
+            report['nb_changed'] += 1
+        report['worst_after'] = max(report['worst_after'], best)
+    return report
+
+
 def pin_weapon_grip(body_model, weapon_model) -> dict:
     """Pin one converted weapon's grip to its converted body's hand on the in-between frames.
     Returns {'grip': Grip or None, 'steady': bool, 'nb_pinned': int, 'worst_before': float,

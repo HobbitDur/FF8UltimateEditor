@@ -448,7 +448,7 @@ class WattsManager:
         import numpy as np
         from FF8GameData.dat import weapongrip
         character = pose.character
-        report = {'name': character.name, 'grip': None, 'weapon': None, 'nb_pinned': 0,
+        report = {'name': character.name, 'grip': None, 'weapon': None, 'nb_pinned': 0, 'smooth': None,
                   'worst_before': 0.0, 'worst_after': {}, 'skipped': None}
         models = self._pose_models(pose, models_folder)
         if models['body'] is None or models['weapon'] is None:
@@ -472,7 +472,10 @@ class WattsManager:
         frame_report = weapongrip.pin_frames(grip, body, weapon, body_frames, weapon_frames)
         report['nb_pinned'] = frame_report['nb_pinned']
         report['worst_before'] = frame_report['worst_before']
-        if not frame_report['nb_pinned']:
+        # an in-between whose weapon jumps for 1/30 s seen from the hand takes a pose between
+        # its neighbours (the body blends on through the weapon's snaps here)
+        report['smooth'] = weapongrip.smooth_in_betweens(grip, body, weapon, body_frames, weapon_frames)
+        if not frame_report['nb_pinned'] and not report['smooth']['nb_changed']:
             return None, report
         weapon_section.animations[0]._recompute_frame_storage_types()
         block = self.canonicalize_animation_block(bytes(weapon_section.to_binary()), character.weapon_bones)
