@@ -29,7 +29,8 @@ pytestmark = pytest.mark.ff8data("extracted_files/menu/mmag.bin",
 # Comfortably longer than the widget's 40 ms debounce.
 DEBOUNCE_WAIT = 150
 
-COMPLEMENTARY_NAMES = ("mngrp.bin", "kernel.bin", "mwepon.bin", "icon.sp1", "mitem.bin")
+COMPLEMENTARY_NAMES = ("mngrp.bin", "kernel.bin", "mwepon.bin", "icon.sp1", "mitem.bin",
+                       "sysfnt.TEX", "sysfnt.tdw")
 
 
 @pytest.fixture(scope="module")
@@ -53,6 +54,8 @@ def widget(qapp):
     zone._apply_mwepon(str(MENU_DIR / "mwepon.bin"))
     zone._apply_icons(str(MENU_DIR / "icon.sp1"))
     zone._apply_mitem(str(MENU_DIR / "mitem.bin"))
+    zone.font_source._load_tex(str(MENU_DIR / "sysfnt.TEX"))
+    zone.font_source._load_tdw(str(MENU_DIR / "sysfnt.tdw"))
     zone._refresh_preview()
     return zone
 
@@ -143,7 +146,7 @@ def test_the_bindings_split_the_edited_file_from_the_rest(qapp):
     mngrp = zone.companion_bindings["mngrp.bin"]
     assert mngrp.complementary and not mngrp.read_only
     assert all(binding.read_only for name, binding in zone.companion_bindings.items() if name != "mngrp.bin")
-    bindings = zone.file_bindings()  # main first, then the five companions
+    bindings = zone.file_bindings()  # main first, then the companions
     assert bindings[0] is zone.mmag_binding
     assert {b.file_name for b in bindings if b.read_only or b.complementary} == set(COMPLEMENTARY_NAMES)
 

@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
+from Common.pagefontsource import PageFontSource
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.magpage import MagPageEntry, UNUSED_ID
 from FF8GameData.menu.magpicture import is_added_slot, pc_picture_file_name
@@ -48,6 +49,8 @@ COMPLEMENTARY_FILES = {
     "mwepon.bin": "the weapon remodel item lists, drawn on the Weapons Monthly pages",
     "icon.sp1": "the button and item icons of those two lists (needs icon.TEX beside it)",
     "mitem.bin": "which type icon each remodel item uses",
+    "sysfnt.TEX": "the menu font's glyphs, for the page text (boxes without it)",
+    "sysfnt.tdw": "the menu font's glyph widths, for the page text",
 }
 
 
@@ -95,6 +98,11 @@ class ZoneWidget(QWidget):
             "mitem.bin": FileBinding("mitem.bin", file_registry, load_callback=self._apply_mitem,
                                      read_only=True),
         }
+        # The menu font: two more side files, opened like the others (never looked up elsewhere)
+        self.font_source = PageFontSource(file_registry)
+        self.companion_bindings["sysfnt.TEX"] = self.font_source.tex_binding
+        self.companion_bindings["sysfnt.tdw"] = self.font_source.tdw_binding
+        self.font_source.changed.connect(self._on_font_changed)
         # The same kernel.bin also names the weapons - the only source of those names.
         self.kernel_names = KernelNameSource(self.game_data, file_registry,
                                              binding=self.companion_bindings["kernel.bin"])
@@ -143,7 +151,8 @@ class ZoneWidget(QWidget):
 
     def file_bindings(self):
         """The files the shared header toolbar drives for this tab: mmag.bin (edited) and the
-        five read-only complementary files it renders from."""
+        read-only complementary files it renders from (mngrp.bin's book text and pictures are
+        edited here too)."""
         return [self.mmag_binding, *self.companion_bindings.values()]
 
     def _build_page_buttons(self):
@@ -240,6 +249,12 @@ class ZoneWidget(QWidget):
         group = QGroupBox("Page preview")
         layout = QVBoxLayout()
         layout.addWidget(self.preview_label)
+        # Says which font side file is missing (the text is boxes without them)
+        self.font_notice = QLabel(self.font_source.notice())
+        self.font_notice.setWordWrap(True)
+        self.font_notice.setStyleSheet("color: #c07000;")
+        self.font_notice.setMaximumWidth(CANVAS_WIDTH * PREVIEW_SCALE)
+        layout.addWidget(self.font_notice)
         button_icon_layout = QHBoxLayout()
         button_icon_layout.addWidget(QLabel("Duel buttons:"))
         button_icon_layout.addWidget(self.button_icon_combo)
@@ -684,18 +699,25 @@ class ZoneWidget(QWidget):
                 binding.open_path(candidate)  # publish -> load here and in the tool that edits it
 
     def _apply_mngrp(self, file_name):
-        """Load a shared mngrp.bin (the read-only binding's callback).
-
-        sysfnt.TEX/sysfnt.tdw sit in the same menu folder as mngrp.bin."""
+        """Load a shared mngrp.bin (its binding's callback). The font is not taken from its
+        folder: sysfnt.TEX / sysfnt.tdw are side files of their own (font_source)."""
         try:
             self.manager.load_mngrp(file_name)
         except (OSError, ValueError) as e:
             QMessageBox.warning(self, "Could not load mngrp.bin", str(e))
             return
-        self.renderer = PageRenderer(self.manager, menu_folder=os.path.dirname(file_name),
-                                     button_icon_style=self.button_icon_combo.currentData())
+        self.renderer = PageRenderer(self.manager, button_icon_style=self.button_icon_combo.currentData())
+        self.font_source.apply_to(self.renderer)
         self._refresh_choices()
         self._update_resolved_labels()
+        self._refresh_preview()
+
+    def _on_font_changed(self):
+        """sysfnt.TEX or sysfnt.tdw was opened or removed: redraw the text with what is open."""
+        self.font_source.apply_to(self.renderer)
+        notice = self.font_source.notice()
+        self.font_notice.setText(notice)
+        self.font_notice.setVisible(bool(notice))
         self._refresh_preview()
 
     def _fill_weapon_combo(self, weapon_index):

@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
+from Common.pagefontsource import PageFontSource
 from FF8GameData.gamedata import GameData
 from FF8GameData.menu.pagerender import PageRenderer, CANVAS_WIDTH, CANVAS_HEIGHT
 from Moomba.moombamanager import MoombaManager, MagPageEntry
@@ -45,6 +46,9 @@ class MoombaWidget(QWidget):
                                          load_callback=self.load_file, save_callback=self.save_file)
         self.mngrp_binding = FileBinding("mngrp.bin", file_registry,
                                          load_callback=self._apply_mngrp, read_only=True)
+        # The menu font: two more side files, opened like mngrp.bin (never looked up elsewhere)
+        self.font_source = PageFontSource(file_registry)
+        self.font_source.changed.connect(self._on_font_changed)
 
         # Page list (left side), with a Ctrl+F search bar filtering it
         self.page_list = QListWidget()
@@ -88,6 +92,7 @@ class MoombaWidget(QWidget):
 
         self.mmag2_binding.load_opened_file()  # Another tool may have opened mmag2.bin already
         self.mngrp_binding.load_opened_file()  # ... or mngrp.bin (e.g. Shiva or the Zone tab)
+        self.font_source.load_opened_files()   # ... or the font
 
         # A render is a few ms, so this only coalesces bursts (holding a spin box arrow,
         # typing a value); 40 ms is well under the threshold where a redraw feels laggy.
@@ -105,9 +110,15 @@ class MoombaWidget(QWidget):
             "overlays (art) and the text overlays (raw file 90) on the screen backdrop.\nThe "
             "screen's own chrome (Mog, the chocobo, the frame) is not part of mmag2.bin, so it is "
             "not drawn.")
+        # Says which font side file is missing (the text is boxes without them)
+        self.font_notice = QLabel(self.font_source.notice())
+        self.font_notice.setWordWrap(True)
+        self.font_notice.setStyleSheet("color: #c07000;")
+        self.font_notice.setMaximumWidth(CANVAS_WIDTH * PREVIEW_SCALE)
         group = QGroupBox("Page preview")
         layout = QVBoxLayout()
         layout.addWidget(self.preview_label)
+        layout.addWidget(self.font_notice)
         layout.addStretch(1)
         group.setLayout(layout)
         return group
@@ -137,8 +148,17 @@ class MoombaWidget(QWidget):
         self.preview_label.setPixmap(pixmap)
 
     def _build_renderer(self, mngrp_path):
-        """Build the page renderer from a loaded mngrp.bin (sysfnt.* sit next to it)."""
-        self.renderer = PageRenderer(self.manager, menu_folder=os.path.dirname(mngrp_path))
+        """Build the page renderer from a loaded mngrp.bin, with the opened font."""
+        self.renderer = PageRenderer(self.manager)
+        self.font_source.apply_to(self.renderer)
+        self._refresh_preview()
+
+    def _on_font_changed(self):
+        """sysfnt.TEX or sysfnt.tdw was opened or removed: redraw the text with what is open."""
+        self.font_source.apply_to(self.renderer)
+        notice = self.font_source.notice()
+        self.font_notice.setText(notice)
+        self.font_notice.setVisible(bool(notice))
         self._refresh_preview()
 
     def _spinbox(self, minimum, maximum, tooltip=""):
@@ -306,10 +326,12 @@ class MoombaWidget(QWidget):
         # The Chocobo World art/text/font live in mngrp.bin: pick up the one next to mmag2.bin
         # automatically (shared through the registry), so a page renders straight away without
         # opening it by hand. One another tool already shared is kept.
-        if not self.mngrp_binding.current_path:
-            mngrp_path = os.path.join(os.path.dirname(file_name), "mngrp.bin")
-            if os.path.exists(mngrp_path):
-                self.mngrp_binding.open_path(mngrp_path)  # -> _apply_mngrp, here and in Zone/Shiva
+        for binding in (self.mngrp_binding, *self.font_source.bindings):
+            if binding.current_path:
+                continue
+            side_path = os.path.join(os.path.dirname(file_name), binding.file_name)
+            if os.path.exists(side_path):
+                binding.open_path(side_path)  # -> its callback, here and in Zone/Shiva
         with QSignalBlocker(self.page_list):
             self.page_list.clear()
             self.page_list.addItems([self.manager.get_entry_name(entry.entry_id)
@@ -318,11 +340,12 @@ class MoombaWidget(QWidget):
 
     def file_bindings(self):
         """The files the shared header toolbar drives for this tab: mmag2.bin (edited) and
-        the read-only mngrp.bin companion (the art/text/font, edited in Shiva)."""
-        return [self.mmag2_binding, self.mngrp_binding]
+        the read-only companions: mngrp.bin (the art and text, edited in Shiva) and the font."""
+        return [self.mmag2_binding, self.mngrp_binding, *self.font_source.bindings]
 
     def _apply_mngrp(self, file_name):
-        """Load a shared mngrp.bin (the read-only binding's callback). sysfnt.* sit next to it."""
+        """Load a shared mngrp.bin (the read-only binding's callback). The font is not taken
+        from its folder: sysfnt.TEX / sysfnt.tdw are side files of their own (font_source)."""
         try:
             self.manager.load_mngrp(file_name)
         except (OSError, ValueError) as e:

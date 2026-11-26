@@ -40,12 +40,13 @@ def test_file_bindings_follow_the_active_tab(qapp):
     tabs.tabs.setCurrentIndex(0)
     main = [b for b in tabs.file_bindings() if not b.read_only and not b.complementary]
     assert [b.file_name for b in main] == ["mmag.bin"]
-    # its five complementary files: mngrp.bin edited too (book text, pictures), the others read-only
+    # its complementary files: mngrp.bin edited too (book text, pictures), the others read-only
     assert {b.file_name for b in tabs.file_bindings() if b.read_only} == {
-        "kernel.bin", "mwepon.bin", "icon.sp1", "mitem.bin"}
+        "kernel.bin", "mwepon.bin", "icon.sp1", "mitem.bin", "sysfnt.TEX", "sysfnt.tdw"}
     assert {b.file_name for b in tabs.file_bindings() if b.complementary and not b.read_only} == {"mngrp.bin"}
 
     tabs.tabs.setCurrentIndex(1)
     main = [b for b in tabs.file_bindings() if not b.read_only]
     assert [b.file_name for b in main] == ["mmag2.bin"]
-    assert {b.file_name for b in tabs.file_bindings() if b.read_only} == {"mngrp.bin"}
+    assert {b.file_name for b in tabs.file_bindings() if b.read_only} == {
+        "mngrp.bin", "sysfnt.TEX", "sysfnt.tdw"}

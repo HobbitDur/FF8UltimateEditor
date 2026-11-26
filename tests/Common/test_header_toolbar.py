@@ -87,12 +87,13 @@ def test_import_and_save_follow_zones_active_tab(main_window):
     zone.tabs.setCurrentIndex(0)  # mmag.bin
     assert [b.file_name for b in tb._main_bindings()] == ["mmag.bin"]
     assert sorted(b.file_name for b in tb._complementary_bindings()) == [
-        "icon.sp1", "kernel.bin", "mitem.bin", "mngrp.bin", "mwepon.bin"]
+        "icon.sp1", "kernel.bin", "mitem.bin", "mngrp.bin", "mwepon.bin", "sysfnt.TEX", "sysfnt.tdw"]
     assert tb.import_button.isEnabled() and tb.import_complementary_button.isEnabled()
 
     zone.tabs.setCurrentIndex(1)  # mmag2.bin -> toolbar follows via file_bindings_changed
     assert [b.file_name for b in tb._main_bindings()] == ["mmag2.bin"]
-    assert sorted(b.file_name for b in tb._complementary_bindings()) == ["mngrp.bin"]
+    assert sorted(b.file_name for b in tb._complementary_bindings()) == [
+        "mngrp.bin", "sysfnt.TEX", "sysfnt.tdw"]
 
 
 def test_ifrit_open_save_are_on_the_shared_toolbar(main_window):

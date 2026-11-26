@@ -142,7 +142,8 @@ FFNx's AddMoreItems lets a mod add items 199-255 and gives the player 255 invent
 A magazine is an item of type *Magazine* whose two parameters are its first and last page in
 `mmag.bin`; reading a page unlocks what it names (a weapon remodel, a Zell Duel move, an Angelo move).
 - **SolomonRing**, **Kadowaki**, **Siren**: add the item (see above), type *Magazine*, pages first-last.
-- **Zone** (`mmag.bin` + `mngrp.bin`) makes the book itself, with a live preview:
+- **Zone** (`mmag.bin` + `mngrp.bin`) makes the book itself, with a live preview (its text uses
+  the menu font: open `sysfnt.TEX` and `sysfnt.tdw` as complementary files, else it is drawn as boxes):
   - **+ Add page** appends a page, a copy of the selected one; a magazine's pages are consecutive.
     Up to 256 pages; only the added ones can be removed.
   - Each text overlay's line is edited in place, and **New line** adds one to the book text at the

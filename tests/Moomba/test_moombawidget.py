@@ -97,7 +97,7 @@ def test_bindings_split_mmag2_from_the_read_only_mngrp(qapp):
     assert moomba.mngrp_binding.file_name == "mngrp.bin" and moomba.mngrp_binding.read_only
     bindings = moomba.file_bindings()
     assert [b.file_name for b in bindings if not b.read_only] == ["mmag2.bin"]
-    assert [b.file_name for b in bindings if b.read_only] == ["mngrp.bin"]
+    assert [b.file_name for b in bindings if b.read_only] == ["mngrp.bin", "sysfnt.TEX", "sysfnt.tdw"]
 
 
 def test_opening_mmag2_auto_loads_the_mngrp_beside_it(qapp):

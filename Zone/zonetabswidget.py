@@ -16,8 +16,8 @@ class ZoneTabsWidget(QWidget):
       * tab 1 — mmag.bin: the in-menu magazines and tutorial books (the ZoneWidget);
       * tab 2 — mmag2.bin: the save-point Chocobo World screen (the MoombaWidget).
 
-    Both tabs share the one FileRegistry, so a mngrp.bin (or sysfnt.*) opened for
-    one page family is picked up by the other without re-opening it. The shared header
+    Both tabs share the one FileRegistry, so a mngrp.bin (or the sysfnt.TEX / sysfnt.tdw font
+    side files) opened for one page family is picked up by the other without re-opening it. The shared header
     toolbar's Import/Save follow the active tab: file_bindings() returns the active tab's
     files, and file_bindings_changed tells the toolbar to refresh when the tab changes."""
 
