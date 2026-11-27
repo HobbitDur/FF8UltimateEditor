@@ -4,6 +4,7 @@ show their progress against the size of the previous download."""
 import io
 import json
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -108,3 +109,27 @@ def test_ffnx_sources_progress_runs_against_the_previous_download_size(github, t
     progress.clear()
     downloader.update_one_tool("FFNxEffects", lambda done, total: progress.append((done, total)))
     assert progress[0] == (0, len(archive))  # then against the last download's size
+
+
+DELING_110_ASSETS = ["deling-cli-linux_arm64.tar.xz", "deling-cli-linux_x64.tar.xz", "deling-cli-macos.dmg",
+                     "deling-cli-win_arm64.zip", "deling-cli-win_x64.zip", "deling-gui-linux_arm64.AppImage",
+                     "deling-gui-linux_arm64.tar.xz", "deling-gui-linux_x64.AppImage", "deling-gui-linux_x64.tar.xz",
+                     "deling-gui-macos.dmg", "deling-gui-win_arm64.zip", "deling-gui-win_x64.zip",
+                     "deling_1.1.0-1.noble_amd64.deb", "deling_1.1.0-1.noble_arm64.deb"]
+
+
+@pytest.mark.parametrize("tool, expected", [("DelingCli", "deling-cli-win_x64.zip"),
+                                            ("Deling", "deling-gui-win_x64.zip")])
+def test_deling_110_installs_its_windows_x64_archive(tool, expected):
+    """Deling 1.1.0 renamed its assets (win64 -> win_x64); its first asset is a Linux arm64 .tar.xz
+    that cannot be extracted."""
+    with open(Path(__file__).resolve().parents[2] / "ToolUpdate" / "list.json") as f:
+        names = json.load(f)["ExternalTools"][tool]["asset_name"]
+    assets = [{"name": name} for name in DELING_110_ASSETS]
+    assert ToolDownloader._tool_asset(assets, names)["name"] == expected
+
+
+def test_unknown_asset_names_fall_back_to_the_windows_x64_zip(monkeypatch):
+    monkeypatch.setattr("ToolUpdate.toolupdate.sys.platform", "win32")
+    assets = [{"name": name.replace("deling", "tool")} for name in DELING_110_ASSETS]
+    assert ToolDownloader._tool_asset(assets, ["no-such-asset.zip"])["name"] == "tool-cli-win_x64.zip"

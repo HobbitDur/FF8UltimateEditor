@@ -34,6 +34,7 @@
 	  "install_path":       "FF8GameData/fs/DelingCli",
 	  "asset_name":         [
 		"deling-continuous-cli-win_x64.zip",
+		"deling-cli-win_x64.zip",
 		"deling-cli-win64.zip"
 	  ],
 	  "ignore_first_folder":"True"
@@ -43,6 +44,7 @@
 	  "install_path":       "ExternalTools/Deling",
 	  "asset_name":         [
 		"deling-continuous-gui-win_x64.zip",
+		"deling-gui-win_x64.zip",
 		"deling-gui-win64.zip"
 	  ],
 	  "ignore_first_folder":"True"

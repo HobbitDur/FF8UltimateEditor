@@ -51,15 +51,24 @@ class ToolDownloader:
             f.write(release)
         return True
 
-    @staticmethod
-    def _tool_asset(assets: list, asset_names: list) -> dict:
+    # Words in an asset's name that mark it as a build for another system than Windows x64.
+    NOT_WINDOWS_X64 = ("linux", "macos", "darwin", "arm64", "aarch64", ".deb", ".dmg", ".appimage")
+
+    @classmethod
+    def _tool_asset(cls, assets: list, asset_names: list) -> dict:
         """The release asset to install: the only one, else the first of the release's assets
-        named in "asset_name", else the first one."""
+        named in "asset_name", else the first Windows x64 archive (a release that renamed its
+        assets, as Deling 1.1.0 did: its first asset is a Linux arm64 .tar.xz), else the first one."""
         if len(assets) == 1:
             return assets[0]
         for asset in assets:
             if asset['name'] in asset_names:
                 return asset
+        if sys.platform == "win32":
+            for asset in assets:
+                name = asset['name'].lower()
+                if name.endswith(".zip") and not any(word in name for word in cls.NOT_WINDOWS_X64):
+                    return asset
         return assets[0]
 
     def update_source_tool(self, tool_name: str, download_update_func: types.MethodType = None, canary=False):
