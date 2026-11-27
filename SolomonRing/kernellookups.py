@@ -7,6 +7,10 @@ from SolomonRing.commandtypes import command_type_options
 # FujinEffects.dll (the game's dispatcher falls back to effect 0 for an empty one)
 FREE_EFFECTS = (224, 225, *range(346, 401))
 CRONOS_EFFECTS_FILE = "attack_animation_cronos.json"
+# Attack types the Cronos mod gives a routine of its own (vanilla: no case in Damage_DispatchByAttackType, no effect),
+# named this way in the attack type lists while the Cronos box is ticked. 0x1E: Cronos's MissingHpPower.dll.
+MISSING_HP_POWER_TYPE = 30
+CRONOS_ATTACK_TYPES = {MISSING_HP_POWER_TYPE: "Magic Attack, power + missing HP bonus (Cronos)"}
 
 
 class LookupRegistry:
@@ -64,6 +68,11 @@ class LookupRegistry:
     def resolve(self, name: str):
         if name in self._cache:
             return self._cache[name]
+        if name == "attack_type" and self.cronos_effects:
+            self._cache[name] = {"type": "enum", "entries": [
+                {**entry, "name": CRONOS_ATTACK_TYPES.get(entry["value"], entry["name"])}
+                for entry in self._lookups[name]["entries"]]}
+            return self._cache[name]
         if name in self._lookups:
             lookup = self._lookups[name]
             if "extends" not in lookup:
@@ -118,10 +127,12 @@ class LookupRegistry:
         return {"type": "enum", "entries": [{"value": effect, "name": names[effect]} for effect in sorted(names)]}
 
     def set_cronos_effects(self, enabled: bool):
-        """Name Cronos's own effects in the effect lists (or show their slots as free); the caller refreshes
-        the combos built from "attack_animation"."""
+        """Name Cronos's own effects in the effect lists (or show their slots as free) and Cronos's own attack
+        types in the attack type lists (CRONOS_ATTACK_TYPES); the caller refreshes the combos built from
+        "attack_animation" and "attack_type"."""
         self.cronos_effects = bool(enabled)
         self._cache.pop("attack_animation", None)
+        self._cache.pop("attack_type", None)
 
     def set_dynamic(self, name: str, entries: list):
         """Inject/replace a lookup computed from the currently-loaded kernel.bin itself

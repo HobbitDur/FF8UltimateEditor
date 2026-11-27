@@ -11,6 +11,7 @@ from Common.fileregistry import FileRegistry
 from FF8GameData.gamedata import GameData
 from FF8GameData import itemids
 from FF8GameData.kernel.kernelmanager import KernelManager
+from SolomonRing import formula_specs
 from SolomonRing.kernellookups import LookupRegistry
 from SolomonRing.kernelentry import KernelEntry
 from SolomonRing.kernelsectiontab import KernelSectionTab
@@ -85,6 +86,7 @@ class SolomonRingWidget(QWidget):
         self.registry = LookupRegistry(self.game_data, game_data_folder)
         cronos = bool(settings.value(self.CRONOS_KEY, defaultValue=False, type=bool)) if settings is not None else False
         self.registry.set_cronos_effects(cronos)
+        formula_specs.CRONOS_ATTACK_TYPES = cronos
         self.loaded_filename = None
 
         with open(os.path.join(game_data_folder, "Resources", "json", "kernel_section_fields.json"),
@@ -123,12 +125,15 @@ class SolomonRingWidget(QWidget):
         # --- Cronos switch ----------------------------------------------------
         # The effect lists (a spell's, an item's, an attack's animation) name the Cronos mod's own effects,
         # in free slots of the effect table, from attack_animation_cronos.json (as Ifrit's Cronos box picks
-        # ai_cronos.json); off, those slots read "Free slot N".
+        # ai_cronos.json); off, those slots read "Free slot N". The attack type lists name Cronos's own attack
+        # types (0x1E, MissingHpPower.dll), and their formula previews show Cronos's routine.
         self.cronos_check = QCheckBox("Cronos")
         self.cronos_check.setToolTip(
             "Name the Cronos mod's own battle effects in the effect lists (Bio 349, Arctic Wind 350, Smoke Grenade 360...),\n"
             "from attack_animation_cronos.json. Off: the effect table's free slots (224, 225, 346-400) read \"Free slot N\".\n"
-            "Only names change: the values loaded and saved are the same either way.")
+            "Attack type 30 (0x1E, vanilla: does nothing) becomes Cronos's \"Magic Attack, power + missing HP bonus\"\n"
+            "(MissingHpPower.dll): a magic attack whose power is the kernel power + 18 x min(1, (1 - HP / max HP) / 0.9).\n"
+            "Only names and previews change: the values loaded and saved are the same either way.")
         self.cronos_check.setChecked(self.registry.cronos_effects)
         self.cronos_check.toggled.connect(self._set_cronos)
         unlock_row = QHBoxLayout()
@@ -185,10 +190,12 @@ class SolomonRingWidget(QWidget):
         self._refresh_command_data_enabled()
 
     def _set_cronos(self, enabled):
-        """The Cronos box: the effect lists name Cronos's own effects (or show their slots as free)."""
+        """The Cronos box: the effect lists name Cronos's own effects (or show their slots as free), the attack
+        type lists Cronos's own attack types, and the formula previews show their routine."""
         self.registry.set_cronos_effects(enabled)
+        formula_specs.CRONOS_ATTACK_TYPES = bool(enabled)
         for tab in self._section_tabs.values():
-            tab.refresh_dynamic_combos(lookups=("attack_animation",))
+            tab.refresh_dynamic_combos(lookups=("attack_animation", "attack_type"))
         if self.settings is not None:
             self.settings.setValue(self.CRONOS_KEY, bool(enabled))
 

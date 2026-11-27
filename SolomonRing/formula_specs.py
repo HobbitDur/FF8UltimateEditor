@@ -33,6 +33,10 @@ PARAM_DEFS = {
                        "Target's current HP - used by Demi / %-HP attacks. Doomtrain default 1000."),
     "target_maxhp":   ("Target max HP", 1000, 1, 99999999,
                        "Target's max HP - used by Devour and Angelo Recover (value/16 x maxHP)."),
+    "target_hp_percent": ("Target HP % (cur/max)", 50, 0, 100,
+                       "The target's current HP as a percent of its max HP - used by Cronos's attack type 30 "
+                       "(MissingHpPower.dll), whose power grows as the target loses HP: +0 at 100 %, the "
+                       "full +18 at 10 % and below."),
     "battle_speed":   ("Battle speed", 2, 0, 4,
                        "FF8 config Battle Speed (SG_SETTING.battleSpeed), 0 (fast) … 4 (slow) — five "
                        "settings, not 0-255 (Battle_SetMaxAtbFromBattleSpeed @0x484490: "
@@ -119,6 +123,10 @@ PARAM_DEFS = {
 
 # Live, user-editable values (start at defaults). Edited in the formula popups.
 PARAM_VALUES = {k: v[1] for k, v in PARAM_DEFS.items()}
+
+# SolomonRing's Cronos box: the attack types the Cronos mod gives a routine of its own (kernellookups
+# CRONOS_ATTACK_TYPES) show that routine instead of vanilla's "no effect".
+CRONOS_ATTACK_TYPES = False
 
 # callable(formula_key) -> {param: value}, applied on top of PARAM_VALUES by compute(): the
 # stats of a real character and monster picked in the battle setup (battle_setup.py) replace
@@ -426,9 +434,9 @@ def _magic_damage(value, P, entry):
     name = ATTACK_TYPE_NAMES.get(att, f"type {att}")
     hits_txt = f"  × {hit} hits" if hit > 1 else ""
 
-    def _msg(sym, sub, res, note, params=(), latex=None, latex_sub=None):
+    def _msg(sym, sub, res, note, params=(), latex=None, latex_sub=None, value=None):
         return {"params": params, "symbolic": sym, "substituted": sub, "result": res,
-                "note": note, "latex": latex, "latex_sub": latex_sub}
+                "note": note, "latex": latex, "latex_sub": latex_sub, "value": value}
 
     # --- offensive magic (Magic Attack, Ignore-SPR variant, LV? Attack all share the core) ---
     # att 0 (None / empty entry) also shows this formula: the formula is a property of the
@@ -463,7 +471,8 @@ def _magic_damage(value, P, entry):
                    r"\right\rfloor\cdot\frac{element\%}{100}"),
             latex_sub=(rf"\frac{{240..272}}{{256}}\cdot"
                        rf"\frac{{{p}\,({k}-{spr_eff}){base_tex_sub}}}{{1024}}\cdot"
-                       rf"\frac{{{elem}}}{{100}}" + (rf"\cdot{hit}" if hit > 1 else "")))
+                       rf"\frac{{{elem}}}{{100}}" + (rf"\cdot{hit}" if hit > 1 else "")),
+            value=avg)
 
     # --- curative magic ---
     if att == 3:
@@ -574,9 +583,9 @@ def _monster_damage(value, P, entry):
     att = entry.get("attack_type") if entry else 1
     name = ATTACK_TYPE_NAMES.get(att, f"type {att}")
 
-    def out(params, sym, sub, res, note, latex, latex_sub):
+    def out(params, sym, sub, res, note, latex, latex_sub, value=None):
         return {"params": params, "symbolic": sym, "substituted": sub, "result": res,
-                "note": note, "latex": latex, "latex_sub": latex_sub}
+                "note": note, "latex": latex, "latex_sub": latex_sub, "value": value}
 
     # --- physical (Damage_ComputePhysicalCore @0x492c40 mode 0; 36 = mode 19, VIT forced 0) ---
     if att in (1, 36):
@@ -632,7 +641,8 @@ def _monster_damage(value, P, entry):
             r"\right\rfloor" + (r"\cdot\frac{1}{2}" if halve == 2 else "") + r"\cdot\frac{element\%}{100}",
             rf"\frac{{{p}\,({k}-{spr}){base_tex_sub}}}{{1024}}"
             + (r"\cdot\frac{1}{2}" if halve == 2 else "")
-            + rf"\cdot\frac{{{elem}}}{{100}}\approx {avg}")
+            + rf"\cdot\frac{{{elem}}}{{100}}\approx {avg}",
+            avg)
 
     # --- % current HP (7 = physical path mode 1, 8 = magic path): P × curHP / 16 ---
     if att in (7, 8):
@@ -1350,6 +1360,66 @@ def _monster_hit(value, P, entry):
         "Target EVA and LUCK are the character's.")
 
 
+# --- Cronos's attack type 30 (MissingHpPower.dll) -------------------------------
+# Vanilla 0x1E has no case in Damage_DispatchByAttackType (no effect). The DLL sends it to the Magic
+# Attack case (type 2) with power = kernel power + 18 x min(1, (1 - HP / max HP) / 0.9), rounded
+# down: with the HP as a whole percent, min(18, 18 x (100 - HP%) / 90).
+MISSING_HP_POWER_TYPE = 30
+MISSING_HP_BONUS_MAX = 18
+MISSING_HP_FULL_BONUS = 90    # % of max HP missing for the full bonus
+
+
+def missing_hp_bonus(hp_percent):
+    """The power MissingHpPower.dll adds against a target at ``hp_percent`` % of its max HP."""
+    missing = 100 - max(0, min(100, hp_percent))
+    return min(MISSING_HP_BONUS_MAX, MISSING_HP_BONUS_MAX * missing // MISSING_HP_FULL_BONUS)
+
+
+class _EntryWith:
+    """Entry view that answers some fields with other values (the rest from the entry)."""
+
+    def __init__(self, entry, values):
+        self._entry = entry
+        self._values = values
+
+    def get(self, name, default=None):
+        if name in self._values:
+            return self._values[name]
+        return self._entry.get(name, default) if self._entry is not None else default
+
+
+def _with_missing_hp_power(formula, power_field):
+    """``formula`` (magic_damage / monster_damage), with Cronos's attack type 30 shown as the Magic Attack
+    formula at the bigger power, drawn over the target's HP %."""
+    def compute_one(value, P, entry):
+        att = entry.get("attack_type") if entry else None
+        if not (CRONOS_ATTACK_TYPES and att == MISSING_HP_POWER_TYPE):
+            return formula(value, P, entry)
+        power = entry.get(power_field)
+        if power is None:
+            power = value
+        hp = P["target_hp_percent"]
+        bonus = missing_hp_bonus(hp)
+        out = formula(value, P, _EntryWith(entry, {"attack_type": 2, power_field: power + bonus}))
+        out["params"] = tuple(out.get("params") or ()) + ("target_hp_percent",)
+        out["symbolic"] = (f"P = power + {MISSING_HP_BONUS_MAX}×min(1, (1−HP/maxHP)/0.9)   then   "
+                           + out["symbolic"])
+        out["substituted"] = (f"P = {power} + {MISSING_HP_BONUS_MAX}×min(1, (1−{hp}%)/0.9) = {power}+{bonus} = "
+                              f"{power + bonus}   " + out["substituted"])
+        out["note"] = ("Cronos attack type 30 (MissingHpPower.dll; vanilla 0x1E does nothing): the Magic Attack "
+                       f"formula, its power raised by up to {MISSING_HP_BONUS_MAX} as the target loses HP (+0 at "
+                       "full HP, +9 at 55 %, the full bonus at 10 % HP and below; rounded down). Shell, Reflect, "
+                       "elements, Drain and statuses as for a Magic Attack. " + (out.get("note") or ""))
+        if out.get("latex"):
+            out["latex"] = (rf"P=power+{MISSING_HP_BONUS_MAX}\cdot\min\left(1,\frac{{1-HP/maxHP}}{{0.9}}\right)"
+                            r"\quad " + out["latex"])
+        if out.get("latex_sub"):
+            out["latex_sub"] = rf"P={power}+{bonus}={power + bonus}\quad " + out["latex_sub"]
+        out["plot"] = {"param": "target_hp_percent", "x_label": "Target HP %", "y_label": "Damage"}
+        return out
+    return compute_one
+
+
 FORMULAS = {
     "status_timer": ("Status duration", _status_timer),
     "dead_timer": ("Summon-check interval", _dead_timer),
@@ -1359,7 +1429,7 @@ FORMULAS = {
     "gf_hp": ("GF HP curve", _gf_hp),
     "gf_next_exp": ("GF next-level EXP", _gf_next_exp),
     "gf_damage": ("GF damage", _gf_damage),
-    "magic_damage": ("Magic damage / healing", _magic_damage),
+    "magic_damage": ("Magic damage / healing", _with_missing_hp_power(_magic_damage, "spell_power")),
     "crisis": ("Crisis level contribution", _crisis),
     "char_exp": ("Character EXP curve", _char_exp),
     "physical_damage": ("Physical damage", _physical_damage),
@@ -1367,7 +1437,7 @@ FORMULAS = {
     "monster_crit": ("Critical-hit chance (monster attacker)", _crit_chance_monster),
     "weapon_hit": ("Hit rate (character weapon)", _weapon_hit),
     "monster_hit": ("Hit rate (monster attacker)", _monster_hit),
-    "monster_damage": ("Enemy attack damage", _monster_damage),
+    "monster_damage": ("Enemy attack damage", _with_missing_hp_power(_monster_damage, "attack_power")),
     "status_accuracy": ("Status inflict chance", _status_accuracy),
 }
 for _st in _CHAR_STAT_LABELS:

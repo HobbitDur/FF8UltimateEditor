@@ -14,6 +14,8 @@ from PyQt6.QtWidgets import (
     QFormLayout, QGridLayout, QGroupBox, QLabel, QSizePolicy, QVBoxLayout, QWidget,
 )
 
+from SolomonRing.kernellookups import MISSING_HP_POWER_TYPE
+
 
 # Attack-type values, not reaction-category values. Percentage and special damage
 # retain their routine's protection checks even when they do not use STR or MAG.
@@ -49,6 +51,13 @@ _OTHER_EFFECTS = {
 }
 
 
+# The Cronos mod's own attack types (shown while SolomonRing's Cronos box is ticked). 0x1E: MissingHpPower.dll
+# sends it to the Magic Attack case with a bigger power, so it keeps type 2's protection rules.
+_CRONOS_MAGIC = {
+    MISSING_HP_POWER_TYPE: "Magic damage (MAG / SPR), power + up to 18 against a wounded target (Cronos)",
+}
+
+
 @dataclass(frozen=True)
 class AttackBehaviour:
     headline: str
@@ -57,8 +66,12 @@ class AttackBehaviour:
     med_data: str = ""
 
 
-def describe_attack_behaviour(attack_type, category):
-    """Describe verified routine/category combinations without conflating the fields."""
+def describe_attack_behaviour(attack_type, category, cronos=False):
+    """Describe verified routine/category combinations without conflating the fields. ``cronos``: the Cronos
+    mod's own attack types (_CRONOS_MAGIC) have their Cronos routine."""
+    if cronos and attack_type in _CRONOS_MAGIC:
+        shell = "halves damage" if category == 1 else "no effect"
+        return AttackBehaviour(_CRONOS_MAGIC[attack_type], "no effect", shell)
     if attack_type in _PHYSICAL:
         return AttackBehaviour(_PHYSICAL[attack_type], "halves damage", "no effect")
     if attack_type in _MAGIC_GF:
@@ -85,9 +98,10 @@ def describe_attack_behaviour(attack_type, category):
 class AttackBehaviourPanel(QGroupBox):
     """Uses the tab's registered editors so loading, dirty tracking and saving stay intact."""
 
-    def __init__(self, calculation_label, calculation, category_label, category, parent=None):
+    def __init__(self, calculation_label, calculation, category_label, category, parent=None, cronos=False):
         super().__init__("Attack behaviour", parent)
         self.setObjectName("attackBehaviourPanel")
+        self.cronos = cronos   # SolomonRing's Cronos box: Cronos's own attack types have their routine
         self.calculation = calculation
         self.category = category
         self._category_names = {category.itemData(i): category.itemText(i)
@@ -172,7 +186,7 @@ class AttackBehaviourPanel(QGroupBox):
 
     def refresh(self, _=None):
         attack_type, category = self.calculation.currentData(), self.category.currentData()
-        behaviour = describe_attack_behaviour(attack_type, category)
+        behaviour = describe_attack_behaviour(attack_type, category, self.cronos)
         self.headline.setText(behaviour.headline)
         self.protection.setText(f"Protect: {behaviour.protect} · Shell: {behaviour.shell}")
         if attack_type == 14:

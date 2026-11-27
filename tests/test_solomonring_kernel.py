@@ -1488,6 +1488,50 @@ def test_the_effect_list_names_the_free_slots_and_cronos_effects(game_data):
     assert {e["value"]: e["name"] for e in registry.resolve("attack_animation")["entries"]} == names
 
 
+def test_the_cronos_box_names_cronos_attack_type_30(game_data):
+    """Attack type 30 (0x1E: no case in the game's dispatcher) is Cronos's MissingHpPower magic attack while the
+    Cronos box is ticked; the other types keep their names."""
+    registry = LookupRegistry(game_data, GAME_DATA_FOLDER)
+    names = {e["value"]: e["name"] for e in registry.resolve("attack_type")["entries"]}
+    assert names[30] == names[31] == "No handler (does nothing)"
+    registry.set_cronos_effects(True)
+    cronos = {e["value"]: e["name"] for e in registry.resolve("attack_type")["entries"]}
+    assert cronos[30] == "Magic Attack, power + missing HP bonus (Cronos)"
+    assert {k: v for k, v in cronos.items() if k != 30} == {k: v for k, v in names.items() if k != 30}
+    registry.set_cronos_effects(False)
+    assert {e["value"]: e["name"] for e in registry.resolve("attack_type")["entries"]} == names
+    assert describe_attack_behaviour(30, 1).headline == "No damage routine"
+    cronos_magic = describe_attack_behaviour(30, 1, cronos=True)
+    assert cronos_magic.headline.startswith("Magic damage (MAG / SPR), power + up to 18")
+    assert (cronos_magic.protect, cronos_magic.shell) == ("no effect", "halves damage")
+
+
+@pytest.mark.ff8data("extracted_files/main/kernel.bin")
+def test_the_cronos_box_renames_attack_type_30_in_the_panel(qapp, tmp_path):
+    """Ticking the Cronos box renames type 30 in a spell's attack type list, keeps the value shown, updates the
+    attack behaviour panel and the formula previews; unticking puts vanilla back."""
+    from SolomonRing import formula_specs
+    work = tmp_path / "kernel.bin"
+    work.write_bytes(KERNEL.read_bytes())
+    widget = SolomonRingWidget(icon_path="Resources", game_data_folder=GAME_DATA_FOLDER)
+    widget.load_file(str(work))
+    widget.cronos_check.setChecked(False)
+    tab = widget._section_tabs[2]
+    panel = tab._attack_behaviour_panel
+    combo = panel.calculation
+    combo.setCurrentIndex(combo.findData(30))
+    assert panel.headline.text() == "No damage routine"
+    width = combo.maximumWidth()
+    widget.cronos_check.setChecked(True)
+    assert combo.itemText(combo.findData(30)) == "Magic Attack, power + missing HP bonus (Cronos)"
+    assert combo.currentData() == 30 and combo.maximumWidth() == width       # the panel's combo still stretches
+    assert panel.headline.text().startswith("Magic damage (MAG / SPR), power + up to 18")
+    assert formula_specs.CRONOS_ATTACK_TYPES
+    widget.cronos_check.setChecked(False)
+    assert combo.itemText(combo.findData(30)) == "No handler (does nothing)" and panel.headline.text() == "No damage routine"
+    assert not formula_specs.CRONOS_ATTACK_TYPES
+
+
 @pytest.mark.ff8data("extracted_files/main/kernel.bin")
 def test_the_cronos_box_renames_the_effect_lists(qapp, tmp_path):
     """Ticking SolomonRing's Cronos box renames the Cronos effects in every built effect list (a spell's animation

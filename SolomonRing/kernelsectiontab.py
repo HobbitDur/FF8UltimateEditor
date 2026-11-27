@@ -556,7 +556,8 @@ class KernelSectionTab(QWidget):
             calculation_label, calculation_widget = self._labeled_widget(calculation)
             category_label, category_widget = self._labeled_widget(category)
             self._attack_behaviour_panel = AttackBehaviourPanel(
-                calculation_label, calculation_widget, category_label, category_widget)
+                calculation_label, calculation_widget, category_label, category_widget,
+                cronos=self.registry.cronos_effects)
             vbox.addWidget(self._attack_behaviour_panel)
             fields = [f for f in fields if f is not calculation and f is not category]
 
@@ -1406,11 +1407,14 @@ class KernelSectionTab(QWidget):
             for entry in lookup["entries"]:
                 widget.addItem(entry["name"], entry["value"])
             # Real content can be much longer than the placeholder it was first sized for
-            # (e.g. "Set 0" -> "0: Cure x10, Curaga x5, ..."); resize to fit.
+            # (e.g. "Set 0" -> "0: Cure x10, Curaga x5, ..."); resize to fit. The attack behaviour
+            # panel's combos stretch with the panel instead.
             metrics = widget.fontMetrics()
             widest = max((metrics.horizontalAdvance(e["name"]) for e in lookup["entries"]),
                         default=60)
-            widget.setFixedWidth(min(widest + 40, 240 if self.config.get("compact_form") else 480))
+            panel = self._attack_behaviour_panel
+            if panel is None or widget not in (panel.calculation, panel.category):
+                widget.setFixedWidth(min(widest + 40, 240 if self.config.get("compact_form") else 480))
             widget.view().setMinimumWidth(widest + 40)
             pos = widget.findData(current)
             if pos < 0 and current is not None:
@@ -1419,5 +1423,8 @@ class KernelSectionTab(QWidget):
             if pos >= 0:
                 widget.setCurrentIndex(pos)
             widget.blockSignals(False)
+        if self._attack_behaviour_panel is not None:
+            self._attack_behaviour_panel.cronos = self.registry.cronos_effects
+            self._attack_behaviour_panel.refresh()
         if self._learn_panel is not None:
             self._learn_panel.refresh()

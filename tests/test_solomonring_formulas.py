@@ -190,3 +190,46 @@ def test_the_setup_fills_each_side_of_the_formula():
     assert values["monster_mag"] == battle_setup.monster_stat("mag", [10, 2, 5, 4], 20)
     assert "target_spr" not in values                                      # the target is the character
     assert setup.overrides("gf_hp") == ({}, {})
+
+
+@pytest.fixture
+def cronos_attack_types():
+    formula_specs.CRONOS_ATTACK_TYPES = True
+    yield
+    formula_specs.CRONOS_ATTACK_TYPES = False
+
+
+def test_missing_hp_bonus_follows_the_dll():
+    """MissingHpPower.dll: power + 18 x min(1, (1 - HP / max HP) / 0.9), rounded down."""
+    bonus = formula_specs.missing_hp_bonus
+    assert [bonus(hp) for hp in (100, 95, 94, 55, 50, 11, 10, 1, 0)] == [0, 1, 1, 9, 10, 17, 18, 18, 18]
+    assert all(bonus(hp) == min(18, int(18 * min(1.0, (1 - hp / 100) / 0.9) + 1e-9)) for hp in range(101))
+
+
+def test_cronos_attack_type_30_is_magic_with_the_missing_hp_power(cronos_attack_types):
+    params = {"caster_mag": 100, "target_spr": 50, "elem_defense": 100, "target_hp_percent": 10}
+    saved = {k: formula_specs.PARAM_VALUES[k] for k in params}
+    formula_specs.PARAM_VALUES.update(params)
+    try:
+        for key, power_field in (("magic_damage", "spell_power"), ("monster_damage", "attack_power")):
+            new = formula_specs.compute(key, 20, _Entry(attack_type=30, hit_count=1, **{power_field: 20}))
+            magic = formula_specs.compute(key, 38, _Entry(attack_type=2, hit_count=1, **{power_field: 38}))
+            assert _average(new) == _average(magic) == new["value"]
+            assert "target_hp_percent" in new["params"] and new["plot"]["param"] == "target_hp_percent"
+            assert new["substituted"].startswith("P = 20 + 18×min(1, (1−10%)/0.9) = 20+18 = 38")
+        formula_specs.PARAM_VALUES["target_hp_percent"] = 100      # full HP: the kernel power
+        full = formula_specs.compute("magic_damage", 20, _Entry(attack_type=30, spell_power=20, hit_count=1))
+        assert _average(full) == _average(
+            formula_specs.compute("magic_damage", 20, _Entry(attack_type=2, spell_power=20, hit_count=1)))
+        formula_specs.CRONOS_ATTACK_TYPES = False                  # vanilla: type 30 does nothing
+        assert "≈" not in formula_specs.compute("magic_damage", 20, _Entry(attack_type=30, spell_power=20))["result"]
+    finally:
+        formula_specs.PARAM_VALUES.update(saved)
+
+
+@pytest.mark.skipif(not formula_latex.AVAILABLE, reason="matplotlib not installed")
+def test_cronos_attack_type_30_renders_as_math(qapp, cronos_attack_types):
+    for key in ("magic_damage", "monster_damage"):
+        out = formula_specs.compute(key, 20, _Entry(attack_type=30))
+        for field in ("latex", "latex_sub"):
+            assert formula_latex.render(out[field], "#000000") is not None, (key, field, out[field])
