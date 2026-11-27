@@ -38,7 +38,8 @@ jobs:
           libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
           libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 \
           libxkbcommon0 libxkbcommon-x11-0 \
-          libfontconfig1 libxcomposite1 libxdamage1 libxrandr2 libxi6
+          libfontconfig1 libxcomposite1 libxdamage1 libxrandr2 libxi6 \
+          libva2 libva-drm2 libva-x11-2
 
     - name: Install dependencies
       shell: bash
@@ -97,6 +98,10 @@ jobs:
 
     - name: Create CLI release
       shell: bash
+      env:
+        # The API call finding deling-cli's latest release: anonymous calls share a small hourly
+        # limit per runner IP, and a refused one left jq with nothing ("Cannot iterate over null")
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         pyinstaller -n FF8UltimateEditorCli -F --specpath release-cli/build --distpath release-cli --workpath release-cli/build --onefile cli.py
         rm -R release-cli/build
@@ -105,7 +110,7 @@ jobs:
         mkdir -p release-cli/ShumiTranslator/csv
 
         # Download and setup deling-cli (Linux x64) directly
-        DOWNLOAD_URL=$(curl -s https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[] | select(.name == "deling-cli-linux_x64.tar.xz") | .browser_download_url')
+        DOWNLOAD_URL=$(curl -s -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[]? | select(.name == "deling-cli-linux_x64.tar.xz") | .browser_download_url')
         if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" = "null" ]; then
           echo "Error: Could not find deling-cli-linux_x64.tar.xz in latest release"
           exit 1
@@ -303,6 +308,10 @@ jobs:
 
     - name: Create CLI release
       shell: bash
+      env:
+        # The API call finding deling-cli's latest release: anonymous calls share a small hourly
+        # limit per runner IP, and a refused one left jq with nothing ("Cannot iterate over null")
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # Create CLI executable with desired name
         pyinstaller -n FF8UltimateEditorCli -F --specpath release-cli/build --distpath release-cli --noconsole --workpath release-cli/build --onefile --icon=../../Resources/hobbitdur.ico cli.py
@@ -313,7 +322,7 @@ jobs:
         mkdir -p release-cli/ShumiTranslator/csv
 
         # Download and setup deling-cli directly
-        DOWNLOAD_URL=$(curl -s https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[] | select(.name == "deling-cli-win_x64.zip") | .browser_download_url')
+        DOWNLOAD_URL=$(curl -s -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/repos/myst6re/deling/releases/latest | jq -r '.assets[]? | select(.name == "deling-cli-win_x64.zip") | .browser_download_url')
         if [ -z "$DOWNLOAD_URL" ] || [ "$DOWNLOAD_URL" = "null" ]; then
           echo "Error: Could not find deling-cli-win_x64.zip in latest release"
           exit 1

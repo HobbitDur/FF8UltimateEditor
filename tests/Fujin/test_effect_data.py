@@ -674,6 +674,7 @@ def test_an_animset_file_plays_in_the_recording(tmp_path):
     assert ticks(edited) != ticks(original)
 
 
+@pytest.mark.ff8data("extracted_files/battle/d0c000.dat", "extracted_files/battle/d0w000.dat", "extracted_files/battle/c0m009.dat")
 def test_the_cast_sequence_is_the_one_the_game_picks():
     """A character's by the command that plays the effect (Magic 11, GF 14, item 15), a monster's from its ability slots; nothing for an
     actor with no sequence for it."""
@@ -824,6 +825,7 @@ def _camera_address(effect):
     return next(entry["eng_address"] for entry in load_effect_camera_data()["tracks"] if entry["effect_id"] == effect)
 
 
+@pytest.mark.ff8data(*FILES)
 def test_cure_cast_is_the_games_sequence(tmp_path):
     """Cure as the game plays it: Squall's sequence 11 starts the effect (it asks after its 45 ticks), the recording ends with the effect,
     and the cast's glow stands at his height (+0x24 as the game inits it: 0, not above his head)."""

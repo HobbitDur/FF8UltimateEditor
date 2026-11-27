@@ -50,7 +50,12 @@ jobs:
             libxcb-xinerama0 \
             libxcb-xkb1 \
             libxkbcommon-x11-0 \
-            libpulse0
+            libpulse0 \
+            libva2 \
+            libva-drm2 \
+            libva-x11-2
+          # libva*: Qt 6.12's QtMultimedia links libva.so.2 / libva-drm.so.2 itself (Julia's audio
+          # player), so without them importing it - and the whole editor - fails on Linux
 
       - name: 📦 Install dependencies
         shell: bash
