@@ -1,9 +1,9 @@
 import os
 
-from PyQt6.QtCore import QSignalBlocker
+from PyQt6.QtCore import QSignalBlocker, QSettings
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                             QListWidget, QSpinBox, QComboBox, QGroupBox, QFormLayout)
+                             QListWidget, QSpinBox, QComboBox, QGroupBox, QFormLayout, QCheckBox)
 
 from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
@@ -19,7 +19,10 @@ class JunkshopWidget(QWidget):
 
     Ported from the original JunkShop tool: each weapon upgrade has a price (stored as a
     multiple of 10) and a recipe of up to four (item, quantity) pairs the game consumes when
-    the upgrade is bought. An item id of 0 (Nothing) disables that recipe slot."""
+    the upgrade is bought. An item id of 0 (Nothing) disables that recipe slot.
+
+    The Cronos checkbox reads and writes the prices on 16 bits, as Cronos's JunkShopPrice16.hext
+    has the game do: byte 2 of the record is the high byte, up to 655,350 gil instead of 2,550."""
 
     def __init__(self, icon_path="Resources", game_data_folder="FF8GameData", file_registry=None):
         QWidget.__init__(self)
@@ -30,6 +33,16 @@ class JunkshopWidget(QWidget):
         self.game_data = GameData(game_data_folder)
         self.game_data.load_item_data()
         self.manager = JunkshopManager(self.game_data)
+        self.settings = QSettings("HobbitDur", "FF8UltimateEditor")
+
+        self.cronos_checkbox = QCheckBox("Cronos")
+        self.cronos_checkbox.setToolTip(
+            "Prices on 16 bits, as Cronos's JunkShopPrice16.hext has the game read them: byte 2 of the record\n"
+            "is the high byte of price / 10, up to 655,350 G instead of 2,550 G.\n"
+            "Unticked: the vanilla game, byte 3 only. A vanilla file has 0 in byte 2, so its prices read the same.")
+        self.cronos_checkbox.setChecked(self.settings.value("junkshop/cronos_checkbox", defaultValue=False, type=bool))
+        self.manager.set_cronos(self.cronos_checkbox.isChecked())
+        self.cronos_checkbox.toggled.connect(self._on_cronos_toggled)
 
         self.setWindowTitle("Junkshop")
         self.setWindowIcon(QIcon(os.path.join(icon_path, 'junkshop.ico')))
@@ -60,11 +73,15 @@ class JunkshopWidget(QWidget):
         self.weapon_name_label.setStyleSheet("font-size: 14pt; font-weight: bold;")
 
         self.price_spinbox = QSpinBox()
-        self.price_spinbox.setRange(0, 2550)  # byte price * 10
+        self.price_spinbox.setRange(0, self.manager.max_price)  # price / 10 on 1 byte, or 2 with Cronos
         self.price_spinbox.setSingleStep(10)
         self.price_spinbox.setSuffix(" G")
         self.price_spinbox.setToolTip("Upgrade price in gils (stored as price / 10, so it is a multiple of 10)")
         self.price_spinbox.valueChanged.connect(self._on_data_changed)
+        # Vanilla mode on a record whose byte 2 is set: what Cronos would charge for it
+        self.cronos_price_label = QLabel("")
+        self.cronos_price_label.setStyleSheet("color: #c07000;")
+        self.cronos_price_label.setVisible(False)
 
         self.name_offset_label = QLabel("")
         self.name_offset_label.setToolTip(
@@ -83,6 +100,7 @@ class JunkshopWidget(QWidget):
         price_form = QFormLayout()
         price_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         price_form.addRow("Upgrade price:", self.price_spinbox)
+        price_form.addRow("", self.cronos_price_label)
         price_form.addRow("Text offset (read-only):", self.name_offset_label)
         price_form.addRow("Shop text (mwepon.msg):", self.msg_text_label)
         price_group.setLayout(price_form)
@@ -129,7 +147,12 @@ class JunkshopWidget(QWidget):
         main_editor_layout.addWidget(self.editor_container)
         main_editor_layout.addStretch(1)  # the editor keeps its natural width, the room is left after it
 
+        top_layout = QHBoxLayout()
+        top_layout.addWidget(self.cronos_checkbox)
+        top_layout.addStretch(1)
+
         main_layout = QVBoxLayout()
+        main_layout.addLayout(top_layout)
         main_layout.addWidget(self.weapon_notice)
         main_layout.addLayout(main_editor_layout)
         self.setLayout(main_layout)
@@ -203,6 +226,14 @@ class JunkshopWidget(QWidget):
         if self.manager.file_path:
             self.manager.save_file()
 
+    def _on_cronos_toggled(self, checked):
+        """16-bit prices on or off: the range and the shown price follow; no byte changes until an edit."""
+        self.settings.setValue("junkshop/cronos_checkbox", checked)
+        self.manager.set_cronos(checked)
+        with QSignalBlocker(self.price_spinbox):  # a narrower range must not write a clamped price
+            self.price_spinbox.setRange(0, self.manager.max_price)
+        self.reload_selected_weapon()
+
     def reload_selected_weapon(self):
         weapon = self._selected_weapon()
         if not weapon:
@@ -210,6 +241,7 @@ class JunkshopWidget(QWidget):
         self.weapon_name_label.setText(weapon.name)
         with QSignalBlocker(self.price_spinbox):
             self.price_spinbox.setValue(weapon.price)
+        self._show_cronos_price(weapon)
         self.name_offset_label.setText(f"0x{weapon.name_offset:04X}")
         self.msg_text_label.setText(self._shop_text(weapon))
         for i in range(WeaponUpgrade.NB_ITEM):
@@ -233,6 +265,15 @@ class JunkshopWidget(QWidget):
         if not weapon:
             return
         weapon.price = self.price_spinbox.value()
+        self._show_cronos_price(weapon)
         for i in range(WeaponUpgrade.NB_ITEM):
             weapon.items[i][0] = self.item_comboboxes[i].currentData()
             weapon.items[i][1] = self.quantity_spinboxes[i].value()
+
+    def _show_cronos_price(self, weapon):
+        """Unticked Cronos on a record with a high byte: the vanilla game ignores it, Cronos does not."""
+        shown = not self.manager.cronos and weapon.padding != 0
+        if shown:
+            self.cronos_price_label.setText(
+                f"Byte 2 is {weapon.padding}: with Cronos this upgrade costs {weapon.cronos_price:,} G")
+        self.cronos_price_label.setVisible(shown)

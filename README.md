@@ -243,7 +243,8 @@ automatically (see the update button in the toolbar).
 
   <img src="Resources/screenshots/doomtrain_1.png" width="30%"></img> <img src="Resources/screenshots/doomtrain_2.png" width="30%"></img> <img src="Resources/screenshots/doomtrain_3.png" width="30%"></img>
 
-- **Junkshop** — `mweapon.bin` editor (weapon data).
+- **Junkshop** — `mwepon.bin` editor (Junk Shop weapon upgrades: price and recipe). Up to 2,550 G; with the
+  **Cronos** box ticked, up to 655,350 G (Cronos's `JunkShopPrice16.hext`: byte 2 of a record is the price's high byte).
 
   <img src="Resources/screenshots/junkshop.png"></img>
 
@@ -298,7 +299,7 @@ reference data load it automatically from `FF8GameData/`.
 | `solomon-ring` | `kernel.bin` (all data sections, field-level) | `list-sections`, `list-fields`, `get`, `set`, `export-csv`, `import-csv` |
 | `tonberry-shop` | shop inventories (`shop.bin`) | `export-csv`, `import-csv` |
 | `siren` | item prices (`price.bin`) | `export-csv`, `import-csv`, `set-price` |
-| `junkshop` | weapon-upgrade recipes (`mwepon.bin`) | `export-csv`, `import-csv` |
+| `junkshop` | weapon-upgrade recipes (`mwepon.bin`) | `export-csv`, `import-csv` (`--cronos`: 16-bit prices) |
 | `pupu-cargo` | item menu behaviour (`mitem.bin`) | `export-csv`, `import-csv` |
 | `pandemona` | GF refine formulas (`mngrp.bin`) | `export-csv`, `import-csv` |
 | `nida` | SeeD written tests (`mngrp.bin`) | `show`, `export-csv`, `import-csv`, `set-answer` |

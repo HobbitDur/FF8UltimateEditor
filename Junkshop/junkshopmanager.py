@@ -9,7 +9,7 @@ class WeaponUpgrade:
     Layout (little endian), confirmed against the FF8 executable (sub_4EA890,
     reads ``mweaponbinbuffer + 12 * weapon_id``):
         - offset 0 (uint16): offset of the upgrade's shop text inside mwepon.msg (FF8GameData.menu.mweponmsg)
-        - offset 2 (byte)  : unused padding (always 0)
+        - offset 2 (byte)  : unused padding (always 0) - with Cronos, the high byte of the price
         - offset 3 (byte)  : upgrade price divided by 10 (the game multiplies it back by 10)
         - offset 4 (byte)  : item 1 id
         - offset 5 (byte)  : item 1 quantity
@@ -24,10 +24,16 @@ class WeaponUpgrade:
     (ids equal to 0 mean "no item" and are ignored) and charges ``price`` gils.
     The text offset belongs to mwepon.msg's editor (ShumiTranslator moves it with the texts), so a
     save keeps the one on disk; the padding is preserved byte-perfect.
+
+    Cronos (``cronos`` True): its JunkShopPrice16.hext makes byte 2 the high byte of the price,
+    price = 10 * (byte3 + 256 * byte2), up to 655,350 gil instead of 2,550. A vanilla file has 0
+    there, so its prices read the same either way.
     """
 
     NB_ITEM = 4
     PRICE_STEP = 10  # The game stores price / 10 and multiplies it back by 10
+    MAX_PRICE = 255 * PRICE_STEP  # vanilla: byte 3 only
+    CRONOS_MAX_PRICE = 0xFFFF * PRICE_STEP  # Cronos JunkShopPrice16.hext: bytes 3 (low) and 2 (high)
 
     def __init__(self, weapon_id, name, name_offset=0, padding=0, price_div10=0, items=None):
         self.weapon_id = weapon_id
@@ -37,14 +43,28 @@ class WeaponUpgrade:
         self.price_div10 = price_div10
         # items is a list of NB_ITEM [item_id, quantity] pairs
         self.items = items if items is not None else [[0, 0] for _ in range(self.NB_ITEM)]
+        self.cronos = False  # True: the price is read and written on 16 bits (see the class doc)
 
     @property
     def price(self):
+        if self.cronos:
+            return ((self.padding << 8) | (self.price_div10 & 0xFF)) * self.PRICE_STEP
         return self.price_div10 * self.PRICE_STEP
 
     @price.setter
     def price(self, value):
-        self.price_div10 = int(value) // self.PRICE_STEP
+        stored = int(value) // self.PRICE_STEP
+        if self.cronos:
+            stored = max(0, min(stored, 0xFFFF))
+            self.price_div10 = stored & 0xFF
+            self.padding = stored >> 8
+        else:  # byte 2 is left as it is: the vanilla game does not read it
+            self.price_div10 = stored
+
+    @property
+    def cronos_price(self):
+        """The price Cronos charges for this record (bytes 3 and 2), whatever the mode."""
+        return ((self.padding << 8) | (self.price_div10 & 0xFF)) * self.PRICE_STEP
 
     def to_bytes(self):
         data = bytearray(12)
@@ -73,6 +93,18 @@ class JunkshopManager:
         self.weapon_upgrades = []
         # The weapon names come only from a kernel.bin (set_weapon_names) - none built in.
         self.weapon_name_list = []
+        self.cronos = False  # 16-bit prices (Cronos JunkShopPrice16.hext), see WeaponUpgrade
+
+    @property
+    def max_price(self):
+        return WeaponUpgrade.CRONOS_MAX_PRICE if self.cronos else WeaponUpgrade.MAX_PRICE
+
+    def set_cronos(self, enabled):
+        """Read and write the prices on 16 bits (Cronos) or on byte 3 only (vanilla). The bytes
+        of the loaded upgrades are not changed, only how their price reads."""
+        self.cronos = bool(enabled)
+        for weapon_upgrade in self.weapon_upgrades:
+            weapon_upgrade.cronos = self.cronos
 
     def set_weapon_names(self, names):
         """Name the weapons from a kernel.bin (an empty list: none open) - re-labels the loaded
@@ -111,6 +143,7 @@ class JunkshopManager:
             self.weapon_upgrades.append(
                 WeaponUpgrade(weapon_id, self.get_weapon_name(weapon_id),
                               name_offset, padding, price_div10, items))
+        self.set_cronos(self.cronos)
 
     def save_file(self, file_path=""):
         """Write mwepon.bin. Saving over the loaded file keeps the text offsets it holds on disk now:

@@ -4,6 +4,7 @@ Junkshop CLI Tool.
 Headless mwepon.bin editing (same data as the Junkshop GUI):
   • export-csv  (mwepon.bin → CSV: one row per weapon upgrade, price + 4 recipe slots)
   • import-csv  (base mwepon.bin + CSV → new mwepon.bin)
+--cronos: prices on 16 bits (Cronos JunkShopPrice16.hext: byte 2 is the high byte, up to 655,350).
 """
 
 import argparse
@@ -18,16 +19,20 @@ CSV_HEADER = ["Weapon ID", "Weapon name", "Price",
               "Item3 ID", "Item3 name", "Qty3",
               "Item4 ID", "Item4 name", "Qty4"]
 
+CRONOS_HELP = ("Prices on 16 bits, as Cronos's JunkShopPrice16.hext reads them: byte 2 of a record is the "
+               "high byte of price / 10 (up to 655,350 instead of 2,550)")
 
-def _load_manager(mwepon_bin_path: str):
+
+def _load_manager(mwepon_bin_path: str, cronos: bool = False):
     from Junkshop.junkshopmanager import JunkshopManager
     manager = JunkshopManager(load_game_data())
+    manager.set_cronos(cronos)
     manager.load_file(mwepon_bin_path)
     return manager
 
 
 def _cmd_export_csv(args) -> int:
-    manager = _load_manager(args.input)
+    manager = _load_manager(args.input, args.cronos)
     rows = []
     for upgrade in manager.weapon_upgrades:
         row = [upgrade.weapon_id, upgrade.name, upgrade.price]
@@ -41,7 +46,7 @@ def _cmd_export_csv(args) -> int:
 
 def _cmd_import_csv(args) -> int:
     from Junkshop.junkshopmanager import WeaponUpgrade
-    manager = _load_manager(args.input)
+    manager = _load_manager(args.input, args.cronos)
     applied = 0
     for row in read_csv(args.csv):
         if not row or not str(row[0]).strip():
@@ -78,12 +83,14 @@ class JunkshopCliTool(BaseCliTool):
         p_export = sub.add_parser("export-csv", help="Export mwepon.bin to CSV")
         p_export.add_argument("--input", "-i", required=True, help="Path to mwepon.bin")
         p_export.add_argument("--output", "-o", required=True, help="Output CSV path")
+        p_export.add_argument("--cronos", action="store_true", help=CRONOS_HELP)
         p_export.set_defaults(func=_cmd_export_csv)
 
         p_import = sub.add_parser("import-csv", help="Apply a CSV onto a mwepon.bin")
         p_import.add_argument("--input", "-i", required=True, help="Path to the base mwepon.bin")
         p_import.add_argument("--csv", "-c", required=True, help="CSV produced by export-csv")
         p_import.add_argument("--output", "-o", help="Output mwepon.bin (overwrites input if omitted)")
+        p_import.add_argument("--cronos", action="store_true", help=CRONOS_HELP)
         p_import.set_defaults(func=_cmd_import_csv)
 
         return parser

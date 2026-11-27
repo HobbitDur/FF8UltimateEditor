@@ -191,3 +191,91 @@ def test_a_recipe_item_past_the_game_ones_survives_an_edit(qapp, tmp_path):
     combo.setCurrentIndex(combo.findData(1))
     widget.save_file()
     assert path.read_bytes()[4] == 1
+
+
+class TestCronosPrices:
+    """Cronos's JunkShopPrice16.hext: byte 2 is the high byte of price / 10 (up to 655,350 gil)."""
+
+    def test_byte_2_is_the_high_byte_with_cronos_only(self, manager, tmp_path):
+        path = tmp_path / "mwepon.bin"
+        path.write_bytes(_weapon_bytes(0x10, 0x30, 0x39, []))
+        manager.load_file(str(path))
+        assert manager.weapon_upgrades[0].price == 570  # vanilla: byte 3 only
+        manager.set_cronos(True)
+        assert manager.weapon_upgrades[0].price == 123450
+        assert manager.max_price == 655350
+
+    def test_a_vanilla_file_reads_the_same_either_way(self, manager, mwepon_file):
+        file_path, entries = mwepon_file
+        manager.load_file(str(file_path))
+        vanilla = [upgrade.price for upgrade in manager.weapon_upgrades]
+        manager.set_cronos(True)
+        assert [upgrade.price for upgrade in manager.weapon_upgrades] == vanilla
+
+    @pytest.mark.parametrize("price,byte2,byte3", [(655350, 0xFF, 0xFF), (2570, 1, 1), (123450, 0x30, 0x39),
+                                                   (2550, 0, 0xFF), (700000, 0xFF, 0xFF)])
+    def test_cronos_writes_price_over_bytes_3_and_2(self, manager, mwepon_file, tmp_path, price, byte2, byte3):
+        file_path, _ = mwepon_file
+        manager.set_cronos(True)
+        manager.load_file(str(file_path))
+        manager.weapon_upgrades[1].price = price
+        saved = tmp_path / "saved_mwepon.bin"
+        manager.save_file(str(saved))
+        data = saved.read_bytes()
+        assert (data[12 + 2], data[12 + 3]) == (byte2, byte3)
+        assert data[12:14] == bytes([0x2A, 0x00]) and data[16:] == file_path.read_bytes()[16:]
+
+    def test_vanilla_mode_leaves_byte_2_alone(self, manager, tmp_path):
+        path = tmp_path / "mwepon.bin"
+        path.write_bytes(_weapon_bytes(0x10, 0x30, 0x39, []))
+        manager.load_file(str(path))
+        manager.weapon_upgrades[0].price = 1000
+        manager.save_file()
+        assert path.read_bytes()[2:4] == bytes([0x30, 100])
+        assert manager.weapon_upgrades[0].cronos_price == (0x30 * 256 + 100) * 10
+
+
+def test_the_cronos_checkbox_switches_to_16_bit_prices(qapp, tmp_path):
+    from PyQt6.QtCore import QSettings
+    from Junkshop.junkshopwidget import JunkshopWidget
+    QSettings("HobbitDur", "FF8UltimateEditor").remove("junkshop/cronos_checkbox")
+    path = tmp_path / "mwepon.bin"
+    path.write_bytes(_weapon_bytes(0x10, 0x30, 0x39, [(1, 1)]) + _weapon_bytes(0x20, 0, 80, [(2, 1)]))
+    widget = JunkshopWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
+    assert not widget.cronos_checkbox.isChecked()
+    widget.load_file(str(path))
+    assert widget.price_spinbox.maximum() == 2550 and widget.price_spinbox.value() == 570
+    assert not widget.cronos_price_label.isHidden()
+    assert "123,450" in widget.cronos_price_label.text()
+
+    widget.cronos_checkbox.setChecked(True)
+    assert widget.price_spinbox.maximum() == 655350 and widget.price_spinbox.value() == 123450
+    assert widget.cronos_price_label.isHidden()
+    widget.price_spinbox.setValue(500000)
+    widget.save_file()
+    assert path.read_bytes()[2:4] == bytes([50000 >> 8, 50000 & 0xFF])
+
+    # Unticking narrows the range without writing a clamped price into the record
+    widget.cronos_checkbox.setChecked(False)
+    widget.save_file()
+    assert path.read_bytes()[2:4] == bytes([50000 >> 8, 50000 & 0xFF])
+    assert QSettings("HobbitDur", "FF8UltimateEditor").value("junkshop/cronos_checkbox", type=bool) is False
+
+    widget.cronos_checkbox.setChecked(True)
+    assert JunkshopWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData")).cronos_checkbox.isChecked()
+    QSettings("HobbitDur", "FF8UltimateEditor").remove("junkshop/cronos_checkbox")
+
+
+def test_the_cli_reads_and_writes_16_bit_prices_with_cronos(tmp_path):
+    from Cli.junkshop import JunkshopCliTool
+    path = tmp_path / "mwepon.bin"
+    path.write_bytes(_weapon_bytes(0x10, 0x30, 0x39, [(1, 1)]))
+    tool = JunkshopCliTool()
+    csv_path = tmp_path / "mwepon.csv"
+    assert tool.execute(tool.build_parser().parse_args(
+        ["export-csv", "-i", str(path), "-o", str(csv_path), "--cronos"])) == 0
+    assert "|123450|" in csv_path.read_text(encoding="utf-8-sig")
+    csv_path.write_text(csv_path.read_text(encoding="utf-8-sig").replace("|123450|", "|655350|"), encoding="utf-8")
+    assert tool.execute(tool.build_parser().parse_args(
+        ["import-csv", "-i", str(path), "-c", str(csv_path), "--cronos"])) == 0
+    assert path.read_bytes()[2:4] == b"\xFF\xFF"
