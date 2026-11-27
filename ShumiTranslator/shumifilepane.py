@@ -41,8 +41,8 @@ _WARNINGS = {
         "weapon?\" while the cursor is on that upgrade (line n = upgrade n, unless upgrades share a "
         "text). The retail texts are blank (spaces).<br/>"
         "One line only, cut at the bar's edge (about 50 characters); a colour code ends the text.<br/>"
-        "mwepon.bin (beside it) holds where each text starts: Save updates those offsets too (bytes "
-        "0-1 of each upgrade, nothing else; Junkshop keeps them as saved here)."),
+        "mwepon.bin (open it too, Import > mwepon.bin) holds where each text starts: Save updates "
+        "those offsets too (bytes 0-1 of each upgrade, nothing else; Junkshop keeps them as saved here)."),
     FileType.EXE: (
         "/!\\ Only compatible with FFNx (2000 and 2013 version)<br/>"
         "When saving, this tool produce<br/>"
@@ -214,12 +214,42 @@ class ShumiFilePane(QWidget):
         self.search_bar.set_tab_holder(tab_holder)
 
     def _build_mwepon_msg(self, outer):
-        """mwepon.msg with the mwepon.bin beside it (passed as the pane's second file): the texts in
-        file order, numbered from 0 so a line's number is the upgrade showing it."""
-        self.manager = MweponMsg.from_files(self.game_data, self.file_loaded, self.file_mngrphd_loaded)
+        """mwepon.msg with the opened mwepon.bin (the pane's second file): the texts in file order,
+        numbered from 0 so a line's number is the upgrade showing it. Without a mwepon.bin, or with
+        one whose offsets don't fit this mwepon.msg, the tab only says what is missing."""
+        problem = None
+        if not self.file_mngrphd_loaded:
+            problem = ("Open <b>mwepon.bin</b> too (Import &gt; mwepon.bin) to edit these texts: it holds where "
+                       "each upgrade's text starts in mwepon.msg, and Save moves those offsets with the texts.")
+        else:
+            try:
+                self.manager = MweponMsg.from_files(self.game_data, self.file_loaded, self.file_mngrphd_loaded)
+            except (OSError, ValueError) as error:
+                problem = (f"This mwepon.bin doesn't go with this mwepon.msg ({error}).<br/>"
+                           f"mwepon.bin: {self.file_mngrphd_loaded}<br/>Open the mwepon.bin of the same game "
+                           f"files (Import &gt; mwepon.bin).")
+        if problem is not None:
+            self.manager = None
+            label = QLabel(problem)
+            label.setWordWrap(True)
+            label.setStyleSheet("QLabel { color: #c0392b; font-weight: bold; padding: 12px; }")
+            outer.addWidget(label)
+            outer.addStretch(1)
+            if self.search_bar is not None:
+                self.search_bar.setEnabled(False)
+            return
         self._begin_progress(1)
         self._add_section(SectionWidget(self.manager.text_section, 0))
         self._add_scroll(outer)
+
+    @property
+    def can_save(self):
+        """False for a mwepon.msg tab still waiting for its mwepon.bin (nothing to save)."""
+        return not (self.file_type == FileType.MWEPON_MSG and self.manager is None)
+
+    @property
+    def supports_csv(self):
+        return self.can_save
 
     def _build_exe(self, outer):
         self.manager = ExeManager(game_data=self.game_data)
@@ -294,6 +324,8 @@ class ShumiFilePane(QWidget):
             self.manager.save_file(self.file_loaded, self.file_mngrphd_loaded)
             return f"Data saved to file <b>{pathlib.Path(self.file_loaded).name}</b>"
         if self.file_type == FileType.MWEPON_MSG:
+            if self.manager is None:
+                return None  # waiting for mwepon.bin (Save is disabled meanwhile)
             self.manager.save(self.file_loaded, self.file_mngrphd_loaded)
             return (f"Data saved to file <b>{pathlib.Path(self.file_loaded).name}</b>, and the text offsets "
                     f"in <b>{pathlib.Path(self.file_mngrphd_loaded).name}</b>")

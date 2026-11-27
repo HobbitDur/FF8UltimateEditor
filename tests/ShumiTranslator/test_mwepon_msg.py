@@ -97,11 +97,18 @@ def test_shumitranslator_opens_edits_and_saves_mwepon_msg(tmp_path, game_data, q
     from ShumiTranslator.shumitranslator import ShumiTranslator
     msg_path, bin_path = _files(tmp_path, game_data, [" ", " "])
     shumi = ShumiTranslator(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
-    assert shumi.mwepon_msg_binding in shumi.file_bindings()
+    assert shumi.mwepon_msg_binding in shumi.file_bindings() and shumi.mwepon_bin_binding in shumi.file_bindings()
+    # mwepon.msg alone: its tab opens, waiting for mwepon.bin (nothing opened by itself)
     shumi.mwepon_msg_binding.open_path(str(msg_path))
+    assert shumi.mwepon_bin_binding.current_path == ""
     pane = shumi.tab_widget.currentWidget()
     assert pane.file_type == FileType.MWEPON_MSG and pane.display_name == "mwepon.msg"
-    assert len(pane.section_widget_list) == 1
+    assert pane.section_widget_list == [] and not pane.can_save and not shumi.can_save_folder()
+    # then mwepon.bin: the same tab, now editable
+    shumi.mwepon_bin_binding.open_path(str(bin_path))
+    assert shumi.tab_widget.count() == 1
+    pane = shumi.tab_widget.currentWidget()
+    assert len(pane.section_widget_list) == 1 and pane.can_save and shumi.can_save_folder()
 
     pane.section_widget_list[0].set_text_from_id(1, "Shear Trigger: Str +14")
     assert "mwepon.bin" in pane.save(shumi)
@@ -115,8 +122,10 @@ def test_junkshop_shows_the_text_and_keeps_the_offsets_on_disk(tmp_path, game_da
     junkshop = JunkshopWidget(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
     assert junkshop.msg_binding in junkshop.file_bindings() and junkshop.msg_binding.read_only
     junkshop.mwepon_binding.open_path(str(bin_path))
-    assert junkshop.msg_binding.current_path == str(msg_path)  # opened beside mwepon.bin
+    assert junkshop.msg_binding.current_path == ""  # not opened by itself
     junkshop.weapon_list.setCurrentRow(1)
+    assert "Import complementary" in junkshop.msg_text_label.text()
+    junkshop.msg_binding.open_path(str(msg_path))
     assert junkshop.msg_text_label.text() == "\"Second\""
 
     # ShumiTranslator moves the offsets meanwhile; a Junkshop save keeps the moved ones
@@ -128,3 +137,14 @@ def test_junkshop_shows_the_text_and_keeps_the_offsets_on_disk(tmp_path, game_da
     junkshop.save_file()
     saved = bin_path.read_bytes()
     assert read_offsets(saved) == moved and saved[12 + 3] == 50
+
+
+def test_a_mwepon_bin_that_does_not_fit_leaves_the_tab_waiting(tmp_path, game_data, qapp):
+    from ShumiTranslator.shumitranslator import ShumiTranslator
+    msg_path, bin_path = _files(tmp_path, game_data, ["A"])
+    bin_path.write_bytes(_record(40))  # points past the end of this mwepon.msg
+    shumi = ShumiTranslator(game_data_folder=str(PROJECT_ROOT / "FF8GameData"))
+    shumi.mwepon_bin_binding.open_path(str(bin_path))
+    shumi.mwepon_msg_binding.open_path(str(msg_path))
+    pane = shumi.tab_widget.currentWidget()
+    assert pane.file_type == FileType.MWEPON_MSG and not pane.can_save and pane.section_widget_list == []

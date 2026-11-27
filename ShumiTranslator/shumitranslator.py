@@ -19,7 +19,7 @@ from .view.translatorwidget import TranslatorWidget
 
 
 class ShumiTranslator(QWidget):
-    """All-text editor for eight FF8 file kinds (kernel.bin, namedic.bin, mngrp.bin, mwepon.msg, the
+    """All-text editor for nine FF8 file kinds (kernel.bin, namedic.bin, mngrp.bin, mwepon.msg + mwepon.bin, the
     FF8 exe, the remaster's card-name .dat, field.fs, world.fs) plus c0mxx.dat battle text, and the font
     (.tdw). The header's Import lists each kind; each file opens its own closable tab (a
     ShumiFilePane with its own manager). Several c0mxx.dat, picked together, collapse into one
@@ -138,9 +138,13 @@ class ShumiTranslator(QWidget):
         self.remaster_binding = FileBinding("remaster card names (.dat)", file_registry,
                                             load_callback=self._load_remaster,
                                             file_filter="off_cards_names*.dat")
-        # mwepon.msg, the Junk Shop text per upgrade: read with the mwepon.bin beside it (its offsets)
+        # mwepon.msg, the Junk Shop text per upgrade, and mwepon.bin, where each upgrade's text starts:
+        # the mwepon.msg tab is editable once both are opened (each by its own Import entry)
         self.mwepon_msg_binding = FileBinding("mwepon.msg", file_registry,
                                               load_callback=self._load_mwepon_msg, file_filter="mwepon*.msg")
+        self.mwepon_bin_binding = FileBinding("mwepon.bin", file_registry,
+                                              load_callback=self._load_mwepon_bin, file_filter="mwepon*.bin")
+        self.mwepon_bin_binding.file_closed.connect(lambda _path: self.__refresh_mwepon_tabs(""))
         self.field_fs_binding = FileBinding("field.fs", file_registry,
                                             load_callback=self._load_field_fs, file_filter="field*.fs")
         self.world_fs_binding = FileBinding("world.fs", file_registry,
@@ -159,7 +163,7 @@ class ShumiTranslator(QWidget):
                                               file_filter="sysfld0*.tex sysevn0*.tex sysodd0*.tex",
                                               complementary=True)
         self._bindings = [self.kernel_binding, self.namedic_binding, self.mngrp_binding,
-                          self.mwepon_msg_binding, self.exe_binding, self.remaster_binding, self.field_fs_binding,
+                          self.mwepon_msg_binding, self.mwepon_bin_binding, self.exe_binding, self.remaster_binding, self.field_fs_binding,
                           self.world_fs_binding, self.font_binding, self.font_texture_binding,
                           self.font_hires_binding]
 
@@ -298,8 +302,10 @@ class ShumiTranslator(QWidget):
         return bool(pane is not None and callable(getattr(pane, "redo", None)) and pane.redo())
 
     def can_save_folder(self):
-        """The shared Save button is enabled whenever a file tab is open."""
-        return self.__active_pane() is not None
+        """The shared Save button is enabled whenever the tab shown can save (a mwepon.msg tab
+        waiting for its mwepon.bin cannot)."""
+        pane = self.__active_pane()
+        return pane is not None and getattr(pane, "can_save", True)
 
     def has_unsaved_changes(self):
         """Whether any tab holds edits not saved yet (each tab tracks its own, see __track_edits)."""
@@ -332,15 +338,23 @@ class ShumiTranslator(QWidget):
         self.__add_pane(FileType.MNGRP, file_name, mngrphd_path)
 
     def _load_mwepon_msg(self, file_name):
-        """mwepon.msg needs mwepon.bin beside it: its upgrade records say where each text starts, and
-        Save moves those offsets with the texts."""
-        bin_path = os.path.join(os.path.dirname(file_name), "mwepon.bin")
-        if not os.path.exists(bin_path):
-            QMessageBox.warning(self, "ShumiTranslator - mwepon.bin not found",
-                                f"mwepon.bin says where each text of mwepon.msg starts, it is not next to "
-                                f"it:\n{bin_path}")
-            return
-        self.__add_pane(FileType.MWEPON_MSG, file_name, bin_path)
+        """mwepon.msg opens its tab; the texts are editable once mwepon.bin is opened too (its upgrade
+        records say where each text starts, and Save moves those offsets with the texts). Until
+        then the tab says so."""
+        self.__add_pane(FileType.MWEPON_MSG, file_name, self.mwepon_bin_binding.current_path)
+
+    def _load_mwepon_bin(self, file_name):
+        """mwepon.bin completes the mwepon.msg tab(s): rebuilt with it."""
+        self.__refresh_mwepon_tabs(file_name)
+
+    def __refresh_mwepon_tabs(self, bin_path):
+        """Rebuild each mwepon.msg tab with this mwepon.bin ("" = none: the tab waits for one). A tab
+        with unsaved edits keeps the mwepon.bin it was built with."""
+        for index in range(self.tab_widget.count()):
+            pane = self.tab_widget.widget(index)
+            if pane.file_type == FileType.MWEPON_MSG and pane.file_mngrphd_loaded != bin_path \
+                    and not pane.dirty_state.dirty:
+                self.__add_pane(FileType.MWEPON_MSG, pane.file_loaded, bin_path or "")
 
     def _load_exe(self, file_name):
         self.__add_pane(FileType.EXE, file_name)
@@ -495,6 +509,7 @@ class ShumiTranslator(QWidget):
         pane = self.__active_pane()
         has_pane = pane is not None
         has_csv = has_pane and getattr(pane, "supports_csv", True)  # a font tab has no texts
+        self.file_bindings_changed.emit()  # the header Save follows the tab shown (can_save_folder)
         self.csv_save_button.setEnabled(has_csv)
         self.csv_upload_button.setEnabled(has_csv)
         supports_compress = has_pane and pane.supports_compress

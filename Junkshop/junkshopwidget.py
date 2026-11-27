@@ -159,7 +159,7 @@ class JunkshopWidget(QWidget):
     def _shop_text(self, weapon):
         """What the Junk Shop shows for that upgrade, as a label (or what is missing to show it)."""
         if self.msg_data is None:
-            return "(open mwepon.msg, beside mwepon.bin, with \"Import complementary\" to see it)"
+            return "(open mwepon.msg with \"Import complementary\" to see it)"
         text = text_at(self.game_data, self.msg_data, weapon.name_offset)
         if text is None:
             return f"(offset past the end of mwepon.msg, {len(self.msg_data)} bytes: not this file's mwepon.msg)"
@@ -198,11 +198,6 @@ class JunkshopWidget(QWidget):
             self.weapon_list.clear()
             self.weapon_list.addItems([weapon.name for weapon in self.manager.weapon_upgrades])
         self.weapon_search.select_first_match()  # Row 0, or the first match if a search is typed in
-        # mwepon.msg sits beside mwepon.bin: share it as a side file when it is there (one another
-        # tool already opened is kept)
-        msg_path = os.path.join(os.path.dirname(file_name), "mwepon.msg")
-        if not self.msg_binding.current_path and os.path.exists(msg_path):
-            self.msg_binding.open_path(msg_path)
 
     def save_file(self):
         if self.manager.file_path:
