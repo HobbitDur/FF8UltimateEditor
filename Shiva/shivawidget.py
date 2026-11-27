@@ -170,12 +170,6 @@ class ShivaWidget(QWidget):
             return
         self.mngrp_path = mngrp_path
         self.mngrphd_path = mngrphd_path
-        # The font sits beside mngrp.bin in the game's menu folder: share it as a side file when it
-        # is there (one another tool already opened is kept), so the SeeD preview has real glyphs.
-        for binding in (*self.font_source.bindings, self.icon_binding):
-            side_path = os.path.join(os.path.dirname(mngrp_path), binding.file_name)
-            if not binding.current_path and os.path.exists(side_path):
-                binding.open_path(side_path)
         for tab in self.section_tabs:
             tab.load_from_mngrp(self.manager)
         self.tabs.setEnabled(True)

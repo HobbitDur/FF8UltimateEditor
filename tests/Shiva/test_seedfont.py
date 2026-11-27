@@ -124,8 +124,8 @@ SIDE_FILES = ("sysfnt.tdw", "sysfnt.TEX", "icon.sp1", "icon.TEX")
 @pytest.mark.ff8data("extracted_files/menu/mngrp.bin", "extracted_files/menu/mngrphd.bin",
                      *(f"extracted_files/menu/{name}" for name in SIDE_FILES))
 def test_shiva_shares_the_side_files_beside_mngrp_with_the_seed_preview(tmp_path):
-    """The font and the menu icons beside mngrp.bin are opened as side files (listed in the toolbar),
-    and the SeeD preview draws with them; without them it says what to open."""
+    """The font and the menu icons are side files (listed in the toolbar), opened by the user, never
+    by themselves; the SeeD preview draws with them, and without them says what to open."""
     from PyQt6.QtWidgets import QApplication
     QApplication.instance() or QApplication(sys.argv)
     from Shiva.shivawidget import ShivaWidget
@@ -138,6 +138,11 @@ def test_shiva_shares_the_side_files_beside_mngrp_with_the_seed_preview(tmp_path
     assert {shiva.font_source.tex_binding, shiva.icon_binding} <= set(shiva.file_bindings())
 
     shiva.mngrp_binding.open_path(str(tmp_path / "mngrp.bin"))
+    assert preview.atlas is None and preview.icons is None  # not opened by themselves
+    assert all(not binding.current_path for binding in (*shiva.font_source.bindings, shiva.icon_binding))
+    for binding in shiva.font_source.bindings:
+        binding.open_path(str(tmp_path / binding.file_name))
+    shiva.icon_binding.open_path(str(tmp_path / "icon.sp1"))
     assert preview.atlas is not None and preview.metrics is not None
     assert preview.icons is not None and preview.icons.hand is not None
     assert preview.icons.hand[0].size == (24, 16)  # the menu hand, icon.sp1 sprite 0
