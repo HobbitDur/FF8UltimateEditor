@@ -19,8 +19,8 @@ from .view.translatorwidget import TranslatorWidget
 
 
 class ShumiTranslator(QWidget):
-    """All-text editor for seven FF8 file kinds (kernel.bin, namedic.bin, mngrp.bin, the FF8 exe,
-    the remaster's card-name .dat, field.fs, world.fs) plus c0mxx.dat battle text, and the font
+    """All-text editor for eight FF8 file kinds (kernel.bin, namedic.bin, mngrp.bin, mwepon.msg, the
+    FF8 exe, the remaster's card-name .dat, field.fs, world.fs) plus c0mxx.dat battle text, and the font
     (.tdw). The header's Import lists each kind; each file opens its own closable tab (a
     ShumiFilePane with its own manager). Several c0mxx.dat, picked together, collapse into one
     battle-text tab. The font is a secondary file, under Import complementary: it opens a font tab
@@ -138,6 +138,9 @@ class ShumiTranslator(QWidget):
         self.remaster_binding = FileBinding("remaster card names (.dat)", file_registry,
                                             load_callback=self._load_remaster,
                                             file_filter="off_cards_names*.dat")
+        # mwepon.msg, the Junk Shop text per upgrade: read with the mwepon.bin beside it (its offsets)
+        self.mwepon_msg_binding = FileBinding("mwepon.msg", file_registry,
+                                              load_callback=self._load_mwepon_msg, file_filter="mwepon*.msg")
         self.field_fs_binding = FileBinding("field.fs", file_registry,
                                             load_callback=self._load_field_fs, file_filter="field*.fs")
         self.world_fs_binding = FileBinding("world.fs", file_registry,
@@ -156,7 +159,7 @@ class ShumiTranslator(QWidget):
                                               file_filter="sysfld0*.tex sysevn0*.tex sysodd0*.tex",
                                               complementary=True)
         self._bindings = [self.kernel_binding, self.namedic_binding, self.mngrp_binding,
-                          self.exe_binding, self.remaster_binding, self.field_fs_binding,
+                          self.mwepon_msg_binding, self.exe_binding, self.remaster_binding, self.field_fs_binding,
                           self.world_fs_binding, self.font_binding, self.font_texture_binding,
                           self.font_hires_binding]
 
@@ -327,6 +330,17 @@ class ShumiTranslator(QWidget):
                                 f"not next to it:\n{mngrphd_path}")
             return
         self.__add_pane(FileType.MNGRP, file_name, mngrphd_path)
+
+    def _load_mwepon_msg(self, file_name):
+        """mwepon.msg needs mwepon.bin beside it: its upgrade records say where each text starts, and
+        Save moves those offsets with the texts."""
+        bin_path = os.path.join(os.path.dirname(file_name), "mwepon.bin")
+        if not os.path.exists(bin_path):
+            QMessageBox.warning(self, "ShumiTranslator - mwepon.bin not found",
+                                f"mwepon.bin says where each text of mwepon.msg starts, it is not next to "
+                                f"it:\n{bin_path}")
+            return
+        self.__add_pane(FileType.MWEPON_MSG, file_name, bin_path)
 
     def _load_exe(self, file_name):
         self.__add_pane(FileType.EXE, file_name)

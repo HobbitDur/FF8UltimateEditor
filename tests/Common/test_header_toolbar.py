@@ -591,8 +591,8 @@ def test_julia_audio_fmt_open_and_direct_save(main_window, monkeypatch, tmp_path
 
 @pytest.mark.ff8data("extracted_files/main/kernel.bin", "extracted_files/main/namedic.bin", "extracted_files/battle/c0m000.dat")
 def test_shumitranslator_opens_a_tab_per_file(main_window, monkeypatch, tmp_path):
-    """ShumiTranslator's seven fixed-name kinds (kernel.bin, namedic.bin, mngrp.bin, FF8 exe,
-    remaster .dat, field.fs, world.fs) plus the c0mxx.dat multi-select are eight *independent*
+    """ShumiTranslator's eight fixed-name kinds (kernel.bin, namedic.bin, mngrp.bin, mwepon.msg, FF8 exe,
+    remaster .dat, field.fs, world.fs) plus the c0mxx.dat multi-select are nine *independent*
     Import-menu entries - not one combined "N files loaded" line like Alexander. Each opened file
     gets its own closable tab (a ShumiFilePane with its own manager); Save/CSV/compress act on the
     active tab. kernel.bin shares its registry key with SolomonRing (opening it feeds both)."""
@@ -620,8 +620,8 @@ def test_shumitranslator_opens_a_tab_per_file(main_window, monkeypatch, tmp_path
     assert not hasattr(shumi, "file_dialog_button") and not hasattr(shumi, "save_button")
     # One Import entry per file kind, plus the c0mxx.dat multi-select; the font is complementary.
     assert [label for label, _ in tb._import_entries()] == [
-        "kernel.bin", "namedic.bin", "mngrp.bin", "FF8 exe", "remaster card names (.dat)", "field.fs",
-        "world.fs", "c0mxx.dat (battle text)"]
+        "kernel.bin", "namedic.bin", "mngrp.bin", "mwepon.msg", "FF8 exe", "remaster card names (.dat)",
+        "field.fs", "world.fs", "c0mxx.dat (battle text)"]
     assert [binding.file_name for binding in tb._complementary_bindings()] == [
         "font (.tdw)", "font texture, low res (menu/sysfnt.TEX)",
         "font textures, high res (menu/hires/sysfld00.TEX...)"]

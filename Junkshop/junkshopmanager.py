@@ -1,3 +1,5 @@
+import os
+
 from FF8GameData.gamedata import GameData
 
 
@@ -6,7 +8,7 @@ class WeaponUpgrade:
 
     Layout (little endian), confirmed against the FF8 executable (sub_4EA890,
     reads ``mweaponbinbuffer + 12 * weapon_id``):
-        - offset 0 (uint16): offset of the weapon name inside mwepon.msg
+        - offset 0 (uint16): offset of the upgrade's shop text inside mwepon.msg (FF8GameData.menu.mweponmsg)
         - offset 2 (byte)  : unused padding (always 0)
         - offset 3 (byte)  : upgrade price divided by 10 (the game multiplies it back by 10)
         - offset 4 (byte)  : item 1 id
@@ -20,8 +22,8 @@ class WeaponUpgrade:
 
     When the player buys an upgrade the game removes ``quantity`` of each item id
     (ids equal to 0 mean "no item" and are ignored) and charges ``price`` gils.
-    The name offset and padding are gameplay-irrelevant for this editor but are
-    preserved byte-perfect so the resulting file stays identical everywhere else.
+    The text offset belongs to mwepon.msg's editor (ShumiTranslator moves it with the texts), so a
+    save keeps the one on disk; the padding is preserved byte-perfect.
     """
 
     NB_ITEM = 4
@@ -111,10 +113,26 @@ class JunkshopManager:
                               name_offset, padding, price_div10, items))
 
     def save_file(self, file_path=""):
+        """Write mwepon.bin. Saving over the loaded file keeps the text offsets it holds on disk now:
+        ShumiTranslator may have moved them with mwepon.msg's texts since the load."""
         if not file_path:
             file_path = self.file_path
+        self._take_text_offsets_from_disk(file_path)
         file_data = bytearray()
         for weapon_upgrade in self.weapon_upgrades:
             file_data.extend(weapon_upgrade.to_bytes())
         with open(file_path, "wb") as out_file:
             out_file.write(file_data)
+
+    def _take_text_offsets_from_disk(self, file_path):
+        if os.path.normcase(os.path.abspath(file_path)) != os.path.normcase(os.path.abspath(self.file_path)):
+            return
+        if not os.path.exists(file_path):
+            return
+        with open(file_path, "rb") as in_file:
+            on_disk = in_file.read()
+        if len(on_disk) // self.NB_BYTE_PER_WEAPON != len(self.weapon_upgrades):
+            return
+        for weapon_upgrade in self.weapon_upgrades:
+            offset = weapon_upgrade.weapon_id * self.NB_BYTE_PER_WEAPON
+            weapon_upgrade.name_offset = on_disk[offset] | (on_disk[offset + 1] << 8)

@@ -9,6 +9,7 @@ from Common.filebinding import FileBinding
 from Common.fileregistry import FileRegistry
 from Common.kernelnamesource import KernelNameSource
 from FF8GameData.gamedata import GameData
+from FF8GameData.menu.mweponmsg import text_at
 from Junkshop.junkshopmanager import JunkshopManager, WeaponUpgrade
 from SmallWidget.listsearchbar import ListSearchBar
 
@@ -36,6 +37,12 @@ class JunkshopWidget(QWidget):
         # File section: mwepon.bin, driven by the shared header toolbar (Import / Save).
         self.mwepon_binding = FileBinding("mwepon.bin", file_registry,
                                           load_callback=self.load_file, save_callback=self.save_file)
+        # mwepon.msg, read-only (ShumiTranslator edits it): the text each upgrade's offset points at
+        self.msg_binding = FileBinding("mwepon.msg", file_registry, file_filter="mwepon*.msg",
+                                       read_only=True, complementary=True)
+        self.msg_binding.file_opened.connect(self._load_msg)
+        self.msg_binding.file_closed.connect(self._clear_msg)
+        self.msg_data = None
         # kernel.bin, complementary: the only source of the weapon names.
         self.kernel_names = KernelNameSource(self.game_data, file_registry)
         self.kernel_names.changed.connect(self._on_kernel_names_changed)
@@ -61,20 +68,30 @@ class JunkshopWidget(QWidget):
 
         self.name_offset_label = QLabel("")
         self.name_offset_label.setToolTip(
-            "Offset of this weapon's name inside mwepon.msg (bytes 0-1 of the record).\n"
-            "Read-only: it is set by the original game files and has no effect on gameplay "
-            "other than pointing to the name text, so it is preserved as-is on save.")
+            "Where this upgrade's text starts in mwepon.msg (bytes 0-1 of the record). The weapon's name\n"
+            "is not there: it comes from kernel.bin. Read-only here: ShumiTranslator edits mwepon.msg and\n"
+            "moves these offsets with its texts; Save here keeps them as they are on disk.")
+        self.msg_text_label = QLabel("")
+        self.msg_text_label.setWordWrap(True)
+        self.msg_text_label.setMinimumWidth(360)  # a full line of the shop text, wrapped past that
+        self.msg_text_label.setToolTip(
+            "The text the Junk Shop shows in the bar under \"Remodel to which weapon?\" while the cursor is\n"
+            "on this upgrade: mwepon.msg at the offset above (blank in the retail game). Edited in\n"
+            "ShumiTranslator; one line, about 50 characters, and a colour code ends it.")
 
-        price_group = QGroupBox("Price")
+        price_group = QGroupBox("Price and shop text")
         price_form = QFormLayout()
+        price_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         price_form.addRow("Upgrade price:", self.price_spinbox)
-        price_form.addRow("Name offset (read-only):", self.name_offset_label)
+        price_form.addRow("Text offset (read-only):", self.name_offset_label)
+        price_form.addRow("Shop text (mwepon.msg):", self.msg_text_label)
         price_group.setLayout(price_form)
 
         # Four recipe slots (item + quantity)
         self.item_comboboxes = []
         self.quantity_spinboxes = []
         recipe_form = QFormLayout()
+        recipe_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         for i in range(WeaponUpgrade.NB_ITEM):
             item_combobox = QComboBox()   # filled by _fill_item_combos: the item id is each entry's data
             item_combobox.setToolTip("Item consumed by this recipe slot (Nothing = slot disabled)")
@@ -92,6 +109,7 @@ class JunkshopWidget(QWidget):
             slot_layout.addWidget(item_combobox)
             slot_layout.addWidget(QLabel("x"))
             slot_layout.addWidget(quantity_spinbox)
+            slot_layout.addStretch(1)
             recipe_form.addRow(f"Item {i + 1}:", slot_layout)
 
         recipe_group = QGroupBox("Recipe (items required to buy)")
@@ -109,6 +127,7 @@ class JunkshopWidget(QWidget):
         main_editor_layout = QHBoxLayout()
         main_editor_layout.addWidget(self.weapon_search.column)
         main_editor_layout.addWidget(self.editor_container)
+        main_editor_layout.addStretch(1)  # the editor keeps its natural width, the room is left after it
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.weapon_notice)
@@ -118,11 +137,33 @@ class JunkshopWidget(QWidget):
         self._fill_item_combos()
         self.mwepon_binding.load_opened_file()  # Another tool may have opened mwepon.bin already
         self.kernel_names.binding.load_opened_file()  # ...or a kernel.bin
+        self.msg_binding.load_opened_file()  # ...or a mwepon.msg
 
     def file_bindings(self):
-        """The files the shared header toolbar drives for this tool: mwepon.bin, and kernel.bin as
-        a complementary file naming the weapons."""
-        return [self.mwepon_binding, self.kernel_names.binding]
+        """The files the shared header toolbar drives for this tool: mwepon.bin, kernel.bin as
+        a complementary file naming the weapons, and mwepon.msg (read-only) for the shop texts."""
+        return [self.mwepon_binding, self.kernel_names.binding, self.msg_binding]
+
+    def _load_msg(self, file_name):
+        try:
+            with open(file_name, "rb") as msg_file:
+                self.msg_data = msg_file.read()
+        except OSError:
+            self.msg_data = None
+        self.reload_selected_weapon()
+
+    def _clear_msg(self, _path=None):
+        self.msg_data = None
+        self.reload_selected_weapon()
+
+    def _shop_text(self, weapon):
+        """What the Junk Shop shows for that upgrade, as a label (or what is missing to show it)."""
+        if self.msg_data is None:
+            return "(open mwepon.msg, beside mwepon.bin, with \"Import complementary\" to see it)"
+        text = text_at(self.game_data, self.msg_data, weapon.name_offset)
+        if text is None:
+            return f"(offset past the end of mwepon.msg, {len(self.msg_data)} bytes: not this file's mwepon.msg)"
+        return f"\"{text}\"" + (" (blank)" if not text.strip() else "")
 
     def _fill_item_combos(self):
         """The recipe items: the game's, then those a kernel.bin adds (FFNx AddMoreItems, 199+)."""
@@ -157,6 +198,11 @@ class JunkshopWidget(QWidget):
             self.weapon_list.clear()
             self.weapon_list.addItems([weapon.name for weapon in self.manager.weapon_upgrades])
         self.weapon_search.select_first_match()  # Row 0, or the first match if a search is typed in
+        # mwepon.msg sits beside mwepon.bin: share it as a side file when it is there (one another
+        # tool already opened is kept)
+        msg_path = os.path.join(os.path.dirname(file_name), "mwepon.msg")
+        if not self.msg_binding.current_path and os.path.exists(msg_path):
+            self.msg_binding.open_path(msg_path)
 
     def save_file(self):
         if self.manager.file_path:
@@ -170,6 +216,7 @@ class JunkshopWidget(QWidget):
         with QSignalBlocker(self.price_spinbox):
             self.price_spinbox.setValue(weapon.price)
         self.name_offset_label.setText(f"0x{weapon.name_offset:04X}")
+        self.msg_text_label.setText(self._shop_text(weapon))
         for i in range(WeaponUpgrade.NB_ITEM):
             item_id, quantity = weapon.items[i]
             combo = self.item_comboboxes[i]

@@ -42,6 +42,7 @@ class FileType(Enum):
     FIELD_FS = 8
     WORLD_FS = 9
     FONT = 10  # a .tdw font file (ShumiTranslator's font tab)
+    MWEPON_MSG = 11  # menu/mwepon.msg, the Junk Shop text per upgrade (with mwepon.bin beside it)
 
 
 class SectionType(Enum):

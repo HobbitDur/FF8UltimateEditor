@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QLabel, QFileDial
 
 from FF8GameData.gamedata import GameData, FileType, SectionType, RemasterCardType
 from FF8GameData.menu.mngrp.mngrpmanager import MngrpManager
+from FF8GameData.menu.mweponmsg import MweponMsg
 from FF8GameData.menu.mngrp.string.sectionstring import SectionString
 from .model.battle.battlemanager import BattleManager
 from .model.exe.exemanager import ExeManager
@@ -35,6 +36,13 @@ _WARNINGS = {
     FileType.MNGRP: (
         "{x0...} are yet unknown text correspondence. Pls don't modify them.<br/>"
         "Value between {} are \"compressed\" data. Pls don't remove bracket around.<br/>"),
+    FileType.MWEPON_MSG: (
+        "One line per text of mwepon.msg: the Junk Shop shows it in the bar under \"Remodel to which "
+        "weapon?\" while the cursor is on that upgrade (line n = upgrade n, unless upgrades share a "
+        "text). The retail texts are blank (spaces).<br/>"
+        "One line only, cut at the bar's edge (about 50 characters); a colour code ends the text.<br/>"
+        "mwepon.bin (beside it) holds where each text starts: Save updates those offsets too (bytes "
+        "0-1 of each upgrade, nothing else; Junkshop keeps them as saved here)."),
     FileType.EXE: (
         "/!\\ Only compatible with FFNx (2000 and 2013 version)<br/>"
         "When saving, this tool produce<br/>"
@@ -100,6 +108,7 @@ class ShumiFilePane(QWidget):
             FileType.KERNEL: self._build_kernel,
             FileType.NAMEDIC: self._build_namedic,
             FileType.MNGRP: self._build_mngrp,
+            FileType.MWEPON_MSG: self._build_mwepon_msg,
             FileType.EXE: self._build_exe,
             FileType.DAT: self._build_dat,
             FileType.REMASTER_DAT: self._build_remaster,
@@ -204,6 +213,14 @@ class ShumiFilePane(QWidget):
         outer.addWidget(tab_holder, 1)
         self.search_bar.set_tab_holder(tab_holder)
 
+    def _build_mwepon_msg(self, outer):
+        """mwepon.msg with the mwepon.bin beside it (passed as the pane's second file): the texts in
+        file order, numbered from 0 so a line's number is the upgrade showing it."""
+        self.manager = MweponMsg.from_files(self.game_data, self.file_loaded, self.file_mngrphd_loaded)
+        self._begin_progress(1)
+        self._add_section(SectionWidget(self.manager.text_section, 0))
+        self._add_scroll(outer)
+
     def _build_exe(self, outer):
         self.manager = ExeManager(game_data=self.game_data)
         self.manager.load_file(self.file_loaded)
@@ -276,6 +293,10 @@ class ShumiFilePane(QWidget):
         if self.file_type == FileType.MNGRP:
             self.manager.save_file(self.file_loaded, self.file_mngrphd_loaded)
             return f"Data saved to file <b>{pathlib.Path(self.file_loaded).name}</b>"
+        if self.file_type == FileType.MWEPON_MSG:
+            self.manager.save(self.file_loaded, self.file_mngrphd_loaded)
+            return (f"Data saved to file <b>{pathlib.Path(self.file_loaded).name}</b>, and the text offsets "
+                    f"in <b>{pathlib.Path(self.file_mngrphd_loaded).name}</b>")
         if self.file_type == FileType.REMASTER_DAT:
             self.manager.save_file(self.file_loaded)
             return f"Data saved to file <b>{pathlib.Path(self.file_loaded).name}</b>"

@@ -74,6 +74,7 @@ class SirenWidget(QWidget):
 
         edit_group = QGroupBox("Prices")
         edit_form = QFormLayout()
+        edit_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         edit_form.addRow("Buy price:", self.buy_spinbox)
         edit_form.addRow("Sell price multiplier:", self.sell_mult_spinbox)
         edit_form.addRow("Sell price*:", self.sell_price_label)
@@ -91,6 +92,7 @@ class SirenWidget(QWidget):
         main_editor_layout = QHBoxLayout()
         main_editor_layout.addWidget(self.item_search.column)
         main_editor_layout.addWidget(self.editor_container)
+        main_editor_layout.addStretch(1)  # the editor keeps its natural width, the room is left after it
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(main_editor_layout)
