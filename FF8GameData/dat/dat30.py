@@ -17,10 +17,9 @@ d7c016, reduced weapon d1w/d9w):
    weapons share the animation ids, see IfritManager). The Slow-safe limit of 128 frames no
    longer applies: on a converted model FFNx emulates Slow by holding each frame for two
    host frames instead of letting the engine double the frame count in a byte.
-2. The sequences (seqrewrite30): every tick count x2, every per-tick step /2... Then a movement
-   written as `current_frame / total_frames` of an A0 animation divides by total_frames - 1, so
-   it reaches its end on its last tick instead of leaving the model one step short until the
-   sequence ends and puts it back in one frame (seqframeratio).
+2. The sequences (seqrewrite30): every tick count x2, every per-tick step /2... A movement written
+   as `current_frame / total_frames` of an A0 animation is left as it is: the game counts
+   current_frame from 1 to total_frames on those ticks, so it reaches its end at 30 fps as in vanilla.
 3. The extra single-animation block (character body section 7, weapon section 8, Edea
    section 10): the battle-entry animation, swapped in at battle start
    (initAnimationSequenceAtStartBattle 0x5029A8/0x5029C9) and played by sequence 8 - doubled
@@ -51,7 +50,6 @@ from . import interpolation
 from .animloopdetector import is_looping, ANIM_UNUSED
 from .animsplitter import (MAX_ANIMATION_FRAME, can_split_animation, get_nb_part_needed,
                            split_and_convert_animation)
-from .seqframeratio import end_frame_ratio_movements
 from .seqrewrite30 import rewrite_seq_animation_data
 from . import camera30
 
@@ -289,7 +287,7 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
     ('camera', reason), and nothing is touched either.
     """
     report = {'nb_converted': 0, 'split_list': [], 'skipped_list': [], 'sequence_report': None,
-              'nb_extra': 0, 'camera_report': None, 'ratio_list': []}
+              'nb_extra': 0, 'camera_report': None}
     if driver_frame_count is None:
         driver_frame_count = [len(animation.frames) for animation in monster.animation_data.animations]
     camera_problem = plan_camera(monster)
@@ -327,14 +325,6 @@ def convert_monster_to_real30(game_data, monster, kind_dict: dict, allow_split: 
         report['split_list'].append((anim_id, nb_frame, split_report['nb_part'],
                                      split_report['new_id_list']))
         report['nb_converted'] += split_report['nb_part']
-
-    # 2b. movements on current_frame / total_frames reach their end (vanilla counts x2: an A0
-    # animation is never split)
-    if sequence_list:
-        def converted_count(anim_id):
-            return FACTOR * driver_frame_count[anim_id] if 0 <= anim_id < len(driver_frame_count) else 0
-        report['ratio_list'] = end_frame_ratio_movements(game_data, monster.seq_animation_data,
-                                                         converted_count)
 
     # 3. the battle-entry block
     if has_animation:

@@ -566,7 +566,7 @@ class IfritManager:
         return {'file': os.path.basename(str(file_path)), 'name': "", 'nb_converted': 0,
                 'split_list': [], 'skipped_list': [], 'error': "", 'source': "",
                 'real30': True, 'sequence_report': None, 'nb_extra': 0, 'warning_list': [],
-                'camera_report': None, 'ratio_list': []}
+                'camera_report': None}
 
     def _group_families(self, file_list) -> list:
         """The files of file_list grouped so a character body and its weapons are converted
@@ -798,7 +798,7 @@ class IfritManager:
         except Exception as e:
             return f"the conversion failed ({type(e).__name__}: {e})"
         for key in ('nb_converted', 'split_list', 'skipped_list', 'sequence_report', 'nb_extra',
-                    'camera_report', 'ratio_list'):
+                    'camera_report'):
             report[key] = result[key]
         return ""
 

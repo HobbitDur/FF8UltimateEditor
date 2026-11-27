@@ -13,7 +13,6 @@ import pytest
 from FF8GameData.dat import dat30
 from FF8GameData.dat.animsplitter import rewrite_sequence_list_for_split
 from FF8GameData.dat.monsteranalyser import MonsterAnalyser
-from FF8GameData.dat.seqframeratio import end_frame_ratio_movements
 from FF8GameData.dat.seqrewrite30 import rewrite_sequence_dict
 from FF8GameData.dat.sequencevm import entity_sequence_vm
 from FF8GameData.monsterdata import AnimationSection
@@ -58,12 +57,6 @@ def _verify_file(vm, original_path, converted_path, frames=None, anim_alias=None
     sequence_15, sequence_30 = read_sequence_dict(original), read_sequence_dict(converted)
     frame_15 = frames[0] if frames else read_frame_count_list(original)
     frame_30 = frames[1] if frames else read_frame_count_list(converted)
-    # A way back the conversion makes reach its end (seqframeratio) is compared with the same
-    # way back ending in vanilla: everything else must still match the original exactly.
-    reference = {'seq_animation_data': [{'id': seq_id, 'data': bytearray(data)}
-                                        for seq_id, data in sequence_15.items()]}
-    end_frame_ratio_movements(vm, reference, lambda anim_id: frame_15[anim_id] if anim_id < len(frame_15) else 0)
-    sequence_15 = {sequence['id']: bytes(sequence['data']) for sequence in reference['seq_animation_data']}
     problem = {}
     for seq_id, data in sequence_15.items():
         if data:
@@ -234,22 +227,16 @@ class TestChainedCut:
         # a one-shot the sequence ends on still holds its last pose
         assert root(converted[30].frames[-1]) == root(vanilla[30].frames[-1])
 
-    def test_ward_ends_his_way_back_on_his_spot(self, manager, tmp_path):
-        """The way back is `start * (1 - current_frame / total_frames)` over anim 29's frames: once
-        converted it divides by total_frames - 1 (seqframeratio), so the last tick is home."""
-        from FF8GameData.dat.sequencebake import BattleContext, bake_sequence, sequence_dict_from_section
+    def test_ward_way_back_keeps_its_vanilla_divisor(self, manager, tmp_path):
+        """The way back is `start * (1 - current_frame / total_frames)` over anim 29's frames. The game
+        counts current_frame from 1 to total_frames on those ticks, so it already ends on his spot: the
+        converted sequence still divides by total_frames (D3 0A), as vanilla does."""
         body, weapon = _copy(tmp_path, "dac021.dat", "daw039.dat")
         report_list = manager.convert_file_list_to_fps([body, weapon], 30)
-        assert report_list[0]['ratio_list'] == []
-        # sequences 13 (attack) and 25, each at its D3 0A after the A0 1D: D2 07 (8 frames - 1)
-        assert [(seq, anim, divisor) for seq, _address, anim, divisor in report_list[1]['ratio_list']] == \
-            [(13, 29, 7), (25, 29, 7)]
-        weapon_data = _load(manager, weapon)
-        frame_count = [len(a.frames) for a in _load(manager, body).animation_data.animations]
-        result = bake_sequence(manager.game_data, sequence_dict_from_section(weapon_data.seq_animation_data),
-                               13, frame_count, BattleContext(is_monster=False), follow_chain=False)
-        way_back = [frame.position[2] for frame in result.frame_list if frame.anim_id == 29]
-        assert way_back[0] < 0 and way_back[-1] == 0
+        assert [r['error'] for r in report_list] == ["", ""]
+        from FF8GameData.dat.sequencebake import sequence_dict_from_section
+        sequence = sequence_dict_from_section(_load(manager, weapon).seq_animation_data)[13]
+        assert bytes.fromhex("CF 09 E5 FE C3 FE D3 0A") in sequence
 
     def test_a_cut_that_moves_the_entity_is_recorded_with_its_move(self, manager, vm):
         """Squall's attack: the run (anim 32) carries him 2078 forward in its root, then anim 34
