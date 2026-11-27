@@ -49,6 +49,17 @@ jobs:
         pip install pyinstaller
         pip freeze
 
+    - name: Write the build version (shown in the window title)
+      shell: bash
+      run: |
+        if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          BUILD_VERSION="${{ github.ref_name }}"
+        else
+          BUILD_VERSION="canary $(git rev-parse --short=7 HEAD) ($(git log -1 --format=%cs HEAD))"
+        fi
+        echo "BUILD_VERSION = \"${BUILD_VERSION}\"" > Common/_buildversion.py
+        cat Common/_buildversion.py
+
     - name: Create patcher
       shell: bash
       run: |
@@ -221,6 +232,17 @@ jobs:
         choco install curl
 
     - uses: milliewalky/setup-7-zip@v2
+
+    - name: Write the build version (shown in the window title)
+      shell: bash
+      run: |
+        if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          BUILD_VERSION="${{ github.ref_name }}"
+        else
+          BUILD_VERSION="canary $(git rev-parse --short=7 HEAD) ($(git log -1 --format=%cs HEAD))"
+        fi
+        echo "BUILD_VERSION = \"${BUILD_VERSION}\"" > Common/_buildversion.py
+        cat Common/_buildversion.py
 
     - name: Create patcher
       shell: bash

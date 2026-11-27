@@ -1,4 +1,6 @@
 **/.idea
+# Written by the release workflow before PyInstaller (the version shown in the title)
+Common/_buildversion.py
 **/__pycache__/
 **/decompressed_battle/
 **/release

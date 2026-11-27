@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (QWidget, QMenuBar, QHBoxLayout, QVBoxLayout, QLabel
 from CCGroup.ccgroup import CCGroupWidget
 from Chocoboy.chocoboywidget import ChocoboyWidget
 from Cid.cidwidget import CidWidget
+from Common.appversion import app_version
 from Common.closedfileview import install_closed_file_view
 from Common.dirtytracking import install_dirty_tracking, tool_has_unsaved_changes
 from Common.fileregistry import FileRegistry
@@ -94,7 +95,8 @@ class FF8UltimateEditorWidget(QWidget):
         if getattr(sys, 'frozen', False):  # Check if running as exe
             self.setup_logging()
 
-        self._base_title = "FF8 ultimate editor"
+        # The version is in the title, so a screenshot from a user says which build they run
+        self._base_title = f"FF8 ultimate editor - {app_version()}"
         self.setWindowTitle(self._base_title)
         self.setWindowIcon(QIcon(os.path.join(resources_path, 'hobbitdur.ico')))
 
