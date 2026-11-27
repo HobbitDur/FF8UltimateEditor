@@ -1,7 +1,8 @@
 """The battle files a tool's BattleScenePreview draws, opened as side files (only read, never edited).
 
-A host (JumboCactuar, Alexander) offers them in the header's Import read-only menu (entries())
-and Auto-upload (auto_import_source); they are listed under one summary
+A host (JumboCactuar, Alexander; Fujin and Ifrit for the stages only) offers them in the header's
+Import complementary menu (entries(), or import_stages) and Auto-upload (auto_import_source); they
+are listed under one summary
 entry of the Opened files panel (`registry_key`) and closing it there forgets them. The preview
 finds them by name (path) and stands the party among the opened characters and weapons.
 """

@@ -86,8 +86,9 @@ def _shifted(batches, offset):
             for batch in batches]
 
 
-class _Stage:
-    """A battle stage read for the preview: its mesh in viewer space and its camera section."""
+class StageMesh:
+    """A battle stage read for a preview: its mesh in viewer space (to_viewer, UNIT per battle unit)
+    and its camera section. Also drawn by Ifrit's battle previews (BattlePreviewSetup)."""
 
     def __init__(self, path, stage_id):
         from Alexander.alexandermanager import AlexanderManager
@@ -151,7 +152,7 @@ class BattleScenePreview(QWidget):
         self.file_source = lambda _name: None
         self._game_data_folder = game_data_folder
         self._game_data = None
-        self._stages = {}           # path -> _Stage (or the error reading it)
+        self._stages = {}           # path -> StageMesh (or the error reading it)
         self._models = {}           # path -> _Model (or the error reading it)
         self._record = None
         self._encounter_index = None
@@ -398,7 +399,7 @@ class BattleScenePreview(QWidget):
             return
         record, notes = self._record, []
         stage_id = record.stage_id
-        stage = self._read(self._stages, stage_file_name(stage_id), lambda path: _Stage(path, stage_id))
+        stage = self._read(self._stages, stage_file_name(stage_id), lambda path: StageMesh(path, stage_id))
         if isinstance(stage, str):
             notes.append(stage)
             stage = None

@@ -4,8 +4,9 @@ The scene is the Camera tab's battle preview (BattlePreviewSetup, model_view): t
 on its encounter slot, turned the way the game turns it (resetBasedRotation, EN 502070), with the
 engine's root offset (model_root, raw/128), and the encounter's other enemies and the party stand
 where scene.out and the battle formation put them. Only the models the user opened are drawn (no
-file is looked up in a folder); a slot without one is a post on the ground. The camera stays the
-orbit camera, centred on the field.
+file is looked up in a folder); a slot without one is a post on the ground. The encounter's battle
+stage is drawn under them when the user opened its a0stgNNN.x (set_stage_source), else a ground
+grid. The camera stays the orbit camera, centred on the field.
 """
 import numpy as np
 from PyQt6.QtCore import pyqtSignal
@@ -39,6 +40,11 @@ class BattleView(QWidget):
 
     def set_model_paths(self, paths):
         self.setup.set_model_paths(paths)
+        self.mark_dirty()
+
+    def set_stage_source(self, source):
+        """The battle stages the user opened (callable: a0stgNNN.x -> path or None)."""
+        self.setup.set_stage_source(source)
         self.mark_dirty()
 
     def mark_dirty(self):
@@ -93,8 +99,10 @@ class BattleView(QWidget):
         gl.set_preview_actor(setup.opponent_mesh(frame, animate=True))
         unit = setup.unit
         half = self._field_half_size()
+        # the stage's floor is the ground: no grid over it
+        grid = half * unit if show_ground and setup.stage is None else None
         gl.set_preview_slot_markers([setup.to_viewer(point) for point in setup.marker_positions()],
-                                    MARKER_HEIGHT * unit, half * unit if show_ground else None, GRID_STEP * unit)
+                                    MARKER_HEIGHT * unit, grid, GRID_STEP * unit)
 
     def _positions(self):
         context = self.setup.context

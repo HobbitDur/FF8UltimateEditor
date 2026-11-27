@@ -1,5 +1,7 @@
 """Read-only encounter picker shared by every battle preview. scene.out comes from the header
 toolbar's Import complementary (the shared file bank): the picker has no file button of its own."""
+import os
+import re
 from pathlib import Path
 
 from PyQt6.QtCore import pyqtSignal
@@ -11,9 +13,14 @@ from Common.fileregistry import FileRegistry
 from FF8GameData.sceneout import read_encounters, ENCOUNTER_SIZE, NB_ENCOUNTER
 
 
+COM_FILE_ID = re.compile(r'c0m(\d{3})', re.IGNORECASE)
+
+
 class EncounterPicker(QWidget):
     changed = pyqtSignal()
     NO_SCENE_TEXT = "Import scene.out (header's Import complementary) to place the models in an encounter."
+    NO_COM_ID_TEXT = ("This model's file name has no c0mNNN number, so scene.out can't tell which encounters "
+                      "it is in: name it c0mNNN.dat to list them. Manual placement.")
 
     def __init__(self, manager, registry=None, parent=None, host_cast=False):
         """host_cast: the host picks the actors itself (Fujin's Caster/Target), so the slot pick
@@ -70,6 +77,21 @@ class EncounterPicker(QWidget):
         return getattr(getattr(enemy, 'entity_type', None), 'name', '').startswith('MONSTER')
 
     @property
+    def com_id(self):
+        """The loaded monster's id in scene.out: the NNN of its c0mNNN file name. None for a file
+        named otherwise (a renamed copy, a converted or new model): the model's own id is then 0,
+        which is the Dummy's, in 202 encounters (764 and up) that are not this model's."""
+        enemy = self.manager.enemy
+        # Only a real string counts (a test's stand-in manager answers any attribute with a mock)
+        name, path = getattr(enemy, 'origin_file_name', ''), getattr(enemy, 'origin_path', '')
+        if not isinstance(name, str) or not name:
+            name = os.path.basename(path) if isinstance(path, str) and path else ''
+        if not name:
+            return getattr(enemy, 'id', None)   # no file name known: the id the host gave
+        match = COM_FILE_ID.search(name)
+        return int(match.group(1)) if match else None
+
+    @property
     def selected(self):
         return self.encounter.currentData()
 
@@ -104,7 +126,7 @@ class EncounterPicker(QWidget):
         """The edited/current DAT name, else the monster catalog's. No c0mNNN.dat is read: only
         the files the user opened one by one are used, never ones beside scene.out."""
         enemy = self.manager.enemy
-        if self.is_monster and com_id == getattr(enemy, 'id', None):
+        if self.is_monster and com_id == self.com_id:
             name = getattr(enemy, 'info_stat_data', {}).get('monster_name')
             if name is not None:
                 return str(name).strip('\x00').strip() or f'Monster {com_id}'
@@ -117,8 +139,7 @@ class EncounterPicker(QWidget):
         return name
 
     def refresh_model(self, force=False):
-        key = (getattr(self.manager.enemy, 'origin_path', ''), self.is_monster,
-               getattr(self.manager.enemy, 'id', None))
+        key = (getattr(self.manager.enemy, 'origin_path', ''), self.is_monster, self.com_id)
         if key == self._model_key and not force:
             return
         self._model_key = key
@@ -131,7 +152,7 @@ class EncounterPicker(QWidget):
             slots = encounter.monster_slots()
             if not slots:
                 continue
-            if self.is_monster and not any(s.com_file_id == key[2] for s in slots):
+            if self.is_monster and (key[2] is None or not any(s.com_file_id == key[2] for s in slots)):
                 continue
             names = ', '.join(self.monster_name(s.com_file_id) for s in [s for s in slots if s.present] or slots)
             self.encounter.addItem(f'Encounter {encounter.index} · stage {encounter.stage_id} · {names}', encounter)
@@ -157,7 +178,7 @@ class EncounterPicker(QWidget):
         self.monsters.show_encounter(encounter, self.monster_name)
         if encounter is not None:
             # a monster's own slots, the ones there at the start first; else the slots shown
-            slots = (sorted((slot for slot in encounter.monster_slots() if slot.com_file_id == self.manager.enemy.id),
+            slots = (sorted((slot for slot in encounter.monster_slots() if slot.com_file_id == self.com_id),
                             key=lambda slot: not slot.present) if self.is_monster else self.present_slots())
             for slot in slots:
                 self.enemy_slot.addItem(
@@ -172,8 +193,12 @@ class EncounterPicker(QWidget):
         self.enemy_slot.setVisible(shown)
         if encounter is None:
             count = self.encounter.count() - 1
-            self.status.setText(f'{count} matching encounters. Manual placement.' if self.path else
-                                self.NO_SCENE_TEXT)
+            if not self.path:
+                self.status.setText(self.NO_SCENE_TEXT)
+            elif self.is_monster and self.com_id is None:
+                self.status.setText(self.NO_COM_ID_TEXT)
+            else:
+                self.status.setText(f'{count} matching encounters. Manual placement.')
         else:
             self.status.setText(f'Encounter {encounter.index} · stage {encounter.stage_id} · '
                                 'Enemy positions from scene.out; normal party formation.')

@@ -154,6 +154,7 @@ class Ifrit3DWidget(QWidget):
         self._battle_view_cb = None      # its toolbar toggle, only on a tab that offers it
         self._battle_registry = None
         self._battle_model_source = None
+        self._battle_stage_source = None
         # Weapon placement is automatic: the weapon's own animation carries a per-frame root
         # position that traces the hand (the game applies each model's own root - see
         # _current_weapon_verts), so no user-picked attach bone is needed.
@@ -1485,6 +1486,13 @@ class Ifrit3DWidget(QWidget):
         if self._battle_view is not None:
             self._battle_view.set_model_paths(paths)
 
+    def set_battle_stage_source(self, source):
+        """The battle stages the user opened (callable: a0stgNNN.x -> path or None): the battle
+        view draws the encounter's under the actors."""
+        self._battle_stage_source = source
+        if self._battle_view is not None:
+            self._battle_view.set_stage_source(source)
+
     def battle_view_active(self):
         return self._battle_view is not None and self._battle_view_cb.isChecked()
 
@@ -1493,6 +1501,8 @@ class Ifrit3DWidget(QWidget):
         self._battle_view = BattleView(self.ifrit_manager, self._battle_registry, settings=self.settings)
         if self._battle_model_source is not None:
             self._battle_view.set_model_paths(self._battle_model_source)
+        if self._battle_stage_source is not None:
+            self._battle_view.set_stage_source(self._battle_stage_source)
         self._battle_view.changed.connect(self._on_battle_view_changed)
         self._main_layout.insertWidget(self._gl_layout_index + 1, self._battle_view)
 

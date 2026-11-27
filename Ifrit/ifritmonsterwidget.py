@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 )
 from Common.filebinding import FileBinding
 from Common.autoimport import AutoImportSource
+from Common.battlesidefiles import BattleSideFiles
 from Common.fileregistry import FileRegistry
 from Common.undo import UndoStack
 from FF8GameData.dat.monsteranalyser import GarbageFileError, MonsterAnalyser
@@ -102,6 +103,23 @@ _VIEW_ONLY_PROPERTY = "ifritViewOnly"
 _DIRTY_WIRED_PROPERTY = "ifritDirtyWired"
 # The file list Auto-upload reopens: the whole session, kept up to date as files come and go.
 SESSION_SELECTION_KEY = "Ifrit battle models"
+# The battle stages opened for the previews: one summary entry in the Opened files panel
+STAGE_FILES_KEY = "Ifrit battle stage(s)"
+
+
+class _StageFilesSink:
+    """What BattleSideFiles tells its preview, for Ifrit: the stages opened or closed go to the
+    battle previews of every file pane (on_changed). Ifrit stands no party from side files: its
+    models are the session's own .dat files."""
+
+    def __init__(self, on_changed):
+        self._on_changed = on_changed
+
+    def set_party_files(self, _paths):
+        pass
+
+    def files_changed(self, reload=False):
+        self._on_changed()
 
 
 def _shrink_stack_to_current(stack, policy_cache):
@@ -516,6 +534,12 @@ class IfritFilePane(QWidget):
         self._seq_widget.set_model_paths(paths)
         self._3d_widget.set_battle_model_paths(paths)
 
+    def set_stage_source(self, source):
+        """The battle stages opened in the session (callable: a0stgNNN.x -> path or None): drawn
+        under the encounter by the previews that show the battle (Camera tab, 3D battle view)."""
+        self._camera_widget.set_stage_source(source)
+        self._3d_widget.set_battle_stage_source(source)
+
     def show_saved_tab(self):
         """Select the tab the user last had open (shared preference across panes)."""
         idx = self.settings.value("ifrit/current_tab", defaultValue=0, type=int)
@@ -921,6 +945,10 @@ class IfritMonsterWidget(QWidget):
         self.anim_set_source.changed.connect(self._on_anim_set_source_changed)
         # an anim set becoming edited or saved changes has_unsaved_changes(): the header re-checks it
         self.anim_set_source.documents_changed.connect(self.file_bindings_changed.emit)
+        # Battle stages a0stgNNN.x, complementary: the Camera tab and the 3D battle view draw the
+        # encounter's stage under the actors (as Alexander, JumboCactuar and Fujin do), else a grid.
+        self.stage_files = BattleSideFiles(self, file_registry, STAGE_FILES_KEY,
+                                           _StageFilesSink(self._on_stage_files_changed), patterns=("a0stg*.x",))
         self._encounters = []
         # Ifrit is an Alexander-pattern tool with no per-file FileBinding, so the shared-toolbar
         # Reload button reaches it through the reload_files() / can_reload_files() hooks below
@@ -1072,6 +1100,19 @@ class IfritMonsterWidget(QWidget):
         return [self.kernel_binding, self.sceneout_binding, self.audio_binding, self.mngrp_binding,
                 *self.anim_set_source.bindings()]
 
+    def complementary_entries(self):
+        """The header's Import complementary: the fixed-name files (file_bindings) and the battle
+        stages, which have no fixed name."""
+        entries = [(binding.file_name, (lambda b=binding: b.open_remembered(self))) for binding in self.file_bindings()]
+        entries.append(("Battle stages: a0stg###.x (drawn under the encounter in the Camera tab and the 3D battle "
+                        "view; several, Ctrl+A for all)", self.stage_files.import_stages))
+        return entries
+
+    def _on_stage_files_changed(self):
+        for f in self._files:
+            if f.get('pane') is not None:
+                f['pane'].set_stage_source(self.stage_files.path)
+
     def _on_anim_set_source_changed(self):
         for f in self._files:
             if f.get('pane') is not None:
@@ -1100,7 +1141,8 @@ class IfritMonsterWidget(QWidget):
     def auto_import_sources(self):
         return [AutoImportSource("battle model (.dat)",
                                  ("*.dat",), self.open_files, selection_only=True,
-                                 selection_key=SESSION_SELECTION_KEY)]
+                                 selection_key=SESSION_SELECTION_KEY),
+                self.stage_files.auto_import_source()]
 
     def open_files(self, paths=None):
         """Open one or more model .dat files at once (shared header Import routes here). Non-model
@@ -1558,6 +1600,7 @@ class IfritMonsterWidget(QWidget):
         pane.edited.connect(self._on_active_edited)          # every edit -> (debounced) undo snapshot
         pane.full_view_toggled.connect(self._set_full_view)
         pane.set_model_paths(self._opened_model_paths)
+        pane.set_stage_source(self.stage_files.path)
         f['pane'] = pane
         self._ensure_undo_stack(f)   # baseline = the just-loaded (== on-disk) model; kept across rebuilds
         self._stack.addWidget(pane)

@@ -7,7 +7,11 @@ encounter's enemies, the default player), `party_models` (party slot -> (body, w
 `opponent_weapon`. Nothing is read from scene.out's folder or the loaded model's: an encounter
 enemy whose file is not opened stays a marker at its scene.out place, named in the status. In an
 encounter every battle slot is placed, and the caster/target slot spins pick any of them
-(defaults: the loaded model and its opponent)."""
+(defaults: the loaded model and its opponent).
+
+The encounter's battle stage is drawn under the actors when the host opened its a0stgNNN.x
+(`stage_source`: file name -> path, None when not opened), read as BattleScenePreview reads it
+(StageMesh); `stage` is the one drawn after build(), None for a ground grid."""
 import math
 from pathlib import Path
 
@@ -111,6 +115,10 @@ class BattlePreviewSetup(QWidget):
         self.opponent_weapon = None     # weapon of a character opponent (manual / monster encounters)
         self._kind = None               # whether the defaults below were set for a monster
         self.model_paths = None         # callable -> the .dat paths the host loaded (the cast panel)
+        self.stage_source = None        # callable: a0stgNNN.x -> the path the host opened, or None
+        self._stage_cache = {}          # (path, mtime) -> StageMesh or the error reading it
+        self.stage = None               # the StageMesh drawn, after build(); None: a ground grid
+        self.stage_note = ''            # why no stage is drawn in an encounter ('' when one is)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         row = QHBoxLayout()
@@ -284,6 +292,39 @@ class BattlePreviewSetup(QWidget):
         if self.cast is not None:
             self.cast.refresh()
 
+    def set_stage_source(self, source):
+        """The battle stages the host opened (callable: a0stgNNN.x -> path or None): the scene is
+        built again, with the encounter's stage under it."""
+        self.stage_source = source
+        self.changed.emit()
+
+    def _load_stage(self, stage_id):
+        """The encounter's stage when the host opened its file, else None (and stage_note says why)."""
+        from Common.battlescenepreview import StageMesh, stage_file_name
+        name = stage_file_name(stage_id)
+        path = self.stage_source(name) if self.stage_source is not None else None
+        if not path:
+            self.stage_note = (f'{name} not imported: a ground grid' if self.stage_source is not None else '')
+            return None
+        try:
+            key = (str(path), Path(path).stat().st_mtime_ns)
+        except OSError as error:
+            self.stage_note = f'{name}: {error}'
+            return None
+        if key not in self._stage_cache:
+            if len(self._stage_cache) >= 4:   # a stage is big: keep only the last few
+                self._stage_cache.pop(next(iter(self._stage_cache)))
+            try:
+                self._stage_cache[key] = StageMesh(path, stage_id)
+            except Exception as error:
+                self._stage_cache[key] = f'{name}: {error}'
+        stage = self._stage_cache[key]
+        if isinstance(stage, str):
+            self.stage_note = stage
+            return None
+        self.stage_note = ''
+        return stage
+
     def build(self, animation=0, animate=False):
         if self.cast is not None:
             blocked = self.blockSignals(True)   # its state set again, not a change to rebuild for
@@ -296,6 +337,7 @@ class BattlePreviewSetup(QWidget):
         self._scene_weapons = []
         self._mesh = None
         self._pose_cache = {}
+        self.stage, self.stage_note = None, ''
         self.main_position, self.main_yaw = (0., 0., 0.), 0.
         self._sync_kind()
         if self.encounters.selected is not None and (self.encounters.selected_slot is not None or not self.encounters.is_monster):
@@ -388,13 +430,16 @@ class BattlePreviewSetup(QWidget):
         main = actor_from_model(self.manager, self.main_position, self.main_yaw, animation, animate)
         self._main = main
         slots, notes = {}, []
+        self.stage = self._load_stage(encounter.stage_id)
+        if self.stage_note:
+            notes.append(self.stage_note)
         for slot in self.encounters.present_slots():
             if monster and slot.slot_index == selected.slot_index:
                 actor, manager = main, None
             else:
                 name = f'c0m{slot.com_file_id:03}.dat'
                 try:
-                    manager = self.manager if monster and slot.com_file_id == self.manager.enemy.id else self._asset(name)
+                    manager = self.manager if monster and slot.com_file_id == self.encounters.com_id else self._asset(name)
                     if manager is None:
                         notes.append(f'{name}: not imported (a marker)')
                 except Exception as error:
@@ -463,11 +508,21 @@ class BattlePreviewSetup(QWidget):
         return np.asarray(point) * np.array((-1., -1., 1.)) * self.unit
 
     def opponent_mesh(self, tick=0, animate=False):
-        if not self._scene_mesh_actors and not self._scene_weapons:
+        """The scene drawn with the loaded model: the stage (when one is drawn) and the other actors
+        posed at this tick, as one mesh in viewer space. None when there is nothing else to draw."""
+        if not self._scene_mesh_actors and not self._scene_weapons and self.stage is None:
             return None
         if self._mesh is None:
+            from FF8GameData.battlestage.battlestageanalyser import VERTEX_SCALE
             from Ifrit.Ifrit3D.previewmesh import PreviewMesh, prepare_batches
             batches, self._mesh_slices, offset = [], [], 0
+            stage_vertices = None
+            if self.stage is not None:
+                # read in BattleScenePreview's viewer space (VERTEX_SCALE per battle unit): rescaled
+                # to this scene's unit (the loaded model's), it stands where the slots are
+                stage_vertices = self.stage.vertices * np.float32(self.unit / VERTEX_SCALE)
+                batches.extend(self.stage.batches)   # built at vertex 0
+                offset = len(stage_vertices)
             drawn = ([(manager, actor, None) for manager, actor in self._scene_mesh_actors]
                      + list(self._scene_weapons))
             for manager, actor, body in drawn:
@@ -477,6 +532,8 @@ class BattlePreviewSetup(QWidget):
                 self._mesh_slices.append((manager, actor, body, slice(offset, offset + count)))
                 offset += count
             self._mesh = PreviewMesh(np.empty((offset, 3), dtype=np.float32), batches)
+            if stage_vertices is not None:
+                self._mesh.vertices[:len(stage_vertices)] = stage_vertices   # the stage never moves
         for manager, actor, body, dest in self._mesh_slices:
             key = (id(manager), id(body), self._pose_frame(body or manager, tick, animate))
             if key not in self._pose_cache:

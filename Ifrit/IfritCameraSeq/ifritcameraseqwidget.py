@@ -105,6 +105,12 @@ class IfritCameraSeqWidget(QWidget):
         if self._preview_panel._battle_setup is not None:
             self._preview_panel._battle_setup.set_model_paths(paths)
 
+    def set_stage_source(self, source):
+        """The battle stages the user opened (callable: a0stgNNN.x -> path or None): the preview's
+        battle draws the encounter's."""
+        if self._preview_panel._battle_setup is not None:
+            self._preview_panel._battle_setup.set_stage_source(source)
+
     def save_file(self):
         """Fold the edited bytes back into the model the file writer persists."""
         if self._editable and self._collection is not None:
